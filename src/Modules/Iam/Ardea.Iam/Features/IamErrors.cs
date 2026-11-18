@@ -28,8 +28,8 @@ internal static class IamErrors
     public static IResult RegistrationClosed() =>
         ApiProblems.Problem("registration_closed", StatusCodes.Status403Forbidden, "Registration is closed on this instance.");
 
-    public static IResult EmailTaken() =>
-        ApiProblems.Problem("email_taken", StatusCodes.Status409Conflict, "An account with this e-mail address exists already.");
+    public static IResult WrongPassword() =>
+        ApiProblems.Validation("invalid_password", "The password is wrong.", new Dictionary<string, string[]> { ["password"] = ["The password is wrong."] });
 
     public static IResult InvalidToken() =>
         ApiProblems.Problem("invalid_token", StatusCodes.Status400BadRequest, "The link is not valid or has expired.");

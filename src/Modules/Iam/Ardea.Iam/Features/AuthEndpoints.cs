@@ -21,9 +21,18 @@ internal static class AuthEndpoints
 {
     public const string RateLimitPolicy = "ardea-auth";
 
-    /// <summary>A hash to verify against when the account does not exist, so both cases take as long.</summary>
-    private static readonly Lazy<string> DummyHash = new(() =>
-        new PasswordHasher<ArdeaUser>().HashPassword(new ArdeaUser { DisplayName = "-" }, Guid.NewGuid().ToString()));
+    private static readonly ArdeaUser Nobody = new() { DisplayName = "-" };
+    private static string? _dummyHash;
+
+    /// <summary>
+    /// Costs as much as checking a real password: a hash made with the configured hasher, so its
+    /// iteration count matches the stored hashes.
+    /// </summary>
+    private static void BurnPasswordCheck(UserManager<ArdeaUser> users, string password)
+    {
+        var hash = _dummyHash ??= users.PasswordHasher.HashPassword(Nobody, Guid.NewGuid().ToString());
+        users.PasswordHasher.VerifyHashedPassword(Nobody, hash, password);
+    }
 
     public static void Map(IEndpointRouteBuilder api)
     {
@@ -126,7 +135,7 @@ internal static class AuthEndpoints
         if (user is null)
         {
             // Same work and the same answer as for a wrong password: nothing tells whether the account exists.
-            users.PasswordHasher.VerifyHashedPassword(new ArdeaUser { DisplayName = "-" }, DummyHash.Value, request.Password);
+            BurnPasswordCheck(users, request.Password);
             return IamErrors.InvalidCredentials();
         }
 
@@ -142,6 +151,12 @@ internal static class AuthEndpoints
         {
             await unitOfWork.CommitAsync(cancellationToken);
             return Results.Ok(LoginResponse.TwoFactorRequired);
+        }
+
+        if (result.IsLockedOut)
+        {
+            // Identity skips the password check for a locked account; doing it anyway keeps the timing equal.
+            BurnPasswordCheck(users, request.Password);
         }
 
         await audit.RecordAsync(
@@ -223,7 +238,10 @@ internal static class AuthEndpoints
 
         if (await users.FindByEmailAsync(request.Email!.Trim()) is not null)
         {
-            return IamErrors.EmailTaken();
+            // The same answer as a new registration, without signing in: the web app then shows the
+            // sign-in page. Nothing tells a stranger that the address has an account (master plan 9.3).
+            BurnPasswordCheck(users, request.Password!);
+            return Results.NoContent();
         }
 
         var user = NewUser(request.Email!, request.DisplayName!, time);
@@ -231,7 +249,7 @@ internal static class AuthEndpoints
         var created = await users.CreateAsync(user, request.Password!);
         if (!created.Succeeded)
         {
-            return created.Errors.Any(e => e.Code is "DuplicateEmail" or "DuplicateUserName") ? IamErrors.EmailTaken() : IamErrors.WeakPassword(created);
+            return created.Errors.Any(e => e.Code is "DuplicateEmail" or "DuplicateUserName") ? Results.NoContent() : IamErrors.WeakPassword(created);
         }
 
         await signIn.SignInAsync(user, isPersistent: true);

@@ -33,11 +33,13 @@ internal sealed record UpdateAccountRequest(string? DisplayName);
 
 internal sealed record ChangePasswordRequest(string? CurrentPassword, string? NewPassword);
 
+internal sealed record MfaSetupRequest(string? Password);
+
 internal sealed record MfaSetupResponse(string SharedKey, string AuthenticatorUri);
 
 internal sealed record EnableMfaRequest(string? Code);
 
-internal sealed record DisableMfaRequest(string? Code);
+internal sealed record DisableMfaRequest(string? Password, string? Code);
 
 internal sealed record RecoveryCodesResponse(IReadOnlyList<string> RecoveryCodes);
 

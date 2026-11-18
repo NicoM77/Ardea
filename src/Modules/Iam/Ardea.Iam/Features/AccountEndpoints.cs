@@ -55,9 +55,15 @@ internal static class AccountEndpoints
         var result = await users.ChangePasswordAsync(user, request.CurrentPassword ?? string.Empty, request.NewPassword ?? string.Empty);
         if (!result.Succeeded)
         {
-            return result.Errors.Any(e => e.Code == "PasswordMismatch")
-                ? IamErrors.Validation(new() { ["currentPassword"] = ["The current password is wrong."] })
-                : IamErrors.WeakPassword(result, "newPassword");
+            if (result.Errors.Any(e => e.Code == "PasswordMismatch"))
+            {
+                // A stolen session must not allow unlimited guesses at the password.
+                await users.AccessFailedAsync(user);
+                await unitOfWork.CommitAsync(cancellationToken);
+                return IamErrors.Validation(new() { ["currentPassword"] = ["The current password is wrong."] });
+            }
+
+            return IamErrors.WeakPassword(result, "newPassword");
         }
 
         // The new security stamp ends every other session; this one is issued again.
@@ -67,11 +73,20 @@ internal static class AccountEndpoints
         return Results.NoContent();
     }
 
+    /// <summary>
+    /// Starting two-factor setup needs the password again: otherwise a stolen session could bind the
+    /// account to the thief's authenticator and lock the owner out.
+    /// </summary>
     private static async Task<IResult> SetupMfaAsync(
-        HttpContext http, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, ArdeaSignInManager signIn, IamDbContext db, TimeProvider time,
-        CancellationToken cancellationToken)
+        MfaSetupRequest? request, HttpContext http, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, ArdeaSignInManager signIn, IamDbContext db,
+        TimeProvider time, CancellationToken cancellationToken)
     {
         var user = await CurrentUserAsync(http, users);
+        if (!await CheckPasswordAsync(users, user, request?.Password, unitOfWork, cancellationToken))
+        {
+            return IamErrors.WrongPassword();
+        }
+
         if (user.TwoFactorEnabled)
         {
             return Platform.Http.ApiProblems.Problem("mfa_enabled", StatusCodes.Status409Conflict, "Two-factor authentication is already on.");
@@ -93,6 +108,8 @@ internal static class AccountEndpoints
         var code = Normalize(request.Code);
         if (code.Length == 0 || !await users.VerifyTwoFactorTokenAsync(user, users.Options.Tokens.AuthenticatorTokenProvider, code))
         {
+            await users.AccessFailedAsync(user);
+            await unitOfWork.CommitAsync(cancellationToken);
             return IamErrors.InvalidCode();
         }
 
@@ -109,11 +126,18 @@ internal static class AccountEndpoints
         IamDbContext db, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
     {
         var user = await CurrentUserAsync(http, users);
+        if (!await CheckPasswordAsync(users, user, request.Password, unitOfWork, cancellationToken))
+        {
+            return IamErrors.WrongPassword();
+        }
+
         var code = Normalize(request.Code);
         var valid = code.Length > 0 && (await users.VerifyTwoFactorTokenAsync(user, users.Options.Tokens.AuthenticatorTokenProvider, code)
             || (await users.RedeemTwoFactorRecoveryCodeAsync(user, request.Code!.Trim())).Succeeded);
         if (!valid)
         {
+            await users.AccessFailedAsync(user);
+            await unitOfWork.CommitAsync(cancellationToken);
             return IamErrors.InvalidCode();
         }
 
@@ -171,6 +195,19 @@ internal static class AccountEndpoints
         await AuthEndpoints.RevokeSessionsAsync(db, user.Id, except: null, time, cancellationToken);
         await signIn.SignInAsync(user, isPersistent: true);
         _ = http;
+    }
+
+    /// <summary>Checks a re-entered password; a wrong one counts toward the lockout like a failed sign-in.</summary>
+    private static async Task<bool> CheckPasswordAsync(UserManager<ArdeaUser> users, ArdeaUser user, string? password, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
+    {
+        if (!await users.IsLockedOutAsync(user) && !string.IsNullOrEmpty(password) && await users.CheckPasswordAsync(user, password))
+        {
+            return true;
+        }
+
+        await users.AccessFailedAsync(user);
+        await unitOfWork.CommitAsync(cancellationToken);
+        return false;
     }
 
     private static Guid UserId(HttpContext http) =>

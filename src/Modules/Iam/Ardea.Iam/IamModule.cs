@@ -80,7 +80,9 @@ public sealed class IamModule : IModule
             options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             options.Cookie.SameSite = SameSiteMode.Strict;
             options.Cookie.Path = "/";
+            // Five minutes from the password, however many codes are tried in between.
             options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+            options.SlidingExpiration = false;
         });
         services.Configure<CookieAuthenticationOptions>(IdentityConstants.ExternalScheme, options => options.Cookie.SecurePolicy = CookieSecurePolicy.Always);
         services.Configure<CookieAuthenticationOptions>(IdentityConstants.TwoFactorRememberMeScheme, options => options.Cookie.SecurePolicy = CookieSecurePolicy.Always);
@@ -98,8 +100,10 @@ public sealed class IamModule : IModule
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            // Per client network: an IPv6 client controls a whole /64, so the limit applies to it as one.
+            // Per account, the lockout after five failures limits guessing (master plan 9.3).
             options.AddPolicy(AuthEndpoints.RateLimitPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
-                http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                ClientKey(http.Connection.RemoteIpAddress),
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = perMinute, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
             options.OnRejected = async (context, cancellationToken) =>
             {
@@ -119,6 +123,28 @@ public sealed class IamModule : IModule
     {
         AuthEndpoints.Map(endpoints);
         AccountEndpoints.Map(endpoints);
+    }
+
+    internal static string ClientKey(System.Net.IPAddress? address)
+    {
+        if (address is null)
+        {
+            return "unknown";
+        }
+
+        if (address.IsIPv4MappedToIPv6)
+        {
+            address = address.MapToIPv4();
+        }
+
+        if (address.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            return address.ToString();
+        }
+
+        var bytes = address.GetAddressBytes();
+        Array.Clear(bytes, 8, 8);
+        return new System.Net.IPAddress(bytes) + "/64";
     }
 
     private static Task Status(HttpResponse response, int status)

@@ -21,6 +21,8 @@ internal sealed record RegisterRequest(string? InvitationToken, string? Email, s
 
 internal sealed record ForgotPasswordRequest(string? Email);
 
+internal sealed record ConfirmEmailRequest(Guid? UserId, string? Token);
+
 internal sealed record ResetPasswordRequest(string? Email, string? Token, string? NewPassword);
 
 internal sealed record SessionUser(Guid Id, string Email, string DisplayName, bool IsInstanceAdmin, bool TwoFactorEnabled);

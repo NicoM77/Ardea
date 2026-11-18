@@ -3,6 +3,8 @@ using Ardea.Iam.Domain;
 using Ardea.Iam.Persistence;
 using Ardea.Iam.Security;
 using Ardea.Platform.Audit;
+using Ardea.Platform.Email;
+using Ardea.Platform.Jobs;
 using Ardea.Platform.Persistence;
 using Ardea.Platform.Settings;
 using Microsoft.AspNetCore.Antiforgery;
@@ -48,6 +50,7 @@ internal static class AuthEndpoints
         auth.MapPost("/register", RegisterAsync).RequireRateLimiting(RateLimitPolicy);
         auth.MapPost("/password/forgot", ForgotPasswordAsync).RequireRateLimiting(RateLimitPolicy);
         auth.MapPost("/password/reset", ResetPasswordAsync).RequireRateLimiting(RateLimitPolicy);
+        auth.MapPost("/email/confirm", ConfirmEmailAsync).RequireRateLimiting(RateLimitPolicy);
     }
 
     private static async Task<SetupStatusResponse> SetupStatusAsync(IUnitOfWork unitOfWork, CancellationToken cancellationToken) =>
@@ -212,7 +215,7 @@ internal static class AuthEndpoints
 
     private static async Task<IResult> RegisterAsync(
         RegisterRequest request, IUnitOfWork unitOfWork, IConfiguration configuration, UserManager<ArdeaUser> users,
-        ArdeaSignInManager signIn, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
+        ArdeaSignInManager signIn, IEmailSender email, IJobQueue jobs, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
     {
         var mode = (configuration["REGISTRATION"] ?? "invite").ToLowerInvariant();
         if (mode == "closed")
@@ -236,20 +239,34 @@ internal static class AuthEndpoints
             return IamErrors.InvalidInvitation();
         }
 
-        if (await users.FindByEmailAsync(request.Email!.Trim()) is not null)
+        if (await users.FindByEmailAsync(request.Email!.Trim()) is { } existing)
         {
             // The same answer as a new registration, without signing in: the web app then shows the
-            // sign-in page. Nothing tells a stranger that the address has an account (master plan 9.3).
+            // sign-in page. Nothing tells a stranger that the address has an account (master plan 9.3);
+            // the owner of the address learns it by e-mail.
             BurnPasswordCheck(users, request.Password!);
+            if (await email.IsConfiguredAsync(cancellationToken))
+            {
+                await jobs.EnqueueAsync(new SendAlreadyRegisteredNotice(existing.Id), new EnqueueOptions { CoalesceKey = $"iam.already-registered:{existing.Id}" }, cancellationToken);
+                await unitOfWork.CommitAsync(cancellationToken);
+            }
+
             return Results.NoContent();
         }
 
         var user = NewUser(request.Email!, request.DisplayName!, time);
-        user.EmailConfirmed = true; // confirmation by e-mail comes with task 0.9
+        // Without SMTP addresses count as confirmed (master plan 12.4); with it, a mail confirms them.
+        var withMail = await email.IsConfiguredAsync(cancellationToken);
+        user.EmailConfirmed = !withMail;
         var created = await users.CreateAsync(user, request.Password!);
         if (!created.Succeeded)
         {
             return created.Errors.Any(e => e.Code is "DuplicateEmail" or "DuplicateUserName") ? Results.NoContent() : IamErrors.WeakPassword(created);
+        }
+
+        if (withMail)
+        {
+            await jobs.EnqueueAsync(new SendEmailConfirmation(user.Id), cancellationToken: cancellationToken);
         }
 
         await signIn.SignInAsync(user, isPersistent: true);
@@ -258,13 +275,45 @@ internal static class AuthEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>Always 204, whether or not the account exists (master plan 9.3).</summary>
-    private static Task<IResult> ForgotPasswordAsync(ForgotPasswordRequest request)
+    /// <summary>
+    /// Always 204, whether or not the account exists (master plan 9.3). With SMTP a job sends the link;
+    /// without it the operator resets the password with <c>ardea admin reset-password</c> (master plan 12.4).
+    /// </summary>
+    private static async Task<IResult> ForgotPasswordAsync(
+        ForgotPasswordRequest request, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, IEmailSender email, IJobQueue jobs,
+        IAuditLog audit, CancellationToken cancellationToken)
     {
-        // Sending the reset link needs e-mail (task 0.9). Without SMTP the operator resets the password
-        // with `ardea admin reset-password` (master plan 12.4).
-        _ = request;
-        return Task.FromResult(Results.NoContent());
+        if (!string.IsNullOrWhiteSpace(request.Email)
+            && await email.IsConfiguredAsync(cancellationToken)
+            && await users.FindByEmailAsync(request.Email.Trim()) is { } user)
+        {
+            // At most one waiting mail per account, however often the form is sent.
+            await jobs.EnqueueAsync(new SendPasswordResetEmail(user.Id), new EnqueueOptions { CoalesceKey = $"iam.password-reset:{user.Id}" }, cancellationToken);
+            await audit.RecordAsync(new AuditEntry("auth.password_reset_requested", "user", user.Id.ToString()) { ActorUserId = user.Id, InstanceEvent = true }, cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
+        }
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> ConfirmEmailAsync(
+        ConfirmEmailRequest request, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, IAuditLog audit, CancellationToken cancellationToken)
+    {
+        if (request.UserId is not { } userId || string.IsNullOrWhiteSpace(request.Token)
+            || await users.FindByIdAsync(userId.ToString()) is not { } user)
+        {
+            return IamErrors.InvalidToken();
+        }
+
+        var result = await users.ConfirmEmailAsync(user, request.Token);
+        if (!result.Succeeded)
+        {
+            return IamErrors.InvalidToken();
+        }
+
+        await audit.RecordAsync(new AuditEntry("account.email_confirmed", "user", user.Id.ToString()) { ActorUserId = user.Id, InstanceEvent = true }, cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
+        return Results.NoContent();
     }
 
     private static async Task<IResult> ResetPasswordAsync(

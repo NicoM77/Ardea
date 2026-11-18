@@ -12,6 +12,7 @@ return command switch
     "healthcheck" => await HealthcheckCommand.RunAsync(rest),
     "init-env" => InitEnvCommand.Run(rest),
     "doctor" => await DoctorCommand.RunAsync(rest),
+    "admin" => await AdminCommand.RunAsync(rest),
     "version" or "--version" => VersionCommand.Run(),
     _ => HelpCommand.Run(command),
 };

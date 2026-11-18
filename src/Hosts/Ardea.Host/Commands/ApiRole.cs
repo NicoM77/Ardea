@@ -34,7 +34,12 @@ internal static partial class ApiRole
     }
 
     /// <summary>Builds the API application; <c>null</c> when the configuration is invalid.</summary>
-    public static WebApplication? Build(string[] args, out ConfigurationCheck check, Action<WebApplicationBuilder>? configure = null)
+    /// <param name="args">Command-line arguments after the role.</param>
+    /// <param name="check">The configuration check; inspect it when the result is <c>null</c>.</param>
+    /// <param name="configure">Runs first: configuration and web host (tests use a test server).</param>
+    /// <param name="overrideServices">Runs after every registration, so tests can replace a service.</param>
+    public static WebApplication? Build(
+        string[] args, out ConfigurationCheck check, Action<WebApplicationBuilder>? configure = null, Action<IServiceCollection>? overrideServices = null)
     {
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, ApplicationName = typeof(ApiRole).Assembly.GetName().Name });
         builder.Configuration.AddArdeaEnvironment();
@@ -64,6 +69,7 @@ internal static partial class ApiRole
             module.AddApiServices(builder.Services, builder.Configuration);
         }
 
+        overrideServices?.Invoke(builder.Services);
         var app = builder.Build();
         app.UseForwardedHeaders();
         app.UseExceptionHandler();

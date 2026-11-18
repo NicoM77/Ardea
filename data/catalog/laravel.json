@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Laravel",
+  "products": [
+    {
+      "key": "laravel",
+      "name": "Laravel Framework",
+      "kind": "framework",
+      "versionScheme": "packagist",
+      "cpe": ["laravel:framework", "laravel:laravel"],
+      "packages": ["pkg:composer/laravel/framework"],
+      "aliases": [{ "vendor": "Laravel", "names": ["Laravel"] }],
+      "related": ["php"]
+    }
+  ]
+}

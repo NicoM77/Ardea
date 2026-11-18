@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "WordPress",
+  "products": [
+    {
+      "key": "wordpress",
+      "name": "WordPress",
+      "kind": "cms",
+      "versionScheme": "numeric",
+      "cpe": ["wordpress:wordpress"],
+      "aliases": [{ "names": ["WordPress"] }],
+      "related": ["php"],
+      "images": ["wordpress"]
+    }
+  ]
+}

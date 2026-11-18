@@ -29,6 +29,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra
 WORKDIR /app
 COPY --from=build /app .
 COPY --from=web /src/web/dist/ardea/browser ./wwwroot
+# Master data that migrate loads after the migrations (master plan 4.11); ARDEA_DATA_DIR overrides the path.
+COPY data/ /app/data/
 # Working space for large archives. A named volume mounted here takes over this directory's owner,
 # so the non-root user can write to it although the root file system is read-only.
 COPY --from=build --chown=$APP_UID:$APP_UID /scratch /scratch

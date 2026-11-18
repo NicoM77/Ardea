@@ -1,0 +1,2097 @@
+{
+  "description": "Real OSV records with an installed version and the expected verdict of the version check (master plan 6.6, phase 1 acceptance). Ranges are copied from the record unchanged.",
+  "cases": [
+    {
+      "ecosystem": "npm",
+      "record": "GHSA-rv95-896h-c2vc",
+      "package": "express",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "4.19.2"
+            }
+          ]
+        },
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "5.0.0-alpha.1"
+            },
+            {
+              "fixed": "5.0.0-beta.3"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "4.19.1",
+      "expected": "in_range",
+      "note": "4.19.1 is below the fix 4.19.2 of the range starting at 0."
+    },
+    {
+      "ecosystem": "npm",
+      "record": "GHSA-rv95-896h-c2vc",
+      "package": "express",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "4.19.2"
+            }
+          ]
+        },
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "5.0.0-alpha.1"
+            },
+            {
+              "fixed": "5.0.0-beta.3"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "5.0.0-beta.3",
+      "expected": "out_of_range",
+      "note": "5.0.0-beta.3 is above 4.19.2 and equals the fix of the 5.0.0-alpha.1 range (fixed is exclusive)."
+    },
+    {
+      "ecosystem": "npm",
+      "record": "GHSA-rv95-896h-c2vc",
+      "package": "express",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "4.19.2"
+            }
+          ]
+        },
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "5.0.0-alpha.1"
+            },
+            {
+              "fixed": "5.0.0-beta.3"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "5.0.0-beta.1",
+      "expected": "in_range",
+      "note": "Pre-release ordering: 5.0.0-alpha.1 <= 5.0.0-beta.1 < 5.0.0-beta.3."
+    },
+    {
+      "ecosystem": "npm",
+      "record": "GHSA-qw6h-vgh9-j6wx",
+      "package": "express",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "4.20.0"
+            }
+          ]
+        },
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "5.0.0-alpha.1"
+            },
+            {
+              "fixed": "5.0.0"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "5.0.0-beta.3",
+      "expected": "in_range",
+      "note": "5.0.0-beta.3 is a pre-release of 5.0.0, so it lies in [5.0.0-alpha.1, 5.0.0)."
+    },
+    {
+      "ecosystem": "npm",
+      "record": "GHSA-qw6h-vgh9-j6wx",
+      "package": "express",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "4.20.0"
+            }
+          ]
+        },
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "5.0.0-alpha.1"
+            },
+            {
+              "fixed": "5.0.0"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "4.20.0",
+      "expected": "out_of_range",
+      "note": "Gap: 4.20.0 is the fix of the first range and below the introduced 5.0.0-alpha.1 of the second."
+    },
+    {
+      "ecosystem": "npm",
+      "record": "GHSA-p6mc-m468-83gw",
+      "package": "lodash",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "3.7.0"
+            },
+            {
+              "fixed": "4.17.19"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "3.6.0",
+      "expected": "out_of_range",
+      "note": "3.6.0 is below the explicit introduced 3.7.0."
+    },
+    {
+      "ecosystem": "npm",
+      "record": "GHSA-fr5h-rqp8-mj6g",
+      "package": "next",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "13.4.0"
+            },
+            {
+              "fixed": "14.1.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "14.1.1-canary.0",
+      "expected": "in_range",
+      "note": "14.1.1-canary.0 is a pre-release below the fix 14.1.1 and above the introduced 13.4.0."
+    },
+    {
+      "ecosystem": "npm",
+      "record": "GHSA-f82v-jwr5-mffw",
+      "package": "next",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "13.0.0"
+            },
+            {
+              "fixed": "13.5.9"
+            }
+          ]
+        },
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "14.0.0"
+            },
+            {
+              "fixed": "14.2.25"
+            }
+          ]
+        },
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "15.0.0"
+            },
+            {
+              "fixed": "15.2.3"
+            }
+          ]
+        },
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "12.0.0"
+            },
+            {
+              "fixed": "12.3.5"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "11.1.4",
+      "expected": "out_of_range",
+      "note": "11.1.4 is below the lowest introduced 12.0.0 and below every other range."
+    },
+    {
+      "ecosystem": "npm",
+      "record": "GHSA-35jh-r3h4-6jhm",
+      "package": "lodash",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "4.17.21"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "^4.17.1",
+      "expected": "unknown",
+      "note": "A manifest range is not a concrete npm version."
+    },
+    {
+      "ecosystem": "npm",
+      "record": "GHSA-f82v-jwr5-mffw",
+      "package": "next",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "13.0.0"
+            },
+            {
+              "fixed": "13.5.9"
+            }
+          ]
+        },
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "14.0.0"
+            },
+            {
+              "fixed": "14.2.25"
+            }
+          ]
+        },
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "15.0.0"
+            },
+            {
+              "fixed": "15.2.3"
+            }
+          ]
+        },
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "12.0.0"
+            },
+            {
+              "fixed": "12.3.5"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "latest",
+      "expected": "unknown",
+      "note": "A dist-tag is not a concrete npm version."
+    },
+    {
+      "ecosystem": "NuGet",
+      "record": "GHSA-5crp-9r3c-p9vr",
+      "package": "Newtonsoft.Json",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "13.0.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "12.0.3",
+      "expected": "in_range",
+      "note": "12.0.3 is below the fix 13.0.1 of the range starting at 0."
+    },
+    {
+      "ecosystem": "NuGet",
+      "record": "GHSA-5crp-9r3c-p9vr",
+      "package": "Newtonsoft.Json",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "13.0.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "13.0.1.0",
+      "expected": "out_of_range",
+      "note": "NuGet treats the 4-part 13.0.1.0 as equal to 13.0.1, the fixed version."
+    },
+    {
+      "ecosystem": "NuGet",
+      "record": "GHSA-5crp-9r3c-p9vr",
+      "package": "Newtonsoft.Json",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "13.0.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "13.0.1-beta1",
+      "expected": "in_range",
+      "note": "The pre-release 13.0.1-beta1 sorts below the release 13.0.1, the fix."
+    },
+    {
+      "ecosystem": "NuGet",
+      "record": "GHSA-ghhp-997w-qr28",
+      "package": "System.Text.Encodings.Web",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0.0"
+            },
+            {
+              "fixed": "4.5.1"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.6.0"
+            },
+            {
+              "fixed": "4.7.2"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "5.0.0"
+            },
+            {
+              "fixed": "5.0.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "4.5.1",
+      "expected": "out_of_range",
+      "note": "Gap: 4.5.1 is the fix of the 4.0.0 range and below the introduced 4.6.0 and 5.0.0."
+    },
+    {
+      "ecosystem": "NuGet",
+      "record": "GHSA-ghhp-997w-qr28",
+      "package": "System.Text.Encodings.Web",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0.0"
+            },
+            {
+              "fixed": "4.5.1"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.6.0"
+            },
+            {
+              "fixed": "4.7.2"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "5.0.0"
+            },
+            {
+              "fixed": "5.0.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "4.5.0-preview2-26406-04",
+      "expected": "in_range",
+      "note": "The pre-release 4.5.0-preview2-26406-04 lies in [4.0.0, 4.5.1)."
+    },
+    {
+      "ecosystem": "NuGet",
+      "record": "GHSA-ghhp-997w-qr28",
+      "package": "System.Text.Encodings.Web",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0.0"
+            },
+            {
+              "fixed": "4.5.1"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.6.0"
+            },
+            {
+              "fixed": "4.7.2"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "5.0.0"
+            },
+            {
+              "fixed": "5.0.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "5.0.0-rc.2.20475.5",
+      "expected": "out_of_range",
+      "note": "The pre-release sorts below the introduced 5.0.0 and above the fix 4.7.2 of the 4.6.0 range."
+    },
+    {
+      "ecosystem": "NuGet",
+      "record": "GHSA-hh2w-p6rv-4g7w",
+      "package": "System.Text.Json",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "7.0.0"
+            },
+            {
+              "fixed": "8.0.4"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "6.0.9",
+      "expected": "out_of_range",
+      "note": "6.0.9 is below the explicit introduced 7.0.0."
+    },
+    {
+      "ecosystem": "NuGet",
+      "record": "GHSA-cgpw-2gph-2r9g",
+      "package": "Microsoft.AspNetCore.Server.Kestrel.Core",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.0.0"
+            },
+            {
+              "fixed": "2.0.4"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.1.0"
+            },
+            {
+              "fixed": "2.1.2"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "2.1.1",
+      "expected": "in_range",
+      "note": "2.1.1 lies in the second range [2.1.0, 2.1.2)."
+    },
+    {
+      "ecosystem": "NuGet",
+      "record": "GHSA-98g6-xh36-x2p7",
+      "package": "Microsoft.Data.SqlClient",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "2.1.7"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "3.0.0"
+            },
+            {
+              "fixed": "3.1.5"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0.0"
+            },
+            {
+              "fixed": "4.0.5"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "5.0.0"
+            },
+            {
+              "fixed": "5.1.3"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "[5.0.0, 5.2.0)",
+      "expected": "unknown",
+      "note": "A NuGet version range is not a concrete version."
+    },
+    {
+      "ecosystem": "NuGet",
+      "record": "GHSA-5crp-9r3c-p9vr",
+      "package": "Newtonsoft.Json",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "13.0.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "13.0.*",
+      "expected": "unknown",
+      "note": "A floating version is not a concrete version."
+    },
+    {
+      "ecosystem": "Packagist",
+      "record": "GHSA-w248-ffj2-4v5q",
+      "package": "guzzlehttp/guzzle",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0.0"
+            },
+            {
+              "fixed": "6.5.7"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "7.0.0"
+            },
+            {
+              "fixed": "7.4.4"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "v7.4.3",
+      "expected": "in_range",
+      "note": "Composer strips the v prefix; 7.4.3 lies in [7.0.0, 7.4.4)."
+    },
+    {
+      "ecosystem": "Packagist",
+      "record": "GHSA-w248-ffj2-4v5q",
+      "package": "guzzlehttp/guzzle",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0.0"
+            },
+            {
+              "fixed": "6.5.7"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "7.0.0"
+            },
+            {
+              "fixed": "7.4.4"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "3.8.1",
+      "expected": "out_of_range",
+      "note": "3.8.1 is below both explicit introduced versions 4.0.0 and 7.0.0."
+    },
+    {
+      "ecosystem": "Packagist",
+      "record": "GHSA-m6ch-gg5f-wxx3",
+      "package": "guzzlehttp/guzzle",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "6"
+            },
+            {
+              "fixed": "6.2.1"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0.0-rc2"
+            },
+            {
+              "fixed": "4.2.4"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "5"
+            },
+            {
+              "fixed": "5.3.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "4.0.0-RC1",
+      "expected": "out_of_range",
+      "note": "4.0.0-RC1 sorts below the explicit introduced 4.0.0-rc2 and below 5 and 6."
+    },
+    {
+      "ecosystem": "Packagist",
+      "record": "GHSA-gv7v-rgg6-548h",
+      "package": "laravel/framework",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "6.20.45"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "7.0.0"
+            },
+            {
+              "fixed": "7.30.7"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "8.0.0"
+            },
+            {
+              "fixed": "8.83.28"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "9.0.0"
+            },
+            {
+              "fixed": "9.52.17"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "10.0.0"
+            },
+            {
+              "fixed": "10.48.23"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "11.0.0"
+            },
+            {
+              "fixed": "11.31.0"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "9.52.17.0",
+      "expected": "out_of_range",
+      "note": "Composer normalises 9.52.17 to 9.52.17.0, so the 4-part version equals the fix of the 9.0.0 range."
+    },
+    {
+      "ecosystem": "Packagist",
+      "record": "GHSA-gv7v-rgg6-548h",
+      "package": "laravel/framework",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "6.20.45"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "7.0.0"
+            },
+            {
+              "fixed": "7.30.7"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "8.0.0"
+            },
+            {
+              "fixed": "8.83.28"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "9.0.0"
+            },
+            {
+              "fixed": "9.52.17"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "10.0.0"
+            },
+            {
+              "fixed": "10.48.23"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "11.0.0"
+            },
+            {
+              "fixed": "11.31.0"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "v10.48.22",
+      "expected": "in_range",
+      "note": "v10.48.22 lies in [10.0.0, 10.48.23)."
+    },
+    {
+      "ecosystem": "Packagist",
+      "record": "GHSA-q8hg-pf8v-cxrv",
+      "package": "symfony/http-kernel",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.2.0"
+            },
+            {
+              "fixed": "2.8.52"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "3.0.0"
+            },
+            {
+              "fixed": "3.4.35"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0.0"
+            },
+            {
+              "fixed": "4.2.12"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.3.0"
+            },
+            {
+              "fixed": "4.3.8"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "4.2.12",
+      "expected": "out_of_range",
+      "note": "Gap: 4.2.12 is the fix of the 4.0.0 range and below the introduced 4.3.0."
+    },
+    {
+      "ecosystem": "Packagist",
+      "record": "GHSA-6377-hfv9-hqf6",
+      "package": "twig/twig",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "3.11.2"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "3.12"
+            },
+            {
+              "fixed": "3.14.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "3.12.0",
+      "expected": "in_range",
+      "note": "3.12.0 equals the introduced 3.12 (normalised 3.12.0.0) and is below 3.14.1."
+    },
+    {
+      "ecosystem": "Packagist",
+      "record": "GHSA-qvqm-h22r-4cp9",
+      "package": "laravel/framework",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "last_affected": "5.5.40"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "5.6.0"
+            },
+            {
+              "fixed": "5.6.30"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "5.5.40",
+      "expected": "in_range",
+      "note": "5.5.40 equals the last_affected of the first range, which is inclusive."
+    },
+    {
+      "ecosystem": "Packagist",
+      "record": "GHSA-6377-hfv9-hqf6",
+      "package": "twig/twig",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "3.11.2"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "3.12"
+            },
+            {
+              "fixed": "3.14.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "dev-main",
+      "expected": "unknown",
+      "note": "A branch name is not a comparable release version."
+    },
+    {
+      "ecosystem": "Packagist",
+      "record": "GHSA-w248-ffj2-4v5q",
+      "package": "guzzlehttp/guzzle",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0.0"
+            },
+            {
+              "fixed": "6.5.7"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "7.0.0"
+            },
+            {
+              "fixed": "7.4.4"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "^6.5",
+      "expected": "unknown",
+      "note": "A Composer constraint is not a concrete version."
+    },
+    {
+      "ecosystem": "PyPI",
+      "record": "GHSA-2gwj-7jmv-h26r",
+      "package": "django",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.2"
+            },
+            {
+              "fixed": "2.2.28"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "3.2"
+            },
+            {
+              "fixed": "3.2.13"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0"
+            },
+            {
+              "fixed": "4.0.4"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "4.0.0",
+      "expected": "in_range",
+      "note": "PEP 440 treats 4.0.0 as equal to the introduced 4.0; it is below the fix 4.0.4."
+    },
+    {
+      "ecosystem": "PyPI",
+      "record": "GHSA-2gwj-7jmv-h26r",
+      "package": "django",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.2"
+            },
+            {
+              "fixed": "2.2.28"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "3.2"
+            },
+            {
+              "fixed": "3.2.13"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0"
+            },
+            {
+              "fixed": "4.0.4"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "3.0.14",
+      "expected": "out_of_range",
+      "note": "Gap: 3.0.14 is above the fix 2.2.28 and below the introduced 3.2 and 4.0."
+    },
+    {
+      "ecosystem": "PyPI",
+      "record": "GHSA-2hrw-hx67-34x6",
+      "package": "django",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "3.2a1"
+            },
+            {
+              "fixed": "3.2.18"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.1a1"
+            },
+            {
+              "fixed": "4.1.7"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0a1"
+            },
+            {
+              "fixed": "4.0.10"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "4.1rc1",
+      "expected": "in_range",
+      "note": "4.1rc1 lies in [4.1a1, 4.1.7) because a1 < rc1 < final."
+    },
+    {
+      "ecosystem": "PyPI",
+      "record": "GHSA-2hrw-hx67-34x6",
+      "package": "django",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "3.2a1"
+            },
+            {
+              "fixed": "3.2.18"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.1a1"
+            },
+            {
+              "fixed": "4.1.7"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0a1"
+            },
+            {
+              "fixed": "4.0.10"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "4.1.dev20220801",
+      "expected": "out_of_range",
+      "note": "A .dev release sorts before 4.1a1, so it is below that introduced and above the fix 4.0.10."
+    },
+    {
+      "ecosystem": "PyPI",
+      "record": "GHSA-9wx4-h78v-vm56",
+      "package": "requests",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "2.32.0"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "2.32.0.post1",
+      "expected": "out_of_range",
+      "note": "A post-release sorts after 2.32.0, the fixed version."
+    },
+    {
+      "ecosystem": "PyPI",
+      "record": "GHSA-gmj6-6f8f-6699",
+      "package": "jinja2",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "3.0.0"
+            },
+            {
+              "fixed": "3.1.5"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "3.0.0rc1",
+      "expected": "out_of_range",
+      "note": "3.0.0rc1 sorts below the explicit introduced 3.0.0."
+    },
+    {
+      "ecosystem": "PyPI",
+      "record": "GHSA-44wm-f244-xhp3",
+      "package": "pillow",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "10.3.0"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "10.2.0",
+      "expected": "in_range",
+      "note": "10.2.0 is below the fix 10.3.0 of the range starting at 0."
+    },
+    {
+      "ecosystem": "PyPI",
+      "record": "GHSA-34jh-p97f-mpxf",
+      "package": "urllib3",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "1.26.19"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.0.0"
+            },
+            {
+              "fixed": "2.2.2"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "1.26.18",
+      "expected": "in_range",
+      "note": "1.26.18 is below the fix 1.26.19 of the range starting at 0."
+    },
+    {
+      "ecosystem": "PyPI",
+      "record": "GHSA-9wx4-h78v-vm56",
+      "package": "requests",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "2.32.0"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": ">=2.31.0",
+      "expected": "unknown",
+      "note": "A requirement specifier is not a concrete version."
+    },
+    {
+      "ecosystem": "PyPI",
+      "record": "GHSA-44wm-f244-xhp3",
+      "package": "pillow",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "10.3.0"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "latest",
+      "expected": "unknown",
+      "note": "'latest' is not a PEP 440 version."
+    },
+    {
+      "ecosystem": "Maven",
+      "record": "GHSA-jfh8-c2jp-5v3q",
+      "package": "org.apache.logging.log4j:log4j-core",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.13.0"
+            },
+            {
+              "fixed": "2.15.0"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.0-beta9"
+            },
+            {
+              "fixed": "2.3.1"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.4"
+            },
+            {
+              "fixed": "2.12.2"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "2.14.1",
+      "expected": "in_range",
+      "note": "2.14.1 lies in [2.13.0, 2.15.0)."
+    },
+    {
+      "ecosystem": "Maven",
+      "record": "GHSA-jfh8-c2jp-5v3q",
+      "package": "org.apache.logging.log4j:log4j-core",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.13.0"
+            },
+            {
+              "fixed": "2.15.0"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.0-beta9"
+            },
+            {
+              "fixed": "2.3.1"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.4"
+            },
+            {
+              "fixed": "2.12.2"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "2.15",
+      "expected": "out_of_range",
+      "note": "Maven treats 2.15 as equal to 2.15.0, the fix of the 2.13.0 range."
+    },
+    {
+      "ecosystem": "Maven",
+      "record": "GHSA-jfh8-c2jp-5v3q",
+      "package": "org.apache.logging.log4j:log4j-core",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.13.0"
+            },
+            {
+              "fixed": "2.15.0"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.0-beta9"
+            },
+            {
+              "fixed": "2.3.1"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.4"
+            },
+            {
+              "fixed": "2.12.2"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "2.0-rc1",
+      "expected": "in_range",
+      "note": "Qualifier ordering beta < rc < release puts 2.0-rc1 in [2.0-beta9, 2.3.1)."
+    },
+    {
+      "ecosystem": "Maven",
+      "record": "GHSA-jfh8-c2jp-5v3q",
+      "package": "org.apache.logging.log4j:log4j-core",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.13.0"
+            },
+            {
+              "fixed": "2.15.0"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.0-beta9"
+            },
+            {
+              "fixed": "2.3.1"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.4"
+            },
+            {
+              "fixed": "2.12.2"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "2.0-beta8",
+      "expected": "out_of_range",
+      "note": "2.0-beta8 is below the explicit introduced 2.0-beta9 and below 2.4 and 2.13.0."
+    },
+    {
+      "ecosystem": "Maven",
+      "record": "GHSA-jfh8-c2jp-5v3q",
+      "package": "org.apache.logging.log4j:log4j-core",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.13.0"
+            },
+            {
+              "fixed": "2.15.0"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.0-beta9"
+            },
+            {
+              "fixed": "2.3.1"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.4"
+            },
+            {
+              "fixed": "2.12.2"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "2.12.2",
+      "expected": "out_of_range",
+      "note": "Gap: 2.12.2 is the fix of the 2.4 range and below the introduced 2.13.0."
+    },
+    {
+      "ecosystem": "Maven",
+      "record": "GHSA-57j2-w4cx-62h2",
+      "package": "com.fasterxml.jackson.core:jackson-databind",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.13.0"
+            },
+            {
+              "fixed": "2.13.2.1"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "2.12.6.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "2.13.2",
+      "expected": "in_range",
+      "note": "2.13.2 sorts below the 4-part fix 2.13.2.1 and is at or above the introduced 2.13.0."
+    },
+    {
+      "ecosystem": "Maven",
+      "record": "GHSA-rmrm-75hp-phr2",
+      "package": "org.hibernate.validator:hibernate-validator",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "6.1.0.Final"
+            },
+            {
+              "fixed": "6.1.5.Final"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "6.0.20.Final"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "6.1.0.CR1",
+      "expected": "out_of_range",
+      "note": "6.1.0.CR1 sorts below the introduced 6.1.0.Final and above the fix 6.0.20.Final."
+    },
+    {
+      "ecosystem": "Maven",
+      "record": "GHSA-ccgv-vj62-xf9h",
+      "package": "org.springframework:spring-web",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "6.1.0"
+            },
+            {
+              "fixed": "6.1.4"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "6.0.0"
+            },
+            {
+              "fixed": "6.0.17"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "5.3.0"
+            },
+            {
+              "fixed": "5.3.32"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "last_affected": "5.2.25.RELEASE"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "5.2.25.RELEASE",
+      "expected": "in_range",
+      "note": "5.2.25.RELEASE equals the inclusive last_affected of the range starting at 0."
+    },
+    {
+      "ecosystem": "Maven",
+      "record": "GHSA-36p3-wjmg-h94x",
+      "package": "org.springframework:spring-beans",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "5.2.20.RELEASE"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "5.3.0"
+            },
+            {
+              "fixed": "5.3.18"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "${spring.version}",
+      "expected": "unknown",
+      "note": "An unresolved property placeholder is not a version."
+    },
+    {
+      "ecosystem": "Maven",
+      "record": "GHSA-57j2-w4cx-62h2",
+      "package": "com.fasterxml.jackson.core:jackson-databind",
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "2.13.0"
+            },
+            {
+              "fixed": "2.13.2.1"
+            }
+          ]
+        },
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "2.12.6.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "[2.12,2.13)",
+      "expected": "unknown",
+      "note": "A Maven version range is not a concrete version."
+    },
+    {
+      "ecosystem": "Go",
+      "record": "GO-2023-2102",
+      "package": "golang.org/x/net",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "0.17.0"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "v0.16.0",
+      "expected": "in_range",
+      "note": "v0.16.0 is below the fix 0.17.0 of the range starting at 0."
+    },
+    {
+      "ecosystem": "Go",
+      "record": "GO-2022-0969",
+      "package": "golang.org/x/net",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "0.0.0-20220906165146-f3363e06e74c"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "v0.0.0-20220127200216-cd36cc0744dd",
+      "expected": "in_range",
+      "note": "This pseudo-version, from 2022-01-27, sorts below the fixed pseudo-version from 2022-09-06."
+    },
+    {
+      "ecosystem": "Go",
+      "record": "GO-2023-1495",
+      "package": "golang.org/x/net",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0.0.0-20220524220425-1d687d428aca"
+            },
+            {
+              "fixed": "0.1.1-0.20221104162952-702349b0e862"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "v0.0.0-20220127200216-cd36cc0744dd",
+      "expected": "out_of_range",
+      "note": "This pseudo-version, from 2022-01-27, sorts below the introduced pseudo-version from 2022-05-24."
+    },
+    {
+      "ecosystem": "Go",
+      "record": "GO-2023-1699",
+      "package": "github.com/docker/docker",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "1.12.0"
+            },
+            {
+              "fixed": "20.10.24+incompatible"
+            },
+            {
+              "introduced": "23.0.0+incompatible"
+            },
+            {
+              "fixed": "23.0.3+incompatible"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "v20.10.24+incompatible",
+      "expected": "out_of_range",
+      "note": "Gap: the version equals the fix 20.10.24+incompatible and is below the introduced 23.0.0+incompatible."
+    },
+    {
+      "ecosystem": "Go",
+      "record": "GO-2023-1699",
+      "package": "github.com/docker/docker",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "1.12.0"
+            },
+            {
+              "fixed": "20.10.24+incompatible"
+            },
+            {
+              "introduced": "23.0.0+incompatible"
+            },
+            {
+              "fixed": "23.0.3+incompatible"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "v23.0.2+incompatible",
+      "expected": "in_range",
+      "note": "The version lies in [23.0.0+incompatible, 23.0.3+incompatible); build metadata does not affect ordering."
+    },
+    {
+      "ecosystem": "Go",
+      "record": "GO-2022-0969",
+      "package": "stdlib",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "1.18.6"
+            },
+            {
+              "introduced": "1.19.0-0"
+            },
+            {
+              "fixed": "1.19.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "v1.19.0-rc.1",
+      "expected": "in_range",
+      "note": "1.19.0-rc.1 is at or above the introduced 1.19.0-0, because a numeric pre-release identifier sorts before an alphanumeric one, and below the fix 1.19.1."
+    },
+    {
+      "ecosystem": "Go",
+      "record": "GO-2022-0969",
+      "package": "stdlib",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "1.18.6"
+            },
+            {
+              "introduced": "1.19.0-0"
+            },
+            {
+              "fixed": "1.19.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "v1.18.6",
+      "expected": "out_of_range",
+      "note": "Gap: 1.18.6 is the first fix and below the second introduced 1.19.0-0."
+    },
+    {
+      "ecosystem": "Go",
+      "record": "GO-2023-1737",
+      "package": "github.com/gin-gonic/gin",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "1.3.1-0.20190301021747-ccb9e902956d"
+            },
+            {
+              "fixed": "1.9.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "v1.3.0",
+      "expected": "out_of_range",
+      "note": "v1.3.0 is below the introduced pseudo-version 1.3.1-0.20190301021747-ccb9e902956d."
+    },
+    {
+      "ecosystem": "Go",
+      "record": "GO-2023-1737",
+      "package": "github.com/gin-gonic/gin",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "1.3.1-0.20190301021747-ccb9e902956d"
+            },
+            {
+              "fixed": "1.9.1"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "latest",
+      "expected": "unknown",
+      "note": "'latest' is a version query, not a module version."
+    },
+    {
+      "ecosystem": "Go",
+      "record": "GO-2023-2102",
+      "package": "golang.org/x/net",
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "0.17.0"
+            }
+          ]
+        }
+      ],
+      "versions": [],
+      "installed": "master",
+      "expected": "unknown",
+      "note": "A branch name is not a module version."
+    }
+  ]
+}

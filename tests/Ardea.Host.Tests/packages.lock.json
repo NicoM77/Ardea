@@ -587,7 +587,9 @@
         "type": "Project",
         "dependencies": {
           "Ardea.Catalog.Contracts": "[0.0.0, )",
-          "Ardea.Platform": "[0.0.0, )"
+          "Ardea.Platform": "[0.0.0, )",
+          "NuGet.Versioning": "[7.9.0, )",
+          "Semver": "[3.0.0, )"
         }
       },
       "ardea.catalog.contracts": {
@@ -791,6 +793,12 @@
           "OpenTelemetry.API": "1.15.3"
         }
       },
+      "NuGet.Versioning": {
+        "type": "CentralTransitive",
+        "requested": "[7.9.0, )",
+        "resolved": "7.9.0",
+        "contentHash": "r4sZuVpVqwSBLe4qYDrnpScqdyctlRXg0HSF5OoCGkeBc8b+o8BBYHuI/u1RoWYX78PbieijU13TBt71/Xf3lw=="
+      },
       "OpenTelemetry.Exporter.OpenTelemetryProtocol": {
         "type": "CentralTransitive",
         "requested": "[1.21.0, )",
@@ -837,6 +845,15 @@
         "contentHash": "CpkfBbVIHR6Jn8QrGwt7RtOEDyKOHL2rs9HL+5ckzvlsvQiJ5lHD/qvB7NqJuFZIvXnACSYB7AD0ycXITPQFPg==",
         "dependencies": {
           "OpenTelemetry.Api": "[1.21.0, 2.0.0)"
+        }
+      },
+      "Semver": {
+        "type": "CentralTransitive",
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "9jZCicsVgTebqkAujRWtC9J1A5EQVlu0TVKHcgoCuv345ve5DYf4D1MjhKEnQjdRZo6x/vdv6QQrYFs7ilGzLA==",
+        "dependencies": {
+          "Microsoft.Extensions.Primitives": "5.0.1"
         }
       },
       "xunit.v3.extensibility.core": {

@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "PostgreSQL Global Development Group",
+  "products": [
+    {
+      "key": "postgresql",
+      "name": "PostgreSQL",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["postgresql:postgresql"],
+      // CVE records for PostgreSQL often name the vendor «n/a» (master plan 6.5).
+      "aliases": [{ "names": ["PostgreSQL", "Postgres"] }],
+      "images": ["postgres"]
+    }
+  ]
+}

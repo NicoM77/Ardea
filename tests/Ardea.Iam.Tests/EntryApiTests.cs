@@ -75,6 +75,41 @@ public sealed class EntryApiTests(PostgresServer server)
         Assert.True(await host.ScalarAsync<bool>("SELECT next_sync_at <= now() AND interval = interval '60 minutes' FROM intel.source WHERE key = 'ncsc-hub'"));
     }
 
+    [Fact]
+    public async Task The_administrator_sees_cve_conflicts_and_keeps_them_separate()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var admin = await SignedInAsync(host);
+        using var member = host.Client();
+        await member.PostAsync("/api/v1/auth/register", new { email = "member@example.org", displayName = "Member", password = ApiTestHost.Password });
+        await SeedAsync(host);
+        await host.ScalarAsync<int>(
+            """
+            INSERT INTO intel.review_item (kind, subject_key, entry_ids, shared_aliases, state, first_seen_at, last_seen_at)
+            SELECT 'cve_conflict', 'CVE-2026-1,CVE-2026-2', array_agg(id ORDER BY primary_key), '{GHSA:GHSA-dddd-eeee-ffff}', 'open', now(), now()
+            FROM intel.security_entry WHERE primary_key IN ('CVE-2026-1', 'CVE-2026-2')
+            RETURNING 1
+            """);
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await member.GetAsync("/api/v1/instance/review")).StatusCode);
+
+        var open = await Page(admin, "/api/v1/instance/review");
+        var item = Assert.Single(open.EnumerateArray());
+        Assert.Equal("cve_conflict", item.GetProperty("kind").GetString());
+        Assert.Equal(["CVE-2026-1", "CVE-2026-2"], item.GetProperty("entries").EnumerateArray().Select(e => e.GetProperty("primaryKey").GetString()));
+        Assert.Equal("GHSA:GHSA-dddd-eeee-ffff", Assert.Single(item.GetProperty("sharedAliases").EnumerateArray()).GetString());
+
+        var id = item.GetProperty("id").GetString();
+        Assert.Equal(HttpStatusCode.Forbidden, (await member.PostAsync($"/api/v1/instance/review/{id}/keep-separate")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/v1/instance/review/{id}/keep-separate")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await admin.PostAsync($"/api/v1/instance/review/{Guid.NewGuid()}/keep-separate")).StatusCode);
+
+        Assert.Empty((await Page(admin, "/api/v1/instance/review")).EnumerateArray());
+        Assert.Single((await Page(admin, "/api/v1/instance/review?state=kept_separate")).EnumerateArray());
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.GetAsync("/api/v1/instance/review?state=nonsense")).StatusCode);
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.audit_event WHERE action = 'instance.review_kept_separate'"));
+    }
+
     private static async Task<ApiClient> SignedInAsync(ApiTestHost host)
     {
         var client = host.Client();

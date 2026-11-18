@@ -51,17 +51,22 @@ public sealed class IntelModule : IModule
         services.AddJob<NormalizeRecords, NormalizeRecordsHandler>(new JobKindOptions { MaxConcurrency = 2, MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(30) });
         services.AddJob<Correlation.CorrelateEntry, Correlation.CorrelateEntryHandler>(new JobKindOptions { MaxConcurrency = 4, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(2) });
         services.AddJob<Correlation.NotifyEntryChanged, Correlation.NotifyEntryChangedHandler>(new JobKindOptions { MaxConcurrency = 4, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(2) });
+        services.AddJob<CheckCompleteness, CheckCompletenessHandler>(new JobKindOptions { MaxConcurrency = 1, MaxAttempts = 1, Timeout = TimeSpan.FromMinutes(30), Priority = JobPriority.Background });
         services.AddSchedule("intel.schedule-due-sources", "* * * * *", new ScheduleDueSources());
+        services.AddSchedule("intel.check-completeness", "23 4 * * *", new CheckCompleteness());
     }
 
     /// <summary>Only the worker fetches; it registers every adapter's source at start.</summary>
     public void AddWorkerServices(IServiceCollection services, IConfiguration configuration) =>
         services.AddSingleton<IHostedService, SourceRegistrar>();
 
+    public IReadOnlyList<MaintenanceCommand> Commands { get; } = [Features.IntelCommands.Renormalize, Features.IntelCommands.Recompute];
+
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         Features.EntryEndpoints.Map(endpoints);
         Features.SourceEndpoints.Map(endpoints);
+        Features.ReviewEndpoints.Map(endpoints);
     }
 
     private static HttpMessageHandler PrimaryHandler() => new SocketsHttpHandler

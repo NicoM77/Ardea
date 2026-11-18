@@ -89,6 +89,22 @@ internal sealed class IntelTestHost : IAsyncDisposable
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 
+    /// <summary>Runs the daily completeness check the way the worker does.</summary>
+    public async Task CheckCompletenessAsync()
+    {
+        await using var scope = Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<CheckCompletenessHandler>()
+            .HandleAsync(new CheckCompleteness(), new JobContext(Guid.CreateVersion7(), CheckCompleteness.Kind, 1, null), CancellationToken.None);
+        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+    }
+
+    /// <summary>Runs a maintenance command the way <c>ardea admin</c> does: own scope, tenant-free unit of work.</summary>
+    public async Task<int> RunCommandAsync(Platform.Modules.MaintenanceCommand command, params string[] args)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        return await command.RunAsync(scope.ServiceProvider, args, CancellationToken.None);
+    }
+
     public async Task<T> ScalarAsync<T>(string sql)
     {
         await using var connection = new NpgsqlConnection(Database.OwnerConnectionString("tests"));
@@ -163,6 +179,8 @@ internal sealed class IntelTestHost : IAsyncDisposable
                 .HandleAsync(System.Text.Json.JsonSerializer.Deserialize<Correlation.CorrelateEntry>(payload, json)!, context, CancellationToken.None),
             "intel.notify-entry-changed" => services.GetRequiredService<Correlation.NotifyEntryChangedHandler>()
                 .HandleAsync(System.Text.Json.JsonSerializer.Deserialize<Correlation.NotifyEntryChanged>(payload, json)!, context, CancellationToken.None),
+            "intel.sync-source" => services.GetRequiredService<SyncSourceHandler>()
+                .HandleAsync(System.Text.Json.JsonSerializer.Deserialize<SyncSource>(payload, json)!, context, CancellationToken.None),
             "intel.normalize-records" => services.GetRequiredService<NormalizeRecordsHandler>()
                 .HandleAsync(System.Text.Json.JsonSerializer.Deserialize<NormalizeRecords>(payload, json)!, context, CancellationToken.None),
             _ => throw new InvalidOperationException($"No test runner for {kind}."),
@@ -178,7 +196,7 @@ internal sealed class IntelTestHost : IAsyncDisposable
 }
 
 /// <summary>A provider that yields what the test scripts, and can fail after a number of items.</summary>
-internal sealed class ScriptedProvider : ISourceProvider
+internal sealed class ScriptedProvider : ISourceProvider, IChangeLogSource
 {
     public const string Key = "scripted";
 
@@ -202,10 +220,38 @@ internal sealed class ScriptedProvider : ISourceProvider
 
     public SyncMode? ModeSeen { get; private set; }
 
+    /// <summary>What the change log lists; may hold duplicates and records <see cref="Items"/> never delivered in a run.</summary>
+    public List<ChangedRecord> ChangeLog { get; } = [];
+
+    /// <summary>What a single fetch finds, by id; falls back to <see cref="Items"/>.</summary>
+    public Dictionary<string, RawRecord> Singles { get; } = [];
+
+    public async IAsyncEnumerable<ChangedRecord> ListChangesAsync(SyncContext context, DateTimeOffset since, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        foreach (var change in ChangeLog.Where(c => c.ModifiedAt is null || c.ModifiedAt >= since))
+        {
+            await Task.Yield();
+            yield return change;
+        }
+    }
+
     public async IAsyncEnumerable<FetchItem> FetchAsync(SyncContext context, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         CursorSeen = context.Cursor;
         ModeSeen = context.Mode;
+        if (context.Mode == SyncMode.Single)
+        {
+            var single = Singles.GetValueOrDefault(context.SingleId!) ?? Items.OfType<RawRecord>().LastOrDefault(r => r.ExternalId == context.SingleId);
+            if (single is null)
+            {
+                throw new HttpRequestException($"{context.SingleId} not found");
+            }
+
+            await Task.Yield();
+            yield return single;
+            yield break;
+        }
+
         var yielded = 0;
         foreach (var item in Items)
         {

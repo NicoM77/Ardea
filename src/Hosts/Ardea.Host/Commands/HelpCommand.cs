@@ -28,6 +28,8 @@ internal static class HelpCommand
                 --dir <path>        Target directory (default: current directory)
               doctor              Check configuration, database, schema and the runtime image
               admin <command>     Maintenance commands, e.g. `admin reset-password <email>`; `admin` lists them
+              intel renormalize --source <key>   Read a source's stored records again with the current parser
+              intel recompute     Merge every entry again with the current rules
               version             Print the installed version
             """);
         return known ? 0 : 64;

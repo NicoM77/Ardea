@@ -47,6 +47,25 @@ public sealed class CveProgramProviderTests : IDisposable
     }
 
     [Fact]
+    public async Task The_change_log_lists_every_new_and_updated_record_since_the_given_time()
+    {
+        var http = new RecordedHttp().On("deltaLog.json", () => Json(TestData.Read("cve-program", "deltaLog-trimmed.json")));
+        var context = Context(http, cursor: null);
+        var since = DateTimeOffset.Parse("2026-11-18T20:00:00Z", System.Globalization.CultureInfo.InvariantCulture);
+
+        var changes = new List<ChangedRecord>();
+        await foreach (var change in new CveProgramProvider().ListChangesAsync(context, since, TestContext.Current.CancellationToken))
+        {
+            changes.Add(change);
+        }
+
+        // The two entries after `since`, two new and two updated records each; the oldest entry is left out.
+        Assert.Equal(8, changes.Count);
+        Assert.All(changes, c => Assert.Matches("^CVE-\\d{4}-\\d+$", c.ExternalId));
+        Assert.All(changes, c => Assert.NotNull(c.ModifiedAt));
+    }
+
+    [Fact]
     public void Cursor_older_than_the_log_is_a_gap_that_only_the_archive_closes()
     {
         var entries = JsonSerializer.Deserialize<List<DeltaEntry>>(TestData.Read("cve-program", "deltaLog-trimmed.json"))!;

@@ -1,0 +1,45 @@
+{
+  "kind": "advisory",
+  "title": "[Advisory] Java4Shell (CVE-2026-114938): Critical Remote Code Execution, Patch Now",
+  "summary": "Security updates and technical details are now available for Java4Shell (CVE-2026-114938). Calif has demonstrated remote code execution in widely deployed Java applications, including attacks without authentication against Keycloak, Jira, Confluence and Jenkins. Organisations should urgently identify affected deployments and apply security updates or the documented temporary mitigation.",
+  "description": "###### Update: 17 November 2026 23:00\n\n**Interim WAF rules available**\n\nIONIX has published Web Application Firewall (WAF) rule examples for Cloudflare, AWS WAF \u2026 (9859 characters)",
+  "language": "en",
+  "publishedAt": "2026-11-17T11:53:10.324688+00:00",
+  "modifiedAt": "2026-11-17T21:57:54.549455+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "CVE",
+          "value": "CVE-2026-114938"
+        }
+      ],
+      "related": [
+        {
+          "scheme": "NCSC-HUB",
+          "value": "13198"
+        }
+      ],
+      "state": "published",
+      "metrics": [],
+      "affected": [],
+      "references": [
+        {
+          "url": "https://security-hub.ncsc.admin.ch/#/posts/13198",
+          "tags": [
+            "advisory"
+          ]
+        }
+      ],
+      "weaknesses": []
+    }
+  ],
+  "references": [
+    {
+      "url": "https://security-hub.ncsc.admin.ch/#/posts/13198",
+      "tags": [
+        "advisory"
+      ]
+    }
+  ]
+}

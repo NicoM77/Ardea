@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "The PHP Group",
+  "products": [
+    {
+      "key": "php",
+      "name": "PHP",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["php:php"],
+      "images": ["php"]
+    }
+  ]
+}

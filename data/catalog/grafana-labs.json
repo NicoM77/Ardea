@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Grafana Labs",
+  "products": [
+    {
+      "key": "grafana",
+      "name": "Grafana",
+      "kind": "other",
+      "versionScheme": "go",
+      "cpe": ["grafana:grafana"],
+      "packages": ["pkg:golang/github.com/grafana/grafana"],
+      "aliases": [{ "vendor": "Grafana", "names": ["Grafana", "Grafana OSS"] }],
+      "images": ["grafana/grafana", "grafana/grafana-oss"]
+    }
+  ]
+}

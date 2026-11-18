@@ -1,0 +1,19 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Newtonsoft",
+  "products": [
+    {
+      "key": "newtonsoft-json",
+      "name": "Json.NET",
+      "kind": "library",
+      "versionScheme": "nuget",
+      "cpe": ["newtonsoft:json.net"],
+      "packages": ["pkg:nuget/Newtonsoft.Json"],
+      "aliases": [
+        { "vendor": "Newtonsoft", "names": ["Newtonsoft.Json"] },
+        { "vendor": "James Newton-King", "names": ["Json.NET", "Newtonsoft.Json"] }
+      ],
+      "related": ["dotnet"]
+    }
+  ]
+}

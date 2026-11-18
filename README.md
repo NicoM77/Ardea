@@ -44,7 +44,7 @@ Consolidated entries from five sources, including OSV for packages, with merging
 
 | No. | Task | Depends on | Status |
 |---|---|---|---|
-| 1.1 | Catalog module: product keys, CPE reader, version schemes (SemVer, NuGet, PEP 440, Maven, RPM, numeric), catalogue format | 0.1 | ⬜ |
+| 1.1 | Catalog module: product keys, CPE reader, version schemes (SemVer, NuGet, PEP 440, Maven, RPM, numeric), catalogue format | 0.1 | ✅ [ADR 030](docs/adr/0030-catalogue-format-and-master-data.md) |
 | 1.2 | Provider SDK with checkpoints and signal interface; sync control: due time, cursor, back-off, health, run log | 0.4 | ⬜ |
 | 1.3 | HTTP foundation for adapters: timeout, retry, rate limiting, conditional requests, size limits | 1.2 | ⬜ |
 | 1.4 | CVE Program adapter: deltas, initial load and long gaps via the full archive, single fetch | 1.3 | ⬜ |

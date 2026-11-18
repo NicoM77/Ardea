@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "F5",
+  "products": [
+    {
+      "key": "nginx",
+      "name": "nginx",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["f5:nginx", "nginx:nginx"],
+      "aliases": [
+        { "vendor": "F5", "names": ["NGINX Open Source"] },
+        { "vendor": "nginx", "names": ["nginx", "NGINX Open Source"] }
+      ],
+      "images": ["nginx", "nginxinc/nginx-unprivileged"]
+    }
+  ]
+}

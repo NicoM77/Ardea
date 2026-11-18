@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Django Software Foundation",
+  "products": [
+    {
+      "key": "django",
+      "name": "Django",
+      "kind": "framework",
+      "versionScheme": "pep440",
+      "cpe": ["djangoproject:django"],
+      "packages": ["pkg:pypi/django"],
+      "aliases": [{ "names": ["Django"] }]
+    }
+  ]
+}

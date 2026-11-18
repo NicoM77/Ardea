@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "OpenSSL",
+  "products": [
+    {
+      "key": "openssl",
+      "name": "OpenSSL",
+      "kind": "library",
+      "versionScheme": "numeric",
+      "cpe": ["openssl:openssl"],
+      "aliases": [{ "names": ["OpenSSL"] }]
+    }
+  ]
+}

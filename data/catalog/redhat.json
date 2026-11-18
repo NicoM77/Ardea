@@ -1,0 +1,28 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Red Hat",
+  "products": [
+    {
+      "key": "rhel",
+      "name": "Red Hat Enterprise Linux",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["redhat:enterprise_linux"],
+      "aliases": [
+        { "vendor": "Red Hat", "names": ["RHEL", "Red Hat Enterprise Linux {line}", "Red Hat Enterprise Linux {line} for {platform}"] }
+      ],
+      "images": ["registry.access.redhat.com/ubi9/ubi", "registry.access.redhat.com/ubi8/ubi"]
+    },
+    {
+      // A distribution package: versions follow the distribution's builds, compared as RPM.
+      "key": "rhel/openssl",
+      "name": "openssl (Red Hat Enterprise Linux package)",
+      "kind": "library",
+      "versionScheme": "rpm",
+      "cpe": ["redhat:openssl"],
+      "packages": ["pkg:rpm/redhat/openssl"],
+      "platform": "rhel",
+      "related": ["openssl"]
+    }
+  ]
+}

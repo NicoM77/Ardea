@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Automattic",
+  "products": [
+    {
+      "key": "woocommerce",
+      "name": "WooCommerce",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "cpe": ["woocommerce:woocommerce"],
+      // Wordfence records name the plugin's author as vendor.
+      "aliases": [{ "vendor": "WooCommerce", "names": ["WooCommerce"] }],
+      "platform": "wordpress"
+    }
+  ]
+}

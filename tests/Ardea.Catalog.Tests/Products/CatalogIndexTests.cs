@@ -1,0 +1,110 @@
+using Ardea.Catalog.Contracts;
+using Ardea.Catalog.Products;
+
+namespace Ardea.Catalog.Tests.Products;
+
+/// <summary>Finding products by spelling, CPE pair, package and image (master plan 6.5, 16.3) in the curated catalogue.</summary>
+public sealed class CatalogIndexTests
+{
+    private static readonly CatalogIndex Index = new(CatalogFiles.Load(CatalogFilesTests.RepositoryCatalog).Products);
+
+    [Theory]
+    [InlineData("Microsoft Corporation", "ASP.NET Core", "aspnetcore")]
+    [InlineData("microsoft", "asp.net_core", "aspnetcore")]
+    [InlineData("n/a", "PostgreSQL", "postgresql")]
+    [InlineData(null, "postgres", "postgresql")]
+    [InlineData("PostgreSQL Global Development Group", "PostgreSQL", "postgresql")]
+    [InlineData("EnterpriseDB", "PostgreSQL", "postgresql")]
+    [InlineData("nginx, Inc.", "NGINX", "nginx")]
+    [InlineData("F5 Networks", "NGINX Open Source", "nginx")]
+    [InlineData("The Apache Software Foundation", "Apache Log4j2", "log4j-core")]
+    [InlineData("Red Hat", "openssl", "rhel/openssl")]
+    [InlineData("n/a", "OpenSSL", "openssl")]
+    [InlineData("OpenSSL Project", "OpenSSL", "openssl")]
+    [InlineData("VMware", "RabbitMQ Server", "rabbitmq")]
+    [InlineData("WooCommerce", "WooCommerce", "woocommerce")]
+    public void Spellings_of_vendor_and_product_find_the_product(string? vendor, string product, string key) =>
+        Assert.Equal(key, Index.FindByName(vendor, product)?.Product.Key);
+
+    [Theory]
+    [InlineData("Microsoft", ".NET 10.0 installed on Linux", "dotnet", "10.0", "linux")]
+    [InlineData("Microsoft", ".NET 8.0", "dotnet", "8.0", null)]
+    [InlineData("Microsoft Corporation", "ASP.NET Core 9.0", "aspnetcore", "9.0", null)]
+    [InlineData("Red Hat", "Red Hat Enterprise Linux 9", "rhel", "9", null)]
+    public void Name_patterns_give_version_line_and_platform(string vendor, string product, string key, string line, string? platform)
+    {
+        var match = Index.FindByName(vendor, product);
+
+        Assert.Equal((key, line, platform), (match?.Product.Key, match?.VersionLine, match?.Platform));
+    }
+
+    [Theory]
+    [InlineData("Acme", "Express")]
+    [InlineData("Acme", "ESXi")]
+    [InlineData(null, "login.php")]
+    [InlineData("Microsoft", "Windows 11")]
+    public void Unknown_or_foreign_spellings_find_nothing(string? vendor, string product) => Assert.Null(Index.FindByName(vendor, product));
+
+    [Fact]
+    public void Cpe_pair_finds_the_product()
+    {
+        Assert.Equal("aspnetcore", Index.FindByCpe(Cpe.Parse("cpe:2.3:a:microsoft:asp.net_core:8.0.0:*:*:*:*:*:*:*").Pair)?.Key);
+        Assert.Equal("nodejs", Index.FindByCpe(Cpe.Parse("cpe:/a:nodejs:node.js:20.0.0").Pair)?.Key);
+    }
+
+    [Theory]
+    [InlineData("npm", "@angular/core", "angular")]
+    [InlineData("NuGet", "newtonsoft.json", "newtonsoft-json")]
+    [InlineData("Maven", "org.apache.logging.log4j:log4j-core", "log4j-core")]
+    [InlineData("PyPI", "Django", "django")]
+    [InlineData("Packagist", "laravel/framework", "laravel")]
+    [InlineData("Go", "github.com/grafana/grafana", "grafana")]
+    public void Package_finds_the_product_in_osv_and_purl_spelling(string type, string name, string key) =>
+        Assert.Equal(key, Index.FindByPackage(type, name)?.Key);
+
+    [Fact]
+    public void Purl_is_read_into_type_name_and_version()
+    {
+        Assert.True(PackageCoordinate.TryParsePurl("pkg:npm/%40angular/core@18.2.1?foo=bar#src", out var package, out var version));
+
+        Assert.Equal((new PackageCoordinate("npm", "@angular/core"), "18.2.1"), (package, version));
+        Assert.Equal("angular", Index.FindByPackage(package.Type, package.Name)?.Key);
+    }
+
+    [Theory]
+    [InlineData("postgres:18", "postgresql")]
+    [InlineData("docker.io/library/postgres:16-alpine", "postgresql")]
+    [InlineData("mcr.microsoft.com/dotnet/aspnet:10.0", "aspnetcore")]
+    [InlineData("php@sha256:0123456789abcdef", "php")]
+    [InlineData("grafana/grafana-oss:11.0.0", "grafana")]
+    public void Container_image_finds_the_product(string image, string key) => Assert.Equal(key, Index.FindByImage(image)?.Key);
+
+    [Fact]
+    public void Search_finds_by_name_alias_and_key_best_first()
+    {
+        Assert.Equal("postgresql", Index.Search("postgres", 5)[0].Key);
+        Assert.Equal("entra-id", Index.Search("azure active", 5).Single().Key);
+        Assert.Equal(["aspnetcore", "dotnet"], Index.Search(".net", 2).Select(p => p.Key).Order());
+        Assert.Empty(Index.Search("   ", 5));
+    }
+
+    [Fact]
+    public void Learned_entry_adds_spellings_but_never_overrides_a_curated_one()
+    {
+        CatalogProduct[] products =
+        [
+            new() { Key = "tool", Name = "Tool", Vendor = "Acme", Kind = ProductKind.Library, VersionScheme = "semver", CpePairs = [new("acme", "tool")] },
+            new() { Key = "tool-learned", Name = "Tool", Vendor = "Acme", Kind = ProductKind.Library, VersionScheme = "numeric", Origin = ProductOrigin.Learned, CpePairs = [new("acme", "tool"), new("acme", "tool_pro")] },
+            new() { Key = "gadget", Name = "Gadget", Vendor = "Acme", Kind = ProductKind.Other, VersionScheme = "numeric", Origin = ProductOrigin.Learned },
+        ];
+
+        var index = new CatalogIndex(products, new Dictionary<string, string> { ["acme/toolkit"] = "tool" });
+
+        Assert.Empty(index.Conflicts);
+        Assert.Equal("tool", index.FindByName("Acme", "Tool")?.Product.Key);
+        Assert.Equal("tool", index.FindByCpe(new("acme", "tool"))?.Key);
+        Assert.Equal("tool-learned", index.FindByCpe(new("acme", "tool_pro"))?.Key);
+        Assert.Equal("gadget", index.FindByName("Acme Inc.", "Gadget")?.Product.Key);
+        Assert.Equal("tool", index.FindByName("Acme", "Toolkit")?.Product.Key);
+    }
+}

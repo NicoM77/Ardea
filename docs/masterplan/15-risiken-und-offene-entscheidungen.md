@@ -44,7 +44,7 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | E12 | Registrierung | nur auf Einladung nach dem ersten Benutzer | Kapitel 9.1 |
 | E13 | Fristen je Stufe | 48 Stunden, 7, 30 und 90 Tage; je Organisation änderbar | Kapitel 7.6 |
 | E14 | Rückblick beim Erststart | 180 Tage; Gesamtbestand als Befehl | Kapitel 4.10 |
-| E15 | Weitere Mockups | Ruhige Übersicht, Massnahme mit mehreren Befunden und Fassung mit KI-Einschätzung vor Phase 3; Wizard und Projektprofil vor Phase 2; Regeln vor Phase 5 | Phasen 1, 2, 3, 5 |
+| E15 | Weitere Mockups | **entschieden am 18.11.2026:** Die bisher gezeigten Mockups sind freigegeben. Die weiteren (Wizard und Projektprofil vor Phase 2, ruhige Übersicht, Massnahme mit mehreren Befunden und Fassung mit KI-Einschätzung vor Phase 3, Regeln vor Phase 5) entwirft die Umsetzung selbst nach `DESIGN.md`, ohne auf eine Freigabe zu warten; der Eigentümer korrigiert im Nachhinein | Phasen 1, 2, 3, 5 |
 | E16 | Arbeitseinheit | die Massnahme (Komponente in einem Projekt) statt der einzelnen CVE | Kapitel 7.4, 8 |
 | E17 | Umfang und Dauer | MVP wie in Kapitel 1.5 gekürzt und um das Profil aus Repositories erweitert; 33 bis 44 Wochen für eine Person; nach Phase 3 neu beurteilen | Kapitel 14 |
 | E18 | Zugang zu privaten Repositories im MVP | feingranulares Token je Organisation, nur lesend; GitHub App mit Webhooks als Ausbaustufe | Kapitel 16.4 |
@@ -61,6 +61,7 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | Name Ardea; Logo: Reiher als Outline (Kopf und Hals), Wortmarke in Inter Tight SemiBold; Dateien und Regeln in `docs/design/brand/` | Rückfrage und Wahl des Eigentümers vom 18.11.2026 |
 | Visuelle Richtung: schlichte Arbeitsanwendung nach den Gestaltungsrichtlinien von Apple; Priorität als Wort mit Symbol; «Gefahrenbulletin» verworfen | Vorgabe des Eigentümers vom 18.11.2026 |
 | Helles Design als einziges | Vorgabe des Eigentümers |
+| Bisher gezeigte Mockups freigegeben; weitere Mockups ohne Freigabe vorab, Korrektur im Nachhinein (E15) | Vorgabe des Eigentümers vom 18.11.2026 |
 | Abfrage der öffentlichen Schnittstelle des Cyber Security Hub und Speichern der Texte sind erlaubt; keine Anfrage beim BACS (E10) | Bestätigung des Eigentümers vom 18.11.2026 |
 | Ladeanzeige: Variante «Draw», der Reiher zeichnet sich vom Schnabel her; Prototyp in `docs/design/loader/` | Wahl des Eigentümers vom 18.11.2026 |
 | Profil aus GitHub-Repositories im MVP, mit OSV als Paketquelle für npm, NuGet, Packagist, PyPI, Maven und Go und dem Verschmelzen von Einträgen | Vorgabe und Rückfrage vom 18.11.2026 |

@@ -15,7 +15,7 @@ Sieben Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen
 | 6 | Geprüftes, dokumentiertes Release 1.0 | 3–4 Wochen |
 | | **Summe** | **33–44 Wochen** |
 
-Die Zahlen gelten für eine erfahrene Person mit KI-Unterstützung und sind Schätzungen, keine Zusage. Drei Posten treiben sie und sind schwer zu verkürzen, weil sie Handarbeit an Daten sind: der Katalog mit rund 300 Produkten samt Aliassen, der Referenzsatz mit 200 von Hand beschrifteten Paaren und die 15 bis 20 Oberflächenkomponenten mit allen Zuständen. Nicht enthalten sind Wartezeiten auf Dritte (Antwort des BACS, eine externe Sicherheitsprüfung) und die Mockups, die vor einzelnen Phasen freizugeben sind.
+Die Zahlen gelten für eine erfahrene Person mit KI-Unterstützung und sind Schätzungen, keine Zusage. Drei Posten treiben sie und sind schwer zu verkürzen, weil sie Handarbeit an Daten sind: der Katalog mit rund 300 Produkten samt Aliassen, der Referenzsatz mit 200 von Hand beschrifteten Paaren und die 15 bis 20 Oberflächenkomponenten mit allen Zuständen. Nicht enthalten sind Wartezeiten auf Dritte (eine externe Sicherheitsprüfung). Die Mockups halten nichts auf: Die Umsetzung entwirft sie selbst, der Eigentümer prüft sie im Nachhinein (Kapitel 15, E15).
 
 Eine erste Fassung dieses Plans nannte 16 bis 23 Wochen. Die unabhängige Durchsicht hat das als unrealistisch beanstandet; der Umfang wurde daraufhin gekürzt und der Rest neu geschätzt. Die zweite Durchsicht fand die Oberfläche für den Instanz-Administrator in keiner Aufgabe; sie ist jetzt Aufgabe 0.13 und mit einer Woche in Phase 0 eingerechnet. Am 18.11.2026 kamen das Profil aus GitHub-Repositories und mit ihm OSV, zwei weitere Versionsschemata und das Verschmelzen von Einträgen ins MVP (Kapitel 16); das sind 5 bis 7 Wochen mehr, 2 bis 3 in Phase 1 und 3 bis 4 in Phase 2.
 
@@ -101,7 +101,7 @@ Abnahme:
 | 2.3 | Projekte und Komponenten mit Version, Herkunft, Erreichbarkeit, Kritikalität, Schutzmassnahme; Ersetzen eines Profils als Abgleich, der Kennungen erhält | 2.1 |
 | 2.4 | Katalog füllen: rund 300 Produkte mit Aliassen, CPE-Zuordnung, verwandten Produkten; Suche | 1.1 |
 | 2.5 | Suchindex `component_key` mit Trefferstärke | 2.3, 2.4 |
-| 2.6 | Mockups für Setup-Wizard mit Repository und Vorschlägen und für das Projektprofil mit Paketen; Freigabe durch den Eigentümer | |
+| 2.6 | Mockups für Setup-Wizard mit Repository und Vorschlägen und für das Projektprofil mit Paketen; Durchsicht durch den Eigentümer im Nachhinein | |
 | 2.7 | Setup-Wizard mit den Schritten Repository, Betrieb und Technologien in drei Gruppen (Kapitel 11.6); Projektseiten mit Verknüpfungen, Paketen je Ökosystem und Vorschlägen; Einstellungen der Organisation mit Zugängen und Ansicht des Audit-Protokolls | 2.3, 2.4, 2.6, 2.13 |
 | 2.8 | Hinweise zur Abdeckung: fehlende Versionen, Plattformen ohne Komponenten, Pakete aus Distributionen, Pakete ohne Lockdatei, noch nicht prüfbare Ökosysteme | 2.5 |
 | 2.9 | **Versuch:** asynchroner SBOM-Export mit einem öffentlichen und einem privaten Repository und einem feingranularen Token; offene Punkte aus Kapitel 16.10; Ergebnis als ADR | |
@@ -127,7 +127,7 @@ Abnahme:
 
 | Nr. | Aufgabe | Abhängig von |
 |---|---|---|
-| 3.1 | Mockups: ruhige Übersicht, Massnahme mit mehreren Befunden, Fassung mit KI-Einschätzung; Freigabe durch den Eigentümer | |
+| 3.1 | Mockups: ruhige Übersicht, Massnahme mit mehreren Befunden, Fassung mit KI-Einschätzung; Durchsicht durch den Eigentümer im Nachhinein | |
 | 3.2 | Kandidatensuche vorwärts und rückwärts, auch über Paketkoordinaten aus OSV; Trefferstärke; schwache Treffer als Stufe 1 | 1.7, 1.12, 2.5 |
 | 3.3 | Versionsprüfung mit den drei Ergebnissen einschliesslich Vorgabezustand der Records (Kapitel 6.6); Pakete aus Distributionen als unbekannt | 3.2, 1.1 |
 | 3.4 | Regelwerk Version 1 als Datei; Faktoren, Ober- und Untergrenzen, Fristen | 3.3 |
@@ -185,7 +185,7 @@ Abnahme:
 | 5.5 | Kanal Web Push: Schlüsselpaar, Abos, Service Worker, Manifest, Installationsführung für iOS | 5.2 |
 | 5.6 | Kanal Webhook mit Signatur und Schutz vor internen Zielen | 5.2 |
 | 5.7 | Vorgaberegeln; Sammelnachrichten nach Zeitplan; persönliche Stummschaltung | 5.2, 5.4 |
-| 5.8 | Mockup und Seiten für Regeln, Ziele, Zustellprotokoll, persönliche Einstellungen; Freigabe des Mockups | 5.1 |
+| 5.8 | Mockup und Seiten für Regeln, Ziele, Zustellprotokoll, persönliche Einstellungen; Durchsicht des Mockups im Nachhinein | 5.1 |
 
 Abnahme: die Kriterien aus Kapitel 8.8.
 

@@ -111,7 +111,7 @@ internal static class AuthEndpoints
 
     /// <summary>The signed-in user and the readable CSRF token; 401 when signed out, still with a token for the sign-in form.</summary>
     private static async Task<IResult> SessionAsync(
-        HttpContext http, IAntiforgery antiforgery, UserManager<ArdeaUser> users, CancellationToken cancellationToken)
+        HttpContext http, IAntiforgery antiforgery, UserManager<ArdeaUser> users, IamDbContext db, CancellationToken cancellationToken)
     {
         IssueCsrfToken(http, antiforgery);
         if (http.User.Identity?.IsAuthenticated != true || await users.GetUserAsync(http.User) is not { } user)
@@ -119,10 +119,10 @@ internal static class AuthEndpoints
             return Results.Unauthorized();
         }
 
-        _ = cancellationToken;
+        var organizations = await OrganizationDirectory.ForUserAsync(db, user.Id, cancellationToken);
         return Results.Ok(new SessionResponse(
             new SessionUser(user.Id, user.Email!, user.DisplayName, user.IsInstanceAdmin, user.TwoFactorEnabled),
-            []));
+            [.. organizations.Select(o => new SessionOrganization(o.Id, o.Slug, o.Name, o.Role, o.MfaRequired))]));
     }
 
     private static async Task<IResult> LoginAsync(
@@ -215,7 +215,8 @@ internal static class AuthEndpoints
 
     private static async Task<IResult> RegisterAsync(
         RegisterRequest request, IUnitOfWork unitOfWork, IInstanceSettings settings, UserManager<ArdeaUser> users,
-        ArdeaSignInManager signIn, IEmailSender email, IJobQueue jobs, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
+        ArdeaSignInManager signIn, IEmailSender email, IJobQueue jobs, IAuditLog audit, TimeProvider time, NpgsqlDataSource dataSource,
+        CancellationToken cancellationToken)
     {
         var mode = ((await settings.GetAsync(InstanceSettingDefinitions.Registration, cancellationToken)).Value ?? "invite").ToLowerInvariant();
         if (mode == "closed")
@@ -233,9 +234,12 @@ internal static class AuthEndpoints
             return IamErrors.Validation(errors.Errors);
         }
 
-        if (mode == "invite")
+        // An invitation for this very address opens registration in the mode "invite" and confirms
+        // the address; the web app accepts the invitation right after (POST /invitations/{token}/accept).
+        var invited = !string.IsNullOrWhiteSpace(request.InvitationToken)
+            && await OrganizationDirectory.OrganizationOfTokenAsync(dataSource, request.InvitationToken, users.NormalizeEmail(request.Email!.Trim()), cancellationToken) is not null;
+        if (mode == "invite" && !invited)
         {
-            // Invitations arrive with organisations (task 2.1); until then no token is valid.
             return IamErrors.InvalidInvitation();
         }
 
@@ -256,7 +260,7 @@ internal static class AuthEndpoints
 
         var user = NewUser(request.Email!, request.DisplayName!, time);
         // Without SMTP addresses count as confirmed (master plan 12.4); with it, a mail confirms them.
-        var withMail = await email.IsConfiguredAsync(cancellationToken);
+        var withMail = await email.IsConfiguredAsync(cancellationToken) && !invited;
         user.EmailConfirmed = !withMail;
         var created = await users.CreateAsync(user, request.Password!);
         if (!created.Succeeded)

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../BuildingBlocks/Ardea.Platform/Ardea.Platform.csproj" />
+    <ProjectReference Include="../Ardea.Notifications.Contracts/Ardea.Notifications.Contracts.csproj" />
+    <ProjectReference Include="../../Assessment/Ardea.Assessment.Contracts/Ardea.Assessment.Contracts.csproj" />
+    <ProjectReference Include="../../Iam/Ardea.Iam.Contracts/Ardea.Iam.Contracts.csproj" />
+    <ProjectReference Include="../../Intel/Ardea.Intel.Contracts/Ardea.Intel.Contracts.csproj" />
+  </ItemGroup>
+</Project>

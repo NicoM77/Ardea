@@ -1,1 +1,15 @@
 .taste-skill/
+bin/
+obj/
+*.user
+.vs/
+.idea/
+TestResults/
+artifacts/
+node_modules/
+.angular/
+dist/
+coverage/
+*.received.*
+.env
+.env.app

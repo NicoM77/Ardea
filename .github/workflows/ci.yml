@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  CI: "true"
+
+# Time budget (master plan 13.7): pull request 15 minutes target, 25 minutes hard limit.
+# Jobs run side by side; a job over its timeout is a defect to fix, not a limit to raise.
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - name: Restore
+        run: dotnet restore Ardea.slnx --locked-mode
+      - name: Format
+        run: dotnet format Ardea.slnx --verify-no-changes --no-restore
+      - name: Build
+        run: dotnet build Ardea.slnx --no-restore -c Release
+      - name: Test
+        run: dotnet test --solution Ardea.slnx --no-build -c Release
+
+  dependencies:
+    name: Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - name: Excluded libraries
+        run: python3 build/check-banned-packages.py
+      - name: Restore
+        run: dotnet restore Ardea.slnx --locked-mode
+      - name: Licences
+        run: mkdir -p artifacts && build/check-licenses.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: licences
+          path: artifacts/nuget-licenses.md
+          if-no-files-found: ignore

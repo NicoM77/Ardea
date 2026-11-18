@@ -635,6 +635,7 @@
           "Ardea.Catalog": "[0.0.0, )",
           "Ardea.Iam": "[0.0.0, )",
           "Ardea.Intel": "[0.0.0, )",
+          "Ardea.Intel.Sources.CveProgram": "[0.0.0, )",
           "Ardea.Intel.Sources.Formats": "[0.0.0, )",
           "Ardea.Notifications": "[0.0.0, )",
           "Ardea.Platform": "[0.0.0, )",
@@ -721,6 +722,13 @@
         "type": "Project",
         "dependencies": {
           "Ardea.SharedKernel": "[0.0.0, )"
+        }
+      },
+      "ardea.intel.sources.cveprogram": {
+        "type": "Project",
+        "dependencies": {
+          "Ardea.Intel.Sources.Abstractions": "[0.0.0, )",
+          "Ardea.Intel.Sources.Formats": "[0.0.0, )"
         }
       },
       "ardea.intel.sources.formats": {

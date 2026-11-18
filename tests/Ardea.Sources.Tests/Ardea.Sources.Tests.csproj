@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Sources/Ardea.Intel.Sources.CveProgram/Ardea.Intel.Sources.CveProgram.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Data/**/*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

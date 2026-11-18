@@ -1,9 +1,16 @@
-import { httpResource } from '@angular/common/http';
 import { computed, inject, Injectable, Injector, Resource } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { filter, firstValueFrom } from 'rxjs';
-import { Me, SessionResponse, SetupStatus } from '../api/models';
+import {
+  getSessionResource,
+  getSetupStatusResource,
+  type SessionOrganization,
+  type SessionUser,
+} from '../api/client';
 import { signInStateOf, SignInState } from './access';
+
+/** The signed-in person as the pages use it: the user with their memberships. */
+export type Me = SessionUser & { organizations: SessionOrganization[] };
 
 /**
  * Who is signed in and whether the instance still needs its first user. Both are reads
@@ -16,19 +23,16 @@ import { signInStateOf, SignInState } from './access';
 export class Session {
   private readonly injector = inject(Injector);
 
-  readonly setupStatus = httpResource<SetupStatus>(() => '/api/v1/setup/status');
-  readonly session = httpResource<SessionResponse>(() => '/api/v1/auth/session');
+  readonly setupStatus = getSetupStatusResource();
+  readonly session = getSessionResource();
 
   readonly user = computed<Me | null>(() => {
-    if (!this.session.hasValue()) return null;
-    const { user, organizations } = this.session.value();
-    return { ...user, organizations };
+    const value = this.session.hasValue() ? this.session.value() : undefined;
+    return value ? { ...value.user, organizations: value.organizations } : null;
   });
-  readonly state = computed<SignInState>(() =>
-    signInStateOf(this.session.hasValue(), this.session.error()),
-  );
+  readonly state = computed<SignInState>(() => signInStateOf(!!this.user(), this.session.error()));
   readonly setupRequired = computed<boolean | null>(() =>
-    this.setupStatus.hasValue() ? this.setupStatus.value().setupRequired : null,
+    this.setupStatus.hasValue() ? (this.setupStatus.value()?.setupRequired ?? null) : null,
   );
 
   /** Resolves once both reads have an answer, so a guard never decides on a loading state. */

@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideKeyRound, LucideLogOut, LucideMenu, LucideSearch } from '@lucide/angular';
 import { UiAvatar, UiButton, UiKbd } from 'ui';
-import { Me } from '../../core/api/models';
+import type { Me } from '../../core/session/session';
 
 /**
  * The top bar on the ground (48px): the search, which opens with `/` or Ctrl K, and the account

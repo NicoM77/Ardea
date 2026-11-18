@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const enPath = join(root, 'projects/ardea/src/i18n/en.json');
 const sourceRoots = ['projects/ardea/src', 'projects/ui/src'].map((p) => join(root, p));
-const skip = [/\.spec\.ts$/, /[\\/]showcase[\\/]/];
+const skip = [/\.spec\.ts$/, /[\\/]showcase[\\/]/, /[\\/]api[\\/]generated[\\/]/];
 
 function flatten(node, prefix = '', out = new Map()) {
   for (const [key, value] of Object.entries(node)) {

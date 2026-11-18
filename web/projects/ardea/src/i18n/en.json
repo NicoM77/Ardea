@@ -136,7 +136,7 @@
       "forgot": "Forgot your password?",
       "notices": {
         "passwordChanged": "Your password is changed. Sign in with the new one.",
-        "registered": "Your account is ready. Sign in to continue.",
+        "registered": "Sign in to continue. If this address already had an account, an e-mail on its way explains what to do.",
         "signedOut": "You are signed out.",
         "twoFactorExpired": "The sign-in took too long. Enter your email and password again."
       },
@@ -179,16 +179,14 @@
     "register": {
       "title": "Create your account",
       "lead": "You were invited to Ardea. Choose how you will sign in.",
+      "leadOpen": "Create an account on this Ardea instance.",
       "emailHint": "Use the address the invitation was sent to.",
       "submit": "Create account",
       "haveAccount": "Already have an account?",
-      "missing": {
-        "heading": "This invitation link is incomplete",
-        "text": "Open the link from the invitation email again, or ask the person who invited you to send a new one."
-      },
       "errors": {
         "invitation": "This invitation is no longer valid. Ask the person who invited you to send a new one.",
-        "emailTaken": "An account with this email address exists already. Sign in instead.",
+        "invitationRequired": "This instance takes new accounts by invitation only. Open the link from your invitation e-mail.",
+        "closed": "This instance does not take new accounts. Ask its administrator.",
         "rejected": "The account could not be created. Check the entries and try again."
       }
     },

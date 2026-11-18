@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideLayoutGrid } from '@lucide/angular';
 import { UiCard, UiEmptyState, UiPageHeader } from 'ui';
-import { Me } from '../../core/api/models';
+import type { Me } from '../../core/session/session';
 import { Sidebar } from '../../layout/shell/sidebar';
 import { Topbar } from '../../layout/shell/topbar';
 

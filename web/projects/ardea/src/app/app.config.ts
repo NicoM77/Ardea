@@ -21,6 +21,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import { provideLucideConfig } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
 import { routes } from './app.routes';
+import { apiBaseUrlInterceptor } from './core/http/api-base-url.interceptor';
 import { sessionExpiredInterceptor } from './core/http/session-expired.interceptor';
 import { Session } from './core/session/session';
 import { provideTranslations } from './core/i18n/translations';
@@ -40,7 +41,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withFetch(),
       withXsrfConfiguration({ cookieName: 'XSRF-TOKEN', headerName: 'X-XSRF-TOKEN' }),
-      withInterceptors([sessionExpiredInterceptor]),
+      withInterceptors([apiBaseUrlInterceptor, sessionExpiredInterceptor]),
     ),
     provideTranslations(),
     // Icons: 1.6px line drawings on a 24px grid, shown at 16px (DESIGN.md, Shapes)

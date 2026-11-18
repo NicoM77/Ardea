@@ -124,15 +124,51 @@ jobs:
         run: npm ci
       # The /ui pages exist in development builds only.
       - name: Build
-        run: npx ng build ardea --configuration development
+        run: npx ng build ardea --configuration development --output-path dist/showcase
       - name: Compare
-        run: npx playwright test
+        run: npx playwright test --project visual
         env:
           HOME: /root
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: visual-diff
+          path: |
+            web/playwright-report
+            web/test-results
+          if-no-files-found: ignore
+
+  # The production build under the production Content Security Policy, on every pull request:
+  # pages must load without a console error, so nothing that needs eval or inline script ships.
+  web-csp:
+    name: Web under CSP
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Load pages under the policy
+        run: npx playwright test --project csp
+        env:
+          HOME: /root
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: csp-report
           path: |
             web/playwright-report
             web/test-results

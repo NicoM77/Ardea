@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Kubernetes",
+  "products": [
+    {
+      "key": "kubernetes",
+      "name": "Kubernetes",
+      "kind": "container",
+      "versionScheme": "semver",
+      "cpe": ["kubernetes:kubernetes"],
+      "packages": ["pkg:golang/k8s.io/kubernetes"],
+      "aliases": [{ "names": ["Kubernetes"] }]
+    }
+  ]
+}

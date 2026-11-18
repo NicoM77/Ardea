@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Google",
+  "products": [
+    {
+      "key": "angular",
+      "name": "Angular",
+      "kind": "framework",
+      "versionScheme": "semver",
+      "cpe": ["angular:angular"],
+      "packages": ["pkg:npm/@angular/core"],
+      "aliases": [{ "vendor": "angular", "names": ["Angular", "@angular/core"] }],
+      "related": ["nodejs"]
+    }
+  ]
+}

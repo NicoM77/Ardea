@@ -6,6 +6,7 @@ Der Masterplan ist seit dem 18.11.2026 freigegeben; damit sind alle Einträge **
 |---|---|
 | [0028](0028-runtime-image-and-pre-migration-dump.md) | Runtime image and dump before migration (experiment 0.7); confirms 002 and 024 |
 | [0029](0029-row-level-security-as-hardening.md) | Row-level security as hardening (experiment 0.6); refines 012 and 023 |
+| [0030](0030-catalogue-format-and-master-data.md) | Catalogue format (JSON per vendor) and master data loaded by `migrate`; refines 022 |
 
 | Nr. | Entscheidung | Wichtigste verworfene Alternative | Kapitel | Status |
 |---|---|---|---|---|

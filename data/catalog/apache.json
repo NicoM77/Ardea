@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Apache Software Foundation",
+  "products": [
+    {
+      "key": "log4j-core",
+      "name": "Apache Log4j Core",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:log4j"],
+      "packages": ["pkg:maven/org.apache.logging.log4j/log4j-core"],
+      "aliases": [{ "vendor": "Apache", "names": ["Apache Log4j", "Apache Log4j2", "Log4j2", "Apache Log4j Core"] }]
+    }
+  ]
+}

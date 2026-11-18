@@ -1,6 +1,6 @@
 # 14 · Umsetzungsphasen
 
-Sieben Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen lässt. Enthalten ist nur, was in Kapitel 1.5 in der Spalte MVP steht.
+Sieben Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen lässt. Enthalten ist nur, was in Kapitel 1.5 in der Spalte MVP steht. Abnahmekriterien werden einmal je Phase nachgewiesen; dauerhaft in die Pipeline kommt nur, was als schneller Test läuft, denn jede Pipeline bleibt unter 25 Minuten (Kapitel 13.6 und 13.7).
 
 ## 14.1 Aufwand
 
@@ -39,7 +39,7 @@ Phase 2 braucht aus Phase 1 nur die Aufgabe 1.1; danach laufen beide unabhängig
 | Nr. | Aufgabe | Abhängig von |
 |---|---|---|
 | 0.1 | Repository nach Kapitel 13: Solution, Modul-Gerüste, zentrale Paketverwaltung, Analyzer | |
-| 0.2 | Build-Kette: Bauen, Tests, Lint, Lizenzabgleich, Image für zwei Architekturen | 0.1 |
+| 0.2 | Build-Kette nach Kapitel 13.7: Bauen, Tests, Lint, Lizenzabgleich, Image für zwei Architekturen durch Cross-Kompilieren; Messung der Dauer | 0.1 |
 | 0.3 | Host-Programm mit `api`, `worker`, `migrate` (mit Sicherung vor einer Migration, nach dem Ergebnis von 0.7), `healthcheck`, `init-env`, `doctor`; Dockerfile; Compose mit TLS-Proxy | 0.1 |
 | 0.4 | Job-System im Umfang von Kapitel 3.4; Tests mit erzwungenen Abbrüchen | 0.3 |
 | 0.5 | Mandantenkontext und Arbeitseinheit über mehrere Module; Audit; Einstellungen; Verschlüsselung der Geheimnisse; Telemetrie | 0.3 |
@@ -59,6 +59,7 @@ Abnahme:
 - Ein Job und seine Fachänderung entstehen gemeinsam oder gar nicht (Test mit erzwungenem Abbruch).
 - Für die Versuche 0.6 und 0.7 liegt je ein ADR vor.
 - Ein Pull Request mit einer ausgeschlossenen Bibliothek oder einem Verstoss gegen die Modulgrenzen scheitert im Build.
+- Die Pipeline eines Pull Requests läuft in unter 15 Minuten.
 
 ## Phase 1 · Von der Quelle zum konsolidierten Eintrag
 
@@ -188,7 +189,7 @@ Keine neuen Funktionen für Benutzer. Hinzu kommen nur Werkzeuge für den Betrie
 | 6.7 | Dokumentation: Installation, Konfiguration, Betrieb, Update, «Eine Quelle hinzufügen»; `SECURITY.md` mit Meldeweg und Hinweis, wie Betreiber von Sicherheitsupdates des Projekts erfahren |
 | 6.8 | SBOM, Lizenzdatei, Images für beide Architekturen; eigene Instanz des Projekts mit dem eigenen Technologieprofil |
 
-Abnahme: alle Kriterien aus Kapitel 1.6, nachgewiesen auf einer frischen Installation für `amd64` und `arm64`; keine offenen Feststellungen mit hohem Schweregrad aus 6.1 und 6.2.
+Abnahme: alle Kriterien aus Kapitel 1.6, nachgewiesen auf einer frischen Installation für `amd64` und `arm64`; jede Pipeline läuft mit dem vollen Umfang in höchstens 25 Minuten; keine offenen Feststellungen mit hohem Schweregrad aus 6.1 und 6.2.
 
 ## Nach 1.0
 

@@ -93,26 +93,61 @@ Ausgeschlossen, weil kommerziell oder mit Auflagen für Betreiber (Stand 18.11.2
 
 ## 13.6 Tests
 
-| Ebene | Gegenstand | Werkzeug |
-|---|---|---|
-| Unit | Versionsvergleich, Produktschlüssel, Vorrangregeln, Regelwerk mit Ober- und Untergrenzen, Fingerabdrücke, Bildung der Massnahmen, Benachrichtigungsstand | xUnit v3 |
-| Adapter | Jeder Quellenadapter gegen aufgezeichnete echte Antworten; Ausgabe als Snapshot | xUnit v3, Verify |
-| Integration | Verarbeitungskette gegen echtes PostgreSQL: Idempotenz, Wiederholung, Leases, gemeinsame Transaktion, Mandantentrennung | Testcontainers, Respawn |
-| Architektur | Modulgrenzen und Abhängigkeitsrichtung | ArchUnitNET |
-| Vertrag | OpenAPI-Dokument stimmt mit dem Code überein; Fremdzugriffstest für jeden Mandanten-Endpunkt | eigener Test im Build |
-| Ende zu Ende | Kernabläufe im Browser, Desktop und Telefonbreite, mit automatischer Zugänglichkeitsprüfung | Playwright, axe |
-| Visuell | Seiten der Komponentenbibliothek mit allen Zuständen im Bildvergleich | Playwright |
-| Bewertung | Referenzsatz für Treffer und Stufe; Schwellen als Abnahmekriterium | eigener Lauf, bei Änderungen an Katalog, Regeln, Prompt |
+**Vorgabe des Eigentümers (18.11.2026): Jede Pipeline läuft in etwa 15 bis höchstens 25 Minuten.** Stundenlange Testläufe gibt es nicht. Daraus folgt die Form der Tests: viele schnelle Unit-Tests, wenige Tests gegen die echte Datenbank, eine Handvoll Ende-zu-Ende-Tests für die wichtigsten Abläufe. Lieber wenige Tests mit klarer Aussage als viele ohne.
 
-Fehler in der Verarbeitung werden mit dem auslösenden Rohdatensatz als Testfall festgehalten, bevor sie behoben werden.
+Was ein Test leisten muss:
+
+- Er prüft eine Regel oder einen Fehler, den man benennen kann. Sein Name sagt, welche.
+- Er steht auf der tiefsten Ebene, auf der die Aussage möglich ist. Was ein Unit-Test zeigen kann, wird nicht zusätzlich durch die Oberfläche geprüft.
+- Nicht geschrieben werden Tests für Abbildungen ohne Logik, für das Verhalten von Framework und Bibliotheken und für Abdeckungszahlen. Eine Mindestabdeckung in Prozent gibt es nicht.
+- Ein Fehler aus dem Betrieb wird mit dem auslösenden Rohdatensatz als Testfall festgehalten, bevor er behoben wird. Ein Test, der länger als ein Jahr nichts gefunden hat und dasselbe prüft wie ein anderer, wird gestrichen.
+
+| Ebene | Gegenstand | Werkzeug | Umfang und Zeit |
+|---|---|---|---|
+| Unit | Versionsvergleich, Produktschlüssel, Vorrangregeln, Regelwerk mit Ober- und Untergrenzen, Fingerabdrücke, Bildung der Massnahmen, Benachrichtigungsstand; in der Web-App Logik und Zustände der Komponenten | xUnit v3, Vitest | der grösste Teil aller Tests; zusammen unter 3 Minuten |
+| Adapter | Jeder Quellenadapter gegen aufgezeichnete echte Antworten; Ausgabe als Snapshot | xUnit v3, Verify | ohne Netz, zählt zeitlich zu Unit |
+| Bewertung | Referenzsatz für Treffer und Stufe mit den Schwellen als Abnahmekriterium; nur Regeln, kein Sprachmodell | eigener Lauf | 200 Paare, unter 1 Minute |
+| Integration | Nur was allein die echte Datenbank zeigt: Idempotenz der Kette, Wiederholung und Leases, gemeinsame Transaktion, Mandantentrennung, Migrationen | Testcontainers, Respawn | eine Datenbank für den ganzen Lauf, parallel; unter 6 Minuten |
+| Architektur und Vertrag | Modulgrenzen; OpenAPI-Dokument stimmt mit dem Code überein; Fremdzugriffstest für jeden Mandanten-Endpunkt, aus dem OpenAPI-Dokument erzeugt | ArchUnitNET, eigener Test | unter 2 Minuten |
+| Ende zu Ende | Sechs Kernabläufe, nicht mehr: Ersteinrichtung und Anmeldung mit TOTP; Projekt im Wizard anlegen; vom Bulletin in die Massnahme, in Prüfung nehmen und zurücknehmen; Massnahme mit Ergebnis abschliessen; Regel anlegen und In-App-Benachrichtigung erhalten; Einladung annehmen. In Chromium, Desktopbreite; der dritte Ablauf zusätzlich in Telefonbreite. Die Zugänglichkeitsprüfung läuft auf den dabei besuchten Seiten mit. | Playwright, axe | unter 5 Minuten |
+| Visuell | Seiten der Komponentenbibliothek mit allen Zuständen im Bildvergleich | Playwright | ein Bild je Seite, unter 1 Minute |
+
+Ein neuer Ende-zu-Ende-Test braucht eine Begründung im Pull Request und ersetzt im Zweifel einen bestehenden.
+
+**Nicht in der Pipeline,** weil es lange dauert, ein Netz oder einen Menschen braucht:
+
+| Prüfung | Wann |
+|---|---|
+| Lasttest, Dauerbetrieb über sieben Tage, Messung des Speicherbedarfs | einmal, zur Abnahme der Phase |
+| Sicherung, Wiederherstellung und Update üben | vor jedem Release mit Migration |
+| Bewertungslauf mit einem Sprachmodell | von Hand, bei Wechsel von Modell oder Prompt |
+| Vertragstest der Adapter gegen die echten Quellen | zeitgesteuert einmal täglich, wenige Minuten; meldet, blockiert aber keinen Pull Request |
+| Web Push und Installation als PWA in Firefox, Safari und auf Android und iOS | von Hand, vor einem Release, das diese Teile berührt |
+| Zugänglichkeit mit Tastatur und Screenreader | von Hand, vor jeder Hauptversion |
+
+Abnahmekriterien aus Kapitel 14 werden einmal je Phase nachgewiesen. Dauerhaft in die Pipeline kommt nur, was sich als schneller Test formulieren lässt.
 
 ## 13.7 Automatisierung
 
-Bei jedem Pull Request: bauen, formatieren, linten, alle Tests bis und mit Integration, Lizenzprüfung, OpenAPI-Abgleich, Image-Bau. Auf dem Hauptzweig zusätzlich Ende-zu-Ende-Tests und der Bewertungslauf. Bei einem Versions-Tag: Images für beide Architekturen, SBOM, Release-Notizen. Vorabstände werden ab Phase 1 als `0.x` markiert, damit sich Updates üben lassen.
+| Pipeline | Inhalt | Ziel | Obergrenze |
+|---|---|---|---|
+| Pull Request | bauen, formatieren, linten, Lizenzprüfung, Unit, Adapter, Bewertung, Integration, Architektur und Vertrag, Ende zu Ende, Image für `amd64` | 15 Minuten | 25 Minuten |
+| Hauptzweig | wie Pull Request, dazu der Bildvergleich und das Image für beide Architekturen | 20 Minuten | 25 Minuten |
+| Versions-Tag | Images für beide Architekturen aus dem bereits geprüften Stand, SBOM, Release-Notizen | 15 Minuten | 25 Minuten |
+
+So bleibt die Zeit im Rahmen:
+
+- Die Teile der Pipeline laufen nebeneinander, nicht nacheinander: Backend, Web-App und Image haben eigene Jobs; Abhängigkeiten und Build-Schichten kommen aus dem Cache.
+- Das Image für `arm64` entsteht durch Cross-Kompilieren, nicht durch Emulation: .NET veröffentlicht für die Zielarchitektur auf dem Build-Rechner, und die Web-App ist von der Architektur unabhängig.
+- Die Integrationstests teilen sich eine Datenbank und setzen sie zwischen den Tests zurück, statt je Test eine zu starten.
+- Die Dauer jeder Pipeline wird gemessen. Liegt sie über der Obergrenze, ist das ein Fehler, der behoben wird: Tests straffen, verschieben oder streichen. Die Grenze wird nicht angehoben.
+
+Vorabstände werden ab Phase 1 als `0.x` markiert, damit sich Updates üben lassen.
 
 ## 13.8 Fertig heisst
 
-- Abnahmekriterien der Aufgabe erfüllt und durch Tests belegt
+- Abnahmekriterien der Aufgabe erfüllt und belegt: durch einen schnellen Test, wo das möglich ist, sonst durch einen dokumentierten einmaligen Nachweis
+- Pipeline weiterhin innerhalb ihrer Obergrenze
 - kein neuer Befund in Lint, Analyzer, Lizenz- und Zugänglichkeitsprüfung
 - Migration vorwärts verträglich, Stammdaten aktualisiert
 - Oberfläche in Englisch vollständig, Zustände vorhanden, mit Tastatur bedienbar

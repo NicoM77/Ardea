@@ -24,7 +24,7 @@ Versionen und Lizenzen sind am 18.11.2026 gegen Primärquellen geprüft. Die vol
 | Übersetzung | Transloco, zur Laufzeit umschaltbar | 8.4 | Ein Image und später eine App für alle Sprachen. |
 | Mobile | PWA im MVP; Capacitor als Ausbaustufe | Capacitor 8.6, 9.0 als RC | Web Push funktioniert ohne eigene Infrastruktur (Kapitel 11). |
 | Container | `aspnet:10.0-noble-chiseled-extra`, ein Image, Docker Compose | | Ohne Shell, nicht privilegiert, mit Zeitzonendaten. |
-| Tests | xUnit v3, Testcontainers, Verify, ArchUnitNET, Vitest, Playwright mit axe | | Aktuelle Standardwerkzeuge, alle frei lizenziert. |
+| Tests | xUnit v3, Testcontainers, Verify, ArchUnitNET, Vitest, Playwright mit axe | | Aktuelle Standardwerkzeuge, alle frei lizenziert. Viele Unit-Tests, wenige Ende-zu-Ende-Tests; jede Pipeline bleibt unter 25 Minuten (Kapitel 13.6). |
 
 ## 2.2 Entscheidung: Hintergrundjobs und Zeitsteuerung
 

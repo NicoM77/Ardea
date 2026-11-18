@@ -1,3 +1,4 @@
+using Ardea.Platform.Persistence;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,9 @@ public interface IModule
 {
     /// <summary>Name of the module; also the name of its database schema.</summary>
     string Name { get; }
+
+    /// <summary>The module's schema, or <c>null</c> while it has no tables yet.</summary>
+    IModuleDatabase? Database => null;
 
     void AddServices(IServiceCollection services, IConfiguration configuration);
 

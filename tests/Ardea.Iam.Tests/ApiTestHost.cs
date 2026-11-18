@@ -8,6 +8,7 @@ using Ardea.TestSupport;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
@@ -32,7 +33,7 @@ internal sealed class ApiTestHost : IAsyncDisposable
 
     public IServiceProvider Services => _app.Services;
 
-    public static async Task<ApiTestHost> StartAsync(PostgresServer server, Dictionary<string, string?>? settings = null)
+    public static async Task<ApiTestHost> StartAsync(PostgresServer server, Dictionary<string, string?>? settings = null, Action<IServiceCollection>? services = null)
     {
         var name = await server.CreateDatabaseAsync("iam");
         var database = new DatabaseOptions
@@ -74,7 +75,7 @@ internal sealed class ApiTestHost : IAsyncDisposable
             builder.WebHost.UseTestServer();
             builder.Configuration.AddInMemoryCollection(values);
             builder.Logging.SetMinimumLevel(LogLevel.Warning);
-        }) ?? throw new InvalidOperationException(string.Join(" ", check.Errors));
+        }, services) ?? throw new InvalidOperationException(string.Join(" ", check.Errors));
         await app.StartAsync();
         return new ApiTestHost(app, database);
     }

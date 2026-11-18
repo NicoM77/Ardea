@@ -81,7 +81,7 @@ internal sealed class ApiTestHost : IAsyncDisposable
     }
 
     /// <summary>A browser-like client: keeps cookies and echoes the CSRF token like the web app.</summary>
-    public ApiClient Client() => new(_app.GetTestServer());
+    public ApiClient Client(string baseAddress = "https://localhost") => new(_app.GetTestServer(), baseAddress);
 
     public async Task<T> ScalarAsync<T>(string sql)
     {
@@ -110,9 +110,12 @@ internal sealed class ApiClient : IDisposable
     private readonly CookieContainer _cookies = new();
     private readonly HttpClient _http;
 
-    public ApiClient(TestServer server)
+    private readonly Uri _base;
+
+    public ApiClient(TestServer server, string baseAddress)
     {
-        _http = new HttpClient(new CookieHandler(_cookies, server.CreateHandler())) { BaseAddress = new Uri("https://localhost") };
+        _base = new Uri(baseAddress);
+        _http = new HttpClient(new CookieHandler(_cookies, server.CreateHandler())) { BaseAddress = _base };
     }
 
     public CookieContainer Cookies => _cookies;
@@ -169,7 +172,7 @@ internal sealed class ApiClient : IDisposable
 
     public void Dispose() => _http.Dispose();
 
-    private string? Xsrf() => _cookies.GetCookies(new Uri("https://localhost")).FirstOrDefault(c => c.Name == "XSRF-TOKEN")?.Value;
+    private string? Xsrf() => _cookies.GetCookies(_base).FirstOrDefault(c => c.Name == "XSRF-TOKEN")?.Value;
 
     private sealed class CookieHandler(CookieContainer cookies, HttpMessageHandler inner) : DelegatingHandler(inner)
     {

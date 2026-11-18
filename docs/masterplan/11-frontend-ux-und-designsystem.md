@@ -59,7 +59,7 @@ Massgeblich ist `DESIGN.md`; die Tokens stehen in `docs/design/mockups/app.css`.
 | **Vulnerability** | Eine Schwachstelle aus Sicht der Organisation: betroffene Projekte, Begründung der Priorität als Punkterechnung, Beschreibung, Details, Quellen mit Betreiber und Trägerschaft, Verlauf | ohne KI-Einschätzung (Vorlagen), Vorschlag des Modells zu bestätigen, zurückgezogen |
 | **Vulnerabilities** | Suche über alle konsolidierten Einträge, unabhängig vom eigenen Profil | kein Treffer |
 | **Projects** | Projekte und ihr Technologieprofil; verbundene Repositories mit Commit und Zeitpunkt des letzten Einlesens; Pakete je Ökosystem; offene Vorschläge; Hinweise auf Lücken im Profil | ohne Komponenten, Version fehlt, Repository wird eingelesen, Repository nicht lesbar, Stand zur Bestätigung zurückgehalten, Token läuft ab |
-| **Sources** | Stand der Quellen mit Betreiber und Trägerschaft (Kapitel 5.6), Filter nach Trägerschaft; für den Instanz-Administrator auch Steuerung | Quelle fehlerhaft, deaktiviert |
+| **Sources** | Stand der Quellen mit Betreiber und Trägerschaft (Kapitel 5.6), Filter nach Trägerschaft; für den Instanz-Administrator auch Steuerung und die Prüfliste des Katalogs mit gelernten Einträgen (Kapitel 6.9) | Quelle fehlerhaft, deaktiviert |
 | **Notification rules** | Regeln, Webhook-Ziele, Zustellprotokoll | Zustellung fehlgeschlagen |
 | **Team** | Mitglieder, Rollen, Einladungen | Einladung offen |
 | **Settings** | Organisation, Fristen, KI-Datenrichtlinie, Audit-Protokoll; persönlich: Sprache, MFA, aktive Sitzungen, Geräte für Push | |

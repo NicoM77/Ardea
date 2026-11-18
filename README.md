@@ -96,9 +96,9 @@ Findings, actions and alerts with level and reasoning; overview, list, detail.
 | 3.10 | Action and vulnerability detail; status, assignment, deadline, note, revert | 3.5, 3.1 | ⬜ |
 | 3.11 | Live updates via Server-Sent Events; command to recompute levels | 3.8 | ⬜ |
 
-### Phase 4 · AI assessment (2–3 weeks)
+### Phase 4 · AI assessment (3–4 weeks)
 
-AI assessment as an optional step.
+AI assessment as an optional step; a catalogue that grows by itself.
 
 | No. | Task | Depends on | Status |
 |---|---|---|---|
@@ -110,6 +110,8 @@ AI assessment as an optional step.
 | 4.6 | Limits: concurrency, quotas, timeout; metrics | 4.1 | ⬜ |
 | 4.7 | «Correct assessment» with re-evaluation | 4.2, 3.10 | ⬜ |
 | 4.8 | Integration tests with recorded model answers, including invalid and manipulated ones; local model recommendation in the guide | 4.2 | ⬜ |
+| 4.9 | Catalogue learning (plan 6.9): collect unknown products, rule-based mapping without a model, `GrowCatalog` job with the model, validation, auto-apply by confidence, review list, recompute | 4.2, 1.11, 2.4 | ⬜ |
+| 4.10 | Withdraw learned entries; note on the match; suggestions for organisations' free entries; export in the catalogue file format; metrics in administration | 4.9, 3.10 | ⬜ |
 
 ### Phase 5 · Notifications (3–4 weeks)
 
@@ -141,7 +143,7 @@ A reviewed, documented release 1.0.
 | 6.7 | Documentation: install, configure, operate, update, «Add a source»; `SECURITY.md` | ⬜ |
 | 6.8 | SBOM, licence file, images for both architectures; the project's own instance, fed from its own repository | ⬜ |
 
-**Total: 33–44 weeks.**
+**Total: 34–45 weeks.**
 
 ### After 1.0
 

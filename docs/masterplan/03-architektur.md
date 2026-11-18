@@ -200,7 +200,7 @@ Der Baustein bleibt hinter `IJobQueue` und `IScheduler`. Sollte er sich als zu k
 | Versionsvergleich | `IVersionScheme` (Kapitel 6) | eine Klasse je Schema |
 | Code-Plattform | `IRepositoryHost` (Kapitel 16.4): Zweigkopf, SBOM, Dateibaum, Datei | eine Klasse je Plattform; im MVP GitHub |
 | Lockdatei oder Plattformdatei | `IManifestReader`, `IStackDetector` (Kapitel 16.3) | eine Klasse je Dateiart, Testfälle aus echten Dateien |
-| Katalog | Stammdaten als versionierte Dateien im Repository | ein Eintrag mit Aliassen |
+| Katalog | Grundstock als versionierte Dateien im Repository; gelernte Einträge in der Instanz (Kapitel 6.9) | ein Eintrag mit Aliassen, oder keiner: der Katalog lernt ihn |
 
 ## 3.7 Wachstumspfad
 

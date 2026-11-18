@@ -4,6 +4,7 @@ using Ardea.Iam.Persistence;
 using Ardea.Iam.Security;
 using Ardea.Platform.Audit;
 using Ardea.Platform.Email;
+using Ardea.Platform.Http;
 using Ardea.Platform.Jobs;
 using Ardea.Platform.Persistence;
 using Ardea.Platform.Settings;
@@ -13,7 +14,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Npgsql;
 
 namespace Ardea.Iam.Features;
@@ -39,18 +39,18 @@ internal static class AuthEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         var setup = api.MapGroup("/setup").WithTags("Setup").RequireRateLimiting(RateLimitPolicy);
-        setup.MapGet("/status", SetupStatusAsync);
-        setup.MapPost("", SetupAsync);
+        setup.MapGet("/status", SetupStatusAsync).WithName("getSetupStatus");
+        setup.MapPost("", SetupAsync).WithName("completeSetup").NoContent().Problems(400, 403, 409);
 
         var auth = api.MapGroup("/auth").WithTags("Authentication");
-        auth.MapGet("/session", SessionAsync);
-        auth.MapPost("/login", LoginAsync).RequireRateLimiting(RateLimitPolicy);
-        auth.MapPost("/login/two-factor", TwoFactorAsync).RequireRateLimiting(RateLimitPolicy);
-        auth.MapPost("/logout", LogoutAsync);
-        auth.MapPost("/register", RegisterAsync).RequireRateLimiting(RateLimitPolicy);
-        auth.MapPost("/password/forgot", ForgotPasswordAsync).RequireRateLimiting(RateLimitPolicy);
-        auth.MapPost("/password/reset", ResetPasswordAsync).RequireRateLimiting(RateLimitPolicy);
-        auth.MapPost("/email/confirm", ConfirmEmailAsync).RequireRateLimiting(RateLimitPolicy);
+        auth.MapGet("/session", SessionAsync).WithName("getSession").Produces<SessionResponse>().Problems(401);
+        auth.MapPost("/login", LoginAsync).WithName("login").Produces<LoginResponse>().Problems(401).RequireRateLimiting(RateLimitPolicy);
+        auth.MapPost("/login/two-factor", TwoFactorAsync).WithName("loginTwoFactor").NoContent().Problems(400, 401).RequireRateLimiting(RateLimitPolicy);
+        auth.MapPost("/logout", LogoutAsync).WithName("logout").NoContent();
+        auth.MapPost("/register", RegisterAsync).WithName("register").NoContent().Problems(400, 403).RequireRateLimiting(RateLimitPolicy);
+        auth.MapPost("/password/forgot", ForgotPasswordAsync).WithName("forgotPassword").NoContent().RequireRateLimiting(RateLimitPolicy);
+        auth.MapPost("/password/reset", ResetPasswordAsync).WithName("resetPassword").NoContent().Problems(400).RequireRateLimiting(RateLimitPolicy);
+        auth.MapPost("/email/confirm", ConfirmEmailAsync).WithName("confirmEmail").NoContent().Problems(400).RequireRateLimiting(RateLimitPolicy);
     }
 
     private static async Task<SetupStatusResponse> SetupStatusAsync(IUnitOfWork unitOfWork, CancellationToken cancellationToken) =>
@@ -214,10 +214,10 @@ internal static class AuthEndpoints
     }
 
     private static async Task<IResult> RegisterAsync(
-        RegisterRequest request, IUnitOfWork unitOfWork, IConfiguration configuration, UserManager<ArdeaUser> users,
+        RegisterRequest request, IUnitOfWork unitOfWork, IInstanceSettings settings, UserManager<ArdeaUser> users,
         ArdeaSignInManager signIn, IEmailSender email, IJobQueue jobs, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
     {
-        var mode = (configuration["REGISTRATION"] ?? "invite").ToLowerInvariant();
+        var mode = ((await settings.GetAsync(InstanceSettingDefinitions.Registration, cancellationToken)).Value ?? "invite").ToLowerInvariant();
         if (mode == "closed")
         {
             return IamErrors.RegistrationClosed();

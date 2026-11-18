@@ -4,6 +4,7 @@ using Ardea.Iam.Domain;
 using Ardea.Iam.Persistence;
 using Ardea.Iam.Security;
 using Ardea.Platform.Audit;
+using Ardea.Platform.Http;
 using Ardea.Platform.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -21,14 +22,14 @@ internal static class AccountEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         var account = api.MapGroup("/account").WithTags("Account").RequireAuthorization();
-        account.MapPatch("", UpdateAsync);
-        account.MapPost("/password", ChangePasswordAsync).RequireRateLimiting(AuthEndpoints.RateLimitPolicy);
-        account.MapPost("/mfa/setup", SetupMfaAsync);
-        account.MapPost("/mfa", EnableMfaAsync).RequireRateLimiting(AuthEndpoints.RateLimitPolicy);
-        account.MapDelete("/mfa", DisableMfaAsync).RequireRateLimiting(AuthEndpoints.RateLimitPolicy);
-        account.MapGet("/sessions", ListSessionsAsync);
-        account.MapDelete("/sessions/{sessionId:guid}", RevokeSessionAsync);
-        account.MapDelete("/sessions", RevokeOtherSessionsAsync);
+        account.MapPatch("", UpdateAsync).WithName("updateAccount").NoContent().Problems(400);
+        account.MapPost("/password", ChangePasswordAsync).WithName("changePassword").NoContent().Problems(400).RequireRateLimiting(AuthEndpoints.RateLimitPolicy);
+        account.MapPost("/mfa/setup", SetupMfaAsync).WithName("startMfaSetup").Produces<MfaSetupResponse>().Problems(400, 409);
+        account.MapPost("/mfa", EnableMfaAsync).WithName("enableMfa").Produces<RecoveryCodesResponse>().Problems(400).RequireRateLimiting(AuthEndpoints.RateLimitPolicy);
+        account.MapDelete("/mfa", DisableMfaAsync).WithName("disableMfa").NoContent().Problems(400).RequireRateLimiting(AuthEndpoints.RateLimitPolicy);
+        account.MapGet("/sessions", ListSessionsAsync).WithName("listSessions");
+        account.MapDelete("/sessions/{sessionId:guid}", RevokeSessionAsync).WithName("revokeSession").NoContent().Problems(404);
+        account.MapDelete("/sessions", RevokeOtherSessionsAsync).WithName("revokeOtherSessions").NoContent();
     }
 
     private static async Task<IResult> UpdateAsync(

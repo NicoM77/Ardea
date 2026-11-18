@@ -17,6 +17,10 @@
     <ProjectReference Include="../../Sources/Ardea.Intel.Sources.Formats/Ardea.Intel.Sources.Formats.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="MailKit" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="Ardea.Host.Tests" />
     <InternalsVisibleTo Include="Ardea.Iam.Tests" />
   </ItemGroup>

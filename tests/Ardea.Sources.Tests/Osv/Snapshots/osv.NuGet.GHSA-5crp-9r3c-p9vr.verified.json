@@ -1,0 +1,94 @@
+{
+  "kind": "vulnerability",
+  "title": "Improper Handling of Exceptional Conditions in Newtonsoft.Json",
+  "description": "Newtonsoft.Json prior to version 13.0.1 is vulnerable to Insecure Defaults due to improper handling of expressions with high nesting level that lead to StackOverFlow exception or high CPU and RAM usage. Exploiting this vulnerability results in Denial Of Service (DoS). \n\nThe serialization and deserialization path have different properties regarding the issue.\n\nDeserializing methods (like \u0060JsonConvert.DeserializeObject\u0060) will process the input that results in burning the CPU, allocating memory, and consuming a thread of execution. Quite high nesting level (\u003E10kk, or 9.5MB of \u0060{a:{a:{...\u0060 input) is needed to achieve the latency over 10 seconds, depending on the hardware.\n\nSerializing methods (like \u0060JsonConvert.Serialize\u0060 or \u0060JObject.ToString\u0060) will throw StackOverFlow exception with the nesting level of around 20k.\n\nTo mitigate the issue one either need to update Newtonsoft.Json to 13.0.1 or set \u0060MaxDepth\u0060 parameter in the \u0060JsonSerializerSettings\u0060. This can be done globally with the following statement. After that the parsing of the nested input will fail fast with \u0060Newtonsoft.Json.JsonReaderException\u0060:\n\n\u0060\u0060\u0060 \nJsonConvert.DefaultSettings = () =\u003E new JsonSerializerSettings { MaxDepth = 128 };\n\u0060\u0060\u0060\n\nRepro code:\n\u0060\u0060\u0060\n//Create a string representation of an highly nested object (JSON serialized)\nint nRep = 25000;\nstring json = string.Concat(Enumerable.Repeat(\u0022{a:\u0022, nRep)) \u002B \u00221\u0022 \u002B\n string.Concat(Enumerable.Repeat(\u0022}\u0022, nRep));\n\n//Parse this object (leads to high CPU/RAM consumption)\nvar parsedJson = JsonConvert.DeserializeObject(json);\n\n// Methods below all throw stack overflow with nRep around 20k and higher\n// string a = parsedJson.ToString();\n// string b = JsonConvert.SerializeObject(parsedJson);\n\u0060\u0060\u0060\n\n### Additional affected product and version information\n**The original statement about the problem only affecting IIS applications is misleading.** Any application is affected, however the IIS has a behavior that stops restarting the instance after some time resulting in a harder-to-fix DoS.**",
+  "language": "en",
+  "publishedAt": "2022-06-22T15:08:47+00:00",
+  "modifiedAt": "2026-07-08T06:53:11.583483+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-5crp-9r3c-p9vr"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2024-21907"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Improper Handling of Exceptional Conditions in Newtonsoft.Json",
+      "description": "Newtonsoft.Json prior to version 13.0.1 is vulnerable to Insecure Defaults due to improper handling of expressions with high nesting level that lead to StackOverFlow exception or high CPU and RAM usage. Exploiting this vulnerability results in Denial Of Service (DoS). \n\nThe serialization and deserialization path have different properties regarding the issue.\n\nDeserializing methods (like \u0060JsonConvert.DeserializeObject\u0060) will process the input that results in burning the CPU, allocating memory, and consuming a thread of execution. Quite high nesting level (\u003E10kk, or 9.5MB of \u0060{a:{a:{...\u0060 input) is needed to achieve the latency over 10 seconds, depending on the hardware.\n\nSerializing methods (like \u0060JsonConvert.Serialize\u0060 or \u0060JObject.ToString\u0060) will throw StackOverFlow exception with the nesting level of around 20k.\n\nTo mitigate the issue one either need to update Newtonsoft.Json to 13.0.1 or set \u0060MaxDepth\u0060 parameter in the \u0060JsonSerializerSettings\u0060. This can be done globally with the following statement. After that the parsing of the nested input will fail fast with \u0060Newtonsoft.Json.JsonReaderException\u0060:\n\n\u0060\u0060\u0060 \nJsonConvert.DefaultSettings = () =\u003E new JsonSerializerSettings { MaxDepth = 128 };\n\u0060\u0060\u0060\n\nRepro code:\n\u0060\u0060\u0060\n//Create a string representation of an highly nested object (JSON serialized)\nint nRep = 25000;\nstring json = string.Concat(Enumerable.Repeat(\u0022{a:\u0022, nRep)) \u002B \u00221\u0022 \u002B\n string.Concat(Enumerable.Repeat(\u0022}\u0022, nRep));\n\n//Parse this object (leads to high CPU/RAM consumption)\nvar parsedJson = JsonConvert.DeserializeObject(json);\n\n// Methods below all throw stack overflow with nRep around 20k and higher\n// string a = parsedJson.ToString();\n// string b = JsonConvert.SerializeObject(parsedJson);\n\u0060\u0060\u0060\n\n### Additional affected product and version information\n**The original statement about the problem only affecting IIS applications is misleading.** Any application is affected, however the IIS has a behavior that stops restarting the instance after some time resulting in a harder-to-fix DoS.**",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "Newtonsoft.Json",
+          "cpes": [],
+          "purl": "pkg:nuget/Newtonsoft.Json",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "13.0.1",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u002213.0.1\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/JamesNK/Newtonsoft.Json/issues/2457",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/JamesNK/Newtonsoft.Json/pull/2462",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/JamesNK/Newtonsoft.Json/commit/7e77bbe1beccceac4fc7b174b53abfefac278b66",
+          "tags": []
+        },
+        {
+          "url": "https://alephsecurity.com/2018/10/22/StackOverflowException",
+          "tags": []
+        },
+        {
+          "url": "https://alephsecurity.com/vulns/aleph-2018004",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/JamesNK/Newtonsoft.Json",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://security.snyk.io/vuln/SNYK-DOTNET-NEWTONSOFTJSON-2774678",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-755"
+      ],
+      "publishedAt": "2022-06-22T15:08:47+00:00",
+      "modifiedAt": "2026-07-08T06:53:11.583483+00:00"
+    }
+  ],
+  "references": []
+}

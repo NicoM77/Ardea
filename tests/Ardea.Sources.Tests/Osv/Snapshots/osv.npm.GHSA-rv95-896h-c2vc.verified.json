@@ -1,0 +1,117 @@
+{
+  "kind": "vulnerability",
+  "title": "Express.js Open Redirect in malformed URLs",
+  "description": "### Impact\n\nVersions of Express.js prior to 4.19.2 and pre-release alpha and beta versions before 5.0.0-beta.3 are affected by an open redirect vulnerability using malformed URLs.\n\nWhen a user of Express performs a redirect using a user-provided URL Express performs an encode [using \u0060encodeurl\u0060](https://github.com/pillarjs/encodeurl) on the contents before passing it to the \u0060location\u0060 header. This can cause malformed URLs to be evaluated in unexpected ways by common redirect allow list implementations in Express applications, leading to an Open Redirect via bypass of a properly implemented allow list.\n\nThe main method impacted is \u0060res.location()\u0060 but this is also called from within \u0060res.redirect()\u0060.\n\n### Patches\n\nhttps://github.com/expressjs/express/commit/0867302ddbde0e9463d0564fea5861feb708c2dd\nhttps://github.com/expressjs/express/commit/0b746953c4bd8e377123527db11f9cd866e39f94\n\nAn initial fix went out with \u0060express@4.19.0\u0060, we then patched a feature regression in \u00604.19.1\u0060 and added improved handling for the bypass in \u00604.19.2\u0060.\n\n### Workarounds\n\nThe fix for this involves pre-parsing the url string with either \u0060require(\u0027node:url\u0027).parse\u0060 or \u0060new URL\u0060. These are steps you can take on your own before passing the user input string to \u0060res.location\u0060 or \u0060res.redirect\u0060.\n\n### Resources\n\nhttps://github.com/expressjs/express/pull/5539\nhttps://github.com/koajs/koa/issues/1800\nhttps://expressjs.com/en/4x/api.html#res.location",
+  "language": "en",
+  "publishedAt": "2024-03-25T19:40:26+00:00",
+  "modifiedAt": "2026-09-10T03:50:10.7500685+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-rv95-896h-c2vc"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2024-29041"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Express.js Open Redirect in malformed URLs",
+      "description": "### Impact\n\nVersions of Express.js prior to 4.19.2 and pre-release alpha and beta versions before 5.0.0-beta.3 are affected by an open redirect vulnerability using malformed URLs.\n\nWhen a user of Express performs a redirect using a user-provided URL Express performs an encode [using \u0060encodeurl\u0060](https://github.com/pillarjs/encodeurl) on the contents before passing it to the \u0060location\u0060 header. This can cause malformed URLs to be evaluated in unexpected ways by common redirect allow list implementations in Express applications, leading to an Open Redirect via bypass of a properly implemented allow list.\n\nThe main method impacted is \u0060res.location()\u0060 but this is also called from within \u0060res.redirect()\u0060.\n\n### Patches\n\nhttps://github.com/expressjs/express/commit/0867302ddbde0e9463d0564fea5861feb708c2dd\nhttps://github.com/expressjs/express/commit/0b746953c4bd8e377123527db11f9cd866e39f94\n\nAn initial fix went out with \u0060express@4.19.0\u0060, we then patched a feature regression in \u00604.19.1\u0060 and added improved handling for the bypass in \u00604.19.2\u0060.\n\n### Workarounds\n\nThe fix for this involves pre-parsing the url string with either \u0060require(\u0027node:url\u0027).parse\u0060 or \u0060new URL\u0060. These are steps you can take on your own before passing the user input string to \u0060res.location\u0060 or \u0060res.redirect\u0060.\n\n### Resources\n\nhttps://github.com/expressjs/express/pull/5539\nhttps://github.com/koajs/koa/issues/1800\nhttps://expressjs.com/en/4x/api.html#res.location",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "express",
+          "cpes": [],
+          "purl": "pkg:npm/express",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "4.19.2",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00224.19.2\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "express",
+          "cpes": [],
+          "purl": "pkg:npm/express",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "5.0.0-alpha.1",
+              "fixed": "5.0.0-beta.3",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00225.0.0-alpha.1\u0022},{\u0022fixed\u0022:\u00225.0.0-beta.3\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/expressjs/express/security/advisories/GHSA-rv95-896h-c2vc",
+          "tags": []
+        },
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-29041",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/koajs/koa/issues/1800",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/expressjs/express/pull/5539",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/expressjs/express/commit/0867302ddbde0e9463d0564fea5861feb708c2dd",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/expressjs/express/commit/0b746953c4bd8e377123527db11f9cd866e39f94",
+          "tags": []
+        },
+        {
+          "url": "https://expressjs.com/en/4x/api.html#res.location",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/expressjs/express",
+          "tags": [
+            "package"
+          ]
+        }
+      ],
+      "weaknesses": [
+        "CWE-1286",
+        "CWE-601"
+      ],
+      "publishedAt": "2024-03-25T19:40:26+00:00",
+      "modifiedAt": "2026-09-10T03:50:10.7500685+00:00"
+    }
+  ],
+  "references": []
+}

@@ -1,0 +1,77 @@
+{
+  "kind": "vulnerability",
+  "title": "ZITADEL Vulnerable to Account Takeover Due to Improper Instance Validation in V2 Login in github.com/zitadel/zitadel",
+  "description": "ZITADEL Vulnerable to Account Takeover Due to Improper Instance Validation in V2 Login in github.com/zitadel/zitadel.\n\nNOTE: The source advisory for this report contains additional versions that could not be automatically mapped to standard Go module versions.\n\n(If this is causing false-positive reports from vulnerability scanners, please suggest an edit to the report.)\n\nThe additional affected modules and versions are: github.com/zitadel/zitadel from v4.0.0-rc.1 before v4.7.1.",
+  "language": "en",
+  "publishedAt": "2025-12-15T19:37:35+00:00",
+  "modifiedAt": "2026-03-09T16:11:05.035091+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "OSV",
+          "value": "GO-2025-4212"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2026-29067"
+        },
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-pfrf-9r5f-73f5"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "ZITADEL Vulnerable to Account Takeover Due to Improper Instance Validation in V2 Login in github.com/zitadel/zitadel",
+      "description": "ZITADEL Vulnerable to Account Takeover Due to Improper Instance Validation in V2 Login in github.com/zitadel/zitadel.\n\nNOTE: The source advisory for this report contains additional versions that could not be automatically mapped to standard Go module versions.\n\n(If this is causing false-positive reports from vulnerability scanners, please suggest an edit to the report.)\n\nThe additional affected modules and versions are: github.com/zitadel/zitadel from v4.0.0-rc.1 before v4.7.1.",
+      "metrics": [],
+      "affected": [
+        {
+          "product": "github.com/zitadel/zitadel",
+          "cpes": [],
+          "purl": "pkg:golang/github.com/zitadel/zitadel",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "1.80.0-v2.20.0.20251208091519-4c879b47334e",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00221.80.0-v2.20.0.20251208091519-4c879b47334e\u0022},{\u0022introduced\u0022:\u00221.83.4\u0022}]}"
+            },
+            {
+              "status": "affected",
+              "introduced": "1.83.4",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00221.80.0-v2.20.0.20251208091519-4c879b47334e\u0022},{\u0022introduced\u0022:\u00221.83.4\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/zitadel/zitadel/security/advisories/GHSA-pfrf-9r5f-73f5",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/zitadel/zitadel/commit/4c879b47334e01d4fcab921ac1b44eda39acdb96",
+          "tags": [
+            "patch"
+          ]
+        }
+      ],
+      "weaknesses": [],
+      "publishedAt": "2025-12-15T19:37:35+00:00",
+      "modifiedAt": "2026-03-09T16:11:05.035091+00:00"
+    }
+  ],
+  "references": []
+}

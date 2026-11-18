@@ -1,0 +1,100 @@
+{
+  "kind": "vulnerability",
+  "title": "Requests \u0060Session\u0060 object does not verify requests after making first request with verify=False",
+  "description": "When using a \u0060requests.Session\u0060, if the first request to a given origin is made with \u0060verify=False\u0060, TLS certificate verification may remain disabled for all subsequent requests to that origin, even if \u0060verify=True\u0060 is explicitly specified later.\n\nThis occurs because the underlying connection is reused from the session\u0027s connection pool, causing the initial TLS verification setting to persist for the lifetime of the pooled connection. As a result, applications may unintentionally send requests without certificate verification, leading to potential man-in-the-middle attacks and compromised confidentiality or integrity.\n\nThis behavior affects versions of \u0060requests\u0060 prior to 2.32.0.",
+  "language": "en",
+  "publishedAt": "2024-05-20T20:15:00+00:00",
+  "modifiedAt": "2026-09-10T03:50:13.7408797+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-9wx4-h78v-vm56"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2024-35195"
+        },
+        {
+          "scheme": "OSV",
+          "value": "PYSEC-2026-1873"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Requests \u0060Session\u0060 object does not verify requests after making first request with verify=False",
+      "description": "When using a \u0060requests.Session\u0060, if the first request to a given origin is made with \u0060verify=False\u0060, TLS certificate verification may remain disabled for all subsequent requests to that origin, even if \u0060verify=True\u0060 is explicitly specified later.\n\nThis occurs because the underlying connection is reused from the session\u0027s connection pool, causing the initial TLS verification setting to persist for the lifetime of the pooled connection. As a result, applications may unintentionally send requests without certificate verification, leading to potential man-in-the-middle attacks and compromised confidentiality or integrity.\n\nThis behavior affects versions of \u0060requests\u0060 prior to 2.32.0.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:L/AC:H/PR:H/UI:R/S:U/C:H/I:H/A:N",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "requests",
+          "cpes": [],
+          "purl": "pkg:pypi/requests",
+          "platforms": [],
+          "versionScheme": "pep440",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "2.32.0",
+              "scheme": "pep440",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00222.32.0\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/psf/requests/security/advisories/GHSA-9wx4-h78v-vm56",
+          "tags": []
+        },
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-35195",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/psf/requests/pull/6655",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/psf/requests/commit/a58d7f2ffb4d00b46dca2d70a3932a0b37e22fac",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/psf/requests",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/IYLSNK5TL46Q6XPRVMHVWS63MVJQOK4Q",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/N7WP6EYDSUOCOJYHDK5NX43PYZ4SNHGZ",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-670"
+      ],
+      "publishedAt": "2024-05-20T20:15:00+00:00",
+      "modifiedAt": "2026-09-10T03:50:13.7408797+00:00"
+    }
+  ],
+  "references": []
+}

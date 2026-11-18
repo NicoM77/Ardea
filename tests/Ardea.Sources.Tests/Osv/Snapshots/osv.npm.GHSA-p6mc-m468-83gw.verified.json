@@ -1,0 +1,227 @@
+{
+  "kind": "vulnerability",
+  "title": "Prototype Pollution in lodash",
+  "description": "Versions of lodash prior to 4.17.19 are vulnerable to Prototype Pollution. The functions \u0060pick\u0060, \u0060set\u0060, \u0060setWith\u0060, \u0060update\u0060, \u0060updateWith\u0060, and \u0060zipObjectDeep\u0060 allow a malicious user to modify the prototype of Object if the property identifiers are user-supplied. Being affected by this issue requires manipulating objects based on user-provided property values or arrays.\n\nThis vulnerability causes the addition or modification of an existing property that will exist on all objects and may lead to Denial of Service or Code Execution under specific circumstances.",
+  "language": "en",
+  "publishedAt": "2020-07-15T19:15:48+00:00",
+  "modifiedAt": "2025-08-12T21:56:17.174859+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-p6mc-m468-83gw"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2020-8203"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Prototype Pollution in lodash",
+      "description": "Versions of lodash prior to 4.17.19 are vulnerable to Prototype Pollution. The functions \u0060pick\u0060, \u0060set\u0060, \u0060setWith\u0060, \u0060update\u0060, \u0060updateWith\u0060, and \u0060zipObjectDeep\u0060 allow a malicious user to modify the prototype of Object if the property identifiers are user-supplied. Being affected by this issue requires manipulating objects based on user-provided property values or arrays.\n\nThis vulnerability causes the addition or modification of an existing property that will exist on all objects and may lead to Denial of Service or Code Execution under specific circumstances.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:H",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "lodash",
+          "cpes": [],
+          "purl": "pkg:npm/lodash",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "3.7.0",
+              "fixed": "4.17.19",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00223.7.0\u0022},{\u0022fixed\u0022:\u00224.17.19\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "lodash-es",
+          "cpes": [],
+          "purl": "pkg:npm/lodash-es",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "3.7.0",
+              "fixed": "4.17.20",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00223.7.0\u0022},{\u0022fixed\u0022:\u00224.17.20\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "lodash.pick",
+          "cpes": [],
+          "purl": "pkg:npm/lodash.pick",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "4.0.0",
+              "lastAffected": "4.4.0",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00224.0.0\u0022},{\u0022last_affected\u0022:\u00224.4.0\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "lodash.set",
+          "cpes": [],
+          "purl": "pkg:npm/lodash.set",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "3.7.0",
+              "lastAffected": "4.3.2",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00223.7.0\u0022},{\u0022last_affected\u0022:\u00224.3.2\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "lodash.setwith",
+          "cpes": [],
+          "purl": "pkg:npm/lodash.setwith",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "lastAffected": "4.3.2",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022last_affected\u0022:\u00224.3.2\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "lodash.update",
+          "cpes": [],
+          "purl": "pkg:npm/lodash.update",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "lastAffected": "4.10.2",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022last_affected\u0022:\u00224.10.2\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "lodash.updatewith",
+          "cpes": [],
+          "purl": "pkg:npm/lodash.updatewith",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "lastAffected": "4.10.2",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022last_affected\u0022:\u00224.10.2\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "lodash-rails",
+          "cpes": [],
+          "purl": "pkg:gem/lodash-rails",
+          "platforms": [],
+          "versionScheme": "rubygems",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "3.7.0",
+              "fixed": "4.17.19",
+              "scheme": "rubygems",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00223.7.0\u0022},{\u0022fixed\u0022:\u00224.17.19\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2020-8203",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/lodash/lodash/issues/4744",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/lodash/lodash/issues/4874",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/github/advisory-database/pull/2884",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/lodash/lodash/commit/c84fe82760fb2d3e03a63379b297a1cc1a2fce12",
+          "tags": []
+        },
+        {
+          "url": "https://hackerone.com/reports/712065",
+          "tags": []
+        },
+        {
+          "url": "https://hackerone.com/reports/864701",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/lodash/lodash",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://github.com/lodash/lodash/wiki/Changelog#v41719",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/rubysec/ruby-advisory-db/blob/master/gems/lodash-rails/CVE-2020-8203.yml",
+          "tags": []
+        },
+        {
+          "url": "https://security.netapp.com/advisory/ntap-20200724-0006",
+          "tags": []
+        },
+        {
+          "url": "https://web.archive.org/web/20210914001339/https://github.com/lodash/lodash/issues/4744",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-1321",
+        "CWE-770"
+      ],
+      "publishedAt": "2020-07-15T19:15:48+00:00",
+      "modifiedAt": "2025-08-12T21:56:17.174859+00:00"
+    }
+  ],
+  "references": []
+}

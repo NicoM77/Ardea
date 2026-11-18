@@ -1,0 +1,108 @@
+{
+  "kind": "vulnerability",
+  "title": "Pillow buffer overflow vulnerability",
+  "description": "In _imagingcms.c in Pillow before 10.3.0, a buffer overflow exists because strcpy is used instead of strncpy.",
+  "language": "en",
+  "publishedAt": "2024-04-03T03:30:30+00:00",
+  "modifiedAt": "2026-09-10T03:50:11.1397121+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-44wm-f244-xhp3"
+        },
+        {
+          "scheme": "OSV",
+          "value": "BIT-pillow-2024-28219"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2024-28219"
+        },
+        {
+          "scheme": "OSV",
+          "value": "PYSEC-2026-1793"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Pillow buffer overflow vulnerability",
+      "description": "In _imagingcms.c in Pillow before 10.3.0, a buffer overflow exists because strcpy is used instead of strncpy.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:R/S:U/C:H/I:H/A:H",
+          "assigner": "GitHub"
+        },
+        {
+          "system": "CVSS",
+          "version": "4.0",
+          "vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:L/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "pillow",
+          "cpes": [],
+          "purl": "pkg:pypi/pillow",
+          "platforms": [],
+          "versionScheme": "pep440",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "10.3.0",
+              "scheme": "pep440",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u002210.3.0\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-28219",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/python-pillow/Pillow/commit/2a93aba5cfcf6e241ab4f9392c13e3b74032c061",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/python-pillow/Pillow",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://lists.debian.org/debian-lts-announce/2024/04/msg00008.html",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/4XLPUT3VK4GQ6EVY525TT2QNUIXNRU5M",
+          "tags": []
+        },
+        {
+          "url": "https://pillow.readthedocs.io/en/stable/releasenotes/10.3.0.html#security",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-120",
+        "CWE-676",
+        "CWE-680"
+      ],
+      "publishedAt": "2024-04-03T03:30:30+00:00",
+      "modifiedAt": "2026-09-10T03:50:11.1397121+00:00"
+    }
+  ],
+  "references": []
+}

@@ -1,0 +1,80 @@
+{
+  "kind": "vulnerability",
+  "description": "A remote code execution vulnerability exists in invoke-ai/invokeai versions 5.3.1 through 5.4.2 via the /api/v2/models/install API. The vulnerability arises from unsafe deserialization of model files using torch.load without proper validation. Attackers can exploit this by embedding malicious code in model files, which is executed upon loading. This issue is fixed in version 5.4.3.",
+  "language": "en",
+  "publishedAt": "2025-03-20T10:15:26+00:00",
+  "modifiedAt": "2026-06-10T17:01:32.3165477+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "OSV",
+          "value": "PYSEC-2025-9"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2024-12029"
+        },
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-mcrp-whpw-jp68"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "description": "A remote code execution vulnerability exists in invoke-ai/invokeai versions 5.3.1 through 5.4.2 via the /api/v2/models/install API. The vulnerability arises from unsafe deserialization of model files using torch.load without proper validation. Attackers can exploit this by embedding malicious code in model files, which is executed upon loading. This issue is fixed in version 5.4.3.",
+      "metrics": [],
+      "affected": [
+        {
+          "product": "invokeai",
+          "cpes": [],
+          "purl": "pkg:pypi/invokeai",
+          "platforms": [],
+          "versionScheme": "pep440",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "756008dc5899081c5aa51e5bd8f24c1b3975a59e",
+              "scheme": "git",
+              "raw": "{\u0022type\u0022:\u0022GIT\u0022,\u0022repo\u0022:\u0022https://github.com/invoke-ai/invokeai\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u0022756008dc5899081c5aa51e5bd8f24c1b3975a59e\u0022}]}"
+            },
+            {
+              "status": "affected",
+              "introduced": "5.3.1",
+              "fixed": "5.4.3rc1",
+              "scheme": "pep440",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00225.3.1\u0022},{\u0022fixed\u0022:\u00225.4.3rc1\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/invoke-ai/invokeai/commit/756008dc5899081c5aa51e5bd8f24c1b3975a59e",
+          "tags": [
+            "patch"
+          ]
+        },
+        {
+          "url": "https://huntr.com/bounties/9b790f94-1b1b-4071-bc27-78445d1a87a3",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/advisories/GHSA-mcrp-whpw-jp68",
+          "tags": [
+            "advisory"
+          ]
+        }
+      ],
+      "weaknesses": [],
+      "publishedAt": "2025-03-20T10:15:26+00:00",
+      "modifiedAt": "2026-06-10T17:01:32.3165477+00:00"
+    }
+  ],
+  "references": []
+}

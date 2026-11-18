@@ -1,0 +1,231 @@
+{
+  "kind": "vulnerability",
+  "title": "Symfony Http-Kernel has non-constant time comparison in UriSigner",
+  "description": "When checking the signature of an URI (an ESI fragment URL for instance), the URISigner did not used a constant time string comparison function, resulting in a potential remote timing attack vulnerability.",
+  "language": "en",
+  "publishedAt": "2022-03-26T00:22:49+00:00",
+  "modifiedAt": "2024-02-20T05:19:46.052258+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-q8hg-pf8v-cxrv"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2019-18887"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Symfony Http-Kernel has non-constant time comparison in UriSigner",
+      "description": "When checking the signature of an URI (an ESI fragment URL for instance), the URISigner did not used a constant time string comparison function, resulting in a potential remote timing attack vulnerability.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "symfony/http-kernel",
+          "cpes": [],
+          "purl": "pkg:composer/symfony/http-kernel",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "2.2.0",
+              "fixed": "2.8.52",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00222.2.0\u0022},{\u0022fixed\u0022:\u00222.8.52\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "symfony/http-kernel",
+          "cpes": [],
+          "purl": "pkg:composer/symfony/http-kernel",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "3.0.0",
+              "fixed": "3.4.35",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00223.0.0\u0022},{\u0022fixed\u0022:\u00223.4.35\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "symfony/http-kernel",
+          "cpes": [],
+          "purl": "pkg:composer/symfony/http-kernel",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "4.0.0",
+              "fixed": "4.2.12",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00224.0.0\u0022},{\u0022fixed\u0022:\u00224.2.12\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "symfony/http-kernel",
+          "cpes": [],
+          "purl": "pkg:composer/symfony/http-kernel",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "4.3.0",
+              "fixed": "4.3.8",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00224.3.0\u0022},{\u0022fixed\u0022:\u00224.3.8\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "symfony/symfony",
+          "cpes": [],
+          "purl": "pkg:composer/symfony/symfony",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "2.2.0",
+              "fixed": "2.8.52",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00222.2.0\u0022},{\u0022fixed\u0022:\u00222.8.52\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "symfony/symfony",
+          "cpes": [],
+          "purl": "pkg:composer/symfony/symfony",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "3.0.0",
+              "fixed": "3.4.35",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00223.0.0\u0022},{\u0022fixed\u0022:\u00223.4.35\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "symfony/symfony",
+          "cpes": [],
+          "purl": "pkg:composer/symfony/symfony",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "4.0.0",
+              "fixed": "4.2.12",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00224.0.0\u0022},{\u0022fixed\u0022:\u00224.2.12\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "symfony/symfony",
+          "cpes": [],
+          "purl": "pkg:composer/symfony/symfony",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "4.3.0",
+              "fixed": "4.3.8",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00224.3.0\u0022},{\u0022fixed\u0022:\u00224.3.8\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2019-18887",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/FriendsOfPHP/security-advisories/blob/master/symfony/http-kernel/CVE-2019-18887.yaml",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/FriendsOfPHP/security-advisories/blob/master/symfony/symfony/CVE-2019-18887.yaml",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/symfony/symfony/releases/tag/v4.3.8",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/DZNXRVHDQBNZQUCNRVZICPPBFRAUWUJX",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/UED22BOXTL2SSFMGYKA64ZFHGLLJG3EA",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/VXEAOEANNIVYANTMOJ42NKSU6BGNBULZ",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/DZNXRVHDQBNZQUCNRVZICPPBFRAUWUJX",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UED22BOXTL2SSFMGYKA64ZFHGLLJG3EA",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/VXEAOEANNIVYANTMOJ42NKSU6BGNBULZ",
+          "tags": []
+        },
+        {
+          "url": "https://symfony.com/blog/cve-2019-18887-use-constant-time-comparison-in-urisigner",
+          "tags": []
+        },
+        {
+          "url": "https://symfony.com/blog/symfony-4-3-8-released",
+          "tags": []
+        },
+        {
+          "url": "https://symfony.com/cve-2019-18887",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-203"
+      ],
+      "publishedAt": "2022-03-26T00:22:49+00:00",
+      "modifiedAt": "2024-02-20T05:19:46.052258+00:00"
+    }
+  ],
+  "references": []
+}

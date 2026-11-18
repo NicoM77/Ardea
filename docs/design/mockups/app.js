@@ -213,7 +213,7 @@
     { id: 'actions', label: 'Actions', href: 'actions.html', icon: 'actions', count: D.ACTIONS.length },
     { id: 'vulnerabilities', label: 'Vulnerabilities', icon: 'vulnerabilities' },
     { id: 'projects', label: 'Projects', icon: 'projects' },
-    { id: 'sources', label: 'Sources', icon: 'sources' },
+    { id: 'sources', label: 'Sources', href: 'sources.html', icon: 'sources' },
     { id: 'rules', label: 'Notification rules', icon: 'rules' }
   ];
   var NAV_FOOT = [

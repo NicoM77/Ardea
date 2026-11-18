@@ -2,10 +2,15 @@
 #   ARDEA_DOMAIN=ardea.example.com docker compose -f compose.yaml -f compose.caddy.yaml up -d
 # Caddy obtains a certificate for a public domain automatically. For a test on one machine use
 # ARDEA_DOMAIN=localhost: Caddy then issues a certificate from its own local authority.
+# ARDEA_HTTP_PORT_PUBLIC and ARDEA_HTTPS_PORT_PUBLIC move the published ports when 80 and 443 are
+# taken; ARDEA_PUBLIC_URL must then carry the port (https://localhost:8443).
 services:
   caddy:
     image: caddy:2
-    ports: ["80:80", "443:443", "443:443/udp"]
+    ports:
+      - "${ARDEA_HTTP_PORT_PUBLIC:-80}:80"
+      - "${ARDEA_HTTPS_PORT_PUBLIC:-443}:443"
+      - "${ARDEA_HTTPS_PORT_PUBLIC:-443}:443/udp"
     environment:
       ARDEA_DOMAIN: ${ARDEA_DOMAIN:?set ARDEA_DOMAIN to the public host name}
     volumes:

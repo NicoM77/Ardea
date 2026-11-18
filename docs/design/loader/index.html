@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ardea loader</title>
+<link rel="icon" href="../brand/ardea-favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ground: #f1f4f6;
+  --surface: #ffffff;
+  --raised: #f5f7f8;
+  --active: #e4e9ec;
+  --border: #e3e8eb;
+  --rule: #edf0f2;
+  --control: #c9d0d4;
+  --text: #131416;
+  --muted: #53595d;
+  --faint: #656b6f;
+  --accent: #1b6c80;
+  --accent-soft: #e2eef1;
+  --positive: #1e7b4f;
+  --ease-arrive: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { background: var(--ground); }
+body {
+  margin: 0;
+  padding: 8px;
+  font: 400 14px/20px 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: var(--ground);
+}
+::selection { background: var(--accent-soft); color: var(--text); }
+.sheet {
+  max-width: 1120px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 32px 32px 40px;
+}
+header { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: end; justify-content: space-between; margin-bottom: 28px; }
+h1 { font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 6px; }
+.lead { margin: 0; color: var(--muted); max-width: 62ch; }
+h2 { font-size: 16px; line-height: 24px; font-weight: 600; margin: 0; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); cursor: pointer; user-select: none; }
+.toggle input { width: 16px; height: 16px; margin: 0; accent-color: var(--text); }
+
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.card { border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; min-width: 0; }
+.card-head { padding: 16px 16px 0; }
+.card-head p { margin: 4px 0 0; color: var(--muted); min-height: 40px; }
+.stage {
+  margin: 16px;
+  height: 220px;
+  border-radius: 6px;
+  background: var(--raised);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+}
+.stage .heron { width: 96px; height: 96px; }
+.status { color: var(--faint); font-size: 13px; line-height: 16px; transition: color 220ms var(--ease-arrive); }
+.card.is-done .status { color: var(--positive); }
+
+.uses { border-top: 1px solid var(--rule); padding: 14px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.btn {
+  font: inherit; font-weight: 500;
+  height: 32px; padding: 0 12px; border-radius: 6px;
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--control); background: var(--surface); color: var(--text);
+  cursor: pointer;
+  transition: transform 140ms var(--ease-arrive), background-color 150ms var(--ease-arrive);
+}
+.btn:active { transform: scale(0.97); }
+@media (hover: hover) { .btn:hover { background: var(--raised); } }
+.btn:focus-visible, .toggle input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.primary { background: var(--text); border-color: var(--text); color: #fff; }
+@media (hover: hover) { .btn.primary:hover { background: #2a2c30; } }
+.btn .heron { width: 16px; height: 16px; }
+.inline { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
+.inline .heron { width: 20px; height: 20px; }
+.actions { border-top: 1px solid var(--rule); padding: 12px 16px 16px; display: flex; gap: 8px; margin-top: auto; }
+
+.note { margin-top: 28px; color: var(--muted); max-width: 72ch; }
+.note h2 { color: var(--text); margin-bottom: 6px; }
+.note p { margin: 0 0 8px; }
+
+/* ── The heron ─────────────────────────────────────────────────────────── */
+.heron { display: block; overflow: visible; }
+.heron g { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.heron .eye { stroke: none; fill: var(--text); }
+.heron .final path { stroke: var(--text); }
+.heron .final { opacity: 0; }
+
+/* Draw: the line runs from the beak down the neck, holds, and lets go. */
+.v-draw .loop path { stroke: var(--text); stroke-dasharray: 100 100; animation: draw 2.4s var(--ease-move) infinite both; }
+.v-draw .loop path.front { animation-delay: 90ms; }
+.v-draw .loop path.crest { animation-name: draw-crest; }
+.v-draw .loop .eye { animation: eye 2.4s var(--ease-arrive) infinite both; }
+@keyframes draw {
+  0% { stroke-dashoffset: 100; }
+  44%, 74% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -100; }
+}
+@keyframes draw-crest {
+  0%, 36% { stroke-dashoffset: 100; }
+  52%, 74% { stroke-dashoffset: 0; }
+  90%, 100% { stroke-dashoffset: -100; }
+}
+@keyframes eye {
+  0%, 42% { opacity: 0; }
+  50%, 76% { opacity: 1; }
+  86%, 100% { opacity: 0; }
+}
+
+/* Strike: stands still, draws back, strikes, returns. */
+.v-strike .loop path { stroke: var(--text); }
+.v-strike .loop {
+  transform-box: view-box;
+  transform-origin: 39px 58px;
+  animation: strike 2.8s infinite both;
+}
+@keyframes strike {
+  0% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); }
+  56% { transform: rotate(2.5deg); animation-timing-function: cubic-bezier(0.2, 0, 0, 1); }
+  62%, 72% { transform: rotate(-11deg); animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Trace: a short light runs along both lines, like a pass over the sources. */
+.v-trace .loop .base { stroke: var(--control); }
+.v-trace .loop .light { stroke: var(--accent); stroke-dasharray: 26 200; animation: trace 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite both; }
+.v-trace .loop .eye { fill: var(--control); }
+@keyframes trace {
+  from { stroke-dashoffset: 26; }
+  to { stroke-dashoffset: -100; }
+}
+
+/* Done: the loop gives way to the mark, drawn once from the beak. */
+.is-done .heron:not(.v-strike) .loop { opacity: 0; transition: opacity 150ms ease-out; }
+.is-done .heron:not(.v-strike) .final { opacity: 1; }
+.is-done .heron:not(.v-strike) .final path { stroke-dasharray: 100 100; animation: settle 700ms var(--ease-arrive) both; }
+.is-done .heron:not(.v-strike) .final .eye { animation: fade-in 220ms var(--ease-arrive) 420ms both; }
+@keyframes settle { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Reduced motion: no travel, no drawing; the mark fades slowly between two tones. */
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.rm-off) .heron .loop { display: none; }
+  :root:not(.rm-off) .heron .final { opacity: 1; }
+  :root:not(.rm-off) .heron .final path, :root:not(.rm-off) .heron .final .eye { animation: none !important; }
+  :root:not(.rm-off) .card:not(.is-done) .heron .final { animation: quiet 1.6s ease-in-out infinite alternate; }
+}
+.rm .heron .loop { display: none; }
+.rm .heron .final { opacity: 1; }
+.rm .heron .final path, .rm .heron .final .eye { animation: none !important; }
+.rm .card:not(.is-done) .heron .final { animation: quiet 1.6s ease-in-out infinite alternate; }
+@keyframes quiet { from { opacity: 1; } to { opacity: 0.35; } }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  .card-head p { min-height: 0; }
+}
+@media (max-width: 600px) {
+  body { padding: 0; }
+  .sheet { border-radius: 0; border-width: 0; padding: 24px 16px 32px; }
+}
+</style>
+</head>
+<body>
+<main class="sheet">
+  <header>
+    <div>
+      <h1>Loader</h1>
+      <p class="lead">Three ways to make the heron say “still working”. Each card shows the full-page size, a button and an inline row. Finish loading shows how the loop hands over to the finished mark.</p>
+    </div>
+    <label class="toggle"><input type="checkbox" id="rm"> Reduce motion</label>
+  </header>
+
+  <div class="grid" id="grid"></div>
+
+  <section class="note">
+    <h2>Recommendation</h2>
+    <p><strong>Trace</strong> for everything inside the app. The full mark stays visible, so it reads as the logo even at 16px, and the light keeps moving at a steady pace without stopping to pose.</p>
+    <p><strong>Draw</strong> for the first start of an instance and the sign-in screen, where the page is empty anyway and the heron can take 2.4 seconds to appear. It also gives the hand-over to the finished mark for free.</p>
+    <p><strong>Strike</strong> carries the name best, but it holds still for most of its cycle and the movement is too small to read below 40px.</p>
+  </section>
+</main>
+
+<script>
+const PATHS = [
+  ['back', 'M6 25 L27 16.5 C29 11.5 36 10.5 39 14.5 C42 18.5 40 23.5 36.5 27.5 C33 31.5 33 36 37 40 C42 45 46 50 46 58'],
+  ['front', 'M6 25 L28 22 C29.5 26 27.5 29.5 26 32.5 C24 37 24.5 42 28.5 46 C31.5 49 32 53 32 58'],
+  ['crest', 'M39 14.5 L47 12'],
+];
+
+const VARIANTS = [
+  { key: 'draw', name: 'Draw', text: 'The line runs from the beak down the neck, holds, and lets go. 2.4 s per cycle.' },
+  { key: 'trace', name: 'Trace', text: 'A light runs along the outline, like a pass over the sources. 1.8 s per cycle.' },
+  { key: 'strike', name: 'Strike', text: 'The heron stands still, draws back and strikes. 2.8 s per cycle.' },
+];
+
+// Line weight follows the brand sheet: 3.8 for the mark, 4.6 without the eye at favicon sizes.
+function heron(variant, size) {
+  const small = size <= 24;
+  const sw = small ? 4.6 : 3.8;
+  const eye = small ? '' : '<circle class="eye" cx="32" cy="17" r="1.9"/>';
+  const line = (cls, d) => `<path class="${cls}" d="${d}" pathLength="100"/>`;
+  let loop;
+  if (variant === 'trace') {
+    loop = PATHS.map(([c, d]) => line(`base ${c}`, d)).join('') +
+      PATHS.slice(0, 2).map(([c, d]) => line(`light ${c}`, d)).join('') + eye;
+  } else {
+    loop = PATHS.map(([c, d]) => line(c, d)).join('') + eye;
+  }
+  const final = PATHS.map(([c, d]) => line(c, d)).join('') + eye;
+  return `<svg class="heron v-${variant}" viewBox="-1.5 6.25 56 56" aria-hidden="true" focusable="false">` +
+    `<g class="loop" stroke-width="${sw}">${loop}</g><g class="final" stroke-width="${sw}">${final}</g></svg>`;
+}
+
+function card(v) {
+  return `<article class="card" data-variant="${v.key}" aria-busy="true">
+    <div class="card-head"><h2>${v.name}</h2><p>${v.text}</p></div>
+    <div class="stage">${heron(v.key, 96)}<span class="status" role="status">Loading entries</span></div>
+    <div class="uses">
+      <button class="btn" type="button" tabindex="-1" aria-hidden="true">${heron(v.key, 16)}Syncing sources</button>
+      <span class="inline">${heron(v.key, 20)}Fetching CVE records</span>
+    </div>
+    <div class="actions">
+      <button class="btn primary" type="button" data-act="done">Finish loading</button>
+      <button class="btn" type="button" data-act="replay">Replay</button>
+    </div>
+  </article>`;
+}
+
+const grid = document.getElementById('grid');
+grid.innerHTML = VARIANTS.map(card).join('');
+
+// Strike settles from wherever the loop happens to be, instead of jumping back.
+function finish(el) {
+  if (el.classList.contains('is-done')) return;
+  el.querySelectorAll('.v-strike .loop').forEach(g => {
+    const now = getComputedStyle(g).transform;
+    g.style.animation = 'none';
+    g.style.transform = now;
+    g.getBoundingClientRect();
+    g.style.transition = 'transform 320ms cubic-bezier(0.23, 1, 0.32, 1)';
+    g.style.transform = 'rotate(0deg)';
+  });
+  el.classList.add('is-done');
+  el.setAttribute('aria-busy', 'false');
+  el.querySelector('.status').textContent = 'Loaded';
+}
+
+function replay(el) {
+  el.classList.remove('is-done');
+  el.setAttribute('aria-busy', 'true');
+  el.querySelector('.status').textContent = 'Loading entries';
+  el.querySelectorAll('.heron').forEach(svg => {
+    svg.querySelectorAll('.loop').forEach(g => { g.style.animation = ''; g.style.transform = ''; g.style.transition = ''; });
+    const fresh = svg.cloneNode(true);
+    svg.replaceWith(fresh);
+  });
+}
+
+grid.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const el = b.closest('.card');
+  (b.dataset.act === 'done' ? finish : replay)(el);
+});
+
+// The toggle previews the reduced-motion path; it starts in the state of the system setting.
+const rm = document.getElementById('rm');
+const mq = matchMedia('(prefers-reduced-motion: reduce)');
+rm.checked = mq.matches;
+function applyRm() {
+  document.documentElement.classList.toggle('rm', rm.checked);
+  document.documentElement.classList.toggle('rm-off', !rm.checked);
+}
+rm.addEventListener('change', applyRm);
+applyRm();
+</script>
+</body>
+</html>

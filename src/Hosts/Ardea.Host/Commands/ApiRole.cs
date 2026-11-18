@@ -1,7 +1,10 @@
+using Ardea.Platform.Audit;
 using Ardea.Platform.Configuration;
 using Ardea.Platform.Hosting;
 using Ardea.Platform.Jobs;
 using Ardea.Platform.Persistence;
+using Ardea.Platform.Secrets;
+using Ardea.Platform.Telemetry;
 using Npgsql;
 
 namespace Ardea.Host.Commands;
@@ -50,6 +53,8 @@ internal static partial class ApiRole
         builder.Services.AddArdeaPlatform(builder.Configuration, "api");
         builder.Services.AddUnitOfWork();
         builder.Services.AddJobQueue();
+        builder.Services.AddArdeaSecrets(MasterKey.FromBase64(builder.Configuration[HostConfiguration.MasterKeyKey]!));
+        builder.Services.AddArdeaTelemetry(builder.Logging, builder.Configuration, "api", AppVersion.Current);
         builder.Services.AddProblemDetails();
         foreach (var module in Modules.All)
         {
@@ -59,6 +64,13 @@ internal static partial class ApiRole
         var app = builder.Build();
         app.UseExceptionHandler();
         app.UseStatusCodePages();
+        app.Use((context, next) =>
+        {
+            var origin = context.RequestServices.GetRequiredService<AuditOrigin>();
+            origin.Origin = "api";
+            origin.IpAddress = context.Connection.RemoteIpAddress?.ToString();
+            return next(context);
+        });
 
         app.MapGet("/health/live", () => Results.Ok(new { status = "live" })).ExcludeFromDescription();
         app.MapGet("/health/ready", ReadyAsync).ExcludeFromDescription();

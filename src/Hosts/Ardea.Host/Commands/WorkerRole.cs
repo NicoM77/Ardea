@@ -2,6 +2,8 @@ using Ardea.Platform.Configuration;
 using Ardea.Platform.Hosting;
 using Ardea.Platform.Jobs;
 using Ardea.Platform.Persistence;
+using Ardea.Platform.Secrets;
+using Ardea.Platform.Telemetry;
 using Npgsql;
 
 namespace Ardea.Host.Commands;
@@ -25,6 +27,8 @@ internal static class WorkerRole
         builder.Services.AddHostedService(sp => ActivatorUtilities.CreateInstance<WorkerHeartbeat>(sp, AppVersion.Current));
         builder.Services.AddUnitOfWork();
         builder.Services.AddJobWorker();
+        builder.Services.AddArdeaSecrets(MasterKey.FromBase64(builder.Configuration[HostConfiguration.MasterKeyKey]!));
+        builder.Services.AddArdeaTelemetry(builder.Logging, builder.Configuration, "worker", AppVersion.Current);
         foreach (var module in Modules.All)
         {
             module.AddServices(builder.Services, builder.Configuration);

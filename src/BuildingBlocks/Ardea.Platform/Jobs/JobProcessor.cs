@@ -161,6 +161,7 @@ internal sealed partial class JobProcessor(
         try
         {
             await using var scope = scopes.CreateAsyncScope();
+            scope.ServiceProvider.GetRequiredService<Audit.AuditOrigin>().Origin = $"job:{job.Kind}";
             if (job.OrganizationId is { } organization)
             {
                 scope.ServiceProvider.GetRequiredService<TenantContext>().SetOrganization(organization);

@@ -30,6 +30,8 @@ internal sealed class ApiTestHost : IAsyncDisposable
 
     public DatabaseOptions Database { get; }
 
+    public IServiceProvider Services => _app.Services;
+
     public static async Task<ApiTestHost> StartAsync(PostgresServer server, Dictionary<string, string?>? settings = null)
     {
         var name = await server.CreateDatabaseAsync("iam");
@@ -119,7 +121,7 @@ internal sealed class ApiClient : IDisposable
 
     public Task<HttpResponseMessage> GetAsync(string path) => _http.GetAsync(new Uri(path, UriKind.Relative));
 
-    public async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, object? body = null, bool csrf = true, string? origin = null)
+    public async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, object? body = null, bool csrf = true, string? origin = null, string? fetchSite = null)
     {
         if (csrf && Xsrf() is null)
         {
@@ -140,6 +142,11 @@ internal sealed class ApiClient : IDisposable
         if (origin is not null)
         {
             request.Headers.Add("Origin", origin);
+        }
+
+        if (fetchSite is not null)
+        {
+            request.Headers.Add("Sec-Fetch-Site", fetchSite);
         }
 
         var response = await _http.SendAsync(request);

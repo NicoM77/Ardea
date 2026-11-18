@@ -181,7 +181,7 @@ public sealed class SignInTests(PostgresServer server)
         await using var host = await ApiTestHost.StartAsync(server);
         using var browser = host.Client();
         await SetupAsync(browser);
-        var setup = await (await browser.PostAsync("/api/v1/account/mfa/setup")).Content.ReadFromJsonAsync<JsonElement>();
+        var setup = await (await browser.PostAsync("/api/v1/account/mfa/setup", new { password = ApiTestHost.Password })).Content.ReadFromJsonAsync<JsonElement>();
         var key = setup.GetProperty("sharedKey").GetString()!.Replace(" ", string.Empty, StringComparison.Ordinal);
 
         var stored = await host.ScalarAsync<string>("SELECT value FROM iam.user_token WHERE name = 'AuthenticatorKey'");
@@ -203,17 +203,95 @@ public sealed class SignInTests(PostgresServer server)
     }
 
     [Fact]
-    public async Task Open_registration_creates_a_signed_in_account_and_rejects_a_taken_address()
+    public async Task Open_registration_creates_an_account_and_does_not_reveal_a_taken_address()
     {
         await using var host = await ApiTestHost.StartAsync(server);
         using var browser = host.Client();
 
         await Expect(HttpStatusCode.NoContent, await browser.PostAsync("/api/v1/auth/register", new { email = "new@example.org", displayName = "New", password = ApiTestHost.Password }));
         Assert.False((await SessionAsync(browser)).GetProperty("user").GetProperty("isInstanceAdmin").GetBoolean());
+
         using var other = host.Client();
-        await ExpectProblem(
-            await other.PostAsync("/api/v1/auth/register", new { email = "new@example.org", displayName = "Other", password = ApiTestHost.Password }),
-            HttpStatusCode.Conflict, "email_taken");
+        await Expect(HttpStatusCode.NoContent, await other.PostAsync("/api/v1/auth/register", new { email = "new@example.org", displayName = "Other", password = "the other persons phrase" }));
+        await Expect(HttpStatusCode.Unauthorized, await other.SessionAsync());
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM iam.\"user\" WHERE email = 'new@example.org'"));
+    }
+
+    [Fact]
+    public async Task Two_factor_setup_needs_the_password_and_a_wrong_one_counts_toward_lockout()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var thief = host.Client();
+        await SetupAsync(thief);
+
+        await ExpectProblem(await thief.PostAsync("/api/v1/account/mfa/setup", new { password = "a guessed password" }), HttpStatusCode.BadRequest, "invalid_password");
+        await ExpectProblem(await thief.PostAsync("/api/v1/account/mfa/setup"), HttpStatusCode.BadRequest, "invalid_password");
+        Assert.Equal(2, await host.ScalarAsync<int>("SELECT access_failed_count FROM iam.\"user\""));
+    }
+
+    [Fact]
+    public async Task Turning_on_two_factor_and_signing_out_everywhere_end_the_other_sessions()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var laptop = host.Client();
+        await SetupAsync(laptop);
+        using var phone = host.Client();
+        await phone.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
+
+        await EnableTotpAsync(laptop);
+        await Expect(HttpStatusCode.Unauthorized, await phone.SessionAsync());
+        await Expect(HttpStatusCode.OK, await laptop.SessionAsync());
+
+        using var tablet = host.Client();
+        await tablet.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
+        await tablet.PostAsync("/api/v1/auth/login/two-factor", new { code = await CurrentCodeAsync(host), isRecoveryCode = false });
+        await Expect(HttpStatusCode.OK, await tablet.SessionAsync());
+        await Expect(HttpStatusCode.NoContent, await laptop.SendAsync(HttpMethod.Delete, "/api/v1/account/sessions"));
+        await Expect(HttpStatusCode.Unauthorized, await tablet.SessionAsync());
+        await Expect(HttpStatusCode.OK, await laptop.SessionAsync());
+    }
+
+    [Fact]
+    public async Task Sign_in_from_a_cross_site_page_is_refused()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var browser = host.Client();
+        await SetupAsync(browser);
+        await browser.PostAsync("/api/v1/auth/logout");
+
+        var response = await browser.SendAsync(HttpMethod.Post, "/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password }, fetchSite: "cross-site");
+
+        await ExpectProblem(response, HttpStatusCode.Forbidden, "csrf_failed");
+    }
+
+    [Fact]
+    public async Task Api_answers_are_never_cached()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var browser = host.Client();
+
+        var response = await browser.SessionAsync();
+
+        Assert.True(response.Headers.CacheControl?.NoStore, response.Headers.CacheControl?.ToString());
+    }
+
+    [Theory]
+    [InlineData("2001:db8:1:2:aaaa::1", "2001:db8:1:2::/64")]
+    [InlineData("2001:db8:1:2:ffff::9", "2001:db8:1:2::/64")]
+    [InlineData("203.0.113.9", "203.0.113.9")]
+    [InlineData("::ffff:203.0.113.9", "203.0.113.9")]
+    public void Rate_limit_treats_an_ipv6_slash_64_as_one_client(string address, string key)
+    {
+        Assert.Equal(key, IamModule.ClientKey(System.Net.IPAddress.Parse(address)));
+    }
+
+    /// <summary>The current code of the stored authenticator key, as the user's app shows it.</summary>
+    private static async Task<string> CurrentCodeAsync(ApiTestHost host)
+    {
+        await using var scope = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.CreateAsyncScope(host.Services);
+        var users = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<Domain.ArdeaUser>>(scope.ServiceProvider);
+        var user = await users.FindByEmailAsync(Email);
+        return Totp.Code((await users.GetAuthenticatorKeyAsync(user!))!);
     }
 
     private static Task<HttpResponseMessage> SetupAsync(ApiClient client, string token = ApiTestHost.SetupTokenValue, string email = Email, string password = ApiTestHost.Password) =>
@@ -236,7 +314,7 @@ public sealed class SignInTests(PostgresServer server)
 
         async Task<string> Enable()
         {
-            var setup = await (await client.PostAsync("/api/v1/account/mfa/setup")).Content.ReadFromJsonAsync<JsonElement>();
+            var setup = await (await client.PostAsync("/api/v1/account/mfa/setup", new { password = ApiTestHost.Password })).Content.ReadFromJsonAsync<JsonElement>();
             var key = setup.GetProperty("sharedKey").GetString()!;
             Assert.StartsWith("otpauth://totp/Ardea:", setup.GetProperty("authenticatorUri").GetString(), StringComparison.Ordinal);
             var enabled = await client.PostAsync("/api/v1/account/mfa", new { code = Totp.Code(key) });

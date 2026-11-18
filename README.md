@@ -47,8 +47,8 @@ Consolidated entries from five sources, including OSV for packages, with merging
 | 1.1 | Catalog module: product keys, CPE reader, version schemes (SemVer, NuGet, PEP 440, Maven, RPM, numeric), catalogue format | 0.1 | ⬜ |
 | 1.2 | Provider SDK with checkpoints and signal interface; sync control: due time, cursor, back-off, health, run log | 0.4 | ✅ |
 | 1.3 | HTTP foundation for adapters: timeout, retry, rate limiting, conditional requests, size limits | 1.2 | ✅ |
-| 1.4 | CVE Program adapter: deltas, initial load and long gaps via the full archive, single fetch | 1.3 | ⬜ |
-| 1.5 | Raw record store with revisions; normalisation to observations; quarantine | 1.4, 1.1 | ⬜ |
+| 1.4 | CVE Program adapter: deltas, initial load and long gaps via the full archive, single fetch | 1.3 | ✅ |
+| 1.5 | Raw record store with revisions; normalisation to observations; quarantine | 1.4, 1.1 | ✅ |
 | 1.6 | Merge by CVE ID with fixed precedence rules and per-field provenance | 1.5 | ⬜ |
 | 1.7 | Change detection with both fingerprints; change history; follow-up job on material change | 1.6 | ⬜ |
 | 1.8 | Signals: KEV and EPSS in `entry_signal`, class change with threshold | 1.6 | ⬜ |

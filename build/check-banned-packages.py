@@ -18,6 +18,10 @@ BANNED = {
     "sixlabors.imagesharp": 0,
     "duende.identityserver": 0,
     "tickerq": 0,
+    # Verify 33 enforces a maintenance-fee licence check at build time (found 18 Nov 2026).
+    "verify": 0,
+    "verify.xunitv3": 0,
+    "verify.xunit": 0,
 }
 
 # npm packages (lower case) -> first excluded major version

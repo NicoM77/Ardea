@@ -89,7 +89,7 @@ Web:
 
 Eine neue Abhängigkeit braucht einen Grund im Pull Request. Der Build prüft Lizenzen gegen eine Positivliste: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, PostgreSQL, MPL-2.0, für Schriften die SIL Open Font License.
 
-Ausgeschlossen, weil kommerziell oder mit Auflagen für Betreiber (Stand 18.11.2026, Kapitel 2): MediatR, AutoMapper, MassTransit ab 9, FluentAssertions ab 8, ImageSharp, Duende IdentityServer, TickerQ. «Frei für Open-Source-Projekte» genügt nicht: Die Klausel deckt das Repository, nicht die Firma, die das System bei sich betreibt.
+Ausgeschlossen, weil kommerziell oder mit Auflagen für Betreiber (Stand 18.11.2026, Kapitel 2): MediatR, AutoMapper, MassTransit ab 9, FluentAssertions ab 8, ImageSharp, Duende IdentityServer, TickerQ, Verify ab 33. «Frei für Open-Source-Projekte» genügt nicht: Die Klausel deckt das Repository, nicht die Firma, die das System bei sich betreibt.
 
 ## 13.6 Tests
 
@@ -105,7 +105,7 @@ Was ein Test leisten muss:
 | Ebene | Gegenstand | Werkzeug | Umfang und Zeit |
 |---|---|---|---|
 | Unit | Versionsvergleich, Produktschlüssel, Vorrangregeln, Regelwerk mit Ober- und Untergrenzen, Fingerabdrücke, Bildung der Massnahmen, Benachrichtigungsstand, Abgleich eingelesener Komponenten mit dem Profil, Verschmelzen von Einträgen; in der Web-App Logik und Zustände der Komponenten | xUnit v3, Vitest | der grösste Teil aller Tests; zusammen unter 3 Minuten |
-| Adapter | Jeder Quellenadapter gegen aufgezeichnete echte Antworten; ebenso die Anbindung an GitHub, jeder Leser für Lockdateien und jede Erkennungsregel gegen echte Dateien und SBOMs; Ausgabe als Snapshot | xUnit v3, Verify | ohne Netz, zählt zeitlich zu Unit |
+| Adapter | Jeder Quellenadapter gegen aufgezeichnete echte Antworten; ebenso die Anbindung an GitHub, jeder Leser für Lockdateien und jede Erkennungsregel gegen echte Dateien und SBOMs; Ausgabe als Snapshot | xUnit v3, eigener Snapshot-Abgleich | ohne Netz, zählt zeitlich zu Unit |
 | Bewertung | Referenzsatz für Treffer und Stufe mit den Schwellen als Abnahmekriterium; nur Regeln, kein Sprachmodell | eigener Lauf | 200 Paare, unter 1 Minute |
 | Integration | Nur was allein die echte Datenbank zeigt: Idempotenz der Kette, Wiederholung und Leases, gemeinsame Transaktion, Mandantentrennung, Migrationen | Testcontainers, Respawn | eine Datenbank für den ganzen Lauf, parallel; unter 6 Minuten |
 | Architektur und Vertrag | Modulgrenzen; OpenAPI-Dokument stimmt mit dem Code überein; Fremdzugriffstest für jeden Mandanten-Endpunkt, aus dem OpenAPI-Dokument erzeugt | ArchUnitNET, eigener Test | unter 2 Minuten |

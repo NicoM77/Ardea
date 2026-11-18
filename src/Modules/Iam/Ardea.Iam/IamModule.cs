@@ -96,7 +96,7 @@ public sealed class IamModule : IModule
         services.Configure<CookieAuthenticationOptions>(IdentityConstants.ExternalScheme, options => options.Cookie.SecurePolicy = policy);
         services.Configure<CookieAuthenticationOptions>(IdentityConstants.TwoFactorRememberMeScheme, options => options.Cookie.SecurePolicy = policy);
         services.AddAuthorization(options => options.AddPolicy(
-            Contracts.IamPolicies.InstanceAdmin, policy => policy.RequireAuthenticatedUser().RequireClaim(Contracts.IamPolicies.InstanceAdminClaim, "true")));
+            Platform.Http.Policies.InstanceAdmin, policy => policy.RequireAuthenticatedUser().RequireClaim(Contracts.IamPolicies.InstanceAdminClaim, "true")));
         services.AddAntiforgery(options =>
         {
             options.HeaderName = SessionClaims.XsrfHeaderName;

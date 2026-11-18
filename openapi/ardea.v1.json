@@ -598,6 +598,441 @@
         }
       }
     },
+    "/api/v1/entries": {
+      "get": {
+        "tags": [
+          "Entries"
+        ],
+        "operationId": "listEntries",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "changedSince",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOfEntrySummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entries/{key}": {
+      "get": {
+        "tags": [
+          "Entries"
+        ],
+        "operationId": "getEntry",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entries/{key}/changes": {
+      "get": {
+        "tags": [
+          "Entries"
+        ],
+        "operationId": "listEntryChanges",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntryChangeView"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entries/{key}/sources": {
+      "get": {
+        "tags": [
+          "Entries"
+        ],
+        "operationId": "listEntrySources",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntrySourceView"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sources": {
+      "get": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "listSources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SourceStatus"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/sources/{key}": {
+      "patch": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "updateSource",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/sources/{key}/sync": {
+      "post": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "syncSource",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/sources/{key}/runs": {
+      "get": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "listSourceRuns",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SourceRunView"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/sources/{key}/quarantine": {
+      "get": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "listQuarantine",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuarantinedRecord"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/instance": {
       "get": {
         "tags": [
@@ -857,6 +1292,95 @@
           }
         }
       },
+      "AffectedView": {
+        "required": [
+          "vendor",
+          "product",
+          "productKey",
+          "cpe",
+          "purl",
+          "versionScheme",
+          "introduced",
+          "fixed",
+          "lastAffected",
+          "exact",
+          "status",
+          "defaultStatus",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "vendor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "product": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "productKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cpe": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "purl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "versionScheme": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "introduced": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fixed": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lastAffected": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exact": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "defaultStatus": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
       "ChangePasswordRequest": {
         "required": [
           "currentPassword",
@@ -932,6 +1456,314 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "EntryChangeView": {
+        "required": [
+          "revision",
+          "changedAt",
+          "kinds",
+          "isMaterial",
+          "triggeredBy",
+          "diff"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isMaterial": {
+            "type": "boolean"
+          },
+          "triggeredBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "diff": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          }
+        }
+      },
+      "EntryDetail": {
+        "required": [
+          "entry",
+          "summary",
+          "description",
+          "cvssVersion",
+          "cvssVector",
+          "cweIds",
+          "provenance",
+          "exploitationEvidence",
+          "metrics",
+          "solutions",
+          "workarounds",
+          "affected",
+          "references",
+          "revision",
+          "redirectedFrom"
+        ],
+        "type": "object",
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/EntrySummary"
+          },
+          "summary": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cvssVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cvssVector": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cweIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "exploitationEvidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvidenceView"
+            }
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricView"
+            }
+          },
+          "solutions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "workarounds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "affected": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AffectedView"
+            }
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReferenceView"
+            }
+          },
+          "revision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "redirectedFrom": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "EntrySourceView": {
+        "required": [
+          "source",
+          "name",
+          "operator",
+          "operatorKind",
+          "relation",
+          "url",
+          "attribution"
+        ],
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string"
+          },
+          "operatorKind": {
+            "type": "string"
+          },
+          "relation": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "attribution": {
+            "type": "string"
+          }
+        }
+      },
+      "EntrySummary": {
+        "required": [
+          "key",
+          "kind",
+          "title",
+          "state",
+          "cvssScore",
+          "severity",
+          "exploitation",
+          "epssClass",
+          "fixAvailable",
+          "authorityWarning",
+          "publishedAt",
+          "changedAt",
+          "aliases"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "state": {
+            "type": "string"
+          },
+          "cvssScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "exploitation": {
+            "type": "string"
+          },
+          "epssClass": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fixAvailable": {
+            "type": "boolean"
+          },
+          "authorityWarning": {
+            "type": "boolean"
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EvidenceView": {
+        "required": [
+          "source",
+          "state",
+          "evidence",
+          "since"
+        ],
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "since": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -1022,6 +1854,7 @@
           }
         }
       },
+      "JsonElement": {},
       "LoginRequest": {
         "required": [
           "email",
@@ -1054,6 +1887,45 @@
           }
         }
       },
+      "MetricView": {
+        "required": [
+          "system",
+          "version",
+          "vector",
+          "score",
+          "assigner"
+        ],
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "vector": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "score": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "assigner": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "MfaSetupRequest": {
         "required": [
           "password"
@@ -1080,6 +1952,27 @@
           },
           "authenticatorUri": {
             "type": "string"
+          }
+        }
+      },
+      "PageOfEntrySummary": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntrySummary"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -1125,6 +2018,45 @@
           }
         }
       },
+      "QuarantinedRecord": {
+        "required": [
+          "externalId",
+          "url",
+          "reason",
+          "lastSeenAt",
+          "revision"
+        ],
+        "type": "object",
+        "properties": {
+          "externalId": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "RecoveryCodesResponse": {
         "required": [
           "recoveryCodes"
@@ -1132,6 +2064,24 @@
         "type": "object",
         "properties": {
           "recoveryCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ReferenceView": {
+        "required": [
+          "url",
+          "tags"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "tags": {
             "type": "array",
             "items": {
               "type": "string"
@@ -1414,6 +2364,175 @@
           }
         }
       },
+      "SourceRunView": {
+        "required": [
+          "startedAt",
+          "finishedAt",
+          "mode",
+          "outcome",
+          "fetched",
+          "changed",
+          "checkpoints",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "fetched": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "changed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "checkpoints": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SourceStatus": {
+        "required": [
+          "key",
+          "name",
+          "kind",
+          "operator",
+          "operatorKind",
+          "enabled",
+          "health",
+          "healthReason",
+          "intervalMinutes",
+          "lastSuccessAt",
+          "lastAttemptAt",
+          "nextSyncAt",
+          "consecutiveFailures",
+          "records",
+          "quarantined",
+          "attribution",
+          "termsMode"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string"
+          },
+          "operatorKind": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "health": {
+            "type": "string"
+          },
+          "healthReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "intervalMinutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lastSuccessAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lastAttemptAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "nextSyncAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "consecutiveFailures": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "records": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "quarantined": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "attribution": {
+            "type": "string"
+          },
+          "termsMode": {
+            "type": "string"
+          }
+        }
+      },
       "TestEmailRequest": {
         "required": [
           "to"
@@ -1518,6 +2637,30 @@
           }
         },
         "description": "Absent fields stay unchanged; an empty string removes a stored value."
+      },
+      "UpdateSourceRequest": {
+        "required": [
+          "enabled",
+          "intervalMinutes"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "intervalMinutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
       }
     }
   },
@@ -1530,6 +2673,12 @@
     },
     {
       "name": "Account"
+    },
+    {
+      "name": "Entries"
+    },
+    {
+      "name": "Sources"
     },
     {
       "name": "Administration"

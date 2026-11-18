@@ -16,8 +16,12 @@ internal sealed record ScheduleDueSources : IJob
     public static string Kind => "intel.schedule-due-sources";
 }
 
-/// <summary>One run of one source. A single attempt: the source's own back-off decides the next run (master plan 3.4).</summary>
-internal sealed record SyncSource(string SourceKey) : IJob
+/// <summary>
+/// One run of one source. A single attempt: the source's own back-off decides the next run (master
+/// plan 3.4). With <see cref="SingleIds"/> it fetches just those records, e.g. what the completeness
+/// check found missing, and leaves cursor and schedule alone.
+/// </summary>
+internal sealed record SyncSource(string SourceKey, IReadOnlyList<string>? SingleIds = null) : IJob
 {
     public static string Kind => "intel.sync-source";
 
@@ -75,6 +79,12 @@ internal sealed partial class SyncSourceHandler(
         {
             // An unknown key is an adapter that is no longer in the image.
             LogNoProvider(job.SourceKey);
+            return;
+        }
+
+        if (job.SingleIds is { Count: > 0 } singles)
+        {
+            await FetchSinglesAsync(job.SourceKey, provider, singles, cancellationToken);
             return;
         }
 
@@ -136,6 +146,64 @@ internal sealed partial class SyncSourceHandler(
         {
             TryDelete(work);
         }
+    }
+
+    /// <summary>Fetches named records one by one; a record that fails is logged and the others go on.</summary>
+    private async Task FetchSinglesAsync(string sourceKey, ISourceProvider provider, IReadOnlyList<string> ids, CancellationToken cancellationToken)
+    {
+        var (sourceId, _, _, settings) = await ReadStateAsync(sourceKey, cancellationToken);
+        var runId = await StartRunAsync(sourceId, SyncMode.Single, time.GetUtcNow(), cancellationToken);
+        var work = Path.Combine(configuration["SCRATCH_DIR"] ?? Path.Combine(Path.GetTempPath(), "ardea"), sourceKey, runId.ToString("N"));
+        Directory.CreateDirectory(work);
+        var run = new RunCounters();
+        var failures = new List<string>();
+        try
+        {
+            using var client = http.Create(provider.Descriptor, SyncMode.Single);
+            var buffer = new List<RawRecord>();
+            foreach (var id in ids)
+            {
+                var context = new SyncContext
+                {
+                    SourceKey = sourceKey,
+                    Http = client,
+                    Mode = SyncMode.Single,
+                    SingleId = id,
+                    Clock = time,
+                    Limits = new SyncLimits(provider.Descriptor.MaxResponseBytes, SyncSource.Timeout, 1),
+                    WorkDirectory = work,
+                    Configuration = settings,
+                };
+                try
+                {
+                    await foreach (var item in provider.FetchAsync(context, cancellationToken))
+                    {
+                        if (item is RawRecord record)
+                        {
+                            buffer.Add(record);
+                        }
+                    }
+                }
+                catch (Exception ex) when (ex is HttpRequestException or ArgumentException or InvalidOperationException or System.Text.Json.JsonException)
+                {
+                    failures.Add($"{id}: {ex.Message}");
+                }
+            }
+
+            await CommitAsync(sourceId, sourceKey, runId, buffer, newCursor: null, run, cancellationToken);
+        }
+        finally
+        {
+            TryDelete(work);
+        }
+
+        var runRow = await db.SourceRuns.SingleAsync(r => r.Id == runId, cancellationToken);
+        runRow.FinishedAt = time.GetUtcNow();
+        runRow.Fetched = run.Fetched;
+        runRow.Changed = run.Changed;
+        runRow.Outcome = failures.Count == 0 ? "succeeded" : "failed";
+        runRow.Error = failures.Count == 0 ? null : string.Join("; ", failures)[..Math.Min(2000, string.Join("; ", failures).Length)];
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>Batch size of the bulk signal write; EPSS brings about 400,000 values a day.</summary>

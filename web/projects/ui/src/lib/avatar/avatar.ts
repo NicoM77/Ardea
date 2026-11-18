@@ -25,9 +25,14 @@ export function tintFor(id: string): UiAvatarTint {
  */
 @Component({
   selector: 'ui-avatar',
-  host: { '[class]': "'is-' + tint()", 'aria-hidden': 'true' },
-  template: `{{ initials() }}`,
+  host: { '[class]': "'is-' + tint()", '[attr.data-initials]': 'initials()', 'aria-hidden': 'true' },
+  // The initials are drawn as generated content, not text: the control around the avatar carries the
+  // person's name, and visible text that is not part of that name fails WCAG 2.5.3 (label in name).
+  template: '',
   styles: `
+    :host::after {
+      content: attr(data-initials);
+    }
     :host {
       display: inline-grid;
       place-items: center;

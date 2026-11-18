@@ -52,21 +52,17 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
 
     public async Task<MigrationOutcome> MigrateAsync(NpgsqlConnection owner, CancellationToken cancellationToken)
     {
-        // Two migrate processes against the same database run one after the other.
-        await using (var lockCommand = new NpgsqlCommand("SELECT pg_advisory_lock(hashtext('ardea-migrate'))", owner))
+        // Two migrate processes against the same database run one after the other. The lock lives on
+        // its own session: EF Core may close and reopen the migration connection (type reloading).
+        await using var lockSession = new NpgsqlConnection(options.OwnerConnectionString("ardea-migrate-lock"));
+        await lockSession.OpenAsync(cancellationToken);
+        await using (var lockCommand = new NpgsqlCommand("SELECT pg_advisory_lock(hashtext('ardea-migrate'))", lockSession))
         {
             await lockCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        try
-        {
-            return await MigrateLockedAsync(owner, cancellationToken);
-        }
-        finally
-        {
-            await using var unlock = new NpgsqlCommand("SELECT pg_advisory_unlock(hashtext('ardea-migrate'))", owner);
-            await unlock.ExecuteNonQueryAsync(CancellationToken.None);
-        }
+        // The session ends with the connection, and the lock with it.
+        return await MigrateLockedAsync(owner, cancellationToken);
     }
 
     private async Task<MigrationOutcome> MigrateLockedAsync(NpgsqlConnection owner, CancellationToken cancellationToken)
@@ -78,6 +74,7 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
         {
             await using var context = database.CreateContext(owner);
             var migrations = (await context.Database.GetPendingMigrationsAsync(cancellationToken)).ToList();
+            await EnsureOpenAsync(owner, cancellationToken);
             if (migrations.Count > 0)
             {
                 pending.Add((database, migrations));
@@ -94,6 +91,7 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
         {
             await using var context = database.CreateContext(owner);
             await context.Database.MigrateAsync(cancellationToken);
+            await EnsureOpenAsync(owner, cancellationToken);
             LogSchemaMigrated(database.Schema, migrations.Count);
         }
 
@@ -122,6 +120,14 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
         }
 
         return behind;
+    }
+
+    private static async Task EnsureOpenAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
+    {
+        if (connection.State != System.Data.ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
     }
 
     private static async Task<bool> HasApplicationDataAsync(NpgsqlConnection owner, CancellationToken cancellationToken)

@@ -95,5 +95,17 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await expect(page.getByText('Installed version')).toBeVisible();
   await expectAccessible(page, 'administration');
 
+  // Entries and sources (task 1.10): instance-wide, reachable without an organization.
+  await navigation.getByRole('link', { name: 'Sources' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Sources' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Data-quality review' })).toBeVisible();
+  await expectAccessible(page, 'sources');
+
+  await navigation.getByRole('link', { name: 'Vulnerabilities' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Vulnerabilities' })).toBeVisible();
+  await expect(page.locator('section[aria-busy="false"]')).toBeVisible();
+  await expectAccessible(page, 'entries');
+
   expect(problems).toEqual([]);
 });

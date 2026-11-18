@@ -1,1 +1,182 @@
-{"tenantDocumentId":"ld_3884","documentType":"page","contentType":"content-page","lang":"en","documentId":3884,"visiblePublicationDate":"2026-05-15T14:32:25.000Z","updatedAt":"2026-11-18T08:32:21.046Z","metadata":{"groupId":"QYvbYcFD95qD","lang":"en","slug":"current-incidents","teaserImage":{"crops":[{"isAutomatic":true,"x":109,"y":0,"width":332,"height":187,"name":"16:9","url":"https://prod-bacsch-hcms-sdweb.imgix.net/2026/05/26/02362c31-21ef-4b3a-aebc-fdb16958e72a.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","ratio":1.77778,"srcSet":[{"width":2048,"url":"https://prod-bacsch-hcms-sdweb.imgix.net/2026/05/26/02362c31-21ef-4b3a-aebc-fdb16958e72a.jpg?rect=109%2C0%2C332%2C187&w=2048&auto=format"},{"width":1024,"url":"https://prod-bacsch-hcms-sdweb.imgix.net/2026/05/26/02362c31-21ef-4b3a-aebc-fdb16958e72a.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format"},{"width":620,"url":"https://prod-bacsch-hcms-sdweb.imgix.net/2026/05/26/02362c31-21ef-4b3a-aebc-fdb16958e72a.jpg?rect=109%2C0%2C332%2C187&w=620&auto=format"},{"width":320,"url":"https://prod-bacsch-hcms-sdweb.imgix.net/2026/05/26/02362c31-21ef-4b3a-aebc-fdb16958e72a.jpg?rect=109%2C0%2C332%2C187&w=320&auto=format"}]},{"isAutomatic":true,"x":182,"y":0,"width":187,"height":187,"name":"1:1","url":"https://prod-bacsch-hcms-sdweb.imgix.net/2026/05/26/02362c31-21ef-4b3a-aebc-fdb16958e72a.jpg?rect=182%2C0%2C187%2C187&w=1024&auto=format","ratio":1,"srcSet":[{"width":2048,"url":"https://prod-bacsch-hcms-sdweb.imgix.net/2026/05/26/02362c31-21ef-4b3a-aebc-fdb16958e72a.jpg?rect=182%2C0%2C187%2C187&w=2048&auto=format"},{"width":1024,"url":"https://prod-bacsch-hcms-sdweb.imgix.net/2026/05/26/02362c31-21ef-4b3a-aebc-fdb16958e72a.jpg?rect=182%2C0%2C187%2C187&w=1024&auto=format"},{"width":620,"url":"https://prod-bacsch-hcms-sdweb.imgix.net/2026/05/26/02362c31-21ef-4b3a-aebc-fdb16958e72a.jpg?rect=182%2C0%2C187%2C187&w=620&auto=format"},{"width":320,"url":"https://prod-bacsch-hcms-sdweb.imgix.net/2026/05/26/02362c31-21ef-4b3a-aebc-fdb16958e72a.jpg?rect=182%2C0%2C187%2C187&w=320&auto=format"}]}],"mediaId":"JvnYT3b7V0v5","url":"https://prod-bacsch-hcms-sdweb.imgix.net/2026/05/26/02362c31-21ef-4b3a-aebc-fdb16958e72a.jpg?w=1024&auto=format"},"teaserText":"Overview of NCSC warnings.","teaserTitle":"Current Incidents","jsonLDEntities":[],"translationPages":[{"lang":"it","slug":"incidenti-attuali"},{"lang":"fr","slug":"incidents-actuels"},{"lang":"de","slug":"aktuelle-vorfaelle"}],"publishDate":"2026-05-15T14:32:25.000Z","authors":[],"federalTopic":[],"contactData":"","canonical":"","description":"","metakeywords":"","robots":"all","title":"Current Incidents","og":{"description":"","image":"","title":"","type":"article","url":""},"twitter":{"card":"summary","description":"","image":"","site":"","title":"Current Incidents"},"tagCategory":{},"indexGlossary":{},"typeMetadata":{"publicationType":""},"contactDataInformation":{}},"content":[{"properties":{"type":"detail","metaInfoType":{"name":""},"dateInfo":{"publicationDate":""}},"identifier":"lead-contentpage-with-checkbox","id":"doc-1jpk8i8fo0","nestedContent":[{"properties":{"heading":"h1","label":"Current Incidents","class":"hero__title","anchorNav":"Current-Incidents"},"identifier":"title","id":"doc-1jpk8i8fo1"},{"properties":{"text":""},"identifier":"p","id":"doc-1jpk8i8fo2"}]},{"properties":{"sectionStyles":{}},"identifier":"section","id":"doc-section-1795034146076-409","nestedContent":[{"properties":{},"identifier":"container","id":"doc-container-1795034146076-725","nestedContent":[{"properties":{"idComponent":"teaser-grid-doc-1jqt3j26f0","title":"","variant":"teaser-grid","link":null},"identifier":"teaser-container","id":"doc-1jqt3j26f0","nestedContent":[{"properties":{"title":"Java4Shell: Critical Java vulnerability - install security updates immediately","slug":"/en/warnung-java-2-en","description":"The critical vulnerability Java4Shell (CVE-2026-114938) allows attackers to execute malicious code on affected systems over the network, in some cases without authentication. Security updates are available. The NCSC recommends that operators immediately check whether their systems are affected and update affected systems.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Nov 18","metaInfo":{"type":"","date":"2026-11-18T06:33:15.645Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1k7mshhje0"},{"properties":{"title":"Java security updates announced: Operators should check their systems","slug":"/en/warnung-java-en","description":"Oracle has announced security updates for 17 November 2026, including eleven security patches for Java SE. According to the vendor, the associated vulnerabilities can be exploited over a network without credentials. The National Cyber Security Centre (NCSC) recommends that operators check their systems and prepare to update them.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Nov 17","metaInfo":{"type":"","date":"2026-11-17T16:24:00.000Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1k7msef8d0"},{"properties":{"title":"Cooling and refrigeration control systems: Identifying, updating and protecting systems","slug":"/en/warnung-kuehlanlagen-en","description":"The attacks on cooling control systems that have come to light in recent weeks show that Switzerland, too, is affected by this threat. Several incidents in Europe and Switzerland highlight that vulnerable cooling and refrigeration control systems can still be successfully targeted and that the recommended protective measures have not been implemented everywhere.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Nov 10","metaInfo":{"type":"","date":"2026-11-10T09:31:51.453Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1k72f7g1m0"},{"properties":{"title":"Phishing in the name of the Federal Tax Administration (FTA)","slug":"/en/warnung-estv-en","description":"The NCSC is currently receiving a large number of reports of phishing attempts carried out in the name of the Federal Tax Administration (FTA). These involve an alleged tax refund or a supposedly new system or system changeover. As part of this, a great deal of personal information is requested, such as your date of birth, telephone number and bank account details.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Nov 9","metaInfo":{"type":"","date":"2026-11-09T14:29:11.315Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1k70bgpp00"},{"properties":{"title":"Phishing emails sent in the name of the commercial register (FCRO)","slug":"/en/warnung-ehra-en","description":"The NCSC is currently receiving numerous reports regarding an allegedly necessary data update in the Commercial Register (FCRO). These are phishing messages. Do not respond to them; delete these messages.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Nov 6","metaInfo":{"type":"","date":"2026-11-06T11:09:56.518Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1k6o8vadk0"},{"properties":{"title":"Critical vulnerabilities in PHP: Install security updates immediately","slug":"/en/warnung-php-en","description":"Two critical vulnerabilities in PHP could allow attackers to execute malicious code on affected servers without logging in. Security updates are now available. The National Cyber Security Centre (NCSC) recommends updating affected systems without delay. In addition to web servers, please also check applications and devices that use PHP as an integrated component.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Oct 21","metaInfo":{"type":"","date":"2026-10-21T14:36:08.232Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1k5hr5pj70"},{"properties":{"title":"Update on the SwissNovaChat notice","slug":"/en/update-on-the-swissnovachat-notice","description":"The NCSC is currently receiving numerous reports regarding invoices related to an alleged service provided by Swissnovachat, which are being collected through a debt collection agency (Letterdata). BACS recommends that individuals who have not used this service dispute the claim in writing and carefully retain all correspondence in case the claim is pursued further.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Aug 18","metaInfo":{"type":"","date":"2026-08-18T15:08:51.048Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1k0cbl7pr0"},{"properties":{"title":"Increase in compromised websites with fake CAPTCHAs","slug":"/en/clickfix-en","description":"The NCSC is currently seeing an increase in compromised websites that use fake CAPTCHAs to trick people into running malicious commands and infecting their computers with malware. More than 100,000 websites worldwide are affected. The NCSC is also seeing an increase in the number of Swiss websites being compromised by cybercriminals and used to distribute malware.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Aug 7","metaInfo":{"type":"","date":"2026-08-07T10:25:47.569Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1jvk06o1g0"},{"properties":{"title":"Phishing targeting crypto wallets: Letters with a QR code are currently in circulation","slug":"/en/phishing-targeting-crypto-wallets-letters-with-a-qr-code-are-currently-in-circulation","description":"The NCSC has received several reports of letters containing a QR code and prompting recipients to download an urgent update for various crypto wallets. However, after scanning the QR code, recipients are redirected to a phishing website where they are asked to enter their recovery phrases. If these are disclosed, attackers can gain complete control over the crypto wallet in question and steal the assets it contains. Never disclose passwords or recovery phrases to third parties.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Jul 31","metaInfo":{"type":"","date":"2026-07-31T06:30:00.000Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1k0cbm4cc0"},{"properties":{"title":"Warning regarding SwissNovaChat / SwissNovaCare","slug":"/en/warning-regarding-swissnovachat-swissnovacare","description":"The NCSC is currently receiving numerous reports regarding the websites swissnovachat.ch and swissnovacare.com. There may be other similar websites. These are operated by entities whose business model involves sending invoices even though no subscription exists. The legal notice lists “Margot Brands Ltd” from Hong Kong. Ignore such messages, do not click on any links they contain, and do not make any payments.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Apr 6","metaInfo":{"type":"","date":"2026-04-06T22:00:00.000Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1jvjvfkn51"},{"properties":{"title":"Phishing emails regarding the E-Vignette","slug":"/en/phishing-emails-regarding-the-e-vignette","description":"The NCSC receives currently reports of emails claiming that the E-Vignette has been deactivated due to a billing issue. The email links to a phishing site. The email lists the general NCSC email address. This email has not been sent by the NCSC. Please ignore it and delete it.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Jul 29","metaInfo":{"type":"","date":"2026-07-29T18:28:58.737Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1jvjvfkn52"},{"properties":{"title":"Blackmail emails in circulation","slug":"/en/blackmail-emails-in-circulation","description":"The NCSC is currently receiving reports of emails in which blackmailers claim to be in possession of credit card details, driving licence details, social security numbers and other data. They threaten to sell this information on the dark web. The emails often appear to come from the recipient's own address. However, this is not the case. The sender address is fake. The email is a bluff. Ignore it and do not be intimidated.","imageURL":"https://prod-bacsch-hcms-sdweb.imgix.net/dam/en/sd-web/JvnYT3b7V0v5/foto_warnung_email_s.jpg?rect=109%2C0%2C332%2C187&w=1024&auto=format","imageAlt":"","teaserType":"default","language":"en","date":"Feb 28","metaInfo":{"type":"","date":"2026-02-28T19:35:00.000Z"},"isPublicationDateHidden":false,"eventInfos":null,"authors":[],"contentIcons":[],"contentSpecs":{},"federalTopic":[],"contentType":"content-page"},"identifier":"teaser-item","id":"doc-1jvjvfkn53"}]}]}]}]}
+{
+  "documentId": 3884,
+  "tenantDocumentId": "ld_3884",
+  "documentType": "page",
+  "contentType": "content-page",
+  "lang": "en",
+  "visiblePublicationDate": "2026-05-15T14:32:25.000Z",
+  "updatedAt": "2026-11-18T08:32:21.046Z",
+  "metadata": {
+    "groupId": "QYvbYcFD95qD",
+    "lang": "en",
+    "slug": "current-incidents"
+  },
+  "content": [
+    {
+      "identifier": "section",
+      "nestedContent": [
+        {
+          "identifier": "teaser-container",
+          "nestedContent": [
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Java4Shell: Critical Java vulnerability - install security updates immediately",
+                "slug": "/en/warnung-java-2-en",
+                "description": "The critical vulnerability Java4Shell (CVE-2026-114938) allows attackers to execute malicious code on affected systems over the network, in some cases without authentication. Security updates are available. The NCSC recommends that operators immediately check whether their systems are affected and update affected systems.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-11-18T06:33:15.645Z"
+                },
+                "contentType": "content-page"
+              }
+            },
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Java security updates announced: Operators should check their systems",
+                "slug": "/en/warnung-java-en",
+                "description": "Oracle has announced security updates for 17 November 2026, including eleven security patches for Java SE. According to the vendor, the associated vulnerabilities can be exploited over a network without credentials. The National Cyber Security Centre (NCSC) recommends that operators check their systems and prepare to update them.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-11-17T16:24:00.000Z"
+                },
+                "contentType": "content-page"
+              }
+            },
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Cooling and refrigeration control systems: Identifying, updating and protecting systems",
+                "slug": "/en/warnung-kuehlanlagen-en",
+                "description": "The attacks on cooling control systems that have come to light in recent weeks show that Switzerland, too, is affected by this threat. Several incidents in Europe and Switzerland highlight that vulnerable cooling and refrigeration control systems can still be successfully targeted and that the recommended protective measures have not been implemented everywhere.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-11-10T09:31:51.453Z"
+                },
+                "contentType": "content-page"
+              }
+            },
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Phishing in the name of the Federal Tax Administration (FTA)",
+                "slug": "/en/warnung-estv-en",
+                "description": "The NCSC is currently receiving a large number of reports of phishing attempts carried out in the name of the Federal Tax Administration (FTA). These involve an alleged tax refund or a supposedly new system or system changeover. As part of this, a great deal of personal information is requested, such as your date of birth, telephone number and bank account details.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-11-09T14:29:11.315Z"
+                },
+                "contentType": "content-page"
+              }
+            },
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Phishing emails sent in the name of the commercial register (FCRO)",
+                "slug": "/en/warnung-ehra-en",
+                "description": "The NCSC is currently receiving numerous reports regarding an allegedly necessary data update in the Commercial Register (FCRO). These are phishing messages. Do not respond to them; delete these messages.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-11-06T11:09:56.518Z"
+                },
+                "contentType": "content-page"
+              }
+            },
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Critical vulnerabilities in PHP: Install security updates immediately",
+                "slug": "/en/warnung-php-en",
+                "description": "Two critical vulnerabilities in PHP could allow attackers to execute malicious code on affected servers without logging in. Security updates are now available. The National Cyber Security Centre (NCSC) recommends updating affected systems without delay. In addition to web servers, please also check applications and devices that use PHP as an integrated component.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-10-21T14:36:08.232Z"
+                },
+                "contentType": "content-page"
+              }
+            },
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Update on the SwissNovaChat notice",
+                "slug": "/en/update-on-the-swissnovachat-notice",
+                "description": "The NCSC is currently receiving numerous reports regarding invoices related to an alleged service provided by Swissnovachat, which are being collected through a debt collection agency (Letterdata). BACS recommends that individuals who have not used this service dispute the claim in writing and carefully retain all correspondence in case the claim is pursued further.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-08-18T15:08:51.048Z"
+                },
+                "contentType": "content-page"
+              }
+            },
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Increase in compromised websites with fake CAPTCHAs",
+                "slug": "/en/clickfix-en",
+                "description": "The NCSC is currently seeing an increase in compromised websites that use fake CAPTCHAs to trick people into running malicious commands and infecting their computers with malware. More than 100,000 websites worldwide are affected. The NCSC is also seeing an increase in the number of Swiss websites being compromised by cybercriminals and used to distribute malware.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-08-07T10:25:47.569Z"
+                },
+                "contentType": "content-page"
+              }
+            },
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Phishing targeting crypto wallets: Letters with a QR code are currently in circulation",
+                "slug": "/en/phishing-targeting-crypto-wallets-letters-with-a-qr-code-are-currently-in-circulation",
+                "description": "The NCSC has received several reports of letters containing a QR code and prompting recipients to download an urgent update for various crypto wallets. However, after scanning the QR code, recipients are redirected to a phishing website where they are asked to enter their recovery phrases. If these are disclosed, attackers can gain complete control over the crypto wallet in question and steal the assets it contains. Never disclose passwords or recovery phrases to third parties.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-07-31T06:30:00.000Z"
+                },
+                "contentType": "content-page"
+              }
+            },
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Warning regarding SwissNovaChat / SwissNovaCare",
+                "slug": "/en/warning-regarding-swissnovachat-swissnovacare",
+                "description": "The NCSC is currently receiving numerous reports regarding the websites swissnovachat.ch and swissnovacare.com. There may be other similar websites. These are operated by entities whose business model involves sending invoices even though no subscription exists. The legal notice lists “Margot Brands Ltd” from Hong Kong. Ignore such messages, do not click on any links they contain, and do not make any payments.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-04-06T22:00:00.000Z"
+                },
+                "contentType": "content-page"
+              }
+            },
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Phishing emails regarding the E-Vignette",
+                "slug": "/en/phishing-emails-regarding-the-e-vignette",
+                "description": "The NCSC receives currently reports of emails claiming that the E-Vignette has been deactivated due to a billing issue. The email links to a phishing site. The email lists the general NCSC email address. This email has not been sent by the NCSC. Please ignore it and delete it.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-07-29T18:28:58.737Z"
+                },
+                "contentType": "content-page"
+              }
+            },
+            {
+              "identifier": "teaser-item",
+              "properties": {
+                "title": "Blackmail emails in circulation",
+                "slug": "/en/blackmail-emails-in-circulation",
+                "description": "The NCSC is currently receiving reports of emails in which blackmailers claim to be in possession of credit card details, driving licence details, social security numbers and other data. They threaten to sell this information on the dark web. The emails often appear to come from the recipient's own address. However, this is not the case. The sender address is fake. The email is a bluff. Ignore it and do not be intimidated.",
+                "language": "en",
+                "metaInfo": {
+                  "date": "2026-02-28T19:35:00.000Z"
+                },
+                "contentType": "content-page"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

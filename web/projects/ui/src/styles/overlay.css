@@ -1,0 +1,119 @@
+/* Things that float: menus and the dialog scrim. They are the only surfaces with a shadow
+   (DESIGN.md, Elevation). Global because the CDK renders them in its overlay container. */
+
+.ui-scrim {
+  background: var(--scrim);
+}
+
+.ui-scrim.cdk-overlay-backdrop-showing {
+  opacity: 1;
+}
+
+.ui-dialog-pane {
+  align-self: flex-start;
+  margin-top: 12vh;
+}
+
+.ui-menu {
+  display: grid;
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: var(--space-xs);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-tip);
+  animation: ui-menu-in 160ms var(--ease-out) both;
+}
+
+.ui-menu-head {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-sm);
+  margin-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--rule);
+}
+
+.ui-menu-head b {
+  font-weight: 500;
+}
+
+.ui-menu-head small {
+  color: var(--muted);
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  overflow-wrap: anywhere;
+}
+
+.ui-menu-label {
+  padding: var(--space-sm) var(--space-sm) var(--space-xs);
+  color: var(--faint);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+}
+
+.ui-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 var(--space-sm);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-menu-item svg {
+  color: var(--muted);
+}
+
+.ui-menu-item[aria-checked='true'],
+.ui-menu-item.is-current {
+  font-weight: 500;
+}
+
+.ui-menu-item:focus {
+  outline: none;
+}
+
+.ui-menu-item:focus-visible,
+.ui-menu-item.cdk-keyboard-focused {
+  background: var(--active);
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.ui-menu-sep {
+  height: 1px;
+  margin: var(--space-xs) 0;
+  background: var(--rule);
+}
+
+@keyframes ui-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-menu-item:hover {
+    background: var(--raised);
+  }
+}
+
+@media (max-width: 640px) {
+  .ui-menu-item {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-menu {
+    animation: none;
+  }
+}

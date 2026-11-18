@@ -1,0 +1,42 @@
+/* Page to page (DESIGN.md, Motion): the frame stays still; the sheet's content fades out in 120ms
+   and the new content rises in over 260ms. Only transform and opacity. */
+
+::view-transition-old(content) {
+  animation: 120ms ease both ui-vt-out;
+}
+
+::view-transition-new(content) {
+  animation: 260ms var(--ease-out) both ui-vt-in;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+@keyframes ui-vt-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ui-vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(content) {
+    animation: 200ms ease both ui-vt-fade;
+  }
+  ::view-transition-old(content) {
+    animation: 120ms ease both ui-vt-out;
+  }
+  @keyframes ui-vt-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}

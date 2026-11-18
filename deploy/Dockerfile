@@ -3,6 +3,14 @@
 # The SDK stage runs on the build machine's architecture and cross-compiles for the target, so the
 # arm64 image needs no emulation (master plan 13.7).
 
+# The web app does not depend on the target architecture: built once on the build machine.
+FROM --platform=$BUILDPLATFORM node:24-bookworm-slim AS web
+WORKDIR /src/web
+COPY web/package.json web/package-lock.json ./
+RUN --mount=type=cache,id=npm,target=/root/.npm npm ci --no-audit --no-fund
+COPY web/ ./
+RUN npm run build
+
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
 ARG TARGETARCH
 ARG VERSION=0.0.0
@@ -20,6 +28,7 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra
 WORKDIR /app
 COPY --from=build /app .
+COPY --from=web /src/web/dist/ardea/browser ./wwwroot
 # Working space for large archives. A named volume mounted here takes over this directory's owner,
 # so the non-root user can write to it although the root file system is read-only.
 COPY --from=build --chown=$APP_UID:$APP_UID /scratch /scratch

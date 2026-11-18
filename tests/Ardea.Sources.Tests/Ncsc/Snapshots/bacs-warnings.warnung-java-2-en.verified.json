@@ -1,0 +1,44 @@
+{
+  "kind": "advisory",
+  "title": "Java4Shell: Critical Java vulnerability - install security updates immediately",
+  "summary": "The critical vulnerability Java4Shell (CVE-2026-114938) allows attackers to execute malicious code on affected systems over the network, in some cases without authentication. Security updates are available. The NCSC recommends that operators immediately check whether their systems are affected and update affected systems.",
+  "language": "en",
+  "publishedAt": "2026-11-18T06:33:15.645+00:00",
+  "modifiedAt": "2026-11-18T06:33:15.645+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "CVE",
+          "value": "CVE-2026-114938"
+        }
+      ],
+      "related": [
+        {
+          "scheme": "NCSC-HUB",
+          "value": "13198"
+        }
+      ],
+      "state": "published",
+      "metrics": [],
+      "affected": [],
+      "references": [
+        {
+          "url": "https://www.bacs.admin.ch/en/warnung-java-2-en",
+          "tags": [
+            "warning"
+          ]
+        }
+      ],
+      "weaknesses": []
+    }
+  ],
+  "references": [
+    {
+      "url": "https://www.bacs.admin.ch/en/warnung-java-2-en",
+      "tags": [
+        "warning"
+      ]
+    }
+  ]
+}

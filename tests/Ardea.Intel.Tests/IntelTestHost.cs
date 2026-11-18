@@ -108,6 +108,61 @@ internal sealed class IntelTestHost : IAsyncDisposable
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 
+    /// <summary>Runs every waiting job of the given kinds, the way the worker would, until none is left.</summary>
+    public async Task RunJobsAsync(params string[] kinds)
+    {
+        for (var round = 0; round < 10; round++)
+        {
+            await using var connection = new NpgsqlConnection(Database.OwnerConnectionString("tests"));
+            await connection.OpenAsync();
+            await using var select = new NpgsqlCommand("SELECT id, kind, payload::text FROM platform.job WHERE state = 'pending' AND kind = ANY($1) ORDER BY id", connection);
+            select.Parameters.Add(new NpgsqlParameter { Value = kinds });
+            var due = new List<(Guid Id, string Kind, string Payload)>();
+            await using (var reader = await select.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    due.Add((reader.GetGuid(0), reader.GetString(1), reader.GetString(2)));
+                }
+            }
+
+            if (due.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var (id, kind, payload) in due)
+            {
+                await using (var scope = Services.CreateAsyncScope())
+                {
+                    using var document = System.Text.Json.JsonDocument.Parse(payload);
+                    await RunAsync(scope.ServiceProvider, kind, document);
+                    await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+                }
+
+                await using var done = new NpgsqlCommand("UPDATE platform.job SET state = 'succeeded', finished_at = now() WHERE id = $1", connection);
+                done.Parameters.Add(new NpgsqlParameter { Value = id });
+                await done.ExecuteNonQueryAsync();
+            }
+        }
+    }
+
+    private static Task RunAsync(IServiceProvider services, string kind, System.Text.Json.JsonDocument payload)
+    {
+        var context = new JobContext(Guid.CreateVersion7(), kind, 1, null);
+        var json = new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web);
+        return kind switch
+        {
+            "intel.correlate-entry" => services.GetRequiredService<Correlation.CorrelateEntryHandler>()
+                .HandleAsync(System.Text.Json.JsonSerializer.Deserialize<Correlation.CorrelateEntry>(payload, json)!, context, CancellationToken.None),
+            "intel.notify-entry-changed" => services.GetRequiredService<Correlation.NotifyEntryChangedHandler>()
+                .HandleAsync(System.Text.Json.JsonSerializer.Deserialize<Correlation.NotifyEntryChanged>(payload, json)!, context, CancellationToken.None),
+            "intel.normalize-records" => services.GetRequiredService<NormalizeRecordsHandler>()
+                .HandleAsync(System.Text.Json.JsonSerializer.Deserialize<NormalizeRecords>(payload, json)!, context, CancellationToken.None),
+            _ => throw new InvalidOperationException($"No test runner for {kind}."),
+        };
+    }
+
     public ValueTask DisposeAsync() => Services.DisposeAsync();
 
     private sealed class NoBackup : IBackupWriter
@@ -168,11 +223,26 @@ internal sealed class ScriptedProvider : ISourceProvider
             return NormalizationResult.Quarantine("scripted bad record");
         }
 
+        var root = document.RootElement;
+        var kind = root.TryGetProperty("kind", out var k) ? k.GetString() : null;
+        var aliases = root.TryGetProperty("aliases", out var list)
+            ? list.EnumerateArray().Select(a => a.GetString()!.Split(':', 2)).Select(p => new Identifier(p[0], p[1])).ToList()
+            : [new Identifier("TEST", record.ExternalId)];
+        var title = root.TryGetProperty("title", out var t) ? t.GetString() : null;
+        double? score = root.TryGetProperty("score", out var s) ? s.GetDouble() : null;
         return NormalizationResult.Success(new Observation
         {
-            Kind = ObservationKind.Vulnerability,
-            Title = document.RootElement.TryGetProperty("title", out var title) ? title.GetString() : null,
-            Claims = [new ClaimBlock { Aliases = [new Identifier("TEST", record.ExternalId)] }],
+            Kind = kind == "warning" ? ObservationKind.Warning : kind == "advisory" ? ObservationKind.Advisory : ObservationKind.Vulnerability,
+            Title = title,
+            Claims = kind == "warning" ? [] :
+            [
+                new ClaimBlock
+                {
+                    Aliases = aliases,
+                    Title = title,
+                    Metrics = score is null ? [] : [new SeverityMetric("CVSS", "3.1", "AV:N", score)],
+                },
+            ],
         });
     }
 

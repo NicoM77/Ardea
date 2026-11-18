@@ -24,6 +24,416 @@ namespace Ardea.Intel.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntryAffectedRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<string>("CpeProduct")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("cpe_product");
+
+                    b.Property<string>("CpeVendor")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("cpe_vendor");
+
+                    b.Property<string>("DefaultStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("default_status");
+
+                    b.Property<Guid>("EntryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entry_id");
+
+                    b.Property<string>("Exact")
+                        .HasColumnType("text")
+                        .HasColumnName("exact");
+
+                    b.Property<string>("Fixed")
+                        .HasColumnType("text")
+                        .HasColumnName("fixed");
+
+                    b.Property<string>("Introduced")
+                        .HasColumnType("text")
+                        .HasColumnName("introduced");
+
+                    b.Property<string>("LastAffected")
+                        .HasColumnType("text")
+                        .HasColumnName("last_affected");
+
+                    b.Property<string>("Product")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("product");
+
+                    b.Property<string>("ProductKey")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("product_key");
+
+                    b.Property<string>("PurlName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("purl_name");
+
+                    b.Property<string>("PurlType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("purl_type");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Vendor")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("vendor");
+
+                    b.Property<string>("VersionScheme")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("version_scheme");
+
+                    b.HasKey("Id")
+                        .HasName("pk_entry_affected");
+
+                    b.HasIndex("EntryId")
+                        .HasDatabaseName("ix_entry_affected_entry");
+
+                    b.HasIndex("ProductKey")
+                        .HasDatabaseName("ix_entry_affected_product_key");
+
+                    b.HasIndex("CpeVendor", "CpeProduct")
+                        .HasDatabaseName("ix_entry_affected_cpe");
+
+                    b.HasIndex("PurlType", "PurlName")
+                        .HasDatabaseName("ix_entry_affected_purl");
+
+                    b.ToTable("entry_affected", "intel", t =>
+                        {
+                            t.HasCheckConstraint("ck_entry_affected_default_status", "default_status IN ('affected', 'unaffected', 'unknown')");
+
+                            t.HasCheckConstraint("ck_entry_affected_status", "status IN ('affected', 'unaffected', 'unknown')");
+                        });
+                });
+
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntryAliasRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<Guid>("EntryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entry_id");
+
+                    b.Property<string>("Scheme")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("scheme");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("value");
+
+                    b.HasKey("Id")
+                        .HasName("pk_entry_alias");
+
+                    b.HasIndex("EntryId")
+                        .HasDatabaseName("ix_entry_alias_entry");
+
+                    b.HasIndex("Scheme", "Value")
+                        .IsUnique()
+                        .HasDatabaseName("ux_entry_alias");
+
+                    b.ToTable("entry_alias", "intel");
+                });
+
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntryChangeRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.PrimitiveCollection<string[]>("ChangeKinds")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("change_kinds");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<JsonDocument>("Diff")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("diff");
+
+                    b.Property<Guid>("EntryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entry_id");
+
+                    b.Property<bool>("IsMaterial")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_material");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer")
+                        .HasColumnName("revision");
+
+                    b.Property<string>("TriggeredBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("triggered_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_entry_change");
+
+                    b.HasIndex("EntryId", "Revision")
+                        .IsUnique()
+                        .HasDatabaseName("ux_entry_change_revision");
+
+                    b.ToTable("entry_change", "intel");
+                });
+
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntryReferenceRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<Guid>("EntryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entry_id");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_id");
+
+                    b.PrimitiveCollection<string[]>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("tags");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_entry_reference");
+
+                    b.HasIndex("EntryId")
+                        .HasDatabaseName("ix_entry_reference_entry");
+
+                    b.ToTable("entry_reference", "intel");
+                });
+
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntryRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<bool>("AuthorityWarning")
+                        .HasColumnType("boolean")
+                        .HasColumnName("authority_warning");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<double?>("CvssScore")
+                        .HasColumnType("double precision")
+                        .HasColumnName("cvss_score");
+
+                    b.Property<string>("CvssVector")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("cvss_vector");
+
+                    b.Property<string>("CvssVersion")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("cvss_version");
+
+                    b.PrimitiveCollection<string[]>("CweIds")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("cwe_ids");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<JsonDocument>("Details")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("details");
+
+                    b.Property<string>("EpssClass")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("epss_class");
+
+                    b.Property<string>("Exploitation")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("exploitation");
+
+                    b.Property<JsonDocument>("ExploitationEvidence")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("exploitation_evidence");
+
+                    b.Property<bool>("FixAvailable")
+                        .HasColumnType("boolean")
+                        .HasColumnName("fix_available");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("MaterialFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("material_fingerprint");
+
+                    b.Property<Guid?>("MergedIntoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("merged_into_id");
+
+                    b.Property<string>("PrimaryKey")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("primary_key");
+
+                    b.Property<JsonDocument>("Provenance")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("provenance");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("RemediationFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("remediation_fingerprint");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer")
+                        .HasColumnName("revision");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("state");
+
+                    b.Property<string>("Summary")
+                        .HasColumnType("text")
+                        .HasColumnName("summary");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("pk_security_entry");
+
+                    b.HasIndex("ChangedAt")
+                        .IsDescending()
+                        .HasDatabaseName("ix_security_entry_changed_at");
+
+                    b.HasIndex("PrimaryKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_security_entry_primary_key");
+
+                    b.ToTable("security_entry", "intel", t =>
+                        {
+                            t.HasCheckConstraint("ck_security_entry_exploitation", "exploitation IN ('none', 'poc', 'active')");
+
+                            t.HasCheckConstraint("ck_security_entry_kind", "kind IN ('vulnerability', 'warning')");
+
+                            t.HasCheckConstraint("ck_security_entry_state", "state IN ('published', 'rejected', 'disputed', 'merged')");
+                        });
+                });
+
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntrySourceRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<Guid>("EntryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entry_id");
+
+                    b.Property<string>("Relation")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("relation");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_id");
+
+                    b.Property<Guid?>("SourceRecordId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_record_id");
+
+                    b.Property<string>("Url")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_entry_source");
+
+                    b.HasIndex("EntryId")
+                        .HasDatabaseName("ix_entry_source_entry");
+
+                    b.ToTable("entry_source", "intel", t =>
+                        {
+                            t.HasCheckConstraint("ck_entry_source_relation", "relation IN ('describes', 'mentions', 'signal')");
+                        });
+                });
+
             modelBuilder.Entity("Ardea.Intel.Persistence.ObservationRow", b =>
                 {
                     b.Property<Guid>("Id")
@@ -434,6 +844,56 @@ namespace Ardea.Intel.Persistence.Migrations
                         .HasDatabaseName("ix_source_run_source_started");
 
                     b.ToTable("source_run", "intel");
+                });
+
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntryAffectedRow", b =>
+                {
+                    b.HasOne("Ardea.Intel.Persistence.EntryRow", null)
+                        .WithMany()
+                        .HasForeignKey("EntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_entry_affected_security_entry_entry_id");
+                });
+
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntryAliasRow", b =>
+                {
+                    b.HasOne("Ardea.Intel.Persistence.EntryRow", null)
+                        .WithMany()
+                        .HasForeignKey("EntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_entry_alias_security_entry_entry_id");
+                });
+
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntryChangeRow", b =>
+                {
+                    b.HasOne("Ardea.Intel.Persistence.EntryRow", null)
+                        .WithMany()
+                        .HasForeignKey("EntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_entry_change_security_entry_entry_id");
+                });
+
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntryReferenceRow", b =>
+                {
+                    b.HasOne("Ardea.Intel.Persistence.EntryRow", null)
+                        .WithMany()
+                        .HasForeignKey("EntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_entry_reference_security_entry_entry_id");
+                });
+
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntrySourceRow", b =>
+                {
+                    b.HasOne("Ardea.Intel.Persistence.EntryRow", null)
+                        .WithMany()
+                        .HasForeignKey("EntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_entry_source_security_entry_entry_id");
                 });
 
             modelBuilder.Entity("Ardea.Intel.Persistence.ObservationRow", b =>

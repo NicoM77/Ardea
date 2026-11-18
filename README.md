@@ -51,8 +51,8 @@ Consolidated entries from five sources, including OSV for packages, with merging
 | 1.3 | HTTP foundation for adapters: timeout, retry, rate limiting, conditional requests, size limits | 1.2 | ✅ |
 | 1.4 | CVE Program adapter: deltas, initial load and long gaps via the full archive, single fetch | 1.3 | ✅ |
 | 1.5 | Raw record store with revisions; normalisation to observations; quarantine | 1.4, 1.1 | ✅ |
-| 1.6 | Merge by CVE ID with fixed precedence rules and per-field provenance | 1.5 | ⬜ |
-| 1.7 | Change detection with both fingerprints; change history; follow-up job on material change | 1.6 | ⬜ |
+| 1.6 | Merge by CVE ID with fixed precedence rules and per-field provenance | 1.5 | ✅ |
+| 1.7 | Change detection with both fingerprints; change history; follow-up job on material change | 1.6 | ✅ |
 | 1.8 | Signals: KEV and EPSS in `entry_signal`, class change with threshold | 1.6 | ⬜ |
 | 1.9 | NCSC adapter with two readers: Cyber Security Hub API and BACS website warnings; `degraded` on suspicious fetches | 1.6 | ⬜ |
 | 1.10 | Entries API; «Entries» and «Sources» pages with quarantine list and per-source metrics; sources page mockup | 1.7, 0.11 | ⬜ |

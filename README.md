@@ -22,6 +22,8 @@ Status: ✅ done · 🔄 in progress · ⬜ open
 
 A startable instance with sign-in, job system, build chain and a first administration; technical risks resolved.
 
+The phase 0 acceptance (healthy within 3 minutes of loading the images, then sign-in over HTTPS with setup token, password and TOTP) is checked on every pull request by the end-to-end test in [`tests/e2e/`](tests/e2e/) (`tests/e2e/run.sh <image>`).
+
 | No. | Task | Depends on | Status |
 |---|---|---|---|
 | 0.1 | Repository per chapter 13: solution, module skeletons, central package management, analyzers | | ✅ |

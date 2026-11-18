@@ -52,21 +52,26 @@ The product does not forward more security news. It compares every vulnerability
 
 ## Brand Commitments
 
-The name is Ardea (Latin for heron). The logo is an outlined heron, head and neck in one line, with the wordmark in Inter Tight SemiBold; chosen by the owner on 2026-11-18. Files and rules: `docs/design/brand/` (open `index.html`). The wordmark face is for the logo and display lines only; the interface keeps the system font.
+The name is Ardea (Latin for heron). The logo is an outlined heron, head and neck in one line, with the wordmark in Inter Tight SemiBold; chosen by the owner on 2026-11-18. Files and rules: `docs/design/brand/` (open `index.html`). The wordmark face is for the logo only; the interface uses IBM Plex Sans, with IBM Plex Mono for identifiers (see `DESIGN.md`).
 
 Binding constraints the owner stated in the brief:
 
 - Light mode is the primary and, initially, the only theme.
 - Calm, uncluttered surfaces; restrained neutral colours with deliberate accents.
 - Priority and status are never conveyed by colour alone.
-- Motion only where it carries function. No decorative effects, no overloaded dashboards, no complex interaction flows.
+- Motion only where it carries function. No decorative effects, no overloaded dashboards, no complex interaction flows. (Read together with the later instruction below.)
 - The interface must read as serious, professional, and trustworthy; it is a security-critical tool.
 - Guiding line: "Understand the risk. Know what matters. Act immediately."
 
 Standing design preference, stated by the owner on 2026-11-18 after rejecting the first direction ("hazard bulletin"):
 
-- Simple and intuitive, like a professional work application that follows Apple's design guidelines: familiar platform controls, the system font, no invented visual metaphor. It must not look AI-generated.
+- Simple and intuitive, like a professional work application: familiar controls, no invented visual metaphor. It must not look AI-generated.
 - Priority is shown as a word with its own symbol, never as a numeral.
+
+Later instruction, stated by the owner on 2026-11-18 after reviewing the system-app mockups:
+
+- They read as too wordy and too plain. The owner asked for charts, little text, smooth animation and an intuitive flow, and allowed a full restructure as long as it fits the subject.
+- This withdraws three rules of the earlier direction: no charts, nothing moves on load, and the system font only. It does not withdraw the brief: a chart has to answer a question, and motion has to explain or confirm something. `DESIGN.md` holds the resulting system.
 
 ## Evidence on Hand
 

@@ -5,171 +5,302 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Update Puppet Enterprise · Ardea (mockup, sample data)</title>
 <link rel="icon" href="../brand/ardea-favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css">
 </head>
 <body data-page="action" data-section="actions">
-<main class="main" id="main">
-  <div class="content content--narrow" data-action>
+<main class="sheet" id="main">
+  <div class="content">
 
-    <a class="back" href="actions.html"><svg class="icon" aria-hidden="true"><use href="#chevron-left"/></svg>Actions</a>
+    <a class="crumb" href="actions.html"><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Actions</a>
 
-    <header class="page-head">
+    <header class="title-row">
       <div>
-        <h1>Update Puppet Enterprise to 2025.12.1</h1>
-        <p class="detail-meta">
-          <span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span><span class="sep" aria-hidden="true"></span>
-          <span>Platform Ops</span>
-        </p>
-        <p class="detail-meta">
-          <span class="due-soon">Due tomorrow, 19 Nov at 22:05</span>
-          <span class="tag tag--strong">Exploited in the wild</span>
-        </p>
+        <h1 id="title"></h1>
+        <p class="title-meta" id="meta"></p>
       </div>
-      <div class="page-actions">
-        <button class="btn btn--primary" type="button" data-take>Take into review</button>
+      <div class="title-actions">
+        <label class="sr-only" for="status">Status</label>
+        <select class="select" id="status" data-status-select></select>
+        <button class="btn primary" type="button" data-take>Take into review</button>
       </div>
     </header>
 
-    <div role="status">
-      <div class="note note--done" id="confirm" hidden>
-        <svg class="icon" aria-hidden="true"><use href="#check-circle"/></svg>
-        <p id="confirm-text"></p>
-        <button class="btn btn--plain" type="button" id="undo">Undo</button>
+    <div class="grid">
+      <div class="stack span-8">
+
+        <section class="card rise" aria-label="Affected and time left">
+          <div class="split">
+            <div>
+              <h2 class="label">Are we affected?</h2>
+              <p class="answer">Yes</p>
+              <p class="answer-note" id="affected-note"></p>
+              <div class="vtrack" id="vtrack"></div>
+            </div>
+            <div>
+              <h2 class="label">Time left</h2>
+              <p class="figure" data-countdown="puppet"></p>
+              <div class="dtrack" id="dtrack"><i></i></div>
+              <p class="dtrack-ends"><span id="d-from"></span><span id="d-to"></span></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card rise" aria-label="What happened and what to do">
+          <div class="split even">
+            <div>
+              <h2 class="label">What happened</h2>
+              <blockquote class="quote" id="quote" style="margin-top:4px"></blockquote>
+              <p class="source">From the CVE record · <button class="link" type="button" id="quote-more" style="border:0;background:none;padding:0;cursor:pointer" aria-expanded="false">Show all</button></p>
+            </div>
+            <div>
+              <h2 class="label">What to do</h2>
+              <p class="answer" id="todo"></p>
+              <p class="step"><code id="todo-version"></code><button class="btn ghost icon-only" type="button" id="todo-copy" aria-label="Copy the version" data-tip="Copy"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg></button></p>
+              <p class="source">The fixed release of the 2025 branch, from the CVE record</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card rise" aria-labelledby="h-why">
+          <header>
+            <h2 id="h-why">Why Critical</h2>
+            <a class="card-link" href="vulnerability.html#why">Every factor<svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+          </header>
+          <div id="score"></div>
+        </section>
+
+        <section class="card rise" aria-labelledby="h-vulns">
+          <header>
+            <h2 id="h-vulns">Vulnerabilities in this action</h2>
+            <span class="meta" id="vuln-count"></span>
+          </header>
+          <div class="rows" id="vulns"></div>
+        </section>
+      </div>
+
+      <div class="stack span-4">
+        <section class="card rise" aria-label="Details">
+          <dl class="props">
+            <div><dt>Status</dt><dd id="status-text"></dd></div>
+            <div><dt><label for="assignee">Owner</label></dt><dd><select class="select" id="assignee"></select></dd></div>
+            <div><dt>Due</dt><dd id="p-due"></dd></div>
+            <div><dt>Project</dt><dd id="p-project"></dd></div>
+            <div><dt>Component</dt><dd id="p-component"></dd></div>
+            <div><dt>Version</dt><dd id="p-version"></dd></div>
+          </dl>
+          <form id="reason" hidden novalidate style="margin-top:16px">
+            <label class="field">
+              <span id="reason-label">Reason</span>
+              <textarea class="textarea" id="reason-text" aria-describedby="reason-error" placeholder="Kept in the activity"></textarea>
+            </label>
+            <p class="error" id="reason-error" hidden>Write a short reason to close this action.</p>
+            <div class="reason-actions">
+              <button class="btn" type="button" id="reason-cancel">Cancel</button>
+              <button class="btn primary" type="submit">Close action</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card rise" aria-labelledby="h-activity">
+          <header><h2 id="h-activity">Activity</h2></header>
+          <ol class="activity" id="timeline"></ol>
+          <form class="note-form" id="note-form" style="margin-top:20px">
+            <label class="field">
+              <span class="sr-only">Note</span>
+              <textarea class="textarea" id="note-text" placeholder="Add a note for the team"></textarea>
+            </label>
+            <button class="btn" type="submit">Save note</button>
+          </form>
+        </section>
       </div>
     </div>
 
-    <div class="detail">
-      <section class="section" aria-labelledby="summary">
-        <div class="section-head"><h2 id="summary">Summary</h2></div>
-        <ul class="group answers">
-          <li>
-            <h3>What happened</h3>
-            <blockquote>Deserialization of untrusted data in the report-processing code of Puppet, as used by Puppet Server, allows a client that holds any CA-signed agent certificate to execute arbitrary code on the Puppet Server…</blockquote>
-            <span class="source">From the CVE record · <a href="vulnerability.html#description">Full description</a></span>
-            <p class="fact">CISA lists the flaw as actively exploited since 17 November 2026.</p>
-          </li>
-          <li>
-            <h3>Are we affected?</h3>
-            <p><strong>Yes.</strong> Platform Ops runs Puppet Enterprise 2025.9.0. Affected are versions 2025.0.0 up to, not including, 2025.12.1.</p>
-          </li>
-          <li>
-            <h3>What to do</h3>
-            <p>Update Puppet Enterprise to <strong>2025.12.1</strong>, the fixed release for the 2025 branch.</p>
-            <span class="source">From the affected and fixed versions in the CVE record</span>
-          </li>
-        </ul>
-        <p class="note-plain"><svg class="icon" aria-hidden="true"><use href="#info"/></svg><span>These answers are built from the source data; no AI assessment is configured. <a href="vulnerability.html#why">How the priority was set</a></span></p>
-      </section>
-
-      <aside class="inspector" aria-label="Details">
-        <dl class="group props">
-          <div>
-            <dt><label for="status">Status</label></dt>
-            <dd>
-              <select class="select" id="status" data-status-select>
-                <option value="open">Open</option>
-                <option value="in_review">In review</option>
-                <option value="remediated">Remediated</option>
-                <option value="risk_accepted">Risk accepted</option>
-                <option value="not_affected">Not affected</option>
-              </select>
-            </dd>
-          </div>
-          <div>
-            <dt><label for="assignee">Assignee</label></dt>
-            <dd>
-              <select class="select" id="assignee">
-                <option value="">Unassigned</option>
-                <option value="Nina Meier">Nina Meier (you)</option>
-                <option value="Marc Keller">Marc Keller</option>
-              </select>
-            </dd>
-          </div>
-          <div><dt>Due</dt><dd>19 Nov 2026, 22:05</dd></div>
-          <div><dt>Project</dt><dd>Platform Ops</dd></div>
-          <div><dt>Component</dt><dd>Puppet Enterprise</dd></div>
-          <div><dt>Installed</dt><dd><span class="id">2025.9.0</span></dd></div>
-          <div><dt>Target</dt><dd><span class="id">2025.12.1</span></dd></div>
-        </dl>
-
-        <form class="group reason" id="reason" hidden novalidate>
-          <label class="field">
-            <span id="reason-label">Reason</span>
-            <textarea class="textarea" id="reason-text" aria-describedby="reason-error" placeholder="Kept in the activity, visible to the team"></textarea>
-          </label>
-          <p class="error" id="reason-error" hidden>Write a short reason to close this action.</p>
-          <div class="reason-actions">
-            <button class="btn btn--secondary" type="button" id="reason-cancel">Cancel</button>
-            <button class="btn btn--primary" type="submit">Close action</button>
-          </div>
-        </form>
-
-        <form class="note-form" id="note-form">
-          <label class="field">
-            <span>Note</span>
-            <textarea class="textarea" id="note-text" placeholder="Visible to the team and kept in the activity"></textarea>
-          </label>
-          <button class="btn btn--secondary" type="submit">Save note</button>
-        </form>
-      </aside>
-
-      <section class="section" aria-labelledby="vulns">
-        <div class="section-head"><h2 id="vulns">Vulnerabilities in this action</h2></div>
-        <ul class="group list">
-          <li>
-            <a class="row" href="vulnerability.html">
-              <span class="row-body">
-                <span class="row-text">
-                  <span class="row-title">Puppet Enterprise: code execution through crafted reports</span>
-                  <span class="row-sub"><span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span> · <span class="id">CVE-2026-115731</span> · CVSS 9.4 · Fixed in 2025.12.1</span>
-                </span>
-                <svg class="icon row-chevron" aria-hidden="true"><use href="#chevron-right"/></svg>
-              </span>
-            </a>
-          </li>
-        </ul>
-      </section>
-
-      <section class="section" aria-labelledby="activity">
-        <div class="section-head"><h2 id="activity">Activity</h2></div>
-        <ol class="group timeline" id="timeline">
-          <li>
-            <time datetime="2026-11-17T22:07">17 Nov, 22:07</time>
-            <p>Notification sent by email and push to 3 people, rule “Critical at once”.</p>
-          </li>
-          <li>
-            <time datetime="2026-11-17T22:05">17 Nov, 22:05</time>
-            <div>
-              <p class="change">
-                <span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#p-high"/></svg>High</span>
-                <svg class="icon arrow" aria-hidden="true"><use href="#arrow-right"/></svg><span class="sr-only">raised to</span>
-                <span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span>
-              </p>
-              <p>CISA lists the flaw as actively exploited. Due date moved forward from 20 Nov to 19 Nov.</p>
-            </div>
-          </li>
-          <li>
-            <time datetime="2026-11-13T09:12">13 Nov, 09:12</time>
-            <p>Action created at High after Puppet Enterprise 2025.9.0 was added to the profile of Platform Ops. Installed version in the affected range, no known exploitation. Due 20 Nov.</p>
-          </li>
-        </ol>
-      </section>
-    </div>
-
-    <p class="footnote">Mockup with sample data. The CVE record is real; the organization, people, project, installed version and dates are invented. This installation runs without an AI provider, the default of a fresh install. <a href="design-system.html">Design system</a></p>
+    <p class="footnote">Mockup with sample data. The CVE record is real; the organization, people, project, installed version and dates are invented. This installation runs without an AI provider, the default of a fresh install: every answer is built from the source data.</p>
   </div>
 </main>
 <div class="actionbar">
-  <button class="btn btn--primary" type="button" data-take>Take into review</button>
+  <button class="btn primary" type="button" data-take>Take into review</button>
   <label class="sr-only" for="status-bar">Status</label>
-  <select class="select" id="status-bar" data-status-select>
-    <option value="open">Status: Open</option>
-    <option value="in_review">Status: In review</option>
-    <option value="remediated">Status: Remediated</option>
-    <option value="risk_accepted">Status: Risk accepted</option>
-    <option value="not_affected">Status: Not affected</option>
-  </select>
+  <select class="select" id="status-bar" data-status-select></select>
 </div>
+<script src="data.js"></script>
 <script src="app.js"></script>
+<script src="charts.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = window.ARDEA, A = window.A, C = window.C, F = D.fmt;
+  var byId = function (id) { return document.getElementById(id); };
+  var a = D.action('puppet'), v = D.VULN, me = D.PEOPLE[D.ME];
+  var project = D.project(a.project), branch = v.branches.filter(function (b) { return b.installed; })[0];
+  var raised = new Date(v.updated);
+
+  /* ---------- Head ---------- */
+  byId('title').textContent = a.title;
+  byId('meta').innerHTML = A.prio(a.priority) + '<span>' + A.esc(project.name) + '</span>' + (a.exploited ? '<span class="pill pill--alert">Exploited in the wild</span>' : '');
+
+  /* ---------- Are we affected: the installed version inside the affected range ---------- */
+  byId('affected-note').textContent = project.name + ' runs ' + a.installed + ', inside the affected range.';
+  var RANGE = 86, at = branch.at * RANGE;   /* the range takes 86% of the track; the rest is the fixed side */
+  byId('vtrack').innerHTML =
+    '<div class="vtrack-line"><span class="vtrack-range" style="width:' + RANGE + '%"></span></div>' +
+    '<span class="vtrack-path" style="left:' + at + '%;width:' + (RANGE - at) + '%"></span>' +
+    '<span class="vtrack-pin" style="left:' + at + '%"><b>Installed ' + a.installed + '</b><i></i></span>' +
+    '<span class="vtrack-fix" style="left:' + RANGE + '%">' + A.icon('check') + '</span>' +
+    '<span class="vtrack-end">' + branch.from + '</span>' +
+    '<span class="vtrack-end fixed" style="left:' + RANGE + '%">' + branch.fixed + '</span>';
+  byId('vtrack').setAttribute('role', 'img');
+  byId('vtrack').setAttribute('aria-label', 'Affected from ' + branch.from + ' up to ' + branch.fixed + '. Installed ' + a.installed + '. Fixed in ' + branch.fixed + '.');
+  A.grow(A.$('.vtrack-range'), 150, 700);
+  A.fadeIn(A.$('.vtrack-pin'), 550, 250);
+  A.fadeIn(A.$('.vtrack-fix'), 800, 250);
+  A.grow(A.$('.vtrack-path'), 800, 500);
+
+  /* ---------- Time left: 48 hours from the moment it became Critical ---------- */
+  var used = Math.max(0, Math.min(1, (D.NOW - raised) / (a.due - raised)));
+  A.$('#dtrack i').style.width = used * 100 + '%';
+  A.grow(A.$('#dtrack i'), 200, 700);
+  var lower = function (s) { return s.charAt(0).toLowerCase() + s.slice(1); };
+  byId('d-from').textContent = 'Raised ' + lower(F.when(raised));
+  byId('d-to').textContent = 'Due ' + lower(F.when(a.due));
+  C.clock();
+
+  /* ---------- What happened, what to do ---------- */
+  byId('quote').textContent = v.description;
+  byId('quote-more').addEventListener('click', function () {
+    var open = byId('quote').classList.toggle('open');
+    this.textContent = open ? 'Show less' : 'Show all';
+    this.setAttribute('aria-expanded', String(open));
+  });
+  byId('todo').textContent = 'Update to ' + a.target;
+  byId('todo-version').textContent = a.component + ' ' + a.target;
+  byId('todo-copy').setAttribute('data-copy', a.target);
+
+  C.score(byId('score'), v);
+
+  byId('vuln-count').textContent = a.findings;
+  byId('vulns').innerHTML = '<a href="vulnerability.html" data-morph><span class="row-icon c-' + a.priority + '">' + A.sym(D.PRIORITIES[a.priority].sym) + '</span>' +
+    '<span class="row-main"><b data-title>' + A.esc(v.title) + '</b><small><span class="id">' + v.id + '</span> · CVSS ' + v.cvss.score + ' · fixed in ' + a.target + '</small></span>' +
+    '<span class="row-end">' + A.icon('chevron-right') + '</span></a>';
+
+  /* ---------- Details ---------- */
+  byId('p-due').textContent = F.dayTime(a.due);
+  byId('p-project').textContent = project.name;
+  byId('p-component').textContent = a.component;
+  byId('p-version').innerHTML = '<span class="id">' + a.installed + '</span><span class="arrow">→</span><span class="id">' + a.target + '</span>';
+
+  var selects = A.$$('[data-status-select]'), takeButtons = A.$$('[data-take]');
+  selects.forEach(function (s) {
+    s.innerHTML = Object.keys(D.STATUSES).map(function (k) { return '<option value="' + k + '">' + D.STATUSES[k].label + '</option>'; }).join('');
+  });
+  var assignee = byId('assignee');
+  assignee.innerHTML = '<option value="">Unassigned</option>' + Object.keys(D.PEOPLE).map(function (k) {
+    return '<option value="' + k + '">' + D.PEOPLE[k].name + (k === D.ME ? ' (you)' : '') + '</option>';
+  }).join('');
+
+  /* ---------- Activity ---------- */
+  var timeline = byId('timeline');
+  function entry(item) {
+    var li = document.createElement('li');
+    var head = item.change ? '<p class="change">' + A.prio(item.change[0]) + '<span class="arrow" aria-hidden="true">→</span><span class="sr-only">raised to</span>' + A.prio(item.change[1]) + '</p>' : '';
+    li.innerHTML = '<i></i><div><time>' + A.esc(item.when) + '</time>' + head + '<p>' + A.esc(item.text) + '</p>' + (item.note ? '<small>' + A.esc(item.note) + '</small>' : '') + '</div>';
+    return li;
+  }
+  D.ACTIVITY.forEach(function (item) { timeline.appendChild(entry({ when: F.dayTime(item.at), text: item.text, note: item.note, change: item.change })); });
+
+  function addActivity(text) {
+    var li = entry({ when: 'Just now', text: text });
+    timeline.insertBefore(li, timeline.firstChild);
+    if (!A.reduced && li.animate) li.animate([{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: A.EASE_OUT });
+    return li;
+  }
+
+  /* ---------- Take into review with undo, close with a reason, notes ---------- */
+  var reason = byId('reason'), reasonText = byId('reason-text'), reasonError = byId('reason-error');
+  var current = { state: a.status, assignee: a.assignee || '' };
+  var pending = null;
+
+  function render() {
+    selects.forEach(function (s) { s.value = current.state; });
+    assignee.value = current.assignee;
+    takeButtons.forEach(function (b) { b.hidden = current.state !== 'open'; });
+    byId('status-text').innerHTML = A.status(current.state);
+  }
+
+  function commit(next, message, activity) {
+    var before = current, added = addActivity(activity);
+    current = next;
+    render();
+    A.toast(message, { undo: function () { added.remove(); current = before; render(); } });
+  }
+
+  function resetReason() {
+    pending = null;
+    reason.hidden = true;
+    reasonText.value = '';
+    reasonText.removeAttribute('aria-invalid');
+    reasonError.hidden = true;
+  }
+
+  takeButtons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      resetReason();
+      commit({ state: 'in_review', assignee: D.ME }, 'In review and assigned to you', me.name + ' took the action into review');
+    });
+  });
+
+  selects.forEach(function (s) {
+    s.addEventListener('change', function () {
+      var next = s.value, def = D.STATUSES[next];
+      if (def.closing) {
+        pending = next;
+        byId('reason-label').textContent = def.closing;
+        reason.hidden = false;
+        selects.forEach(function (o) { o.value = next; });
+        reason.scrollIntoView({ block: 'nearest' });
+        reasonText.focus();
+        return;
+      }
+      resetReason();
+      commit({ state: next, assignee: current.assignee }, 'Status set to ' + def.label, me.name + ' set the status to ' + def.label);
+    });
+  });
+
+  assignee.addEventListener('change', function () {
+    var who = assignee.value, name = who ? D.PEOPLE[who].name : '';
+    commit({ state: current.state, assignee: who }, who ? 'Assigned to ' + (who === D.ME ? 'you' : name) : 'Unassigned',
+      who ? me.name + ' assigned the action to ' + name : me.name + ' removed the owner');
+  });
+
+  reason.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var text = reasonText.value.trim();
+    if (!text) {
+      reasonText.setAttribute('aria-invalid', 'true');
+      reasonError.hidden = false;
+      reasonText.focus();
+      return;
+    }
+    var next = pending, label = D.STATUSES[next].label.toLowerCase();
+    resetReason();
+    commit({ state: next, assignee: current.assignee }, 'Closed as ' + label, me.name + ' closed the action as ' + label + ': “' + text + '”');
+  });
+
+  byId('reason-cancel').addEventListener('click', function () { resetReason(); render(); });
+
+  byId('note-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var input = byId('note-text'), text = input.value.trim();
+    if (!text) { input.focus(); return; }
+    input.value = '';
+    commit({ state: current.state, assignee: current.assignee }, 'Note saved', 'Note by ' + me.name + ': ' + text);
+  });
+
+  render();
+})();
+</script>
 </body>
 </html>

@@ -164,6 +164,33 @@
         ],
         "createdAt": "2026-11-18T11:16:33.730Z",
         "reason": "builder: spent direction-round sketch from before DESIGN.md existed; it shows a different candidate world on purpose and is not product UI"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "docs/design/mockups/actions.html"
+        ],
+        "createdAt": "2026-11-18T16:47:45.464Z",
+        "reason": "agent: underline tabs sit on their 1px rule by design so the sliding indicator can overlap it; each tab is 40px tall, which is the label's inset"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "docs/design/mockups/vulnerability.html"
+        ],
+        "createdAt": "2026-11-18T16:47:45.639Z",
+        "reason": "agent: segmented control; the 28px buttons inside the 2px track give each label its inset, the track itself needs none"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "docs/design/mockups/design-system.html"
+        ],
+        "createdAt": "2026-11-18T16:47:45.817Z",
+        "reason": "agent: segmented control demo; the 28px buttons inside the 2px track give each label its inset, the track itself needs none"
       }
     ]
   }

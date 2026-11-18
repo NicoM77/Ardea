@@ -67,19 +67,34 @@ internal sealed partial class ScheduleLeader(
                 {
                     LogLeading();
                     await SyncDefinitionsAsync(stoppingToken);
-                    while (!stoppingToken.IsCancellationRequested && leader.State == System.Data.ConnectionState.Open)
+                    // A dropped leader session ends the lock; the probe notices it and leadership is contested again.
+                    while (!stoppingToken.IsCancellationRequested && await IsAliveAsync(leader, stoppingToken))
                     {
                         await RunDueAsync(stoppingToken);
                         await Task.Delay(Interval, stoppingToken);
                     }
                 }
             }
-            catch (Exception ex) when (ex is NpgsqlException or TimeoutException)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 LogFailed(ex);
             }
 
             await Task.Delay(Interval, stoppingToken);
+        }
+    }
+
+    private static async Task<bool> IsAliveAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var probe = new NpgsqlCommand("SELECT 1", connection);
+            await probe.ExecuteScalarAsync(cancellationToken);
+            return true;
+        }
+        catch (NpgsqlException)
+        {
+            return false;
         }
     }
 
@@ -117,33 +132,46 @@ internal sealed partial class ScheduleLeader(
         var now = time.GetUtcNow();
         foreach (var definition in _definitions)
         {
-            await using var scope = scopes.CreateAsyncScope();
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<Persistence.IUnitOfWork>();
-            var connection = await unitOfWork.GetConnectionAsync(cancellationToken);
-            await using (var due = new NpgsqlCommand(
-                "SELECT 1 FROM platform.schedule WHERE key = $1 AND enabled AND next_run_at <= $2 FOR UPDATE SKIP LOCKED", connection))
+            try
             {
-                due.Parameters.Add(new NpgsqlParameter { Value = definition.Key });
-                due.Parameters.Add(new NpgsqlParameter { Value = now });
-                if (await due.ExecuteScalarAsync(cancellationToken) is null)
-                {
-                    continue;
-                }
+                await RunIfDueAsync(definition, now, cancellationToken);
             }
-
-            await definition.Enqueue(scope.ServiceProvider.GetRequiredService<IJobQueue>(), cancellationToken);
-            await using (var next = new NpgsqlCommand(
-                "UPDATE platform.schedule SET last_run_at = $2, next_run_at = $3 WHERE key = $1", connection))
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                next.Parameters.Add(new NpgsqlParameter { Value = definition.Key });
-                next.Parameters.Add(new NpgsqlParameter { Value = now });
-                next.Parameters.Add(new NpgsqlParameter { Value = definition.NextAfter(now) });
-                await next.ExecuteNonQueryAsync(cancellationToken);
+                // One broken schedule (e.g. an unregistered job kind) must not stop the others.
+                LogScheduleFailed(ex, definition.Key);
             }
-
-            await unitOfWork.CommitAsync(cancellationToken);
-            LogEnqueued(definition.Key);
         }
+    }
+
+    private async Task RunIfDueAsync(ScheduleDefinition definition, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        await using var scope = scopes.CreateAsyncScope();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<Persistence.IUnitOfWork>();
+        var connection = await unitOfWork.GetConnectionAsync(cancellationToken);
+        await using (var due = new NpgsqlCommand(
+            "SELECT 1 FROM platform.schedule WHERE key = $1 AND enabled AND next_run_at <= $2 FOR UPDATE SKIP LOCKED", connection))
+        {
+            due.Parameters.Add(new NpgsqlParameter { Value = definition.Key });
+            due.Parameters.Add(new NpgsqlParameter { Value = now });
+            if (await due.ExecuteScalarAsync(cancellationToken) is null)
+            {
+                return;
+            }
+        }
+
+        await definition.Enqueue(scope.ServiceProvider.GetRequiredService<IJobQueue>(), cancellationToken);
+        await using (var next = new NpgsqlCommand(
+            "UPDATE platform.schedule SET last_run_at = $2, next_run_at = $3 WHERE key = $1", connection))
+        {
+            next.Parameters.Add(new NpgsqlParameter { Value = definition.Key });
+            next.Parameters.Add(new NpgsqlParameter { Value = now });
+            next.Parameters.Add(new NpgsqlParameter { Value = definition.NextAfter(now) });
+            await next.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await unitOfWork.CommitAsync(cancellationToken);
+        LogEnqueued(definition.Key);
     }
 
     [LoggerMessage(EventId = 2101, Level = LogLevel.Information, Message = "This worker now runs the schedules")]
@@ -151,6 +179,9 @@ internal sealed partial class ScheduleLeader(
 
     [LoggerMessage(EventId = 2102, Level = LogLevel.Debug, Message = "Schedule {Key} enqueued its run")]
     private partial void LogEnqueued(string key);
+
+    [LoggerMessage(EventId = 2104, Level = LogLevel.Error, Message = "Schedule {Key} could not enqueue its run")]
+    private partial void LogScheduleFailed(Exception exception, string key);
 
     [LoggerMessage(EventId = 2103, Level = LogLevel.Warning, Message = "Running schedules failed")]
     private partial void LogFailed(Exception exception);

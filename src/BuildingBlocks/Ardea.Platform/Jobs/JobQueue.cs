@@ -27,6 +27,11 @@ internal sealed class JobQueue(IUnitOfWork unitOfWork, JobRegistry registry, ITe
         options ??= new EnqueueOptions();
         var now = time.GetUtcNow();
         var runAt = options.RunAt ?? now + (options.Delay ?? TimeSpan.Zero);
+        if (options.OrganizationId is { } requested && tenant.OrganizationId is { } current && requested != current)
+        {
+            throw new InvalidOperationException("A unit of work of one organisation cannot enqueue jobs for another.");
+        }
+
         var organization = options.OrganizationId ?? tenant.OrganizationId;
 
         var connection = await unitOfWork.GetConnectionAsync(cancellationToken);

@@ -51,6 +51,9 @@ internal sealed partial class JobProcessor(
     private readonly ConcurrentDictionary<Guid, Task> _running = new();
     private readonly ConcurrentDictionary<string, int> _runningByKind = new(StringComparer.Ordinal);
     private readonly CancellationTokenSource _crash = new();
+
+    /// <summary>Cancelled when the grace period after a stop request has run out: running jobs stop then.</summary>
+    private readonly CancellationTokenSource _hardStop = new();
     private CancellationToken _stopping;
     private int _runningTotal;
 
@@ -75,7 +78,7 @@ internal sealed partial class JobProcessor(
                 {
                     claimed = await ClaimAndStartAsync(_stopping);
                 }
-                catch (Exception ex) when (ex is NpgsqlException or TimeoutException)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     LogClaimFailed(ex);
                 }
@@ -123,8 +126,11 @@ internal sealed partial class JobProcessor(
     {
         Interlocked.Increment(ref _runningTotal);
         _runningByKind.AddOrUpdate(kind.Kind, 1, (_, n) => n + 1);
+        // The task waits until it is registered, so a quick job cannot remove itself before it is added.
+        var registered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         _running[job.Id] = Task.Run(async () =>
         {
+            await registered.Task;
             try
             {
                 await RunAsync(job, kind);
@@ -137,13 +143,14 @@ internal sealed partial class JobProcessor(
                 _wake.Writer.TryWrite(true);
             }
         });
+        registered.SetResult();
     }
 
     private async Task RunAsync(ClaimedJob job, JobRegistry.Registration kind)
     {
         using var timeout = new CancellationTokenSource(job.Timeout);
         using var leaseLost = new CancellationTokenSource();
-        using var execution = CancellationTokenSource.CreateLinkedTokenSource(_stopping, timeout.Token, leaseLost.Token);
+        using var execution = CancellationTokenSource.CreateLinkedTokenSource(_hardStop.Token, _crash.Token, timeout.Token, leaseLost.Token);
         using var renewal = new CancellationTokenSource();
         var renewing = RenewAsync(job, leaseLost, renewal.Token);
 
@@ -159,45 +166,63 @@ internal sealed partial class JobProcessor(
                 scope.ServiceProvider.GetRequiredService<TenantContext>().SetOrganization(organization);
             }
 
+            // The job system commits the job's unit of work together with the completion.
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
+            unitOfWork.ReserveCommitForOwner();
+
             var context = new JobContext(job.Id, job.Kind, job.Attempt, job.OrganizationId);
             await kind.Invoke(scope.ServiceProvider, job.Payload, context, execution.Token);
 
             await renewal.CancelAsync();
             await Quiet(renewing);
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
             var connection = await unitOfWork.GetConnectionAsync(execution.Token);
-            if (!await JobStore.CompleteAsync(connection, job.Id, worker.Id, execution.Token))
+            if (!await JobStore.CompleteAsync(connection, job, execution.Token))
             {
                 LogLeaseLost(job.Id, job.Kind);
                 return;
             }
 
-            await unitOfWork.CommitAsync(execution.Token);
+            await unitOfWork.CommitAsOwnerAsync(execution.Token);
             LogSucceeded(job.Id, job.Kind, job.Attempt);
         }
         catch (Exception) when (_crash.IsCancellationRequested)
         {
             // A killed process records nothing; its transaction is rolled back with the connection.
         }
-        catch (OperationCanceledException) when (_stopping.IsCancellationRequested && !timeout.IsCancellationRequested)
-        {
-            await JobStore.ReleaseAsync(dataSource, job.Id, worker.Id, CancellationToken.None);
-        }
         catch (Exception) when (leaseLost.IsCancellationRequested)
         {
             LogLeaseLost(job.Id, job.Kind);
+        }
+        catch (OperationCanceledException) when (_hardStop.IsCancellationRequested && !timeout.IsCancellationRequested)
+        {
+            await Settle(() => JobStore.ReleaseAsync(dataSource, job, CancellationToken.None), job);
         }
         catch (Exception ex)
         {
             var error = timeout.IsCancellationRequested ? $"Timed out after {job.Timeout}." : $"{ex.GetType().Name}: {ex.Message}";
             activity?.SetStatus(ActivityStatusCode.Error, error);
             LogFailed(ex, job.Id, job.Kind, job.Attempt, job.MaxAttempts);
-            await JobStore.FailAsync(dataSource, job.Id, worker.Id, error, Backoff.After(job.Attempt, Random.Shared.NextDouble(), options.BackoffBase), CancellationToken.None);
+            await Settle(
+                () => JobStore.FailAsync(dataSource, job, error, Backoff.After(job.Attempt, Random.Shared.NextDouble(), options.BackoffBase), CancellationToken.None),
+                job);
         }
         finally
         {
             await renewal.CancelAsync();
             await Quiet(renewing);
+        }
+    }
+
+    /// <summary>Records the outcome; if that fails too, the lease runs out and the watchdog settles the job.</summary>
+    private async Task Settle(Func<Task> record, ClaimedJob job)
+    {
+        try
+        {
+            await record();
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            LogSettleFailed(ex, job.Id, job.Kind);
         }
     }
 
@@ -210,13 +235,13 @@ internal sealed partial class JobProcessor(
             await Task.Delay(interval, linked.Token);
             try
             {
-                if (!await JobStore.RenewAsync(dataSource, job.Id, worker.Id, options.Lease, linked.Token))
+                if (!await JobStore.RenewAsync(dataSource, job, options.Lease, linked.Token))
                 {
                     await leaseLost.CancelAsync();
                     return;
                 }
             }
-            catch (Exception ex) when (ex is NpgsqlException or TimeoutException)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 LogRenewFailed(ex, job.Id);
             }
@@ -236,12 +261,9 @@ internal sealed partial class JobProcessor(
                     _wake.Writer.TryWrite(true);
                 }
             }
-            catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // A successor was enqueued at the same moment; the next round settles it.
-            }
-            catch (Exception ex) when (ex is NpgsqlException or TimeoutException)
-            {
+                // Never let the watchdog die: without it, jobs of dead workers would never run again.
                 LogWatchdogFailed(ex);
             }
 
@@ -267,7 +289,7 @@ internal sealed partial class JobProcessor(
                     await connection.WaitAsync(cancellationToken);
                 }
             }
-            catch (Exception ex) when (ex is NpgsqlException or TimeoutException or IOException)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 LogListenFailed(ex);
                 await Task.Delay(options.PollInterval, cancellationToken);
@@ -289,16 +311,19 @@ internal sealed partial class JobProcessor(
         }
     }
 
+    /// <summary>
+    /// After a stop request no new job is claimed; running jobs get the grace period to finish, then
+    /// they are cancelled and given back without counting the attempt.
+    /// </summary>
     private async Task DrainAsync()
     {
         var running = _running.Values.ToArray();
-        if (running.Length == 0 || _crash.IsCancellationRequested)
+        if (running.Length > 0 && !_crash.IsCancellationRequested)
         {
-            await Task.WhenAll(running.Select(Quiet));
-            return;
+            await Task.WhenAny(Task.WhenAll(running), Task.Delay(options.ShutdownGrace));
         }
 
-        await Task.WhenAny(Task.WhenAll(running), Task.Delay(options.ShutdownGrace));
+        await _hardStop.CancelAsync();
         await Task.WhenAll(running.Select(Quiet));
     }
 
@@ -316,6 +341,7 @@ internal sealed partial class JobProcessor(
     public override void Dispose()
     {
         _crash.Dispose();
+        _hardStop.Dispose();
         base.Dispose();
     }
 
@@ -339,6 +365,9 @@ internal sealed partial class JobProcessor(
 
     [LoggerMessage(EventId = 2007, Level = LogLevel.Warning, Message = "Job watchdog failed")]
     private partial void LogWatchdogFailed(Exception exception);
+
+    [LoggerMessage(EventId = 2009, Level = LogLevel.Error, Message = "Recording the outcome of job {JobId} ({Kind}) failed; the watchdog settles it after the lease")]
+    private partial void LogSettleFailed(Exception exception, Guid jobId, string kind);
 
     [LoggerMessage(EventId = 2008, Level = LogLevel.Warning, Message = "Listening for new jobs failed; polling until reconnected")]
     private partial void LogListenFailed(Exception exception);

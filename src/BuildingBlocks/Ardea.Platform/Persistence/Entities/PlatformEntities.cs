@@ -63,6 +63,9 @@ internal sealed class JobRow
 
     public DateTimeOffset? LeaseUntil { get; set; }
 
+    /// <summary>New for every claim; every later write of the claim must present it.</summary>
+    public Guid? LeaseToken { get; set; }
+
     public int TimeoutSeconds { get; set; } = 300;
 
     public Guid? OrgId { get; set; }

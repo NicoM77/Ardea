@@ -53,7 +53,7 @@ internal sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> opti
                 .HasFilter("state = 'running'")
                 .HasDatabaseName("ix_job_running_lease");
             job.HasIndex(j => j.FinishedAt)
-                .HasFilter("state IN ('succeeded', 'dead')")
+                .HasFilter("state IN ('succeeded', 'failed', 'dead')")
                 .HasDatabaseName("ix_job_finished");
         });
 

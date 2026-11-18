@@ -151,6 +151,10 @@ namespace Ardea.Platform.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("lease_owner");
 
+                    b.Property<Guid?>("LeaseToken")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lease_token");
+
                     b.Property<DateTimeOffset?>("LeaseUntil")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lease_until");
@@ -201,7 +205,7 @@ namespace Ardea.Platform.Persistence.Migrations
 
                     b.HasIndex("FinishedAt")
                         .HasDatabaseName("ix_job_finished")
-                        .HasFilter("state IN ('succeeded', 'dead')");
+                        .HasFilter("state IN ('succeeded', 'failed', 'dead')");
 
                     b.HasIndex("LeaseUntil")
                         .HasDatabaseName("ix_job_running_lease")

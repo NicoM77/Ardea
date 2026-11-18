@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Ardea.Intel.Sources.Abstractions/Ardea.Intel.Sources.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

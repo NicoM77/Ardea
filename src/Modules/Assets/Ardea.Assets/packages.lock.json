@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "ardea.assets.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "Ardea.SharedKernel": "[0.0.0, )"
+        }
+      },
+      "ardea.catalog.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "Ardea.SharedKernel": "[0.0.0, )"
+        }
+      },
+      "ardea.iam.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "Ardea.SharedKernel": "[0.0.0, )"
+        }
+      },
+      "ardea.intel": {
+        "type": "Project",
+        "dependencies": {
+          "Ardea.Catalog.Contracts": "[0.0.0, )",
+          "Ardea.Intel.Contracts": "[0.0.0, )",
+          "Ardea.Intel.Sources.Abstractions": "[0.0.0, )",
+          "Ardea.Platform": "[0.0.0, )"
+        }
+      },
+      "ardea.intel.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "Ardea.SharedKernel": "[0.0.0, )"
+        }
+      },
+      "ardea.intel.sources.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "Ardea.SharedKernel": "[0.0.0, )"
+        }
+      },
+      "ardea.platform": {
+        "type": "Project",
+        "dependencies": {
+          "Ardea.SharedKernel": "[0.0.0, )"
+        }
+      },
+      "ardea.sharedkernel": {
+        "type": "Project"
+      }
+    }
+  }
+}

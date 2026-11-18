@@ -1,0 +1,42 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Ardea.Platform/Ardea.Platform.csproj" />
+    <Project Path="src/BuildingBlocks/Ardea.SharedKernel/Ardea.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/src/Hosts/">
+    <Project Path="src/Hosts/Ardea.Host/Ardea.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Assessment/">
+    <Project Path="src/Modules/Assessment/Ardea.Assessment.Contracts/Ardea.Assessment.Contracts.csproj" />
+    <Project Path="src/Modules/Assessment/Ardea.Assessment/Ardea.Assessment.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Assets/">
+    <Project Path="src/Modules/Assets/Ardea.Assets.Contracts/Ardea.Assets.Contracts.csproj" />
+    <Project Path="src/Modules/Assets/Ardea.Assets/Ardea.Assets.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Catalog/">
+    <Project Path="src/Modules/Catalog/Ardea.Catalog.Contracts/Ardea.Catalog.Contracts.csproj" />
+    <Project Path="src/Modules/Catalog/Ardea.Catalog/Ardea.Catalog.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Iam/">
+    <Project Path="src/Modules/Iam/Ardea.Iam.Contracts/Ardea.Iam.Contracts.csproj" />
+    <Project Path="src/Modules/Iam/Ardea.Iam/Ardea.Iam.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Intel/">
+    <Project Path="src/Modules/Intel/Ardea.Intel.Contracts/Ardea.Intel.Contracts.csproj" />
+    <Project Path="src/Modules/Intel/Ardea.Intel/Ardea.Intel.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Notifications/">
+    <Project Path="src/Modules/Notifications/Ardea.Notifications.Contracts/Ardea.Notifications.Contracts.csproj" />
+    <Project Path="src/Modules/Notifications/Ardea.Notifications/Ardea.Notifications.csproj" />
+  </Folder>
+  <Folder Name="/src/Sources/">
+    <Project Path="src/Sources/Ardea.Intel.Sources.Abstractions/Ardea.Intel.Sources.Abstractions.csproj" />
+    <Project Path="src/Sources/Ardea.Intel.Sources.Formats/Ardea.Intel.Sources.Formats.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Ardea.Architecture.Tests/Ardea.Architecture.Tests.csproj" />
+  </Folder>
+</Solution>

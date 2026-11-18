@@ -25,13 +25,26 @@ const SAMPLE_KEY = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
           </div>
         </ui-card>
 
-        <ui-card heading="Recovery codes">
-          <ardea-recovery-codes [codes]="codes" />
+        <ui-card heading="Recovery codes, phone width">
+          <!-- 390px screen less 16px padding on each side, less the card's own padding -->
+          <div class="phone"><ardea-recovery-codes [codes]="codes" /></div>
         </ui-card>
       </div>
+
+      <!-- The width of the card on the real page (its column is at most 640px) -->
+      <ui-card class="page-width" heading="Recovery codes, page width">
+        <ardea-recovery-codes [codes]="codes" />
+      </ui-card>
     </div>
   `,
   styles: `
+    .phone {
+      width: 326px;
+      max-width: 100%;
+    }
+    .page-width {
+      max-width: 640px;
+    }
     .key {
       font-size: var(--fs-section);
       letter-spacing: 0.06em;

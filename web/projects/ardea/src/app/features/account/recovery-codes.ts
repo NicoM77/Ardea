@@ -28,40 +28,52 @@ import { UiButton, UiCopyButton } from 'ui';
       display: grid;
       gap: var(--space-lg);
     }
+    /* Two columns where a whole code and its number fit in each, one column otherwise. The list is
+       set in mono, so ch is the width of one character of a code. */
     .codes {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--space-xs) var(--gap);
+      grid-template-columns: repeat(
+        auto-fill,
+        minmax(min(100%, max(20ch, calc((100% - var(--gap)) / 2))), 1fr)
+      );
+      gap: var(--space-sm) var(--gap);
       padding: var(--space-lg) var(--space-xl);
       border-radius: var(--radius-card);
       background: var(--raised);
+      font-family: var(--mono);
+      font-size: var(--fs-body);
+      line-height: var(--lh-body);
       counter-reset: code;
     }
+    /* The number has its own track, so it can never run into a code */
     .codes li {
-      display: flex;
+      display: grid;
+      grid-template-columns: 3ch minmax(0, 1fr);
+      column-gap: var(--space-sm);
       align-items: baseline;
-      gap: var(--space-md);
+      min-width: 0;
       counter-increment: code;
     }
     .codes li::before {
       content: counter(code);
-      min-width: 2ch;
       color: var(--faint);
-      font-size: var(--fs-small);
+      font: 400 var(--fs-small) / var(--lh-small) var(--font);
       text-align: right;
     }
     .codes .id {
-      font-size: var(--fs-body);
+      font-size: inherit;
       letter-spacing: 0.04em;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
     .tools {
       display: flex;
       flex-wrap: wrap;
       gap: var(--space-sm);
     }
-    @media (max-width: 400px) {
+    @media (max-width: 640px) {
       .codes {
-        grid-template-columns: minmax(0, 1fr);
+        padding: var(--space-md) var(--space-lg);
       }
     }
   `,

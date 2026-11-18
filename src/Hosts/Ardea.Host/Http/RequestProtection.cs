@@ -12,20 +12,26 @@ internal static class RequestProtection
 {
     /// <summary>
     /// Behind the bundled proxy or a tunnel, client address and scheme arrive in forwarded headers.
-    /// They are trusted from loopback and private networks by default, or from
-    /// <c>ARDEA_TRUSTED_PROXIES</c> (comma-separated addresses or CIDR ranges).
+    /// They are trusted only from loopback, plus the addresses or CIDR ranges in
+    /// <c>ARDEA_TRUSTED_PROXIES</c> (comma-separated). Trusting more would let anything that reaches
+    /// the API from there choose its client address, and so its rate-limit bucket.
     /// </summary>
     public static void ConfigureForwardedHeaders(IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            // Walk back through every trusted proxy, so a chain of two still yields the real client.
+            options.ForwardLimit = null;
             options.KnownIPNetworks.Clear();
             options.KnownProxies.Clear();
             var configured = configuration["TRUSTED_PROXIES"];
-            var entries = string.IsNullOrWhiteSpace(configured)
-                ? ["127.0.0.0/8", "::1/128", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7"]
-                : configured.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            string[] entries =
+            [
+                "127.0.0.0/8",
+                "::1/128",
+                .. (configured ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+            ];
             foreach (var entry in entries)
             {
                 if (System.Net.IPNetwork.TryParse(entry, out var network))
@@ -56,6 +62,12 @@ internal static class RequestProtection
             "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; " +
             "connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
         headers["Cross-Origin-Opener-Policy"] = "same-origin";
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            // API answers hold personal data and secrets (MFA keys, recovery codes): never cache them.
+            headers.CacheControl = "no-store";
+        }
+
         return next(context);
     }
 

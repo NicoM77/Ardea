@@ -25,7 +25,8 @@ internal static partial class MigrateCommand
             options,
             Modules.Databases,
             new ServerSideBackupWriter(options, TimeProvider.System, loggers.CreateLogger<ServerSideBackupWriter>()),
-            loggers.CreateLogger<DatabaseMigrator>());
+            loggers.CreateLogger<DatabaseMigrator>(),
+            MasterDataOptions.FromConfiguration(configuration));
 
         if (args.Contains("--roles-only"))
         {

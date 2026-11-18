@@ -1,4 +1,8 @@
+using System.Data.Common;
+using Ardea.Platform.Persistence;
 using Ardea.TestSupport;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 namespace Ardea.Platform.Tests.Persistence;
@@ -82,6 +86,43 @@ public sealed class DatabaseMigratorTests(PostgresServer server)
         await db.Migrator().MigrateAsync(owner, TestContext.Current.CancellationToken);
         await using var current = await db.OpenAppAsync();
         Assert.Empty(await db.Migrator().FindSchemasBehindAsync(current, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Master_data_is_loaded_after_the_migrations_on_every_run()
+    {
+        var db = await MigrationDatabase.CreateAsync(server);
+        await using var owner = await db.OpenOwnerAsync();
+        var seeding = new SeedingDatabase();
+        var masterData = new MasterDataOptions("/master-data");
+        var migrator = new DatabaseMigrator(db.Options, [seeding], db.Backup(), NullLogger<DatabaseMigrator>.Instance, masterData);
+
+        await migrator.MigrateAsync(owner, TestContext.Current.CancellationToken);
+        var second = await migrator.MigrateAsync(owner, TestContext.Current.CancellationToken);
+
+        Assert.Equal(0, second.Applied);
+        Assert.Equal([true, true], seeding.SawMigratedSchema);
+        Assert.All(seeding.Directories, d => Assert.Equal("/master-data", d));
+    }
+
+    /// <summary>The platform schema with a seed that records what it saw.</summary>
+    private sealed class SeedingDatabase : IModuleDatabase
+    {
+        public List<bool> SawMigratedSchema { get; } = [];
+
+        public List<string> Directories { get; } = [];
+
+        public string Schema => PlatformDatabase.Instance.Schema;
+
+        public DbContext CreateContext(DbConnection connection) =>
+            PlatformDatabase.Instance.CreateContext(connection);
+
+        public async Task<int> SeedAsync(DbConnection connection, MasterDataOptions masterData, CancellationToken cancellationToken)
+        {
+            SawMigratedSchema.Add(await Scalar<bool>((NpgsqlConnection)connection, "SELECT to_regclass('platform.job') IS NOT NULL"));
+            Directories.Add(masterData.Directory);
+            return 1;
+        }
     }
 
     private static async Task Execute(NpgsqlConnection connection, string sql)

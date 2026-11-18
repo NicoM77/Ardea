@@ -59,6 +59,7 @@ internal static partial class ApiRole
         builder.Services.AddArdeaPlatform(builder.Configuration, "api");
         builder.Services.AddUnitOfWork();
         builder.Services.AddJobQueue();
+        builder.Services.AddSourceAdapters();
         builder.Services.AddArdeaSecrets(MasterKey.FromBase64(builder.Configuration[HostConfiguration.MasterKeyKey]!));
         builder.Services.AddArdeaTelemetry(builder.Logging, builder.Configuration, "api", AppVersion.Current);
         builder.Services.AddProblemDetails();

@@ -26,6 +26,11 @@ public interface IModule
 
     void MapEndpoints(IEndpointRouteBuilder endpoints);
 
+    /// <summary>Services only the <c>worker</c> role needs, e.g. hosted services that fetch.</summary>
+    void AddWorkerServices(IServiceCollection services, IConfiguration configuration)
+    {
+    }
+
     /// <summary>Commands under <c>ardea admin</c>.</summary>
     IReadOnlyList<MaintenanceCommand> Commands => [];
 }

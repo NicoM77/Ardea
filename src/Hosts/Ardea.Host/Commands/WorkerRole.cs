@@ -27,11 +27,13 @@ internal static class WorkerRole
         builder.Services.AddHostedService(sp => ActivatorUtilities.CreateInstance<WorkerHeartbeat>(sp, AppVersion.Current));
         builder.Services.AddUnitOfWork();
         builder.Services.AddJobWorker();
+        builder.Services.AddSourceAdapters();
         builder.Services.AddArdeaSecrets(MasterKey.FromBase64(builder.Configuration[HostConfiguration.MasterKeyKey]!));
         builder.Services.AddArdeaTelemetry(builder.Logging, builder.Configuration, "worker", AppVersion.Current);
         foreach (var module in Modules.All)
         {
             module.AddServices(builder.Services, builder.Configuration);
+            module.AddWorkerServices(builder.Services, builder.Configuration);
         }
 
         using var host = builder.Build();

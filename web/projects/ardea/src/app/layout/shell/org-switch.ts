@@ -3,7 +3,7 @@ import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideCheck, LucideChevronsUpDown } from '@lucide/angular';
-import { MembershipSummary } from '../../core/api/models';
+import type { SessionOrganization } from '../../core/api/client';
 
 /**
  * The organization the pages belong to, and a menu to switch to another one. With no membership
@@ -144,8 +144,8 @@ import { MembershipSummary } from '../../core/api/models';
   `,
 })
 export class OrgSwitch {
-  readonly organizations = input.required<readonly MembershipSummary[]>();
-  readonly current = input<MembershipSummary | null>(null);
+  readonly organizations = input.required<readonly SessionOrganization[]>();
+  readonly current = input<SessionOrganization | null>(null);
   protected readonly mark = computed(() =>
     (Array.from(this.current()?.name.trim() ?? '')[0] ?? '').toLocaleUpperCase(),
   );

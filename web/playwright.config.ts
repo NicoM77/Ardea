@@ -1,19 +1,37 @@
 import { defineConfig, devices } from '@playwright/test';
+import { existsSync } from 'node:fs';
 
 /**
- * Visual comparison of the component library pages (master plan 13.6): one image per page,
- * Chromium on Linux, under a minute. It runs against a development build (the production build
- * leaves the /ui pages out), served by scripts/serve-static.mjs. Build first, then compare in the
- * official image so the baselines match CI:
+ * Two Playwright projects, both in Chromium on Linux, both served by scripts/serve-static.mjs with
+ * the production Content Security Policy:
  *
- *   npx ng build ardea --configuration development
- *   docker run --rm --ipc=host --user "$(id -u):$(id -g)" -e HOME=/tmp \
- *     -v "$PWD":/w -w /w mcr.microsoft.com/playwright:v1.56.1-noble npx playwright test
+ * - `visual`: one image per component library page (master plan 13.6), against a development build
+ *   in dist/showcase (the production build leaves the /ui pages out). Main branch only in CI.
+ * - `csp`: the production build in dist/ardea loads its pages under the policy without a single
+ *   console error. Runs on every pull request.
+ *
+ * Build, then run in the official image so the images match CI (the repository is mounted whole,
+ * because the server reads the policy from the host's source):
+ *
+ *   npx ng build ardea && npx ng build ardea --configuration development --output-path dist/showcase
+ *   docker run --rm --ipc=host --user "$(id -u):$(id -g)" -e HOME=/tmp -e CI=true \
+ *     -v "$PWD/..":/repo -w /repo/web mcr.microsoft.com/playwright:v1.56.1-noble npx playwright test
  *
  * Add `--update-snapshots=all` after an intended visual change and commit the new images.
  */
-const port = 4300;
 const isCi = !!process.env['CI'];
+const showcase = { dir: 'dist/showcase/browser', port: 4300 };
+const production = { dir: 'dist/ardea/browser', port: 4301 };
+
+/** Only the builds that exist are served, so either project can run on its own. */
+const servers = [showcase, production]
+  .filter((build) => existsSync(`${build.dir}/index.html`))
+  .map((build) => ({
+    command: `node scripts/serve-static.mjs ${build.dir} ${build.port}`,
+    url: `http://127.0.0.1:${build.port}/`,
+    reuseExistingServer: !isCi,
+    timeout: 30_000,
+  }));
 
 export default defineConfig({
   testDir: './e2e',
@@ -23,7 +41,6 @@ export default defineConfig({
   retries: 0,
   reporter: isCi ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: `http://127.0.0.1:${port}`,
     trace: 'retain-on-failure',
   },
   expect: {
@@ -39,18 +56,25 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
+      name: 'visual',
+      testMatch: 'visual.spec.ts',
       use: {
         ...devices['Desktop Chrome'],
+        baseURL: `http://127.0.0.1:${showcase.port}`,
         viewport: { width: 1440, height: 900 },
         deviceScaleFactor: 1,
+        // The loader's loop would be cut to its first, empty frame; reduced motion shows the mark.
+        reducedMotion: 'reduce',
+      },
+    },
+    {
+      name: 'csp',
+      testMatch: 'csp.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: `http://127.0.0.1:${production.port}`,
       },
     },
   ],
-  webServer: {
-    command: `node scripts/serve-static.mjs dist/ardea/browser ${port}`,
-    url: `http://127.0.0.1:${port}/ui`,
-    reuseExistingServer: !isCi,
-    timeout: 30_000,
-  },
+  webServer: servers,
 });

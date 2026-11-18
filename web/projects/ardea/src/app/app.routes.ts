@@ -56,6 +56,13 @@ export const routes: Routes = [
           import('./features/auth/reset-password-page').then((m) => m.ResetPasswordPage),
       },
       {
+        // The link from the confirmation e-mail: signed in or out.
+        path: 'confirm-email',
+        title: 'auth.confirmEmail.title',
+        loadComponent: () =>
+          import('./features/auth/confirm-email-page').then((m) => m.ConfirmEmailPage),
+      },
+      {
         path: 'unavailable',
         title: 'unavailable.title',
         loadComponent: () =>
@@ -86,8 +93,7 @@ export const routes: Routes = [
         path: 'admin',
         canActivate: [instanceAdminGuard],
         title: 'nav.administration',
-        data: { area: 'administration' },
-        loadComponent: () => import('./features/areas/area-page').then((m) => m.AreaPage),
+        loadComponent: () => import('./features/admin/admin-page').then((m) => m.AdminPage),
       },
       {
         path: 'o/:slug',

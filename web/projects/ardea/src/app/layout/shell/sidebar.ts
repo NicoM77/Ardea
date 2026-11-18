@@ -3,7 +3,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideDynamicIcon, LucideX } from '@lucide/angular';
 import { UiAvatar, UiButton } from 'ui';
-import { Me, MembershipSummary } from '../../core/api/models';
+import type { SessionOrganization } from '../../core/api/client';
+import type { Me } from '../../core/session/session';
 import { ADMINISTRATION, Area, AREAS } from '../../features/areas/areas';
 import { OrgSwitch } from './org-switch';
 
@@ -199,7 +200,7 @@ interface NavLink {
 })
 export class Sidebar {
   readonly user = input<Me | null>(null);
-  readonly organization = input<MembershipSummary | null>(null);
+  readonly organization = input<SessionOrganization | null>(null);
   /** Shown as the phone menu: larger targets and a close button. */
   readonly menuMode = input(false, { transform: booleanAttribute });
   readonly closeMenu = output();

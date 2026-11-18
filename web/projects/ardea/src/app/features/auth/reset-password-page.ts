@@ -3,7 +3,8 @@ import { form, FormField, FormRoot } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiField, UiInput, UiNotice, UiPasswordToggle } from 'ui';
-import { AuthApi } from '../../core/api/auth-api';
+import { firstValueFrom } from 'rxjs';
+import { AuthenticationService } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import {
   fieldErrorKey,
@@ -88,7 +89,7 @@ export class ResetPasswordPage {
   readonly email = input<string | null>(null);
   readonly token = input<string | null>(null);
 
-  private readonly auth = inject(AuthApi);
+  private readonly auth = inject(AuthenticationService);
   private readonly router = inject(Router);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
@@ -104,11 +105,13 @@ export class ResetPasswordPage {
         this.problem.set(null);
         this.linkExpired.set(false);
         try {
-          await this.auth.resetPassword({
-            email: this.email() ?? '',
-            token: this.token() ?? '',
-            newPassword: this.model().newPassword,
-          });
+          await firstValueFrom(
+            this.auth.resetPassword({
+              email: this.email() ?? '',
+              token: this.token() ?? '',
+              newPassword: this.model().newPassword,
+            }),
+          );
           await this.router.navigate(['/sign-in'], { queryParams: { notice: 'passwordChanged' } });
         } catch (error) {
           const weak = weakPasswordError(error, this.reset.newPassword);

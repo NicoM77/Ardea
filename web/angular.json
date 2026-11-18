@@ -26,8 +26,7 @@
                 "input": "projects/ardea/public"
               }
             ],
-            "styles": ["projects/ardea/src/styles.css"],
-            "allowedCommonJsDependencies": ["@messageformat/core"]
+            "styles": ["projects/ardea/src/styles.css"]
           },
           "configurations": {
             "production": {

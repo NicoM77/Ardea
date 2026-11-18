@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "Ardea",
+    "loading": "Loading Ardea",
     "tagline": "Understand the risk. Know what matters. Act immediately."
   },
   "ui": {
@@ -77,10 +78,99 @@
     "settings": {
       "emptyHeading": "Nothing to set yet",
       "emptyText": "The organization, its deadlines and its AI data policy will be set here."
+    }
+  },
+  "admin": {
+    "title": "Administration",
+    "sub": "Settings and the job queue of this Ardea instance.",
+    "loading": "Loading the administration",
+    "save": "Save",
+    "tryAgain": "Try again",
+    "locked": "Set by environment variable",
+    "settingsTitle": "Settings",
+    "settingsLoadFailed": "The settings could not be loaded.",
+    "errors": {
+      "locked": "A value is set by an environment variable and cannot be changed here.",
+      "invalid": "Some values are not valid. Check the fields marked below.",
+      "saveFailed": "The settings could not be saved. Try again in a moment."
     },
-    "administration": {
-      "emptyHeading": "Nothing to administer yet",
-      "emptyText": "Registration, mail, AI providers and background jobs of this instance will be managed here."
+    "instance": {
+      "title": "This instance",
+      "version": "Installed version",
+      "pending": "Jobs waiting",
+      "running": "Jobs running",
+      "failed": "Jobs failed",
+      "dead": "Jobs given up",
+      "loadFailed": "The state of the instance could not be loaded."
+    },
+    "registration": {
+      "title": "Registration",
+      "mode": "Who can create an account",
+      "invite": "By invitation",
+      "open": "Anyone",
+      "closed": "No one",
+      "inviteHint": "People join through an invitation from an organization.",
+      "openHint": "Anyone who can reach this instance can create an account.",
+      "closedHint": "No new accounts, not even with an invitation.",
+      "saved": "Registration is saved.",
+      "errors": {
+        "mode": "Choose by invitation, anyone or no one."
+      }
+    },
+    "smtp": {
+      "title": "E-mail",
+      "intro": "The mail server Ardea sends confirmations, password resets and notifications through.",
+      "host": "Server",
+      "port": "Port",
+      "portHint": "Usually 587 with STARTTLS, 465 with TLS.",
+      "security": "Encryption",
+      "securityDefault": "Default",
+      "securityStarttls": "STARTTLS",
+      "securityTls": "TLS",
+      "securityNone": "None",
+      "user": "User name",
+      "password": "Password",
+      "passwordSet": "A password is stored. Type a new one to replace it.",
+      "passwordNotSet": "No password is stored.",
+      "passwordReplace": "New password",
+      "removePassword": "Remove password",
+      "from": "Sender address",
+      "fromHint": "The address the e-mails come from.",
+      "saved": "E-mail settings are saved.",
+      "testTitle": "Send a test e-mail",
+      "testTo": "Recipient",
+      "testSend": "Send test e-mail",
+      "testSent": "A test e-mail is on its way to {to}.",
+      "errors": {
+        "host": "Enter the name of the mail server.",
+        "port": "Enter a port between 1 and 65535.",
+        "security": "Choose STARTTLS, TLS or none.",
+        "from": "Enter a sender address, such as ardea@example.org.",
+        "testTo": "Enter the address the test e-mail goes to.",
+        "notConfigured": "Save a server and a sender address first.",
+        "failed": "The mail server did not accept the test e-mail."
+      }
+    },
+    "jobs": {
+      "title": "Failed jobs",
+      "count": "{count, plural, =0 {none} one {# job} other {# jobs}}",
+      "loading": "Loading the failed jobs",
+      "loadFailed": "The failed jobs could not be loaded.",
+      "emptyHeading": "No failed jobs",
+      "emptyText": "Every background job finished or is still on its way.",
+      "kind": "Job",
+      "state": "State",
+      "attempts": "Attempts",
+      "attemptsOf": "{attempts} of {max}",
+      "finished": "Ended",
+      "actions": "Actions",
+      "dead": "Given up",
+      "failed": "Failed",
+      "retry": "Retry",
+      "retryLabel": "Retry {kind}",
+      "retried": "{kind} is queued again.",
+      "gone": "This job is no longer waiting for a retry. The list is up to date again.",
+      "retryFailed": "The job could not be queued again. Try again in a moment."
     }
   },
   "home": {
@@ -136,7 +226,7 @@
       "forgot": "Forgot your password?",
       "notices": {
         "passwordChanged": "Your password is changed. Sign in with the new one.",
-        "registered": "Your account is ready. Sign in to continue.",
+        "registered": "Sign in to continue. If this address already had an account, an e-mail on its way explains what to do.",
         "signedOut": "You are signed out.",
         "twoFactorExpired": "The sign-in took too long. Enter your email and password again."
       },
@@ -179,16 +269,14 @@
     "register": {
       "title": "Create your account",
       "lead": "You were invited to Ardea. Choose how you will sign in.",
+      "leadOpen": "Create an account on this Ardea instance.",
       "emailHint": "Use the address the invitation was sent to.",
       "submit": "Create account",
       "haveAccount": "Already have an account?",
-      "missing": {
-        "heading": "This invitation link is incomplete",
-        "text": "Open the link from the invitation email again, or ask the person who invited you to send a new one."
-      },
       "errors": {
         "invitation": "This invitation is no longer valid. Ask the person who invited you to send a new one.",
-        "emailTaken": "An account with this email address exists already. Sign in instead.",
+        "invitationRequired": "This instance takes new accounts by invitation only. Open the link from your invitation e-mail.",
+        "closed": "This instance does not take new accounts. Ask its administrator.",
         "rejected": "The account could not be created. Check the entries and try again."
       }
     },
@@ -216,6 +304,22 @@
       "errors": {
         "linkInvalid": "This link has expired or was used already.",
         "rejected": "The password could not be changed. Check it and try again."
+      }
+    },
+    "confirmEmail": {
+      "title": "Confirm your e-mail address",
+      "confirming": "Confirming your address",
+      "continue": "Continue",
+      "retry": "Try again",
+      "home": "Go to Ardea",
+      "invalid": "This link has expired or was used already. Sign in to have a new one sent.",
+      "done": {
+        "heading": "Your address is confirmed",
+        "text": "Ardea can now send you e-mails about your account and your projects."
+      },
+      "incomplete": {
+        "heading": "This link is incomplete",
+        "text": "Open the link from the e-mail again, or copy all of it into the address bar."
       }
     }
   },

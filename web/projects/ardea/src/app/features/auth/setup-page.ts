@@ -3,7 +3,8 @@ import { form, FormField, FormRoot, required } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiField, UiInput, UiNotice, UiPasswordToggle } from 'ui';
-import { AuthApi } from '../../core/api/auth-api';
+import { firstValueFrom } from 'rxjs';
+import { SetupService } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { Session } from '../../core/session/session';
 import {
@@ -98,7 +99,7 @@ import { focusFirstInvalid } from './focus-invalid';
   `,
 })
 export class SetupPage {
-  private readonly auth = inject(AuthApi);
+  private readonly setupApi = inject(SetupService);
   private readonly session = inject(Session);
   private readonly router = inject(Router);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
@@ -125,7 +126,9 @@ export class SetupPage {
           this.problem.set(null);
           const value = this.model();
           try {
-            await this.auth.setup({ ...value, setupToken: value.setupToken.trim() });
+            await firstValueFrom(
+              this.setupApi.completeSetup({ ...value, setupToken: value.setupToken.trim() }),
+            );
             await this.session.refresh();
             await this.router.navigateByUrl('/');
           } catch (error) {

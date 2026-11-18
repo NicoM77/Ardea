@@ -1,7 +1,18 @@
 import { HttpClient } from '@angular/common/http';
-import { EnvironmentProviders, inject, Injectable, isDevMode } from '@angular/core';
-import { provideTransloco, Translation, TranslocoLoader } from '@jsverse/transloco';
-import { provideTranslocoMessageformat } from '@jsverse/transloco-messageformat';
+import {
+  EnvironmentProviders,
+  inject,
+  Injectable,
+  isDevMode,
+  makeEnvironmentProviders,
+} from '@angular/core';
+import {
+  provideTransloco,
+  Translation,
+  TRANSLOCO_TRANSPILER,
+  TranslocoLoader,
+} from '@jsverse/transloco';
+import { IcuTranspiler } from './icu-transpiler';
 import { Observable, of } from 'rxjs';
 import en from '../../../i18n/en.json';
 
@@ -34,6 +45,7 @@ export function provideTranslations(): EnvironmentProviders[] {
       },
       loader: TranslationLoader,
     }),
-    provideTranslocoMessageformat(),
+    // ICU without eval: the instance's Content Security Policy has no 'unsafe-eval'.
+    makeEnvironmentProviders([{ provide: TRANSLOCO_TRANSPILER, useClass: IcuTranspiler }]),
   ];
 }

@@ -3,7 +3,8 @@ import { form, FormField, FormRoot, required, validate } from '@angular/forms/si
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiField, UiInput, UiNotice } from 'ui';
-import { AuthApi } from '../../core/api/auth-api';
+import { firstValueFrom } from 'rxjs';
+import { AuthenticationService } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { safeReturnUrl } from '../../core/session/access';
 import { Session } from '../../core/session/session';
@@ -76,7 +77,7 @@ import { focusFirstInvalid } from './focus-invalid';
 export class TwoFactorPage {
   readonly returnUrl = input<string | null>(null);
 
-  private readonly auth = inject(AuthApi);
+  private readonly auth = inject(AuthenticationService);
   private readonly session = inject(Session);
   private readonly router = inject(Router);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
@@ -108,10 +109,12 @@ export class TwoFactorPage {
           const recovery = this.useRecovery();
           const raw = this.model().code;
           try {
-            await this.auth.loginTwoFactor({
-              code: recovery ? normalizeRecoveryCode(raw) : normalizeTotp(raw),
-              isRecoveryCode: recovery,
-            });
+            await firstValueFrom(
+              this.auth.loginTwoFactor({
+                code: recovery ? normalizeRecoveryCode(raw) : normalizeTotp(raw),
+                isRecoveryCode: recovery,
+              }),
+            );
             await this.session.refresh();
             await this.router.navigateByUrl(safeReturnUrl(this.returnUrl()) ?? '/');
           } catch (error) {

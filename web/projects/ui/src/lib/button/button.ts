@@ -1,5 +1,5 @@
 import { booleanAttribute, Component, DestroyRef, ElementRef, inject, input } from '@angular/core';
-import { UiSpinner } from '../spinner/spinner';
+import { UiLoader } from '../loader/loader';
 
 export type UiButtonVariant = 'default' | 'primary' | 'ghost';
 
@@ -8,13 +8,13 @@ export type UiButtonVariant = 'default' | 'primary' | 'ghost';
  * Primary is near-black and appears once per screen; Default has a Control edge; Ghost has none.
  *
  * While `loading` is set the button stays focusable, announces `aria-busy`, ignores clicks and
- * keeps its label beside the spinner, so a keyboard user never loses their place.
+ * keeps its label beside the drawing heron, so a keyboard user never loses their place.
  */
 @Component({
   // An attribute on the native element keeps its semantics, focus and form behaviour.
   // eslint-disable-next-line @angular-eslint/component-selector
   selector: 'button[uiButton], a[uiButton]',
-  imports: [UiSpinner],
+  imports: [UiLoader],
   host: {
     class: 'ui-button',
     '[class.is-primary]': "variant() === 'primary'",
@@ -27,7 +27,7 @@ export type UiButtonVariant = 'default' | 'primary' | 'ghost';
   },
   template: `
     @if (loading()) {
-      <ui-spinner />
+      <ui-loader size="button" />
     }
     <ng-content />
   `,

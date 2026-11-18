@@ -3,7 +3,8 @@ import { form, FormField, FormRoot } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiField, UiInput, UiNotice } from 'ui';
-import { AuthApi } from '../../core/api/auth-api';
+import { firstValueFrom } from 'rxjs';
+import { AuthenticationService } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { EMAIL_ERRORS, emailRules, fieldErrorKey } from './auth-forms';
 import { focusFirstInvalid } from './focus-invalid';
@@ -52,7 +53,7 @@ import { focusFirstInvalid } from './focus-invalid';
   `,
 })
 export class ForgotPasswordPage {
-  private readonly auth = inject(AuthApi);
+  private readonly auth = inject(AuthenticationService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
   protected readonly fieldErrorKey = fieldErrorKey;
@@ -67,7 +68,7 @@ export class ForgotPasswordPage {
         this.problem.set(null);
         const email = this.model().email.trim();
         try {
-          await this.auth.forgotPassword({ email });
+          await firstValueFrom(this.auth.forgotPassword({ email }));
           this.sentTo.set(email);
         } catch (error) {
           this.problem.set(problemMessageKey(error, { fallback: 'auth.forgot.errors.failed' }));

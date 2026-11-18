@@ -1,0 +1,52 @@
+import { expect, test } from '@playwright/test';
+import { watchConsole } from './console';
+import { api } from './mock-api';
+
+/**
+ * The production build under the production Content Security Policy (served by
+ * scripts/serve-static.mjs): every page loads, translates and routes without a single console
+ * error. Guards against code that needs eval or inline script, which the instance never allows.
+ */
+const PAGES: { path: string; signedIn: boolean; title: string; heading: string }[] = [
+  { path: '/sign-in', signedIn: false, title: 'Sign in · Ardea', heading: 'Sign in' },
+  {
+    path: '/register',
+    signedIn: false,
+    title: 'Create your account · Ardea',
+    heading: 'Create your account',
+  },
+  {
+    path: '/confirm-email?userId=0190a000-0000-7000-8000-000000000001&token=abc',
+    signedIn: false,
+    title: 'Confirm your e-mail address · Ardea',
+    heading: 'Confirm your e-mail address',
+  },
+  { path: '/o/example/overview', signedIn: true, title: 'Overview · Ardea', heading: 'Overview' },
+  { path: '/admin', signedIn: true, title: 'Administration · Ardea', heading: 'Administration' },
+  {
+    path: '/account/two-factor',
+    signedIn: true,
+    title: 'Two-factor authentication · Ardea',
+    heading: 'Two-factor authentication',
+  },
+];
+
+for (const target of PAGES) {
+  test(`${target.path} loads under the production policy`, async ({ page }) => {
+    const problems = watchConsole(page);
+    await api(page, target.signedIn);
+
+    await page.goto(target.path);
+    await expect(page.getByRole('heading', { level: 1, name: target.heading })).toBeVisible();
+    await expect(page).toHaveTitle(target.title);
+    expect(problems).toEqual([]);
+  });
+}
+
+test('an ICU plural renders under the production policy', async ({ page }) => {
+  const problems = watchConsole(page);
+  await api(page, true);
+  await page.goto('/admin');
+  await expect(page.getByText('1 job', { exact: true })).toBeVisible();
+  expect(problems).toEqual([]);
+});

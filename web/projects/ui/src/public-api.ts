@@ -17,5 +17,5 @@ export * from './lib/pill/pill';
 export * from './lib/priority/priority';
 export * from './lib/qr-code/qr-code';
 export * from './lib/qr-code/qr-path';
-export * from './lib/spinner/spinner';
+export * from './lib/loader/loader';
 export * from './lib/status/status';

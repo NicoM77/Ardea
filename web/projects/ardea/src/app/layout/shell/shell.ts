@@ -6,8 +6,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideKeyRound } from '@lucide/angular';
-import { filter, map } from 'rxjs';
-import { AuthApi } from '../../core/api/auth-api';
+import { filter, firstValueFrom, map } from 'rxjs';
+import { AuthenticationService } from '../../core/api/client';
 import { Session } from '../../core/session/session';
 import { ADMINISTRATION, AREAS } from '../../features/areas/areas';
 import { SearchDialog, SearchDialogData } from '../search/search-dialog';
@@ -168,7 +168,7 @@ const SLUG = /^\/o\/([^/?#]+)/;
 })
 export class Shell {
   protected readonly session = inject(Session);
-  private readonly auth = inject(AuthApi);
+  private readonly auth = inject(AuthenticationService);
   private readonly router = inject(Router);
   private readonly dialog = inject(Dialog);
   private readonly transloco = inject(TranslocoService);
@@ -242,7 +242,7 @@ export class Shell {
 
   protected async signOut(): Promise<void> {
     try {
-      await this.auth.logout();
+      await firstValueFrom(this.auth.logout());
     } finally {
       await this.session.refresh();
       await this.router.navigate(['/sign-in'], { queryParams: { notice: 'signedOut' } });

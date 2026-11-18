@@ -30,8 +30,8 @@ export interface Area {
   path: string;
   label: string;
   icon: LucideIconData;
-  emptyHeading: string;
-  emptyText: string;
+  emptyHeading?: string;
+  emptyText?: string;
   /** Main list or the group at the foot of the sidebar. */
   group: 'main' | 'foot';
 }
@@ -117,8 +117,6 @@ export const ADMINISTRATION: Area = {
   path: '/admin',
   label: 'nav.administration',
   icon: LucideServerCog.icon,
-  emptyHeading: 'areas.administration.emptyHeading',
-  emptyText: 'areas.administration.emptyText',
   group: 'foot',
 };
 

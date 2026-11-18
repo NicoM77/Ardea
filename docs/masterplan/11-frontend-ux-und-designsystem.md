@@ -13,7 +13,7 @@ Die visuelle Richtung ist gewählt und als Mockups ausgearbeitet.
 
 **Wie die Richtung entstand.** Aus der Welt der Nutzer wurden sieben Kandidaten abgeleitet, ein Zufallswurf wählte einen davon aus, damit nicht jede Planung beim naheliegendsten landet; dazu kamen sechs Herausforderer aus einem Katalog. Zur Wahl standen am Ende vier ausgearbeitete Skizzen: Agenturmeldung, Gefahrenbulletin, Abfahrtstafel und der Kategoriestandard. Der Eigentümer hat das **Gefahrenbulletin** gewählt. Die Mockups wurden danach von einer unabhängigen Instanz abgenommen: acht Befunde, zwei Korrekturrunden, Freigabe.
 
-Englisch ist die Leitsprache der Oberfläche, Deutsch folgt als Übersetzung. Der Produktname ist offen; «CSH Alert» ist Arbeitstitel.
+Englisch ist die Leitsprache der Oberfläche, Deutsch folgt als Übersetzung. Der Produktname ist Ardea, lateinisch für Reiher.
 
 **Was die Mockups noch nicht zeigen.** Sie entstanden vor der Auswertung des Regelwerks am Spike. Zwei Dinge sind seither entschieden und müssen vor Phase 3 nachgezogen werden: Die Liste führt Massnahmen statt einzelner Schwachstellen (Kapitel 7.4), und die Fassung ohne Sprachmodell mit Antworten aus Vorlagen ist die Vorgabe einer frischen Installation (Kapitel 7.5). Die Zahlen im Bulletin-Mockup («6 concern you», 167 auf Stufe 1) sind Beispielwerte und nicht aus dem Regelwerk berechnet.
 

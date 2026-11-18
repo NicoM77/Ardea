@@ -47,12 +47,12 @@ The product does not forward more security news. It compares every vulnerability
 - The AI is a decision aid. Its conclusions must show their reasoning, their uncertainty, and their sources; a deterministic rule set computes the final priority.
 - The system must stay useful without any AI provider configured.
 - Planning phase only: mockups and prototypes are allowed, production implementation is not.
-- Undecided: the product name. "CSH Alert" is a working title and may change.
+- Product name: Ardea, Latin for heron. Chosen by the owner on 2026-11-18; a trademark search is still due before the first public release.
 - Undecided: licence, hosted offering, and any commercial tier. Do not imply any of them.
 
 ## Brand Commitments
 
-No name, logo, palette, or typeface is fixed; the owner left the whole identity open.
+The name is Ardea (Latin for heron). The logo is an outlined heron, head and neck in one line, with the wordmark in Inter Tight SemiBold; chosen by the owner on 2026-11-18. Files and rules: `docs/design/brand/` (open `index.html`). The wordmark face is for the logo and display lines only; the interface keeps the system font.
 
 Binding constraints the owner stated in the brief:
 

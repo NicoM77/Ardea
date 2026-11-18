@@ -1,4 +1,4 @@
-# CSH Alert · Masterplan
+# Ardea · Masterplan
 
 Stand 18. November 2026 · Planungsphase · **zur Prüfung und Freigabe durch den Eigentümer**
 

@@ -27,7 +27,7 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 
 | Nr. | Frage | Empfehlung | Wirkt auf |
 |---|---|---|---|
-| E1 | Produktname | vor dem ersten öffentlichen Release festlegen; bis dahin Arbeitstitel | Namensräume, Image, Domain |
+| E1 | Produktname | **entschieden:** Ardea (lateinisch für Reiher), Wahl des Eigentümers vom 18.11.2026; Markenrecherche (Swissreg, EUIPO, Klassen 9 und 42) vor dem ersten öffentlichen Release | Namensräume, Image, Domain |
 | E2 | Lizenz | AGPL-3.0 für die Anwendung, Apache-2.0 für das Provider-SDK | Beiträge, Verbreitung |
 | E3 | KEV und EPSS schon im MVP | ja; klein, und sie tragen die Priorisierung jenseits von CVSS | Phase 1 |
 | E4 | Job-Verarbeitung | eigene Tabelle statt Bibliothek | Kapitel 3.4 |
@@ -53,7 +53,7 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | Benachrichtigung über SMTP, Web Push und Webhooks; Capacitor für die App | Vorgabe des Eigentümers |
 | Nutzer: verantwortliche Person plus Entwickler, die ereignisgetrieben dazukommen | Rückfrage vom 18.11.2026 |
 | Englisch zuerst, Deutsch als Übersetzung | Rückfrage vom 18.11.2026 |
-| Kein fester Name, keine Markenvorgaben | Rückfrage vom 18.11.2026 |
+| Name Ardea; Logo: Reiher als Outline (Kopf und Hals), Wortmarke in Inter Tight SemiBold; Dateien und Regeln in `docs/design/brand/` | Rückfrage und Wahl des Eigentümers vom 18.11.2026 |
 | Visuelle Richtung «Gefahrenbulletin» | Auswahl des Eigentümers vom 18.11.2026 |
 | Helles Design als einziges | Vorgabe des Eigentümers |
 

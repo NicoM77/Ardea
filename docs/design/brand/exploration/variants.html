@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ardea logo variants</title>
+<style>
+:root{--canvas:#F5F5F7;--surface:#fff;--label:#1D1D1F;--secondary:#5E5E64;--border:#D7D7DC;--sidebar:#EBEBEF;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--canvas);color:var(--label);font:400 15px/1.47 -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI Variable Display', 'Segoe UI', system-ui, Roboto, 'Helvetica Neue', Arial, sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:1120px;margin:0 auto;padding:40px 16px 64px}
+h1{font-size:28px;letter-spacing:-0.02em;margin:0 0 4px}
+.lead{color:var(--secondary);margin:0 0 32px}
+.variant{margin:0 0 40px}
+.variant header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.variant h2{font-size:17px;margin:0}
+.variant p{color:var(--secondary);margin:0}
+.tag{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--label);color:#fff;font-weight:600;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.tile{margin:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:16px;min-height:220px}
+.tile.dark{background:#1D1D1F;border-color:#1D1D1F}
+.tile.dark figcaption{color:#A1A1A6}
+.tile.big img{width:140px;height:140px;margin:auto 0}
+.tile img.logo{width:220px;height:auto;margin:auto 0}
+figcaption{font-size:13px;color:var(--secondary)}
+.row{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;justify-content:center;margin:auto 0}
+.tab{display:inline-flex;align-items:center;gap:6px;background:var(--sidebar);border-radius:8px 8px 0 0;padding:6px 12px;font-size:12px}
+.sidebar{margin:auto 0;display:flex;align-items:center;gap:8px;background:var(--sidebar);border-radius:10px;padding:10px 16px;font-weight:700;letter-spacing:-0.01em}
+.brand-mark img{display:block;width:24px;height:24px}
+</style></head>
+<body><main>
+<h1>Ardea logo variants</h1>
+<p class="lead">Three outlined herons, each as mark, logo with wordmark, app icon and favicon. Wordmark set in the system font; colours from the mockup tokens.</p>
+
+<section class="variant">
+  <header><span class="tag">A</span><h2>Standing</h2><p>The whole bird at rest on its line: patient, complete, most literal.</p></header>
+  <div class="grid">
+    <figure class="tile big"><img src="ardea-a-mark.svg" alt=""><figcaption>Mark</figcaption></figure>
+    <figure class="tile"><img class="logo" src="ardea-a-logo.svg" alt="Ardea"><figcaption>Logo, light</figcaption></figure>
+    <figure class="tile dark"><img class="logo" src="ardea-a-logo-dark.svg" alt="Ardea"><figcaption>Logo, dark</figcaption></figure>
+    <figure class="tile icons">
+      <div class="row"><img src="ardea-a-app-icon.svg" width="120" alt=""><img src="ardea-a-app-icon.svg" width="60" alt=""><img src="ardea-a-app-icon.svg" width="40" alt=""></div>
+      <figcaption>App icon, 120 · 60 · 40 px</figcaption></figure>
+    <figure class="tile icons">
+      <div class="row"><img src="ardea-a-favicon.svg" width="32" alt=""><img src="ardea-a-favicon.svg" width="16" alt="">
+        <span class="tab"><img src="ardea-a-favicon.svg" width="16" alt="">Overview · Ardea</span></div>
+      <figcaption>Favicon, 32 · 16 px, in a tab</figcaption></figure>
+    <figure class="tile icons">
+      <div class="sidebar"><span class="brand-mark"><img src="ardea-a-favicon.svg" alt=""></span><b>Ardea</b></div>
+      <figcaption>In the app sidebar, 24 px</figcaption></figure>
+  </div>
+</section>
+<section class="variant">
+  <header><span class="tag">B</span><h2>Watching</h2><p>Head and neck only, the S-curve and the dagger bill: reads at every size.</p></header>
+  <div class="grid">
+    <figure class="tile big"><img src="ardea-b-mark.svg" alt=""><figcaption>Mark</figcaption></figure>
+    <figure class="tile"><img class="logo" src="ardea-b-logo.svg" alt="Ardea"><figcaption>Logo, light</figcaption></figure>
+    <figure class="tile dark"><img class="logo" src="ardea-b-logo-dark.svg" alt="Ardea"><figcaption>Logo, dark</figcaption></figure>
+    <figure class="tile icons">
+      <div class="row"><img src="ardea-b-app-icon.svg" width="120" alt=""><img src="ardea-b-app-icon.svg" width="60" alt=""><img src="ardea-b-app-icon.svg" width="40" alt=""></div>
+      <figcaption>App icon, 120 · 60 · 40 px</figcaption></figure>
+    <figure class="tile icons">
+      <div class="row"><img src="ardea-b-favicon.svg" width="32" alt=""><img src="ardea-b-favicon.svg" width="16" alt="">
+        <span class="tab"><img src="ardea-b-favicon.svg" width="16" alt="">Overview · Ardea</span></div>
+      <figcaption>Favicon, 32 · 16 px, in a tab</figcaption></figure>
+    <figure class="tile icons">
+      <div class="sidebar"><span class="brand-mark"><img src="ardea-b-favicon.svg" alt=""></span><b>Ardea</b></div>
+      <figcaption>In the app sidebar, 24 px</figcaption></figure>
+  </div>
+</section>
+<section class="variant">
+  <header><span class="tag">C</span><h2>One line</h2><p>One continuous stroke above a ripple: the most reduced, the calmest.</p></header>
+  <div class="grid">
+    <figure class="tile big"><img src="ardea-c-mark.svg" alt=""><figcaption>Mark</figcaption></figure>
+    <figure class="tile"><img class="logo" src="ardea-c-logo.svg" alt="Ardea"><figcaption>Logo, light</figcaption></figure>
+    <figure class="tile dark"><img class="logo" src="ardea-c-logo-dark.svg" alt="Ardea"><figcaption>Logo, dark</figcaption></figure>
+    <figure class="tile icons">
+      <div class="row"><img src="ardea-c-app-icon.svg" width="120" alt=""><img src="ardea-c-app-icon.svg" width="60" alt=""><img src="ardea-c-app-icon.svg" width="40" alt=""></div>
+      <figcaption>App icon, 120 · 60 · 40 px</figcaption></figure>
+    <figure class="tile icons">
+      <div class="row"><img src="ardea-c-favicon.svg" width="32" alt=""><img src="ardea-c-favicon.svg" width="16" alt="">
+        <span class="tab"><img src="ardea-c-favicon.svg" width="16" alt="">Overview · Ardea</span></div>
+      <figcaption>Favicon, 32 · 16 px, in a tab</figcaption></figure>
+    <figure class="tile icons">
+      <div class="sidebar"><span class="brand-mark"><img src="ardea-c-favicon.svg" alt=""></span><b>Ardea</b></div>
+      <figcaption>In the app sidebar, 24 px</figcaption></figure>
+  </div>
+</section>
+</main></body></html>

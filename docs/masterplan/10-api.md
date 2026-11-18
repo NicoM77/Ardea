@@ -143,5 +143,5 @@ Gekürzt; die Felder entsprechen dem, was die Detailansicht zeigt.
 
 ## 10.4 Ausgehende Schnittstellen
 
-- **Webhook:** `POST` an das Ziel der Organisation mit `X-CSH-Event`, `X-CSH-Delivery`, `X-CSH-Timestamp` und `X-CSH-Signature` (HMAC-SHA256 über Zeitstempel und Inhalt). Der Inhalt ist die Massnahme mit ihren wichtigsten Befunden und dem auslösenden Ereignis; das Schema trägt eine Versionsnummer.
+- **Webhook:** `POST` an das Ziel der Organisation mit `X-Ardea-Event`, `X-Ardea-Delivery`, `X-Ardea-Timestamp` und `X-Ardea-Signature` (HMAC-SHA256 über Zeitstempel und Inhalt). Der Inhalt ist die Massnahme mit ihren wichtigsten Befunden und dem auslösenden Ereignis; das Schema trägt eine Versionsnummer.
 - **Quellen und KI-Anbieter:** ausschliesslich vom Worker aus, über benannte HTTP-Clients mit Zeitlimit, Wiederholung, Ratenbegrenzung und kennzeichnendem `User-Agent` (Kapitel 5).

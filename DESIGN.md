@@ -1,5 +1,5 @@
 ---
-name: CSH Alert
+name: Ardea
 description: A security early-warning system that reports risk the way a natural-hazard bulletin does, on a five-level danger scale.
 colors:
   paper: "#FFFFFF"
@@ -208,7 +208,7 @@ components:
     padding: "10px 16px"
 ---
 
-# Design System: CSH Alert
+# Design System: Ardea
 
 Recorded from the shipped planning-phase mockups in `docs/design/mockups/` (`csh.css`, four pages, finish review disposition: ship). The production frontend will be Angular; the CSS custom properties in `csh.css` are the token source and keep their names.
 

@@ -14,39 +14,39 @@ services:
   db:
     image: postgres:18
     environment:
-      POSTGRES_DB: csh
-      POSTGRES_USER: csh_migrator
-      POSTGRES_PASSWORD: ${CSH_DB_OWNER_PASSWORD:?set in .env}
+      POSTGRES_DB: ardea
+      POSTGRES_USER: ardea_migrator
+      POSTGRES_PASSWORD: ${ARDEA_DB_OWNER_PASSWORD:?set in .env}
     volumes: ["db:/var/lib/postgresql"]        # ab PostgreSQL 18: neues Volume-Ziel; darin auch backup/
-    healthcheck: { test: ["CMD-SHELL", "pg_isready -U csh_migrator -d csh"], interval: 5s, retries: 20 }
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U ardea_migrator -d ardea"], interval: 5s, retries: 20 }
     restart: unless-stopped
 
   migrate:                                     # kennt als einziger Dienst das Eigentümer-Passwort
-    image: ghcr.io/OWNER/csh-alert:1
+    image: ghcr.io/OWNER/ardea:1
     command: ["migrate"]
     environment:
-      CSH_DB_OWNER_PASSWORD: ${CSH_DB_OWNER_PASSWORD}
-      CSH_DB_APP_PASSWORD: ${CSH_DB_APP_PASSWORD:?set in .env}
+      ARDEA_DB_OWNER_PASSWORD: ${ARDEA_DB_OWNER_PASSWORD}
+      ARDEA_DB_APP_PASSWORD: ${ARDEA_DB_APP_PASSWORD:?set in .env}
     depends_on: { db: { condition: service_healthy } }
     restart: "no"
 
   api:
-    image: ghcr.io/OWNER/csh-alert:1
+    image: ghcr.io/OWNER/ardea:1
     command: ["api"]
     env_file: .env.app                         # ohne Eigentümer-Passwort
     ports: ["127.0.0.1:8080:8080"]
     depends_on: { migrate: { condition: service_completed_successfully } }
-    healthcheck: { test: ["CMD", "/app/csh", "healthcheck", "api"], interval: 15s, retries: 5 }
+    healthcheck: { test: ["CMD", "/app/ardea", "healthcheck", "api"], interval: 15s, retries: 5 }
     read_only: true
     tmpfs: ["/tmp"]
     restart: unless-stopped
 
   worker:
-    image: ghcr.io/OWNER/csh-alert:1
+    image: ghcr.io/OWNER/ardea:1
     command: ["worker"]
     env_file: .env.app
     depends_on: { migrate: { condition: service_completed_successfully } }
-    healthcheck: { test: ["CMD", "/app/csh", "healthcheck", "worker"], interval: 30s, retries: 5 }
+    healthcheck: { test: ["CMD", "/app/ardea", "healthcheck", "worker"], interval: 30s, retries: 5 }
     read_only: true
     tmpfs: ["/tmp"]
     volumes: ["scratch:/scratch"]              # Gesamtarchiv der CVEs beim Erststart
@@ -57,7 +57,7 @@ volumes: { db: {}, scratch: {} }
 
 - Die API liefert auch die Web-App aus. Ein eigener Webserver-Container entfällt, ebenso CORS.
 - Der Port ist in der Vorgabe nur lokal gebunden. Die Anwendung verlangt HTTPS: Ihr Sitzungs-Cookie wird nur über eine sichere Verbindung gesetzt. TLS und öffentliche Erreichbarkeit übernimmt ein vorgeschalteter Proxy oder Tunnel. Der Schnellstart liefert deshalb eine zweite Compose-Datei mit Caddy mit; Beispiele für Traefik und Cloudflare Tunnel liegen daneben.
-- `migrate` legt beim ersten Lauf die Anwendungsrolle `csh_app` mit eigenem Passwort an, wendet Migrationen an und spielt Stammdaten ein. Steht eine Migration an, entsteht vorher ein Dump im Datenvolume neben dem Datenverzeichnis (`backup/`); die letzten drei bleiben. Er schützt vor einer missglückten Migration, nicht vor dem Verlust des Volumes; dafür ist die Sicherung aus 12.5 da. Das Anwendungsimage enthält kein `pg_dump`. `migrate` lässt den Dump deshalb vom Datenbankserver schreiben (`COPY … TO PROGRAM` mit dem `pg_dump` des Datenbank-Images), was mit der mitgelieferten Datenbank und ihrer Eigentümerrolle möglich ist. Bei einer fremden Datenbank entfällt dieser Schritt mit einem deutlichen Hinweis; die Sicherung liegt dann beim Betreiber. Der Weg wird im Versuch 0.7 geprüft. API und Worker starten erst danach; sie verlangen mindestens ihren Schemastand und vertragen einen neueren, verträglich erweiterten.
+- `migrate` legt beim ersten Lauf die Anwendungsrolle `ardea_app` mit eigenem Passwort an, wendet Migrationen an und spielt Stammdaten ein. Steht eine Migration an, entsteht vorher ein Dump im Datenvolume neben dem Datenverzeichnis (`backup/`); die letzten drei bleiben. Er schützt vor einer missglückten Migration, nicht vor dem Verlust des Volumes; dafür ist die Sicherung aus 12.5 da. Das Anwendungsimage enthält kein `pg_dump`. `migrate` lässt den Dump deshalb vom Datenbankserver schreiben (`COPY … TO PROGRAM` mit dem `pg_dump` des Datenbank-Images), was mit der mitgelieferten Datenbank und ihrer Eigentümerrolle möglich ist. Bei einer fremden Datenbank entfällt dieser Schritt mit einem deutlichen Hinweis; die Sicherung liegt dann beim Betreiber. Der Weg wird im Versuch 0.7 geprüft. API und Worker starten erst danach; sie verlangen mindestens ihren Schemastand und vertragen einen neueren, verträglich erweiterten.
 
 ## 12.3 Das Image
 
@@ -66,7 +66,7 @@ volumes: { db: {}, scratch: {} }
 | Bau | Mehrstufiges Dockerfile: Node baut die Angular-App, das .NET-SDK veröffentlicht, das Ergebnis liegt auf `mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra`. |
 | Laufzeit | Keine Shell, kein Paketmanager, nicht privilegierter Benutzer, Port 8080; Zeitzonendaten und ICU laut Beschreibung des Images enthalten, in Phase 0 geprüft. |
 | Architekturen | `linux/amd64` und `linux/arm64`. |
-| Einstieg | Ein Programm `csh` mit den Rollen `api`, `worker` und `migrate`, den Hilfsbefehlen `healthcheck`, `init-env` und `doctor`, dazu Wartungsbefehle (12.8). |
+| Einstieg | Ein Programm `ardea` mit den Rollen `api`, `worker` und `migrate`, den Hilfsbefehlen `healthcheck`, `init-env` und `doctor`, dazu Wartungsbefehle (12.8). |
 | Tags | `1.4.2`, `1.4`, `1`, `latest`. Die Compose-Vorgabe nutzt die Hauptversion. |
 | Nachweis | SBOM je Release. Signierte Images sind eine Ausbaustufe. |
 
@@ -74,32 +74,32 @@ Health Checks rufen das Programm selbst auf, weil das Image weder `curl` noch ei
 
 ## 12.4 Konfiguration
 
-Umgebungsvariablen mit Präfix `CSH_`; verschachtelte Werte mit doppeltem Unterstrich. Jedes Geheimnis lässt sich alternativ als Datei übergeben (`…_FILE`), passend zu Docker Secrets. Beim Start wird alles geprüft; ein Fehler beendet den Prozess mit einer Meldung, die die Variable beim Namen nennt.
+Umgebungsvariablen mit Präfix `ARDEA_`; verschachtelte Werte mit doppeltem Unterstrich. Jedes Geheimnis lässt sich alternativ als Datei übergeben (`…_FILE`), passend zu Docker Secrets. Beim Start wird alles geprüft; ein Fehler beendet den Prozess mit einer Meldung, die die Variable beim Namen nennt.
 
 | Variable | Pflicht | Bedeutung |
 |---|:-:|---|
-| `CSH_DB_OWNER_PASSWORD` | ● | Passwort der Eigentümerrolle; nur für `db`, `migrate` und Wartungsbefehle |
-| `CSH_DB_APP_PASSWORD` | ● | Passwort der Anwendungsrolle für API und Worker |
-| `CSH_MASTER_KEY` | ● | Hauptschlüssel für die Verschlüsselung der Geheimnisse; 32 Byte, Base64 |
-| `CSH_PUBLIC_URL` | ● | Öffentliche Adresse, für Links in Nachrichten und für Cookies |
-| `CSH_SETUP_TOKEN` | | Einrichtungstoken; ohne Angabe wird eines erzeugt und einmal geloggt |
-| `CSH_REGISTRATION` | | `invite` (Vorgabe), `open`, `closed` |
-| `CSH_SMTP__HOST`, `__PORT`, `__USER`, `__PASSWORD`, `__FROM` | | E-Mail-Versand |
-| `CSH_AI__PROVIDERS__<Name>__KIND`, `__ENDPOINT`, `__MODEL`, `__API_KEY`, `__LOCAL` | | benannte KI-Anbieter; ohne Angabe läuft das System mit Regeln und Vorlagen |
-| `CSH_INTEL__BACKFILL_DAYS` | | Rückblick beim Erststart, Vorgabe 180 |
-| `CSH_TRUSTED_PROXIES` | | Adressen vorgeschalteter Proxys für weitergereichte Header |
+| `ARDEA_DB_OWNER_PASSWORD` | ● | Passwort der Eigentümerrolle; nur für `db`, `migrate` und Wartungsbefehle |
+| `ARDEA_DB_APP_PASSWORD` | ● | Passwort der Anwendungsrolle für API und Worker |
+| `ARDEA_MASTER_KEY` | ● | Hauptschlüssel für die Verschlüsselung der Geheimnisse; 32 Byte, Base64 |
+| `ARDEA_PUBLIC_URL` | ● | Öffentliche Adresse, für Links in Nachrichten und für Cookies |
+| `ARDEA_SETUP_TOKEN` | | Einrichtungstoken; ohne Angabe wird eines erzeugt und einmal geloggt |
+| `ARDEA_REGISTRATION` | | `invite` (Vorgabe), `open`, `closed` |
+| `ARDEA_SMTP__HOST`, `__PORT`, `__USER`, `__PASSWORD`, `__FROM` | | E-Mail-Versand |
+| `ARDEA_AI__PROVIDERS__<Name>__KIND`, `__ENDPOINT`, `__MODEL`, `__API_KEY`, `__LOCAL` | | benannte KI-Anbieter; ohne Angabe läuft das System mit Regeln und Vorlagen |
+| `ARDEA_INTEL__BACKFILL_DAYS` | | Rückblick beim Erststart, Vorgabe 180 |
+| `ARDEA_TRUSTED_PROXIES` | | Adressen vorgeschalteter Proxys für weitergereichte Header |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | | Ziel für Traces, Metriken und Logs; ohne Angabe kein Export |
 
-Die Pflichtwerte erzeugt ein Befehl: `docker run --rm ghcr.io/OWNER/csh-alert:1 init-env`. Er schreibt `.env` für Datenbank und Migration und `.env.app` für API und Worker. Was im Betrieb änderbar sein soll (SMTP, KI-Anbieter, Quellen, Grenzen), lässt sich auch in der Oberfläche setzen; eine gesetzte Umgebungsvariable hat Vorrang und sperrt das Feld mit einem Hinweis.
+Die Pflichtwerte erzeugt ein Befehl: `docker run --rm ghcr.io/OWNER/ardea:1 init-env`. Er schreibt `.env` für Datenbank und Migration und `.env.app` für API und Worker. Was im Betrieb änderbar sein soll (SMTP, KI-Anbieter, Quellen, Grenzen), lässt sich auch in der Oberfläche setzen; eine gesetzte Umgebungsvariable hat Vorrang und sperrt das Feld mit einem Hinweis.
 
-**Ohne SMTP** bleibt die Instanz benutzbar: Eine Einladung zeigt der einladenden Person den Link zum Weitergeben, E-Mail-Adressen gelten ohne Bestätigung, und ein vergessenes Passwort setzt der Betreiber mit `csh admin reset-password` zurück. Der Kanal E-Mail ist abgeschaltet; die Oberfläche sagt das an jeder Stelle, die ihn braucht.
+**Ohne SMTP** bleibt die Instanz benutzbar: Eine Einladung zeigt der einladenden Person den Link zum Weitergeben, E-Mail-Adressen gelten ohne Bestätigung, und ein vergessenes Passwort setzt der Betreiber mit `ardea admin reset-password` zurück. Der Kanal E-Mail ist abgeschaltet; die Oberfläche sagt das an jeder Stelle, die ihn braucht.
 
 ## 12.5 Daten, Sicherung, Wiederherstellung
 
 - Alle dauerhaften Daten liegen in PostgreSQL. API und Worker sind zustandslos.
-- Sicherung: `docker compose exec -T db pg_dump -U csh_migrator -Fc csh > csh.dump`. Für die zeitgesteuerte Sicherung genügt ein Cron-Eintrag des Hosts mit diesem Befehl; ein eigenes Compose-Profil dafür ist eine Ausbaustufe.
+- Sicherung: `docker compose exec -T db pg_dump -U ardea_migrator -Fc ardea > ardea.dump`. Für die zeitgesteuerte Sicherung genügt ein Cron-Eintrag des Hosts mit diesem Befehl; ein eigenes Compose-Profil dafür ist eine Ausbaustufe.
 - Der Hauptschlüssel gehört getrennt gesichert. Ohne ihn sind die gespeicherten Geheimnisse einer Sicherung nicht lesbar; alles andere schon.
-- Wiederherstellung: API und Worker stoppen, eine leere Datenbank anlegen, mit `csh migrate --roles-only` die Anwendungsrolle anlegen, den Dump mit `pg_restore` einspielen, `migrate` ausführen, starten. Die Reihenfolge zählt: Der Dump enthält Rechte für `csh_app`, die Rolle muss also vorher bestehen. Der Ablauf ist dokumentiert und Teil der Release-Tests.
+- Wiederherstellung: API und Worker stoppen, eine leere Datenbank anlegen, mit `ardea migrate --roles-only` die Anwendungsrolle anlegen, den Dump mit `pg_restore` einspielen, `migrate` ausführen, starten. Die Reihenfolge zählt: Der Dump enthält Rechte für `ardea_app`, die Rolle muss also vorher bestehen. Der Ablauf ist dokumentiert und Teil der Release-Tests.
 
 ## 12.6 Updates
 
@@ -128,13 +128,13 @@ Das System warnt selbst, wenn es nicht mehr zuverlässig arbeitet: Eine Quelle, 
 
 | Befehl | Zweck |
 |---|---|
-| `csh doctor` | Prüft Konfiguration, Datenbank, Schema, SMTP, KI-Anbieter und Erreichbarkeit der Quellen |
-| `csh admin reset-password <email>` | Zugang wiederherstellen |
-| `csh intel import --full` | Gesamten CVE-Bestand einspielen |
-| `csh intel renormalize --source <key>` | Rohdaten einer Quelle mit aktuellem Parser neu verarbeiten |
-| `csh intel recompute` | Einträge aus Beobachtungen neu zusammenführen |
-| `csh assess recompute` | Stufen mit aktuellem Regelwerk neu berechnen |
-| `csh org export <slug>` · `csh org delete <slug>` | Daten einer Organisation exportieren oder entfernen |
+| `ardea doctor` | Prüft Konfiguration, Datenbank, Schema, SMTP, KI-Anbieter und Erreichbarkeit der Quellen |
+| `ardea admin reset-password <email>` | Zugang wiederherstellen |
+| `ardea intel import --full` | Gesamten CVE-Bestand einspielen |
+| `ardea intel renormalize --source <key>` | Rohdaten einer Quelle mit aktuellem Parser neu verarbeiten |
+| `ardea intel recompute` | Einträge aus Beobachtungen neu zusammenführen |
+| `ardea assess recompute` | Stufen mit aktuellem Regelwerk neu berechnen |
+| `ardea org export <slug>` · `ardea org delete <slug>` | Daten einer Organisation exportieren oder entfernen |
 
 ## 12.9 Grössenordnung
 

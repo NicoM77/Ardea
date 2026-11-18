@@ -109,7 +109,7 @@ Affected        Platform Ops runs Puppet Enterprise 2025.9.0, inside the affecte
 What to do      Upgrade to 2025.12.1 and restart Puppet Server.
 Covers          1 vulnerability
 
-Open: https://csh.example.org/o/example/actions/143
+Open: https://ardea.example.org/o/example/actions/143
 ```
 
 Bei einer Massnahme mit vielen Befunden nennt die Nachricht die Anzahl und die drei mit der höchsten Stufe. Eine Push-Nachricht trägt Stufe, Nummer und Titel; der Klick öffnet die Massnahme. Die Organisation wählt, wie viel E-Mails enthalten: vollständig wie oben oder nur Stufe, Nummer und Link. E-Mail ist nicht Ende-zu-Ende geschützt.

@@ -2,7 +2,7 @@
 
 ## 1.1 Zweck
 
-CSH Alert (Arbeitstitel) ist ein selbst gehostetes Open-Source-Frühwarnsystem für Sicherheitslücken. Es sammelt Hinweise aus vertrauenswürdigen Quellen, führt Berichte über dieselbe Schwachstelle zu einem Eintrag zusammen und bewertet pro Organisation und Projekt, ob die eingesetzte Technologie betroffen ist.
+Ardea ist ein selbst gehostetes Open-Source-Frühwarnsystem für Sicherheitslücken. Es sammelt Hinweise aus vertrauenswürdigen Quellen, führt Berichte über dieselbe Schwachstelle zu einem Eintrag zusammen und bewertet pro Organisation und Projekt, ob die eingesetzte Technologie betroffen ist.
 
 Der Massstab für jede Entscheidung in diesem Plan: Ein Benutzer beantwortet innerhalb von fünf Sekunden drei Fragen. Was ist passiert? Sind wir betroffen? Was ist zu tun?
 

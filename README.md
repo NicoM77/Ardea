@@ -1,6 +1,8 @@
-# CSH Alert
+# Ardea
 
-Working title. A self-hosted, open-source early-warning system for security vulnerabilities: it collects advisories and CVE records from trusted sources, merges them into one entry per vulnerability, and tells each organization which ones affect its projects, how urgent they are, and what to do.
+Ardea is Latin for heron: a bird that stands still for a long time and strikes only when it matters.
+
+A self-hosted, open-source early-warning system for security vulnerabilities: it collects advisories and CVE records from trusted sources, merges them into one entry per vulnerability, and tells each organization which ones affect its projects, how urgent they are, and what to do.
 
 ## Status: planning
 

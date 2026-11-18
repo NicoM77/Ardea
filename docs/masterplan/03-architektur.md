@@ -88,8 +88,8 @@ Ein Projekt pro Modul plus ein Contracts-Projekt. Die klassische Vierteilung in 
 
 ```
 Modules/Assessment/
-  CshAlert.Assessment.Contracts/     öffentliche Schnittstellen, DTOs, Ereignisse
-  CshAlert.Assessment/
+  Ardea.Assessment.Contracts/        öffentliche Schnittstellen, DTOs, Ereignisse
+  Ardea.Assessment/
     Domain/          Entitäten, Wertobjekte, Regeln (keine Abhängigkeit auf EF oder HTTP)
     Features/        je Anwendungsfall ein Ordner: Handler, Validierung, Endpunkt
     Jobs/            Job-Handler
@@ -184,7 +184,7 @@ Der Baustein bleibt hinter `IJobQueue` und `IScheduler`. Sollte er sich als zu k
 | Zeit | Durchgehend UTC in der Datenbank, `TimeProvider` im Code; Zeitzonen nur in Darstellung und Zeitplänen. |
 | Fehler | Erwartbare Fehler als Ergebnis-Typ bis zum Endpunkt, dort Problem Details nach RFC 9457. Ausnahmen nur für Unerwartetes. |
 | Validierung | An der API-Grenze; Fachregeln zusätzlich in der Domäne. |
-| Konfiguration | Umgebungsvariablen mit Präfix `CSH_`, beim Start validiert; fehlerhafte Konfiguration beendet den Prozess mit klarer Meldung. |
+| Konfiguration | Umgebungsvariablen mit Präfix `ARDEA_`, beim Start validiert; fehlerhafte Konfiguration beendet den Prozess mit klarer Meldung. |
 | Telemetrie | Ein Trace von der Quelle bis zur Zustellung: Der Trace-Kontext reist im Job mit. |
 
 ## 3.6 Erweiterungspunkte

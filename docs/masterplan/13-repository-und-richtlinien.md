@@ -3,39 +3,39 @@
 ## 13.1 Struktur
 
 ```
-CSH-Alert/
+Ardea/
 ├─ README.md                  Schnellstart, Status, Verweise
 ├─ PRODUCT.md  DESIGN.md      Produkt- und Design-Grundlage
 ├─ LICENSE  SECURITY.md  CONTRIBUTING.md
 ├─ global.json  Directory.Build.props  Directory.Packages.props  .editorconfig
-├─ CshAlert.sln
+├─ Ardea.sln
 ├─ src/
 │  ├─ Hosts/
-│  │  └─ CshAlert.Host/                  ein Programm: api, worker, migrate, Wartung
+│  │  └─ Ardea.Host/                     ein Programm: api, worker, migrate, Wartung
 │  ├─ BuildingBlocks/
-│  │  ├─ CshAlert.SharedKernel/          IDs, Ergebnis-Typ, Zeit, Basistypen
-│  │  └─ CshAlert.Platform/              Jobs, Zeitpläne, Mandantenkontext, Arbeitseinheit, Audit, Geheimnisse, Telemetrie
+│  │  ├─ Ardea.SharedKernel/             IDs, Ergebnis-Typ, Zeit, Basistypen
+│  │  └─ Ardea.Platform/                 Jobs, Zeitpläne, Mandantenkontext, Arbeitseinheit, Audit, Geheimnisse, Telemetrie
 │  ├─ Modules/
-│  │  ├─ Iam/           CshAlert.Iam            + .Contracts
-│  │  ├─ Assets/        CshAlert.Assets         + .Contracts
-│  │  ├─ Catalog/       CshAlert.Catalog        + .Contracts
-│  │  ├─ Intel/         CshAlert.Intel          + .Contracts
-│  │  ├─ Assessment/    CshAlert.Assessment     + .Contracts
-│  │  └─ Notifications/ CshAlert.Notifications  + .Contracts
+│  │  ├─ Iam/           Ardea.Iam               + .Contracts
+│  │  ├─ Assets/        Ardea.Assets            + .Contracts
+│  │  ├─ Catalog/       Ardea.Catalog           + .Contracts
+│  │  ├─ Intel/         Ardea.Intel             + .Contracts
+│  │  ├─ Assessment/    Ardea.Assessment        + .Contracts
+│  │  └─ Notifications/ Ardea.Notifications     + .Contracts
 │  └─ Sources/
-│     ├─ CshAlert.Intel.Sources.Abstractions/   Provider-SDK
-│     ├─ CshAlert.Intel.Sources.Formats/        gemeinsame Formatleser: RSS/Atom, CSAF, OSV, CVE JSON
-│     └─ CshAlert.Intel.Sources.<Quelle>/       je Quelle oder Quellenfamilie
+│     ├─ Ardea.Intel.Sources.Abstractions/      Provider-SDK
+│     ├─ Ardea.Intel.Sources.Formats/           gemeinsame Formatleser: RSS/Atom, CSAF, OSV, CVE JSON
+│     └─ Ardea.Intel.Sources.<Quelle>/          je Quelle oder Quellenfamilie
 ├─ web/                        Angular-Arbeitsbereich: Anwendung und UI-Bibliothek
 ├─ data/
 │  ├─ catalog/                 Technologie-Katalog als versionierte Dateien
 │  ├─ rules/                   Regelwerk für die Stufe
 │  └─ corrections/             kuratierte Alias- und Produktkorrekturen
 ├─ tests/
-│  ├─ CshAlert.<Modul>.Tests/              Unit- und Integrationstests je Modul
-│  ├─ CshAlert.Architecture.Tests/         Modulgrenzen
-│  ├─ CshAlert.Sources.Tests/              Referenzdaten je Adapter
-│  ├─ CshAlert.Evaluation/                 Referenzsatz für Matching und Einschätzung
+│  ├─ Ardea.<Modul>.Tests/                 Unit- und Integrationstests je Modul
+│  ├─ Ardea.Architecture.Tests/            Modulgrenzen
+│  ├─ Ardea.Sources.Tests/                 Referenzdaten je Adapter
+│  ├─ Ardea.Evaluation/                    Referenzsatz für Matching und Einschätzung
 │  └─ e2e/                                 Playwright
 ├─ deploy/                     compose.yaml, .env.example, Beispiele für Proxy und Tunnel, Dockerfile
 ├─ docs/
@@ -114,7 +114,7 @@ Was ein Test leisten muss:
 
 Ein neuer Ende-zu-Ende-Test braucht eine Begründung im Pull Request und ersetzt im Zweifel einen bestehenden.
 
-**Keine Langläufer, keine zeitgesteuerten Tests.** CSH Alert ist ein schlankes Projekt. Getestet wird ausschliesslich in der Pipeline eines Pull Requests oder des Hauptzweigs, innerhalb des Zeitbudgets. Es gibt keine Lasttests, keine Dauerläufe über Tage, keine nächtlichen oder täglichen Testläufe und keine Testläufe gegen echte Quellen oder echte Sprachmodelle. Was sich nicht als schneller Test formulieren lässt, wird nicht als Test geführt:
+**Keine Langläufer, keine zeitgesteuerten Tests.** Ardea ist ein schlankes Projekt. Getestet wird ausschliesslich in der Pipeline eines Pull Requests oder des Hauptzweigs, innerhalb des Zeitbudgets. Es gibt keine Lasttests, keine Dauerläufe über Tage, keine nächtlichen oder täglichen Testläufe und keine Testläufe gegen echte Quellen oder echte Sprachmodelle. Was sich nicht als schneller Test formulieren lässt, wird nicht als Test geführt:
 
 - Abnahmekriterien zu Dauer und Menge (etwa die Erstbefüllung) werden in der Entwicklung einmal beobachtet und festgehalten, nicht wiederholt geprüft.
 - Strukturänderungen einer Quelle zeigt der Betrieb selbst: steigende Quarantäne oder leere Abrufe setzen die Quelle auf `degraded` (Kapitel 6.8).

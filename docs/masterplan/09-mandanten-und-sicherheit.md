@@ -84,14 +84,14 @@ Jede dieser Fragen ist eine eigene, schmale Datenbankfunktion, die nur Kennungen
 
 Export und Löschen einer Organisation sowie das Aufräumen alter Daten sind keine Systemoperationen des Betriebs. Sie laufen als Wartungsbefehl mit der Eigentümerrolle.
 
-**Datenbankrollen.** `csh_migrator` besitzt die Tabellen; sein Passwort kennen nur der Befehl `migrate` und die Wartungsbefehle. `csh_app` wird von API und Worker benutzt und hat ein eigenes Passwort. Ein Test im Build prüft, dass jede Tabelle einer der drei Arten zugeordnet ist und dass der Fremdzugriffstest jeden Endpunkt abdeckt, auch mit fremden Kennungen im Anfragekörper.
+**Datenbankrollen.** `ardea_migrator` besitzt die Tabellen; sein Passwort kennen nur der Befehl `migrate` und die Wartungsbefehle. `ardea_app` wird von API und Worker benutzt und hat ein eigenes Passwort. Ein Test im Build prüft, dass jede Tabelle einer der drei Arten zugeordnet ist und dass der Fremdzugriffstest jeden Endpunkt abdeckt, auch mit fremden Kennungen im Anfragekörper.
 
 ## 9.3 Authentifizierung
 
 | Thema | Entscheidung |
 |---|---|
 | Grundlage | ASP.NET Core Identity mit eigenen Endpunkten auf `SignInManager` und `UserManager`. `MapIdentityApi` wird nicht verwendet: kein Logout, keine Passkeys, nicht anpassbar. |
-| Sitzung im Browser | Cookie `__Host-csh`: `HttpOnly`, `Secure`, `SameSite=Lax`, gleitend 12 Stunden, absolut 14 Tage. API-Endpunkte antworten mit 401/403 statt Umleitung. Passwortwechsel, MFA-Änderung und «überall abmelden» entwerten alle Sitzungen über den Sicherheitsstempel. |
+| Sitzung im Browser | Cookie `__Host-ardea`: `HttpOnly`, `Secure`, `SameSite=Lax`, gleitend 12 Stunden, absolut 14 Tage. API-Endpunkte antworten mit 401/403 statt Umleitung. Passwortwechsel, MFA-Änderung und «überall abmelden» entwerten alle Sitzungen über den Sicherheitsstempel. |
 | CSRF | Antiforgery-Token im Header für alle ändernden Anfragen, zusätzlich Prüfung von `Sec-Fetch-Site` und `Origin`. Angular überträgt das Token über seinen eingebauten XSRF-Mechanismus, sobald Cookie- und Headername übereinstimmen. |
 | Passwort | Mindestlänge 12, keine Zusammensetzungsregeln, Abgleich mit einer mitgelieferten Liste häufiger Passwörter. Hashing nach Identity-Vorgabe (PBKDF2), Iterationen konfigurierbar. |
 | MFA | TOTP mit Wiederherstellungscodes im MVP. Eine Organisation kann MFA für ihre Mitglieder verlangen. |
@@ -104,7 +104,7 @@ Export und Löschen einer Organisation sowie das Aufräumen alter Daten sind kei
 
 | Daten | Einstufung | Schutz |
 |---|---|---|
-| Geheimnisse: SMTP-Passwort, KI-Schlüssel, Webhook-URLs und -Geheimnisse, VAPID-Privatschlüssel | kritisch | In der Datenbank verschlüsselt über ASP.NET Data Protection. Deren Schlüssel liegen in der Datenbank und sind mit einem Hauptschlüssel aus `CSH_MASTER_KEY` oder einer Secret-Datei geschützt. Nie im Klartext in API-Antworten oder Logs. |
+| Geheimnisse: SMTP-Passwort, KI-Schlüssel, Webhook-URLs und -Geheimnisse, VAPID-Privatschlüssel | kritisch | In der Datenbank verschlüsselt über ASP.NET Data Protection. Deren Schlüssel liegen in der Datenbank und sind mit einem Hauptschlüssel aus `ARDEA_MASTER_KEY` oder einer Secret-Datei geschützt. Nie im Klartext in API-Antworten oder Logs. |
 | Technologieprofile, Meldungen, Einschätzungen | hoch | Mandantentrennung (9.2), Verschlüsselung des Datenträgers durch den Betreiber, keine Inhalte in Logs oder Telemetrie. |
 | Konten: E-Mail, Passwort-Hash, MFA-Schlüssel | hoch | Identity-Standard; MFA-Schlüssel zusätzlich verschlüsselt. |
 | Quellen, Einträge, Katalog | öffentlich | keine besonderen Massnahmen |

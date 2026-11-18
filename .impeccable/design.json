@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-11-18T11:08:32Z",
-  "title": "Design System: CSH Alert",
+  "title": "Design System: Ardea",
   "extensions": {
     "colorMeta": {
       "paper": {
@@ -560,7 +560,7 @@
       "kind": "nav",
       "refersTo": "band",
       "description": "Anthracite band with wordmark and primary navigation; the current page is a paper chip.",
-      "html": "<div class=\"ds-band\"><a class=\"ds-wordmark\" href=\"#\">CSH Alert</a><nav class=\"ds-nav\" aria-label=\"Primary\"><a href=\"#\" aria-current=\"page\">Bulletin</a><a href=\"#\">Alerts</a><a href=\"#\">Projects</a></nav></div>",
+      "html": "<div class=\"ds-band\"><a class=\"ds-wordmark\" href=\"#\">Ardea</a><nav class=\"ds-nav\" aria-label=\"Primary\"><a href=\"#\" aria-current=\"page\">Bulletin</a><a href=\"#\">Alerts</a><a href=\"#\">Projects</a></nav></div>",
       "css": ".ds-band { background: var(--ink, #1F2326); color: var(--on-ink, #FFFFFF); height: 60px; display: flex; align-items: center; gap: 32px; padding: 0 32px; font-family: var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); } .ds-wordmark { color: var(--on-ink, #FFFFFF); font-weight: 900; font-size: 1.25rem; letter-spacing: -0.01em; text-decoration: none; white-space: nowrap; } .ds-nav { display: flex; gap: 4px; } .ds-nav a { color: var(--on-ink-2, #C8CCD0); font-size: 0.9375rem; font-weight: 600; text-decoration: none; padding: 8px 14px; border-radius: 2px; white-space: nowrap; transition: background-color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)), color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-nav a:hover { color: var(--on-ink, #FFFFFF); background: var(--band-hover, #30353A); } .ds-nav a[aria-current=\"page\"] { background: var(--paper, #FFFFFF); color: var(--ink, #1F2326); } .ds-band a:focus-visible { outline: 2px solid var(--on-ink, #FFFFFF); outline-offset: 2px; }"
     },
     {

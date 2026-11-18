@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Ardea.Intel.Sources.Abstractions/Ardea.Intel.Sources.Abstractions.csproj" />
+    <ProjectReference Include="../Ardea.Intel.Sources.Formats/Ardea.Intel.Sources.Formats.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ardea.Sources.Tests" />
+  </ItemGroup>
+</Project>

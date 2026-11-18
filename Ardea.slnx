@@ -34,6 +34,7 @@
   </Folder>
   <Folder Name="/src/Sources/">
     <Project Path="src/Sources/Ardea.Intel.Sources.Abstractions/Ardea.Intel.Sources.Abstractions.csproj" />
+    <Project Path="src/Sources/Ardea.Intel.Sources.CveProgram/Ardea.Intel.Sources.CveProgram.csproj" />
     <Project Path="src/Sources/Ardea.Intel.Sources.Formats/Ardea.Intel.Sources.Formats.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -42,6 +43,7 @@
     <Project Path="tests/Ardea.Iam.Tests/Ardea.Iam.Tests.csproj" />
     <Project Path="tests/Ardea.Intel.Tests/Ardea.Intel.Tests.csproj" />
     <Project Path="tests/Ardea.Platform.Tests/Ardea.Platform.Tests.csproj" />
+    <Project Path="tests/Ardea.Sources.Tests/Ardea.Sources.Tests.csproj" />
     <Project Path="tests/Ardea.TestSupport/Ardea.TestSupport.csproj" />
   </Folder>
 </Solution>

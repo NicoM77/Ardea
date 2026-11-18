@@ -73,6 +73,9 @@ internal sealed record EntryProjection
 
     public IReadOnlyList<string> Workarounds { get; init; } = [];
 
+    /// <summary>From the signals (task 1.8): <c>high</c>, <c>low</c> or none.</summary>
+    public string? EpssClass { get; init; }
+
     /// <summary>Hash over the fields that can change an assessment (master plan 6.4 step 4).</summary>
     public string MaterialFingerprint(string? epssClass) => Hash(
         State,

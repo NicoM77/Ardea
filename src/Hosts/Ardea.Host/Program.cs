@@ -13,6 +13,8 @@ return command switch
     "init-env" => InitEnvCommand.Run(rest),
     "doctor" => await DoctorCommand.RunAsync(rest),
     "admin" => await AdminCommand.RunAsync(rest),
+    // `ardea intel renormalize …` is the admin command `intel-renormalize` (master plan 12.8 names it so).
+    "intel" when rest.Length > 0 => await AdminCommand.RunAsync(["intel-" + rest[0], .. rest[1..]]),
     "version" or "--version" => VersionCommand.Run(),
     _ => HelpCommand.Run(command),
 };

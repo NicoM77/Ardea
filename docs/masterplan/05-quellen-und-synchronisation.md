@@ -42,6 +42,8 @@ public interface ISourceProvider
 
 Signalquellen (KEV, EPSS) implementieren stattdessen `ISignalProvider` mit einer einzigen Methode: `FetchSignalsAsync` liefert je Kennung einen Wert (Aufnahme in KEV mit Datum und Verweis, EPSS-Wert mit Perzentil). Der Kern schreibt sie in `entry_signal` fort und reiht nur für Kennungen mit Klassenwechsel eine Neuberechnung des Eintrags ein. Beide Schnittstellen teilen `SourceDescriptor`, `SyncContext` und den HTTP-Client. Die Schnittstellen werden mit Phase 1 festgelegt und danach nur ergänzt.
 
+Quellen, die ein Änderungsprotokoll veröffentlichen, können zusätzlich `IChangeLogSource` implementieren (optional, ergänzt mit Aufgabe 1.11): `ListChangesAsync` nennt jede seit einem Zeitpunkt neue oder geänderte Kennung mit ihrem Änderungszeitpunkt. Die tägliche Vollständigkeitsprüfung vergleicht das mit den gespeicherten Rohdatensätzen der letzten sieben Tage und holt fehlende oder veraltete Datensätze einzeln nach (`SyncMode.Single`, Gruppen zu höchstens 100). Doppelte Einträge im Protokoll zählen einmal; Cursor und Zeitplan der Quelle bleiben unberührt.
+
 Regeln für Adapter:
 
 - Kein Zugriff auf Datenbank, andere Adapter oder Mandantendaten. Alles Nötige kommt über den Kontext.

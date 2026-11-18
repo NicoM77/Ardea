@@ -42,7 +42,7 @@ public sealed class OsvProvider : ISourceProvider
         MinimumInterval = TimeSpan.FromMinutes(15),
         AllowedHosts = ["osv-vulnerabilities.storage.googleapis.com", "api.osv.dev"],
         Attribution = "Vulnerability data from OSV.dev (Google, OpenSSF), normalised by Ardea. Records of the GitHub Advisory Database "
-            + "(GitHub, Inc.), the PyPA Advisory Database, the Go Vulnerability Database and OSS-Fuzz under CC BY 4.0 "
+            + "(GitHub, Inc.), the PyPA Advisory Database, the Go Vulnerability Database, OSS-Fuzz and the Erlang Ecosystem Foundation under CC BY 4.0 "
             + "(https://creativecommons.org/licenses/by/4.0/); of the Drupal Advisory Database under the MIT licence; "
             + "of the Global Security Database under CC0 1.0.",
         // One request per changed record; the change lists and archives are one request each.
@@ -87,7 +87,7 @@ public sealed class OsvProvider : ISourceProvider
         }
 
         var json = await context.Http.GetStringAsync(new Uri(ApiUrl + Uri.EscapeDataString(id)), cancellationToken);
-        yield return Record(id, json);
+        yield return Record(OsvRecordReader.Metadata(json)?.Id ?? id, json);
     }
 
     private async IAsyncEnumerable<FetchItem> FetchEcosystemsAsync(SyncContext context, [EnumeratorCancellation] CancellationToken cancellationToken)

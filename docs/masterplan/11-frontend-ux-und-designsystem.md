@@ -36,7 +36,7 @@ Massgeblich ist `DESIGN.md`. Die wichtigsten Festlegungen:
 
 | Bereich | Festlegung |
 |---|---|
-| Farben | Papier `#FFFFFF`, Tinte `#1F2326` mit zwei helleren Stufen für Nebentext, Linie `#D7DADD`, Blau `#0B57B0`. Skala: 1 `#D9F2A0`, 2 `#FFD500`, 3 `#FF9500`, 4 `#D4111E`, 5 `#7A0A12`. |
+| Farben | Papier `#FFFFFF`, Tinte `#1F2326` mit zwei helleren Tönen für Nebentext, Linie `#D7DADD`, Blau `#0B57B0`. Skala: 1 `#D9F2A0`, 2 `#FFD500`, 3 `#FF9500`, 4 `#D4111E`, 5 `#7A0A12`. |
 | Kontraste | Text auf Papier 15,8 : 1, Nebentext 8,2 : 1, Links 7,0 : 1; Ziffern auf der Skala zwischen 5,4 : 1 und 12,9 : 1. |
 | Schrift | Source Sans 3 in sechs festen Grössen (13, 15, 17, 20, 24, 30 px), Gewichte 400, 600, 700, 900. Source Code Pro nur für Kennungen, Versionen und Vektoren. Beide liegen der Anwendung bei. |
 | Form | Gerade Ecken, höchstens 2 px Radius an Bedienelementen, keine Schlagschatten. Hierarchie durch Linien: 3 px unter Seitentiteln, 2 px unter Tabellenköpfen, 1 px zwischen Zeilen. |
@@ -52,15 +52,16 @@ Massgeblich ist `DESIGN.md`. Die wichtigsten Festlegungen:
 | Bereich | Zweck | Wichtigste Zustände |
 |---|---|---|
 | **Bulletin** | Lage des Tages: höchste Stufe, führende Massnahme, Stufe je Projekt, Änderungen, jüngste Warnungen ohne Kennung | ruhig (nichts ab Stufe 2), Erstbefüllung läuft, Quelle veraltet |
-| **Alerts** | Liste der Massnahmen mit Leiter als Filter, Suche, Projekt, Status; jede Zeile nennt Komponente, Ziel und Anzahl der Befunde und lässt sich aufklappen | leer nach Filter, lädt, Stufe 1 auf Wunsch |
+| **Actions** (in den Mockups noch «Alerts») | Liste der Massnahmen mit Leiter als Filter, Suche, Projekt, Status; jede Zeile nennt Komponente, Ziel und Anzahl der Befunde und lässt sich aufklappen | leer nach Filter, lädt; die Ansicht «Not relevant» zeigt Befunde der Stufe 1, die zu keiner Massnahme gehören |
 | **Action** | Eine Massnahme: Ziel, Befunde nach Stufe, Status, Zuweisung, Frist, Verlauf | ein Befund, viele Befunde, keine Korrektur verfügbar |
-| **Alert** | Eine Schwachstelle: drei Antworten, Einschätzung, Faktoren je Projekt, Details, Quellen | ohne KI-Einschätzung (Vorlagen), Vorschlag des Modells zu bestätigen, zurückgezogen |
+| **Alert** | Eine Schwachstelle: drei Antworten, Einschätzung, Faktoren je Komponente, Details, Quellen | ohne KI-Einschätzung (Vorlagen), Vorschlag des Modells zu bestätigen, zurückgezogen |
 | **Entries** | Suche über alle konsolidierten Einträge, unabhängig vom eigenen Profil | kein Treffer |
 | **Projects** | Projekte und ihr Technologieprofil; Hinweise auf Lücken im Profil | ohne Komponenten, Version fehlt |
 | **Sources** | Stand der Quellen; für den Instanz-Administrator auch Steuerung | Quelle fehlerhaft, deaktiviert |
 | **Notification rules** | Regeln, Webhook-Ziele, Zustellprotokoll | Zustellung fehlgeschlagen |
 | **Team** | Mitglieder, Rollen, Einladungen | Einladung offen |
-| **Settings** | Organisation, Fristen, KI-Datenrichtlinie; persönlich: Sprache, MFA, Geräte für Push | |
+| **Settings** | Organisation, Fristen, KI-Datenrichtlinie, Audit-Protokoll; persönlich: Sprache, MFA, aktive Sitzungen, Geräte für Push | |
+| **Administration** | Nur für den Instanz-Administrator: Registrierung, SMTP und KI-Anbieter mit Verbindungstest, Grenzen, aufgegebene Jobs mit Wiederholen, Kennzahlen des Betriebs, installierte Version | Wert durch Umgebungsvariable gesperrt, Verbindungstest fehlgeschlagen |
 | **Setup** | Geführte Ersteinrichtung (11.6) | abgebrochen und fortsetzbar |
 
 Am Desktop liegt die Navigation im Kopfband, am Telefon in einer Leiste am unteren Rand mit vier Zielen. In Massnahme und Meldung ersetzt eine Aktionsleiste die Navigationsleiste: Hauptaktion, Status, Zuweisen.
@@ -69,7 +70,7 @@ Am Desktop liegt die Navigation im Kopfband, am Telefon in einer Leiste am unter
 
 **Ankunft aus einer Benachrichtigung (Entwickler, Telefon).** Push öffnet die Massnahme; bei einem einzigen Befund sieht sie aus wie die Meldung im Mockup. Ohne Scrollen sichtbar: Stufe, Titel, was passiert ist, ob das Projekt betroffen ist, was zu tun ist. Ein Tipp auf «Take into review» setzt den Status, weist zu und bestätigt an Ort und Stelle mit «Undo». Kein Dialog, kein Seitenwechsel.
 
-**Sichtung (verantwortliche Person, Desktop).** Bulletin zeigt die höchste Stufe und was sich geändert hat. Die Leiter führt in die gefilterte Liste; von dort in die Meldung, Zuweisung oder Abschluss mit Ergebnis, zurück in die Liste an dieselbe Stelle.
+**Sichtung (verantwortliche Person, Desktop).** Bulletin zeigt die höchste Stufe und was sich geändert hat. Die Leiter führt in die gefilterte Liste; von dort in die Massnahme, Zuweisung oder Abschluss mit Ergebnis, zurück in die Liste an dieselbe Stelle.
 
 **Abschluss.** «Remediated», «Risk accepted» und «Not affected» verlangen eine kurze Begründung. Der Status wird an der Massnahme gesetzt und gilt für ihre Befunde; einzelne Befunde lassen sich abweichend setzen. Wer im Profil die Version anhebt, schliesst damit die Befunde, die die neue Version nicht mehr betreffen.
 
@@ -82,8 +83,8 @@ Noch nicht als Mockup gebaut; der Aufbau steht fest.
 | Schritt | Inhalt | Regel |
 |---|---|---|
 | 1 Organisation | Name, Sprache, Zeitzone | Vorgaben aus dem Browser |
-| 2 Erstes Projekt | Name, getragener Geschäftsprozess, Kritikalität, Erreichbarkeit, optional vorhandene Schutzmassnahmen | drei Wahlmöglichkeiten je Frage, mit einem Satz Erklärung |
-| 3 Technologien | Suche im Katalog, gruppiert nach Betriebssystem, Laufzeit und Framework, CMS und Shop, Datenbank und Messaging, Cloud und Hosting, Container und Virtualisierung, Netzwerk und Sicherheit, weitere Software und Abhängigkeiten, externe Dienste | Version ist erwünscht, aber nicht Pflicht; «Version unbekannt» ist eine gültige Angabe. Bei Paketen fragt der Wizard, ob sie aus einer Distribution stammen. Externe Dienste haben keine Version. Freie Einträge sind möglich und als ungeprüft gekennzeichnet. |
+| 2 Erstes Projekt | Name, getragener Geschäftsprozess, Kritikalität, Erreichbarkeit | je drei Wahlmöglichkeiten mit einem Satz Erklärung |
+| 3 Technologien | Suche im Katalog, gruppiert nach Betriebssystem, Laufzeit und Framework, CMS und Shop, Datenbank und Messaging, Cloud und Hosting, Container und Virtualisierung, Netzwerk und Sicherheit, weitere Software und Abhängigkeiten, externe Dienste | Version ist erwünscht, aber nicht Pflicht; «Version unbekannt» ist eine gültige Angabe. Bei Paketen fragt der Wizard, ob sie aus einer Distribution stammen. Externe Dienste haben keine Version. Freie Einträge sind möglich und als ungeprüft gekennzeichnet. Je Technologie lässt sich eine Schutzmassnahme mit Begründung angeben. |
 | 4 Abdeckung | Zeigt, was sich prüfen lässt und was nicht: fehlende Versionen, Plattformen ohne Plugins | Hinweise, keine Sperren |
 | 5 Benachrichtigung | Die drei Vorgaberegeln, Push auf diesem Gerät, Team einladen | alles überspringbar |
 | 6 Erstes Bulletin | Die Ersteinschätzung läuft im Hintergrund; die Seite zeigt den Fortschritt und dann das Ergebnis | eine Sammelnachricht statt Einzelalarme |
@@ -99,7 +100,7 @@ web/
       src/app/
         core/                Sitzung, API-Basis, SSE, Fehlerbehandlung, Übersetzung
         features/
-          bulletin/  alerts/  projects/  sources/  rules/  team/  settings/  setup/  auth/
+          bulletin/  actions/  entries/  projects/  sources/  rules/  team/  settings/  admin/  setup/  auth/
         api/generated/       aus dem OpenAPI-Dokument erzeugt, nicht von Hand geändert
     ui/                      Komponentenbibliothek: Tokens, Stufenzeichen, Leiter, Tabelle, Formulare, Hinweise
 ```
@@ -141,7 +142,7 @@ Prüfung in drei Lagen: Lint-Regeln für Vorlagen, Playwright mit axe in den End
 | Serveradresse | Jede Instanz hat eine eigene Adresse. | Erster Bildschirm fragt sie ab und prüft sie gegen einen offenen Endpunkt mit Produktname und API-Version. HTTPS mit gültigem Zertifikat ist Pflicht. |
 | Versionen | App und Server werden unabhängig aktualisiert. | Die API ist versioniert; die App kennt den Zustand «Server zu alt» und «Server zu neu». |
 
-Der Server sendet in beiden Stufen nur Web Push. Die App-Stufe ändert am Server nichts ausser der zweiten Anmeldeart.
+Der Server sendet für die Web-App wie für die native App nur Web Push. Die native App ändert am Server nichts ausser der zweiten Anmeldeart.
 
 ## 11.10 Offen
 

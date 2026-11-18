@@ -55,7 +55,7 @@ Jeder Schritt filtert, was der nächste nicht mehr sehen muss.
 |---|---|---|
 | 1 Transport | ETag, `Last-Modified`, Delta-Endpunkte | unveränderte Feeds |
 | 2 Rohdatensatz | Hash des kanonisierten Inhalts | unveränderte Datensätze |
-| 3 Beobachtung | Feldvergleich mit der vorigen Beobachtung | kosmetische Änderungen der Quelle |
+| 3 Beobachtung | Feldvergleich der neuen Beobachtung mit der bisherigen, bevor sie überschrieben wird, in derselben Transaktion | kosmetische Änderungen der Quelle |
 | 4 Eintrag | **Wesentlichkeits-Fingerabdruck** | Änderungen ohne Folgen für die Bewertung |
 | 5 Befund | Vergleich mit dem vorigen Ergebnis | Neubewertungen ohne neues Ergebnis |
 
@@ -64,7 +64,7 @@ Der Fingerabdruck des Schritts 4 ist ein Hash über genau die Felder, die eine B
 - Zustand (publiziert, zurückgezogen)
 - Schweregrad-Klasse und Vektor
 - Menge der betroffenen Produkte und Versionsbereiche
-- Ausnutzungsstufe und KEV-Aufnahme
+- Ausnutzungsstand und KEV-Aufnahme
 - Korrektur verfügbar
 - Warnung einer nationalen Stelle zu diesem Eintrag
 - EPSS, aber nur als Klasse: über oder unter 50 %, passend zum Regelwerk
@@ -95,10 +95,23 @@ Quellen ohne strukturierte Produktangaben (Freitext-Warnungen) liefern im MVP nu
 
 Die Versionsangaben im Spike: 14 569 `custom`, 5 320 `semver`, 2 827 ohne Typ, 2 238 `rpm`, 316 `git`.
 
-- Ein Vergleichsverfahren je Schema hinter einer Schnittstelle: SemVer, RPM, Debian, Maven, PEP 440, datumsbasiert, und ein tolerantes Verfahren für numerische Punktfolgen als Rückfallebene.
+- Ein Vergleichsverfahren je Schema hinter einer Schnittstelle. Im MVP drei: SemVer, RPM und ein tolerantes Verfahren für numerische Punktfolgen als Rückfallebene. Debian, Maven, PEP 440 und datumsbasierte Schemata kommen mit der ersten Quellenwelle, die solche Angaben liefert; bis dahin ergeben sie *unbekannt*.
 - Bekannte Eigenheiten werden beim Normalisieren aufgelöst: Platzhalter wie `8.2.*`, Bereiche in einem Feld wie `8.4.0-8.4.13`, offene Grenzen wie `0` bis `*`.
 - Git-Commits sind ohne Repository nicht vergleichbar. Solche Angaben werden gespeichert, aber nicht ausgewertet; liefert derselbe Record zusätzlich Versionsnummern (beim Linux-Kernel üblich), zählen diese.
 - Das Ergebnis hat drei Werte: **im Bereich**, **ausserhalb**, **unbekannt**. Unbekannt heisst nie «nicht betroffen»: Fehlt die Version im Profil oder ist die Angabe nicht auswertbar, bleibt der Befund bestehen und die Unsicherheit wird ausgewiesen.
+
+CVE-Records kennen je Produkt Bereiche mit dem Zustand «betroffen» oder «nicht betroffen» und einen Vorgabezustand für alle nicht genannten Versionen; fehlt er, gilt laut Format «unbekannt». Daraus wird das Ergebnis in dieser Reihenfolge gebildet:
+
+| Lage der installierten Version | Ergebnis |
+|---|---|
+| in einem Bereich mit Zustand «betroffen» | im Bereich |
+| in einem Bereich mit Zustand «nicht betroffen» | ausserhalb |
+| in keinem Bereich, Vorgabezustand «betroffen» | im Bereich |
+| in keinem Bereich, Vorgabezustand «nicht betroffen» | ausserhalb |
+| in keinem Bereich, Vorgabezustand unbekannt oder nicht angegeben, und die Version liegt über der Obergrenze oder Korrekturversion aller genannten Bereiche | ausserhalb |
+| in keinem Bereich, sonst | unbekannt |
+
+Die fünfte Zeile ist eine bewusste Auslegung: Die meisten Herausgeber nennen nur betroffene Bereiche und lassen den Vorgabezustand weg. Streng nach Format wäre alles darüber «unbekannt», und fast jede gepflegte Installation bliebe ein offener Befund. Weil *ausserhalb* ohne Rechnung zu Stufe 1 führt, ist diese Zeile die empfindlichste Stelle des Abgleichs. Sie wird am Referenzsatz eigens geprüft: Kein als betroffen beschriftetes Paar darf über sie zu Stufe 1 kommen (Kapitel 7.9). Eine Version unterhalb aller Bereiche gilt nur dann als ausserhalb, wenn der Record eine untere Grenze ausdrücklich nennt.
 
 ## 6.7 Zurückgezogene und geänderte Einträge
 

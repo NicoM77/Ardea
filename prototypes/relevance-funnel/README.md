@@ -68,7 +68,7 @@ Von den 173 Kandidaten wurden 82 in der Woche neu publiziert; 91 sind ältere Re
 | Kubernetes | C | 1 | 0 |
 | Umbraco CMS | A | 1 | 1 |
 
-Installierte Version, Erreichbarkeit und Kritikalität kennt der Spike nicht. Die Tabelle rechnet deshalb vier einheitliche Annahmen durch (Kritikalität normal, EPSS nicht berücksichtigt). Das ist eine Bandbreite, keine Prognose; echte Profile mischen die Fälle, und Versionen ausserhalb des betroffenen Bereichs fallen auf Stufe 1.
+Installierte Version, Erreichbarkeit und Kritikalität kennt der Spike nicht. Die Tabelle rechnet deshalb vier einheitliche Annahmen durch (Kritikalität normal, EPSS nicht berücksichtigt). Als Schweregrad nimmt das Skript den höchsten Wert aus Herausgeber und CISA-Anreicherung; der Plan rechnet mit dem Wert des Herausgebers (Kapitel 6.3), die Zahlen liegen deshalb eher zu hoch. Das ist eine Bandbreite, keine Prognose; echte Profile mischen die Fälle, und Versionen ausserhalb des betroffenen Bereichs fallen auf Stufe 1.
 
 | Annahme für alle Kandidaten | Stufe 5 | Stufe 4 | Stufe 3 | Stufe 2 | ab Stufe 3 | Paare mit Stufe ≥ 4 |
 |---|---:|---:|---:|---:|---:|---:|
@@ -112,7 +112,7 @@ Nicht durch ein Skript im Repository belegt, sondern von Hand am selben Tag geme
 ## Was daraus folgt
 
 1. **Stichwort-Matching ist unbrauchbar.** Bei PHP sind 295 von 297 Treffern falsch: Sie stammen von Dateinamen wie `login.php` in Beschreibungen fremder Produkte. «SQL Server» trifft «My**SQL Server**». Das Matching muss auf den strukturierten Feldern `affected[].vendor/product`, CPE und Paketkoordinaten beruhen.
-2. **Der Vorfilter trägt, aber er genügt nicht.** 2,7 % des Wochenvolumens bleiben als Kandidaten. Je nach Profil werden daraus zwischen 6 und 170 Meldungen ab Stufe 3 in einer einzigen Woche. Eine Meldung pro CVE ist damit keine brauchbare Einheit für Benachrichtigung und Arbeit.
+2. **Der Vorfilter trägt, aber er genügt nicht.** 2,7 % des Wochenvolumens bleiben als Kandidaten. Je nach Profil werden daraus zwischen 6 und 170 Befunde ab Stufe 3 in einer einzigen Woche. Eine Meldung pro CVE ist damit keine brauchbare Einheit für Benachrichtigung und Arbeit.
 3. **Die Arbeitseinheit ist die Massnahme, nicht die CVE.** Dieselben 173 Kandidaten sind 8 Paare aus Projekt und Technologie: «PostgreSQL in Projekt C aktualisieren» behebt 52 Einträge auf einmal. Benachrichtigt, zugewiesen und abgeschlossen wird je Paar.
 4. **Mehr als die Hälfte der Kandidaten sind Änderungen an älteren Records.** Wer aktuell gepatcht ist, hat deren Korrektur bereits. Die Versionsprüfung und die Regel «nur wesentliche Änderungen» entscheiden deshalb über das Rauschen, nicht der Vorfilter.
 5. **Plattformen mit Plugins brauchen ein Inventar auf Komponentenebene.** 477 Records der Woche (7,4 % aller publizierten) betreffen WordPress-Plugins und -Themes, kein einziger den Core. Der Import aus SBOM oder Lockfiles ist die wichtigste Ausbaustufe nach dem MVP.

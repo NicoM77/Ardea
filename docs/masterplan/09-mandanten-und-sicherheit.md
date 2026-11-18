@@ -27,7 +27,9 @@ Instanz
 | Benachrichtigungsregeln, Webhook-Ziele | ● | ● | | |
 | Mitglieder einladen und Rollen ändern | ● | ● | | |
 | KI-Datenrichtlinie, MFA-Pflicht, Fristen | ● | ● | | |
-| Organisation löschen, Owner übertragen | ● | | | |
+| Owner übertragen | ● | | | |
+
+Eine Organisation zu exportieren oder zu löschen ist im MVP ein Wartungsbefehl des Betreibers (Kapitel 12.8); über die Oberfläche kommt es mit Ausbaustufe 1.
 
 Rechte je Projekt (ein Dienstleister sieht nur «sein» Projekt) sind eine Ausbaustufe. Das Datenmodell lässt sie zu, weil jeder Befund sein Projekt trägt.
 
@@ -40,8 +42,9 @@ Jede Tabelle gehört zu einer von drei Arten (Kapitel 4.1), und jede Art hat ein
 | Daten | Wer liest und schreibt |
 |---|---|
 | Organisation | nur mit Mandantenkontext. Er entsteht in der API aus der geprüften Mitgliedschaft, im Worker aus der Organisation des Jobs. |
-| Benutzer | nur der Benutzer selbst, über die Pfade unter `/me`. |
-| Global | lesbar für jeden Angemeldeten; schreibbar für den Worker und, bei Einstellungen und Quellen, für den Instanz-Administrator. |
+| Benutzer | der Benutzer selbst, über die Pfade unter `/account` und `/me`. Dazu genau drei weitere Zugriffe: Mitglieder derselben Organisation lesen über das Mitgliederverzeichnis Name, E-Mail-Adresse und Rolle, sonst nichts. Der Worker schreibt In-App-Benachrichtigungen und liest Push-Abos und Stummschaltungen für einen benannten Empfänger innerhalb des Mandantenkontexts seines Jobs. Die Anmeldung sucht ein Konto über seine E-Mail-Adresse, bevor ein Benutzerkontext besteht. |
+| Global: Einträge, Quellen, Katalog | lesbar für jeden Angemeldeten; schreibbar für den Worker und, bei Quellen, für den Instanz-Administrator. |
+| Global: Jobs, Zeitpläne, Einstellungen der Instanz | nur Worker und Instanz-Administrator. Jobs tragen nur Kennungen. |
 
 **Zwei Schichten sind Pflicht, eine dritte kommt nach einem Versuch hinzu.**
 
@@ -53,7 +56,16 @@ Jede Tabelle gehört zu einer von drei Arten (Kapitel 4.1), und jede Art hat ein
 
 Die Recherche fand für Schicht 3 keine Primärquelle, die das Zusammenspiel von Row-Level Security, Verbindungspool und EF Core beschreibt, und stuft sie als Härtung ein, nicht als Fundament. Der Plan folgt dem: Die Schichten 1 und 2 mit einem automatischen Fremdzugriffstest für jeden Endpunkt sind das Fundament. Schicht 3 wird eingeführt, wenn der Versuch 0.6 in Phase 0 zeigt, dass sie mit der unten beschriebenen Arbeitseinheit sauber zusammenspielt. Sie schützt vor Programmierfehlern, nicht vor einem Angreifer, der bereits beliebiges SQL ausführen kann.
 
-**Eine Arbeitseinheit, eine Transaktion.** Jede Anfrage und jeder Job öffnet genau eine Datenbanktransaktion. Die Plattform stellt Verbindung und Transaktion bereit, setzt darin Organisation und Benutzer, und alle Modul-`DbContext` der Arbeitseinheit benutzen sie gemeinsam. Folgejobs werden in derselben Transaktion eingereiht.
+**Eine Arbeitseinheit, eine Transaktion.** Die Plattform stellt Verbindung und Transaktion bereit, setzt darin Organisation und Benutzer, und alle Modul-`DbContext` der Arbeitseinheit benutzen sie gemeinsam. Was eine Arbeitseinheit ist:
+
+| Fall | Arbeitseinheit |
+|---|---|
+| Anfrage | die ganze Anfrage. Ausnahme: Der Strom der Server-Sent Events hält keine Transaktion offen; er liest in kurzen eigenen. |
+| Job ohne Aussenkontakt | der ganze Job: Zustand und Folgejobs entstehen gemeinsam oder gar nicht. |
+| Job mit Aussenkontakt (Abruf, Aufruf des Sprachmodells, Versand) | drei Schritte: kurz lesen, dann ohne offene Transaktion nach aussen sprechen, dann Ergebnis und Folgejobs in einer Transaktion schreiben. Wiederholungen sind über die Schlüssel der Kette unschädlich (Kapitel 3.3). |
+| Abruf mit Haltepunkten | jede Strecke bis zum nächsten Haltepunkt ist eine eigene Transaktion aus Rohdatensätzen, Cursor und Folgejobs (Kapitel 5.2). |
+
+Keine Transaktion bleibt über einen Aufruf nach aussen offen, und Zeilensperren wie die des Nummernzählers liegen immer im schreibenden Schritt. Die Verlängerung einer Lease läuft auf einer eigenen Verbindung. Der Mandantenkontext wird zu Beginn jeder Transaktion gesetzt, nicht je Verbindung.
 
 **Systemoperationen.** Mehrere Abläufe müssen über Organisationen hinweg fragen. Sie folgen einem Grundsatz: Ein Systemjob ermittelt nur, *welche* Organisationen betroffen sind, und reiht je Organisation einen Job ein. Gelesen und geschrieben wird ausschliesslich in Jobs mit Mandantenkontext.
 
@@ -61,13 +73,16 @@ Die Recherche fand für Schicht 3 keine Primärquelle, die das Zusammenspiel von
 |---|---|
 | Kandidatensuche | Welche Organisationen, Projekte und Komponenten führen diese Produktschlüssel? |
 | Neubewertung, Rückzug eines Eintrags | Welche Organisationen haben Befunde zu diesem Eintrag? |
+| Neues Regelwerk | Welche Organisationen haben offene Befunde? |
+| Warnung ohne Kennung | Welche Organisationen haben eine Regel für Warnungen? |
 | Sammelnachrichten, Eskalation | Welche Ziele sind jetzt fällig? |
-| Anmeldung | Welchen Organisationen gehört dieser Benutzer an? (benutzerbezogene Regel auf `membership`) |
+| Anmeldung | Welches Konto gehört zu dieser E-Mail-Adresse, und welchen Organisationen gehört es an? (benutzerbezogene Regel auf `membership`) |
 | Einladung annehmen | Zu welcher Organisation gehört dieser Token? |
 | Kennzahlen der Instanz | Zählwerte ohne Inhalte |
-| Export, Löschen, Aufräumen | laufen als Wartungsbefehl mit der Eigentümerrolle, nicht im Betrieb |
 
-Jede dieser Fragen ist eine eigene, schmale Datenbankfunktion, die nur Kennungen oder Zählwerte liefert. Die Liste ist abschliessend; eine neue Systemoperation verlangt eine neue Funktion und einen ADR.
+Jede dieser Fragen ist eine eigene, schmale Datenbankfunktion, die nur Kennungen oder Zählwerte liefert. Die Liste ist abschliessend; eine neue Systemoperation verlangt eine neue Funktion und einen ADR. Empfänger einer Regel werden nicht organisationsübergreifend aufgelöst: Das geschieht im Job der Organisation über das Mitgliederverzeichnis.
+
+Export und Löschen einer Organisation sowie das Aufräumen alter Daten sind keine Systemoperationen des Betriebs. Sie laufen als Wartungsbefehl mit der Eigentümerrolle.
 
 **Datenbankrollen.** `csh_migrator` besitzt die Tabellen; sein Passwort kennen nur der Befehl `migrate` und die Wartungsbefehle. `csh_app` wird von API und Worker benutzt und hat ein eigenes Passwort. Ein Test im Build prüft, dass jede Tabelle einer der drei Arten zugeordnet ist und dass der Fremdzugriffstest jeden Endpunkt abdeckt, auch mit fremden Kennungen im Anfragekörper.
 
@@ -118,7 +133,7 @@ Das System liest fremde Inhalte und ruft fremde Adressen auf. Beides ist Angriff
 - **Header:** Content Security Policy, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors 'none'`. HSTS setzt der vorgeschaltete Proxy; die Dokumentation liefert Beispiele.
 - **Container:** läuft als nicht privilegierter Benutzer auf einem Image ohne Shell und Paketmanager, Dateisystem schreibgeschützt, keine zusätzlichen Capabilities.
 - **Datenbank:** nur im Compose-Netz erreichbar, kein veröffentlichter Port in der Vorgabe.
-- **Lieferkette:** Lockfiles für NuGet und npm; automatische Abhängigkeits-Updates; Lizenzprüfung im Build gegen eine Positivliste (Kapitel 13); SBOM je Release; signierte Images.
+- **Lieferkette:** Lockfiles für NuGet und npm; automatische Abhängigkeits-Updates; Lizenzprüfung im Build gegen eine Positivliste (Kapitel 13); SBOM je Release; signierte Images sind eine Ausbaustufe.
 - **Selbstanwendung:** Das Projekt pflegt das eigene Technologieprofil in einer eigenen Instanz und meldet sich Lücken in seinen Abhängigkeiten selbst.
 - **Meldeweg:** `SECURITY.md` mit Kontakt und Frist für die Antwort; koordinierte Offenlegung.
 

@@ -2,7 +2,7 @@
 
 ## 3.1 Form: modularer Monolith mit separatem Worker
 
-Eine Codebasis, eine Datenbank, ein Container-Image mit drei Startbefehlen:
+Eine Codebasis, eine Datenbank, ein Container-Image mit drei Rollen (dazu Hilfsbefehle wie `healthcheck`, `init-env`, `doctor` und die Wartungsbefehle, Kapitel 12.3):
 
 | Prozess | Aufgabe | Skalierung |
 |---|---|---|
@@ -58,12 +58,15 @@ Die acht geforderten Bereiche verteilen sich auf sieben Module und einen Host mi
 
 ```mermaid
 flowchart TB
-  Api --> Iam & Assets & Intel & Assessment & Notifications
+  Api --> Iam & Assets & Catalog & Intel & Assessment & Notifications
   Worker --> Intel & Assessment & Notifications & Assets & Iam
   Assessment -->|Contracts| Intel
   Assessment -->|Contracts| Assets
+  Assessment -->|Contracts| Catalog
+  Assessment -->|Contracts| Iam
   Notifications -->|Contracts| Assessment
   Notifications -->|Contracts| Iam
+  Notifications -->|Contracts| Intel
   Assets -->|Contracts| Iam
   Assets -->|Contracts| Catalog
   Intel -->|Contracts| Catalog
@@ -75,7 +78,7 @@ flowchart TB
 
 1. Ein Modul greift auf ein anderes nur über dessen `Contracts`-Assembly zu: Abfrage-Schnittstellen, Datentransferobjekte, Integrationsereignisse. Alles andere ist `internal`.
 2. Kein Modul liest oder schreibt Tabellen eines anderen Moduls. Jedes Modul besitzt ein eigenes Datenbankschema und einen eigenen `DbContext`.
-3. Abhängigkeiten zeigen in eine Richtung: `Catalog` kennt niemanden, `Intel` und `Assets` kennen `Catalog`, `Assessment` kennt `Intel` und `Assets`, `Notifications` kennt `Assessment` und `Iam`. Zyklen sind verboten.
+3. Abhängigkeiten zeigen in eine Richtung: `Catalog` und `Iam` kennen niemanden. `Intel` kennt `Catalog`. `Assets` kennt `Catalog` und `Iam`. `Assessment` kennt `Intel`, `Assets`, `Catalog` und `Iam` (Einstellungen der Organisation). `Notifications` kennt `Assessment`, `Iam` (Mitgliederverzeichnis) und `Intel` (Warnungen ohne Kennung). Zyklen sind verboten.
 4. Quellenadapter kennen ausschliesslich das Provider-SDK. Sie haben keinen Zugriff auf Datenbank, Mandantendaten oder andere Adapter.
 5. Architekturtests im Build prüfen die Regeln 1 bis 4; ein Verstoss lässt den Build scheitern.
 
@@ -125,13 +128,14 @@ sequenceDiagram
 | Schritt | Job | Auslöser | Idempotenz über |
 |---|---|---|---|
 | Abruf | `SyncSource(sourceId)` | Fälligkeit der Quelle | Cursor der Quelle; Upsert auf (Quelle, externe ID) mit Inhalts-Hash |
-| Normalisierung | `NormalizeRecords(batch)` | neue oder geänderte Rohdatensätze | Beobachtung je Rohdaten-Revision |
+| Normalisierung | `NormalizeRecords(batch)` | neue oder geänderte Rohdatensätze | eine Beobachtung je Rohdatensatz, die mit jeder Revision überschrieben wird; dieselbe Revision ergibt dieselbe Beobachtung |
 | Zusammenführung | `CorrelateEntry(entryKey)` | neue Beobachtungen | Neuberechnung aus allen Beobachtungen; Revisionsnummer |
 | Kandidatensuche | `MatchEntry(entryId)` | Eintrag wesentlich geändert | arbeitet immer auf dem aktuellen Stand; ein wartender Job je Eintrag |
 | Rückwärtssuche | `MatchProject(projectId)` | Profil geändert | arbeitet auf dem aktuellen Profil; ein wartender Job je Projekt |
-| Bewertung | `AssessAlert(orgId, entryId)` | Kandidat gefunden | Fingerabdruck der Eingabe; gleiche Eingabe erzeugt keine neue Einschätzung |
-| Benachrichtigung | `EvaluateRules(event)` → `Deliver(deliveryId)` | Ereignisse nach Kapitel 8.2 | Benachrichtigungsstand und eindeutiger Zustellschlüssel (Kapitel 8.4) |
-| Sammelnachricht | `SendDigest(targetId, period)` | Zeitplan des Ziels | Schlüssel (Ziel, Periode) |
+| Bewertung | `AssessAlert(orgId, entryId)` | Kandidat gefunden | rechnet Regeln und Massnahmen aus dem aktuellen Stand; gleiche Eingabe ändert nichts |
+| KI-Einschätzung | `EstimateAlert(orgId, alertId)` | Regelstufe ab Schwelle und Kontingent der Massnahme frei (Kapitel 7.5) | Fingerabdruck der Eingabe; gleiche Eingabe erzeugt keine neue Einschätzung |
+| Benachrichtigung | `EvaluateRules(event)` → `Deliver(deliveryId)` | Ereignisse nach Kapitel 8.2 | Benachrichtigungsstand; Empfänger, Kanal und Ereignis zusammen eindeutig (Kapitel 8.4) |
+| Sammelnachricht | `SendDigest(targetId, periodEnd)` | Zeitplan des Ziels | Ziel, Empfänger und Periodenende zusammen eindeutig |
 
 Mehrere Quellen aktualisieren dieselbe Schwachstelle oft innerhalb von Minuten. `MatchEntry` wird deshalb mit einer kurzen Verzögerung eingereiht; solange ein Job für denselben Eintrag wartet, entsteht kein zweiter. Eine Welle von Änderungen löst so eine Bewertung aus, nicht fünf.
 
@@ -164,10 +168,10 @@ platform.job
 | Wiederholen | exponentiell mit Streuung; nach `max_attempts` Zustand `dead`, sichtbar in der Administration, von Hand wiederholbar |
 | Zusammenfassen | höchstens ein wartender Job je `coalesce_key` (eindeutiger Teilindex über wartende Jobs); ein laufender oder erledigter Job blockiert keinen neuen |
 | Begrenzen | Parallelität je Job-Art konfigurierbar; KI-Jobs und Abrufe je Quelle haben eigene Obergrenzen |
-| Wiederkehrendes | `platform.schedule` mit Cron-Ausdruck und Zeitzone; ein Leader (Advisory Lock) reiht fällige Läufe ein |
+| Wiederkehrendes | `platform.schedule` mit Cron-Ausdruck und Zeitzone für Aufgaben der Instanz (Aufräumen, fällige Quellen und Sammelziele ermitteln); ein Leader (Advisory Lock) reiht fällige Läufe ein. Wann eine Quelle oder ein Sammelziel fällig ist, steht an der jeweiligen Zeile, nicht hier. |
 | Aufräumen | erledigte Jobs nach 7 Tagen, aufgegebene nach 30 |
 
-Dieselbe Wiederholung gilt für alles: Verarbeitungsschritte, Abrufe und Zustellungen sind Jobs. Es gibt keinen zweiten Mechanismus.
+Verarbeitungsschritte und Zustellungen wiederholt das Job-System; einen zweiten Mechanismus gibt es dafür nicht. Abrufe sind die eine, bewusste Ausnahme: Der Job `SyncSource` hat einen einzigen Versuch. Schlägt er fehl, bestimmt die Quelle aus ihrer Fehlerserie den nächsten Termin (Kapitel 5.4), und der nächste Lauf setzt am letzten Haltepunkt an.
 
 Der Baustein bleibt hinter `IJobQueue` und `IScheduler`. Sollte er sich als zu knapp erweisen, ist Quartz.NET die vorgesehene Ausweichlösung, ohne dass Module es merken.
 
@@ -175,7 +179,7 @@ Der Baustein bleibt hinter `IJobQueue` und `IScheduler`. Sollte er sich als zu k
 
 | Thema | Entscheidung |
 |---|---|
-| Mandantenkontext | `ITenantContext` wird pro Anfrage aus Route und Mitgliedschaft, pro Job aus `org_id` gesetzt. Ohne Kontext sind mandantenbezogene Daten nicht lesbar. Eine Anfrage oder ein Job ist genau eine Transaktion über alle beteiligten Module (Kapitel 9.2). |
+| Mandantenkontext | `ITenantContext` wird pro Anfrage aus Route und Mitgliedschaft, pro Job aus `org_id` gesetzt. Ohne Kontext sind mandantenbezogene Daten nicht lesbar. Eine Arbeitseinheit ist genau eine Transaktion über alle beteiligten Module; Jobs mit Aussenkontakt bestehen aus mehreren Arbeitseinheiten (Kapitel 9.2). |
 | IDs | UUID Version 7: zeitlich sortierbar, ohne zentrale Vergabe. Zusätzlich je Organisation eine kurze, fortlaufende Nummer für Massnahmen und Meldungen als Griff für Menschen. |
 | Zeit | Durchgehend UTC in der Datenbank, `TimeProvider` im Code; Zeitzonen nur in Darstellung und Zeitplänen. |
 | Fehler | Erwartbare Fehler als Ergebnis-Typ bis zum Endpunkt, dort Problem Details nach RFC 9457. Ausnahmen nur für Unerwartetes. |

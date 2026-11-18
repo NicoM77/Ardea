@@ -9,7 +9,7 @@ Die API ist der einzige Zugang zu den Daten: Die Web-App, die spätere Mobile-Ap
 | Basis | `/api/v1`, JSON, `camelCase`, UTF-8. Zeitstempel ISO 8601 in UTC. |
 | Stil | Ressourcenorientiert mit Minimal APIs, gruppiert je Modul. Verben nur, wo eine Aktion keine Ressource ist (`…/sync`, `…/reassess`). |
 | Mandant | Im Pfad: `/api/v1/orgs/{orgId}/…`. Die Mitgliedschaft wird vor jedem Handler geprüft. Instanzweite Verwaltung liegt unter `/api/v1/instance/…`. |
-| Kennungen | UUID Version 7. Massnahmen und Meldungen zusätzlich über ihre Nummer je Organisation (`/actions/142`), Einträge über ihren Schlüssel (`/entries/CVE-2026-115731`). |
+| Kennungen | UUID Version 7. Massnahmen und Meldungen zusätzlich über ihre Nummer je Organisation (`/actions/143`, `/alerts/142`; beide teilen einen Nummernkreis), Einträge über ihren Schlüssel (`/entries/CVE-2026-115731`). |
 | Fehler | Problem Details nach RFC 9457 mit `type`, `title`, `status`, `detail`, `traceId`; Validierungsfehler je Feld unter `errors`. |
 | Listen | Cursor-Paginierung: `?limit=50&cursor=…` liefert `{ items, nextCursor }`. Filter als Query-Parameter, Sortierung nur über freigegebene Felder. |
 | Gleichzeitigkeit | Im MVP gewinnt der letzte Schreibvorgang; Statuswechsel prüfen den erwarteten Ausgangszustand. `ETag` mit `If-Match` und `Idempotency-Key` sind eine Ausbaustufe. |
@@ -28,8 +28,8 @@ Die API ist der einzige Zugang zu den Daten: Die Web-App, die spätere Mobile-Ap
 | `POST /auth/password/forgot`, `/auth/password/reset` | Passwort zurücksetzen |
 | `GET /auth/session` | Angemeldeter Benutzer, Mitgliedschaften, CSRF-Token |
 | `GET, PATCH /account` · `POST, DELETE /account/mfa` · `GET, DELETE /account/sessions` | Profil, MFA, aktive Sitzungen |
-| `GET, POST /orgs` · `GET, PATCH, DELETE /orgs/{orgId}` | Organisationen |
-| `GET /orgs/{orgId}/members` · `PATCH, DELETE …/members/{userId}` | Mitglieder und Rollen |
+| `GET, POST /orgs` · `GET, PATCH /orgs/{orgId}` | Organisationen. Exportieren und Löschen sind im MVP Wartungsbefehle (Kapitel 12.8). |
+| `GET /orgs/{orgId}/members` · `PATCH, DELETE …/members/{userId}` | Mitgliederverzeichnis (Name, E-Mail-Adresse, Rolle) und Rollen |
 | `GET, POST /orgs/{orgId}/invitations` · `DELETE …/{id}` · `POST /invitations/{token}/accept` | Einladungen |
 | `GET /orgs/{orgId}/audit` | Audit-Protokoll der Organisation |
 
@@ -39,7 +39,7 @@ Die API ist der einzige Zugang zu den Daten: Die Web-App, die spätere Mobile-Ap
 |---|---|
 | `GET, POST /orgs/{orgId}/projects` · `GET, PATCH, DELETE …/{projectId}` | Projekte |
 | `GET, POST …/projects/{projectId}/components` · `PATCH, DELETE …/components/{id}` | Komponenten eines Projekts |
-| `PUT …/projects/{projectId}/components` | Profil als Ganzes ersetzen (Wizard, späterer SBOM-Import) |
+| `PUT …/projects/{projectId}/components` | Profil als Ganzes ersetzen (Wizard, späterer SBOM-Import). Der Server gleicht über die Kennungen ab, statt zu löschen und neu anzulegen (Kapitel 4.9). |
 | `GET /catalog/products?q=` | Suche im Technologie-Katalog für die Eingabehilfe |
 | `GET /orgs/{orgId}/setup` · `POST …/setup/complete` | Zustand des Setup-Wizards |
 | `GET /orgs/{orgId}/profile/coverage` | Hinweise auf Lücken im Profil (nicht prüfbare Plattform-Treffer, fehlende Versionen) |
@@ -63,9 +63,10 @@ Die API ist der einzige Zugang zu den Daten: Die Web-App, die spätere Mobile-Ap
 | `GET /orgs/{orgId}/actions/{number}` | Massnahme mit Ziel, Befunden und Verlauf |
 | `PATCH …/actions/{number}` | Zuweisen, Frist ändern |
 | `POST …/actions/{number}/status` | Status für alle Befunde der Massnahme setzen, mit Begründung |
+| `GET /orgs/{orgId}/findings?level=&project=` | Befunde, auch die der Stufe 1 für die Ansicht «Not relevant» |
 | `PATCH …/findings/{findingId}` | Status eines einzelnen Befunds; Vorschlag des Modells bestätigen oder verwerfen |
 | `GET …/actions/{number}/events` · `POST …/notes` | Verlauf, Notiz |
-| `GET /orgs/{orgId}/alerts/{number}` | Schwachstelle aus Sicht der Organisation: Einschätzung, Faktoren je Projekt, Quellen |
+| `GET /orgs/{orgId}/alerts/{number}` | Schwachstelle aus Sicht der Organisation: Einschätzung, Befunde mit Faktoren je Komponente, Quellen |
 | `POST …/alerts/{number}/assess` | Einschätzung durch das Modell anfordern, wo sie nicht von selbst lief |
 | `POST …/alerts/{number}/feedback` | Einschätzung korrigieren; löst eine Neubewertung aus |
 | `GET /orgs/{orgId}/warnings` | Warnungen ohne Schwachstellenkennung |
@@ -120,18 +121,18 @@ Gekürzt; die Felder entsprechen dem, was die Detailansicht zeigt.
     "actions": [
       { "text": "Upgrade to Puppet Enterprise 2025.12.1 and restart Puppet Server.", "source": 3 }
     ],
-    "unknowns": [ "Does the Puppet CA autosign requests?" ],
-    "factors": [
-      { "factor": "exploitation", "value": "active", "evidence": "CISA KEV since 2026-11-17", "points": 3 },
-      { "factor": "severity", "value": "critical", "evidence": "CVSS 4.0: 9.4", "points": 4 },
-      { "factor": "affectedness", "value": "in_range", "evidence": "2025.9.0 within 2025.0.0 to 2025.12.1", "points": 1 },
-      { "factor": "criticality", "value": "high", "points": 1 },
-      { "factor": "exposure", "value": "internal", "points": 0 }
-    ]
+    "unknowns": [ "Does the Puppet CA autosign requests?" ]
   },
   "findings": [
     { "id": "…", "project": { "id": "…", "name": "Platform Ops" }, "component": "Puppet Enterprise 2025.9.0",
-      "versionVerdict": "in_range", "verdict": "affected", "level": 5, "status": "open" }
+      "action": 143, "versionVerdict": "in_range", "verdict": "affected", "level": 5, "status": "open",
+      "factors": [
+        { "factor": "exploitation", "value": "active", "evidence": "CISA KEV since 2026-11-17", "points": 3 },
+        { "factor": "severity", "value": "critical", "evidence": "CVSS 4.0: 9.4", "points": 4 },
+        { "factor": "affectedness", "value": "in_range", "evidence": "2025.9.0 within 2025.0.0 to 2025.12.1", "points": 1 },
+        { "factor": "criticality", "value": "high", "points": 1 },
+        { "factor": "exposure", "value": "internal", "points": 0 }
+      ] }
   ],
   "sources": [
     { "n": 1, "source": "cve-program", "url": "https://www.cve.org/CVERecord?id=CVE-2026-115731" },

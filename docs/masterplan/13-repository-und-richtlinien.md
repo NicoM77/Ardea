@@ -101,13 +101,14 @@ Ausgeschlossen, weil kommerziell oder mit Auflagen für Betreiber (Stand 18.11.2
 | Architektur | Modulgrenzen und Abhängigkeitsrichtung | ArchUnitNET |
 | Vertrag | OpenAPI-Dokument stimmt mit dem Code überein; Fremdzugriffstest für jeden Mandanten-Endpunkt | eigener Test im Build |
 | Ende zu Ende | Kernabläufe im Browser, Desktop und Telefonbreite, mit automatischer Zugänglichkeitsprüfung | Playwright, axe |
+| Visuell | Seiten der Komponentenbibliothek mit allen Zuständen im Bildvergleich | Playwright |
 | Bewertung | Referenzsatz für Treffer und Stufe; Schwellen als Abnahmekriterium | eigener Lauf, bei Änderungen an Katalog, Regeln, Prompt |
 
 Fehler in der Verarbeitung werden mit dem auslösenden Rohdatensatz als Testfall festgehalten, bevor sie behoben werden.
 
 ## 13.7 Automatisierung
 
-Bei jedem Pull Request: bauen, formatieren, linten, alle Tests bis und mit Integration, Lizenzprüfung, OpenAPI-Abgleich, Image-Bau. Auf dem Hauptzweig zusätzlich Ende-zu-Ende-Tests und der Bewertungslauf. Bei einem Versions-Tag: Images für beide Architekturen, SBOM, Signatur, Release-Notizen.
+Bei jedem Pull Request: bauen, formatieren, linten, alle Tests bis und mit Integration, Lizenzprüfung, OpenAPI-Abgleich, Image-Bau. Auf dem Hauptzweig zusätzlich Ende-zu-Ende-Tests und der Bewertungslauf. Bei einem Versions-Tag: Images für beide Architekturen, SBOM, Release-Notizen. Vorabstände werden ab Phase 1 als `0.x` markiert, damit sich Updates üben lassen.
 
 ## 13.8 Fertig heisst
 

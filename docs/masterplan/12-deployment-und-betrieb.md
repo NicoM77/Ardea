@@ -17,7 +17,7 @@ services:
       POSTGRES_DB: csh
       POSTGRES_USER: csh_migrator
       POSTGRES_PASSWORD: ${CSH_DB_OWNER_PASSWORD:?set in .env}
-    volumes: ["db:/var/lib/postgresql"]        # ab PostgreSQL 18: neues Volume-Ziel
+    volumes: ["db:/var/lib/postgresql"]        # ab PostgreSQL 18: neues Volume-Ziel; darin auch backup/
     healthcheck: { test: ["CMD-SHELL", "pg_isready -U csh_migrator -d csh"], interval: 5s, retries: 20 }
     restart: unless-stopped
 
@@ -27,7 +27,6 @@ services:
     environment:
       CSH_DB_OWNER_PASSWORD: ${CSH_DB_OWNER_PASSWORD}
       CSH_DB_APP_PASSWORD: ${CSH_DB_APP_PASSWORD:?set in .env}
-    volumes: ["backup:/backup"]                # Sicherung vor einer Migration
     depends_on: { db: { condition: service_healthy } }
     restart: "no"
 
@@ -49,15 +48,16 @@ services:
     depends_on: { migrate: { condition: service_completed_successfully } }
     healthcheck: { test: ["CMD", "/app/csh", "healthcheck", "worker"], interval: 30s, retries: 5 }
     read_only: true
-    tmpfs: ["/tmp"]                            # Entpacken von Archiven, begrenzt
+    tmpfs: ["/tmp"]
+    volumes: ["scratch:/scratch"]              # Gesamtarchiv der CVEs beim Erststart
     restart: unless-stopped
 
-volumes: { db: {}, backup: {} }
+volumes: { db: {}, scratch: {} }
 ```
 
 - Die API liefert auch die Web-App aus. Ein eigener Webserver-Container entfällt, ebenso CORS.
 - Der Port ist in der Vorgabe nur lokal gebunden. Die Anwendung verlangt HTTPS: Ihr Sitzungs-Cookie wird nur über eine sichere Verbindung gesetzt. TLS und öffentliche Erreichbarkeit übernimmt ein vorgeschalteter Proxy oder Tunnel. Der Schnellstart liefert deshalb eine zweite Compose-Datei mit Caddy mit; Beispiele für Traefik und Cloudflare Tunnel liegen daneben.
-- `migrate` legt beim ersten Lauf die Anwendungsrolle `csh_app` mit eigenem Passwort an, wendet Migrationen an und spielt Stammdaten ein. Steht eine Migration an, schreibt es vorher einen Dump in das Volume `backup` und behält die letzten drei. API und Worker starten erst danach; sie verlangen mindestens ihren Schemastand und vertragen einen neueren, verträglich erweiterten.
+- `migrate` legt beim ersten Lauf die Anwendungsrolle `csh_app` mit eigenem Passwort an, wendet Migrationen an und spielt Stammdaten ein. Steht eine Migration an, entsteht vorher ein Dump im Datenvolume neben dem Datenverzeichnis (`backup/`); die letzten drei bleiben. Er schützt vor einer missglückten Migration, nicht vor dem Verlust des Volumes; dafür ist die Sicherung aus 12.5 da. Das Anwendungsimage enthält kein `pg_dump`. `migrate` lässt den Dump deshalb vom Datenbankserver schreiben (`COPY … TO PROGRAM` mit dem `pg_dump` des Datenbank-Images), was mit der mitgelieferten Datenbank und ihrer Eigentümerrolle möglich ist. Bei einer fremden Datenbank entfällt dieser Schritt mit einem deutlichen Hinweis; die Sicherung liegt dann beim Betreiber. Der Weg wird im Versuch 0.7 geprüft. API und Worker starten erst danach; sie verlangen mindestens ihren Schemastand und vertragen einen neueren, verträglich erweiterten.
 
 ## 12.3 Das Image
 
@@ -66,9 +66,9 @@ volumes: { db: {}, backup: {} }
 | Bau | Mehrstufiges Dockerfile: Node baut die Angular-App, das .NET-SDK veröffentlicht, das Ergebnis liegt auf `mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra`. |
 | Laufzeit | Keine Shell, kein Paketmanager, nicht privilegierter Benutzer, Port 8080; Zeitzonendaten und ICU laut Beschreibung des Images enthalten, in Phase 0 geprüft. |
 | Architekturen | `linux/amd64` und `linux/arm64`. |
-| Einstieg | Ein Programm `csh` mit Befehlen: `api`, `worker`, `migrate`, `healthcheck`, `doctor`, dazu Wartungsbefehle (12.8). |
+| Einstieg | Ein Programm `csh` mit den Rollen `api`, `worker` und `migrate`, den Hilfsbefehlen `healthcheck`, `init-env` und `doctor`, dazu Wartungsbefehle (12.8). |
 | Tags | `1.4.2`, `1.4`, `1`, `latest`. Die Compose-Vorgabe nutzt die Hauptversion. |
-| Nachweis | SBOM und Signatur je Release. |
+| Nachweis | SBOM je Release. Signierte Images sind eine Ausbaustufe. |
 
 Health Checks rufen das Programm selbst auf, weil das Image weder `curl` noch eine Shell enthält. Für die API prüft `healthcheck` den Endpunkt `/health/ready`, für den Worker einen Herzschlag in der Datenbank, der nicht älter als zwei Minuten sein darf.
 
@@ -92,12 +92,14 @@ Umgebungsvariablen mit Präfix `CSH_`; verschachtelte Werte mit doppeltem Unters
 
 Die Pflichtwerte erzeugt ein Befehl: `docker run --rm ghcr.io/OWNER/csh-alert:1 init-env`. Er schreibt `.env` für Datenbank und Migration und `.env.app` für API und Worker. Was im Betrieb änderbar sein soll (SMTP, KI-Anbieter, Quellen, Grenzen), lässt sich auch in der Oberfläche setzen; eine gesetzte Umgebungsvariable hat Vorrang und sperrt das Feld mit einem Hinweis.
 
+**Ohne SMTP** bleibt die Instanz benutzbar: Eine Einladung zeigt der einladenden Person den Link zum Weitergeben, E-Mail-Adressen gelten ohne Bestätigung, und ein vergessenes Passwort setzt der Betreiber mit `csh admin reset-password` zurück. Der Kanal E-Mail ist abgeschaltet; die Oberfläche sagt das an jeder Stelle, die ihn braucht.
+
 ## 12.5 Daten, Sicherung, Wiederherstellung
 
 - Alle dauerhaften Daten liegen in PostgreSQL. API und Worker sind zustandslos.
-- Sicherung: `docker compose exec -T db pg_dump -U csh_migrator -Fc csh > csh.dump`. Ein optionales Compose-Profil `backup` erledigt das zeitgesteuert in ein Verzeichnis des Hosts.
+- Sicherung: `docker compose exec -T db pg_dump -U csh_migrator -Fc csh > csh.dump`. Für die zeitgesteuerte Sicherung genügt ein Cron-Eintrag des Hosts mit diesem Befehl; ein eigenes Compose-Profil dafür ist eine Ausbaustufe.
 - Der Hauptschlüssel gehört getrennt gesichert. Ohne ihn sind die gespeicherten Geheimnisse einer Sicherung nicht lesbar; alles andere schon.
-- Wiederherstellung: Dump einspielen, `migrate` ausführen, starten. Der Ablauf ist dokumentiert und Teil der Release-Tests.
+- Wiederherstellung: API und Worker stoppen, eine leere Datenbank anlegen, mit `csh migrate --roles-only` die Anwendungsrolle anlegen, den Dump mit `pg_restore` einspielen, `migrate` ausführen, starten. Die Reihenfolge zählt: Der Dump enthält Rechte für `csh_app`, die Rolle muss also vorher bestehen. Der Ablauf ist dokumentiert und Teil der Release-Tests.
 
 ## 12.6 Updates
 
@@ -108,7 +110,7 @@ docker compose pull && docker compose up -d
 - Semantische Versionierung. Patch- und Minor-Versionen sind für unbeaufsichtigte Updates geeignet, etwa per Cron.
 - Migrationen laufen automatisch, vorwärtsgerichtet und in zwei Schritten verträglich (Kapitel 4.11).
 - Eine neue Hauptversion kommt nie über das Tag `1`. Wer sie will, ändert das Tag und liest die Hinweise.
-- Rückwärts wird nicht migriert. Der Weg zurück ist der Dump, den `migrate` vor jeder Migration schreibt, zusammen mit dem vorherigen Image. Das ist auch die Absicherung für unbeaufsichtigte Updates.
+- Rückwärts wird nicht migriert. Der Weg zurück ist der Dump, der vor jeder Migration entsteht, zusammen mit dem vorherigen Image. Das ist auch die Absicherung für unbeaufsichtigte Updates.
 - Die Instanz fragt nirgends nach neuen Versionen. Die installierte Version steht in der Administration.
 
 ## 12.7 Beobachtbarkeit
@@ -120,7 +122,7 @@ docker compose pull && docker compose up -d
 | Traces | aus | ein Trace von der Quelle bis zur Zustellung per OTLP |
 | Betrachter | keiner | Compose-Profil `observability` mit dem eigenständigen Aspire-Dashboard |
 
-Das System warnt selbst, wenn es nicht mehr zuverlässig arbeitet: Eine Quelle, die länger als sechs Stunden nicht abgerufen werden konnte, ein stehender Worker oder dauerhaft fehlschlagende Zustellungen erzeugen eine Meldung an den Instanz-Administrator und einen Hinweis im Bulletin («Stand von 02:10, Quelle nicht erreichbar»).
+Das System warnt selbst, wenn es nicht mehr zuverlässig arbeitet: Eine Quelle, die länger als sechs Stunden nicht abgerufen werden konnte, ein stehender Worker oder dauerhaft fehlschlagende Zustellungen erzeugen eine Benachrichtigung an den Instanz-Administrator und einen Hinweis im Bulletin («Stand von 02:10, Quelle nicht erreichbar»).
 
 ## 12.8 Wartungsbefehle
 
@@ -138,8 +140,8 @@ Das System warnt selbst, wenn es nicht mehr zuverlässig arbeitet: Eine Quelle, 
 
 | Einsatz | Empfehlung |
 |---|---|
-| Kleine Instanz, bis etwa 20 Organisationen, ohne lokale KI | 2 vCPU, 2 GB RAM, 10 GB Speicher (Schätzung; in Phase 6 gemessen) |
-| Mit lokalem Sprachmodell | zusätzlich ein Modell-Server mit 8 bis 16 GB Speicher für ein Modell der 8- bis 12-Milliarden-Klasse; getrennt betrieben, per URL angebunden |
+| Kleine Instanz, bis etwa 20 Organisationen, ohne lokale KI | 2 vCPU, 4 GB RAM, 20 GB Speicher; das ist auch die Referenzmaschine der Abnahmekriterien (Schätzung; in Phase 6 gemessen) |
+| Mit lokalem Sprachmodell | zusätzlich ein Modell-Server mit 8 bis 16 GB Arbeitsspeicher (Modell von grob 6 bis 10 GB plus Kontext) für ein Modell der 8- bis 12-Milliarden-Klasse; getrennt betrieben, per URL angebunden |
 | Gesamter CVE-Bestand | zusätzlich rund 10 GB Speicher |
 
 Das Sprachmodell gehört nicht ins Compose der Anwendung. Wer eines lokal betreiben will, startet den Modell-Server daneben; ein Beispiel liegt bei.

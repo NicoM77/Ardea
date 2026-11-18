@@ -35,8 +35,9 @@ The product does not forward more security news. It compares every vulnerability
 - Sources at the start: the Swiss National Cyber Security Centre (NCSC) and the CVE Program. The architecture targets 30 to 50 sources.
 - An alert is the pairing of one consolidated vulnerability with one organization. It carries a priority, an assessment with reasoning and stated uncertainty, the affected projects, recommended actions, the underlying sources, and a change history.
 - Priority levels: Critical, High, Medium, Low, Not relevant.
-- Working states of an alert: Open, In review, Remediated, Risk accepted, Not affected.
-- People are notified by email, web push, in-app notifications, and webhooks, according to rules each organization defines. A known vulnerability re-alerts only when its risk or the required action changes materially.
+- An action bundles every open finding of one component in one project, for example "update PostgreSQL in project C". It is the unit people work on and are notified about; one action can cover many alerts.
+- Working states, set on an action and its findings: Open, In review, Remediated, Risk accepted, Not affected.
+- People are notified by email, web push, in-app notifications, and webhooks, according to rules each organization defines. An action re-alerts only when its risk or the required step changes materially.
 
 ## Capabilities and Constraints
 

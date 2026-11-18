@@ -2,7 +2,7 @@
 
 ## 1.1 Zweck
 
-CSH Alert (Arbeitstitel) ist ein selbst gehostetes Open-Source-Frühwarnsystem für Sicherheitslücken. Es sammelt Meldungen aus vertrauenswürdigen Quellen, führt Berichte über dieselbe Schwachstelle zu einem Eintrag zusammen und bewertet pro Organisation und Projekt, ob die eingesetzte Technologie betroffen ist.
+CSH Alert (Arbeitstitel) ist ein selbst gehostetes Open-Source-Frühwarnsystem für Sicherheitslücken. Es sammelt Hinweise aus vertrauenswürdigen Quellen, führt Berichte über dieselbe Schwachstelle zu einem Eintrag zusammen und bewertet pro Organisation und Projekt, ob die eingesetzte Technologie betroffen ist.
 
 Der Massstab für jede Entscheidung in diesem Plan: Ein Benutzer beantwortet innerhalb von fünf Sekunden drei Fragen. Was ist passiert? Sind wir betroffen? Was ist zu tun?
 
@@ -33,14 +33,14 @@ Architektur:
 8. **Herkunft geht nie verloren.** Jede Angabe im konsolidierten Eintrag lässt sich auf Quelle und Abrufzeitpunkt zurückführen; der Eintrag ist aus den Rohdaten neu berechenbar.
 9. **Jeder Verarbeitungsschritt ist wiederholbar.** Jobs sind idempotent; ein Absturz oder doppelter Lauf erzeugt weder Lücken noch doppelte Meldungen.
 10. **Mandantentrennung ist Grundzustand,** kein Feature. Daten einer Organisation sind ohne ausdrücklichen Kontext nicht erreichbar.
-11. **Wenig bewegliche Teile.** Eine Datenbank, ein Image, drei Container. Jede zusätzliche Komponente muss ihren Betrieb rechtfertigen.
+11. **Wenig bewegliche Teile.** Eine Datenbank und ein Image; im Betrieb laufen Datenbank, API und Worker, davor ein TLS-Proxy. Jede zusätzliche Komponente muss ihren Betrieb rechtfertigen.
 
 ## 1.4 Was das System nicht ist
 
-- Kein Schwachstellen-Scanner: Es prüft keine Systeme, sondern gleicht Meldungen mit einem deklarierten Profil ab.
-- Kein SIEM, SOAR oder Ticketsystem: Es erzeugt Meldungen und führt deren Status; Abarbeitung in Fremdsystemen läuft über Webhooks.
+- Kein Schwachstellen-Scanner: Es prüft keine Systeme, sondern gleicht Einträge mit einem deklarierten Profil ab.
+- Kein SIEM, SOAR oder Ticketsystem: Es erzeugt Massnahmen und führt deren Status; Abarbeitung in Fremdsystemen läuft über Webhooks.
 - Keine Threat-Intelligence-Plattform: keine Indikatoren, kein STIX/TAXII im MVP.
-- Kein gehosteter Dienst: Ein SaaS-Angebot, Lizenzmodell und kommerzielle Stufen sind offen und nicht Teil dieses Plans.
+- Kein gehosteter Dienst: Ein SaaS-Angebot, Lizenzmodell und kommerzielle Angebote sind offen und nicht Teil dieses Plans.
 
 ## 1.5 MVP-Abgrenzung
 
@@ -48,9 +48,9 @@ Das MVP beweist den Kern von der Quelle bis zur Benachrichtigung mit vier Quelle
 
 | Bereich | MVP (Version 1.0) | Ausbaustufe 1 | Später |
 |---|---|---|---|
-| Quellen | CVE Program inkl. eingebetteter CISA-Daten (SSVC, KEV), NCSC.ch, dazu CISA KEV und FIRST EPSS als Anreicherung | 8–12 weitere: GitHub Advisories/OSV, NVD, CERT-Bund, CISA-Advisories, MSRC, Red Hat, Ubuntu, Debian, Kubernetes | Ausbau auf 30–50, generischer CSAF-Adapter für Herstellerfeeds |
+| Quellen | CVE Program inkl. eingebetteter CISA-Daten (SSVC, KEV), NCSC.ch, dazu CISA KEV und FIRST EPSS als Anreicherung | die erste Welle mit elf Quellen (Kapitel 5.6): OSV, GitHub Advisories, NVD, CISA-Advisories, CERT-Bund, Microsoft, Red Hat, Ubuntu, Debian, Kubernetes, CERT-FR | Ausbau auf 30–50, generischer CSAF-Adapter für Herstellerfeeds |
 | Profil | Projekte mit Komponenten aus einem kuratierten Katalog, freie Einträge, Version, Erreichbarkeit, Kritikalität; geführter Setup-Wizard | SBOM-Import (CycloneDX, SPDX), Lockfile-Import | Erkennung aus Repositories, Agent für installierte Pakete |
-| Abgleich | Vendor/Produkt mit Aliassen, CPE, Versionsbereiche; Zustände «Version unbekannt» und «aus Distribution»; verwandte Produkte und Plattform-Treffer als schwach | Paketkoordinaten über OSV und GitHub Advisories; Daten der Distributionen | Lernende Alias-Vorschläge |
+| Abgleich | Vendor/Produkt mit Aliassen, CPE, Paketangaben, soweit die CVE-Records sie tragen, Versionsbereiche; Zustände «Version unbekannt» und «aus Distribution»; verwandte Produkte und Plattform-Treffer als schwach | Paketdaten aus OSV und GitHub Advisories; Daten der Distributionen | Lernende Alias-Vorschläge |
 | Bewertung | Regelwerk für Stufe 1–5 mit nachvollziehbaren Faktoren, darunter Schutzmassnahmen; Antworten aus Vorlagen ohne KI; KI-Einschätzung optional und ab einer Schwelle; Korrektur durch Benutzer mit Neubewertung | Korrekturen fliessen als Kontext in spätere Einschätzungen ein; Produkte aus Freitext durch ein Modell; Gewichte je Organisation | Mehrere Modelle im Vergleich |
 | Massnahmen und Meldungen | Bulletin, Liste der Massnahmen, Detail der Schwachstelle; Status je Befund und je Massnahme; Zuweisung; Frist sichtbar; Notizen; Verlauf | Sammelaktionen, Export, Eskalation bei Fristablauf | Berichte für Kunden und Management |
 | Benachrichtigung | In-App, E-Mail (SMTP), Web Push, generischer Webhook; Regeln nach Stufe und Projekt; Sammelnachrichten nach Zeitplan; je Massnahme, erneut nur bei wesentlicher Änderung | Eskalation in Schritten, Teams- und Slack-Vorlagen, Ruhezeiten | Native Push über Relay, ntfy |
@@ -66,11 +66,11 @@ Bewusst nicht im MVP, obwohl in den Anforderungen genannt: die native Mobile-App
 |---|---|
 | Erststart | Auf einem Host mit Docker führt `docker compose up -d` mit der mitgelieferten Beispielkonfiguration (einschliesslich TLS-Proxy) in unter 3 Minuten nach dem Laden der Images zu einer anmeldebereiten Instanz. Die ersten Einträge erscheinen in unter 10 Minuten. |
 | Aktualität | Ein neuer oder geänderter CVE-Record ist spätestens 90 Minuten nach Veröffentlichung im System, bei stündlicher Abfrage. |
-| Vollständigkeit | Nach einem Ausfall von bis zu 30 Tagen holt das System ohne Handarbeit lückenlos auf, gemessen am Änderungsprotokoll der Quelle. |
+| Vollständigkeit | Nach einem Ausfall holt das System ohne Handarbeit lückenlos auf: bis 30 Tage über das Änderungsprotokoll der Quelle, darüber über ihr Gesamtarchiv. Geprüft mit einem simulierten Ausfall von 48 Stunden und einem eigenen Test für den Weg über das Archiv. |
 | Deduplizierung | Dieselbe CVE-ID aus mehreren Quellen ergibt genau einen Eintrag mit allen Quellen im Nachweis. |
 | Treffergüte | Am Referenzsatz aus Kapitel 7.9: kein übersehenes Paar unter den exakten Produkt- und Versionstreffern, höchstens 2 % übersehene insgesamt, höchstens 20 % unbegründete ab Stufe 3. |
 | Alarmdisziplin | Ein dreifach verarbeitetes Ereignis erzeugt pro Empfänger und Kanal eine Zustellung; eine unveränderte Massnahme löst keine zweite aus. |
-| Bedienung | Mit den Beispieldaten der Mockups sind bei 390 × 844 Punkten nach dem Öffnen einer Meldung Stufe, Betroffenheit und erste Massnahme ohne Scrollen sichtbar. Für Texte gilt eine Längenvorgabe, die das auch im Betrieb sichert. |
+| Bedienung | Mit den Beispieldaten der Mockups sind bei 390 × 844 Punkten nach dem Öffnen einer Massnahme Stufe, Betroffenheit und erster Schritt ohne Scrollen sichtbar. Für Texte gelten Längenvorgaben, die das auch im Betrieb sichern (Kapitel 7.5). |
 | Zugänglichkeit | WCAG 2.2 AA: automatisierte Prüfung ohne Befund, manuelle Tastatur- und Screenreader-Prüfung der Kernabläufe bestanden. |
 | Ohne KI | Alle Kriterien ausser der KI-Einschätzung sind ohne konfigurierten KI-Anbieter erfüllt. |
 

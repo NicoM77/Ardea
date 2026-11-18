@@ -3,7 +3,7 @@
 WEGWERF-PROTOTYP (Planungsphase) - kein Produktivcode.
 
 Frage: Was wird aus den strukturierten Kandidaten des Trichters, wenn man das
-Regelwerk aus Kapitel 7.5 des Masterplans anwendet? Wie viele Meldungen je
+Regelwerk aus Kapitel 7.6 des Masterplans anwendet? Wie viele Befunde je
 Stufe entstehen, wie viele davon betreffen neu publizierte Schwachstellen, und
 auf wie viele Massnahmen (Projekt x Technologie) verteilen sie sich?
 
@@ -18,7 +18,7 @@ import sys
 sys.dont_write_bytecode = True
 import funnel  # noqa: E402  (liegt im selben Ordner)
 
-# Regelwerk Version 1, ganzzahlige Punkte (Masterplan Kapitel 7.5)
+# Regelwerk Version 1, ganzzahlige Punkte (Masterplan Kapitel 7.6)
 def severity_points(score):
     if score == 0:
         return 2  # unbewertet

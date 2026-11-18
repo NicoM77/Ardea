@@ -2,17 +2,17 @@
 
 Stand 18. November 2026 · Planungsphase · **zur Prüfung und Freigabe durch den Eigentümer**
 
-Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit Quellen, ein Daten-Spike mit echten CVE-Daten, die UI-Mockups samt Designsystem und der Bericht einer unabhängigen Durchsicht. Die Umsetzung beginnt erst nach ausdrücklicher Freigabe.
+Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit Quellen, ein Daten-Spike mit echten CVE-Daten, die UI-Mockups samt Designsystem und der Bericht der ersten von zwei unabhängigen Durchsichten. Die Umsetzung beginnt erst nach ausdrücklicher Freigabe.
 
 ## Das Wichtigste auf einer Seite
 
-**Was gebaut wird.** Ein selbst gehostetes Open-Source-Frühwarnsystem. Es sammelt Sicherheitsmeldungen, führt sie je Schwachstelle zu einem Eintrag zusammen und sagt jeder Organisation, welche davon ihre Projekte betreffen, wie dringend das ist und was zu tun ist.
+**Was gebaut wird.** Ein selbst gehostetes Open-Source-Frühwarnsystem. Es sammelt Sicherheitshinweise aus Quellen, führt sie je Schwachstelle zu einem Eintrag zusammen und sagt jeder Organisation, welche davon ihre Projekte betreffen, wie dringend das ist und was zu tun ist.
 
 **Wie es das tut.** Als Trichter aus deterministischen Schritten auf strukturierten Daten. Von 6 432 Einträgen einer Woche bleiben für eine Organisation mit drei Projekten 173 Kandidaten. Daraus werden je nach Versionen und Erreichbarkeit zwischen 6 und 170 Befunde ab Stufe 3, verteilt auf 8 Massnahmen. Gearbeitet und benachrichtigt wird deshalb je Massnahme («PostgreSQL in Projekt C aktualisieren»), nicht je CVE. Ein Sprachmodell erklärt und schätzt ein, wo die Regeln «unbekannt» sagen; es vergibt keine Stufe und kann keine Meldung verschwinden lassen. Ohne es bleibt das System vollständig nutzbar.
 
 **Was die Planung an Neuem ergeben hat.**
 
-1. Die Menge ist gross: im Mittel 590 neue CVEs pro Tag, Spitzen über 2 000, dazu 2 800 Änderungen pro Tag. Mehr als die Hälfte der Kandidaten einer Woche sind Änderungen an älteren Records.
+1. Die Menge ist gross: im Mittel 590 neue CVEs pro Tag, Spitzen über 2 000, dazu rund 2 800 Änderungen pro Tag. Mehr als die Hälfte der Kandidaten einer Woche sind Änderungen an älteren Records.
 2. Stichwortsuche ist unbrauchbar. Bei «PHP» waren 295 von 297 Treffern falsch. Abgeglichen wird nur über Vendor, Produkt, CPE und Paket.
 3. Ein Vorfilter allein genügt nicht. Erst die Bündelung je Massnahme macht aus hundert Befunden einer Woche eine Handvoll Aufgaben.
 4. WordPress-Plugins machten 7,4 % aller CVEs der Woche aus, der Core keinen einzigen. Profile brauchen Komponenten unterhalb der Plattform; der SBOM-Import ist die wichtigste Ausbaustufe.
@@ -35,9 +35,9 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | Oberfläche | Angular 22 mit eigener Komponentenbibliothek; Richtung «Gefahrenbulletin»: Stufe als Ziffer und Wort, die drei Antworten zuerst |
 | Betrieb | `docker compose up -d`, automatische Migrationen mit Sicherung davor, Updates per `pull` und `up` |
 
-**Umfang.** Sieben Phasen bis Version 1.0, geschätzt 27 bis 36 Wochen für eine erfahrene Person mit KI-Unterstützung. Nach Phase 3 liegt ein nutzbares System ohne KI und ohne Benachrichtigung vor.
+**Umfang.** Sieben Phasen bis Version 1.0, geschätzt 28 bis 37 Wochen für eine erfahrene Person mit KI-Unterstützung. Nach Phase 3 liegt ein nutzbares System ohne KI und ohne Benachrichtigung vor.
 
-**Was dieser Stand nicht leistet.** Die Mockups zeigen die Liste noch je Schwachstelle statt je Massnahme. Die Gewichte des Regelwerks sind ungeeicht, bis der Referenzsatz steht. Die überarbeitete Fassung des Plans wurde nicht erneut unabhängig gegengelesen.
+**Was dieser Stand nicht leistet.** Die Mockups zeigen die Liste noch je Schwachstelle statt je Massnahme. Die Gewichte des Regelwerks sind ungeeicht, bis der Referenzsatz steht. Der Plan wurde zweimal unabhängig gegengelesen. Die Korrekturen aus der zweiten Durchsicht sind eingearbeitet, aber nicht ein drittes Mal geprüft (Kapitel 15.4).
 
 ## Kapitel
 
@@ -67,7 +67,7 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | Warnung | Warning | Eintrag ohne Schwachstellenkennung, etwa eine Phishing-Warnung |
 | Beobachtung | | Normalisierte Aussagen einer Quelle zu einem Rohdatensatz |
 | Komponente | Component | Eingesetzte Technologie in einem Projekt |
-| Befund | Finding | Betroffenheit einer Komponente durch einen Eintrag, mit Stufe und Status |
+| Befund | Finding | Betroffenheit einer Komponente durch einen Eintrag, mit Stufe und Status. Befunde der Stufe 1 gehören zu keiner Massnahme. |
 | Massnahme | Action | Alle offenen Befunde einer Komponente in einem Projekt; Einheit für Arbeit und Benachrichtigung |
 | Meldung | Alert | Eine Schwachstelle aus Sicht einer Organisation, mit Einschätzung und Quellen |
 | Stufe | Level | Priorität 1 bis 5 eines Befunds, einer Massnahme oder Meldung. Das Wort wird im Plan nur dafür verwendet. |
@@ -98,6 +98,6 @@ Die Freigabe umfasst drei Dinge:
 ## Woher die Zahlen stammen
 
 - Mengen und Anteile zu CVEs: Auswertung der Daten des CVE Program vom 19.10. bis 18.11.2026 mit den Skripten in `prototypes/relevance-funnel/`. Die Befundzahlen sind Bandbreiten unter einheitlichen Annahmen, keine Prognose.
-- Versionen, Lizenzen und Pflegestände: Recherche am 18.11.2026 (`docs/research/`). Was nicht bestätigt werden konnte, steht in Kapitel 2.8; Bedingungen der meisten Quellen sind ungeprüft (Kapitel 5.6).
+- Versionen, Lizenzen und Pflegestände: Recherche am 18.11.2026 (`docs/research/`). Was nicht bestätigt werden konnte, steht in Kapitel 2.8; Bedingungen rund der Hälfte der späteren Quellen sind ungeprüft (Kapitel 5.6).
 - Aufwände, Token-Mengen und Speicherbedarf: Schätzungen, als solche gekennzeichnet.
 - Beispieldaten der Mockups: echte CVE-Records; Organisation, Personen, Projekte, installierte Versionen und die Zähler im Bulletin sind erfunden.

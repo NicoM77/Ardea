@@ -18,7 +18,7 @@ Versionen und Lizenzen sind am 18.11.2026 gegen Primärquellen geprüft. Die vol
 | HTTP nach aussen | `HttpClientFactory` mit Microsoft.Extensions.Http.Resilience und `System.Threading.RateLimiting` | 11.0.0 | Wiederholung, Zeitlimit, Ratenbegrenzung je Quelle ohne Eigenbau. |
 | Telemetrie | OpenTelemetry .NET, JSON-Logs der Plattform | 1.21.0 | Alle drei Signale stabil; Serilog ist dafür nicht mehr nötig. |
 | Frontend | Angular 22, eigenständige Komponenten, Signale, zonenlos | 22.2 | Einziger aktiv gepflegter Hauptzweig, LTS bis Juni 2028 (2.4). |
-| Komponenten | eigene Bibliothek auf Angular CDK und Angular Aria, TanStack Table für die Meldungsliste | 22.3 / 9.3 | Das Design ist eigenständig; kopflose Bausteine liefern Tastatur, Rollen und Fokus (2.4). |
+| Komponenten | eigene Bibliothek auf Angular CDK und Angular Aria, TanStack Table für die Liste der Massnahmen | 22.3 / 9.3 | Das Design ist eigenständig; kopflose Bausteine liefern Tastatur, Rollen und Fokus (2.4). |
 | Styling | CSS Custom Properties, komponentenweise Stylesheets | | Kleines, geschlossenes System; kein Tailwind nötig. |
 | API-Client | orval, aus dem OpenAPI-Dokument erzeugt | 8.48 | Sehr aktiv gepflegt, erzeugt `httpResource` für Lesen und `HttpClient` für Schreiben; OpenAPI Generator ist die Alternative. |
 | Übersetzung | Transloco, zur Laufzeit umschaltbar | 8.4 | Ein Image und später eine App für alle Sprachen. |
@@ -62,7 +62,9 @@ Anbieter hinter derselben Schnittstelle, alle geprüft:
 | Anthropic | Anthropic 13.10.0 (offizielles SDK) | Apache-2.0 | `AsIChatClient()`, native strukturierte Ausgabe. |
 | Google Gemini | Google.GenAI 2.2.0 (offizielles SDK) | Apache-2.0 | `AsIChatClient()`. |
 
-Für den lokalen Betrieb kommen nach heutigem Stand Modelle der 8- bis 12-Milliarden-Klasse in Frage, etwa `qwen3.5:9b`, `granite4.1:8b` oder `gemma4:12b`, bei grob 6 bis 10 GB Speicher (Schätzung, nicht gemessen). Kleinere Modelle liefern gültiges JSON, aber schwache Extraktion. Einen unabhängigen Vergleich für Sicherheitstexte gibt es nicht; die Wahl muss am Referenzsatz aus Kapitel 7.9 gemessen werden. Modelle mit Denkmodus brauchen diesen abgeschaltet, sonst landet die Antwort im falschen Kanal.
+Im MVP werden drei davon angeboten: der OpenAI-kompatible Endpunkt, Ollama und Anthropic. Azure OpenAI und Gemini folgen ohne Änderung an den Modulen (Entscheidung E6).
+
+Für den lokalen Betrieb kommen nach heutigem Stand Modelle der 8- bis 12-Milliarden-Klasse in Frage, etwa `qwen3.5:9b`, `granite4.1:8b` oder `gemma4:12b`, bei grob 6 bis 10 GB für das Modell selbst, also 8 bis 16 GB Arbeitsspeicher auf dem Modell-Server (Schätzung, nicht gemessen). Kleinere Modelle liefern gültiges JSON, aber schwache Extraktion. Einen unabhängigen Vergleich für Sicherheitstexte gibt es nicht; die Wahl muss am Referenzsatz aus Kapitel 7.9 gemessen werden. Modelle mit Denkmodus brauchen diesen abgeschaltet, sonst landet die Antwort im falschen Kanal.
 
 Schema-Erzwingung garantiert die Form, nicht den Inhalt. Die Prüfung der Verweise und die Untergrenzen des Regelwerks bleiben in jedem Fall bestehen.
 

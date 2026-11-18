@@ -1,6 +1,6 @@
 # 5 · Quellen und Synchronisation
 
-Die Endpunkte in diesem Kapitel wurden am 18.11.2026 abgerufen, soweit nichts anderes vermerkt ist. Die Tabellen mit Adressen, Antwortcodes und Hinweisen zu den Bedingungen stehen in [`docs/research/2026-11-18-source-catalogue.md`](../research/2026-11-18-source-catalogue.md). Drei Einschränkungen gelten für das ganze Kapitel: Die Recherche wurde vor ihrer Zusammenfassung beendet, die Einordnung in Familien und Wellen stammt deshalb aus diesem Plan. Lizenz- und Nutzungsbedingungen sind bei den meisten Quellen nicht geprüft (5.6). Und dokumentierte Limits wie die der NVD sind übernommen, nicht nachgemessen.
+Die Endpunkte in diesem Kapitel wurden am 18.11.2026 abgerufen, soweit nichts anderes vermerkt ist. Die Tabellen mit Adressen, Antwortcodes und Hinweisen zu den Bedingungen stehen in [`docs/research/2026-11-18-source-catalogue.md`](../research/2026-11-18-source-catalogue.md). Drei Einschränkungen gelten für das ganze Kapitel: Die Recherche wurde vor ihrer Zusammenfassung beendet, die Einordnung in Familien und Wellen stammt deshalb aus diesem Plan. Lizenz- und Nutzungsbedingungen sind bei rund der Hälfte der späteren Quellen nicht geprüft (5.6). Und dokumentierte Limits wie die der NVD sind übernommen, nicht nachgemessen.
 
 ## 5.1 Zielbild
 
@@ -40,6 +40,8 @@ public interface ISourceProvider
 | `FetchItem` | entweder ein Rohdatensatz (externe ID, Adresse, Rohinhalt, Zeitstempel der Quelle) oder ein Haltepunkt mit Cursor |
 | `NormalizationResult` | eine Beobachtung mit einem Aussagenblock je Kennung, oder der Grund für die Quarantäne |
 
+Signalquellen (KEV, EPSS) implementieren stattdessen `ISignalProvider` mit einer einzigen Methode: `FetchSignalsAsync` liefert je Kennung einen Wert (Aufnahme in KEV mit Datum und Verweis, EPSS-Wert mit Perzentil). Der Kern schreibt sie in `entry_signal` fort und reiht nur für Kennungen mit Klassenwechsel eine Neuberechnung des Eintrags ein. Beide Schnittstellen teilen `SourceDescriptor`, `SyncContext` und den HTTP-Client. Die Schnittstellen werden mit Phase 1 festgelegt und danach nur ergänzt.
+
 Regeln für Adapter:
 
 - Kein Zugriff auf Datenbank, andere Adapter oder Mandantendaten. Alles Nötige kommt über den Kontext.
@@ -65,7 +67,7 @@ Ein CSAF-Leser allein erschliesst dreizehn geprüfte Anbieter; die Liste vertrau
 
 ## 5.4 Abrufstrategie
 
-**Fälligkeit ist Zustand der Quelle.** Jede Quelle trägt `next_sync_at`. Der Worker nimmt fällige Quellen mit einer Lease, höchstens ein Lauf je Quelle. Nach einem Lauf wird die nächste Fälligkeit berechnet aus Vorgabeintervall, `Cache-Control` und `Retry-After` der Quelle sowie einem zufälligen Versatz je Instanz. Der Versatz ist wichtig: Tausend Installationen sollen nicht zur vollen Stunde gleichzeitig dieselbe Adresse treffen.
+**Fälligkeit ist Zustand der Quelle.** Jede Quelle trägt `next_sync_at`. Ein wiederkehrender Job der Instanz reiht für fällige Quellen `SyncSource` ein und schiebt dabei `next_sync_at` um das Zeitlimit des Laufs vor; so entsteht kein zweiter Lauf, solange der erste arbeitet. Die Lease des laufenden Abrufs gehört dem Job. Nach einem Lauf wird die nächste Fälligkeit berechnet aus Vorgabeintervall, `Cache-Control` und `Retry-After` der Quelle sowie einem zufälligen Versatz je Instanz. Der Versatz ist wichtig: Tausend Installationen sollen nicht zur vollen Stunde gleichzeitig dieselbe Adresse treffen.
 
 **Nur holen, was sich geändert hat.** Welches Verfahren trägt, wurde je Quelle gemessen, nicht angenommen:
 
@@ -81,7 +83,7 @@ Unabhängig vom Verfahren wird jeder Rohdatensatz gehasht. Ein unveränderter Da
 
 **Aufholen.** Der Cursor merkt sich, bis wohin sicher verarbeitet ist. Nach einem Ausfall setzt der nächste Lauf dort an. Für das CVE Program reicht das Änderungsprotokoll 30 Tage zurück; bei längerer Pause fällt der Adapter auf das tägliche Gesamtarchiv zurück.
 
-**Fehler.** Vorübergehende Fehler einer einzelnen Anfrage wiederholt der HTTP-Client wenige Male. Schlägt der Lauf fehl, verlängert sich das Intervall der Quelle exponentiell bis höchstens sechs Stunden und der Zustand wechselt über `degraded` zu `failing`. Ein Lauf bricht nie am einzelnen Datensatz: Was sich nicht übersetzen lässt, geht in die Quarantäne.
+**Fehler.** Vorübergehende Fehler einer einzelnen Anfrage wiederholt der HTTP-Client wenige Male. Schlägt der Lauf fehl, verlängert sich das Intervall der Quelle exponentiell bis höchstens sechs Stunden und der Zustand wechselt über `degraded` zu `failing`. Das ist die einzige Wiederholung eines Abrufs: Der Job selbst hat einen Versuch, und der nächste Lauf setzt am letzten Haltepunkt an (Kapitel 3.4). Ein Lauf bricht nie am einzelnen Datensatz: Was sich nicht übersetzen lässt, geht in die Quarantäne.
 
 **Rücksicht.** Kennzeichnender `User-Agent` mit Projektadresse; Obergrenze je Host und Worker-Prozess; dokumentierte Limits der Quelle als Vorgabe (NVD laut Dokumentation 5 Anfragen in 30 Sekunden ohne Schlüssel, nicht nachgemessen; GitHub 60 pro Stunde ohne Token, gemessen). Quellen, die automatisierte Clients abweisen, werden nicht durch einen vorgetäuschten Browser umgangen.
 
@@ -95,11 +97,11 @@ Unabhängig vom Verfahren wird jeder Rohdatensatz gehasht. Ein unveränderter Da
 |---|---|
 | Abgleich | `delta.json` (bedingte Abfrage funktioniert) und stündliche Delta-Archive; Änderungsprotokoll über 30 Tage; tägliches Gesamtarchiv von 666 MB; Einzelabruf über die CVE-Dienste ohne Anmeldung |
 | Format | Record-Format 5.2 bei allen geprüften Records |
-| Menge | im Mittel 590 neue Records und 2 800 Änderungen pro Tag, Spitze 2 077 neue an einem Tag |
+| Menge | im Mittel 590 neue Records und rund 2 800 Änderungen pro Tag (gemessen 2 774), Spitze 2 077 neue an einem Tag |
 | Inhalt | 97 % mit Vendor und Produkt, 74 % mit Versionsbereich, 88 % mit Schweregrad des Herausgebers, 84 % mit CISA-Anreicherung (SSVC, gegebenenfalls KEV) |
 | Bedingungen | freie Nutzung mit Urheberhinweis |
 
-Der Adapter läuft stündlich über die Deltas, beim Erststart über die Tagesarchive des Rückblicks.
+Der Adapter läuft stündlich über die Deltas. Der Erststart und jede Pause über 30 Tage laufen über das tägliche Gesamtarchiv: Es wird auf ein Arbeitsvolume geladen und ohne Entpacken durchlaufen; übernommen werden nur Records, die im Rückblick publiziert oder geändert wurden. Ob das auf der Referenzmaschine in der geforderten Zeit gelingt, misst Phase 1.
 
 ### NCSC / BACS
 
@@ -140,7 +142,7 @@ Reihenfolge nach Nutzen für die Bewertung, nicht nach Bekanntheit.
 | CISA KEV | Massendatei | Signal |
 | FIRST EPSS | Massendatei | Signal |
 
-**Erste Welle nach 1.0 (11): Pakete, Distributionen, grosse Hersteller**
+**Erste Welle nach 1.0 (elf Quellen): Pakete, Distributionen, grosse Hersteller**
 
 | Quelle | Familie | Hinweis |
 |---|---|---|
@@ -166,7 +168,7 @@ Exploit-DB, Metasploit-Metadaten, Nuclei-Vorlagen (öffentlich verfügbare Explo
 
 Zusammen 54 Quellen, davon 13 allein über den CSAF-Leser.
 
-**Bedingungen.** Geprüft und frei nutzbar sind die Startquellen CVE Program, KEV und EPSS sowie unter den späteren unter anderem GitHub Advisories, Red Hat und SUSE (jeweils mit Namensnennung). Für zwölf Quellen der späteren Wellen nennt die Recherche Bedingungen nur ungeprüft, und für CERT.at fand sie keine offene Lizenz. Vor der Aufnahme einer Quelle werden ihre Bedingungen geprüft (5.8, Schritt 5); bis dahin gilt für sie der Modus «nur Metadaten und Verweis».
+**Bedingungen.** Geprüft und frei nutzbar sind die Startquellen CVE Program, KEV und EPSS sowie unter den späteren unter anderem GitHub Advisories, Red Hat und SUSE (jeweils mit Namensnennung). Für rund zwanzig Quellen der späteren Wellen nennt die Recherche Bedingungen nur ungeprüft, für sieben weitere gar keine, und für CERT.at fand sie keine offene Lizenz. Vor der Aufnahme einer Quelle werden ihre Bedingungen geprüft (5.8, Schritt 5); bis dahin gilt für sie der Modus «nur Metadaten und Verweis».
 
 **Nur auf Wunsch des Betreibers, weil ein eigener Schlüssel nötig ist**
 
@@ -187,7 +189,7 @@ Zusammen 54 Quellen, davon 13 allein über den CSAF-Leser.
 | Broadcom/VMware | nur eine undokumentierte Portal-Schnittstelle | spät und mit Vertragstest, oder gar nicht |
 | WPScan, Patchstack | restriktive Bedingungen | nicht vorgesehen |
 | inTheWild | nicht erreichbar | nicht vorgesehen |
-| NCSC UK, ACSC | fast keine Meldungen mit CVE | erst, wenn Warnungen ohne Kennung breiter gefragt sind |
+| NCSC UK, ACSC | fast keine Hinweise mit CVE | erst, wenn Warnungen ohne Kennung breiter gefragt sind |
 | Oracle, Palo Alto | Inhalte ohne freie Lizenz | Metadaten und Verweis, kein Volltext |
 
 ## 5.7 Was die Prüfung für die Leser bedeutet

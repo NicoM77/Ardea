@@ -50,25 +50,9 @@ interface NavLink {
 
     <ardea-org-switch [organizations]="user()?.organizations ?? []" [current]="organization()" />
 
-    <ul class="nav">
-      @for (link of mainLinks(); track link.area.id) {
-        <li>
-          <a
-            [routerLink]="link.url"
-            routerLinkActive="is-current"
-            ariaCurrentWhenActive="page"
-            (click)="navigated.emit()"
-          >
-            <svg [lucideIcon]="link.area.icon" aria-hidden="true"></svg>
-            <span>{{ link.area.label | transloco }}</span>
-          </a>
-        </li>
-      }
-    </ul>
-
-    <div class="foot">
+    <nav class="links" [attr.aria-label]="'shell.nav' | transloco">
       <ul class="nav">
-        @for (link of footLinks(); track link.area.id) {
+        @for (link of mainLinks(); track link.area.id) {
           <li>
             <a
               [routerLink]="link.url"
@@ -82,16 +66,34 @@ interface NavLink {
           </li>
         }
       </ul>
-      @if (user(); as me) {
-        <div class="person">
-          <ui-avatar [name]="me.displayName" [personId]="me.id" />
-          <span class="person-name">
-            {{ me.displayName }}
-            <small>{{ me.email }}</small>
-          </span>
-        </div>
-      }
-    </div>
+
+      <div class="foot">
+        <ul class="nav">
+          @for (link of footLinks(); track link.area.id) {
+            <li>
+              <a
+                [routerLink]="link.url"
+                routerLinkActive="is-current"
+                ariaCurrentWhenActive="page"
+                (click)="navigated.emit()"
+              >
+                <svg [lucideIcon]="link.area.icon" aria-hidden="true"></svg>
+                <span>{{ link.area.label | transloco }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+        @if (user(); as me) {
+          <div class="person">
+            <ui-avatar [name]="me.displayName" [personId]="me.id" />
+            <span class="person-name">
+              {{ me.displayName }}
+              <small>{{ me.email }}</small>
+            </span>
+          </div>
+        }
+      </div>
+    </nav>
   `,
   styles: `
     :host {
@@ -152,6 +154,14 @@ interface NavLink {
       background: var(--active);
       color: var(--text);
       font-weight: 500;
+    }
+    /* The navigation landmark: the area lists, with the second group pushed to the foot */
+    .links {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 2px;
+      min-height: 0;
     }
     .foot {
       display: flex;

@@ -3,7 +3,17 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../../../BuildingBlocks/Ardea.Platform/Ardea.Platform.csproj" />
     <ProjectReference Include="../Ardea.Iam.Contracts/Ardea.Iam.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources/common-passwords.txt.gz" LogicalName="Ardea.Iam.common-passwords.txt.gz" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ardea.Iam.Tests" />
   </ItemGroup>
 </Project>

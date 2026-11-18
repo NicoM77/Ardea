@@ -35,7 +35,9 @@ internal sealed class IntelTestHost : IAsyncDisposable
 
     public FakeTimeProvider Clock { get; }
 
-    public static async Task<IntelTestHost> StartAsync(PostgresServer server)
+    /// <param name="server">The test database server.</param>
+    /// <param name="sources">Further record sources beside the scripted one, e.g. real adapters replaying recorded data.</param>
+    public static async Task<IntelTestHost> StartAsync(PostgresServer server, params ISourceProvider[] sources)
     {
         var name = await server.CreateDatabaseAsync("intel");
         var database = new DatabaseOptions
@@ -70,6 +72,11 @@ internal sealed class IntelTestHost : IAsyncDisposable
         services.AddUnitOfWork();
         services.AddJobQueue();
         services.AddSingleton<ISourceProvider>(provider);
+        foreach (var source in sources)
+        {
+            services.AddSingleton(source);
+        }
+
         var signals = new ScriptedSignalProvider();
         services.AddSingleton<ISignalProvider>(signals);
         new Catalog.CatalogModule().AddServices(services, configuration);

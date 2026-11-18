@@ -87,7 +87,7 @@ Der Spike zeigt, warum Freitext nicht genügt und was an den strukturierten Feld
 | 477 WordPress-Plugins in einer Woche, kein Core-Record | Plugins und Pakete sind eigene Komponenten mit Bezug zur Plattform; ein Treffer nur auf die Plattform gilt als schwach und meldet nicht |
 | CPE-Angaben nur in 39,5 % der Records | CPE ist ein Weg unter mehreren, nicht der einzige |
 
-Jedes betroffene Produkt erhält einen `product_key`: Vendor und Produkt in Kleinschreibung, bereinigt um Rechtsformen, Sonderzeichen und bekannte Zusätze. Der Katalog bildet Schreibweisen auf denselben Schlüssel ab. Unbekannte Produkte behalten ihren rohen Schlüssel und bleiben auffindbar; der Anteil unbekannter Produkte ist eine Messgrösse und treibt die Katalogpflege.
+Jedes betroffene Produkt erhält einen `product_key`: Vendor und Produkt in Kleinschreibung, bereinigt um Rechtsformen, Sonderzeichen und bekannte Zusätze. Der Katalog bildet Schreibweisen auf denselben Schlüssel ab. Unbekannte Produkte behalten ihren rohen Schlüssel und bleiben auffindbar; der Anteil unbekannter Produkte ist eine Messgrösse und treibt die Katalogpflege. Der Katalog wächst dabei selbst (6.9).
 
 Quellen ohne strukturierte Produktangaben (Freitext-Warnungen) liefern im MVP nur zwei Dinge: CVE-IDs, die per Muster aus dem Text gelesen werden und die Warnung zum Beleg des jeweiligen Eintrags machen, und Warnungen ohne Kennung, die ohne Projektbezug angezeigt werden. Die Extraktion von Produkten und Versionen aus Freitext durch ein Sprachmodell ist eine Ausbaustufe: einmal je Rohdaten-Revision für alle Organisationen, gespeichert als Beobachtung mit der Herkunft «extrahiert».
 
@@ -129,3 +129,40 @@ Die fünfte Zeile ist eine bewusste Auslegung: Die meisten Herausgeber nennen nu
 | Kuratierte Korrekturen | Alias- und Produktzuordnungen als versionierte Daten im Repository; sie überstimmen Quellenangaben und sind nachvollziehbar. |
 | Neuberechnung | Parser, Vorrangregeln und Katalog lassen sich ändern und rückwirkend anwenden; der Befehl dazu gehört zum Lieferumfang. |
 | Prüfliste | Quarantäne-Fälle und widersprüchliche Angaben sammeln sich an einem Ort für den Instanz-Administrator. Im MVP als einfache Liste auf der Quellenseite. |
+
+## 6.9 Der Katalog wächst selbst
+
+Entscheidung des Eigentümers vom 18.11.2026: Der Katalog wird nicht nur von Hand gepflegt, er wächst im Betrieb selbständig mit Hilfe des Sprachmodells. Der Katalog aus Aufgabe 2.4 bleibt der Grundstock.
+
+**Zwei Schichten.**
+
+| Schicht | Herkunft | Ort | Regel |
+|---|---|---|---|
+| Grundstock | von Hand kuratiert, mit dem Image ausgeliefert | `data/catalog/` und `data/corrections/` im Repository | gilt immer; kuratierte Korrekturen überstimmen alles |
+| Gelernt | in der Instanz entstanden | `catalog.product` mit Herkunft `learned`, Kandidaten in `catalog.unknown_product` (Kapitel 4.5) | ergänzt den Grundstock; ändert und entfernt keinen kuratierten Eintrag |
+
+**Woraus gelernt wird.** Nur aus öffentlichen Daten der Quellen: aus den Produktangaben in Beobachtungen (Vendor, Produkt, CPE, Paketkoordinaten), die keinem Katalogeintrag zugeordnet werden konnten, also den unbekannten Produkten aus 6.5. Freie Einträge der Organisationen sind Daten der Organisation und fliessen nicht in den globalen Katalog. Sie werden nur gegen ihn abgeglichen: Passt ein gelernter Eintrag zu einem freien Eintrag, erhält die Organisation einen Vorschlag, die Komponente auf den Katalogeintrag umzustellen.
+
+**Ablauf.** Der Job `GrowCatalog` läuft einmal täglich und nach der Erstbefüllung:
+
+1. **Sammeln.** Unbekannte Produktschlüssel mit der Zahl ihrer Records. Bearbeitet wird ein Schlüssel ab zwei Records, sofort, wenn einer davon in KEV steht. Die häufigsten zuerst.
+2. **Ohne Modell zuordnen.** Gleiches CPE-Paar wie ein bestehender Eintrag, oder derselbe Name bis auf Rechtsform, Versionszusatz und Schreibweise: Alias zu diesem Eintrag. Ein CPE-Paar, das kein Eintrag kennt: neuer Eintrag mit Name und Vendor aus dem Record und dem numerischen Versionsschema. Dieser Schritt läuft auch ohne KI-Anbieter.
+3. **Modell fragen.** Für den Rest je Schlüssel ein Aufruf mit den Rohangaben (Vendor, Produkt, CPE, Paketkoordinaten, bis zu drei Titel) und den fünf ähnlichsten Katalogeinträgen aus der Suche. Antwort als JSON: `alias_of` (ein Schlüssel aus der Kandidatenliste), `new_product` (Name, Vendor, Art, Versionsschema aus der festen Liste, CPE-Paare aus der Eingabe, verwandte Produkte und Plattform aus der Kandidatenliste) oder `unclear`; dazu `confidence` und ein Satz Begründung.
+4. **Prüfen.** Schema; jeder genannte Schlüssel und jedes CPE-Paar stammt aus der Eingabe; ein neuer Name gleicht keinem bestehenden Namen oder Alias. Sonst verworfen und einmal wiederholt.
+5. **Übernehmen.** Bei `confidence` high und bestandener Prüfung wird der Eintrag sofort wirksam. Alles andere geht in die Prüfliste des Instanz-Administrators auf der Seite «Sources», neben der Quarantäne: bestätigen, ändern oder ablehnen. Abgelehntes wird nicht erneut vorgeschlagen.
+6. **Neu berechnen.** Produktschlüssel und Kandidatensuche der betroffenen Einträge laufen über den Befehl aus Kapitel 6.8 neu. Neue Treffer bei Organisationen entstehen dabei wie jeder andere Befund.
+
+**Warum das sicher genug ist.**
+
+- Ein gelernter Eintrag ordnet nur Schlüssel zu, die vorher nichts trafen. Er kann Treffer hinzufügen, aber keinen bestehenden entfernen und keine Warnung unterdrücken. Ein Fehler zeigt sich als überflüssige Meldung, nicht als ausgebliebene.
+- Ein Treffer, der nur über einen gelernten Eintrag zustande kommt, nennt das als Beleg («über gelernten Katalogeintrag») und verlinkt den Eintrag. Der Instanz-Administrator kann ihn mit einem Klick zurücknehmen; die Neuberechnung folgt.
+- Wie bei der Einschätzung (7.5): keine Werkzeuge, Quelltexte in einem abgegrenzten Datenblock, nur JSON als Ausgang.
+- An das Modell gehen nur öffentliche Daten der Quellen, keine Daten einer Organisation. Die Instanz legt fest, welcher Anbieter dafür verwendet wird; Vorgabe ist der erste lokale Anbieter, ein Cloud-Anbieter nur, wenn der Instanz-Administrator ihn dafür freigibt.
+
+**Grenzen.** Höchstens 200 Aufrufe pro Tag, der Rest am nächsten Tag. Nach einer Erstbefüllung über 180 Tage sind einige tausend unbekannte Schlüssel zu erwarten (Schätzung, gemessen wird in Phase 4); mit Schwelle und Kontingent arbeitet der Job sie über einige Tage ab, die häufigsten zuerst.
+
+**Ohne KI.** Schritt 2 läuft weiter. Der Rest sammelt sich als Liste unbekannter Produkte mit Häufigkeit, die der Instanz-Administrator von Hand zuordnen kann.
+
+**Zurück ins Projekt.** Der Instanz-Administrator kann die gelernten Einträge als Datei im Format des Grundstocks exportieren und dem Projekt als Beitrag schicken. So wächst der Grundstock über alle Installationen. Automatisch übertragen wird nichts.
+
+**Messgrössen.** Der Anteil unbekannter Produkte (6.8) zeigt, ob der Katalog nachkommt. Dazu je Woche: gelernte, sofort übernommene, bestätigte, abgelehnte und zurückgenommene Einträge, sichtbar in der Administration.

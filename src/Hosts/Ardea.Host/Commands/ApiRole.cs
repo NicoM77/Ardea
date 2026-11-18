@@ -76,6 +76,8 @@ internal static partial class ApiRole
         app.UseExceptionHandler();
         app.UseStatusCodePages();
         app.Use(RequestProtection.SecurityHeaders);
+        var httpsRequired = new Uri(builder.Configuration[HostConfiguration.PublicUrlKey]!).Scheme == Uri.UriSchemeHttps;
+        app.Use(next => RequestProtection.RequireHttps(next, httpsRequired));
         app.Use((context, next) =>
         {
             var origin = context.RequestServices.GetRequiredService<AuditOrigin>();
@@ -83,6 +85,7 @@ internal static partial class ApiRole
             origin.IpAddress = context.Connection.RemoteIpAddress?.ToString();
             return next(context);
         });
+        WebApp.Use(app);
         app.UseAuthentication();
         app.Use(RequestProtection.TenantUser);
         var publicOrigin = RequestProtection.Origin(builder.Configuration[HostConfiguration.PublicUrlKey]!);
@@ -101,6 +104,7 @@ internal static partial class ApiRole
         }
 
         Features.InstanceEndpoints.Map(api);
+        WebApp.Map(app);
 
         return app;
     }

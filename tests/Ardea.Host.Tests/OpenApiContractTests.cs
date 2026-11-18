@@ -33,6 +33,7 @@ public sealed class OpenApiContractTests
         await using var _ = app;
         await app.StartAsync(TestContext.Current.CancellationToken);
         using var client = app.GetTestClient();
+        client.BaseAddress = new Uri("https://localhost");
 
         var actual = ApiDocument.Normalize(await client.GetStringAsync(new Uri("/api/openapi/v1.json", UriKind.Relative), TestContext.Current.CancellationToken));
         var path = Path.Combine(RepositoryRoot(), "openapi", "ardea.v1.json");

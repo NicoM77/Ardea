@@ -12,3 +12,7 @@ prototypes
 tests
 deploy/.env
 deploy/.env.app
+web/dist
+web/e2e/results
+web/test-results
+web/playwright-report

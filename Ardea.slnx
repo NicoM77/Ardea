@@ -41,6 +41,7 @@
     <Project Path="tests/Ardea.Catalog.Tests/Ardea.Catalog.Tests.csproj" />
     <Project Path="tests/Ardea.Host.Tests/Ardea.Host.Tests.csproj" />
     <Project Path="tests/Ardea.Iam.Tests/Ardea.Iam.Tests.csproj" />
+    <Project Path="tests/Ardea.Intel.Tests/Ardea.Intel.Tests.csproj" />
     <Project Path="tests/Ardea.Platform.Tests/Ardea.Platform.Tests.csproj" />
     <Project Path="tests/Ardea.TestSupport/Ardea.TestSupport.csproj" />
   </Folder>

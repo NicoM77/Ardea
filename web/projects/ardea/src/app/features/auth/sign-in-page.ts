@@ -3,7 +3,8 @@ import { form, FormField, FormRoot, required } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiField, UiInput, UiNotice, UiPasswordToggle } from 'ui';
-import { AuthApi } from '../../core/api/auth-api';
+import { firstValueFrom } from 'rxjs';
+import { AuthenticationService } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { safeReturnUrl } from '../../core/session/access';
 import { Session } from '../../core/session/session';
@@ -83,7 +84,7 @@ export class SignInPage {
   readonly returnUrl = input<string | null>(null);
   readonly notice = input<string | null>(null);
 
-  private readonly auth = inject(AuthApi);
+  private readonly auth = inject(AuthenticationService);
   private readonly session = inject(Session);
   private readonly router = inject(Router);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
@@ -106,7 +107,7 @@ export class SignInPage {
         action: async () => {
           this.problem.set(null);
           try {
-            const result = await this.auth.login(this.model());
+            const result = await firstValueFrom(this.auth.login(this.model()));
             const returnUrl = safeReturnUrl(this.returnUrl());
             if (result.status === 'twoFactorRequired') {
               await this.router.navigate(['/sign-in/two-factor'], {

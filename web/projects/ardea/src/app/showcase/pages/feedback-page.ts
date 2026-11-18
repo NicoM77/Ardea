@@ -1,14 +1,6 @@
 import { Component } from '@angular/core';
 import { LucideFolder, LucideListChecks } from '@lucide/angular';
-import {
-  UiButton,
-  UiCard,
-  UiCopyButton,
-  UiEmptyState,
-  UiNotice,
-  UiPageHeader,
-  UiSpinner,
-} from 'ui';
+import { UiButton, UiCard, UiCopyButton, UiEmptyState, UiNotice, UiPageHeader, UiLoader } from 'ui';
 
 /** Notices, empty states, loading and copy feedback. */
 @Component({
@@ -22,7 +14,7 @@ import {
     UiEmptyState,
     UiNotice,
     UiPageHeader,
-    UiSpinner,
+    UiLoader,
   ],
   template: `
     <div class="sc-page">
@@ -61,17 +53,42 @@ import {
         </ui-empty-state>
       </div>
 
-      <ui-card heading="Progress and copy">
+      <ui-card heading="Loader">
+        <span uiCardMeta>Draw, 2.4 s per cycle, shown after 300 ms</span>
         <div class="sc-rows">
           <div class="sc-row">
-            <span class="sc-label">Spinner</span>
+            <span class="sc-label">Page · 96</span>
             <div class="sc-demo">
-              <ui-spinner />
-              <span class="muted"
-                >Loading on its own; inside a button it sits beside the label.</span
-              >
+              <ui-loader size="page" label="Loading entries" [delay]="0" />
             </div>
           </div>
+          <div class="sc-row">
+            <span class="sc-label">Inline · 20, button · 16</span>
+            <div class="sc-demo">
+              <ui-loader label="Fetching CVE records" [delay]="0" />
+              <button uiButton type="button" loading>Syncing sources</button>
+              <button uiButton variant="primary" type="button" loading>Save</button>
+            </div>
+          </div>
+          <div class="sc-row">
+            <span class="sc-label">Frames of the loop</span>
+            <div class="sc-demo">
+              @for (frame of frames; track frame) {
+                <ui-loader size="page" [label]="frame * 100 + ' %'" [delay]="0" [frame]="frame" />
+              }
+            </div>
+          </div>
+          <div class="sc-row">
+            <span class="sc-label">Done</span>
+            <div class="sc-demo">
+              <ui-loader size="page" label="Loaded" [delay]="0" done />
+            </div>
+          </div>
+        </div>
+      </ui-card>
+
+      <ui-card heading="Copy">
+        <div class="sc-rows">
           <div class="sc-row">
             <span class="sc-label">Copy</span>
             <div class="sc-demo">
@@ -89,4 +106,6 @@ import {
     }
   `,
 })
-export class FeedbackPage {}
+export class FeedbackPage {
+  protected readonly frames = [0.25, 0.5, 0.75, 1];
+}

@@ -34,9 +34,9 @@ A startable instance with sign-in, job system, build chain and a first administr
 | 0.8 | Sign-in: setup token, registration, server-side sessions with list and revoke, TOTP, password rules, CSRF protection, rate limiting | 0.5 | ✅ |
 | 0.9 | Basic e-mail for confirmation, password reset and invitations; behaviour without SMTP | 0.3 | ✅ |
 | 0.10 | Web: workspace with app and `ui` library; tokens from the mockups; header band, navigation, sign-in pages; i18n scaffold with English; component pages with visual comparison | 0.1 | ✅ |
-| 0.11 | OpenAPI document at build time, check in the build, generated client | 0.8, 0.10 | ⬜ |
+| 0.11 | OpenAPI document at build time, check in the build, generated client | 0.8, 0.10 | ✅ |
 | 0.12 | Architecture tests for module boundaries | 0.1 | ✅ |
-| 0.13 | First administration: instance settings (registration, SMTP with test mail), abandoned jobs with retry, installed version | 0.4, 0.8, 0.10 | ⬜ |
+| 0.13 | First administration: instance settings (registration, SMTP with test mail), abandoned jobs with retry, installed version | 0.4, 0.8, 0.10 | ✅ |
 
 ### Phase 1 · From source to consolidated entry (7–10 weeks)
 
@@ -45,8 +45,8 @@ Consolidated entries from five sources, including OSV for packages, with merging
 | No. | Task | Depends on | Status |
 |---|---|---|---|
 | 1.1 | Catalog module: product keys, CPE reader, version schemes (SemVer, NuGet, PEP 440, Maven, RPM, numeric), catalogue format | 0.1 | ✅ [ADR 030](docs/adr/0030-catalogue-format-and-master-data.md) |
-| 1.2 | Provider SDK with checkpoints and signal interface; sync control: due time, cursor, back-off, health, run log | 0.4 | ⬜ |
-| 1.3 | HTTP foundation for adapters: timeout, retry, rate limiting, conditional requests, size limits | 1.2 | ⬜ |
+| 1.2 | Provider SDK with checkpoints and signal interface; sync control: due time, cursor, back-off, health, run log | 0.4 | ✅ |
+| 1.3 | HTTP foundation for adapters: timeout, retry, rate limiting, conditional requests, size limits | 1.2 | ✅ |
 | 1.4 | CVE Program adapter: deltas, initial load and long gaps via the full archive, single fetch | 1.3 | ⬜ |
 | 1.5 | Raw record store with revisions; normalisation to observations; quarantine | 1.4, 1.1 | ⬜ |
 | 1.6 | Merge by CVE ID with fixed precedence rules and per-field provenance | 1.5 | ⬜ |

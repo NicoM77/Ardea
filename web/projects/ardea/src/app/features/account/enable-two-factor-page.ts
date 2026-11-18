@@ -15,8 +15,8 @@ import {
   UiPasswordToggle,
   UiQrCode,
 } from 'ui';
-import { AccountApi } from '../../core/api/account-api';
-import { TwoFactorSetup } from '../../core/api/models';
+import { firstValueFrom } from 'rxjs';
+import { AccountService, type MfaSetupResponse } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { Session } from '../../core/session/session';
 import { fieldErrorKey, formatSharedKey, normalizeTotp } from '../auth/auth-forms';
@@ -258,7 +258,7 @@ type Step = 'intro' | 'scan' | 'codes';
   `,
 })
 export class EnableTwoFactorPage {
-  private readonly account = inject(AccountApi);
+  private readonly account = inject(AccountService);
   private readonly session = inject(Session);
   private readonly router = inject(Router);
   private readonly sanitizer = inject(DomSanitizer);
@@ -274,7 +274,7 @@ export class EnableTwoFactorPage {
 
   protected readonly step = signal<Step>('intro');
   protected readonly problem = signal<string | null>(null);
-  protected readonly setup = signal<TwoFactorSetup | null>(null);
+  protected readonly setup = signal<MfaSetupResponse | null>(null);
   protected readonly recoveryCodes = signal<string[]>([]);
   protected readonly alreadyOn = computed(() => this.session.user()?.twoFactorEnabled === true);
   protected readonly sharedKey = computed(() => formatSharedKey(this.setup()?.sharedKey ?? ''));
@@ -298,7 +298,9 @@ export class EnableTwoFactorPage {
           this.problem.set(null);
           try {
             this.setup.set(
-              await this.account.startTwoFactorSetup({ password: this.introModel().password }),
+              await firstValueFrom(
+                this.account.startMfaSetup({ password: this.introModel().password }),
+              ),
             );
             this.introModel.set({ password: '' });
             this.step.set('scan');
@@ -330,9 +332,11 @@ export class EnableTwoFactorPage {
         action: async () => {
           this.problem.set(null);
           try {
-            const result = await this.account.enableTwoFactor({
-              code: normalizeTotp(this.model().code),
-            });
+            const result = await firstValueFrom(
+              this.account.enableMfa({
+                code: normalizeTotp(this.model().code),
+              }),
+            );
             this.recoveryCodes.set(result.recoveryCodes);
             this.step.set('codes');
           } catch (error) {

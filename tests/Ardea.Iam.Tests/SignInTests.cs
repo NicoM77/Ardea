@@ -225,7 +225,7 @@ public sealed class SignInTests(PostgresServer server)
         await SetupAsync(thief);
 
         await ExpectProblem(await thief.PostAsync("/api/v1/account/mfa/setup", new { password = "a guessed password" }), HttpStatusCode.BadRequest, "invalid_password");
-        await ExpectProblem(await thief.PostAsync("/api/v1/account/mfa/setup"), HttpStatusCode.BadRequest, "invalid_password");
+        await ExpectProblem(await thief.PostAsync("/api/v1/account/mfa/setup", new { }), HttpStatusCode.BadRequest, "invalid_password");
         Assert.Equal(2, await host.ScalarAsync<int>("SELECT access_failed_count FROM iam.\"user\""));
     }
 
@@ -262,6 +262,28 @@ public sealed class SignInTests(PostgresServer server)
         var response = await browser.SendAsync(HttpMethod.Post, "/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password }, fetchSite: "cross-site");
 
         await ExpectProblem(response, HttpStatusCode.Forbidden, "csrf_failed");
+    }
+
+    [Fact]
+    public async Task Https_instance_refuses_plain_http_api_calls_with_a_clear_code()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var plain = host.Client("http://localhost");
+
+        await ExpectProblem(await plain.GetAsync("/api/v1/setup/status"), HttpStatusCode.Forbidden, "https_required");
+    }
+
+    [Fact]
+    public async Task Development_instance_on_plain_http_signs_in_with_unprefixed_cookies()
+    {
+        await using var host = await ApiTestHost.StartAsync(server, new() { ["PUBLIC_URL"] = "http://localhost" });
+        using var browser = host.Client("http://localhost");
+
+        await Expect(HttpStatusCode.NoContent, await SetupAsync(browser));
+        await Expect(HttpStatusCode.OK, await browser.SessionAsync());
+        var names = browser.Cookies.GetCookies(new Uri("http://localhost")).Select(c => c.Name).ToList();
+        Assert.Contains("ardea", names);
+        Assert.DoesNotContain(names, n => n.StartsWith("__Host-", StringComparison.Ordinal));
     }
 
     [Fact]

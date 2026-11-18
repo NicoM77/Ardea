@@ -66,7 +66,7 @@ Ein Hersteller-Advisory, das zwölf CVEs nennt, erzeugt keinen eigenen Eintrag. 
 
 | Tabelle | Zweck | Wichtige Spalten |
 |---|---|---|
-| `source` | Stammdaten und Abrufzustand | `key`, `kind` (record, advisory, signal), `adapter`, `enabled`, `interval`, `config jsonb`, `attribution`, `terms_mode` (full, metadata_only); Zustand: `next_sync_at`, `cursor jsonb`, `last_success_at`, `consecutive_failures`, `health`. Die Lease eines laufenden Abrufs gehört dem Job, nicht der Quelle. |
+| `source` | Stammdaten und Abrufzustand | `key`, `kind` (record, advisory, signal), `operator`, `operator_kind` (authority, mandated, recognized, vendor, community; Kapitel 5.6), `adapter`, `enabled`, `interval`, `config jsonb`, `attribution`, `terms_mode` (full, metadata_only); Zustand: `next_sync_at`, `cursor jsonb`, `last_success_at`, `consecutive_failures`, `health`. Die Lease eines laufenden Abrufs gehört dem Job, nicht der Quelle. |
 | `source_run` | Protokoll jedes Abrufs | `source_id`, `started_at`, `finished_at`, `outcome`, `fetched`, `changed`, `quarantined`, `error` |
 | `source_record` | Aktueller Rohdatensatz je externer ID | `source_id`, `external_id` (zusammen eindeutig), `url`, `content_hash`, `payload`, `revision`, `source_published_at`, `source_modified_at`, `first_seen_at`, `last_seen_at`, `parse_status` |
 | `source_record_revision` | Frühere Rohstände | `source_record_id`, `revision`, `content_hash`, `payload`, `fetched_at` |

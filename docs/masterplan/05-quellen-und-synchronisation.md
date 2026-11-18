@@ -35,7 +35,7 @@ public interface ISourceProvider
 
 | Baustein | Inhalt |
 |---|---|
-| `SourceDescriptor` | Schlüssel, Name, Art, Vorgabeintervall, erlaubte Hosts, Namensnennung und Lizenzhinweis, Konfigurationsschema (etwa optionaler API-Schlüssel) |
+| `SourceDescriptor` | Schlüssel, Name, Art, Trägerschaft und Betreiber (5.6), Vorgabeintervall, erlaubte Hosts, Namensnennung und Lizenzhinweis, Konfigurationsschema (etwa optionaler API-Schlüssel) |
 | `SyncContext` | letzter gespeicherter Cursor; vorkonfigurierter HTTP-Client; Modus (`incremental`, `backfill` ab Datum, `single` für eine ID); Uhr; Grenzen für Grösse und Dauer |
 | `FetchItem` | entweder ein Rohdatensatz (externe ID, Adresse, Rohinhalt, Zeitstempel der Quelle) oder ein Haltepunkt mit Cursor |
 | `NormalizationResult` | eine Beobachtung mit einem Aussagenblock je Kennung, oder der Grund für die Quarantäne |
@@ -172,7 +172,7 @@ OSV ist im MVP, weil Projekte ihre Abhängigkeiten aus dem Repository einlesen (
 
 Mit OSV kommen Einträge, die zuerst nur eine GHSA- oder OSV-Kennung tragen und ihre CVE-ID später erhalten. Das Verschmelzen von Einträgen (Kapitel 6.2) gehört deshalb zum MVP.
 
-**Erste Welle nach 1.0 (zehn Quellen): weitere Ökosysteme, Distributionen, grosse Hersteller**
+**Erste Welle nach 1.0 (elf Quellen): weitere Ökosysteme, Distributionen, grosse Hersteller**
 
 | Quelle | Familie | Hinweis |
 |---|---|---|
@@ -186,16 +186,36 @@ Mit OSV kommen Einträge, die zuerst nur eine GHSA- oder OSV-Kennung tragen und 
 | Ubuntu | JSON-API | der RSS-Feed fasst nur zehn Einträge und läuft an vollen Tagen in unter einer Stunde über |
 | Kubernetes | JSON-API | offizieller CVE-Feed |
 | CERT-FR | RSS, Details als JSON je Dokument | Feed ist nicht chronologisch sortiert |
+| ENISA EUVD | JSON-API | nur Anreicherung: EUVD-ID als Alias und Merkmal «ausgenutzt» als Signal einer EU-Behörde, unabhängig von NVD und CISA; einmal täglich über `fromUpdatedDate` und Seiten, weil die Schnittstelle langsam ist und nur Tage kennt; Bedingungen vor der Aufnahme prüfen |
 
 **Zweite Welle (21): weitere Stellen und Hersteller**
 
 NCSC-NL, SUSE, Siemens (alle CSAF) · Cisco, Fortinet, Ivanti, ZDI, CERT/CC (RSS oder Atom) · Palo Alto (CVE JSON 5 je Schwachstelle) · CERT.at, CERT-EU, INCIBE, ACN, CCCS, JVN iPedia (RSS, Atom oder RDF) · Drupal, GitLab, Jenkins, WordPress Core (RSS oder Atom) · OpenSSL, Apache HTTP Server (JSON je Projekt).
 
-**Dritte Welle (18): Signale und langer Schwanz**
+**Dritte Welle (17): Signale und langer Schwanz**
 
-Exploit-DB, Metasploit-Metadaten, Nuclei-Vorlagen (öffentlich verfügbare Exploits) · CIRCL-Sichtungen mit den Beobachtungen von Shadowserver · EUVD · Node.js, .NET-Releases, Mozilla, Umbraco über GitHub · Atlassian, TYPO3, Oracle · sechs weitere CSAF-Anbieter ohne zusätzlichen Code: Schneider Electric, ABB, SICK, Huawei, Open-Xchange, Trend Micro.
+Exploit-DB, Metasploit-Metadaten, Nuclei-Vorlagen (öffentlich verfügbare Exploits) · CIRCL-Sichtungen mit den Beobachtungen von Shadowserver · Node.js, .NET-Releases, Mozilla, Umbraco über GitHub · Atlassian, TYPO3, Oracle · sechs weitere CSAF-Anbieter ohne zusätzlichen Code: Schneider Electric, ABB, SICK, Huawei, Open-Xchange, Trend Micro.
 
 Zusammen 54 Quellen, davon 13 allein über den CSAF-Leser.
+
+**Trägerschaft der Quellen**
+
+Wer hinter einer Quelle steht, sagt dem Leser etwas anderes als die Art ihres Inhalts. Jede Quelle trägt deshalb neben der Art eine Trägerschaft und den Namen ihres Betreibers als Stammdatum. Die Einordnung stammt aus diesem Plan (Stand 18.11.2026) und wird bei der Aufnahme einer Quelle geprüft (5.8, Schritt 5).
+
+| Trägerschaft | Schlüssel | Bedeutung | Quellen aus dem Katalog |
+|---|---|---|---|
+| Behörde | `authority` | Amt oder Agentur eines Staates oder der EU | NCSC / BACS (CH), CISA KEV und CISA CSAF, NVD (NIST), CERT-Bund (BSI), CERT-FR (ANSSI), NCSC-NL, ACN (IT), CCCS (CA), ENISA EUVD, CERT-EU |
+| Staatlicher Auftrag | `mandated` | keine Behörde, aber im Auftrag oder mit Mitteln eines Staates betrieben | CVE Program (MITRE im Auftrag der CISA; die Records selbst stammen von den CNAs), CERT/CC (Carnegie Mellon), JVN (JPCERT/CC und IPA), CERT.at (nic.at für die Republik Österreich), CIRCL (nationales CERT Luxemburgs), INCIBE (staatliche Gesellschaft, ES) |
+| Anerkannte Organisation | `recognized` | nicht staatlich, als Standard der Branche anerkannt | FIRST EPSS, OSV.dev (Google, OpenSSF), GitHub Advisory Database, Shadowserver (über CIRCL) |
+| Hersteller oder Projekt | `vendor` | spricht verbindlich nur für die eigenen Produkte | Microsoft, Red Hat, SUSE, Ubuntu, Debian (über OSV), Siemens, Cisco, Fortinet, Ivanti, Palo Alto, Oracle, Atlassian, Schneider Electric, ABB, SICK, Huawei, Open-Xchange, Trend Micro, Kubernetes, OpenSSL, Apache HTTP Server, Node.js, .NET, Mozilla, Drupal, Jenkins, WordPress Core, TYPO3, Umbraco, GitLab |
+| Firma oder Community | `community` | Forschung, Werkzeuge und Datensammlungen ohne Auftrag | ZDI, Exploit-DB, Metasploit, Nuclei-Vorlagen; auf Wunsch Wordfence und VulnCheck |
+
+Was daraus folgt:
+
+- **Keine Rangfolge der Genauigkeit.** Die Trägerschaft bestimmt nicht, welche Angabe bei der Zusammenführung gilt. Für betroffene Versionen ist der Hersteller genauer als jede Behörde; die Vorrangregeln bleiben in Kapitel 6.
+- **Nationale Stelle.** Als «Warnung einer nationalen Stelle» (Kapitel 7.6) zählt ein Advisory oder eine Warnung aus einer Quelle der Trägerschaft Behörde oder staatlicher Auftrag. Signale wie KEV und das Merkmal «ausgenutzt» der EUVD zählen dort nicht, sie gehen in den Faktor Ausnutzung.
+- **Anzeige.** Jeder Beleg nennt Betreiber und Trägerschaft («Authority · BACS»). Bei Sammelquellen wie OSV und CIRCL steht zusätzlich der ursprüngliche Herausgeber, wo der Record ihn nennt. Die Seite «Sources» lässt sich nach Trägerschaft filtern.
+- **Ausbau.** Für die erste Welle bringt der CSAF-Leser mit CISA, CERT-Bund und Microsoft zwei Behörden und einen grossen Hersteller zugleich; mit EUVD kommt eine zweite, von den USA unabhängige Behörde für die Ausnutzung dazu.
 
 **Bedingungen.** Geprüft und frei nutzbar sind die Startquellen CVE Program, KEV und EPSS sowie unter den späteren unter anderem GitHub Advisories, Red Hat und SUSE (jeweils mit Namensnennung). OSV führt die Bedingungen je Datenquelle: Für die Daten der GitHub Advisory Database sind sie geprüft, für die übrigen Datenquellen der sechs Ökosysteme des MVP werden sie in Phase 1 vor dem Bau des Adapters geprüft. Für rund zwanzig Quellen der späteren Wellen nennt die Recherche Bedingungen nur ungeprüft, für sieben weitere gar keine, und für CERT.at fand sie keine offene Lizenz. Vor der Aufnahme einer Quelle werden ihre Bedingungen geprüft (5.8, Schritt 5); bis dahin gilt für sie der Modus «nur Metadaten und Verweis».
 
@@ -211,6 +231,7 @@ Zusammen 54 Quellen, davon 13 allein über den CSAF-Leser.
 
 | Quelle | Befund | Umgang |
 |---|---|---|
+| CISA Vulnrichment als eigene Quelle | dieselben Daten (SSVC, CWE, CVSS, KEV-Merkmal) stehen als CISA-Container schon in den CVE-Records | keine eigene Quelle; kommt mit dem CVE Program |
 | NVD als Hauptquelle | seit April 2026 reichert NIST nur noch ausgewählte CVEs an; von acht Tage alten Records hatten 5 % CPE-Angaben | nur Anreicherung |
 | CISA-Feeds und CSAF bei cisa.gov | 403 für automatisierte Clients | GitHub-Repositorys von CISA |
 | Citrix | kein maschinenlesbarer Feed mehr | CVE-Records des Herstellers, KEV, Stellen wie CERT-Bund |
@@ -236,7 +257,7 @@ Zusammen 54 Quellen, davon 13 allein über den CSAF-Leser.
 2. Echte Antworten der Quelle als Testdaten ablegen, einschliesslich eines geänderten und eines fehlerhaften Datensatzes.
 3. Abgleichverfahren messen: Validatoren, Fenster, Grösse, Limits.
 4. Abbildung auf die Beobachtung schreiben; das Ergebnis der Testdaten als Snapshot prüfen.
-5. Lizenz, Namensnennung und Vorgabeintervall eintragen.
+5. Lizenz, Namensnennung, Vorgabeintervall, Betreiber und Trägerschaft eintragen.
 6. Grenzwerte für den Zustand `degraded`: Anteil Quarantäne und leere Abrufe. Ändert die Quelle ihre Struktur, merkt es der Betrieb, nicht ein eigener Testlauf.
 
 Fertig ist eine Quelle, wenn ein zweiter Lauf über dieselben Daten nichts ändert, ein simulierter Ausfall aufgeholt wird und die Anleitung in `docs/guides/` den Eintrag enthält.

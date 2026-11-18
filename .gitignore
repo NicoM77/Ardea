@@ -13,3 +13,4 @@ coverage/
 *.received.*
 .env
 .env.app
+.claude/worktrees/

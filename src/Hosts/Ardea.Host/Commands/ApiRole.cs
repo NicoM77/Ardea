@@ -1,3 +1,4 @@
+using Ardea.Host.Http;
 using Ardea.Platform.Audit;
 using Ardea.Platform.Configuration;
 using Ardea.Platform.Hosting;
@@ -56,14 +57,18 @@ internal static partial class ApiRole
         builder.Services.AddArdeaSecrets(MasterKey.FromBase64(builder.Configuration[HostConfiguration.MasterKeyKey]!));
         builder.Services.AddArdeaTelemetry(builder.Logging, builder.Configuration, "api", AppVersion.Current);
         builder.Services.AddProblemDetails();
+        RequestProtection.ConfigureForwardedHeaders(builder.Services, builder.Configuration);
         foreach (var module in Modules.All)
         {
             module.AddServices(builder.Services, builder.Configuration);
+            module.AddApiServices(builder.Services, builder.Configuration);
         }
 
         var app = builder.Build();
+        app.UseForwardedHeaders();
         app.UseExceptionHandler();
         app.UseStatusCodePages();
+        app.Use(RequestProtection.SecurityHeaders);
         app.Use((context, next) =>
         {
             var origin = context.RequestServices.GetRequiredService<AuditOrigin>();
@@ -71,6 +76,12 @@ internal static partial class ApiRole
             origin.IpAddress = context.Connection.RemoteIpAddress?.ToString();
             return next(context);
         });
+        app.UseAuthentication();
+        app.Use(RequestProtection.TenantUser);
+        var publicOrigin = RequestProtection.Origin(builder.Configuration[HostConfiguration.PublicUrlKey]!);
+        app.Use(next => RequestProtection.Csrf(next, publicOrigin));
+        app.UseRateLimiter();
+        app.UseAuthorization();
 
         app.MapGet("/health/live", () => Results.Ok(new { status = "live" })).ExcludeFromDescription();
         app.MapGet("/health/ready", ReadyAsync).ExcludeFromDescription();

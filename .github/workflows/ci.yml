@@ -174,6 +174,47 @@ jobs:
             web/test-results
           if-no-files-found: ignore
 
+  # The core flows of master plan 13.6 against the real image behind Caddy, over HTTPS. The first
+  # one is the acceptance of phase 0: healthy within 3 minutes, then setup token, password and TOTP.
+  # The image is built here from the Image job's cache (read only), so both jobs run side by side.
+  e2e:
+    name: End to end
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image (amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          platforms: linux/amd64
+          load: true
+          tags: ardea:e2e
+          cache-from: type=gha,scope=image-amd64
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: tests/e2e/package-lock.json
+      - name: Install
+        working-directory: tests/e2e
+        run: npm ci
+      - name: Licences
+        working-directory: tests/e2e
+        run: npm run check:licenses
+      - name: Start the instance and run the flows
+        run: tests/e2e/run.sh ardea:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-report
+          path: |
+            tests/e2e/playwright-report
+            tests/e2e/test-results
+          if-no-files-found: ignore
+
   image:
     name: Image
     runs-on: ubuntu-latest

@@ -1,0 +1,99 @@
+import { expect, test } from '@playwright/test';
+import { Authenticator, expectAccessible, openFirstPage, watchConsole } from './support';
+
+/**
+ * Core flow 1 of master plan 13.6 and the acceptance of phase 0: on a fresh instance, set up the
+ * first user with the setup token, turn on two-factor authentication, sign out, and sign in again
+ * with password and TOTP over HTTPS. Every visited page is checked with axe (WCAG 2.2 AA) and the
+ * test fails on any console error.
+ */
+const setupToken = process.env['E2E_SETUP_TOKEN'] ?? '';
+const person = {
+  email: 'first.admin@example.org',
+  name: 'First Admin',
+  // A long passphrase: the password rules ask for length, not character classes.
+  password: 'heron stands still in the reeds',
+};
+
+test('set up the first user, turn on two-factor, sign in again with TOTP', async ({ page }) => {
+  test.skip(!setupToken, 'E2E_SETUP_TOKEN is not set; run the test through run.sh');
+  const problems = watchConsole(page);
+
+  // A fresh instance sends every visitor to setup.
+  await openFirstPage(page, '/');
+  await expect(page).toHaveURL(/\/setup$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Set up Ardea' })).toBeVisible();
+  await expectAccessible(page, 'setup');
+
+  await page.getByLabel('Setup token').fill(setupToken);
+  await page.getByLabel('Email').fill(person.email);
+  await page.getByLabel('Name').fill(person.name);
+  await page.getByLabel('Password', { exact: true }).fill(person.password);
+  await page.getByRole('button', { name: 'Create account' }).click();
+
+  // Signed in, without an organization yet; the instance administrator sees Administration.
+  await expect(page.getByRole('heading', { level: 1, name: 'Welcome' })).toBeVisible();
+  const navigation = page.getByRole('navigation', { name: 'Main' });
+  await expect(navigation.getByRole('link', { name: 'Administration' })).toBeVisible();
+  await expectAccessible(page, 'no organization');
+
+  // Two-factor authentication: confirm the password, read the key, enter a code, see the recovery codes.
+  await page.getByRole('button', { name: `Account: ${person.name}` }).click();
+  await page.getByRole('menuitem', { name: 'Two-factor authentication' }).click();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Two-factor authentication' }),
+  ).toBeVisible();
+  await expectAccessible(page, 'two-factor intro');
+
+  await page.getByLabel('Current password').fill(person.password);
+  await page.getByRole('button', { name: 'Set up authenticator app' }).click();
+  const appLink = page.getByRole('link', { name: 'Open in authenticator app' });
+  await expect(appLink).toBeVisible();
+  await expectAccessible(page, 'two-factor scan');
+
+  const uri = new URL((await appLink.getAttribute('href')) ?? '');
+  const sharedKey = uri.searchParams.get('secret') ?? '';
+  expect(sharedKey).not.toBe('');
+  // The key shown for typing by hand is the same one, in groups of four.
+  await expect(page.getByText(sharedKey.match(/.{1,4}/g)!.join(' '))).toBeVisible();
+  const authenticator = new Authenticator(sharedKey);
+
+  await page.getByLabel('6-digit code').fill(await authenticator.nextCode());
+  await page.getByRole('button', { name: 'Turn on' }).click();
+  await expect(page.getByRole('heading', { name: 'Save your recovery codes' })).toBeVisible();
+  await expect(
+    page.getByRole('list', { name: 'Recovery codes' }).getByRole('listitem'),
+  ).not.toHaveCount(0);
+  await expectAccessible(page, 'recovery codes');
+  await page.getByRole('button', { name: 'I saved them' }).click();
+
+  // Sign out.
+  await page.getByRole('button', { name: `Account: ${person.name}` }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  await expect(page).toHaveURL(/\/sign-in\?notice=signedOut$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
+  await expectAccessible(page, 'sign in');
+
+  // Sign in with the password, then the second step with a fresh code.
+  await page.getByLabel('Email').fill(person.email);
+  await page.getByLabel('Password', { exact: true }).fill(person.password);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page).toHaveURL(/\/sign-in\/two-factor/);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Two-factor authentication' }),
+  ).toBeVisible();
+  await expectAccessible(page, 'two-factor step');
+
+  await page.getByLabel('Code').fill(await authenticator.nextCode());
+  await page.getByRole('button', { name: 'Verify' }).click();
+
+  // Signed in: the shell with the instance administrator's Administration.
+  await expect(page.getByRole('heading', { level: 1, name: 'Welcome' })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Administration' })).toBeVisible();
+  await navigation.getByRole('link', { name: 'Administration' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Administration' })).toBeVisible();
+  await expect(page.getByText('Installed version')).toBeVisible();
+  await expectAccessible(page, 'administration');
+
+  expect(problems).toEqual([]);
+});

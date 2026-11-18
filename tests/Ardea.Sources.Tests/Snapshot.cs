@@ -12,7 +12,7 @@ internal static class Snapshot
 {
     public static void Match(string actual, string name, [CallerFilePath] string testFile = "")
     {
-        var directory = Path.Combine(Path.GetDirectoryName(testFile)!, "Snapshots");
+        var directory = Path.Combine(Path.GetDirectoryName(SourcePath(testFile))!, "Snapshots");
         Directory.CreateDirectory(directory);
         var verified = Path.Combine(directory, name + ".verified.json");
         var received = Path.Combine(directory, name + ".received.json");
@@ -34,5 +34,22 @@ internal static class Snapshot
         Assert.Fail(expected is null
             ? $"No snapshot {name} yet. Review {received} and accept it with ARDEA_UPDATE_SNAPSHOTS=1."
             : $"Output differs from snapshot {name}. Compare {received} with {verified}; accept intended changes with ARDEA_UPDATE_SNAPSHOTS=1.");
+    }
+
+    /// <summary>CI builds are deterministic and record source paths as <c>/_/…</c>; map them back to the checkout.</summary>
+    private static string SourcePath(string compiledPath)
+    {
+        if (!compiledPath.StartsWith("/_/", StringComparison.Ordinal))
+        {
+            return compiledPath;
+        }
+
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Ardea.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        return Path.Combine(directory?.FullName ?? throw new InvalidOperationException("Repository root not found."), compiledPath[3..]);
     }
 }

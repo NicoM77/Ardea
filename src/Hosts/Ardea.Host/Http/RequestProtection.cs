@@ -71,6 +71,23 @@ internal static class RequestProtection
         return next(context);
     }
 
+    /// <summary>
+    /// An instance with an HTTPS public address takes API calls only over HTTPS, normally through its
+    /// proxy (master plan 12.2). A plain request gets a clear answer instead of failing deep inside.
+    /// </summary>
+    public static RequestDelegate RequireHttps(RequestDelegate next, bool required) => context =>
+    {
+        if (required && !context.Request.IsHttps && context.Request.Path.StartsWithSegments("/api"))
+        {
+            return ApiProblems.Problem(
+                "https_required", StatusCodes.Status403Forbidden,
+                "This instance answers only over HTTPS. Open it through its public address, or check that the proxy sends X-Forwarded-Proto and is listed in ARDEA_TRUSTED_PROXIES.")
+                .ExecuteAsync(context);
+        }
+
+        return next(context);
+    };
+
     /// <summary>The signed-in user becomes part of the tenant context before any data access.</summary>
     public static Task TenantUser(HttpContext context, RequestDelegate next)
     {

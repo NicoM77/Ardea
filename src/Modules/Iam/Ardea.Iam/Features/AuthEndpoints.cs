@@ -369,7 +369,7 @@ internal static class AuthEndpoints
         http.Response.Cookies.Append(SessionClaims.XsrfCookieName, tokens.RequestToken!, new CookieOptions
         {
             HttpOnly = false,
-            Secure = true,
+            Secure = http.Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Path = "/",
         });

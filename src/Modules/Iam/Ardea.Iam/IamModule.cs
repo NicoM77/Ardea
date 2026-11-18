@@ -63,12 +63,14 @@ public sealed class IamModule : IModule
 
     public void AddApiServices(IServiceCollection services, IConfiguration configuration)
     {
+        var secure = IsSecure(configuration);
+        var policy = secure ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
         services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
         services.ConfigureApplicationCookie(options =>
         {
-            options.Cookie.Name = SessionClaims.CookieName;
+            options.Cookie.Name = SessionClaims.CookieName(secure);
             options.Cookie.HttpOnly = true;
-            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.SecurePolicy = policy;
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.Cookie.Path = "/";
             options.ExpireTimeSpan = UserSession.IdleTimeout;
@@ -83,23 +85,23 @@ public sealed class IamModule : IModule
         });
         services.Configure<CookieAuthenticationOptions>(IdentityConstants.TwoFactorUserIdScheme, options =>
         {
-            options.Cookie.Name = "__Host-ardea-2fa";
-            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.Name = SessionClaims.TwoFactorCookieName(secure);
+            options.Cookie.SecurePolicy = policy;
             options.Cookie.SameSite = SameSiteMode.Strict;
             options.Cookie.Path = "/";
             // Five minutes from the password, however many codes are tried in between.
             options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
             options.SlidingExpiration = false;
         });
-        services.Configure<CookieAuthenticationOptions>(IdentityConstants.ExternalScheme, options => options.Cookie.SecurePolicy = CookieSecurePolicy.Always);
-        services.Configure<CookieAuthenticationOptions>(IdentityConstants.TwoFactorRememberMeScheme, options => options.Cookie.SecurePolicy = CookieSecurePolicy.Always);
+        services.Configure<CookieAuthenticationOptions>(IdentityConstants.ExternalScheme, options => options.Cookie.SecurePolicy = policy);
+        services.Configure<CookieAuthenticationOptions>(IdentityConstants.TwoFactorRememberMeScheme, options => options.Cookie.SecurePolicy = policy);
         services.AddAuthorization(options => options.AddPolicy(
             Contracts.IamPolicies.InstanceAdmin, policy => policy.RequireAuthenticatedUser().RequireClaim(Contracts.IamPolicies.InstanceAdminClaim, "true")));
         services.AddAntiforgery(options =>
         {
             options.HeaderName = SessionClaims.XsrfHeaderName;
-            options.Cookie.Name = SessionClaims.CsrfCookieName;
-            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.Name = SessionClaims.CsrfCookieName(secure);
+            options.Cookie.SecurePolicy = policy;
             options.Cookie.SameSite = SameSiteMode.Strict;
             options.Cookie.Path = "/";
         });
@@ -134,6 +136,10 @@ public sealed class IamModule : IModule
         AuthEndpoints.Map(endpoints);
         AccountEndpoints.Map(endpoints);
     }
+
+    /// <summary>Real instances have an HTTPS public address; only development runs on plain HTTP.</summary>
+    internal static bool IsSecure(IConfiguration configuration) =>
+        !Uri.TryCreate(configuration["PUBLIC_URL"], UriKind.Absolute, out var url) || url.Scheme != Uri.UriSchemeHttp;
 
     internal static string ClientKey(System.Net.IPAddress? address)
     {

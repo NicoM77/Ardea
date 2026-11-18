@@ -12,7 +12,8 @@ Instanz
      ├─ Mitgliedschaften mit Rolle
      ├─ Projekte → Komponenten
      ├─ Meldungen → Befunde, Einschätzungen, Verlauf
-     └─ Regeln, Zustellungen, Webhook-Ziele
+     ├─ Massnahmen (Komponente in einem Projekt) mit Status und Zuweisung
+     └─ Regeln, Benachrichtigungsstand, Zustellungen, Webhook-Ziele
 ```
 
 - Ein Benutzer kann mehreren Organisationen angehören und wechselt in der Oberfläche zwischen ihnen. Die aktive Organisation steht in der URL (`/o/{slug}/…`) und in jedem API-Pfad (`/api/v1/orgs/{orgId}/…`), nicht in einem versteckten Sitzungszustand.
@@ -20,7 +21,7 @@ Instanz
 
 | Recht | Owner | Admin | Member | Viewer |
 |---|:-:|:-:|:-:|:-:|
-| Meldungen, Projekte, Bulletin lesen | ● | ● | ● | ● |
+| Massnahmen, Meldungen, Projekte, Bulletin lesen | ● | ● | ● | ● |
 | Status setzen, zuweisen, Notiz, Einschätzung korrigieren | ● | ● | ● | |
 | Projekte und Komponenten pflegen | ● | ● | ● | |
 | Benachrichtigungsregeln, Webhook-Ziele | ● | ● | | |
@@ -32,21 +33,43 @@ Rechte je Projekt (ein Dienstleister sieht nur «sein» Projekt) sind eine Ausba
 
 Registrierung ist pro Instanz einstellbar: offen, nur auf Einladung (Vorgabe nach dem ersten Benutzer) oder geschlossen. Eine frische Instanz nimmt den ersten Benutzer nur mit einem **Einrichtungstoken** an, das beim ersten Start im Log steht oder per Umgebungsvariable gesetzt wird. So kann niemand eine eben gestartete, schon erreichbare Instanz übernehmen.
 
-## 9.2 Trennung der Mandanten in drei Schichten
+## 9.2 Trennung der Mandanten
+
+Jede Tabelle gehört zu einer von drei Arten (Kapitel 4.1), und jede Art hat eine Zugriffsregel:
+
+| Daten | Wer liest und schreibt |
+|---|---|
+| Organisation | nur mit Mandantenkontext. Er entsteht in der API aus der geprüften Mitgliedschaft, im Worker aus der Organisation des Jobs. |
+| Benutzer | nur der Benutzer selbst, über die Pfade unter `/me`. |
+| Global | lesbar für jeden Angemeldeten; schreibbar für den Worker und, bei Einstellungen und Quellen, für den Instanz-Administrator. |
+
+**Zwei Schichten sind Pflicht, eine dritte kommt nach einem Versuch hinzu.**
 
 | Schicht | Mechanismus | Schützt vor |
 |---|---|---|
-| 1 Zugriff | Jeder Endpunkt unter `/orgs/{orgId}` prüft Mitgliedschaft und Rolle, bevor ein Handler läuft. Der Mandantenkontext entsteht nur aus dieser Prüfung. | Aufruf mit fremder Organisations-ID |
-| 2 Abfrage | Benannte Abfragefilter in EF Core 10 auf jeder mandantenbezogenen Entität. Ohne Mandantenkontext wirft der `DbContext`. | vergessene `WHERE`-Bedingung |
-| 3 Datenbank | Row-Level Security in PostgreSQL auf jeder Tabelle mit `organization_id`. Die Anwendung verbindet sich als Rolle ohne Eigentum und ohne `BYPASSRLS`; der Mandant wird je Transaktion gesetzt. | Fehler in Schicht 2, rohes SQL, künftige Abfragen ausserhalb von EF |
+| 1 Zugriff | Jeder Endpunkt unter `/orgs/{orgId}` prüft Mitgliedschaft und Rolle, bevor ein Handler läuft. Kennungen in Anfragekörpern (Projekt, Komponente, Regel, Ziel) werden innerhalb des Mandanten aufgelöst; eine fremde Kennung ist «nicht gefunden». | Aufruf mit fremder Organisations- oder Objektkennung |
+| 2 Abfrage | Benannte Abfragefilter in EF Core 10 auf jeder Entität der Arten Organisation und Benutzer. Ohne Kontext wirft der `DbContext`. | vergessene `WHERE`-Bedingung |
+| 3 Datenbank | Row-Level Security auf denselben Tabellen. Die Anwendung verbindet sich als Rolle ohne Eigentum und ohne `BYPASSRLS`. | Fehler in Schicht 2, rohes SQL, künftige Abfragen ausserhalb von EF |
 
-Row-Level Security schützt vor Programmierfehlern, nicht vor einem Angreifer, der bereits beliebiges SQL ausführen kann. Sie ist die Rückversicherung, nicht die erste Verteidigung.
+Die Recherche fand für Schicht 3 keine Primärquelle, die das Zusammenspiel von Row-Level Security, Verbindungspool und EF Core beschreibt, und stuft sie als Härtung ein, nicht als Fundament. Der Plan folgt dem: Die Schichten 1 und 2 mit einem automatischen Fremdzugriffstest für jeden Endpunkt sind das Fundament. Schicht 3 wird eingeführt, wenn der Versuch 0.6 in Phase 0 zeigt, dass sie mit der unten beschriebenen Arbeitseinheit sauber zusammenspielt. Sie schützt vor Programmierfehlern, nicht vor einem Angreifer, der bereits beliebiges SQL ausführen kann.
 
-**Umsetzung der Schicht 3.** Zwei Datenbankrollen: `csh_migrator` besitzt die Tabellen und führt Migrationen aus; `csh_app` wird von API und Worker benutzt. Jede Arbeitseinheit öffnet eine Transaktion und setzt `app.org_id` für deren Dauer. Die Richtlinie lautet sinngemäss `organization_id = current_setting('app.org_id')::uuid`. Ein Test im Build prüft, dass jede Tabelle mit `organization_id` eine aktive, erzwungene Richtlinie hat.
+**Eine Arbeitseinheit, eine Transaktion.** Jede Anfrage und jeder Job öffnet genau eine Datenbanktransaktion. Die Plattform stellt Verbindung und Transaktion bereit, setzt darin Organisation und Benutzer, und alle Modul-`DbContext` der Arbeitseinheit benutzen sie gemeinsam. Folgejobs werden in derselben Transaktion eingereiht.
 
-**Die eine Ausnahme.** Die Kandidatensuche muss für einen geänderten Eintrag über alle Organisationen hinweg fragen, wer ein Produkt einsetzt. Dafür gibt es genau eine Datenbankfunktion mit erhöhten Rechten, die zu einer Liste von Produktschlüsseln die Tripel aus Organisation, Projekt und Komponente liefert und nichts sonst. Alles Weitere läuft danach wieder im Kontext der jeweiligen Organisation.
+**Systemoperationen.** Mehrere Abläufe müssen über Organisationen hinweg fragen. Sie folgen einem Grundsatz: Ein Systemjob ermittelt nur, *welche* Organisationen betroffen sind, und reiht je Organisation einen Job ein. Gelesen und geschrieben wird ausschliesslich in Jobs mit Mandantenkontext.
 
-**Offener Punkt.** Das Zusammenspiel von RLS, Verbindungspool und EF Core ist nicht in einer offiziellen Quelle beschrieben (Kapitel 2). Ein Spike in Phase 0 klärt es. Scheitert er, bleiben die Schichten 1 und 2, ergänzt um einen automatischen Test, der für jeden Endpunkt den Zugriff mit einer fremden Organisation versucht.
+| Ablauf | Was organisationsübergreifend gefragt wird |
+|---|---|
+| Kandidatensuche | Welche Organisationen, Projekte und Komponenten führen diese Produktschlüssel? |
+| Neubewertung, Rückzug eines Eintrags | Welche Organisationen haben Befunde zu diesem Eintrag? |
+| Sammelnachrichten, Eskalation | Welche Ziele sind jetzt fällig? |
+| Anmeldung | Welchen Organisationen gehört dieser Benutzer an? (benutzerbezogene Regel auf `membership`) |
+| Einladung annehmen | Zu welcher Organisation gehört dieser Token? |
+| Kennzahlen der Instanz | Zählwerte ohne Inhalte |
+| Export, Löschen, Aufräumen | laufen als Wartungsbefehl mit der Eigentümerrolle, nicht im Betrieb |
+
+Jede dieser Fragen ist eine eigene, schmale Datenbankfunktion, die nur Kennungen oder Zählwerte liefert. Die Liste ist abschliessend; eine neue Systemoperation verlangt eine neue Funktion und einen ADR.
+
+**Datenbankrollen.** `csh_migrator` besitzt die Tabellen; sein Passwort kennen nur der Befehl `migrate` und die Wartungsbefehle. `csh_app` wird von API und Worker benutzt und hat ein eigenes Passwort. Ein Test im Build prüft, dass jede Tabelle einer der drei Arten zugeordnet ist und dass der Fremdzugriffstest jeden Endpunkt abdeckt, auch mit fremden Kennungen im Anfragekörper.
 
 ## 9.3 Authentifizierung
 
@@ -54,7 +77,7 @@ Row-Level Security schützt vor Programmierfehlern, nicht vor einem Angreifer, d
 |---|---|
 | Grundlage | ASP.NET Core Identity mit eigenen Endpunkten auf `SignInManager` und `UserManager`. `MapIdentityApi` wird nicht verwendet: kein Logout, keine Passkeys, nicht anpassbar. |
 | Sitzung im Browser | Cookie `__Host-csh`: `HttpOnly`, `Secure`, `SameSite=Lax`, gleitend 12 Stunden, absolut 14 Tage. API-Endpunkte antworten mit 401/403 statt Umleitung. Passwortwechsel, MFA-Änderung und «überall abmelden» entwerten alle Sitzungen über den Sicherheitsstempel. |
-| CSRF | Antiforgery-Token im Header für alle ändernden Anfragen, zusätzlich Prüfung von `Sec-Fetch-Site` und `Origin`. Angular sendet das Token von Haus aus mit. |
+| CSRF | Antiforgery-Token im Header für alle ändernden Anfragen, zusätzlich Prüfung von `Sec-Fetch-Site` und `Origin`. Angular überträgt das Token über seinen eingebauten XSRF-Mechanismus, sobald Cookie- und Headername übereinstimmen. |
 | Passwort | Mindestlänge 12, keine Zusammensetzungsregeln, Abgleich mit einer mitgelieferten Liste häufiger Passwörter. Hashing nach Identity-Vorgabe (PBKDF2), Iterationen konfigurierbar. |
 | MFA | TOTP mit Wiederherstellungscodes im MVP. Eine Organisation kann MFA für ihre Mitglieder verlangen. |
 | Passkeys | Ausbaustufe 1, über die in .NET 10 eingebauten Passkey-Dienste. |
@@ -73,8 +96,8 @@ Row-Level Security schützt vor Programmierfehlern, nicht vor einem Angreifer, d
 
 Dazu:
 
-- **Datensparsamkeit gegenüber der KI:** Nur getroffene Komponenten verlassen das System, Projektnamen als Platzhalter; die Organisation wählt `keine KI`, `nur lokal` oder `Cloud erlaubt` (Kapitel 7.7).
-- **Kein Heimtelefon:** Die Anwendung sendet nichts an das Projekt. Telemetrie geht nur an einen Endpunkt, den der Betreiber selbst setzt.
+- **Datensparsamkeit gegenüber der KI:** Nur getroffene Komponenten verlassen das System, Projektnamen als Platzhalter; die Organisation wählt `keine KI`, `nur lokal` oder `Cloud erlaubt` (Kapitel 7.8).
+- **Keine Rückmeldung an das Projekt:** Die Anwendung sendet nichts an ihre Entwickler. Telemetrie geht nur an einen Endpunkt, den der Betreiber selbst setzt.
 - **Audit-Protokoll:** Anmeldungen, Rollenänderungen, Änderungen an Profil, Regeln und Einstellungen sowie Statuswechsel, je mit Benutzer, Zeit, Organisation und Herkunft. Unveränderlich für die Anwendung; Löschung nur über Aufbewahrungsfristen.
 - **Löschen und Exportieren:** Eine Organisation lässt sich vollständig exportieren und löschen; die globalen Daten bleiben unberührt.
 
@@ -85,10 +108,10 @@ Das System liest fremde Inhalte und ruft fremde Adressen auf. Beides ist Angriff
 | Risiko | Massnahme |
 |---|---|
 | Schadcode in Advisory-Texten (gespeichertes XSS) | HTML wird beim Normalisieren auf eine Positivliste reduziert; die Oberfläche bindet Texte nie als HTML ein, ausser dem bereinigten Beschreibungsfeld; strikte Content Security Policy ohne Inline-Skripte. |
-| Anweisungen an das Sprachmodell in Quelltexten | Keine Werkzeuge für das Modell, Schema-Prüfung der Ausgabe, deterministische Untergrenzen (Kapitel 7.4, 7.5). |
-| Webhook als Sprungbrett ins interne Netz (SSRF) | Ziele werden aufgelöst und gegen private, lokale und Metadaten-Adressbereiche geprüft; die geprüfte Adresse wird für die Verbindung verwendet. Interne Ziele nur über eine Freigabeliste des Instanz-Administrators. Keine Weiterleitungen. |
+| Anweisungen an das Sprachmodell in Quelltexten | Keine Werkzeuge für das Modell, Schema-Prüfung der Ausgabe, kein «nicht betroffen» ohne Bestätigung durch einen Menschen, Untergrenzen im Regelwerk (Kapitel 7.5, 7.6). |
+| Webhook oder Push-Abo als Sprungbrett ins interne Netz (SSRF) | Webhook-Ziele werden aufgelöst und gegen private, lokale und Metadaten-Adressbereiche geprüft; die geprüfte Adresse wird für die Verbindung verwendet. Interne Ziele nur über eine Freigabeliste des Instanz-Administrators. Keine Weiterleitungen. Push-Abos werden nur für die Push-Dienste der Browserhersteller angenommen. |
 | Manipulierte oder übergrosse Antworten von Quellen | Adapter rufen nur die konfigurierten Hosts auf; Grössen- und Zeitlimits; XML ohne DTD und externe Entitäten; Entpacken mit Obergrenzen für Grösse und Dateizahl. |
-| Kompromittierte Quelle liefert falsche Daten | Rangfolge der Quellen, Herkunft je Feld sichtbar, auffällige Massenänderungen (viele Rückzüge, Stufensprünge) halten die Verarbeitung an und warnen den Instanz-Administrator. |
+| Kompromittierte Quelle liefert falsche Daten | Rangfolge der Quellen, Herkunft je Feld sichtbar. Ein Anhalten bei auffälligen Massenänderungen ist eine Ausbaustufe. |
 
 ## 9.6 Härtung der Anwendung
 
@@ -103,12 +126,12 @@ Das System liest fremde Inhalte und ruft fremde Adressen auf. Beides ist Angriff
 
 | Bedrohung | Wirkung | Wichtigste Gegenmassnahmen |
 |---|---|---|
-| Mitglied von A liest Daten von B | Offenlegung der Angriffsfläche | drei Schichten der Trennung, automatischer Fremdzugriffstest |
+| Mitglied von A liest Daten von B | Offenlegung der Angriffsfläche | Zugriffsprüfung und Abfragefilter, Row-Level Security nach bestandenem Versuch, automatischer Fremdzugriffstest |
 | Kontoübernahme | Zugriff auf alle Organisationen des Kontos | MFA, Sperre, Ratenbegrenzung, Sitzungsentwertung |
 | Frische Instanz wird gekapert | vollständige Kontrolle | Einrichtungstoken |
 | Datenbank-Dump gerät in falsche Hände | Profile lesbar, Geheimnisse nicht | Spaltenverschlüsselung der Geheimnisse, Hauptschlüssel ausserhalb der Datenbank, Empfehlung zur Datenträgerverschlüsselung |
-| Unterdrückung einer Warnung über manipulierten Quelltext | übersehene Lücke | Untergrenzen im Regelwerk, Schema-Prüfung, Herkunft sichtbar |
-| Alarmflut durch fehlerhafte oder böswillige Quelle | Abstumpfung, Ausfall | Wesentlichkeitsprüfung, Obergrenzen je Kanal, Anhalten bei Massenänderungen |
+| Unterdrückung einer Warnung über manipulierten Quelltext | übersehene Lücke | das Modell kann Stufe 1 nicht allein setzen; Untergrenzen im Regelwerk; Schema-Prüfung |
+| Alarmflut durch fehlerhafte oder böswillige Quelle | Abstumpfung, Ausfall | Benachrichtigung je Massnahme statt je CVE, Wesentlichkeitsprüfung, Obergrenzen je Kanal |
 | Missbrauch als Proxy ins interne Netz | Zugriff auf interne Dienste | SSRF-Schutz für Webhooks und Quellen |
 | Abgezogene Sitzung oder Token | Handeln im Namen des Benutzers | `HttpOnly`-Cookie, CSP, kurze Laufzeit, CSRF-Schutz |
 | Schädliche Abhängigkeit | Codeausführung im System | Lockfiles, Lizenz- und Update-Automatik, minimales Image |

@@ -39,17 +39,18 @@ flowchart LR
 
 ## 3.2 Module und Verantwortlichkeiten
 
-Die acht geforderten Bereiche verteilen sich auf sechs Module und zwei Hosts. Quellenadapter liegen in eigenen Assemblies ausserhalb des Kerns.
+Die acht geforderten Bereiche verteilen sich auf sieben Module und einen Host mit zwei Rollen. Quellenadapter liegen in eigenen Assemblies ausserhalb des Kerns.
 
 | Modul | Verantwortet | Geforderter Bereich |
 |---|---|---|
 | **Intel.Sources.\*** | Je Quelle ein Adapter: abrufen, in Beobachtungen übersetzen. Kennt nur das Provider-SDK, weder Datenbank noch andere Module. | 1 Source Providers |
 | **Intel** | Abrufsteuerung, Rohdatenablage, Normalisierung, Identitätsauflösung, Zusammenführung, Änderungshistorie, konsolidierte Einträge | 2 Ingestion & Normalization, 3 Correlation & Deduplication |
-| **Assessment** | Kandidatensuche gegen Profile, KI-Einschätzung, Regelwerk für die Stufe, Meldungen und Befunde mit Status | 4 Risk Assessment & AI Analysis |
+| **Assessment** | Kandidatensuche gegen Profile, Regelwerk für die Stufe, KI-Einschätzung, Befunde, Massnahmen und Meldungen mit Status | 4 Risk Assessment & AI Analysis |
 | **Iam** | Benutzer, Anmeldung, MFA, Organisationen, Mitgliedschaften, Einladungen, Rollen | 5 Organization … |
-| **Assets** | Projekte, Komponenten, Technologie-Katalog, Setup-Wizard-Zustand | 5 … & Asset Management |
-| **Notifications** | Regeln, Empfängerauflösung, Kanäle, Zustellung mit Wiederholung, Zusammenfassungen, In-App-Benachrichtigungen | 6 Notification Engine |
-| **Platform** | Jobs und Outbox, Mandantenkontext, Audit-Protokoll, Einstellungen, Geheimnisschutz, Telemetrie | Querschnitt |
+| **Assets** | Projekte, Komponenten, Setup-Wizard-Zustand | 5 … & Asset Management |
+| **Catalog** | Technologie-Katalog: Produkte, Aliasse, Produktschlüssel, Versionsschemata | Grundlage für 3, 4 und 5 |
+| **Notifications** | Regeln, Empfängerauflösung, Kanäle, Zustellung mit Wiederholung, Sammelnachrichten, In-App-Benachrichtigungen | 6 Notification Engine |
+| **Platform** | Jobs und Zeitpläne, Mandantenkontext und Arbeitseinheit, Audit-Protokoll, Einstellungen, Geheimnisschutz, Telemetrie | Querschnitt |
 | Host **Api** | Endpunkte aller Module, OpenAPI, Auslieferung der Web-App | 7 Backend API |
 | **web/** | Angular-Anwendung | 8 Web Frontend |
 
@@ -64,21 +65,23 @@ flowchart TB
   Notifications -->|Contracts| Assessment
   Notifications -->|Contracts| Iam
   Assets -->|Contracts| Iam
+  Assets -->|Contracts| Catalog
+  Intel -->|Contracts| Catalog
   Intel --> SDK[Intel.Sources.Abstractions]
   Quellenadapter[Intel.Sources.*] --> SDK
-  Iam & Assets & Intel & Assessment & Notifications --> Platform
+  Iam & Assets & Catalog & Intel & Assessment & Notifications --> Platform
   Platform --> SharedKernel
 ```
 
 1. Ein Modul greift auf ein anderes nur über dessen `Contracts`-Assembly zu: Abfrage-Schnittstellen, Datentransferobjekte, Integrationsereignisse. Alles andere ist `internal`.
 2. Kein Modul liest oder schreibt Tabellen eines anderen Moduls. Jedes Modul besitzt ein eigenes Datenbankschema und einen eigenen `DbContext`.
-3. Abhängigkeiten zeigen in eine Richtung: `Intel` kennt niemanden, `Assessment` kennt `Intel` und `Assets`, `Notifications` kennt `Assessment` und `Iam`. Zyklen sind verboten.
+3. Abhängigkeiten zeigen in eine Richtung: `Catalog` kennt niemanden, `Intel` und `Assets` kennen `Catalog`, `Assessment` kennt `Intel` und `Assets`, `Notifications` kennt `Assessment` und `Iam`. Zyklen sind verboten.
 4. Quellenadapter kennen ausschliesslich das Provider-SDK. Sie haben keinen Zugriff auf Datenbank, Mandantendaten oder andere Adapter.
 5. Architekturtests im Build prüfen die Regeln 1 bis 4; ein Verstoss lässt den Build scheitern.
 
 ### Aufbau eines Moduls
 
-Ein Projekt pro Modul plus ein Contracts-Projekt. Die klassische Vierteilung in Domain, Application, Infrastructure und Presentation als eigene Projekte würde bei sechs Modulen über zwanzig Projekte erzeugen; Ordner und `internal` leisten dasselbe mit weniger Reibung.
+Ein Projekt pro Modul plus ein Contracts-Projekt. Die klassische Vierteilung in Domain, Application, Infrastructure und Presentation als eigene Projekte würde bei sieben Modulen fast dreissig Projekte erzeugen; Ordner und `internal` leisten dasselbe mit weniger Reibung.
 
 ```
 Modules/Assessment/
@@ -95,7 +98,7 @@ Anwendungsfälle sind schlichte Handler-Klassen, die der Endpunkt direkt aufruft
 
 ## 3.3 Die Verarbeitungskette
 
-Jede Stufe ist ein idempotenter Job. Stufen sind über die Outbox entkoppelt: Ein Zustand und das Ereignis darüber werden in derselben Transaktion geschrieben.
+Jeder Schritt ist ein idempotenter Job. Schritte sind über eingereihte Folgejobs entkoppelt: Ein Zustand und der Job, der auf ihn folgt, werden in derselben Transaktion geschrieben.
 
 ```mermaid
 sequenceDiagram
@@ -111,63 +114,69 @@ sequenceDiagram
   I->>I: Rohdaten ablegen, Inhalt hashen, Unverändertes verwerfen
   I->>I: Normalisieren zu Beobachtungen
   I->>I: Identität auflösen, Eintrag neu zusammenführen, Änderung bestimmen
-  I-->>A: Ereignis EntryChanged (nur bei wesentlicher Änderung)
+  I-->>A: Folgejob (nur bei wesentlicher Änderung)
   A->>A: Kandidaten suchen: welche Organisationen und Projekte?
-  A->>A: je Organisation: einschätzen (KI optional), Stufe berechnen
-  A-->>N: Ereignis AlertRaised / AlertLevelChanged
+  A->>A: je Organisation: Stufe berechnen, Massnahmen bilden, KI ab Schwelle
+  A-->>N: Ereignis an einer Massnahme (Kapitel 8.2)
   N->>N: Regeln auswerten, Empfänger bestimmen, Doppelte verwerfen
   N->>U: In-App, E-Mail, Push, Webhook
 ```
 
-| Stufe | Job | Auslöser | Idempotenz über |
+| Schritt | Job | Auslöser | Idempotenz über |
 |---|---|---|---|
 | Abruf | `SyncSource(sourceId)` | Fälligkeit der Quelle | Cursor der Quelle; Upsert auf (Quelle, externe ID) mit Inhalts-Hash |
 | Normalisierung | `NormalizeRecords(batch)` | neue oder geänderte Rohdatensätze | Beobachtung je Rohdaten-Revision |
 | Zusammenführung | `CorrelateEntry(entryKey)` | neue Beobachtungen | Neuberechnung aus allen Beobachtungen; Revisionsnummer |
-| Kandidatensuche | `MatchEntry(entryId, revision)` | `EntryChanged` | Schlüssel (Eintrag, Revision) |
-| Rückwärtssuche | `MatchProject(projectId)` | Profil geändert | Schlüssel (Projekt, Profilversion) |
-| Einschätzung | `AssessAlert(orgId, entryId, revision)` | Kandidat gefunden | Schlüssel (Organisation, Eintrag, Revision, Profilversion) |
-| Benachrichtigung | `EvaluateRules(alertEvent)` → `Deliver(deliveryId)` | `AlertRaised`, `AlertLevelChanged` | eindeutiger Zustellschlüssel (Kapitel 8) |
-| Zusammenfassung | `SendDigest(ruleId, period)` | Zeitplan der Regel | Schlüssel (Regel, Periode) |
+| Kandidatensuche | `MatchEntry(entryId)` | Eintrag wesentlich geändert | arbeitet immer auf dem aktuellen Stand; ein wartender Job je Eintrag |
+| Rückwärtssuche | `MatchProject(projectId)` | Profil geändert | arbeitet auf dem aktuellen Profil; ein wartender Job je Projekt |
+| Bewertung | `AssessAlert(orgId, entryId)` | Kandidat gefunden | Fingerabdruck der Eingabe; gleiche Eingabe erzeugt keine neue Einschätzung |
+| Benachrichtigung | `EvaluateRules(event)` → `Deliver(deliveryId)` | Ereignisse nach Kapitel 8.2 | Benachrichtigungsstand und eindeutiger Zustellschlüssel (Kapitel 8.4) |
+| Sammelnachricht | `SendDigest(targetId, period)` | Zeitplan des Ziels | Schlüssel (Ziel, Periode) |
 
-Mehrere Quellen aktualisieren dieselbe Schwachstelle oft innerhalb von Minuten. `MatchEntry` wird deshalb mit einer kurzen Verzögerung eingereiht und über seinen Schlüssel zusammengefasst, sodass eine Welle von Änderungen eine Einschätzung auslöst, nicht fünf.
+Mehrere Quellen aktualisieren dieselbe Schwachstelle oft innerhalb von Minuten. `MatchEntry` wird deshalb mit einer kurzen Verzögerung eingereiht; solange ein Job für denselben Eintrag wartet, entsteht kein zweiter. Eine Welle von Änderungen löst so eine Bewertung aus, nicht fünf.
 
-## 3.4 Jobs, Outbox und Zeitsteuerung
+## 3.4 Jobs und Zeitsteuerung
 
-Empfehlung (Bewertung der Alternativen in Kapitel 2): eine schlanke, eigene Job-Tabelle in PostgreSQL statt einer Scheduler-Bibliothek. Die drei Gründe:
+Empfehlung (Bewertung der Alternativen in Kapitel 2.2): eine eigene Job-Tabelle in PostgreSQL statt einer Scheduler-Bibliothek. Die Gründe:
 
-- **Transaktionale Einreihung.** Der Zustand «Eintrag geändert» und der Folgejob entstehen in einer Transaktion. Kein Fenster, in dem das eine ohne das andere existiert.
-- **Abrufsteuerung ist Fachzustand.** Wann eine Quelle wieder fällig ist, hängt von ihrem Verhalten ab: Intervall, Fehlerserie, `Retry-After`. Das gehört in die Tabelle der Quelle, nicht in einen fremden Scheduler.
+- **Transaktionale Einreihung.** Der Zustand «Eintrag geändert» und der Folgejob entstehen in einer Transaktion. Kein Fenster, in dem das eine ohne das andere existiert. Die Job-Tabelle ist damit zugleich die Outbox; ein eigener Verteiler entfällt.
+- **Abrufsteuerung ist Fachzustand.** Wann eine Quelle wieder fällig ist, hängt von ihrem Verhalten ab. Das gehört in die Tabelle der Quelle, nicht in einen fremden Scheduler.
 - **Eine Abhängigkeit weniger** bei einem Muster, das mit `FOR UPDATE SKIP LOCKED` gut verstanden ist.
+
+Das ist kein Zehnzeiler, sondern ein kleines eigenes Teilsystem. Sein Umfang im MVP ist bewusst begrenzt:
 
 ```
 platform.job
-  id uuid, kind text, payload jsonb, dedupe_key text unique (nullable),
-  run_at timestamptz, priority smallint,
+  id uuid, kind text, payload jsonb, coalesce_key text (nullable),
+  run_at timestamptz, priority smallint (0 dringend, 1 normal, 2 Hintergrund),
   state: pending | running | succeeded | failed | dead,
   attempts int, max_attempts int, last_error text,
-  lease_owner text, lease_until timestamptz,
+  lease_owner text, lease_until timestamptz, timeout_seconds int,
   org_id uuid (nullable, setzt den Mandantenkontext), trace_parent text,
   created_at, finished_at
 ```
 
-- **Abholen:** `SELECT … WHERE state = 'pending' AND run_at <= now() ORDER BY priority, run_at FOR UPDATE SKIP LOCKED LIMIT n`, danach Lease setzen. Ein Wächter gibt abgelaufene Leases wieder frei.
-- **Wecken:** `NOTIFY` beim Einreihen, damit der Worker nicht pollen muss; ein langsamer Poll bleibt als Rückfallebene.
-- **Wiederholen:** exponentiell mit Streuung; nach `max_attempts` Zustand `dead`, sichtbar in der Administration, manuell wiederholbar.
-- **Zusammenfassen:** Ein gesetzter `dedupe_key` verhindert einen zweiten wartenden Job gleicher Art.
-- **Begrenzen:** Parallelität je Job-Art konfigurierbar; KI-Jobs und Abrufe je Quelle haben eigene Obergrenzen.
-- **Wiederkehrendes:** Eine Tabelle `platform.schedule` mit Cron-Ausdruck und Zeitzone; ein Leader (Advisory Lock) reiht fällige Läufe mit Schlüssel (Zeitplan, Fälligkeit) ein.
-- **Outbox:** `platform.outbox_message` wird in derselben Transaktion wie die Fachänderung geschrieben; ein Verteiler macht daraus Jobs für die abonnierenden Module. Empfänger sind idempotent.
-- **Aufräumen:** Erfolgreiche Jobs werden nach 7 Tagen gelöscht, fehlgeschlagene nach 30.
+| Funktion | Festlegung |
+|---|---|
+| Abholen | `… WHERE state = 'pending' AND run_at <= now() ORDER BY priority, run_at FOR UPDATE SKIP LOCKED LIMIT n`, danach Lease setzen |
+| Lease | läuft nach `timeout_seconds` ab; lange Jobs verlängern sie regelmässig; ein Wächter gibt abgelaufene frei und zählt den Versuch |
+| Wecken | `NOTIFY` beim Einreihen; ein langsamer Poll bleibt als Rückfallebene |
+| Wiederholen | exponentiell mit Streuung; nach `max_attempts` Zustand `dead`, sichtbar in der Administration, von Hand wiederholbar |
+| Zusammenfassen | höchstens ein wartender Job je `coalesce_key` (eindeutiger Teilindex über wartende Jobs); ein laufender oder erledigter Job blockiert keinen neuen |
+| Begrenzen | Parallelität je Job-Art konfigurierbar; KI-Jobs und Abrufe je Quelle haben eigene Obergrenzen |
+| Wiederkehrendes | `platform.schedule` mit Cron-Ausdruck und Zeitzone; ein Leader (Advisory Lock) reiht fällige Läufe ein |
+| Aufräumen | erledigte Jobs nach 7 Tagen, aufgegebene nach 30 |
 
-Der Baustein bleibt hinter `IJobQueue` und `IScheduler`. Sollte er sich als zu knapp erweisen, lässt er sich durch eine Bibliothek ersetzen, ohne dass Module es merken.
+Dieselbe Wiederholung gilt für alles: Verarbeitungsschritte, Abrufe und Zustellungen sind Jobs. Es gibt keinen zweiten Mechanismus.
+
+Der Baustein bleibt hinter `IJobQueue` und `IScheduler`. Sollte er sich als zu knapp erweisen, ist Quartz.NET die vorgesehene Ausweichlösung, ohne dass Module es merken.
 
 ## 3.5 Querschnitt
 
 | Thema | Entscheidung |
 |---|---|
-| Mandantenkontext | `ITenantContext` wird pro Anfrage aus Route und Mitgliedschaft, pro Job aus `org_id` gesetzt. Ohne Kontext sind mandantenbezogene Daten nicht lesbar (Kapitel 9). |
-| IDs | UUID Version 7: zeitlich sortierbar, ohne zentrale Vergabe. Zusätzlich je Organisation eine kurze, fortlaufende Meldungsnummer als Griff für Menschen. |
+| Mandantenkontext | `ITenantContext` wird pro Anfrage aus Route und Mitgliedschaft, pro Job aus `org_id` gesetzt. Ohne Kontext sind mandantenbezogene Daten nicht lesbar. Eine Anfrage oder ein Job ist genau eine Transaktion über alle beteiligten Module (Kapitel 9.2). |
+| IDs | UUID Version 7: zeitlich sortierbar, ohne zentrale Vergabe. Zusätzlich je Organisation eine kurze, fortlaufende Nummer für Massnahmen und Meldungen als Griff für Menschen. |
 | Zeit | Durchgehend UTC in der Datenbank, `TimeProvider` im Code; Zeitzonen nur in Darstellung und Zeitplänen. |
 | Fehler | Erwartbare Fehler als Ergebnis-Typ bis zum Endpunkt, dort Problem Details nach RFC 9457. Ausnahmen nur für Unerwartetes. |
 | Validierung | An der API-Grenze; Fachregeln zusätzlich in der Domäne. |
@@ -180,13 +189,13 @@ Der Baustein bleibt hinter `IJobQueue` und `IScheduler`. Sollte er sich als zu k
 |---|---|---|
 | Quelle | `ISourceProvider` aus dem Provider-SDK (Kapitel 5) | eine Klasse, bei bekannten Formaten wenige Zeilen Konfiguration |
 | Benachrichtigungskanal | `INotificationChannel` (Kapitel 8) | eine Klasse plus Einstellungsformular |
-| KI-Anbieter | `IChatClient` aus Microsoft.Extensions.AI (Kapitel 7) | Konfiguration, kein Code bei OpenAI-kompatiblen Endpunkten |
+| KI-Anbieter | `IChatClient` aus Microsoft.Extensions.AI (Kapitel 7.8) | Konfiguration, kein Code bei OpenAI-kompatiblen Endpunkten |
 | Versionsvergleich | `IVersionScheme` (Kapitel 6) | eine Klasse je Schema |
 | Katalog | Stammdaten als versionierte Dateien im Repository | ein Eintrag mit Aliassen |
 
 ## 3.7 Wachstumspfad
 
-1. **Mehr Last im Worker:** zweite Worker-Instanz starten. Leases verhindern Doppelarbeit, Obergrenzen je Quelle bleiben instanzübergreifend gültig, weil sie in der Datenbank liegen.
+1. **Mehr Last im Worker:** zweite Worker-Instanz starten. Leases verhindern Doppelarbeit; je Quelle läuft durch die Lease der Quelle höchstens ein Abruf. Ratenbegrenzungen je Host gelten im MVP je Worker-Prozess.
 2. **Mehr Last in der API:** weitere API-Instanzen hinter einem Load Balancer. Live-Ereignisse verteilt PostgreSQL per `LISTEN/NOTIFY` an alle Instanzen.
 3. **Grosse Datenmengen:** Partitionierung der Rohdaten nach Monat, Archivierung alter Revisionen, Lesereplikat für Suche.
 4. **Erst danach** und nur mit konkretem Anlass: Herauslösen eines Moduls oder ein Message-Broker. Der Plan rechnet nicht damit.

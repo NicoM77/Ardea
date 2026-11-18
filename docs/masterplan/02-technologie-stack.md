@@ -20,7 +20,7 @@ Versionen und Lizenzen sind am 18.11.2026 gegen Primärquellen geprüft. Die vol
 | Frontend | Angular 22, eigenständige Komponenten, Signale, zonenlos | 22.2 | Einziger aktiv gepflegter Hauptzweig, LTS bis Juni 2028 (2.4). |
 | Komponenten | eigene Bibliothek auf Angular CDK und Angular Aria, TanStack Table für die Meldungsliste | 22.3 / 9.3 | Das Design ist eigenständig; kopflose Bausteine liefern Tastatur, Rollen und Fokus (2.4). |
 | Styling | CSS Custom Properties, komponentenweise Stylesheets | | Kleines, geschlossenes System; kein Tailwind nötig. |
-| API-Client | orval, aus dem OpenAPI-Dokument erzeugt | 8.48 | Einziger aktiv gepflegter Generator mit Ausgabe für `httpResource`. |
+| API-Client | orval, aus dem OpenAPI-Dokument erzeugt | 8.48 | Sehr aktiv gepflegt, erzeugt `httpResource` für Lesen und `HttpClient` für Schreiben; OpenAPI Generator ist die Alternative. |
 | Übersetzung | Transloco, zur Laufzeit umschaltbar | 8.4 | Ein Image und später eine App für alle Sprachen. |
 | Mobile | PWA im MVP; Capacitor als Ausbaustufe | Capacitor 8.6, 9.0 als RC | Web Push funktioniert ohne eigene Infrastruktur (Kapitel 11). |
 | Container | `aspnet:10.0-noble-chiseled-extra`, ein Image, Docker Compose | | Ohne Shell, nicht privilegiert, mit Zeitzonendaten. |
@@ -32,14 +32,14 @@ Anforderungen: Abrufe mit eigenem Intervall je Quelle und Rückzug bei Fehlern; 
 
 | Option | Lizenz | Transaktional mit EF Core | Wiederholung | Zeitpläne | Oberfläche | Einschätzung |
 |---|---|---|---|---|---|---|
-| **Eigene Job-Tabelle** mit `SKIP LOCKED` und Outbox, Cronos für Cron | eigener Code; Cronos MIT | ja, von Natur aus | selbst gebaut | über Cronos | eigene Seite in der Administration | **Empfehlung.** Rund 300 Zeilen, vollständig verstanden, keine Abhängigkeit. |
+| **Eigene Job-Tabelle** mit `SKIP LOCKED`, Cronos für Cron | eigener Code; Cronos MIT | ja, von Natur aus | selbst gebaut | über Cronos | eigene Seite in der Administration | **Empfehlung.** Ein kleines eigenes Teilsystem mit begrenztem Umfang (Kapitel 3.4), vollständig verstanden, keine Abhängigkeit. |
 | Quartz.NET 4 | Apache-2.0 | möglich über `EnlistTransaction` | per Anleitung, nicht geprüft | sehr gut | eingebaut seit 4.0 | Seit 3.9.2026 verfügbar, vier Pflicht-Schemamigrationen in zehn Wochen. Zu unruhig als Fundament; 3.22 wäre die ruhige Linie ohne Oberfläche. |
 | Wolverine | MIT | beste verfügbare Lösung | sehr gut | ja, seit 6.34 | kommerziell | Ganzes Messaging-Framework mit eigenen Konventionen und wöchentlichen Releases. Mehr, als das System braucht. |
-| Hangfire mit PostgreSQL-Plugin | LGPL-3.0 | nicht vorgesehen | sehr gut | gut | eingebaut, ausgereift | Kein Outbox; der PostgreSQL-Speicher ist ein Community-Plugin. |
+| Hangfire mit PostgreSQL-Plugin | LGPL-3.0 | kein dokumentierter Weg gefunden | sehr gut | gut | eingebaut, ausgereift | Keine Outbox; der PostgreSQL-Speicher ist ein Community-Plugin. |
 | TickerQ | nicht mehr Open Source | | | | | **Ausgeschlossen:** umlizenziert, Ausführung an ein Zertifikat gebunden. |
 | Coravel | MIT | nein | nein | ja | kostenpflichtig | **Ausgeschlossen:** nur im Speicher, seit Januar 2025 kein Release. |
 
-Den Ausschlag gibt die transaktionale Einreihung. Mit einer fremden Job-Bibliothek entsteht zwischen «Eintrag geändert» und «Folgejob eingereiht» ein Fenster, das eine eigene Outbox schliessen müsste; dann ist die Outbox ohnehin gebaut und die Bibliothek bringt vor allem ihre Tabellen mit. Der Aufbau steht in Kapitel 3.4. Der Baustein liegt hinter zwei Schnittstellen; Quartz.NET ist die vorgesehene Ausweichlösung, falls er sich als zu knapp erweist.
+Transaktionale Einreihung können auch Quartz.NET 4 und Wolverine. Den Ausschlag geben Reife und Umfang: Quartz.NET 4 ist zehn Wochen alt und hat in dieser Zeit vier Pflichtmigrationen gebraucht, Wolverine ist ein ganzes Messaging-Framework. Was das System tatsächlich braucht, ist wenig: eine Warteschlange mit Wiederholung und eine Fälligkeit je Quelle, die ohnehin Fachzustand ist. Der Preis der Eigenlösung ist ehrlich zu nennen: Leases, Zeitlimits und Wiederholung müssen selbst gebaut und unter erzwungenen Abbrüchen getestet werden (Phase 0). Der Baustein liegt hinter zwei Schnittstellen; Quartz.NET 3.22 oder ein gereiftes 4.x ist die vorgesehene Ausweichlösung.
 
 ## 2.3 Entscheidung: KI-Integration
 
@@ -62,7 +62,7 @@ Anbieter hinter derselben Schnittstelle, alle geprüft:
 | Anthropic | Anthropic 13.10.0 (offizielles SDK) | Apache-2.0 | `AsIChatClient()`, native strukturierte Ausgabe. |
 | Google Gemini | Google.GenAI 2.2.0 (offizielles SDK) | Apache-2.0 | `AsIChatClient()`. |
 
-Für den lokalen Betrieb kommen nach heutigem Stand Modelle der 8- bis 12-Milliarden-Klasse in Frage, etwa `qwen3.5:9b`, `granite4.1:8b` oder `gemma4:12b`, bei 6 bis 10 GB Speicher. Kleinere Modelle liefern gültiges JSON, aber schwache Extraktion. Einen unabhängigen Vergleich für Sicherheitstexte gibt es nicht; die Wahl muss am Referenzsatz aus Kapitel 7.8 gemessen werden. Modelle mit Denkmodus brauchen diesen abgeschaltet, sonst landet die Antwort im falschen Kanal.
+Für den lokalen Betrieb kommen nach heutigem Stand Modelle der 8- bis 12-Milliarden-Klasse in Frage, etwa `qwen3.5:9b`, `granite4.1:8b` oder `gemma4:12b`, bei grob 6 bis 10 GB Speicher (Schätzung, nicht gemessen). Kleinere Modelle liefern gültiges JSON, aber schwache Extraktion. Einen unabhängigen Vergleich für Sicherheitstexte gibt es nicht; die Wahl muss am Referenzsatz aus Kapitel 7.9 gemessen werden. Modelle mit Denkmodus brauchen diesen abgeschaltet, sonst landet die Antwort im falschen Kanal.
 
 Schema-Erzwingung garantiert die Form, nicht den Inhalt. Die Prüfung der Verweise und die Untergrenzen des Regelwerks bleiben in jedem Fall bestehen.
 
@@ -133,7 +133,7 @@ Ein Lizenzabgleich im Build verhindert, dass eine neue Hauptversion eine solche 
 | .NET 10 | 14.11.2028 | auf .NET 12 (LTS, November 2027) im ersten Halbjahr 2028 |
 | Angular 22 | Juni 2028 | auf 23 im Sommer 2027, per `ng update` |
 | PostgreSQL 18 | November 2030 | Hauptversionswechsel als dokumentierter Vorgang mit Sicherung |
-| Capacitor | 9.0 steht kurz vor der Freigabe | Einstieg direkt auf 9, wenn die App-Stufe beginnt |
+| Capacitor | 9.0 steht kurz vor der Freigabe | Einstieg direkt auf 9, wenn die Arbeit an der App beginnt |
 
 ## 2.8 Was die Recherche nicht bestätigen konnte
 
@@ -141,10 +141,14 @@ Diese Punkte beeinflussen Entscheidungen und werden in Phase 0 durch kleine Vers
 
 | Punkt | Betrifft | Klärung |
 |---|---|---|
-| Row-Level Security mit EF Core, Npgsql und Verbindungspool: Sitzungs- oder Transaktionsbereich, Rücksetzen im Pool | Kapitel 9.2 | Spike mit Lasttest und parallelem Mandantenwechsel |
+| Row-Level Security mit EF Core, Npgsql und Verbindungspool: Sitzungs- oder Transaktionsbereich, Rücksetzen im Pool, gemeinsame Transaktion über mehrere `DbContext` | Kapitel 9.2 | Versuch mit Lasttest und parallelem Mandantenwechsel; bis dahin gilt Row-Level Security als Härtung, nicht als Fundament |
 | Zeitzonendaten und ICU im Image `chiseled-extra` | Zeitpläne mit Zeitzone | Rauchtest im Zielimage |
 | Schema-Erzwingung über OpenAI-kompatible Endpunkte bei vLLM und llama.cpp | Kapitel 7 | Test je Anbieter; Rückfall ist Prüfung mit einem Wiederholungsversuch |
-| Qualität lokaler Modelle für Sicherheitstexte | Kapitel 7.8 | Messung am Referenzsatz |
+| Qualität lokaler Modelle für Sicherheitstexte | Kapitel 7.9 | Messung am Referenzsatz |
 | CvssSuite für CVSS 4.0 | Schweregrad | Testvektoren von FIRST; sonst eigener Rechner |
 | Declarative Web Push ausserhalb von Safari; iOS-Web-Apps in der EU | Kapitel 11 | Nachricht in beiden Formen senden, Service Worker als Rückfall |
 | Lizenzangaben einzelner Pakete, die NuGet nicht ausweist (OllamaSharp, CodeHollow.FeedReader) | Lizenzabgleich | Prüfung am Repository beim ersten Einbinden |
+| Letzte freie Versionen und Schwellen der umlizenzierten Bibliotheken | Kapitel 2.6 | ohne Belang, solange keine davon verwendet wird |
+| Dokumentierte Limits der NVD; Lizenz- und Nutzungsbedingungen vieler Quellen | Kapitel 5 | Prüfung je Quelle vor ihrer Aufnahme |
+| Einzelheiten zu UnifiedPush und zu den Relays anderer Projekte | Kapitel 11.9 | erst für die App nötig |
+| Aufwand und Verhalten der eigenen Job-Verarbeitung unter Last | Kapitel 3.4 | Tests mit erzwungenen Abbrüchen in Phase 0 |

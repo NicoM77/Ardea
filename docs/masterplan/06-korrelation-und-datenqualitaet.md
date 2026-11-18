@@ -13,7 +13,7 @@ Jeder Adapter übersetzt seinen Rohdatensatz in dieselbe Struktur. Eine Beobacht
 | Zustand | published, rejected, disputed |
 | Metriken | je Angabe: System und Version (CVSS 2.0 bis 4.0), Vektor, Wert, wer sie vergeben hat |
 | Betroffene Produkte | Vendor, Produkt, CPE, Paketkoordinaten, Plattform, Versionsangaben im Original und normalisiert, Status |
-| Ausnutzung | Stufe (keine, PoC, aktiv), Beleg, Datum; KEV-Aufnahme; SSVC-Entscheidungspunkte |
+| Ausnutzung | Stand (keine, PoC, aktiv), Beleg, Datum; KEV-Aufnahme; SSVC-Entscheidungspunkte |
 | Abhilfe | Lösungen, Umgehungen, Hinweis auf verfügbare Korrektur |
 | Verweise | URL mit Schlagworten (patch, exploit, vendor-advisory) |
 | Schwächen | CWE-IDs |
@@ -27,9 +27,9 @@ Parser tragen eine Versionsnummer. Ändert sich ein Parser, lassen sich alle Roh
 1. Zwei Beobachtungen gehören zum selben Eintrag, wenn sie einen **Alias** teilen.
 2. Bezüge verbinden nichts. Ein Advisory, das zwölf CVEs nennt, wird Beleg von zwölf Einträgen und kein dreizehnter.
 3. Der Primärschlüssel eines Eintrags folgt einer festen Rangfolge der Schemata: CVE vor GHSA vor OSV vor quellenspezifischen Kennungen.
-4. Taucht eine verbindende Kennung später auf (ein GHSA-Eintrag erhält seine CVE-ID), werden die Einträge **verschmolzen**. Meldungen, Befunde und Verlauf wandern mit; der unterlegene Eintrag bleibt als Weiterleitung bestehen.
+4. Taucht eine verbindende Kennung später auf (ein GHSA-Eintrag erhält seine CVE-ID), werden die Einträge **verschmolzen**; Befunde und Verlauf wandern mit, der unterlegene Eintrag bleibt als Weiterleitung bestehen. Mit den Quellen des MVP kommt das nicht vor, weil alle die CVE-ID führen. Der Ablauf wird mit der ersten Quellenwelle festgelegt und gebaut.
 5. Würde ein Alias zwei Einträge verbinden, die beide bereits eine eigene CVE-ID tragen, wird **nicht** automatisch verschmolzen. Der Fall geht in die Prüfliste der Datenqualität. Falsche Verschmelzungen sind schlimmer als ein doppelter Eintrag.
-6. Warnungen ohne Schwachstellenkennung werden nur innerhalb ihrer Quelle über die externe ID dedupliziert. Ein quellenübergreifender Ähnlichkeitsabgleich ist eine spätere Ausbaustufe und erzeugt dann Vorschläge, keine automatischen Verschmelzungen.
+6. Warnungen ohne Schwachstellenkennung werden nur innerhalb ihrer Quelle über deren stabile Dokumentkennung dedupliziert. Ein quellenübergreifender Ähnlichkeitsabgleich ist eine spätere Ausbaustufe und erzeugt dann Vorschläge, keine automatischen Verschmelzungen.
 
 ## 6.3 Zusammenführung: Vorrangregeln je Feld
 
@@ -45,32 +45,35 @@ Der Eintrag wird aus allen aktuellen Beobachtungen neu berechnet. Die Berechnung
 | Verweise, Schwächen | Vereinigung, dedupliziert nach URL beziehungsweise ID. |
 | Zustand | `rejected`, sobald der Herausgeber zurückzieht; das überstimmt alles andere. |
 
-Die Rangfolge der Quellen (`trust_rank`) ist Stammdatum und pro Instanz anpassbar. Im Eintrag steht zu jedem Feld, aus welcher Quelle der Wert stammt.
+Die Rangfolge der Quellen ist im MVP fest hinterlegt; eine Anpassung je Instanz ist eine Ausbaustufe. Im Eintrag steht zu jedem Feld, aus welcher Quelle der Wert stammt.
 
-## 6.4 Änderungserkennung in fünf Stufen
+## 6.4 Änderungserkennung in fünf Schritten
 
-Jede Stufe filtert, was die nächste nicht mehr sehen muss.
+Jeder Schritt filtert, was der nächste nicht mehr sehen muss.
 
-| Stufe | Prüfung | Verwirft |
+| Schritt | Prüfung | Verwirft |
 |---|---|---|
 | 1 Transport | ETag, `Last-Modified`, Delta-Endpunkte | unveränderte Feeds |
 | 2 Rohdatensatz | Hash des kanonisierten Inhalts | unveränderte Datensätze |
 | 3 Beobachtung | Feldvergleich mit der vorigen Beobachtung | kosmetische Änderungen der Quelle |
 | 4 Eintrag | **Wesentlichkeits-Fingerabdruck** | Änderungen ohne Folgen für die Bewertung |
-| 5 Meldung | Vergleich mit der vorigen Einschätzung | Neubewertungen ohne neues Ergebnis |
+| 5 Befund | Vergleich mit dem vorigen Ergebnis | Neubewertungen ohne neues Ergebnis |
 
-Der Fingerabdruck der Stufe 4 ist ein Hash über genau die Felder, die eine Bewertung ändern können:
+Der Fingerabdruck des Schritts 4 ist ein Hash über genau die Felder, die eine Bewertung ändern können:
 
 - Zustand (publiziert, zurückgezogen)
 - Schweregrad-Klasse und Vektor
 - Menge der betroffenen Produkte und Versionsbereiche
 - Ausnutzungsstufe und KEV-Aufnahme
 - Korrektur verfügbar
-- EPSS, aber nur als Klasse (unter 1 %, 1–10 %, 10–50 %, über 50 %)
+- Warnung einer nationalen Stelle zu diesem Eintrag
+- EPSS, aber nur als Klasse: über oder unter 50 %, passend zum Regelwerk
 
-Alles andere (Tippfehler, neue Verweise, umformulierte Beschreibungen) erhöht nur die Revision und erscheint in der Historie. EPSS-Werte ändern sich täglich für den ganzen Bestand; ohne Klassenbildung würde jede Nacht alles neu bewertet.
+Alles andere (Tippfehler, neue Verweise, umformulierte Beschreibungen) erhöht nur die Revision und erscheint in der Historie. Ein zweiter, eigener Fingerabdruck über die Abhilfetexte sorgt dafür, dass eine neue Umgehung die Antwort «Was ist zu tun» aktualisiert, ohne eine Neubewertung auszulösen.
 
-Die Grössenordnung rechtfertigt den Aufwand: 85 326 Änderungsereignisse in 30 Tagen bei 17 642 neuen Records. Einzelne Records wurden über hundertmal geändert.
+Signale gehen einen eigenen Weg: EPSS und KEV werden je Kennung in `entry_signal` fortgeschrieben, nicht als Rohdatensätze. EPSS-Werte ändern sich täglich für den ganzen Bestand; ein Eintrag wird nur berührt, wenn seine Klasse wechselt. Damit ein Wert, der um die Grenze pendelt, nicht täglich umschlägt, wechselt die Klasse erst, wenn der Wert die Grenze um mehr als fünf Prozentpunkte überschritten oder unterschritten hat.
+
+Die Grössenordnung rechtfertigt den Aufwand: 85 326 Änderungsereignisse in 30 Tagen bei 17 642 neuen Records; zwei Records wurden je 126-mal geändert. Im Spike waren 91 von 173 Kandidaten Änderungen an älteren Records.
 
 ## 6.5 Produkte erkennen
 
@@ -86,7 +89,7 @@ Der Spike zeigt, warum Freitext nicht genügt und was an den strukturierten Feld
 
 Jedes betroffene Produkt erhält einen `product_key`: Vendor und Produkt in Kleinschreibung, bereinigt um Rechtsformen, Sonderzeichen und bekannte Zusätze. Der Katalog bildet Schreibweisen auf denselben Schlüssel ab. Unbekannte Produkte behalten ihren rohen Schlüssel und bleiben auffindbar; der Anteil unbekannter Produkte ist eine Messgrösse und treibt die Katalogpflege.
 
-Für Quellen ohne strukturierte Produktangaben (Freitext-Warnungen) extrahiert ein Sprachmodell Produkte und Versionen. Das Ergebnis gilt für alle Organisationen, wird pro Rohdaten-Revision einmal berechnet und als Beobachtung mit der Herkunft «extrahiert» gespeichert. Ohne KI-Anbieter bleibt eine solche Warnung ein Bulletin ohne Projektbezug.
+Quellen ohne strukturierte Produktangaben (Freitext-Warnungen) liefern im MVP nur zwei Dinge: CVE-IDs, die per Muster aus dem Text gelesen werden und die Warnung zum Beleg des jeweiligen Eintrags machen, und Warnungen ohne Kennung, die ohne Projektbezug angezeigt werden. Die Extraktion von Produkten und Versionen aus Freitext durch ein Sprachmodell ist eine Ausbaustufe: einmal je Rohdaten-Revision für alle Organisationen, gespeichert als Beobachtung mit der Herkunft «extrahiert».
 
 ## 6.6 Versionen vergleichen
 
@@ -99,9 +102,9 @@ Die Versionsangaben im Spike: 14 569 `custom`, 5 320 `semver`, 2 827 ohne Typ, 2
 
 ## 6.7 Zurückgezogene und geänderte Einträge
 
-- Zieht der Herausgeber eine CVE zurück, wird der Eintrag `rejected`. Offene Meldungen dazu schliessen mit dem Vermerk «von der Quelle zurückgezogen» und benachrichtigen einmal, wenn zuvor benachrichtigt wurde.
+- Zieht der Herausgeber eine CVE zurück, wird der Eintrag `rejected`. Offene Befunde dazu schliessen mit dem Vermerk «von der Quelle zurückgezogen»; benachrichtigt wird einmal, wenn zuvor benachrichtigt wurde.
 - Fällt ein Produkt aus den betroffenen heraus, wird der Befund neu bewertet und gegebenenfalls auf «nicht betroffen» gesetzt, ebenfalls mit Vermerk.
-- Ein Befund, den ein Mensch abgeschlossen hat, wird durch eine Neubewertung nicht wieder geöffnet, ausser die Stufe steigt. Dann öffnet er mit Hinweis auf den Grund.
+- Ein Befund, den ein Mensch abgeschlossen hat, wird durch eine Neubewertung nur in zwei Fällen wieder geöffnet, jeweils mit Hinweis auf den Grund: wenn seine Stufe steigt, oder wenn die Versionsprüfung wieder «im Bereich» ergibt, etwa weil sich eine Korrektur als unvollständig erwiesen hat und der betroffene Bereich erweitert wurde.
 
 ## 6.8 Qualitätssicherung
 
@@ -112,4 +115,4 @@ Die Versionsangaben im Spike: 14 569 `custom`, 5 320 `semver`, 2 827 ohne Typ, 2
 | Messgrössen je Quelle | Verzögerung zwischen Veröffentlichung und Eintreffen, Quarantäne-Anteil, Anteil unbekannter Produkte, Fehlerserie. Sichtbar in der Oberfläche und als Metriken. |
 | Kuratierte Korrekturen | Alias- und Produktzuordnungen als versionierte Daten im Repository; sie überstimmen Quellenangaben und sind nachvollziehbar. |
 | Neuberechnung | Parser, Vorrangregeln und Katalog lassen sich ändern und rückwirkend anwenden; der Befehl dazu gehört zum Lieferumfang. |
-| Prüfliste | Mehrdeutige Aliasse, widersprüchliche Angaben und Quarantäne-Fälle sammeln sich an einem Ort für den Instanz-Administrator. |
+| Prüfliste | Quarantäne-Fälle und widersprüchliche Angaben sammeln sich an einem Ort für den Instanz-Administrator. Im MVP als einfache Liste auf der Quellenseite. |

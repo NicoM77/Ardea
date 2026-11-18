@@ -14,10 +14,11 @@ CSH-Alert/
 │  │  └─ CshAlert.Host/                  ein Programm: api, worker, migrate, Wartung
 │  ├─ BuildingBlocks/
 │  │  ├─ CshAlert.SharedKernel/          IDs, Ergebnis-Typ, Zeit, Basistypen
-│  │  └─ CshAlert.Platform/              Jobs, Outbox, Mandantenkontext, Audit, Geheimnisse, Telemetrie
+│  │  └─ CshAlert.Platform/              Jobs, Zeitpläne, Mandantenkontext, Arbeitseinheit, Audit, Geheimnisse, Telemetrie
 │  ├─ Modules/
 │  │  ├─ Iam/           CshAlert.Iam            + .Contracts
 │  │  ├─ Assets/        CshAlert.Assets         + .Contracts
+│  │  ├─ Catalog/       CshAlert.Catalog        + .Contracts
 │  │  ├─ Intel/         CshAlert.Intel          + .Contracts
 │  │  ├─ Assessment/    CshAlert.Assessment     + .Contracts
 │  │  └─ Notifications/ CshAlert.Notifications  + .Contracts
@@ -94,9 +95,9 @@ Ausgeschlossen, weil kommerziell oder mit Auflagen für Betreiber (Stand 18.11.2
 
 | Ebene | Gegenstand | Werkzeug |
 |---|---|---|
-| Unit | Versionsvergleich, Produktschlüssel, Vorrangregeln, Regelwerk, Fingerabdrücke, Regelauswertung der Benachrichtigungen | xUnit v3 |
+| Unit | Versionsvergleich, Produktschlüssel, Vorrangregeln, Regelwerk mit Ober- und Untergrenzen, Fingerabdrücke, Bildung der Massnahmen, Benachrichtigungsstand | xUnit v3 |
 | Adapter | Jeder Quellenadapter gegen aufgezeichnete echte Antworten; Ausgabe als Snapshot | xUnit v3, Verify |
-| Integration | Verarbeitungskette gegen echtes PostgreSQL: Idempotenz, Wiederholung, Leases, Outbox, Mandantentrennung | Testcontainers, Respawn |
+| Integration | Verarbeitungskette gegen echtes PostgreSQL: Idempotenz, Wiederholung, Leases, gemeinsame Transaktion, Mandantentrennung | Testcontainers, Respawn |
 | Architektur | Modulgrenzen und Abhängigkeitsrichtung | ArchUnitNET |
 | Vertrag | OpenAPI-Dokument stimmt mit dem Code überein; Fremdzugriffstest für jeden Mandanten-Endpunkt | eigener Test im Build |
 | Ende zu Ende | Kernabläufe im Browser, Desktop und Telefonbreite, mit automatischer Zugänglichkeitsprüfung | Playwright, axe |

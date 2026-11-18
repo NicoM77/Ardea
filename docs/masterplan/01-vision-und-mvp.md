@@ -28,11 +28,12 @@ Produkt:
 
 Architektur:
 
-6. **Deterministischer Kern, KI als Verstärker.** Matching und Stufenberechnung sind Regeln, die sich testen und reproduzieren lassen. Die KI erklärt, ergänzt und schätzt ein; ohne KI-Anbieter bleibt das System nützlich.
-7. **Herkunft geht nie verloren.** Jede Angabe im konsolidierten Eintrag lässt sich auf Quelle und Abrufzeitpunkt zurückführen; der Eintrag ist aus den Rohdaten neu berechenbar.
-8. **Jede Verarbeitungsstufe ist wiederholbar.** Jobs sind idempotent; ein Absturz oder doppelter Lauf erzeugt weder Lücken noch doppelte Meldungen.
-9. **Mandantentrennung ist Grundzustand,** kein Feature. Daten einer Organisation sind ohne ausdrücklichen Kontext nicht erreichbar.
-10. **Wenig bewegliche Teile.** Eine Datenbank, ein Image, drei Container. Jede zusätzliche Komponente muss ihren Betrieb rechtfertigen.
+6. **Deterministischer Kern, KI als Verstärker.** Abgleich und Stufenberechnung sind Regeln, die sich testen und nachrechnen lassen. Die KI erklärt, ergänzt und schätzt ein, wo die Regeln «unbekannt» sagen; ohne KI-Anbieter bleibt das System nützlich.
+7. **Die Arbeitseinheit ist die Massnahme.** Was ein Mensch tun muss, ist «Komponente X in Projekt Y aktualisieren», nicht «52 CVEs lesen». Benachrichtigung, Zuweisung und Abschluss hängen an der Massnahme; die einzelne Schwachstelle ist ihr Beleg.
+8. **Herkunft geht nie verloren.** Jede Angabe im konsolidierten Eintrag lässt sich auf Quelle und Abrufzeitpunkt zurückführen; der Eintrag ist aus den Rohdaten neu berechenbar.
+9. **Jeder Verarbeitungsschritt ist wiederholbar.** Jobs sind idempotent; ein Absturz oder doppelter Lauf erzeugt weder Lücken noch doppelte Meldungen.
+10. **Mandantentrennung ist Grundzustand,** kein Feature. Daten einer Organisation sind ohne ausdrücklichen Kontext nicht erreichbar.
+11. **Wenig bewegliche Teile.** Eine Datenbank, ein Image, drei Container. Jede zusätzliche Komponente muss ihren Betrieb rechtfertigen.
 
 ## 1.4 Was das System nicht ist
 
@@ -43,17 +44,17 @@ Architektur:
 
 ## 1.5 MVP-Abgrenzung
 
-Das MVP beweist den Kern von der Quelle bis zur Benachrichtigung mit zwei Quellen, einem Kanal-Trio und einem vollständigen, aber schmalen Bedienfluss. Alles, was Breite bringt, folgt danach.
+Das MVP beweist den Kern von der Quelle bis zur Benachrichtigung mit vier Quellen, vier Kanälen und einem vollständigen, aber schmalen Bedienfluss. Alles, was Breite bringt, folgt danach. Diese Tabelle ist massgeblich: Die Phasen in Kapitel 14 enthalten nichts, was hier nicht in der Spalte MVP steht.
 
 | Bereich | MVP (Version 1.0) | Ausbaustufe 1 | Später |
 |---|---|---|---|
 | Quellen | CVE Program inkl. eingebetteter CISA-Daten (SSVC, KEV), NCSC.ch, dazu CISA KEV und FIRST EPSS als Anreicherung | 8–12 weitere: GitHub Advisories/OSV, NVD, CERT-Bund, CISA-Advisories, MSRC, Red Hat, Ubuntu, Debian, Kubernetes | Ausbau auf 30–50, generischer CSAF-Adapter für Herstellerfeeds |
 | Profil | Projekte mit Komponenten aus einem kuratierten Katalog, freie Einträge, Version, Erreichbarkeit, Kritikalität; geführter Setup-Wizard | SBOM-Import (CycloneDX, SPDX), Lockfile-Import | Erkennung aus Repositories, Agent für installierte Pakete |
-| Matching | Vendor/Produkt mit Aliassen, CPE, Versionsbereiche; Zustand «Version unbekannt» | Paketkoordinaten (purl) über OSV/GHSA | Lernende Alias-Vorschläge |
-| Bewertung | Regelwerk für Stufe 1–5, nachvollziehbare Faktoren; KI-Einschätzung optional (Betroffenheit, Begründung, Massnahmen, offene Punkte) | Korrekturen durch Benutzer fliessen als Kontext ein; Qualitätsmessung an Stichproben | Mehrere Modelle im Vergleich |
-| Meldungen | Bulletin, Liste, Detail; Status je Projekt; Notizen; Verlauf | Zuweisung mit Fristen, Sammelaktionen, Export | Berichte für Kunden und Management |
-| Benachrichtigung | In-App, E-Mail (SMTP), Web Push, generischer Webhook; Regeln nach Stufe und Projekt; tägliche Zusammenfassung; erneuter Alarm nur bei wesentlicher Änderung | Eskalationsstufen mit Fristen, Teams- und Slack-Vorlagen, Ruhezeiten | Native Push über Relay, ntfy |
-| Benutzer | Registrierung, Organisationen, Einladungen, Rollen Owner/Admin/Member/Viewer, Passwort mit TOTP | Passkeys, OIDC-Anmeldung, API-Tokens | Rechte je Projekt, SCIM |
+| Abgleich | Vendor/Produkt mit Aliassen, CPE, Versionsbereiche; Zustände «Version unbekannt» und «aus Distribution»; verwandte Produkte und Plattform-Treffer als schwach | Paketkoordinaten über OSV und GitHub Advisories; Daten der Distributionen | Lernende Alias-Vorschläge |
+| Bewertung | Regelwerk für Stufe 1–5 mit nachvollziehbaren Faktoren, darunter Schutzmassnahmen; Antworten aus Vorlagen ohne KI; KI-Einschätzung optional und ab einer Schwelle; Korrektur durch Benutzer mit Neubewertung | Korrekturen fliessen als Kontext in spätere Einschätzungen ein; Produkte aus Freitext durch ein Modell; Gewichte je Organisation | Mehrere Modelle im Vergleich |
+| Massnahmen und Meldungen | Bulletin, Liste der Massnahmen, Detail der Schwachstelle; Status je Befund und je Massnahme; Zuweisung; Frist sichtbar; Notizen; Verlauf | Sammelaktionen, Export, Eskalation bei Fristablauf | Berichte für Kunden und Management |
+| Benachrichtigung | In-App, E-Mail (SMTP), Web Push, generischer Webhook; Regeln nach Stufe und Projekt; Sammelnachrichten nach Zeitplan; je Massnahme, erneut nur bei wesentlicher Änderung | Eskalation in Schritten, Teams- und Slack-Vorlagen, Ruhezeiten | Native Push über Relay, ntfy |
+| Benutzer | Registrierung, Organisationen, Einladungen, Rollen Owner/Admin/Member/Viewer, Passwort mit TOTP, MFA-Pflicht je Organisation | Passkeys, OIDC-Anmeldung, API-Tokens, Export und Löschen einer Organisation über die Oberfläche | Rechte je Projekt, SCIM |
 | Oberfläche | Web, responsiv, Englisch; installierbar als PWA | Deutsch; Capacitor-App | Französisch, Italienisch |
 | Betrieb | Docker Compose mit Datenbank, API und Worker; automatische Migrationen; Health Checks; strukturierte Logs; OpenTelemetry auf Wunsch | Helm-Chart, Backup-Hilfen | Hochverfügbarkeit |
 
@@ -63,13 +64,13 @@ Bewusst nicht im MVP, obwohl in den Anforderungen genannt: die native Mobile-App
 
 | Kriterium | Zielwert |
 |---|---|
-| Erststart | `docker compose up -d` führt auf einem frischen Host in unter 3 Minuten zu einer anmeldebereiten Instanz; die ersten Einträge erscheinen in unter 10 Minuten. |
+| Erststart | Auf einem Host mit Docker führt `docker compose up -d` mit der mitgelieferten Beispielkonfiguration (einschliesslich TLS-Proxy) in unter 3 Minuten nach dem Laden der Images zu einer anmeldebereiten Instanz. Die ersten Einträge erscheinen in unter 10 Minuten. |
 | Aktualität | Ein neuer oder geänderter CVE-Record ist spätestens 90 Minuten nach Veröffentlichung im System, bei stündlicher Abfrage. |
-| Vollständigkeit | Nach einem Ausfall von bis zu 30 Tagen holt das System ohne Handarbeit lückenlos auf. |
+| Vollständigkeit | Nach einem Ausfall von bis zu 30 Tagen holt das System ohne Handarbeit lückenlos auf, gemessen am Änderungsprotokoll der Quelle. |
 | Deduplizierung | Dieselbe CVE-ID aus mehreren Quellen ergibt genau einen Eintrag mit allen Quellen im Nachweis. |
-| Treffergüte | Auf einem gepflegten Referenzsatz von mindestens 200 Paaren aus Eintrag und Projekt: keine übersehene Betroffenheit bei exaktem Produkt- und Versionstreffer; Anteil unbegründeter Meldungen ab Stufe 3 unter 20 %. |
-| Alarmdisziplin | Eine unveränderte Schwachstelle löst pro Empfänger und Kanal höchstens eine Benachrichtigung aus. |
-| Bedienung | Auf einem Telefon sind nach dem Öffnen einer Push-Nachricht Stufe, Betroffenheit und Massnahme ohne Scrollen sichtbar. |
+| Treffergüte | Am Referenzsatz aus Kapitel 7.9: kein übersehenes Paar unter den exakten Produkt- und Versionstreffern, höchstens 2 % übersehene insgesamt, höchstens 20 % unbegründete ab Stufe 3. |
+| Alarmdisziplin | Ein dreifach verarbeitetes Ereignis erzeugt pro Empfänger und Kanal eine Zustellung; eine unveränderte Massnahme löst keine zweite aus. |
+| Bedienung | Mit den Beispieldaten der Mockups sind bei 390 × 844 Punkten nach dem Öffnen einer Meldung Stufe, Betroffenheit und erste Massnahme ohne Scrollen sichtbar. Für Texte gilt eine Längenvorgabe, die das auch im Betrieb sichert. |
 | Zugänglichkeit | WCAG 2.2 AA: automatisierte Prüfung ohne Befund, manuelle Tastatur- und Screenreader-Prüfung der Kernabläufe bestanden. |
 | Ohne KI | Alle Kriterien ausser der KI-Einschätzung sind ohne konfigurierten KI-Anbieter erfüllt. |
 

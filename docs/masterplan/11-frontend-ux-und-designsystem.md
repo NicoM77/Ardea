@@ -15,6 +15,8 @@ Die visuelle Richtung ist gewählt und als Mockups ausgearbeitet.
 
 Englisch ist die Leitsprache der Oberfläche, Deutsch folgt als Übersetzung. Der Produktname ist offen; «CSH Alert» ist Arbeitstitel.
 
+**Was die Mockups noch nicht zeigen.** Sie entstanden vor der Auswertung des Regelwerks am Spike. Zwei Dinge sind seither entschieden und müssen vor Phase 3 nachgezogen werden: Die Liste führt Massnahmen statt einzelner Schwachstellen (Kapitel 7.4), und die Fassung ohne Sprachmodell mit Antworten aus Vorlagen ist die Vorgabe einer frischen Installation (Kapitel 7.5). Die Zahlen im Bulletin-Mockup («6 concern you», 167 auf Stufe 1) sind Beispielwerte und nicht aus dem Regelwerk berechnet.
+
 ## 11.2 Die Idee in drei Sätzen
 
 Risiko wird gemeldet wie im Lawinen- oder Naturgefahrenbulletin: eine nummerierte Gefahrenstufe, das Gebiet, für das sie gilt, und das empfohlene Verhalten. Die Stufe ist immer Ziffer und Wort; die Farbe wiederholt nur, was beide sagen. Die Welt liefert Schrift, Farbskala, Dichte und eine Signatur, die Gefahrenleiter; Navigation und Bedienelemente bleiben Standard.
@@ -49,9 +51,11 @@ Massgeblich ist `DESIGN.md`. Die wichtigsten Festlegungen:
 
 | Bereich | Zweck | Wichtigste Zustände |
 |---|---|---|
-| **Bulletin** | Lage des Tages: höchste Stufe, führende Meldung, Stufe je Projekt, Änderungen | ruhig (nichts ab Stufe 2), Erstbefüllung läuft, Quelle veraltet |
-| **Alerts** | Liste aller Meldungen mit Leiter als Filter, Suche, Projekt, Status | leer nach Filter, lädt, Stufe 1 auf Wunsch |
-| **Alert** | Eine Meldung: drei Antworten, Einschätzung, Faktoren, betroffene Projekte, Details, Quellen, Verlauf | ohne KI-Einschätzung, zurückgezogen, erledigt |
+| **Bulletin** | Lage des Tages: höchste Stufe, führende Massnahme, Stufe je Projekt, Änderungen, jüngste Warnungen ohne Kennung | ruhig (nichts ab Stufe 2), Erstbefüllung läuft, Quelle veraltet |
+| **Alerts** | Liste der Massnahmen mit Leiter als Filter, Suche, Projekt, Status; jede Zeile nennt Komponente, Ziel und Anzahl der Befunde und lässt sich aufklappen | leer nach Filter, lädt, Stufe 1 auf Wunsch |
+| **Action** | Eine Massnahme: Ziel, Befunde nach Stufe, Status, Zuweisung, Frist, Verlauf | ein Befund, viele Befunde, keine Korrektur verfügbar |
+| **Alert** | Eine Schwachstelle: drei Antworten, Einschätzung, Faktoren je Projekt, Details, Quellen | ohne KI-Einschätzung (Vorlagen), Vorschlag des Modells zu bestätigen, zurückgezogen |
+| **Entries** | Suche über alle konsolidierten Einträge, unabhängig vom eigenen Profil | kein Treffer |
 | **Projects** | Projekte und ihr Technologieprofil; Hinweise auf Lücken im Profil | ohne Komponenten, Version fehlt |
 | **Sources** | Stand der Quellen; für den Instanz-Administrator auch Steuerung | Quelle fehlerhaft, deaktiviert |
 | **Notification rules** | Regeln, Webhook-Ziele, Zustellprotokoll | Zustellung fehlgeschlagen |
@@ -59,15 +63,15 @@ Massgeblich ist `DESIGN.md`. Die wichtigsten Festlegungen:
 | **Settings** | Organisation, Fristen, KI-Datenrichtlinie; persönlich: Sprache, MFA, Geräte für Push | |
 | **Setup** | Geführte Ersteinrichtung (11.6) | abgebrochen und fortsetzbar |
 
-Am Desktop liegt die Navigation im Kopfband, am Telefon in einer Leiste am unteren Rand mit vier Zielen. In der Meldung ersetzt eine Aktionsleiste die Navigationsleiste: Hauptaktion, Status, Zuweisen.
+Am Desktop liegt die Navigation im Kopfband, am Telefon in einer Leiste am unteren Rand mit vier Zielen. In Massnahme und Meldung ersetzt eine Aktionsleiste die Navigationsleiste: Hauptaktion, Status, Zuweisen.
 
 ## 11.5 Kernabläufe
 
-**Ankunft aus einer Benachrichtigung (Entwickler, Telefon).** Push öffnet die Meldung. Ohne Scrollen sichtbar: Stufe, Titel, was passiert ist, ob das Projekt betroffen ist, was zu tun ist. Ein Tipp auf «Take into review» setzt den Status, weist zu und bestätigt an Ort und Stelle mit «Undo». Kein Dialog, kein Seitenwechsel.
+**Ankunft aus einer Benachrichtigung (Entwickler, Telefon).** Push öffnet die Massnahme; bei einem einzigen Befund sieht sie aus wie die Meldung im Mockup. Ohne Scrollen sichtbar: Stufe, Titel, was passiert ist, ob das Projekt betroffen ist, was zu tun ist. Ein Tipp auf «Take into review» setzt den Status, weist zu und bestätigt an Ort und Stelle mit «Undo». Kein Dialog, kein Seitenwechsel.
 
 **Sichtung (verantwortliche Person, Desktop).** Bulletin zeigt die höchste Stufe und was sich geändert hat. Die Leiter führt in die gefilterte Liste; von dort in die Meldung, Zuweisung oder Abschluss mit Ergebnis, zurück in die Liste an dieselbe Stelle.
 
-**Abschluss.** «Remediated», «Risk accepted» und «Not affected» verlangen eine kurze Begründung. Der Status gilt je Projekt; «für alle Projekte» ist die Abkürzung.
+**Abschluss.** «Remediated», «Risk accepted» und «Not affected» verlangen eine kurze Begründung. Der Status wird an der Massnahme gesetzt und gilt für ihre Befunde; einzelne Befunde lassen sich abweichend setzen. Wer im Profil die Version anhebt, schliesst damit die Befunde, die die neue Version nicht mehr betreffen.
 
 **Korrektur.** «Correct this assessment» erfasst, was falsch war: Urteil, Stufe oder Massnahme. Die Meldung wird neu bewertet; die Korrektur bleibt im Verlauf sichtbar.
 
@@ -78,8 +82,8 @@ Noch nicht als Mockup gebaut; der Aufbau steht fest.
 | Schritt | Inhalt | Regel |
 |---|---|---|
 | 1 Organisation | Name, Sprache, Zeitzone | Vorgaben aus dem Browser |
-| 2 Erstes Projekt | Name, Kritikalität, Erreichbarkeit | drei Wahlmöglichkeiten je Frage, mit einem Satz Erklärung |
-| 3 Technologien | Suche im Katalog, gruppiert nach Betriebssystem, Laufzeit und Framework, CMS und Shop, Datenbank und Messaging, Cloud und Hosting, Container, Netzwerk und Sicherheit, SaaS | Version ist erwünscht, aber nicht Pflicht; «Version unbekannt» ist eine gültige Angabe. Freie Einträge sind möglich und als ungeprüft gekennzeichnet. |
+| 2 Erstes Projekt | Name, getragener Geschäftsprozess, Kritikalität, Erreichbarkeit, optional vorhandene Schutzmassnahmen | drei Wahlmöglichkeiten je Frage, mit einem Satz Erklärung |
+| 3 Technologien | Suche im Katalog, gruppiert nach Betriebssystem, Laufzeit und Framework, CMS und Shop, Datenbank und Messaging, Cloud und Hosting, Container und Virtualisierung, Netzwerk und Sicherheit, weitere Software und Abhängigkeiten, externe Dienste | Version ist erwünscht, aber nicht Pflicht; «Version unbekannt» ist eine gültige Angabe. Bei Paketen fragt der Wizard, ob sie aus einer Distribution stammen. Externe Dienste haben keine Version. Freie Einträge sind möglich und als ungeprüft gekennzeichnet. |
 | 4 Abdeckung | Zeigt, was sich prüfen lässt und was nicht: fehlende Versionen, Plattformen ohne Plugins | Hinweise, keine Sperren |
 | 5 Benachrichtigung | Die drei Vorgaberegeln, Push auf diesem Gerät, Team einladen | alles überspringbar |
 | 6 Erstes Bulletin | Die Ersteinschätzung läuft im Hintergrund; die Seite zeigt den Fortschritt und dann das Ergebnis | eine Sammelnachricht statt Einzelalarme |
@@ -141,6 +145,7 @@ Der Server sendet in beiden Stufen nur Web Push. Die App-Stufe ändert am Server
 
 ## 11.10 Offen
 
+- Überarbeitete Mockups der Liste und des Bulletins mit Massnahmen statt einzelner Schwachstellen, die Detailansicht einer Massnahme und die Fassung ohne Sprachmodell; fällig vor Phase 3.
 - Mockups für Setup-Wizard, Projektprofil, Benachrichtigungsregeln und Quellenstatus; sie folgen nach Freigabe der Richtung.
 - Eine eigene Seite für das ruhige Bulletin. Heute existiert der Zustand nur als Muster im Designsystem.
 - Benennung der Stufe 1 und ob sie in der Leiter standardmässig sichtbar ist.

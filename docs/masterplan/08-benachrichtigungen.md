@@ -2,121 +2,137 @@
 
 ## 8.1 Grundsatz
 
-Eine Benachrichtigung ist ein Eingriff in die Arbeit eines Menschen. Das System sendet deshalb nur, wenn sich für den Empfänger etwas ändert, das er wissen oder tun muss, und es sendet dasselbe nie zweimal. Alles andere steht in der Oberfläche und in Zusammenfassungen.
+Eine Benachrichtigung ist ein Eingriff in die Arbeit eines Menschen. Das System sendet deshalb nur, wenn sich für den Empfänger etwas ändert, das er wissen oder tun muss, und es sendet dasselbe nie zweimal. Alles andere steht in der Oberfläche und in Sammelnachrichten.
+
+Benachrichtigt wird über **Massnahmen** (Kapitel 7.4), nicht über einzelne CVEs. Kommen zu einer offenen Massnahme zwanzig weitere Befunde hinzu, ohne dass ihre Stufe steigt, erfährt der Empfänger das in der nächsten Sammelnachricht und nicht in zwanzig Einzelmeldungen.
 
 ```mermaid
 flowchart LR
-  E[Ereignis aus Assessment] --> R[Regeln der Organisation auswerten]
+  E[Ereignis an einer Massnahme] --> R[Regeln der Organisation auswerten]
   R --> T[Empfänger und Kanäle auflösen]
-  T --> D{Zustellschlüssel<br/>schon vorhanden?}
-  D -- ja --> X[verwerfen]
-  D -- nein --> O[delivery anlegen]
-  O --> S[Kanal sendet, wiederholt bei Fehler]
-  O --> G[Sammelmodus: bis zum Zeitplan zurückhalten]
+  T --> Z{Für Empfänger und Kanal<br/>etwas Neues?}
+  Z -- nein --> X[verwerfen]
+  Z -- ja, sofort --> O[Zustellung einreihen, kurz bündeln]
+  Z -- ja, gesammelt --> G[für die Sammelnachricht vormerken]
+  O --> S[Kanal sendet, Job-System wiederholt]
 ```
 
 ## 8.2 Ereignisse
 
+Diese Tabelle ist die einzige Liste der Ereignisse; andere Kapitel verweisen hierher.
+
 | Ereignis | Bedeutung | Vorgabe |
 |---|---|---|
-| `alert.raised` | neue Meldung ab Stufe 2 | benachrichtigt nach Regel |
-| `alert.level_raised` | Stufe gestiegen | benachrichtigt nach Regel, auch wenn schon einmal gemeldet |
-| `alert.newly_affected` | weiteres Projekt betroffen | benachrichtigt nach Regel |
-| `alert.exploitation_escalated` | Ausnutzung neu bekannt oder von PoC zu aktiv, ohne Stufenwechsel | benachrichtigt nach Regel |
-| `alert.fix_available` | erstmals eine Korrektur verfügbar | nur wenn die Regel es verlangt |
-| `alert.level_lowered`, `alert.withdrawn` | Entwarnung | nur In-App; per E-Mail oder Push einmal, wenn zuvor dorthin gemeldet wurde |
-| `alert.assigned` | Zuweisung | an die zugewiesene Person |
-| `alert.status_changed`, `alert.note_added` | Bearbeitung durch das Team | nur In-App |
+| `action.raised` | neue Massnahme ab Stufe 2 | benachrichtigt nach Regel |
+| `action.level_raised` | Stufe der Massnahme gestiegen | benachrichtigt nach Regel, auch wenn schon einmal gemeldet |
+| `action.exploitation_escalated` | bei einem ihrer Befunde wird Ausnutzung neu bekannt oder aktiv, ohne dass die Stufe steigt | benachrichtigt nach Regel |
+| `action.fix_available` | erstmals eine Korrektur verfügbar | nur wenn die Regel es verlangt |
+| `action.level_lowered`, `action.withdrawn` | Entwarnung | In-App; per E-Mail oder Push einmal, wenn zuvor dorthin gemeldet wurde |
+| `action.assigned` | Zuweisung | an die zugewiesene Person |
+| `action.status_changed`, `action.note_added` | Bearbeitung durch das Team | nur In-App |
+| `warning.published` | neue Warnung ohne Schwachstellenkennung, etwa eine Phishing-Warnung des BACS | In-App und in der wöchentlichen Sammelnachricht; sofort nur, wenn eine Regel es verlangt |
 | `backfill.completed` | Ersteinschätzung eines neuen Projekts fertig | eine Sammelnachricht statt Einzelalarme |
 
-Kein Ereignis und damit nie eine Benachrichtigung: geänderte Beschreibungen, neue Verweise, EPSS-Bewegungen innerhalb einer Klasse, Neubewertungen mit gleichem Ergebnis.
+Kein Ereignis und damit nie eine Benachrichtigung: weitere Befunde in einer Massnahme ohne Stufenanstieg, geänderte Beschreibungen, neue Verweise, EPSS-Bewegungen innerhalb einer Klasse, Neubewertungen mit gleichem Ergebnis.
 
 ## 8.3 Regeln
 
-Eine Regel verbindet Bedingungen mit Empfängern:
+Eine Regel verbindet Bedingungen mit Zielen:
 
 | Teil | Möglichkeiten |
 |---|---|
 | Geltung | alle Projekte oder ausgewählte |
 | Schwelle | Mindeststufe 2 bis 5 |
 | Ereignisse | Auswahl aus 8.2 |
-| Modus | sofort, oder gesammelt nach Zeitplan (Cron mit Zeitzone der Organisation) |
-| Empfänger | Rollen (Owner, Admin, Member), einzelne Benutzer, externe E-Mail-Adressen, Webhook-Ziele |
-| Kanäle | In-App, E-Mail, Web Push, Webhook |
+| Ziele | je Ziel: Empfänger (Rolle, Benutzer, externe E-Mail-Adresse, Webhook), Kanal und Modus |
+| Modus je Ziel | sofort, oder gesammelt nach Zeitplan (Cron mit Zeitzone der Organisation) |
 
-Jede neue Organisation startet mit drei Regeln, damit sie ohne Einrichtung sinnvoll alarmiert wird:
+Der Modus hängt am Ziel, nicht an der Regel: Dieselbe Regel kann In-App sofort und per E-Mail gesammelt zustellen.
 
-1. **Critical at once:** Stufe 5, sofort, an Owner und Admins über In-App, E-Mail und Push.
-2. **High, daily:** ab Stufe 4, In-App sofort, E-Mail gesammelt werktags um 08:00.
-3. **Weekly summary:** ab Stufe 2, montags um 08:00 per E-Mail, auch wenn nichts vorliegt. Die leere Zusammenfassung sagt, dass geprüft wurde und nichts anstand.
+Jede neue Organisation startet mit drei Regeln:
 
-Benutzer können für sich einzelne Kanäle stummschalten. Kanäle, die eine Regel für Stufe 5 vorsieht, lassen sich nur stummschalten, wenn die Organisation das erlaubt.
+1. **Critical at once:** Stufe 5, an Owner und Admins, sofort über In-App, E-Mail und Push.
+2. **High:** ab Stufe 4, an alle Mitglieder, In-App sofort und E-Mail gesammelt werktags um 08:00.
+3. **Weekly summary:** ab Stufe 2 und Warnungen, per E-Mail montags um 08:00, auch wenn nichts vorliegt. Die leere Sammelnachricht sagt, dass geprüft wurde und nichts anstand.
+
+Die Regeln überschneiden sich absichtlich; dass daraus keine doppelten Nachrichten werden, regelt 8.4. Externe E-Mail-Adressen erhalten erst nach Bestätigung durch den Empfänger Nachrichten. Benutzer können für sich einzelne Kanäle stummschalten; für Stufe 5 nur, wenn die Organisation das erlaubt.
 
 ## 8.4 Nie zweimal dasselbe
 
-Jedes Ereignis trägt einen Fingerabdruck über das, was der Empfänger wahrnehmen würde: Meldung, Art des Ereignisses, Stufe, Menge der betroffenen Projekte, Ausnutzungsstand, Korrektur verfügbar.
+Massgeblich ist nicht, welche Regel auslöst, sondern was ein Empfänger auf einem Kanal schon erfahren hat. Das System führt deshalb je Massnahme, Empfänger und Kanal einen **Benachrichtigungsstand**: die zuletzt gemeldete Stufe, den zuletzt gemeldeten Ausnutzungsstand, ob die Korrektur gemeldet wurde, und den Zeitpunkt.
 
-```
-dedupe_key = hash(Regel, Empfänger, Kanal, Fingerabdruck)
-```
+| Ereignis | Sofort gesendet, wenn |
+|---|---|
+| neue Massnahme oder Stufenanstieg | die neue Stufe über der zuletzt gemeldeten liegt und die Schwelle einer Regel erreicht |
+| Ausnutzung | der neue Stand über dem zuletzt gemeldeten liegt |
+| Korrektur verfügbar | noch nicht gemeldet und von einer Regel verlangt |
+| Entwarnung | zuvor auf diesem Kanal gemeldet wurde |
 
-Der Schlüssel ist in `notify.delivery` eindeutig. Ein doppelt verarbeitetes Ereignis, ein wiederholter Job oder zwei Regeln mit demselben Empfänger und Kanal erzeugen damit höchstens eine Zustellung. Zusätzlich gilt:
+Nach jeder Zustellung wird der Stand fortgeschrieben, auch nach einer Entwarnung. Steigt eine Massnahme von 4 auf 5, fällt auf 4 und steigt erneut auf 5, entstehen zwei Nachrichten über den Anstieg: Der Stand nach der Entwarnung ist 4.
 
-- **Bündelung:** Ereignisse zur selben Meldung innerhalb von fünf Minuten werden zu einer Nachricht zusammengezogen. Das fängt Wellen ab, wenn mehrere Quellen kurz nacheinander aktualisieren.
-- **Vorrang:** Löst ein Ereignis für einen Empfänger sowohl eine Sofort- als auch eine Sammelregel aus, gewinnt sofort; die Zusammenfassung führt die Meldung als bereits gemeldet.
-- **Erstbefüllung:** Meldungen aus der Rückwärtssuche benachrichtigen nicht einzeln (Kapitel 7.6).
+Dazu drei Mechanismen:
+
+- **Technische Eindeutigkeit.** Jede Zustellung trägt einen Schlüssel aus Massnahme, Empfänger, Kanal und Übergang (Ereignis mit altem und neuem Stand). Er ist eindeutig; ein doppelt verarbeitetes Ereignis oder ein wiederholter Job erzeugt keine zweite Zustellung. Die Regel ist bewusst nicht Teil des Schlüssels: Zwei Regeln mit demselben Empfänger und Kanal ergeben eine Nachricht.
+- **Bündelung.** Eine Sofortzustellung wartet zwei Minuten und nimmt alles mit, was bis dahin für denselben Empfänger und Kanal anfällt. Das fängt Wellen ab, wenn mehrere Quellen kurz nacheinander aktualisieren.
+- **Sammelnachricht.** Was ein Ziel gesammelt erhalten soll, wird in einer Liste vorgemerkt und zum Zeitplan zusammengestellt: neue Massnahmen, Anstiege, Zuwachs an Befunden, Erledigtes, Warnungen. Bereits sofort Gemeldetes erscheint dort als «bereits gemeldet».
+
+**Erstbefüllung.** Befunde aus der Rückwärtssuche tragen eine Markierung und lösen keine Einzelereignisse aus, auch nicht «neu betroffen». Am Ende steht ein `backfill.completed` je Projekt. Der Benachrichtigungsstand wird dabei auf die Stufe der Erstbefüllung gesetzt, damit erst ein späterer Anstieg meldet.
 
 ## 8.5 Kanäle
 
-Jeder Kanal implementiert dieselbe Schnittstelle: `Send(delivery) → Erfolg | vorübergehender Fehler | endgültiger Fehler`. Ein neuer Kanal ist eine Klasse und ein Einstellungsformular.
+Jeder Kanal implementiert dieselbe Schnittstelle: `Send(Zustellung) → Erfolg | vorübergehender Fehler | endgültiger Fehler`. Ein neuer Kanal ist eine Klasse und ein Einstellungsformular.
 
 | Kanal | Umsetzung | Besonderheiten |
 |---|---|---|
-| In-App | Zeile in `notify.notification`, Live-Zustellung über Server-Sent Events | Zähler im Kopf, Liste mit gelesen/ungelesen |
-| E-Mail | SMTP der Instanz; Text- und HTML-Teil | Betreff beginnt mit Stufe und Meldungsnummer; `List-Unsubscribe` führt zu den Einstellungen |
-| Web Push | Standard-Web-Push mit VAPID-Schlüsselpaar der Instanz | Inhalt Ende-zu-Ende verschlüsselt; Dringlichkeit `high` nur für Stufe 5; abgelaufene Abos (404, 410) werden entfernt |
-| Webhook | `POST` mit JSON, Schema versioniert | Signatur `HMAC-SHA256` über Zeitstempel und Inhalt; Ziele im privaten Netz nur nach Freigabe durch den Instanz-Administrator (Kapitel 9) |
+| In-App | Zeile in `notify.notification`, Live-Zustellung über Server-Sent Events | Zähler im Kopf, Liste mit gelesen und ungelesen |
+| E-Mail | SMTP der Instanz; Text- und HTML-Teil | Betreff beginnt mit Stufe und Nummer; `List-Unsubscribe` führt zu den Einstellungen |
+| Web Push | Standard-Web-Push mit VAPID-Schlüsselpaar der Instanz | Inhalt Ende-zu-Ende verschlüsselt; Dringlichkeit `high` nur für Stufe 5; abgelaufene Abos (404, 410) werden entfernt; Endpunkte nur bei den Push-Diensten der Browserhersteller |
+| Webhook | `POST` mit JSON, Schema versioniert | Signatur `HMAC-SHA256` über Zeitstempel und Inhalt; Ziele im privaten Netz nur nach Freigabe durch den Instanz-Administrator (Kapitel 9.5) |
 
-Ausbaustufen: Vorlagen für Microsoft Teams und Slack auf Basis des Webhook-Kanals, ntfy, native Push für die Capacitor-App über ein Relay (Kapitel 11).
+Ausbaustufen: Vorlagen für Microsoft Teams und Slack auf Basis des Webhook-Kanals, ntfy, native Push für die Capacitor-App über ein Relay (Kapitel 11.9).
 
 ### Was eine Nachricht sagt
 
 Jede Nachricht beantwortet die drei Fragen in derselben Reihenfolge wie die Oberfläche.
 
 ```
-Betreff:  [5 Critical] #142 Puppet Enterprise: code execution through crafted reports
+Subject:  [5 Critical] #143 Puppet Enterprise in Platform Ops
 
 Level 5, Critical. Raised from level 4.
 
-What happened   CISA lists the flaw as actively exploited since 17 Nov 2026.
+What happened   CISA lists CVE-2026-115731 as actively exploited since 17 Nov 2026.
 Affected        Platform Ops runs Puppet Enterprise 2025.9.0, inside the affected range.
-What to do      1. Upgrade to 2025.12.1 and restart Puppet Server.
+What to do      Upgrade to 2025.12.1 and restart Puppet Server.
+Covers          1 vulnerability
 
-Open alert: https://csh.example.org/o/example/alerts/142
+Open: https://csh.example.org/o/example/actions/143
 ```
 
-Eine Push-Nachricht trägt Stufe, Nummer und Titel, der Klick öffnet die Meldung. Die Organisation wählt, wie viel E-Mails enthalten: vollständig wie oben oder nur Stufe, Nummer und Link. E-Mail ist nicht Ende-zu-Ende geschützt; wer keine Infrastrukturdetails per Mail verschicken will, wählt die knappe Form.
+Bei einer Massnahme mit vielen Befunden nennt die Nachricht die Anzahl und die drei mit der höchsten Stufe. Eine Push-Nachricht trägt Stufe, Nummer und Titel; der Klick öffnet die Massnahme. Die Organisation wählt, wie viel E-Mails enthalten: vollständig wie oben oder nur Stufe, Nummer und Link. E-Mail ist nicht Ende-zu-Ende geschützt.
 
 ## 8.6 Zustellung
 
-`notify.delivery` ist zugleich Protokoll und Ausgangspostfach.
-
-- Zustände: `pending`, `sent`, `failed` (wird wiederholt), `dead` (aufgegeben), `suppressed` (durch Stummschaltung oder Vorrang).
-- Wiederholung bei vorübergehenden Fehlern nach 1, 5 und 30 Minuten, 2 und 6 Stunden; danach `dead`.
+- Eine Zustellung ist ein Job des Job-Systems (Kapitel 3.4). Wiederholung, Wartezeiten und Aufgabe nach dem letzten Versuch kommen von dort; es gibt keinen zweiten Wiederholungsmechanismus.
+- `notify.delivery` ist das Protokoll: Empfänger, Kanal, Übergang, Zustand (`pending`, `sent`, `failed`, `dead`, `suppressed`), Fehler, Zeitpunkt.
 - Endgültige Fehler (unbekannte Adresse, Abo abgelaufen, Webhook antwortet mit 4xx ausser 429) werden nicht wiederholt.
-- Schlägt die Zustellung für Stufe 5 auf allen Kanälen eines Empfängers fehl, erhalten die Owner eine In-App-Warnung; der Zustand ist in den Regeln sichtbar.
-- Obergrenzen je Kanal und Organisation schützen vor Fehlkonfiguration: höchstens 60 Sofortnachrichten pro Stunde, darüber wird gebündelt.
+- Schlägt die Zustellung für Stufe 5 auf allen Kanälen eines Empfängers fehl, erhalten die Owner eine In-App-Warnung.
+- Obergrenze je Kanal und Organisation als Schutz vor Fehlkonfiguration: höchstens 60 Sofortnachrichten pro Stunde, darüber wird in die Sammelnachricht verschoben.
 
 ## 8.7 Eskalation (Ausbaustufe 1)
 
-Eine Eskalationsregel beschreibt Stufen mit Wartezeit: «Stufe 5, nach 2 Stunden noch offen und niemand zugewiesen: an Owner; nach 8 Stunden: an die Eskalationsadresse». Technisch ist jede Stufe ein Job mit Fälligkeit, eingereiht beim Auslösen der Meldung. Der Job prüft bei Ausführung den Zustand und tut nichts, wenn die Meldung inzwischen bearbeitet wird. Das Datenmodell (Regeln, Ziele, Zustellungen) trägt das bereits; im MVP fehlen nur Oberfläche und Job.
+Eine Eskalationsregel beschreibt Schritte mit Wartezeit: «Stufe 5, nach 2 Stunden noch offen und niemand zugewiesen: an Owner; nach 8 Stunden: an die Eskalationsadresse». Technisch ist jeder Schritt ein Job mit Fälligkeit, eingereiht beim Auslösen. Er prüft bei Ausführung den Zustand und tut nichts, wenn die Massnahme inzwischen bearbeitet wird. Für die Ausbaustufe kommen eine Tabelle für Eskalationsregeln, ihre Oberfläche und der Job hinzu; Regeln, Ziele und Zustellung werden wiederverwendet.
 
-Fristen sind im MVP sichtbar, lösen aber noch nichts aus: Jede Meldung trägt ein Fälligkeitsdatum aus der Vorgabe ihrer Stufe (Kapitel 7.5); Liste und Bulletin zeigen Überfälliges.
+Fristen sind im MVP sichtbar, lösen aber noch nichts aus: Jede Massnahme trägt ein Fälligkeitsdatum aus der Vorgabe ihrer Stufe (Kapitel 7.6); Liste und Bulletin zeigen Überfälliges.
 
 ## 8.8 Abnahmekriterien
 
-- Dieselbe unveränderte Meldung erzeugt pro Empfänger und Kanal genau eine Zustellung, auch wenn das auslösende Ereignis dreimal verarbeitet wird.
-- Steigt die Stufe einer bereits gemeldeten Schwachstelle, wird erneut benachrichtigt; ändert sich nur die Beschreibung, nicht.
-- Ein nicht erreichbarer SMTP-Server verzögert die Zustellung, verliert sie aber nicht; nach Wiederkehr gehen alle wartenden Nachrichten in richtiger Reihenfolge hinaus.
-- Ein Webhook-Empfänger kann die Echtheit jeder Nachricht mit dem gemeinsamen Geheimnis prüfen.
+- Dasselbe Ereignis dreimal verarbeitet erzeugt pro Empfänger und Kanal genau eine Zustellung.
+- Zwei Regeln mit demselben Empfänger und Kanal erzeugen für ein Ereignis eine Nachricht.
+- Steigt die Stufe einer bereits gemeldeten Massnahme, wird erneut benachrichtigt; kommen nur Befunde hinzu oder ändert sich eine Beschreibung, nicht.
+- Anstieg, Entwarnung und erneuter Anstieg ergeben zwei Nachrichten über den Anstieg.
+- Drei Ereignisse für denselben Empfänger innerhalb von zwei Minuten ergeben eine Nachricht.
 - Ein neu angelegtes Projekt mit 40 Treffern im Rückblick erzeugt genau eine Nachricht.
+- Sammelnachricht: Sie kommt zur eingestellten Zeit in der Zeitzone der Organisation, enthält alles seit der letzten und kommt auch leer, wenn die Regel das vorsieht.
+- E-Mail: Ein nicht erreichbarer SMTP-Server verzögert die Zustellung, verliert sie aber nicht.
+- Web Push: Abo anlegen und entfernen funktioniert in Chrome, Firefox und Safari am Desktop sowie in Chrome auf Android; ein abgelaufenes Abo verschwindet nach dem ersten Fehlversuch. iOS wird von Hand an einer installierten Web-App geprüft.
+- Webhook: Ein Empfänger kann die Echtheit jeder Nachricht mit dem gemeinsamen Geheimnis prüfen; ein Ziel im privaten Netz wird ohne Freigabe abgelehnt.

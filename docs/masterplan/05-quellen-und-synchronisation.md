@@ -1,22 +1,211 @@
 # 5 · Quellen und Synchronisation
 
-> **In Arbeit.** Dieses Kapitel wird fertiggestellt, sobald die Prüfung des Quellenkatalogs abgeschlossen ist (Herstellerquellen und Exploit-Signale laufen noch). Bereits gesichert sind die folgenden Befunde vom 18.11.2026.
+Die Endpunkte in diesem Kapitel wurden am 18.11.2026 abgerufen, soweit nichts anderes vermerkt ist. Die Tabellen mit Adressen, Antwortcodes und Hinweisen zu den Bedingungen stehen in [`docs/research/2026-11-18-source-catalogue.md`](../research/2026-11-18-source-catalogue.md). Drei Einschränkungen gelten für das ganze Kapitel: Die Recherche wurde vor ihrer Zusammenfassung beendet, die Einordnung in Familien und Wellen stammt deshalb aus diesem Plan. Lizenz- und Nutzungsbedingungen sind bei den meisten Quellen nicht geprüft (5.6). Und dokumentierte Limits wie die der NVD sind übernommen, nicht nachgemessen.
 
-## Gesicherte Befunde
+## 5.1 Zielbild
 
-**CVE Program.** Inkrementell über `delta.json` (bedingte Abfrage mit ETag funktioniert) und stündliche Delta-Archive; Gesamtbestand als tägliches Archiv von 666 MB; Einzelabruf ohne Anmeldung. Record-Format 5.2. Im Mittel 590 neue Records und 2 800 Änderungen pro Tag. 83,6 % der Records enthalten die CISA-Anreicherung mit SSVC und gegebenenfalls KEV.
+Fünfzig Quellen sollen nicht fünfzig Sonderfälle sein. Die geprüften Quellen fallen in sechs Formatfamilien. Für jede Familie gibt es einen Leser; eine Quelle einer bekannten Familie ist dann eine kurze Definition aus Adresse, Abgleichverfahren und wenigen Abweichungen. Eigenen Code braucht nur, was in keine Familie passt.
 
-**NCSC / BACS.** Die Website wurde am 20.8.2026 neu aufgesetzt; `ncsc.admin.ch` leitet auf `bacs.admin.ch` um, alle früheren Adressen sind ungültig. Es gibt keinen RSS-Feed für Warnungen. Maschinenlesbar sind die JSON-Daten, aus denen die Website sich selbst aufbaut (nicht dokumentiert, ohne Anmeldung), und die öffentlichen Beiträge des Cyber Security Hub. Warnungen sind redaktionelle Seiten ohne Schweregrad und Produktliste; CVE-IDs stehen nur im Fliesstext, bei etwa einem Viertel der Einträge. Die Nutzungsbedingungen verlangen für Vervielfältigung eine schriftliche Zustimmung. Folge: Anfrage beim BACS vor Phase 1 (Kapitel 15, E10).
+Vier Arten von Inhalt, die das Modell unterscheidet:
 
-**CISA KEV und FIRST EPSS.** Beide ohne Anmeldung abrufbar; EPSS am besten als tägliche Datei (2,85 MB, bedingte Abfrage funktioniert).
+| Art | Beispiel | Wird im System zu |
+|---|---|---|
+| Schwachstellen-Record | CVE Program, OSV, MSRC je CVE | Beobachtung zu genau einem Eintrag |
+| Advisory | Red Hat RHSA, CERT-Bund, Cisco | Beleg für null bis viele Einträge |
+| Warnung ohne Kennung | Phishing-Warnung des BACS | Eintrag der Art Warnung |
+| Signal | KEV, EPSS, Exploit-Datenbanken | Anreicherung bestehender Einträge über die CVE-ID |
 
-**NVD.** Seit April 2026 werden nur noch ausgewählte CVEs angereichert; von den acht Tage alten Records einer Stichprobe hatten 5 % CPE-Angaben. NVD ist keine Hauptquelle mehr, höchstens Anreicherung.
+## 5.2 Provider-SDK
 
-**Nationale Stellen.** CERT-Bund, NCSC-NL und CISA (über das GitHub-Repository) bieten CSAF; CERT-FR liefert JSON je Dokument; die übrigen RSS mit teils abweichenden Datumsformaten. Die Feeds von CISA selbst antworten automatisierten Clients mit 403.
+Ein Adapter hat zwei Aufgaben und sonst keine: Rohdaten holen und Rohdaten übersetzen.
 
-## Noch zu schreiben
+```csharp
+public interface ISourceProvider
+{
+    SourceDescriptor Descriptor { get; }
 
-- Provider-SDK: Vertrag, Adapterfamilien, Registrierung
-- Abrufstrategie: Fälligkeit, Cursor, bedingte Abfragen, Rückzug, Ratenbegrenzung, Überwachung
-- Vollständiger Quellenkatalog mit Format, Abgleichverfahren, Lizenz und Prüfnachweis
-- Reihenfolge des Ausbaus auf 30 bis 50 Quellen
+    // Liefert neue oder geänderte Rohdatensätze und dazwischen Haltepunkte mit dem Cursor,
+    // bis zu dem alles Gelieferte vollständig ist.
+    IAsyncEnumerable<FetchItem> FetchAsync(SyncContext ctx, CancellationToken ct);
+
+    // Übersetzt einen Rohdatensatz in eine Beobachtung. Rein, ohne Ein- und Ausgabe.
+    NormalizationResult Normalize(RawRecord record);
+}
+```
+
+| Baustein | Inhalt |
+|---|---|
+| `SourceDescriptor` | Schlüssel, Name, Art, Vorgabeintervall, erlaubte Hosts, Namensnennung und Lizenzhinweis, Konfigurationsschema (etwa optionaler API-Schlüssel) |
+| `SyncContext` | letzter gespeicherter Cursor; vorkonfigurierter HTTP-Client; Modus (`incremental`, `backfill` ab Datum, `single` für eine ID); Uhr; Grenzen für Grösse und Dauer |
+| `FetchItem` | entweder ein Rohdatensatz (externe ID, Adresse, Rohinhalt, Zeitstempel der Quelle) oder ein Haltepunkt mit Cursor |
+| `NormalizationResult` | eine Beobachtung mit einem Aussagenblock je Kennung, oder der Grund für die Quarantäne |
+
+Regeln für Adapter:
+
+- Kein Zugriff auf Datenbank, andere Adapter oder Mandantendaten. Alles Nötige kommt über den Kontext.
+- Der HTTP-Client gehört der Plattform: Zeitlimit, Wiederholung, Ratenbegrenzung je Host, Kennung im `User-Agent`, Sperre für nicht deklarierte Hosts, Grössenlimit. Ein Adapter kann das nicht umgehen.
+- `Normalize` ist deterministisch. Deshalb lassen sich Rohdaten später mit einem verbesserten Adapter neu übersetzen, ohne die Quelle erneut abzufragen.
+- Ein Adapter entscheidet nichts über Identität, Zusammenführung oder Bedeutung. Das ist Sache des Kerns (Kapitel 6).
+- Der Kern speichert die Rohdatensätze bis zu einem Haltepunkt und den Cursor dieses Haltepunkts in einer Transaktion. Ein abgebrochener Lauf setzt am letzten Haltepunkt an; nichts wird übersprungen.
+
+Adapter werden beim Start über ihre Assembly gefunden und in `intel.source` eingetragen. Eine neue Quelle verlangt keine Änderung am Kern. Im MVP sind alle Adapter Teil des Images; das Nachladen fremder Adapter zur Laufzeit ist eine spätere Frage, die an der Lizenzentscheidung hängt (Kapitel 13.9).
+
+## 5.3 Formatfamilien
+
+| Familie | Leser | Abgleich | Geprüfte Quellen dieser Familie |
+|---|---|---|---|
+| **CVE JSON 5** | ein Leser für Record-Format 5.x | Delta-Dateien, Einzelabruf | CVE Program; OpenSSL und Palo Alto liefern dasselbe Format je Schwachstelle |
+| **CSAF 2.0/2.1** | ein Leser für Dokument, Produktbaum, Schwachstellen; Abgleich über `changes.csv`, ersatzweise ROLIE oder Verzeichnis | `changes.csv` ist neueste zuerst; lesen bis zur letzten bekannten Zeile | CERT-Bund, NCSC-NL, CISA (über GitHub), Microsoft, Red Hat, SUSE, Siemens, Schneider Electric, ABB, SICK, Huawei, Open-Xchange, Trend Micro; Einzeldokumente bei Oracle, Fortinet, Palo Alto |
+| **OSV** | ein Leser für das OSV-Schema | `modified_id.csv` je Ökosystem, neueste zuerst | OSV.dev mit 48 Ökosystemen, darunter GitHub Advisories, PyPI, npm, Go, Ubuntu, Debian, Android |
+| **RSS und Atom** | ein toleranter Leser mit eigener Datumserkennung; je Quelle ein Muster für die Kennung | bedingte Abfrage, wo unterstützt; sonst Inhalts-Hash | CERT-FR, CERT-EU, CERT.at, INCIBE, ACN, CCCS, JVN, Cisco, Fortinet, Ivanti, Drupal, GitLab, Jenkins, WordPress, ZDI, CERT/CC und weitere |
+| **JSON-API** | Basisklasse für Paginierung und Zeitfenster; Abbildung je Quelle | Zeitfenster, Seiten, Cursor | NVD, GitHub Advisories, EUVD, CIRCL, Ubuntu, Kubernetes, Atlassian, BACS |
+| **Massendatei** | Basisklasse für eine Datei mit vollständigem Bestand | bedingte Abfrage auf die Datei | CISA KEV, EPSS (täglich), Exploit-DB, Metasploit, Nuclei |
+
+Ein CSAF-Leser allein erschliesst dreizehn geprüfte Anbieter; die Liste vertrauenswürdiger Anbieter beim BSI nennt vierzehn. Zwei Eigenheiten muss er kennen: Microsoft veröffentlicht ein Dokument je CVE, die meisten anderen eines je Advisory mit vielen CVEs. Der Schlüssel ist deshalb immer die Dokument-ID, und die Schwachstellen darin sind null bis viele Verweise.
+
+## 5.4 Abrufstrategie
+
+**Fälligkeit ist Zustand der Quelle.** Jede Quelle trägt `next_sync_at`. Der Worker nimmt fällige Quellen mit einer Lease, höchstens ein Lauf je Quelle. Nach einem Lauf wird die nächste Fälligkeit berechnet aus Vorgabeintervall, `Cache-Control` und `Retry-After` der Quelle sowie einem zufälligen Versatz je Instanz. Der Versatz ist wichtig: Tausend Installationen sollen nicht zur vollen Stunde gleichzeitig dieselbe Adresse treffen.
+
+**Nur holen, was sich geändert hat.** Welches Verfahren trägt, wurde je Quelle gemessen, nicht angenommen:
+
+| Verfahren | Wo es funktioniert | Wo nicht |
+|---|---|---|
+| ETag mit `If-None-Match` | CVE-Deltas, GitHub, OSV, CERT-FR, NCSC-NL, SUSE, Siemens | CISA KEV und Red Hat ignorieren das ETag |
+| `If-Modified-Since` | CISA KEV, Red Hat, EPSS-Datei, CIRCL | BACS, NVD, EUVD, Ubuntu senden keine Validatoren |
+| Zeitfenster als Parameter | NVD (höchstens 120 Tage), GitHub Advisories, EUVD | |
+| Änderungsliste, neueste zuerst | CSAF `changes.csv`, OSV `modified_id.csv` | Red Hat liefert die Liste nur ganz (2 bis 4 MB je Änderung) |
+| Inhalts-Hash der Liste oder des Datensatzes | überall als letzter Schritt | |
+
+Unabhängig vom Verfahren wird jeder Rohdatensatz gehasht. Ein unveränderter Datensatz erzeugt nichts, auch wenn die Quelle ihn erneut liefert.
+
+**Aufholen.** Der Cursor merkt sich, bis wohin sicher verarbeitet ist. Nach einem Ausfall setzt der nächste Lauf dort an. Für das CVE Program reicht das Änderungsprotokoll 30 Tage zurück; bei längerer Pause fällt der Adapter auf das tägliche Gesamtarchiv zurück.
+
+**Fehler.** Vorübergehende Fehler einer einzelnen Anfrage wiederholt der HTTP-Client wenige Male. Schlägt der Lauf fehl, verlängert sich das Intervall der Quelle exponentiell bis höchstens sechs Stunden und der Zustand wechselt über `degraded` zu `failing`. Ein Lauf bricht nie am einzelnen Datensatz: Was sich nicht übersetzen lässt, geht in die Quarantäne.
+
+**Rücksicht.** Kennzeichnender `User-Agent` mit Projektadresse; Obergrenze je Host und Worker-Prozess; dokumentierte Limits der Quelle als Vorgabe (NVD laut Dokumentation 5 Anfragen in 30 Sekunden ohne Schlüssel, nicht nachgemessen; GitHub 60 pro Stunde ohne Token, gemessen). Quellen, die automatisierte Clients abweisen, werden nicht durch einen vorgetäuschten Browser umgangen.
+
+**Überwachung.** Jeder Lauf steht in `intel.source_run` mit Dauer, Anzahl geholt, geändert, in Quarantäne und Fehler. Die Seite «Quellen» zeigt je Quelle Stand, Verzögerung und Fehlerserie. Fällt eine Quelle länger als sechs Stunden aus, erfährt es der Instanz-Administrator und das Bulletin weist darauf hin.
+
+## 5.5 Die Startquellen
+
+### CVE Program
+
+| Punkt | Befund |
+|---|---|
+| Abgleich | `delta.json` (bedingte Abfrage funktioniert) und stündliche Delta-Archive; Änderungsprotokoll über 30 Tage; tägliches Gesamtarchiv von 666 MB; Einzelabruf über die CVE-Dienste ohne Anmeldung |
+| Format | Record-Format 5.2 bei allen geprüften Records |
+| Menge | im Mittel 590 neue Records und 2 800 Änderungen pro Tag, Spitze 2 077 neue an einem Tag |
+| Inhalt | 97 % mit Vendor und Produkt, 74 % mit Versionsbereich, 88 % mit Schweregrad des Herausgebers, 84 % mit CISA-Anreicherung (SSVC, gegebenenfalls KEV) |
+| Bedingungen | freie Nutzung mit Urheberhinweis |
+
+Der Adapter läuft stündlich über die Deltas, beim Erststart über die Tagesarchive des Rückblicks.
+
+### NCSC / BACS
+
+| Punkt | Befund |
+|---|---|
+| Lage | Website seit 20.8.2026 neu; `ncsc.admin.ch` leitet auf `bacs.admin.ch`; alle früheren Adressen ungültig; kein RSS für Warnungen, kein CSAF |
+| Maschinenlesbar | die JSON-Daten, aus denen die Website sich aufbaut (nicht dokumentiert, ohne Anmeldung), in vier Sprachen; die öffentlichen Beiträge des Cyber Security Hub, davon ist nur der Abruf eines einzelnen Beitrags geprüft |
+| Inhalt | redaktionelle Seiten ohne Schweregrad und Produktliste; CVE-IDs nur im Fliesstext, bei 3 von 12 aktuellen Warnungen; 7 von 12 sind Phishing- und Betrugswarnungen |
+| Änderungen | keine Validatoren; Erkennung über `updatedAt`; Seiten werden nachträglich bearbeitet |
+| Schlüssel | stabile Dokument-ID und Gruppen-ID über die Sprachfassungen; die Adresse ist nicht stabil |
+| Bedingungen | Vervielfältigung verlangt schriftliche Zustimmung |
+
+Folgen für den Adapter: Abruf der Übersicht alle 15 Minuten, Vergleich über `updatedAt`, Einzelseiten nur bei Änderung. Als Rückfall dient das HTML derselben Seiten.
+
+**Was eine NCSC-Warnung im Produkt bewirkt:**
+
+| Fall | Wirkung |
+|---|---|
+| Warnung nennt eine CVE | Sie wird Beleg dieses Eintrags. Der Eintrag erhält das Merkmal «Warnung einer nationalen Stelle»; das Regelwerk zählt dafür einen Punkt (Kapitel 7.6), und Massnahme und Meldung zeigen das Etikett «NCSC warning» mit Verweis. |
+| Warnung ohne CVE | Sie wird ein Eintrag der Art Warnung ohne Projektbezug. Das Bulletin zeigt die jüngsten in einem eigenen Abschnitt; sie stehen in der wöchentlichen Sammelnachricht und lösen das Ereignis `warning.published` aus (Kapitel 8.2). |
+
+**Abhängigkeit vom BACS.** Angefragt wird, ob die öffentliche Schnittstelle des Cyber Security Hub automatisiert abgefragt werden darf und ob Warntexte in der Instanz gespeichert werden dürfen (Kapitel 15, E10). Der Hub ist die fachlich reichere Quelle. Die Umsetzung wartet nicht auf die Antwort: Phase 1 baut den Adapter auf den öffentlichen Daten der Website und speichert Titel, Kurztext und Verweis. Kommt die Zustimmung, kommen Volltext und Hub als Erweiterung dazu; kommt sie nicht, bleibt es dabei.
+
+### CISA KEV und FIRST EPSS
+
+KEV ist eine Datei mit 1 782 Einträgen, wenige Zugänge pro Woche, gemeinfrei. EPSS wird als tägliche Datei geholt (2,85 MB, 407 166 Werte, eine Anfrage pro Tag), nicht über die Abfrage-API. Beide ergänzen bestehende Einträge. Verweist KEV auf eine CVE ausserhalb des Rückblicks, wird sie einzeln nachgeladen.
+
+## 5.6 Katalog und Ausbau
+
+Reihenfolge nach Nutzen für die Bewertung, nicht nach Bekanntheit.
+
+**MVP (4)**
+
+| Quelle | Familie | Art |
+|---|---|---|
+| CVE Program | CVE JSON 5 | Record |
+| NCSC / BACS | JSON-API | Advisory, Warnung |
+| CISA KEV | Massendatei | Signal |
+| FIRST EPSS | Massendatei | Signal |
+
+**Erste Welle nach 1.0 (11): Pakete, Distributionen, grosse Hersteller**
+
+| Quelle | Familie | Hinweis |
+|---|---|---|
+| OSV.dev | OSV | erschliesst Paket-Ökosysteme und mehrere Distributionen auf einmal |
+| GitHub Advisory Database | JSON-API | ohne Token nur 60 Anfragen pro Stunde je Adresse; Token als empfohlene Einstellung |
+| NVD | JSON-API | nur Anreicherung: CPE, wo vorhanden |
+| CISA CSAF | CSAF | über das GitHub-Repository; die Adressen bei CISA selbst antworten mit 403 |
+| CERT-Bund | CSAF | über `changes.csv`; der ROLIE-Feed ist 49,5 MB gross |
+| Microsoft | CSAF | ein Dokument je CVE |
+| Red Hat | CSAF | Advisories und VEX; Abruf höchstens alle 15 bis 30 Minuten |
+| Ubuntu | JSON-API | der RSS-Feed fasst nur zehn Einträge und läuft an vollen Tagen in unter einer Stunde über |
+| Debian | über OSV, ergänzend die DSA-Liste | |
+| Kubernetes | JSON-API | offizieller CVE-Feed |
+| CERT-FR | RSS, Details als JSON je Dokument | Feed ist nicht chronologisch sortiert |
+
+**Zweite Welle (21): weitere Stellen und Hersteller**
+
+NCSC-NL, SUSE, Siemens (alle CSAF) · Cisco, Fortinet, Ivanti, ZDI, CERT/CC (RSS oder Atom) · Palo Alto (CVE JSON 5 je Schwachstelle) · CERT.at, CERT-EU, INCIBE, ACN, CCCS, JVN iPedia (RSS, Atom oder RDF) · Drupal, GitLab, Jenkins, WordPress Core (RSS oder Atom) · OpenSSL, Apache HTTP Server (JSON je Projekt).
+
+**Dritte Welle (18): Signale und langer Schwanz**
+
+Exploit-DB, Metasploit-Metadaten, Nuclei-Vorlagen (öffentlich verfügbare Exploits) · CIRCL-Sichtungen mit den Beobachtungen von Shadowserver · EUVD · Node.js, .NET-Releases, Mozilla, Umbraco über GitHub · Atlassian, TYPO3, Oracle · sechs weitere CSAF-Anbieter ohne zusätzlichen Code: Schneider Electric, ABB, SICK, Huawei, Open-Xchange, Trend Micro.
+
+Zusammen 54 Quellen, davon 13 allein über den CSAF-Leser.
+
+**Bedingungen.** Geprüft und frei nutzbar sind die Startquellen CVE Program, KEV und EPSS sowie unter den späteren unter anderem GitHub Advisories, Red Hat und SUSE (jeweils mit Namensnennung). Für zwölf Quellen der späteren Wellen nennt die Recherche Bedingungen nur ungeprüft, und für CERT.at fand sie keine offene Lizenz. Vor der Aufnahme einer Quelle werden ihre Bedingungen geprüft (5.8, Schritt 5); bis dahin gilt für sie der Modus «nur Metadaten und Verweis».
+
+**Nur auf Wunsch des Betreibers, weil ein eigener Schlüssel nötig ist**
+
+| Quelle | Grund |
+|---|---|
+| Wordfence Intelligence | kostenloser Schlüssel je Installation, Namensnennung verlangt; für WordPress-Plugins die beste freie Quelle |
+| VulnCheck | Konto je Installation, auffällige Namensnennung verlangt |
+| Cisco openVuln | Registrierung; der RSS-Feed genügt in der Regel |
+
+**Bewusst nicht oder nur eingeschränkt**
+
+| Quelle | Befund | Umgang |
+|---|---|---|
+| NVD als Hauptquelle | seit April 2026 reichert NIST nur noch ausgewählte CVEs an; von acht Tage alten Records hatten 5 % CPE-Angaben | nur Anreicherung |
+| CISA-Feeds und CSAF bei cisa.gov | 403 für automatisierte Clients | GitHub-Repositorys von CISA |
+| Citrix | kein maschinenlesbarer Feed mehr | CVE-Records des Herstellers, KEV, Stellen wie CERT-Bund |
+| SAP, Apple, Android-Bulletins, PostgreSQL, Tomcat | nur HTML | über CVE-Records und OSV abgedeckt; kein Auslesen von Webseiten im Kern |
+| Broadcom/VMware | nur eine undokumentierte Portal-Schnittstelle | spät und mit Vertragstest, oder gar nicht |
+| WPScan, Patchstack | restriktive Bedingungen | nicht vorgesehen |
+| inTheWild | nicht erreichbar | nicht vorgesehen |
+| NCSC UK, ACSC | fast keine Meldungen mit CVE | erst, wenn Warnungen ohne Kennung breiter gefragt sind |
+| Oracle, Palo Alto | Inhalte ohne freie Lizenz | Metadaten und Verweis, kein Volltext |
+
+## 5.7 Was die Prüfung für die Leser bedeutet
+
+- **Datumsformate.** Gefunden wurden RFC 822, RFC 822 mit Zonennamen wie `CET`, ISO 8601 im falschen Feld, reines Datum und ein eigenes Format bei Cisco. Der Feed-Leser erkennt Formate selbst und verlässt sich nicht auf die Vorgabe der Plattform.
+- **Reihenfolge.** Feeds sind nicht immer chronologisch (CERT-FR). Neues wird über Kennung und Hash erkannt, nie über die Position.
+- **Fenster.** Manche Feeds fassen nur wenige Einträge (Ubuntu zehn). Wo es eine paginierte Schnittstelle gibt, ist sie der Abgleichweg; der Feed taugt höchstens als Anstoss.
+- **Kennungen.** CVE-IDs haben 2026 sechsstellige Laufnummern, Red Hat ebenfalls. Kein Muster setzt eine feste Länge voraus.
+- **Grosse Listen.** Abgleich über die kleine Änderungsliste, nicht über den vollständigen Feed.
+- **Bedingungen.** Jede Quelle trägt Lizenz und Namensnennung als Stammdatum; die Oberfläche zeigt die Namensnennung beim Beleg. Für Quellen ohne freie Lizenz kennt das System den Modus «nur Metadaten und Verweis».
+
+## 5.8 Eine Quelle hinzufügen
+
+1. Familie bestimmen; passt eine, entsteht eine Definition, sonst ein Adapter.
+2. Echte Antworten der Quelle als Testdaten ablegen, einschliesslich eines geänderten und eines fehlerhaften Datensatzes.
+3. Abgleichverfahren messen: Validatoren, Fenster, Grösse, Limits.
+4. Abbildung auf die Beobachtung schreiben; das Ergebnis der Testdaten als Snapshot prüfen.
+5. Lizenz, Namensnennung und Vorgabeintervall eintragen.
+6. Vertragstest, der im Betrieb täglich prüft, ob die Struktur noch stimmt.
+
+Fertig ist eine Quelle, wenn ein zweiter Lauf über dieselben Daten nichts ändert, ein simulierter Ausfall aufgeholt wird und die Anleitung in `docs/guides/` den Eintrag enthält.

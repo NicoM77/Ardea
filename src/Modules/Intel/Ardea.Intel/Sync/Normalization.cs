@@ -83,6 +83,7 @@ internal sealed partial class NormalizeRecordsHandler(IUnitOfWorkFactory units, 
         var existing = await db.Observations.Where(o => ids.Contains(o.SourceRecordId)).ToDictionaryAsync(o => o.SourceRecordId, cancellationToken);
         var now = time.GetUtcNow();
         var quarantined = 0;
+        var correlate = new HashSet<string>(StringComparer.Ordinal);
         foreach (var record in records)
         {
             var raw = new RawRecord(record.ExternalId, record.Payload, record.ContentType)
@@ -111,6 +112,8 @@ internal sealed partial class NormalizeRecordsHandler(IUnitOfWorkFactory units, 
                 quarantined++;
                 if (existing.TryGetValue(record.Id, out var stale))
                 {
+                    // The entries it backed are recomputed without it.
+                    correlate.UnionWith(stale.Aliases);
                     db.Observations.Remove(stale);
                 }
 
@@ -138,13 +141,27 @@ internal sealed partial class NormalizeRecordsHandler(IUnitOfWorkFactory units, 
             row.Title = Truncate(observation.Title, 1000);
             row.Description = observation.Description;
             row.Language = observation.Language;
-            row.Claims = JsonSerializer.SerializeToDocument(observation, Json);
-            row.Aliases = [.. observation.Claims.SelectMany(c => c.Aliases).Select(a => $"{a.Scheme}:{a.Value}").Distinct(StringComparer.Ordinal)];
+            var previous = existing.TryGetValue(record.Id, out var old) ? old.Aliases : [];
+            var claims = JsonSerializer.SerializeToDocument(observation, Json);
+            var changed = old is null || !JsonElement.DeepEquals(old.Claims.RootElement, claims.RootElement);
+            row.Claims = claims;
+            row.Aliases = [.. observation.Claims.SelectMany(c => c.Aliases).Select(Correlation.CorrelateEntryHandler.AliasKey).Distinct(StringComparer.Ordinal)];
+            if (changed)
+            {
+                // Step 3 of change detection: only a different observation reaches the entry (master plan 6.4).
+                correlate.UnionWith(row.Aliases.Length > 0 ? row.Aliases.Concat(previous) : [$"SRC:{sourceKey}:{record.ExternalId}"]);
+            }
             row.ParserVersion = provider.Descriptor.ParserVersion;
             row.UpdatedAt = now;
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        var jobs = scope.ServiceProvider.GetRequiredService<IJobQueue>();
+        foreach (var key in correlate)
+        {
+            await jobs.EnqueueAsync(new Correlation.CorrelateEntry(key), Correlation.CorrelateEntry.Options(key), cancellationToken);
+        }
+
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
         return (records.Count, quarantined);
     }

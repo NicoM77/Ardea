@@ -41,9 +41,9 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
                 await apply.ExecuteNonQueryAsync(cancellationToken);
                 break;
             }
-            catch (PostgresException ex) when (attempt < 5 && IsConcurrentRoleChange(ex))
+            catch (PostgresException ex) when (attempt < 10 && IsConcurrentRoleChange(ex))
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(50 * (attempt + 1)), cancellationToken);
+                await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(20, 100) * (attempt + 1)), cancellationToken);
             }
         }
 

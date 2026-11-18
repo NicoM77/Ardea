@@ -162,3 +162,31 @@ internal sealed class EntryChangeRow
 
     public string? TriggeredBy { get; set; }
 }
+
+/// <summary>
+/// Signals per identifier, kept apart from the entry (master plan 4.4): KEV listing and EPSS. An entry
+/// is touched only when the EPSS class or the KEV listing changes.
+/// </summary>
+internal sealed class EntrySignalRow
+{
+    public Guid Id { get; set; }
+
+    public required string Scheme { get; set; }
+
+    public required string Value { get; set; }
+
+    public DateOnly? KevListedOn { get; set; }
+
+    public string? KevUrl { get; set; }
+
+    public bool? KevKnownRansomware { get; set; }
+
+    public double? EpssScore { get; set; }
+
+    public double? EpssPercentile { get; set; }
+
+    /// <summary><c>high</c> above 50 % (with a five-point band against flapping) or <c>low</c>.</summary>
+    public string? EpssClass { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+}

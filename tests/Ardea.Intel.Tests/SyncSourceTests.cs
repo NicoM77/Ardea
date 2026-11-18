@@ -22,7 +22,7 @@ public sealed class SyncSourceTests(PostgresServer server)
 
         await host.SyncAsync();
 
-        Assert.Equal("cursor-1", await host.ScalarAsync<string>("SELECT cursor FROM intel.source"));
+        Assert.Equal("cursor-1", await host.ScalarAsync<string>("SELECT cursor FROM intel.source WHERE key = 'scripted'"));
         Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source_record"));
         Assert.Equal("failed", await host.ScalarAsync<string>("SELECT outcome FROM intel.source_run"));
 
@@ -32,7 +32,7 @@ public sealed class SyncSourceTests(PostgresServer server)
 
         Assert.Equal("cursor-1", host.Provider.CursorSeen);
         Assert.Equal(SyncMode.Incremental, host.Provider.ModeSeen);
-        Assert.Equal("cursor-2", await host.ScalarAsync<string>("SELECT cursor FROM intel.source"));
+        Assert.Equal("cursor-2", await host.ScalarAsync<string>("SELECT cursor FROM intel.source WHERE key = 'scripted'"));
         Assert.Equal(3L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source_record"));
     }
 
@@ -78,20 +78,20 @@ public sealed class SyncSourceTests(PostgresServer server)
         host.Provider.FailAfter = 0;
 
         await host.SyncAsync();
-        Assert.Equal("degraded", await host.ScalarAsync<string>("SELECT health FROM intel.source"));
+        Assert.Equal("degraded", await host.ScalarAsync<string>("SELECT health FROM intel.source WHERE key = 'scripted'"));
         await host.SyncAsync();
         await host.SyncAsync();
 
-        Assert.Equal("failing", await host.ScalarAsync<string>("SELECT health FROM intel.source"));
-        Assert.Equal(3, await host.ScalarAsync<int>("SELECT consecutive_failures FROM intel.source"));
+        Assert.Equal("failing", await host.ScalarAsync<string>("SELECT health FROM intel.source WHERE key = 'scripted'"));
+        Assert.Equal(3, await host.ScalarAsync<int>("SELECT consecutive_failures FROM intel.source WHERE key = 'scripted'"));
         // The test clock stands still at 12:00: the third failure doubles the hour to eight, capped at six.
         Assert.True(await host.ScalarAsync<bool>(
-            "SELECT next_sync_at BETWEEN '2026-11-18T18:00:00Z'::timestamptz AND '2026-11-18T18:10:00Z'::timestamptz FROM intel.source"));
+            "SELECT next_sync_at BETWEEN '2026-11-18T18:00:00Z'::timestamptz AND '2026-11-18T18:10:00Z'::timestamptz FROM intel.source WHERE key = 'scripted'"));
 
         host.Provider.FailAfter = null;
         await host.SyncAsync();
-        Assert.Equal("healthy", await host.ScalarAsync<string>("SELECT health FROM intel.source"));
-        Assert.Equal(0, await host.ScalarAsync<int>("SELECT consecutive_failures FROM intel.source"));
+        Assert.Equal("healthy", await host.ScalarAsync<string>("SELECT health FROM intel.source WHERE key = 'scripted'"));
+        Assert.Equal(0, await host.ScalarAsync<int>("SELECT consecutive_failures FROM intel.source WHERE key = 'scripted'"));
     }
 
     [Fact]
@@ -120,21 +120,21 @@ public sealed class SyncSourceTests(PostgresServer server)
             await Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Platform.Persistence.IUnitOfWork>(scope.ServiceProvider).CommitAsync(CancellationToken.None);
         }
 
-        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'intel.sync-source'"));
-        Assert.True(await host.ScalarAsync<bool>("SELECT next_sync_at > '2026-11-18T13:00:00Z'::timestamptz FROM intel.source"));
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'intel.sync-source' AND payload->>'sourceKey' = 'scripted'"));
+        Assert.True(await host.ScalarAsync<bool>("SELECT next_sync_at > '2026-11-18T13:00:00Z'::timestamptz FROM intel.source WHERE key = 'scripted'"));
     }
 
     [Fact]
     public async Task Registration_updates_master_data_but_keeps_operator_settings()
     {
         await using var host = await IntelTestHost.StartAsync(server);
-        await host.ExecuteAsync("UPDATE intel.source SET enabled = false, interval = interval '3 hours', name = 'stale name'");
+        await host.ExecuteAsync("UPDATE intel.source SET enabled = false, interval = interval '3 hours', name = 'stale name' WHERE key = 'scripted'");
 
         await Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions
             .GetServices<Microsoft.Extensions.Hosting.IHostedService>(host.Services).OfType<SourceRegistrar>().Single().RegisterAsync(CancellationToken.None);
 
-        Assert.Equal("Scripted test source", await host.ScalarAsync<string>("SELECT name FROM intel.source"));
-        Assert.False(await host.ScalarAsync<bool>("SELECT enabled FROM intel.source"));
-        Assert.Equal(TimeSpan.FromHours(3), await host.ScalarAsync<TimeSpan>("SELECT interval FROM intel.source"));
+        Assert.Equal("Scripted test source", await host.ScalarAsync<string>("SELECT name FROM intel.source WHERE key = 'scripted'"));
+        Assert.False(await host.ScalarAsync<bool>("SELECT enabled FROM intel.source WHERE key = 'scripted'"));
+        Assert.Equal(TimeSpan.FromHours(3), await host.ScalarAsync<TimeSpan>("SELECT interval FROM intel.source WHERE key = 'scripted'"));
     }
 }

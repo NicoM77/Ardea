@@ -50,6 +50,14 @@ public sealed class SyncContext
     /// <summary>The source asked for a pause (<c>Retry-After</c>, <c>Cache-Control</c>); the core respects it for the next run.</summary>
     public TimeSpan? NextSyncHint => _nextSyncHint;
 
+    /// <summary>
+    /// The cursor a signal provider wants kept, e.g. the validators of its file (record providers use
+    /// checkpoints instead). The core stores it only after the run succeeded.
+    /// </summary>
+    public string? NewCursor { get; private set; }
+
+    public void SaveCursor(string cursor) => NewCursor = cursor;
+
     public void SuggestNextSync(TimeSpan delay)
     {
         if (delay > TimeSpan.Zero && (_nextSyncHint is null || delay > _nextSyncHint))

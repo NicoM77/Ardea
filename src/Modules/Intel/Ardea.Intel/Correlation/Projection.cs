@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using Ardea.Catalog.Contracts;
 using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Correlation;
@@ -253,49 +254,26 @@ internal static class Projection
 
     private static IEnumerable<AffectedData> Rows(Guid sourceId, AffectedProduct product)
     {
-        var (cpeVendor, cpeProduct) = CpePair(product.Cpes.FirstOrDefault());
-        var (purlType, purlName) = PurlPair(product.Purl);
-        var key = ProductKeys.Of(product.Vendor, product.Product);
+        // CPE pair and package in the catalogue's canonical forms, so the candidate search compares like with like.
+        var cpe = product.Cpes.Select(c => Cpe.TryParse(c, out var parsed) ? parsed : null).FirstOrDefault(c => c is not null && c.Vendor is not (Cpe.Any or Cpe.NotApplicable));
+        var package = PackageCoordinate.TryParsePurl(product.Purl, out var coordinate, out _) ? coordinate : null;
+        // The raw key; the correlation replaces it with the catalogue's key where the catalogue knows the product.
+        var key = ProductKey.TryCreate(product.Vendor, product.Product ?? package?.Name, out var raw) ? raw.Value : null;
         var defaultStatus = Status(product.DefaultStatus) ?? "unknown";
         if (product.Versions.Count == 0)
         {
             // No versions named: the default status says it all; without it, unknown.
-            yield return new AffectedData(sourceId, product.Vendor, product.Product, key, cpeVendor, cpeProduct, purlType, purlName,
+            yield return new AffectedData(sourceId, product.Vendor, product.Product, key, cpe?.Vendor, cpe?.Product, package?.Type, package?.Name,
                 product.VersionScheme, null, null, null, null, Status(product.DefaultStatus) ?? "unknown", defaultStatus);
             yield break;
         }
 
         foreach (var range in product.Versions)
         {
-            yield return new AffectedData(sourceId, product.Vendor, product.Product, key, cpeVendor, cpeProduct, purlType, purlName,
+            yield return new AffectedData(sourceId, product.Vendor, product.Product, key, cpe?.Vendor, cpe?.Product, package?.Type, package?.Name,
                 range.Scheme ?? product.VersionScheme, range.Introduced, range.Fixed, range.LastAffected, range.Exact,
                 Status(range.Status) ?? "unknown", defaultStatus);
         }
-    }
-
-    internal static (string? Vendor, string? Product) CpePair(string? cpe)
-    {
-        if (cpe is null)
-        {
-            return (null, null);
-        }
-
-        var parts = cpe.StartsWith("cpe:2.3:", StringComparison.OrdinalIgnoreCase) ? cpe.Split(':') : cpe.Replace("cpe:/", "cpe:2.3:", StringComparison.OrdinalIgnoreCase).Split(':');
-        return parts.Length > 4 ? (Wildcard(parts[3]), Wildcard(parts[4])) : (null, null);
-
-        static string? Wildcard(string value) => value is "*" or "-" or "" ? null : value.ToLowerInvariant();
-    }
-
-    internal static (string? Type, string? Name) PurlPair(string? purl)
-    {
-        if (purl is null || !purl.StartsWith("pkg:", StringComparison.Ordinal))
-        {
-            return (null, null);
-        }
-
-        var body = purl[4..].Split('@', '?', '#')[0];
-        var slash = body.IndexOf('/', StringComparison.Ordinal);
-        return slash <= 0 ? (null, null) : (body[..slash].ToLowerInvariant(), Uri.UnescapeDataString(body[(slash + 1)..]));
     }
 
     private static int Rank(Contribution c) =>
@@ -369,62 +347,4 @@ internal static class Projection
         AffectedStatus.Unknown => "unknown",
         _ => null,
     };
-}
-
-/// <summary>
-/// Product keys of affected products (master plan 6.5). This is the Intel side's interim form —
-/// vendor and product in lower case, without legal forms and punctuation; the Catalog module's
-/// normalisation (task 1.1) replaces it when it lands, and a recompute applies it to stored entries.
-/// </summary>
-internal static class ProductKeys
-{
-    private static readonly string[] LegalForms = [" inc", " inc.", " llc", " ltd", " ltd.", " gmbh", " ag", " corp", " corporation", " co.", " s.a.", " foundation"];
-
-    public static string? Of(string? vendor, string? product)
-    {
-        var p = Clean(product);
-        if (p is null)
-        {
-            return null;
-        }
-
-        var v = Clean(vendor);
-        return v is null ? p : $"{v}:{p}";
-    }
-
-    private static string? Clean(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return null;
-        }
-
-        var text = value.Trim().ToLowerInvariant();
-        if (text is "n/a" or "-" or "unknown")
-        {
-            return null;
-        }
-
-        foreach (var form in LegalForms)
-        {
-            if (text.EndsWith(form, StringComparison.Ordinal))
-            {
-                text = text[..^form.Length];
-            }
-        }
-
-        var builder = new StringBuilder(text.Length);
-        foreach (var c in text)
-        {
-            builder.Append(char.IsLetterOrDigit(c) || c is '.' or '+' ? c : '_');
-        }
-
-        var key = builder.ToString().Trim('_');
-        while (key.Contains("__", StringComparison.Ordinal))
-        {
-            key = key.Replace("__", "_", StringComparison.Ordinal);
-        }
-
-        return key.Length == 0 ? null : key;
-    }
 }

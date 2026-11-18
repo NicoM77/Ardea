@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Ardea.Catalog.Contracts;
 using Ardea.Intel.Contracts;
 using Ardea.Intel.Persistence;
 using Ardea.Intel.Sources.Abstractions;
@@ -29,7 +30,7 @@ internal sealed record NotifyEntryChanged(Guid EntryId) : IJob
     public static readonly TimeSpan Delay = TimeSpan.FromMinutes(1);
 }
 
-internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue jobs, TimeProvider time, ILogger<CorrelateEntryHandler> logger)
+internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue jobs, IProductCatalog catalog, TimeProvider time, ILogger<CorrelateEntryHandler> logger)
     : IJobHandler<CorrelateEntry>
 {
     /// <summary>Rounds of following shared aliases; identity chains are short in practice.</summary>
@@ -100,6 +101,7 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         }
 
         projection = await WithSignalsAsync(projection, sources, cancellationToken);
+        projection = await WithCatalogKeysAsync(projection, cancellationToken);
         await WriteAsync(target, projection, contributions[0].SourceKey, cancellationToken);
     }
 
@@ -142,6 +144,33 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
             Provenance = provenance,
             Sources = links,
         };
+    }
+
+    /// <summary>
+    /// The catalogue's key for every affected product it knows by CPE pair, package or name (master
+    /// plan 6.5); unknown products keep their raw key and stay findable.
+    /// </summary>
+    private async Task<EntryProjection> WithCatalogKeysAsync(EntryProjection projection, CancellationToken cancellationToken)
+    {
+        var resolved = new Dictionary<(string?, string?, string?, string?, string?, string?), string?>();
+        var affected = new List<AffectedData>(projection.Affected.Count);
+        foreach (var row in projection.Affected)
+        {
+            var lookup = (row.Vendor, row.Product, row.CpeVendor, row.CpeProduct, row.PurlType, row.PurlName);
+            if (!resolved.TryGetValue(lookup, out var key))
+            {
+                var name = row.Product ?? row.PurlName;
+                CpePair? cpe = row.CpeVendor is not null && row.CpeProduct is not null ? new CpePair(row.CpeVendor, row.CpeProduct) : null;
+                PackageCoordinate? package = row.PurlType is not null && row.PurlName is not null ? new PackageCoordinate(row.PurlType, row.PurlName) : null;
+                key = name is null && cpe is null ? row.ProductKey
+                    : (await catalog.ResolveKeyAsync(row.Vendor, name ?? cpe!.Value.Product, cpe, package, cancellationToken))?.Value ?? row.ProductKey;
+                resolved[lookup] = key;
+            }
+
+            affected.Add(row with { ProductKey = key });
+        }
+
+        return projection with { Affected = affected };
     }
 
     private static void AddSignalLink(List<SourceLink> links, Dictionary<Guid, SourceRow> sources, string key, string? url)

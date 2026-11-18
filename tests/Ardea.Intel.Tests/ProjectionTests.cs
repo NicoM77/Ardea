@@ -105,21 +105,23 @@ public sealed class ProjectionTests
         Assert.NotEqual(a.MaterialFingerprint(null), a.MaterialFingerprint("high"));
     }
 
-    [Theory]
-    [InlineData("cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*", "apache", "log4j")]
-    [InlineData("cpe:/a:openbsd:openssh:9.0", "openbsd", "openssh")]
-    [InlineData("cpe:2.3:o:*:*:*:*:*:*:*:*:*:*", null, null)]
-    public void Cpe_pair_is_read_from_both_bindings(string cpe, string? vendor, string? product)
+    [Fact]
+    public void Affected_products_carry_canonical_cpe_package_and_raw_key()
     {
-        Assert.Equal((vendor, product), Projection.CpePair(cpe));
-    }
+        var record = Contribution(Cve, "cve-program", "mandated", ObservationKind.Vulnerability, new ClaimBlock
+        {
+            Aliases = [new Identifier("CVE", "CVE-2026-9")],
+            Affected =
+            [
+                new AffectedProduct { Vendor = "The Apache Software Foundation", Product = "Log4j", Cpes = ["cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*"] },
+                new AffectedProduct { Purl = "pkg:npm/%40angular/core" },
+            ],
+        });
 
-    [Theory]
-    [InlineData("pkg:npm/%40angular/core", "npm", "@angular/core")]
-    [InlineData("pkg:maven/org.apache.logging.log4j/log4j-core@2.14.1", "maven", "org.apache.logging.log4j/log4j-core")]
-    public void Purl_pair_keeps_namespace_and_name(string purl, string type, string name)
-    {
-        Assert.Equal((type, name), Projection.PurlPair(purl));
+        var rows = Projection.Compute([record]).Affected;
+
+        Assert.Contains(rows, r => r.CpeVendor == "apache" && r.CpeProduct == "log4j" && r.ProductKey == "apache/log4j");
+        Assert.Contains(rows, r => r.PurlType == "npm" && r.PurlName == "@angular/core");
     }
 
     private static ClaimBlock Block(string description, string fixedIn) => new()

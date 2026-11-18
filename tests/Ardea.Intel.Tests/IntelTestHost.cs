@@ -50,7 +50,7 @@ internal sealed class IntelTestHost : IAsyncDisposable
         await using (var owner = new NpgsqlConnection(database.OwnerConnectionString("tests")))
         {
             await owner.OpenAsync();
-            await new DatabaseMigrator(database, [PlatformDatabase.Instance, new IntelModule().Database!], new NoBackup(), NullLogger<DatabaseMigrator>.Instance)
+            await new DatabaseMigrator(database, [PlatformDatabase.Instance, new Catalog.CatalogModule().Database!, new IntelModule().Database!], new NoBackup(), NullLogger<DatabaseMigrator>.Instance)
                 .MigrateAsync(owner, CancellationToken.None);
         }
 
@@ -72,6 +72,7 @@ internal sealed class IntelTestHost : IAsyncDisposable
         services.AddSingleton<ISourceProvider>(provider);
         var signals = new ScriptedSignalProvider();
         services.AddSingleton<ISignalProvider>(signals);
+        new Catalog.CatalogModule().AddServices(services, configuration);
         new IntelModule().AddServices(services, configuration);
         new IntelModule().AddWorkerServices(services, configuration);
         var built = services.BuildServiceProvider(validateScopes: true);

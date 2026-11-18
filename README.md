@@ -28,8 +28,8 @@ A startable instance with sign-in, job system, build chain and a first administr
 | 0.2 | Build chain: build, tests, lint, licence check, image for two architectures by cross-compiling; timing | 0.1 | ✅ |
 | 0.3 | Host program with `api`, `worker`, `migrate`, `healthcheck`, `init-env`, `doctor`; Dockerfile; Compose with TLS proxy | 0.1 | ✅ |
 | 0.4 | Job system per chapter 3.4; tests with forced aborts | 0.3 | ✅ |
-| 0.5 | Tenant context and unit of work across modules; audit; settings; secret encryption; telemetry | 0.3 | ⬜ |
-| 0.6 | **Spike:** row-level security with EF Core, Npgsql, connection pool and shared transaction; ADR | 0.5 | ⬜ |
+| 0.5 | Tenant context and unit of work across modules; audit; settings; secret encryption; telemetry | 0.3 | ✅ |
+| 0.6 | **Spike:** row-level security with EF Core, Npgsql, connection pool and shared transaction; ADR | 0.5 | ✅ [ADR 029](docs/adr/0029-row-level-security-as-hardening.md) |
 | 0.7 | **Spike:** target image with time zones and culture; health check without shell; dump before migration; work volume for large archives | 0.3 | ✅ [ADR 028](docs/adr/0028-runtime-image-and-pre-migration-dump.md) |
 | 0.8 | Sign-in: setup token, registration, server-side sessions with list and revoke, TOTP, password rules, CSRF protection, rate limiting | 0.5 | ⬜ |
 | 0.9 | Basic e-mail for confirmation, password reset and invitations; behaviour without SMTP | 0.3 | ⬜ |

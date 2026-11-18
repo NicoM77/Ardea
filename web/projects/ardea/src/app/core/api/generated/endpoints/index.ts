@@ -4,5 +4,6 @@ export * from './account/account.service';
 export * from './administration/administration.service';
 export * from './authentication/authentication.service';
 export * from './entries/entries.service';
+export * from './organizations/organizations.service';
 export * from './setup/setup.service';
 export * from './sources/sources.service';

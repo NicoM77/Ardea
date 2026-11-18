@@ -27,7 +27,7 @@ internal sealed record ResetPasswordRequest(string? Email, string? Token, string
 
 internal sealed record SessionUser(Guid Id, string Email, string DisplayName, bool IsInstanceAdmin, bool TwoFactorEnabled);
 
-internal sealed record SessionOrganization(Guid Id, string Slug, string Name, string Role);
+internal sealed record SessionOrganization(Guid Id, string Slug, string Name, string Role, bool MfaRequired);
 
 internal sealed record SessionResponse(SessionUser User, IReadOnlyList<SessionOrganization> Organizations);
 

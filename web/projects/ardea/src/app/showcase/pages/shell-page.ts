@@ -14,8 +14,8 @@ const SAMPLE_ME: Me = {
   isInstanceAdmin: true,
   twoFactorEnabled: false,
   organizations: [
-    { id: 'org-1', slug: 'example', name: 'Example Org', role: 'owner' },
-    { id: 'org-2', slug: 'sample', name: 'Sample Agency', role: 'member' },
+    { id: 'org-1', slug: 'example', name: 'Example Org', role: 'owner', mfaRequired: false },
+    { id: 'org-2', slug: 'sample', name: 'Sample Agency', role: 'member', mfaRequired: false },
   ],
 };
 

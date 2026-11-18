@@ -34,6 +34,15 @@ internal static class IamErrors
     public static IResult InvalidToken() =>
         ApiProblems.Problem("invalid_token", StatusCodes.Status400BadRequest, "The link is not valid or has expired.");
 
+    public static IResult NotFound(string code, string title) =>
+        ApiProblems.Problem(code, StatusCodes.Status404NotFound, title);
+
+    public static IResult Conflict(string code, string title) =>
+        ApiProblems.Problem(code, StatusCodes.Status409Conflict, title);
+
+    public static IResult Forbidden(string code, string title) =>
+        ApiProblems.Problem(code, StatusCodes.Status403Forbidden, title);
+
     public static IResult Validation(Dictionary<string, string[]> errors) =>
         ApiProblems.Validation("validation_failed", "Some values are missing or not valid.", errors);
 
@@ -73,6 +82,16 @@ internal sealed class FieldErrors
         else if (value.Length > 256 || !System.Net.Mail.MailAddress.TryCreate(value, out var parsed) || parsed.Address != value.Trim())
         {
             _errors[field] = ["Enter a valid e-mail address."];
+        }
+
+        return this;
+    }
+
+    public FieldErrors Check(string field, bool valid, string message)
+    {
+        if (!valid && !_errors.ContainsKey(field))
+        {
+            _errors[field] = [message];
         }
 
         return this;

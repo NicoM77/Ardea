@@ -16,6 +16,7 @@
     <ProjectReference Include="../../Modules/Notifications/Ardea.Notifications/Ardea.Notifications.csproj" />
     <ProjectReference Include="../../Sources/Ardea.Intel.Sources.Formats/Ardea.Intel.Sources.Formats.csproj" />
     <ProjectReference Include="../../Sources/Ardea.Intel.Sources.CveProgram/Ardea.Intel.Sources.CveProgram.csproj" />
+    <ProjectReference Include="../../Sources/Ardea.Intel.Sources.Osv/Ardea.Intel.Sources.Osv.csproj" />
     <ProjectReference Include="../../Sources/Ardea.Intel.Sources.Signals/Ardea.Intel.Sources.Signals.csproj" />
   </ItemGroup>
   <ItemGroup>

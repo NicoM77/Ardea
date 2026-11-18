@@ -36,6 +36,7 @@
     <Project Path="src/Sources/Ardea.Intel.Sources.Abstractions/Ardea.Intel.Sources.Abstractions.csproj" />
     <Project Path="src/Sources/Ardea.Intel.Sources.CveProgram/Ardea.Intel.Sources.CveProgram.csproj" />
     <Project Path="src/Sources/Ardea.Intel.Sources.Formats/Ardea.Intel.Sources.Formats.csproj" />
+    <Project Path="src/Sources/Ardea.Intel.Sources.Osv/Ardea.Intel.Sources.Osv.csproj" />
     <Project Path="src/Sources/Ardea.Intel.Sources.Signals/Ardea.Intel.Sources.Signals.csproj" />
   </Folder>
   <Folder Name="/tests/">

@@ -26,8 +26,7 @@ import {
           <div class="sc-rows">
             @for (level of levels; track level) {
               <div class="sc-row">
-                <span class="sc-label">{{ level }}</span
-                ><ui-priority [level]="level" />
+                <span class="sc-label">{{ level }}</span><ui-priority [level]="level" />
               </div>
             }
           </div>
@@ -37,8 +36,7 @@ import {
           <div class="sc-rows">
             @for (kind of kinds; track kind) {
               <div class="sc-row">
-                <span class="sc-label">{{ kind }}</span
-                ><ui-status [kind]="kind" />
+                <span class="sc-label">{{ kind }}</span><ui-status [kind]="kind" />
               </div>
             }
           </div>

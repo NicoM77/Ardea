@@ -1,5 +1,6 @@
 using Ardea.Platform.Configuration;
 using Ardea.Platform.Hosting;
+using Ardea.Platform.Jobs;
 using Ardea.Platform.Persistence;
 using Npgsql;
 
@@ -22,6 +23,8 @@ internal static class WorkerRole
         builder.Services.AddArdeaPlatform(builder.Configuration, "worker");
         builder.Services.AddSingleton(WorkerIdentity.FromConfiguration(builder.Configuration));
         builder.Services.AddHostedService(sp => ActivatorUtilities.CreateInstance<WorkerHeartbeat>(sp, AppVersion.Current));
+        builder.Services.AddUnitOfWork();
+        builder.Services.AddJobWorker();
         foreach (var module in Modules.All)
         {
             module.AddServices(builder.Services, builder.Configuration);

@@ -23,6 +23,8 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
         // alter the role at the same moment. A duplicate is retried as ALTER, a concurrent update again.
         for (var attempt = 0; ; attempt++)
         {
+            // A failed role update can leave the connection broken; each attempt starts on an open one.
+            await EnsureOpenAsync(owner, cancellationToken);
             try
             {
                 await using var command = new NpgsqlCommand(
@@ -39,9 +41,9 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
                 await apply.ExecuteNonQueryAsync(cancellationToken);
                 break;
             }
-            catch (PostgresException ex) when (attempt < 5 && IsConcurrentRoleChange(ex))
+            catch (PostgresException ex) when (attempt < 10 && IsConcurrentRoleChange(ex))
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(50 * (attempt + 1)), cancellationToken);
+                await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(20, 100) * (attempt + 1)), cancellationToken);
             }
         }
 

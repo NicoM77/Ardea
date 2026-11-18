@@ -25,7 +25,7 @@ The rules below summarise chapter 13 of the [master plan](docs/masterplan/13-rep
 A new dependency needs a reason in its pull request. Its licence must be on the allow-list in
 `build/licenses/allowed-licenses.json` (MIT, Apache-2.0, BSD-2/3-Clause, ISC, PostgreSQL, MPL-2.0, OFL-1.1).
 Excluded because they are commercial or impose conditions on operators: MediatR, AutoMapper, MassTransit 9+,
-FluentAssertions 8+, ImageSharp, Duende IdentityServer, TickerQ, PrimeNG 22+.
+FluentAssertions 8+, ImageSharp, Duende IdentityServer, TickerQ, PrimeNG 22+, Verify 33+ (snapshot tests; build-time maintenance-fee check).
 
 ## Tests
 

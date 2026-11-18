@@ -24,7 +24,7 @@ Versionen und Lizenzen sind am 18.11.2026 gegen Primärquellen geprüft. Die vol
 | Übersetzung | Transloco, zur Laufzeit umschaltbar | 8.4 | Ein Image und später eine App für alle Sprachen. |
 | Mobile | PWA im MVP; Capacitor als Ausbaustufe | Capacitor 8.6, 9.0 als RC | Web Push funktioniert ohne eigene Infrastruktur (Kapitel 11). |
 | Container | `aspnet:10.0-noble-chiseled-extra`, ein Image, Docker Compose | | Ohne Shell, nicht privilegiert, mit Zeitzonendaten. |
-| Tests | xUnit v3, Testcontainers, Verify, ArchUnitNET, Vitest, Playwright mit axe | | Aktuelle Standardwerkzeuge, alle frei lizenziert. Viele Unit-Tests, wenige Ende-zu-Ende-Tests; jede Pipeline bleibt unter 25 Minuten (Kapitel 13.6). |
+| Tests | xUnit v3, Testcontainers, eigener Snapshot-Abgleich, ArchUnitNET, Vitest, Playwright mit axe | | Aktuelle Standardwerkzeuge, alle frei lizenziert. Viele Unit-Tests, wenige Ende-zu-Ende-Tests; jede Pipeline bleibt unter 25 Minuten (Kapitel 13.6). |
 
 ## 2.2 Entscheidung: Hintergrundjobs und Zeitsteuerung
 
@@ -126,6 +126,7 @@ Stand 18.11.2026 kommerziell oder mit Auflagen, die auf Betreiber durchschlagen:
 | ImageSharp 4 | geteilte Lizenz | nicht benötigt |
 | Duende IdentityServer | kommerziell | nicht benötigt; falls je ein OIDC-Server nötig wird: OpenIddict |
 | TickerQ | nicht mehr Open Source | eigene Job-Tabelle |
+| Verify 33 (Snapshot-Tests) | verlangt ab dieser Version beim Build eine «Maintenance Fee» oder eine Ausnahme; festgestellt am 18.11.2026 bei der Umsetzung | eigener kleiner Snapshot-Abgleich in den Adapter-Tests |
 | PrimeNG 22 | kommerziell, geschlossen | CDK und Aria |
 
 Ein Lizenzabgleich im Build verhindert, dass eine neue Hauptversion eine solche Änderung unbemerkt einschleppt.

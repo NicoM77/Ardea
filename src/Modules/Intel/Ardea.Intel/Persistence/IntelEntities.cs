@@ -120,6 +120,49 @@ internal sealed class SourceRecordRow
 
     /// <summary>pending, parsed or quarantined.</summary>
     public required string ParseStatus { get; set; }
+
+    /// <summary>Why the record could not be translated (master plan 6.1); shown on the sources page.</summary>
+    public string? QuarantineReason { get; set; }
+
+    /// <summary>The adapter's parser version of the last normalisation.</summary>
+    public int? ParserVersion { get; set; }
+}
+
+/// <summary>
+/// The normalised statements of the current raw record: exactly one per record, overwritten by
+/// every new revision (master plan 4.3, 4.4).
+/// </summary>
+internal sealed class ObservationRow
+{
+    public Guid Id { get; set; }
+
+    public Guid SourceRecordId { get; set; }
+
+    public Guid SourceId { get; set; }
+
+    public int RecordRevision { get; set; }
+
+    /// <summary>vulnerability, advisory or warning.</summary>
+    public required string Kind { get; set; }
+
+    public string? Title { get; set; }
+
+    public string? Description { get; set; }
+
+    public string? Language { get; set; }
+
+    /// <summary>The claim blocks as JSON: aliases, related documents, metrics, affected products, …</summary>
+    public required JsonDocument Claims { get; set; }
+
+    /// <summary>Every alias of every claim block, for identity resolution (master plan 6.2).</summary>
+    public string[] Aliases { get; set; } = [];
+
+    /// <summary>parsed, or extracted by a language model (not in the MVP).</summary>
+    public required string Origin { get; set; }
+
+    public int ParserVersion { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
 }
 
 internal sealed class SourceRecordRevisionRow

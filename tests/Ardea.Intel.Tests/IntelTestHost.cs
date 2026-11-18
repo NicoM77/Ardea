@@ -99,6 +99,15 @@ internal sealed class IntelTestHost : IAsyncDisposable
         await command.ExecuteNonQueryAsync();
     }
 
+    /// <summary>Runs the normalisation job the way the worker does.</summary>
+    public async Task NormalizeAsync()
+    {
+        await using var scope = Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<NormalizeRecordsHandler>()
+            .HandleAsync(new NormalizeRecords(ScriptedProvider.Key), new JobContext(Guid.CreateVersion7(), NormalizeRecords.Kind, 1, null), CancellationToken.None);
+        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+    }
+
     public ValueTask DisposeAsync() => Services.DisposeAsync();
 
     private sealed class NoBackup : IBackupWriter
@@ -150,7 +159,22 @@ internal sealed class ScriptedProvider : ISourceProvider
         }
     }
 
-    public NormalizationResult Normalize(RawRecord record) => NormalizationResult.Quarantine("not used in these tests");
+    /// <summary><c>{"id":"X","bad":true}</c> goes to quarantine; anything else becomes a vulnerability observation with alias TEST:id.</summary>
+    public NormalizationResult Normalize(RawRecord record)
+    {
+        using var document = System.Text.Json.JsonDocument.Parse(record.Content);
+        if (document.RootElement.TryGetProperty("bad", out _))
+        {
+            return NormalizationResult.Quarantine("scripted bad record");
+        }
+
+        return NormalizationResult.Success(new Observation
+        {
+            Kind = ObservationKind.Vulnerability,
+            Title = document.RootElement.TryGetProperty("title", out var title) ? title.GetString() : null,
+            Claims = [new ClaimBlock { Aliases = [new Identifier("TEST", record.ExternalId)] }],
+        });
+    }
 
     public static RawRecord Json(string id, string json) => new(id, json, "application/json");
 }

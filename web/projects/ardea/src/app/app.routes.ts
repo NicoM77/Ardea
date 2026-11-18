@@ -89,6 +89,22 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/account/enable-two-factor-page').then((m) => m.EnableTwoFactorPage),
       },
+      // Entries and sources are the same for every organization (master plan 10.2): instance-wide.
+      {
+        path: 'entries',
+        title: 'entries.title',
+        loadComponent: () => import('./features/entries/entries-page').then((m) => m.EntriesPage),
+      },
+      {
+        path: 'entries/:key',
+        title: 'entryDetail.title',
+        loadComponent: () => import('./features/entries/entry-page').then((m) => m.EntryPage),
+      },
+      {
+        path: 'sources',
+        title: 'sources.title',
+        loadComponent: () => import('./features/sources/sources-page').then((m) => m.SourcesPage),
+      },
       {
         path: 'admin',
         canActivate: [instanceAdminGuard],
@@ -98,7 +114,13 @@ export const routes: Routes = [
       {
         path: 'o/:slug',
         canActivate: [organizationGuard],
-        children: [{ path: '', pathMatch: 'full', redirectTo: 'overview' }, ...AREA_ROUTES],
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'overview' },
+          // Addresses from before entries and sources became instance-wide.
+          { path: 'vulnerabilities', redirectTo: '/entries' },
+          { path: 'sources', redirectTo: '/sources' },
+          ...AREA_ROUTES,
+        ],
       },
       {
         path: '**',

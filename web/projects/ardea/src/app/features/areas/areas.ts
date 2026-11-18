@@ -57,11 +57,10 @@ export const AREAS: readonly Area[] = [
   },
   {
     id: 'vulnerabilities',
-    path: 'vulnerabilities',
+    // Every consolidated entry, the same for all organizations (master plan 10.2): instance-wide.
+    path: '/entries',
     label: 'nav.vulnerabilities',
     icon: LucideShieldExclamationPoint.icon,
-    emptyHeading: 'areas.vulnerabilities.emptyHeading',
-    emptyText: 'areas.vulnerabilities.emptyText',
     group: 'main',
   },
   {
@@ -75,7 +74,7 @@ export const AREAS: readonly Area[] = [
   },
   {
     id: 'sources',
-    path: 'sources',
+    path: '/sources',
     label: 'nav.sources',
     icon: LucideRadioTower.icon,
     emptyHeading: 'areas.sources.emptyHeading',
@@ -124,8 +123,19 @@ export function areaById(id: AreaId): Area {
   return id === 'administration' ? ADMINISTRATION : (AREAS.find((a) => a.id === id) ?? AREAS[0]);
 }
 
+/** Whether an area lives below `/o/:slug` or is the same for the whole instance. */
+export function isInstanceWide(area: Area): boolean {
+  return area.path.startsWith('/');
+}
+
+/** The address of an area: absolute for instance-wide areas, below the organization otherwise. */
+export function areaUrl(area: Area, organizationSlug: string | null | undefined): string | null {
+  if (isInstanceWide(area)) return area.path;
+  return organizationSlug ? `/o/${organizationSlug}/${area.path}` : null;
+}
+
 /** The organization's pages below `/o/:slug`. Each is a placeholder with its empty state for now. */
-export const AREA_ROUTES: Routes = AREAS.map((area) => ({
+export const AREA_ROUTES: Routes = AREAS.filter((area) => !isInstanceWide(area)).map((area) => ({
   path: area.path,
   title: area.label,
   data: { area: area.id },

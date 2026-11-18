@@ -44,8 +44,13 @@ public abstract class ModuleDbContext : DbContext
     }
 
     private void ApplyTenantFilter<T>(ModelBuilder modelBuilder)
-        where T : class, IOrganizationOwned =>
+        where T : class, IOrganizationOwned
+    {
         modelBuilder.Entity<T>().HasQueryFilter(TenantFilter, e => e.OrganizationId == CurrentOrganizationId);
+        // Updates and deletes by key carry the organisation in their WHERE clause: a stub entity
+        // with a foreign id but the own organisation hits no row and fails as a concurrency conflict.
+        modelBuilder.Entity<T>().Property(e => e.OrganizationId).IsConcurrencyToken();
+    }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {

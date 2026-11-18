@@ -1,5 +1,4 @@
 using Ardea.Platform.Tenancy;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Platform.Persistence;
@@ -20,7 +19,7 @@ public static class PersistenceServices
 
     /// <summary>Registers a module context bound to the scope's unit of work.</summary>
     public static IServiceCollection AddModuleDbContext<TContext>(this IServiceCollection services, string schema)
-        where TContext : DbContext
+        where TContext : ModuleDbContext
     {
         services.AddDbContext<TContext>((sp, options) =>
         {

@@ -28,6 +28,7 @@ internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext ten
 {
     private NpgsqlTransaction? _transaction;
     private bool _completed;
+    private bool _commitReserved;
 
     public NpgsqlConnection Connection { get; } = dataSource.CreateConnection();
 
@@ -52,22 +53,55 @@ internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext ten
             await Connection.OpenAsync(cancellationToken);
         }
 
-        _transaction = await Connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
-        await using var command = new NpgsqlCommand(
-            "SELECT set_config('ardea.org_id', $1, true), set_config('ardea.user_id', $2, true)", Connection, _transaction);
-        command.Parameters.Add(new NpgsqlParameter { Value = tenant.OrganizationId?.ToString() ?? string.Empty });
-        command.Parameters.Add(new NpgsqlParameter { Value = tenant.UserId?.ToString() ?? string.Empty });
-        await command.ExecuteNonQueryAsync(cancellationToken);
+        // The tenant is fixed from here on: the EF filter and the database setting must agree.
+        (tenant as TenantContext)?.Freeze();
+        var transaction = await Connection.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+        try
+        {
+            await using var command = new NpgsqlCommand(
+                "SELECT set_config('ardea.org_id', $1, true), set_config('ardea.user_id', $2, true)", Connection, transaction);
+            command.Parameters.Add(new NpgsqlParameter { Value = tenant.OrganizationId?.ToString() ?? string.Empty });
+            command.Parameters.Add(new NpgsqlParameter { Value = tenant.UserId?.ToString() ?? string.Empty });
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+        catch
+        {
+            // Without the tenant setting the transaction must not be used at all.
+            await transaction.DisposeAsync();
+            await Connection.CloseAsync();
+            throw;
+        }
+
+        _transaction = transaction;
     }
 
-    public async Task CommitAsync(CancellationToken cancellationToken)
+    public Task CommitAsync(CancellationToken cancellationToken)
+    {
+        if (_commitReserved)
+        {
+            throw new InvalidOperationException("A job's unit of work is committed by the job system together with the job's completion.");
+        }
+
+        return CommitCoreAsync(cancellationToken);
+    }
+
+    /// <summary>The job system commits a job's unit of work itself; handlers may not.</summary>
+    internal void ReserveCommitForOwner() => _commitReserved = true;
+
+    internal Task CommitAsOwnerAsync(CancellationToken cancellationToken) => CommitCoreAsync(cancellationToken);
+
+    private async Task CommitCoreAsync(CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_completed, this);
         _completed = true;
         if (_transaction is not null)
         {
             await _transaction.CommitAsync(cancellationToken);
+            await _transaction.DisposeAsync();
         }
+
+        // Nothing may run after the commit outside a transaction and without a tenant setting.
+        await Connection.CloseAsync();
     }
 
     public async ValueTask DisposeAsync()

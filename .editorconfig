@@ -61,6 +61,7 @@ dotnet_diagnostic.CA1707.severity = none       # underscores allowed in test nam
 [tests/**.cs]
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA2007.severity = none
+dotnet_diagnostic.xUnit1051.severity = none
 
 [**/Migrations/*.cs]
 generated_code = true

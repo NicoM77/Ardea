@@ -27,7 +27,7 @@ A startable instance with sign-in, job system, build chain and a first administr
 | 0.1 | Repository per chapter 13: solution, module skeletons, central package management, analyzers | | ✅ |
 | 0.2 | Build chain: build, tests, lint, licence check, image for two architectures by cross-compiling; timing | 0.1 | ✅ |
 | 0.3 | Host program with `api`, `worker`, `migrate`, `healthcheck`, `init-env`, `doctor`; Dockerfile; Compose with TLS proxy | 0.1 | ✅ |
-| 0.4 | Job system per chapter 3.4; tests with forced aborts | 0.3 | ⬜ |
+| 0.4 | Job system per chapter 3.4; tests with forced aborts | 0.3 | ✅ |
 | 0.5 | Tenant context and unit of work across modules; audit; settings; secret encryption; telemetry | 0.3 | ⬜ |
 | 0.6 | **Spike:** row-level security with EF Core, Npgsql, connection pool and shared transaction; ADR | 0.5 | ⬜ |
 | 0.7 | **Spike:** target image with time zones and culture; health check without shell; dump before migration; work volume for large archives | 0.3 | ✅ [ADR 028](docs/adr/0028-runtime-image-and-pre-migration-dump.md) |

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Ardea.Platform.Persistence;
 
 /// <summary>Tables of the <c>platform</c> schema (master plan 4.8). All of them are global.</summary>
-internal sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> options) : DbContext(options)
+internal sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> options) : ModuleDbContext(options, tenant: null)
 {
     public const string Schema = "platform";
 
@@ -53,7 +53,7 @@ internal sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> opti
                 .HasFilter("state = 'running'")
                 .HasDatabaseName("ix_job_running_lease");
             job.HasIndex(j => j.FinishedAt)
-                .HasFilter("state IN ('succeeded', 'dead')")
+                .HasFilter("state IN ('succeeded', 'failed', 'dead')")
                 .HasDatabaseName("ix_job_finished");
         });
 

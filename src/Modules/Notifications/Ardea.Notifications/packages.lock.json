@@ -40,6 +40,7 @@
         "type": "Project",
         "dependencies": {
           "Ardea.SharedKernel": "[0.0.0, )",
+          "Cronos": "[0.13.0, )",
           "EFCore.NamingConventions": "[10.0.1, )",
           "Npgsql": "[10.0.3, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )"
@@ -47,6 +48,12 @@
       },
       "ardea.sharedkernel": {
         "type": "Project"
+      },
+      "Cronos": {
+        "type": "CentralTransitive",
+        "requested": "[0.13.0, )",
+        "resolved": "0.13.0",
+        "contentHash": "Nkve+Yi0+ol3ntSBRHeW0ka9cJQ8vndSUvvkXqF9LVqwpoqWueyxu/HS275r98RDOmF7/mzRnZW5XXUBXob+TA=="
       },
       "EFCore.NamingConventions": {
         "type": "CentralTransitive",

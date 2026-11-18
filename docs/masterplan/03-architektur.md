@@ -158,7 +158,7 @@ platform.job
   run_at timestamptz, priority smallint (0 dringend, 1 normal, 2 Hintergrund),
   state: pending | running | succeeded | failed | dead,
   attempts int, max_attempts int, last_error text,
-  lease_owner text, lease_until timestamptz, timeout_seconds int,
+  lease_owner text, lease_until timestamptz, lease_token uuid, timeout_seconds int,
   org_id uuid (nullable, setzt den Mandantenkontext), trace_parent text,
   created_at, finished_at
 ```
@@ -166,7 +166,7 @@ platform.job
 | Funktion | Festlegung |
 |---|---|
 | Abholen | `… WHERE state = 'pending' AND run_at <= now() ORDER BY priority, run_at FOR UPDATE SKIP LOCKED LIMIT n`, danach Lease setzen |
-| Lease | läuft nach `timeout_seconds` ab; lange Jobs verlängern sie regelmässig; ein Wächter gibt abgelaufene frei und zählt den Versuch |
+| Lease | kurz (Vorgabe 30 Sekunden) und vom Worker erneuert, solange er lebt; jede Übernahme erhält ein eigenes Lease-Token, das jedes spätere Schreiben vorweist; ein Wächter gibt abgelaufene frei und zählt den Versuch. `timeout_seconds` begrenzt davon getrennt die Ausführung: Ein Job darüber wird abgebrochen und zählt als Fehlversuch. Beim Beenden holt der Worker keine neuen Jobs mehr, lässt laufende eine Frist lang fertig arbeiten und gibt die übrigen ohne Zählung des Versuchs zurück. |
 | Wecken | `NOTIFY` beim Einreihen; ein langsamer Poll bleibt als Rückfallebene |
 | Wiederholen | exponentiell mit Streuung; nach `max_attempts` Zustand `dead`, sichtbar in der Administration, von Hand wiederholbar |
 | Zusammenfassen | höchstens ein wartender Job je `coalesce_key` (eindeutiger Teilindex über wartende Jobs); ein laufender oder erledigter Job blockiert keinen neuen |

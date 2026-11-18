@@ -63,3 +63,71 @@ jobs:
           name: licences
           path: artifacts/nuget-licenses.md
           if-no-files-found: ignore
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Translations
+        run: npm run check:i18n
+      - name: Design tokens
+        run: npm run check:tokens
+      - name: Licences
+        run: npm run check:licenses
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
+
+  # Image comparison of the component library pages, on the main branch only (master plan 13.7).
+  # The same image as for local runs, so the committed baselines match pixel for pixel.
+  web-visual:
+    name: Web visual comparison
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      # The image ships Node 22.20; Angular CLI 22.2 needs 22.22 or 24.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm ci
+      # The /ui pages exist in development builds only.
+      - name: Build
+        run: npx ng build ardea --configuration development
+      - name: Compare
+        run: npx playwright test
+        env:
+          HOME: /root
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-diff
+          path: |
+            web/playwright-report
+            web/test-results
+          if-no-files-found: ignore

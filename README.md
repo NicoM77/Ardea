@@ -21,6 +21,10 @@ build/check-licenses.sh            # NuGet licences against the allow-list
 python3 build/check-banned-packages.py
 ```
 
+Web app (`web/`, Angular 22, Node 24): `npm ci`, then `npm start` for the dev server (proxies
+`/api` to `http://localhost:5080`), `npm test`, `npm run lint`, `npm run build`. The component
+library pages are at `/ui` in development builds. Details in [`web/README.md`](web/README.md).
+
 The repository layout and the rules for code, dependencies and tests are in chapter 13 of the
 master plan and in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 

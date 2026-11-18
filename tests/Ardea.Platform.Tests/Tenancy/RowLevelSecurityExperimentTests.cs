@@ -105,23 +105,37 @@ public sealed class RowLevelSecurityExperimentTests(PostgresServer server)
         Assert.Equal(0, await check.ServiceProvider.GetRequiredService<ItemContext>().Items.IgnoreQueryFilters().CountAsync());
     }
 
+    [Fact]
+    public async Task Stub_entity_cannot_update_or_delete_another_organisations_row()
+    {
+        await using var fixture = await RlsFixture.CreateAsync(server, maxPoolSize: 2, rowLevelSecurity: false);
+        var foreignId = await fixture.SeedAsync(OrgB, 1);
+
+        // Layer 2 alone (no RLS): the write check and the concurrency token on OrganizationId.
+        await using var scope = fixture.Scope(OrgA);
+        var context = scope.ServiceProvider.GetRequiredService<ItemContext>();
+        context.Remove(new Item { Id = foreignId, OrganizationId = OrgA, Name = "stub" });
+
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => context.SaveChangesAsync());
+    }
+
     private sealed class RlsFixture : IAsyncDisposable
     {
         private readonly ServiceProvider _services;
 
         private RlsFixture(ServiceProvider services) => _services = services;
 
-        public static async Task<RlsFixture> CreateAsync(PostgresServer server, int maxPoolSize)
+        public static async Task<RlsFixture> CreateAsync(PostgresServer server, int maxPoolSize, bool rowLevelSecurity = true)
         {
             var database = await MigrationDatabase.CreateAsync(server);
             await using (var owner = await database.OpenOwnerAsync())
             {
                 await database.Migrator().EnsureAppRoleAsync(owner, CancellationToken.None);
                 await using var ddl = new NpgsqlCommand(
-                    """
+                    $"""
                     CREATE SCHEMA rlstest;
                     CREATE TABLE rlstest.item (id uuid PRIMARY KEY, organization_id uuid NOT NULL, name text NOT NULL);
-                    ALTER TABLE rlstest.item ENABLE ROW LEVEL SECURITY;
+                    {(rowLevelSecurity ? "ALTER TABLE rlstest.item ENABLE ROW LEVEL SECURITY;" : string.Empty)}
                     CREATE POLICY tenant ON rlstest.item
                         USING (organization_id = nullif(current_setting('ardea.org_id', true), '')::uuid)
                         WITH CHECK (organization_id = nullif(current_setting('ardea.org_id', true), '')::uuid);
@@ -151,17 +165,20 @@ public sealed class RowLevelSecurityExperimentTests(PostgresServer server)
             return scope;
         }
 
-        public async Task SeedAsync(Guid organization, int count)
+        public async Task<Guid> SeedAsync(Guid organization, int count)
         {
+            var last = Guid.Empty;
             await using var scope = Scope(organization);
             var context = scope.ServiceProvider.GetRequiredService<ItemContext>();
             for (var i = 0; i < count; i++)
             {
-                context.Items.Add(new Item { Id = Guid.CreateVersion7(), Name = $"item {i}" });
+                last = Guid.CreateVersion7();
+                context.Items.Add(new Item { Id = last, Name = $"item {i}" });
             }
 
             await context.SaveChangesAsync();
             await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+            return last;
         }
 
         public ValueTask DisposeAsync() => _services.DisposeAsync();

@@ -71,6 +71,10 @@ export interface SessionResponse {
 /** The signed-in person as the pages use it: the user with their memberships. */
 export type Me = SessionUser & { organizations: MembershipSummary[] };
 
+export interface TwoFactorSetupRequest {
+  password: string;
+}
+
 export interface TwoFactorSetup {
   sharedKey: string;
   authenticatorUri: string;

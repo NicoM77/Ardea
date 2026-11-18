@@ -1,0 +1,149 @@
+{
+  "kind": "vulnerability",
+  "title": "Microsoft.Data.SqlClient and System.Data.SqlClient vulnerable to SQL Data Provider Security Feature Bypass",
+  "description": "Microsoft.Data.SqlClient and System.Data.SqlClient SQL Data Provider Security Feature Bypass Vulnerability",
+  "language": "en",
+  "publishedAt": "2024-01-09T18:30:27+00:00",
+  "modifiedAt": "2024-05-31T20:48:39.831563+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-98g6-xh36-x2p7"
+        },
+        {
+          "scheme": "OSV",
+          "value": "BIT-dotnet-2024-0056"
+        },
+        {
+          "scheme": "OSV",
+          "value": "BIT-dotnet-sdk-2024-0056"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2024-0056"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Microsoft.Data.SqlClient and System.Data.SqlClient vulnerable to SQL Data Provider Security Feature Bypass",
+      "description": "Microsoft.Data.SqlClient and System.Data.SqlClient SQL Data Provider Security Feature Bypass Vulnerability",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:C/C:H/I:H/A:N",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "Microsoft.Data.SqlClient",
+          "cpes": [],
+          "purl": "pkg:nuget/Microsoft.Data.SqlClient",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "2.1.7",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00222.1.7\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "System.Data.SqlClient",
+          "cpes": [],
+          "purl": "pkg:nuget/System.Data.SqlClient",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "4.8.6",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00224.8.6\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "Microsoft.Data.SqlClient",
+          "cpes": [],
+          "purl": "pkg:nuget/Microsoft.Data.SqlClient",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "3.0.0",
+              "fixed": "3.1.5",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00223.0.0\u0022},{\u0022fixed\u0022:\u00223.1.5\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "Microsoft.Data.SqlClient",
+          "cpes": [],
+          "purl": "pkg:nuget/Microsoft.Data.SqlClient",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "4.0.0",
+              "fixed": "4.0.5",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00224.0.0\u0022},{\u0022fixed\u0022:\u00224.0.5\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "Microsoft.Data.SqlClient",
+          "cpes": [],
+          "purl": "pkg:nuget/Microsoft.Data.SqlClient",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "5.0.0",
+              "fixed": "5.1.3",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00225.0.0\u0022},{\u0022fixed\u0022:\u00225.1.3\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-0056",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/dotnet/announcements/issues/292",
+          "tags": []
+        },
+        {
+          "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-0056",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-319"
+      ],
+      "publishedAt": "2024-01-09T18:30:27+00:00",
+      "modifiedAt": "2024-05-31T20:48:39.831563+00:00"
+    }
+  ],
+  "references": []
+}

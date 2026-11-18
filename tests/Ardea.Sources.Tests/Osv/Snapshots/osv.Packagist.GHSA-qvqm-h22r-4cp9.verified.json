@@ -1,0 +1,108 @@
+{
+  "kind": "vulnerability",
+  "title": "Laravel Framework RCE Vulnerability",
+  "description": "In Laravel Framework through 5.5.40 and 5.6.x through 5.6.29, remote code execution might occur as a result of an unserialize call on a potentially untrusted X-XSRF-TOKEN value. This involves the decrypt method in \u0060Illuminate/Encryption/Encrypter.php\u0060 and PendingBroadcast in \u0060gadgetchains/Laravel/RCE/3/chain.php\u0060 in phpggc. The attacker must know the application key, which normally would never occur, but could happen if the attacker previously had privileged access or successfully accomplished a previous attack.",
+  "language": "en",
+  "publishedAt": "2022-05-14T00:56:30+00:00",
+  "modifiedAt": "2025-01-13T15:00:54.255052+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-qvqm-h22r-4cp9"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2018-15133"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Laravel Framework RCE Vulnerability",
+      "description": "In Laravel Framework through 5.5.40 and 5.6.x through 5.6.29, remote code execution might occur as a result of an unserialize call on a potentially untrusted X-XSRF-TOKEN value. This involves the decrypt method in \u0060Illuminate/Encryption/Encrypter.php\u0060 and PendingBroadcast in \u0060gadgetchains/Laravel/RCE/3/chain.php\u0060 in phpggc. The attacker must know the application key, which normally would never occur, but could happen if the attacker previously had privileged access or successfully accomplished a previous attack.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "laravel/framework",
+          "cpes": [],
+          "purl": "pkg:composer/laravel/framework",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "lastAffected": "5.5.40",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022last_affected\u0022:\u00225.5.40\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "laravel/framework",
+          "cpes": [],
+          "purl": "pkg:composer/laravel/framework",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "5.6.0",
+              "fixed": "5.6.30",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00225.6.0\u0022},{\u0022fixed\u0022:\u00225.6.30\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2018-15133",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/laravel/framework/commit/d84cf988ed5d4661a4bf1fdcb08f5073835083a0",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/kozmic/laravel-poc-CVE-2018-15133",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/laravel/framework",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://laravel.com/docs/5.6/upgrade#upgrade-5.6.30",
+          "tags": []
+        },
+        {
+          "url": "http://packetstormsecurity.com/files/153641/PHP-Laravel-Framework-Token-Unserialize-Remote-Command-Execution.html",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-502"
+      ],
+      "publishedAt": "2022-05-14T00:56:30+00:00",
+      "modifiedAt": "2025-01-13T15:00:54.255052+00:00"
+    }
+  ],
+  "references": []
+}

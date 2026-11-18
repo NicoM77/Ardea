@@ -1,0 +1,71 @@
+{
+  "kind": "vulnerability",
+  "title": "Duplicate Advisory: Microsoft Security Advisory CVE-2026-109478 - ASP.NET Core Denial of Service Vulnerability",
+  "description": "## Duplicate Advisory\n\nThis advisory has been withdrawn because it is a duplicate of\u00A0GHSA-r3qf-p3jm-8h4p. This link is maintained to preserve external references.\n\n## Original Description\nInefficient algorithmic complexity in ASP.NET Core allows an unauthorized attacker to deny service over a network.",
+  "language": "en",
+  "publishedAt": "2026-11-10T21:32:29+00:00",
+  "modifiedAt": "2026-11-11T00:30:04.347303+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-wrm2-c2h2-4w82"
+        }
+      ],
+      "related": [],
+      "state": "rejected",
+      "title": "Duplicate Advisory: Microsoft Security Advisory CVE-2026-109478 - ASP.NET Core Denial of Service Vulnerability",
+      "description": "## Duplicate Advisory\n\nThis advisory has been withdrawn because it is a duplicate of\u00A0GHSA-r3qf-p3jm-8h4p. This link is maintained to preserve external references.\n\n## Original Description\nInefficient algorithmic complexity in ASP.NET Core allows an unauthorized attacker to deny service over a network.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "Microsoft.AspNetCore.App.Runtime.linux-arm",
+          "cpes": [],
+          "purl": "pkg:nuget/Microsoft.AspNetCore.App.Runtime.linux-arm",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "8.0.0-preview.1.23112.2",
+              "lastAffected": "8.0.33",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00228.0.0-preview.1.23112.2\u0022},{\u0022last_affected\u0022:\u00228.0.33\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": false,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-109478",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2026-109478",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-407"
+      ],
+      "publishedAt": "2026-11-10T21:32:29+00:00",
+      "modifiedAt": "2026-11-11T00:30:04.347303+00:00"
+    }
+  ],
+  "references": []
+}

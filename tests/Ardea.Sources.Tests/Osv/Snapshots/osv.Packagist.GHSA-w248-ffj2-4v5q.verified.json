@@ -1,0 +1,139 @@
+{
+  "kind": "vulnerability",
+  "title": "Fix failure to strip Authorization header on HTTP downgrade",
+  "description": "### Impact\n\n\u0060Authorization\u0060 headers on requests are sensitive information. On making a request using the \u0060https\u0060 scheme to a server which responds with a redirect to a URI with the \u0060http\u0060 scheme, we should not forward the \u0060Authorization\u0060 header on. This is much the same as to how we don\u0027t forward on the header if the host changes. Prior to this fix, \u0060https\u0060 to \u0060http\u0060 downgrades did not result in the \u0060Authorization\u0060 header being removed, only changes to the host.\n\n### Patches\n\nAffected Guzzle 7 users should upgrade to Guzzle 7.4.4 as soon as possible. Affected users using any earlier series of Guzzle should upgrade to Guzzle 6.5.7 or 7.4.4.\n\n### Workarounds\n\nAn alternative approach would be to use your own redirect middleware, rather than ours, if you are unable to upgrade. If you do not require or expect redirects to be followed, one should simply disable redirects all together.\n\n### References\n\n* [RFC9110 Section 15.4](https://www.rfc-editor.org/rfc/rfc9110.html#name-redirection-3xx)\n\n### For more information\n\nIf you have any questions or comments about this advisory, please get in touch with us in \u0060#guzzle\u0060 on the [PHP HTTP Slack](https://php-http.slack.com/). Do not report additional security advisories in that public channel, however - please follow our [vulnerability reporting process](https://github.com/guzzle/guzzle/security/policy).",
+  "language": "en",
+  "publishedAt": "2022-06-09T23:47:23+00:00",
+  "modifiedAt": "2025-12-10T23:40:57.755467+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-w248-ffj2-4v5q"
+        },
+        {
+          "scheme": "OSV",
+          "value": "BIT-drupal-2022-31042"
+        },
+        {
+          "scheme": "OSV",
+          "value": "BIT-drupal-2022-31043"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2022-31042"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2022-31043"
+        },
+        {
+          "scheme": "OSV",
+          "value": "DRUPAL-CORE-2022-011"
+        },
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-f2wf-25xc-69c9"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Fix failure to strip Authorization header on HTTP downgrade",
+      "description": "### Impact\n\n\u0060Authorization\u0060 headers on requests are sensitive information. On making a request using the \u0060https\u0060 scheme to a server which responds with a redirect to a URI with the \u0060http\u0060 scheme, we should not forward the \u0060Authorization\u0060 header on. This is much the same as to how we don\u0027t forward on the header if the host changes. Prior to this fix, \u0060https\u0060 to \u0060http\u0060 downgrades did not result in the \u0060Authorization\u0060 header being removed, only changes to the host.\n\n### Patches\n\nAffected Guzzle 7 users should upgrade to Guzzle 7.4.4 as soon as possible. Affected users using any earlier series of Guzzle should upgrade to Guzzle 6.5.7 or 7.4.4.\n\n### Workarounds\n\nAn alternative approach would be to use your own redirect middleware, rather than ours, if you are unable to upgrade. If you do not require or expect redirects to be followed, one should simply disable redirects all together.\n\n### References\n\n* [RFC9110 Section 15.4](https://www.rfc-editor.org/rfc/rfc9110.html#name-redirection-3xx)\n\n### For more information\n\nIf you have any questions or comments about this advisory, please get in touch with us in \u0060#guzzle\u0060 on the [PHP HTTP Slack](https://php-http.slack.com/). Do not report additional security advisories in that public channel, however - please follow our [vulnerability reporting process](https://github.com/guzzle/guzzle/security/policy).",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "guzzlehttp/guzzle",
+          "cpes": [],
+          "purl": "pkg:composer/guzzlehttp/guzzle",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "4.0.0",
+              "fixed": "6.5.7",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00224.0.0\u0022},{\u0022fixed\u0022:\u00226.5.7\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "guzzlehttp/guzzle",
+          "cpes": [],
+          "purl": "pkg:composer/guzzlehttp/guzzle",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "7.0.0",
+              "fixed": "7.4.4",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00227.0.0\u0022},{\u0022fixed\u0022:\u00227.4.4\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/guzzle/guzzle/security/advisories/GHSA-w248-ffj2-4v5q",
+          "tags": []
+        },
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2022-31043",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/guzzle/guzzle/commit/e3ff079b22820c2029d4c2a87796b6a0b8716ad8",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/FriendsOfPHP/security-advisories/blob/master/guzzlehttp/guzzle/CVE-2022-31043.yaml",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/guzzle/guzzle",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://www.debian.org/security/2022/dsa-5246",
+          "tags": []
+        },
+        {
+          "url": "https://www.drupal.org/sa-core-2022-011",
+          "tags": []
+        },
+        {
+          "url": "https://www.rfc-editor.org/rfc/rfc9110.html#name-redirection-3xx",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-200",
+        "CWE-212",
+        "CWE-863"
+      ],
+      "publishedAt": "2022-06-09T23:47:23+00:00",
+      "modifiedAt": "2025-12-10T23:40:57.755467+00:00"
+    }
+  ],
+  "references": []
+}

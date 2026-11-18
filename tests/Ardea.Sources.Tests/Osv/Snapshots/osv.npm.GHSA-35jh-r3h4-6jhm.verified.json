@@ -1,0 +1,197 @@
+{
+  "kind": "vulnerability",
+  "title": "Command Injection in lodash",
+  "description": "\u0060lodash\u0060 versions prior to 4.17.21 are vulnerable to Command Injection via the template function.",
+  "language": "en",
+  "publishedAt": "2021-05-06T16:05:51+00:00",
+  "modifiedAt": "2026-10-17T02:55:38.0858138+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-35jh-r3h4-6jhm"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2021-23337"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Command Injection in lodash",
+      "description": "\u0060lodash\u0060 versions prior to 4.17.21 are vulnerable to Command Injection via the template function.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "lodash",
+          "cpes": [],
+          "purl": "pkg:npm/lodash",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "4.17.21",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00224.17.21\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "lodash-es",
+          "cpes": [],
+          "purl": "pkg:npm/lodash-es",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "4.17.21",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00224.17.21\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "lodash.template",
+          "cpes": [],
+          "purl": "pkg:npm/lodash.template",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "lastAffected": "4.5.0",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022last_affected\u0022:\u00224.5.0\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "lodash-template",
+          "cpes": [],
+          "purl": "pkg:npm/lodash-template",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "lastAffected": "1.0.0",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022last_affected\u0022:\u00221.0.0\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "lodash-rails",
+          "cpes": [],
+          "purl": "pkg:gem/lodash-rails",
+          "platforms": [],
+          "versionScheme": "rubygems",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "4.17.21",
+              "scheme": "rubygems",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00224.17.21\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2021-23337",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/lodash/lodash/commit/3469357cff396a26c363f8c1b5a91dde28ba4b1c",
+          "tags": []
+        },
+        {
+          "url": "https://www.oracle.com/security-alerts/cpuoct2021.html",
+          "tags": []
+        },
+        {
+          "url": "https://www.oracle.com/security-alerts/cpujul2022.html",
+          "tags": []
+        },
+        {
+          "url": "https://www.oracle.com/security-alerts/cpujan2022.html",
+          "tags": []
+        },
+        {
+          "url": "https://www.oracle.com//security-alerts/cpujul2021.html",
+          "tags": []
+        },
+        {
+          "url": "https://snyk.io/vuln/SNYK-JS-LODASH-1040724",
+          "tags": []
+        },
+        {
+          "url": "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSNPM-1074929",
+          "tags": []
+        },
+        {
+          "url": "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSBOWERGITHUBLODASH-1074931",
+          "tags": []
+        },
+        {
+          "url": "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARSBOWER-1074928",
+          "tags": []
+        },
+        {
+          "url": "https://snyk.io/vuln/SNYK-JAVA-ORGWEBJARS-1074930",
+          "tags": []
+        },
+        {
+          "url": "https://snyk.io/vuln/SNYK-JAVA-ORGFUJIONWEBJARS-1074932",
+          "tags": []
+        },
+        {
+          "url": "https://security.netapp.com/advisory/ntap-20210312-0006",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/rubysec/ruby-advisory-db/blob/master/gems/lodash-rails/CVE-2021-23337.yml",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/lodash/lodash/blob/ddfd9b11a0126db2302cb70ec9973b66baec0975/lodash.js#L14851",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/lodash/lodash",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://cert-portal.siemens.com/productcert/pdf/ssa-637483.pdf",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-77",
+        "CWE-94"
+      ],
+      "publishedAt": "2021-05-06T16:05:51+00:00",
+      "modifiedAt": "2026-10-17T02:55:38.0858138+00:00"
+    }
+  ],
+  "references": []
+}

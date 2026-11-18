@@ -14,6 +14,9 @@ public static class PersistenceServices
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<UnitOfWork>());
         services.AddScoped<IUnitOfWorkFactory, UnitOfWorkFactory>();
         services.AddModuleDbContext<PlatformDbContext>(PlatformDbContext.Schema);
+        services.AddScoped<Audit.AuditOrigin>();
+        services.AddScoped<Audit.IAuditLog, Audit.AuditLog>();
+        services.AddScoped<Settings.IInstanceSettings, Settings.InstanceSettings>();
         return services;
     }
 

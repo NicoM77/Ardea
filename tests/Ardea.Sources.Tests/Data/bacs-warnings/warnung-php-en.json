@@ -1,0 +1,27 @@
+{
+  "documentId": 5045,
+  "tenantDocumentId": "ld_5045",
+  "documentType": "page",
+  "contentType": "content-page",
+  "lang": "en",
+  "visiblePublicationDate": "2026-10-21T14:36:08.232Z",
+  "updatedAt": "2026-10-21T14:59:50.501Z",
+  "metadata": {
+    "groupId": "txwJa-5h6ZN1",
+    "lang": "en",
+    "slug": "warnung-php-en",
+    "title": "Critical vulnerabilities in PHP: Install security updates immediately",
+    "teaserTitle": "Critical vulnerabilities in PHP: Install security updates immediately",
+    "teaserText": "Two critical vulnerabilities in PHP could allow attackers to execute malicious code on affected servers without logging in. Security updates are now available. The National Cyber Security Centre (NCSC) recommends updating affected systems without delay. In addition to web servers, please also check applications and devices that use PHP as an integrated component.",
+    "description": "Two critical vulnerabilities in PHP could allow attackers to execute malicious code on affected servers without logging in. Security updates are now available. The National Cyber Security Centre (NCSC) recommends updating affected systems without delay. In addition to web servers, please also check applications and devices that use PHP as an integrated component.",
+    "publishDate": "2026-10-21T14:36:08.232Z"
+  },
+  "content": [
+    {
+      "identifier": "p",
+      "properties": {
+        "text": "SYNTHETIC PLACEHOLDER, not BACS text. <a href=\"https://security-hub.ncsc.admin.ch/#/posts/13083\">hub</a>"
+      }
+    }
+  ]
+}

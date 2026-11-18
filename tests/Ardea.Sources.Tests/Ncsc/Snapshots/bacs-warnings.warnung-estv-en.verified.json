@@ -1,0 +1,17 @@
+{
+  "kind": "warning",
+  "title": "Phishing in the name of the Federal Tax Administration (FTA)",
+  "summary": "The NCSC is currently receiving a large number of reports of phishing attempts carried out in the name of the Federal Tax Administration (FTA). These involve an alleged tax refund or a supposedly new system or system changeover. As part of this, a great deal of personal information is requested, such as your date of birth, telephone number and bank account details.",
+  "language": "en",
+  "publishedAt": "2026-11-09T14:29:11.315+00:00",
+  "modifiedAt": "2026-11-11T11:02:06.615+00:00",
+  "claims": [],
+  "references": [
+    {
+      "url": "https://www.bacs.admin.ch/en/warnung-estv-en",
+      "tags": [
+        "warning"
+      ]
+    }
+  ]
+}

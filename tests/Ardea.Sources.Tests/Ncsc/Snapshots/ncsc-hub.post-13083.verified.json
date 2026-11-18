@@ -1,0 +1,71 @@
+{
+  "kind": "advisory",
+  "title": "[Advisory] PHP2Shell: Critical Security Updates - Patch Now",
+  "summary": "PHP has announced an upcoming security release addressing two critical vulnerabilities. Public reporting associates these issues with unauthenticated remote code execution. Organisations should identify PHP deployments now and prepare to update promptly when fixes become available.",
+  "description": "##### SEVERITY AND IMPACT:\n\n- Successful exploitation could allow remote attackers to execute code on affected servers, exposing application data and disrupting \u2026 (11281 characters)",
+  "language": "en",
+  "publishedAt": "2026-10-21T05:44:25.873945+00:00",
+  "modifiedAt": "2026-10-22T00:11:40.880103+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "CVE",
+          "value": "CVE-2026-109618"
+        }
+      ],
+      "related": [
+        {
+          "scheme": "NCSC-HUB",
+          "value": "13083"
+        }
+      ],
+      "state": "published",
+      "metrics": [],
+      "affected": [],
+      "references": [
+        {
+          "url": "https://security-hub.ncsc.admin.ch/#/posts/13083",
+          "tags": [
+            "advisory"
+          ]
+        }
+      ],
+      "weaknesses": []
+    },
+    {
+      "aliases": [
+        {
+          "scheme": "CVE",
+          "value": "CVE-2026-109619"
+        }
+      ],
+      "related": [
+        {
+          "scheme": "NCSC-HUB",
+          "value": "13083"
+        }
+      ],
+      "state": "published",
+      "metrics": [],
+      "affected": [],
+      "references": [
+        {
+          "url": "https://security-hub.ncsc.admin.ch/#/posts/13083",
+          "tags": [
+            "advisory"
+          ]
+        }
+      ],
+      "weaknesses": []
+    }
+  ],
+  "references": [
+    {
+      "url": "https://security-hub.ncsc.admin.ch/#/posts/13083",
+      "tags": [
+        "advisory"
+      ]
+    }
+  ]
+}

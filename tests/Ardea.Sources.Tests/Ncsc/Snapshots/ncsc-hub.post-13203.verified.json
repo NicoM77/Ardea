@@ -1,0 +1,71 @@
+{
+  "kind": "advisory",
+  "title": "[Advisory] F5 NGINX: Critical Unauthenticated HTTP/2 RCE",
+  "summary": "Two critical memory-safety vulnerabilities in NGINX HTTP/2 handling can allow unauthenticated remote code execution on affected servers. Exploitation may enable attackers to steal data, tamper with websites, or disrupt services. The flaws are in NGINX itself and require HTTP/2 to be enabled. The vendor patch includes fixes for other important vulnerabilities.",
+  "description": "##### SEVERITY AND IMPACT:\n- Successful exploitation allows unauthenticated network attackers to execute arbitrary code on affected NGINX servers, compromising  \u2026 (1963 characters)",
+  "language": "en",
+  "publishedAt": "2026-11-18T16:40:03.607237+00:00",
+  "modifiedAt": "2026-11-18T16:40:03.607237+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "CVE",
+          "value": "CVE-2026-123633"
+        }
+      ],
+      "related": [
+        {
+          "scheme": "NCSC-HUB",
+          "value": "13203"
+        }
+      ],
+      "state": "published",
+      "metrics": [],
+      "affected": [],
+      "references": [
+        {
+          "url": "https://security-hub.ncsc.admin.ch/#/posts/13203",
+          "tags": [
+            "advisory"
+          ]
+        }
+      ],
+      "weaknesses": []
+    },
+    {
+      "aliases": [
+        {
+          "scheme": "CVE",
+          "value": "CVE-2026-123007"
+        }
+      ],
+      "related": [
+        {
+          "scheme": "NCSC-HUB",
+          "value": "13203"
+        }
+      ],
+      "state": "published",
+      "metrics": [],
+      "affected": [],
+      "references": [
+        {
+          "url": "https://security-hub.ncsc.admin.ch/#/posts/13203",
+          "tags": [
+            "advisory"
+          ]
+        }
+      ],
+      "weaknesses": []
+    }
+  ],
+  "references": [
+    {
+      "url": "https://security-hub.ncsc.admin.ch/#/posts/13203",
+      "tags": [
+        "advisory"
+      ]
+    }
+  ]
+}

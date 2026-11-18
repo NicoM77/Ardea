@@ -1,0 +1,23 @@
+{
+  "kind": "warning",
+  "title": "Critical vulnerabilities in PHP: Install security updates immediately",
+  "summary": "Two critical vulnerabilities in PHP could allow attackers to execute malicious code on affected servers without logging in. Security updates are now available. The National Cyber Security Centre (NCSC) recommends updating affected systems without delay. In addition to web servers, please also check applications and devices that use PHP as an integrated component.",
+  "language": "en",
+  "publishedAt": "2026-10-21T14:36:08.232+00:00",
+  "modifiedAt": "2026-10-21T14:59:50.501+00:00",
+  "claims": [],
+  "references": [
+    {
+      "url": "https://www.bacs.admin.ch/en/warnung-php-en",
+      "tags": [
+        "warning"
+      ]
+    },
+    {
+      "url": "https://security-hub.ncsc.admin.ch/#/posts/13083",
+      "tags": [
+        "related"
+      ]
+    }
+  ]
+}

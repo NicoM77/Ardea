@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Ardea.Platform.Persistence;
 
 /// <summary>Tables of the <c>platform</c> schema (master plan 4.8). All of them are global.</summary>
-internal sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> options) : DbContext(options)
+internal sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> options) : ModuleDbContext(options, tenant: null)
 {
     public const string Schema = "platform";
 

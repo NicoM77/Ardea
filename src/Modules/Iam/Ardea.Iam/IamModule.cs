@@ -4,6 +4,7 @@ using Ardea.Iam.Domain;
 using Ardea.Iam.Features;
 using Ardea.Iam.Persistence;
 using Ardea.Iam.Security;
+using Ardea.Platform.Jobs;
 using Ardea.Platform.Modules;
 using Ardea.Platform.Persistence;
 using Ardea.Platform.Tenancy;
@@ -48,6 +49,11 @@ public sealed class IamModule : IModule
             .AddSignInManager<ArdeaSignInManager>()
             .AddPasswordValidator<CommonPasswordValidator>()
             .AddDefaultTokenProviders();
+        // Reset and confirmation links work for two hours.
+        services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromHours(2));
+        services.AddJob<SendPasswordResetEmail, AccountEmailHandlers>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });
+        services.AddJob<SendEmailConfirmation, AccountEmailHandlers>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });
+        services.AddJob<SendAlreadyRegisteredNotice, AccountEmailHandlers>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });
         if (int.TryParse(configuration["PASSWORD_HASH_ITERATIONS"], CultureInfo.InvariantCulture, out var iterations) && iterations > 0)
         {
             services.Configure<PasswordHasherOptions>(o => o.IterationCount = iterations);
@@ -118,6 +124,8 @@ public sealed class IamModule : IModule
         });
         services.AddHostedService<SetupTokenAnnouncer>();
     }
+
+    public IReadOnlyList<MaintenanceCommand> Commands { get; } = [ResetPasswordCommand.Definition];
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {

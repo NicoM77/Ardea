@@ -133,7 +133,6 @@ body { display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr)
 .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; padding-top: 12px; }
 .sync { display: flex; align-items: center; gap: 8px; padding: 8px; color: var(--muted); font-size: var(--fs-sub); line-height: 18px; }
 .live { position: relative; width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--positive); }
-.live::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--positive); animation: ping 2.4s var(--ease-out) infinite; }
 .user { display: flex; align-items: center; gap: 10px; padding: 8px; }
 .user-name { min-width: 0; font-weight: 500; line-height: 16px; }
 .user-name small { display: block; color: var(--muted); font-size: var(--fs-sub); font-weight: 400; }
@@ -181,7 +180,6 @@ kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; 
 /* Cards arrive once, in order. Content is never held back: without the animation they are simply there. */
 .rise { animation: rise 420ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 45ms); }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
-@keyframes ping { 0% { transform: scale(1); opacity: 0.5; } 70%, 100% { transform: scale(2.6); opacity: 0; } }
 
 /* ---------- Priority, status, people, pills ---------- */
 .prio { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; white-space: nowrap; }
@@ -196,7 +194,7 @@ kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; 
 .status .sym { color: var(--muted); width: 1em; height: 1em; }
 .status--remediated .sym { color: var(--positive); }
 
-.who { display: inline-grid; place-items: center; width: 24px; height: 24px; flex: none; border-radius: 50%; font-size: 11px; font-weight: 600; line-height: 1; }
+.who { display: inline-grid; place-items: center; width: 24px; height: 24px; flex: none; border-radius: 50%; font-size: var(--fs-small); font-weight: 600; line-height: 1; letter-spacing: -0.02em; }
 .who--a { background: var(--who-a-bg); color: var(--who-a-ink); }
 .who--b { background: var(--who-b-bg); color: var(--who-b-ink); }
 .who--c { background: var(--who-c-bg); color: var(--who-c-ink); }
@@ -299,7 +297,6 @@ kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; 
 .sieve-field canvas { width: 100%; }
 .sieve-hit { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; display: grid; place-items: center; }
 .sieve-hit i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); transition: transform var(--t-hover) var(--ease-out); }
-.sieve-hit.ping::after { content: ""; position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--c); animation: ping 2.4s var(--ease-out) infinite; }
 .sieve-field[data-stage="published"] .sieve-hit, .sieve-field[data-stage="candidates"] .sieve-hit { opacity: 0; pointer-events: none; }
 .sieve-hit { transition: opacity var(--t-ui) ease; }
 .stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 16px calc(-1 * var(--card-pad)) calc(-1 * var(--card-pad)); border-top: 1px solid var(--border); }
@@ -411,7 +408,7 @@ kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; 
 /* The score that sets the priority: one block per point on a scale that ends at the highest possible sum */
 .score { --units: 12; position: relative; }
 .score-bar { position: relative; height: 32px; border-radius: 4px; background: var(--raised); overflow: hidden; }
-.score-seg { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; padding: 0 8px; color: #fff; font-size: var(--fs-small); font-weight: 500; white-space: nowrap; overflow: hidden; border-right: 2px solid var(--surface); transform-origin: left; transition: clip-path var(--t-ui) var(--ease-in-out), opacity var(--t-hover) ease; clip-path: inset(0 0 0 0); }
+.score-seg { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; padding: 0 8px; color: #fff; font-size: var(--fs-small); font-weight: 500; white-space: nowrap; overflow: hidden; transform-origin: left; transition: clip-path var(--t-ui) var(--ease-in-out), opacity var(--t-hover) ease; clip-path: inset(0 0 0 0); }
 .score-seg.off { clip-path: inset(0 100% 0 0); }
 .score-seg:nth-child(1) { background: #124d5c; }
 .score-seg:nth-child(2) { background: #1b6c80; }
@@ -438,7 +435,7 @@ kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; 
 .factor.zero em { color: var(--faint); font-weight: 400; }
 
 /* Properties rail */
-.props > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 40px; }
+.props > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 40px; padding: 6px 0; }
 .props > div + div { border-top: 1px solid var(--rule); border-radius: 0; }
 .props dt { color: var(--muted); white-space: nowrap; }
 .props dd { min-width: 0; font-weight: 500; text-align: right; }
@@ -534,7 +531,7 @@ kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; 
 .swatch span { color: var(--muted); font: 400 12px/16px var(--mono); }
 .demo { display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; }
 .demo + .demo { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule); border-radius: 0; }
-.type-row { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 16px; align-items: baseline; min-height: 44px; }
+.type-row { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 16px; align-items: center; min-height: 44px; padding: 8px 0; }
 .type-row + .type-row { border-top: 1px solid var(--rule); border-radius: 0; }
 .type-row > span:first-child { color: var(--muted); font-size: var(--fs-small); }
 .motion-demo { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 16px; align-items: center; height: 36px; }
@@ -674,7 +671,6 @@ kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; 
 /* ---------- Reduced motion: keep the fades, drop the travel ---------- */
 @media (prefers-reduced-motion: reduce) {
   .rise { animation: fade 200ms ease both; }
-  .live::after, .sieve-hit.ping::after, .vtrack-path { animation: none; }
   ::view-transition-new(content) { animation: 200ms ease both fade; }
   ::view-transition-group(*) { animation-duration: 0.01ms; }
   .tabs-ink, .segmented-thumb, .score-mark, .score-seg, .ring circle, .gauge .fg, .sidebar, .toast { transition-duration: 0.01ms; }

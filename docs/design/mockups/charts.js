@@ -175,7 +175,7 @@
       hits.forEach(function (h, k) {
         var q = xy(h.index), a = h.action;
         var link = document.createElement('a');
-        link.className = 'sieve-hit c-' + a.priority + (a.priority === 'critical' && !A.reduced ? ' ping' : '');
+        link.className = 'sieve-hit c-' + a.priority;
         link.href = a.href;
         link.style.left = q[0] + 'px'; link.style.top = q[1] + 'px';
         link.setAttribute('data-tip', '<b>' + A.esc(a.component) + '</b> <span>· ' + A.esc(a.title) + '</span>');
@@ -300,7 +300,7 @@
     function level(sum) { return vuln.bands.filter(function (b) { return sum >= b.from && sum <= b.to; })[0].priority; }
 
     var at = 0, segs = scoring.map(function (f) {
-      var html = '<span class="score-seg" data-factor="' + A.esc(f.name) + '" style="left:' + (at / UNITS) * 100 + '%;width:' + (f.points / UNITS) * 100 + '%" data-tip="' + A.esc(f.name + ' +' + f.points) + '">' +
+      var html = '<span class="score-seg" data-factor="' + A.esc(f.name) + '" style="left:' + (at / UNITS) * 100 + '%;width:calc(' + (f.points / UNITS) * 100 + '% - 2px)" data-tip="' + A.esc(f.name + ' +' + f.points) + '">' +
         (f.points > 1 ? '<span class="seg-name">' + A.esc(f.name) + '&nbsp;</span>' : '') + '+' + f.points + '</span>';
       at += f.points;
       return html;

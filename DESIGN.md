@@ -26,6 +26,10 @@ colors:
   positive-ink: "#04250E"
   dot: "#B4BDC2"
   dot-faint: "#DFE4E7"
+  score-deep: "#124D5C"
+  score-light: "#2A7588"
+  alert-ink: "#7D0A1D"
+  toast-check: "#7FD8A8"
 typography:
   figure:
     fontFamily: "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
@@ -72,8 +76,14 @@ typography:
     fontWeight: 400
 rounded:
   sheet: "16px"
+  dialog: "12px"
+  toast: "10px"
   card: "8px"
   control: "6px"
+  key: "4px"
+  bar: "3px"
+  meter: "2px"
+  tick: "1px"
   pill: "999px"
 spacing:
   xs: "4px"
@@ -176,6 +186,8 @@ Owner decision, 18 Nov 2026: this direction replaces "The Well-Made System App".
 ### Data
 - **Accent** (accent): the one chart hue. The trend line, the dots that name a profiled technology, the score blocks, the focus ring. 6.0:1 on the sheet. It is not a button colour.
 - **Dot** / **Dot faint**: a CVE record that has not been sorted yet, and one that was dismissed.
+- **Score deep** / **Score light**: a darker and a lighter step of Accent, so the blocks of the priority score read apart. White text on them is 9.4:1 and 5.3:1.
+- **Alert ink**: the text of the "Exploited" pill, on a pale red. **Toast check**: the check mark on the dark toast.
 
 ### Priority and outcome
 - **Critical** (critical) 5.9:1, **High** (high) 5.2:1, **Medium** (medium) 5.5:1. **Low** and **Not relevant** use Muted and are told apart by shape.
@@ -227,7 +239,7 @@ Flat. Depth is one tone step (ground to sheet) and 1px edges. Shadows belong onl
 
 ## Shapes
 
-Sheet 16px, cards 8px, controls 6px, pills and chips fully round. Chart bars are 12px tall with 3px corners; meters are 4px. The focus ring is 2px Accent, offset 2px. Icons are 1.6px line drawings on a 24px grid at 16px.
+Sheet 16px, cards 8px, controls 6px, pills and chips fully round. The search dialog has 12px corners, the toast 10px, key caps and the score bar 4px. Chart bars are 12px tall with 3px corners; meters are 4px tall with 2px corners; deadline ticks 1px. The focus ring is 2px Accent, offset 2px. Icons are 1.6px line drawings on a 24px grid at 16px.
 
 ## Charts
 
@@ -258,7 +270,8 @@ Each chart answers one question and is drawn from the dataset.
 - **Inside a page.** Filtered rows glide to their new place.
 - **Only transform and opacity** are animated. Bars grow with scale, never with width.
 - **The keyboard gets no animation.** Search opened with `/` simply appears; opened with the pointer it scales in from 0.97.
-- **Reduced motion** keeps short fades and drops travel, drawing and pulsing.
+- **Nothing pulses.** The only thing that keeps moving is the countdown, because its value changes.
+- **Reduced motion** keeps short fades and drops travel and drawing.
 
 ## Components
 

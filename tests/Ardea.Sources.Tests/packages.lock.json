@@ -387,6 +387,13 @@
           "Ardea.Intel.Sources.Abstractions": "[0.0.0, )"
         }
       },
+      "ardea.intel.sources.ncsc": {
+        "type": "Project",
+        "dependencies": {
+          "Ardea.Intel.Sources.Abstractions": "[0.0.0, )",
+          "Ardea.Intel.Sources.Formats": "[0.0.0, )"
+        }
+      },
       "ardea.intel.sources.osv": {
         "type": "Project",
         "dependencies": {

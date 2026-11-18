@@ -1,0 +1,18 @@
+{
+  "kind": "advisory",
+  "title": "[Advisory] Danfoss AK-SM 800A: Multiple Pre-Authentication Remote Code Execution",
+  "summary": "Multiple critical vulnerabilities recently fixed in Danfoss AK-SM 800A refrigeration controllers allow unauthenticated remote code execution and complete device takeover. Attackers could disrupt refrigeration, install persistent malicious firmware, or render controllers inoperable.",
+  "description": "##### SEVERITY AND IMPACT:\n- Successful exploitation allows unauthenticated attackers to control refrigeration operations, establish persistent access, or disab \u2026 (1410 characters)",
+  "language": "en",
+  "publishedAt": "2026-11-16T07:13:58.765641+00:00",
+  "modifiedAt": "2026-11-16T07:14:42.263958+00:00",
+  "claims": [],
+  "references": [
+    {
+      "url": "https://security-hub.ncsc.admin.ch/#/posts/13180",
+      "tags": [
+        "advisory"
+      ]
+    }
+  ]
+}

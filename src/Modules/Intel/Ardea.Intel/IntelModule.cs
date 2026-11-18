@@ -60,6 +60,8 @@ public sealed class IntelModule : IModule
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
+        Features.EntryEndpoints.Map(endpoints);
+        Features.SourceEndpoints.Map(endpoints);
     }
 
     private static HttpMessageHandler PrimaryHandler() => new SocketsHttpHandler

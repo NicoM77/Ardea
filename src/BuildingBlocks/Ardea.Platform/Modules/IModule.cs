@@ -19,5 +19,10 @@ public interface IModule
 
     void AddServices(IServiceCollection services, IConfiguration configuration);
 
+    /// <summary>Services only the <c>api</c> role needs: authentication, rate limits, hosted helpers of the API.</summary>
+    void AddApiServices(IServiceCollection services, IConfiguration configuration)
+    {
+    }
+
     void MapEndpoints(IEndpointRouteBuilder endpoints);
 }

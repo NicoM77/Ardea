@@ -10,6 +10,7 @@ public static class JobSystemServices
     {
         JobServiceCollectionExtensions.GetRegistry(services);
         services.TryAddScoped<IJobQueue, JobQueue>();
+        services.TryAddScoped<IJobAdministration, JobAdministration>();
         if (!services.Any(d => d.ServiceType == typeof(CleanUpJobsHandler)))
         {
             services.AddJob<CleanUpJobs, CleanUpJobsHandler>(new JobKindOptions { MaxConcurrency = 1, Priority = JobPriority.Background });

@@ -3,6 +3,8 @@
     <AssemblyName>ardea</AssemblyName>
     <RootNamespace>Ardea.Host</RootNamespace>
     <OutputType>Exe</OutputType>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../BuildingBlocks/Ardea.Platform/Ardea.Platform.csproj" />
@@ -13,5 +15,8 @@
     <ProjectReference Include="../../Modules/Assessment/Ardea.Assessment/Ardea.Assessment.csproj" />
     <ProjectReference Include="../../Modules/Notifications/Ardea.Notifications/Ardea.Notifications.csproj" />
     <ProjectReference Include="../../Sources/Ardea.Intel.Sources.Formats/Ardea.Intel.Sources.Formats.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ardea.Host.Tests" />
   </ItemGroup>
 </Project>

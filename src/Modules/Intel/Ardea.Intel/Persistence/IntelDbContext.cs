@@ -20,6 +20,18 @@ internal sealed class IntelDbContext(DbContextOptions<IntelDbContext> options, I
 
     public DbSet<ObservationRow> Observations => Set<ObservationRow>();
 
+    public DbSet<EntryRow> Entries => Set<EntryRow>();
+
+    public DbSet<EntryAliasRow> EntryAliases => Set<EntryAliasRow>();
+
+    public DbSet<EntryAffectedRow> EntryAffected => Set<EntryAffectedRow>();
+
+    public DbSet<EntryReferenceRow> EntryReferences => Set<EntryReferenceRow>();
+
+    public DbSet<EntrySourceRow> EntrySources => Set<EntrySourceRow>();
+
+    public DbSet<EntryChangeRow> EntryChanges => Set<EntryChangeRow>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -102,6 +114,103 @@ internal sealed class IntelDbContext(DbContextOptions<IntelDbContext> options, I
             observation.HasIndex(o => o.Aliases).HasMethod("gin").HasDatabaseName("ix_observation_aliases");
             observation.HasOne<SourceRecordRow>().WithMany().HasForeignKey(o => o.SourceRecordId).OnDelete(DeleteBehavior.Cascade);
             observation.HasOne<SourceRow>().WithMany().HasForeignKey(o => o.SourceId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EntryRow>(entry =>
+        {
+            entry.ToTable("security_entry", t =>
+            {
+                t.HasCheckConstraint("ck_security_entry_kind", "kind IN ('vulnerability', 'warning')");
+                t.HasCheckConstraint("ck_security_entry_state", "state IN ('published', 'rejected', 'disputed', 'merged')");
+                t.HasCheckConstraint("ck_security_entry_exploitation", "exploitation IN ('none', 'poc', 'active')");
+            });
+            entry.HasKey(e => e.Id);
+            entry.Property(e => e.Id).HasDefaultValueSql("uuidv7()");
+            entry.HasIndex(e => e.PrimaryKey).IsUnique().HasDatabaseName("ux_security_entry_primary_key");
+            entry.HasIndex(e => e.ChangedAt).IsDescending().HasDatabaseName("ix_security_entry_changed_at");
+            entry.Property(e => e.Kind).HasMaxLength(20);
+            entry.Property(e => e.PrimaryKey).HasMaxLength(300);
+            entry.Property(e => e.Title).HasMaxLength(1000);
+            entry.Property(e => e.State).HasMaxLength(20);
+            entry.Property(e => e.MaterialFingerprint).HasMaxLength(64);
+            entry.Property(e => e.RemediationFingerprint).HasMaxLength(64);
+            entry.Property(e => e.CvssVersion).HasMaxLength(10);
+            entry.Property(e => e.CvssVector).HasMaxLength(300);
+            entry.Property(e => e.Exploitation).HasMaxLength(10);
+            entry.Property(e => e.ExploitationEvidence).HasColumnType("jsonb");
+            entry.Property(e => e.EpssClass).HasMaxLength(10);
+            entry.Property(e => e.Provenance).HasColumnType("jsonb");
+            entry.Property(e => e.Details).HasColumnType("jsonb");
+        });
+
+        modelBuilder.Entity<EntryAliasRow>(alias =>
+        {
+            alias.ToTable("entry_alias");
+            alias.HasKey(a => a.Id);
+            alias.Property(a => a.Id).HasDefaultValueSql("uuidv7()");
+            alias.Property(a => a.Scheme).HasMaxLength(50);
+            alias.Property(a => a.Value).HasMaxLength(300);
+            alias.HasIndex(a => new { a.Scheme, a.Value }).IsUnique().HasDatabaseName("ux_entry_alias");
+            alias.HasIndex(a => a.EntryId).HasDatabaseName("ix_entry_alias_entry");
+            alias.HasOne<EntryRow>().WithMany().HasForeignKey(a => a.EntryId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EntryAffectedRow>(affected =>
+        {
+            affected.ToTable("entry_affected", t =>
+            {
+                t.HasCheckConstraint("ck_entry_affected_status", "status IN ('affected', 'unaffected', 'unknown')");
+                t.HasCheckConstraint("ck_entry_affected_default_status", "default_status IN ('affected', 'unaffected', 'unknown')");
+            });
+            affected.HasKey(a => a.Id);
+            affected.Property(a => a.Id).HasDefaultValueSql("uuidv7()");
+            foreach (var name in new[] { nameof(EntryAffectedRow.Vendor), nameof(EntryAffectedRow.Product), nameof(EntryAffectedRow.ProductKey), nameof(EntryAffectedRow.CpeVendor), nameof(EntryAffectedRow.CpeProduct), nameof(EntryAffectedRow.PurlName) })
+            {
+                affected.Property(name).HasMaxLength(500);
+            }
+
+            affected.Property(a => a.PurlType).HasMaxLength(50);
+            affected.Property(a => a.VersionScheme).HasMaxLength(50);
+            affected.Property(a => a.Status).HasMaxLength(20);
+            affected.Property(a => a.DefaultStatus).HasMaxLength(20);
+            // The indexes the candidate search uses (master plan 4.4).
+            affected.HasIndex(a => a.ProductKey).HasDatabaseName("ix_entry_affected_product_key");
+            affected.HasIndex(a => new { a.CpeVendor, a.CpeProduct }).HasDatabaseName("ix_entry_affected_cpe");
+            affected.HasIndex(a => new { a.PurlType, a.PurlName }).HasDatabaseName("ix_entry_affected_purl");
+            affected.HasIndex(a => a.EntryId).HasDatabaseName("ix_entry_affected_entry");
+            affected.HasOne<EntryRow>().WithMany().HasForeignKey(a => a.EntryId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EntryReferenceRow>(reference =>
+        {
+            reference.ToTable("entry_reference");
+            reference.HasKey(r => r.Id);
+            reference.Property(r => r.Id).HasDefaultValueSql("uuidv7()");
+            reference.Property(r => r.Url).HasMaxLength(2000);
+            reference.HasIndex(r => r.EntryId).HasDatabaseName("ix_entry_reference_entry");
+            reference.HasOne<EntryRow>().WithMany().HasForeignKey(r => r.EntryId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EntrySourceRow>(link =>
+        {
+            link.ToTable("entry_source", t => t.HasCheckConstraint("ck_entry_source_relation", "relation IN ('describes', 'mentions', 'signal')"));
+            link.HasKey(l => l.Id);
+            link.Property(l => l.Id).HasDefaultValueSql("uuidv7()");
+            link.Property(l => l.Relation).HasMaxLength(20);
+            link.Property(l => l.Url).HasMaxLength(2000);
+            link.HasIndex(l => l.EntryId).HasDatabaseName("ix_entry_source_entry");
+            link.HasOne<EntryRow>().WithMany().HasForeignKey(l => l.EntryId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EntryChangeRow>(change =>
+        {
+            change.ToTable("entry_change");
+            change.HasKey(c => c.Id);
+            change.Property(c => c.Id).HasDefaultValueSql("uuidv7()");
+            change.Property(c => c.Diff).HasColumnType("jsonb");
+            change.Property(c => c.TriggeredBy).HasMaxLength(100);
+            change.HasIndex(c => new { c.EntryId, c.Revision }).IsUnique().HasDatabaseName("ux_entry_change_revision");
+            change.HasOne<EntryRow>().WithMany().HasForeignKey(c => c.EntryId).OnDelete(DeleteBehavior.Cascade);
         });
 
         ApplyTenantFilters(modelBuilder);

@@ -62,6 +62,7 @@ internal static partial class ApiRole
         builder.Services.AddArdeaSecrets(MasterKey.FromBase64(builder.Configuration[HostConfiguration.MasterKeyKey]!));
         builder.Services.AddArdeaTelemetry(builder.Logging, builder.Configuration, "api", AppVersion.Current);
         builder.Services.AddProblemDetails();
+        builder.Services.AddOpenApi(ApiDocument.Name, ApiDocument.Configure);
         RequestProtection.ConfigureForwardedHeaders(builder.Services, builder.Configuration);
         foreach (var module in Modules.All)
         {
@@ -92,11 +93,14 @@ internal static partial class ApiRole
         app.MapGet("/health/live", () => Results.Ok(new { status = "live" })).ExcludeFromDescription();
         app.MapGet("/health/ready", ReadyAsync).ExcludeFromDescription();
 
+        app.MapOpenApi(ApiDocument.Route);
         var api = app.MapGroup("/api/v1");
         foreach (var module in Modules.All)
         {
             module.MapEndpoints(api);
         }
+
+        Features.InstanceEndpoints.Map(api);
 
         return app;
     }

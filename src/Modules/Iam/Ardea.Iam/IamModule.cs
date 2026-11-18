@@ -48,6 +48,7 @@ public sealed class IamModule : IModule
             .AddUserStore<ProtectedUserStore>()
             .AddSignInManager<ArdeaSignInManager>()
             .AddPasswordValidator<CommonPasswordValidator>()
+            .AddClaimsPrincipalFactory<ArdeaClaimsFactory>()
             .AddDefaultTokenProviders();
         // Reset and confirmation links work for two hours.
         services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromHours(2));
@@ -92,7 +93,8 @@ public sealed class IamModule : IModule
         });
         services.Configure<CookieAuthenticationOptions>(IdentityConstants.ExternalScheme, options => options.Cookie.SecurePolicy = CookieSecurePolicy.Always);
         services.Configure<CookieAuthenticationOptions>(IdentityConstants.TwoFactorRememberMeScheme, options => options.Cookie.SecurePolicy = CookieSecurePolicy.Always);
-        services.AddAuthorization();
+        services.AddAuthorization(options => options.AddPolicy(
+            Contracts.IamPolicies.InstanceAdmin, policy => policy.RequireAuthenticatedUser().RequireClaim(Contracts.IamPolicies.InstanceAdminClaim, "true")));
         services.AddAntiforgery(options =>
         {
             options.HeaderName = SessionClaims.XsrfHeaderName;

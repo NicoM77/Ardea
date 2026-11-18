@@ -72,7 +72,7 @@ Abnahme:
 | 1.6 | Zusammenführung über die CVE-ID mit festen Vorrangregeln und Herkunft je Feld | 1.5 |
 | 1.7 | Änderungserkennung mit beiden Fingerabdrücken; Änderungshistorie; Folgejob bei wesentlicher Änderung | 1.6 |
 | 1.8 | Signale: KEV und EPSS in `entry_signal`, Klassenwechsel mit Schwelle | 1.6 |
-| 1.9 | Adapter BACS auf den öffentlichen Daten der Website: Titel, Kurztext, Verweis, CVE-IDs aus dem Text; Vertragstest im Betrieb | 1.6 |
+| 1.9 | Adapter NCSC mit zwei Lesern: öffentliche Schnittstelle des Cyber Security Hub (Liste, Einzelbeitrag, Änderungsverlauf) und Warnungen der Website des BACS; Titel, Kurztext, Verweis, CVE-IDs aus Titel und Text; Vertragstest im Betrieb | 1.6 |
 | 1.10 | API für Einträge; Seiten «Entries» und «Sources» mit Quarantäne-Liste und Kennzahlen je Quelle; Mockup der Quellenseite | 1.7, 0.11 |
 | 1.11 | Befehle zum Neu-Normalisieren und Neuberechnen; Vollständigkeitsprüfung gegen das Änderungsprotokoll | 1.7 |
 
@@ -82,7 +82,7 @@ Abnahme:
 - Ein neuer oder geänderter CVE-Record ist spätestens 90 Minuten nach Veröffentlichung im System.
 - Dasselbe Delta zweimal verarbeitet ändert nichts: keine neue Revision, kein Folgejob.
 - Sieben Tage Dauerbetrieb ohne fehlende ID gegenüber dem Änderungsprotokoll der Quelle.
-- Eine CVE, die in CVE Program, KEV und EPSS vorkommt, ist ein Eintrag; jedes Feld nennt seine Quelle. Nennt eine BACS-Warnung die CVE, erscheint sie als weiterer Beleg und setzt das Merkmal «Warnung einer nationalen Stelle».
+- Eine CVE, die in CVE Program, KEV und EPSS vorkommt, ist ein Eintrag; jedes Feld nennt seine Quelle. Nennt ein Advisory des NCSC die CVE, erscheint es als weiterer Beleg und setzt das Merkmal «Warnung einer nationalen Stelle». Wird die CVE erst nachträglich in ein Advisory eingetragen, geschieht dasselbe beim nächsten Abruf.
 - Quarantäne-Anteil für CVE Program unter 0,5 %.
 - Ein simulierter Ausfall einer Quelle über 48 Stunden wird ohne Handarbeit und ohne Lücke aufgeholt. Der Weg für Pausen über 30 Tage (Gesamtarchiv) hat einen eigenen Test mit einem verkleinerten Archiv.
 - Der tägliche EPSS-Lauf berührt nur Einträge, deren Klasse wechselt.

@@ -37,7 +37,7 @@ Conventions:
 | CH-8 | Press releases via NSB — JSON used by new site | `https://www.bacs.admin.ch/ne/nsb/channel?lang=en&contentType=nsb-page&organisation=1101&from=2026-01-01&to=2026-11-18` | custom-json-api | 200 `application/json`, ETag present; 16 items for 2026 | N. `from`+`to` are mandatory (400 "from or to is invalid" otherwise); the parameter is spelled `organisation` (with `organization` it silently returns 0 items) |
 | CH-9 | Sitemap (discovery of new slugs) | `https://www.bacs.admin.ch/sitemap/{de,fr,en,it}.xml` | xml | 200 `application/xml`, 70 KB (en) | no `<lastmod>`; appears ordered most-recently-changed first |
 | CH-10 | **Cyber Security Hub** public post detail | `https://security-hub.ncsc.admin.ch/api/v1/posts/{id}/details` | custom-json-api | 200 `application/json; charset=utf-8`, `cache-control: no-store`, 11 KB for id 13198 — **only this one call verified** | A — "[Advisory] …" posts with Markdown body, `tlpStatus`, `created`, `lastModified`, edit `history[]` with reasons |
-| CH-11 | CSH public post list | `https://security-hub.ncsc.admin.ch/api/v1/posts/dashboard?pageSize=…&pageIndex=…` | custom-json-api | 400 JSON without the two params (`"The field 'pageSize' is required"`) → endpoint exists and answers anonymously; **paged call UNVERIFIED** (blocked by permission guard) | — |
+| CH-11 | CSH public post list | `https://security-hub.ncsc.admin.ch/api/v1/posts/dashboard?pageSize=…&pageIndex=…` | custom-json-api | 400 JSON without the two params (`"The field 'pageSize' is required"`); **paged call verified later the same day, see 1.4a** | A |
 
 ### 1.3 What a BACS warning item looks like (CH-1 / CH-2)
 
@@ -68,6 +68,19 @@ Observed sample (12 items on the list, Feb–Nov 2026): 5 vulnerability/technica
 ```
 
 The SPA (version "15.9.0") is an Angular app with OIDC login against `auth.ncsc.admin.ch/realms/csh_prod`; most `/api/*` routes are for members (e.g. `/api/tags` → 401). The two `/api/v1/posts/*` routes are the anonymous "public dashboard". CSH content is "mostly in English". Human URL of a post: `https://security-hub.ncsc.admin.ch/#/posts/{id}`.
+
+### 1.4a Addendum: CSH public list verified (2026-11-18, after the owner pointed out that the hub has a public JSON API)
+
+Three list requests and five probes for documentation, User-Agent `csh-alert-research/0.1`.
+
+- `GET /api/v1/posts/dashboard?pageSize=5&pageIndex=0` and `…&pageIndex=1` → 200 `application/json; charset=utf-8`, `cache-control: no-store`, no `ETag`, no `Last-Modified`. `pageIndex` is zero-based.
+- `GET …?pageSize=50&pageIndex=0` → 200, 31 536 bytes, 0.2 s. Envelope: `{pageIndex, pageSize, items[], count}` with `count: 335`.
+- Item fields: `id`, `created`, `lastChange`, `publicationStatus` ("Open" in all 50), `summary` (362 characters on average), `title`, `tlpStatus` ("Clear" in all 50), and `lastModified` only on edited posts (17 of 50).
+- Content of the 50 most recent items (created 2026-08-28 to 2026-11-17, about 4.3 per week): 48 titles carry the prefix `[Advisory]`; 47 follow the shape `<product>: <headline>`; 29 name a CVE ID in title or summary.
+- Order: roughly by `lastChange` descending, but not strictly (first violation at position 17). Do not rely on it for incremental sync; compare `id` + `lastChange` and sweep all pages periodically.
+- No API description found: `/swagger/v1/swagger.json`, `/swagger/index.html`, `/api/swagger/v1/swagger.json`, `/api/v1` → 404. Two web searches found no public documentation.
+- `https://security-hub.ncsc.admin.ch/robots.txt` → 200, content `User-agent: *` / `Disallow: /`. The interface answers anonymously, but the host asks automated agents to stay away. This is the reason the request to BACS stays in the plan (decision E10).
+- Not tested: maximum `pageSize`, rate limits, behaviour under frequent polling.
 
 ### 1.5 Incremental sync for BACS
 

@@ -16,7 +16,7 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 2. Stichwortsuche ist unbrauchbar. Bei «PHP» waren 295 von 297 Treffern falsch. Abgeglichen wird nur über Vendor, Produkt, CPE und Paket.
 3. Ein Vorfilter allein genügt nicht. Erst die Bündelung je Massnahme macht aus hundert Befunden einer Woche eine Handvoll Aufgaben.
 4. WordPress-Plugins machten 7,4 % aller CVEs der Woche aus, der Core keinen einzigen. Profile brauchen Komponenten unterhalb der Plattform; der SBOM-Import ist die wichtigste Ausbaustufe.
-5. Die Startquelle NCSC hat seit dem Neuaufbau der Website im August 2026 keinen dokumentierten Feed und kein RSS für Warnungen. Die Umsetzung baut auf den öffentlichen Daten der Website; eine Anfrage beim BACS klärt, ob mehr möglich ist.
+5. Die Startquelle NCSC liefert ihre Advisories über die öffentliche JSON-Schnittstelle des Cyber Security Hub: rund vier pro Woche, gut die Hälfte mit CVE-ID. Die Schnittstelle ist nicht dokumentiert und die `robots.txt` des Hubs wünscht keine automatisierten Zugriffe; eine Anfrage beim BACS klärt Form und Intervall. Die Website des BACS ergänzt die Warnungen an die Öffentlichkeit.
 6. NVD reichert neue CVEs kaum noch an und taugt nicht mehr als Hauptquelle. Schweregrad und Ausnutzungssignale kommen aus den CVE-Records selbst.
 7. Mehrere verbreitete Bibliotheken sind inzwischen kommerziell (MediatR, AutoMapper, MassTransit, FluentAssertions, PrimeNG, TickerQ). Der Plan kommt ohne sie aus und prüft Lizenzen im Build.
 8. Eine native App braucht für Push ein vom Projekt betriebenes Relay. Das MVP umgeht das als installierbare Web-App mit Web Push.

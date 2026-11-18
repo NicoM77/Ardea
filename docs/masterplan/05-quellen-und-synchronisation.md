@@ -107,14 +107,36 @@ Der Adapter läuft stündlich über die Deltas. Der Erststart und jede Pause üb
 
 | Punkt | Befund |
 |---|---|
-| Lage | Website seit 20.8.2026 neu; `ncsc.admin.ch` leitet auf `bacs.admin.ch`; alle früheren Adressen ungültig; kein RSS für Warnungen, kein CSAF |
-| Maschinenlesbar | die JSON-Daten, aus denen die Website sich aufbaut (nicht dokumentiert, ohne Anmeldung), in vier Sprachen; die öffentlichen Beiträge des Cyber Security Hub, davon ist nur der Abruf eines einzelnen Beitrags geprüft |
-| Inhalt | redaktionelle Seiten ohne Schweregrad und Produktliste; CVE-IDs nur im Fliesstext, bei 3 von 12 aktuellen Warnungen; 7 von 12 sind Phishing- und Betrugswarnungen |
+Das NCSC hat zwei öffentliche Zugänge mit verschiedenem Inhalt. Beide wurden am 18.11.2026 geprüft.
+
+**Cyber Security Hub: die Hauptquelle.** Der Hub (`security-hub.ncsc.admin.ch`) hat eine öffentliche JSON-Schnittstelle ohne Anmeldung. Sie liefert die technischen Advisories des NCSC.
+
+| Punkt | Befund |
+|---|---|
+| Liste | `GET /api/v1/posts/dashboard?pageSize=…&pageIndex=…`, Seiten ab 0; die Antwort nennt die Gesamtzahl (335 öffentliche Beiträge). Je Beitrag: Nummer, Titel, Kurztext (im Mittel 360 Zeichen), `created`, `lastChange`, TLP-Kennzeichnung. Eine Seite mit 50 Beiträgen misst 31 kB. |
+| Einzelbeitrag | `GET /api/v1/posts/{id}/details`: Text als Markdown, Anhänge, Änderungsverlauf mit Begründung je Bearbeitung |
+| Inhalt | 48 von 50 Beiträgen sind als «[Advisory]» gekennzeichnet, alle TLP:CLEAR, in Englisch. 29 von 50 nennen eine CVE-ID in Titel oder Kurztext. 47 von 50 Titeln beginnen mit dem Produkt («Citrix NetScaler: …»). Kein Feld für Schweregrad, Produkt oder Version. |
+| Menge | rund 4 Beiträge pro Woche; 17 von 50 wurden nach der Veröffentlichung bearbeitet, etwa um eine CVE-ID nachzutragen |
+| Änderungen | keine Validatoren (`Cache-Control: no-store`); Erkennung über `lastChange`. Die Liste ist nur ungefähr nach Änderung geordnet, auf die Reihenfolge ist kein Verlass. |
+| Einschränkungen | Die Schnittstelle ist nicht dokumentiert; gefunden wurde keine Beschreibung und kein OpenAPI-Dokument. Die `robots.txt` des Hubs schliesst automatisierte Zugriffe pauschal aus (`Disallow: /`). |
+
+**Website des BACS: Warnungen an die Öffentlichkeit.** Die Website ist seit dem 20.8.2026 neu; `ncsc.admin.ch` leitet auf `bacs.admin.ch`, alle früheren Adressen sind ungültig, es gibt weder RSS für Warnungen noch CSAF.
+
+| Punkt | Befund |
+|---|---|
+| Maschinenlesbar | die JSON-Daten, aus denen die Website sich aufbaut (nicht dokumentiert, ohne Anmeldung), in vier Sprachen |
+| Inhalt | redaktionelle Seiten ohne Schweregrad und Produktliste; 7 von 12 aktuellen Warnungen betreffen Phishing und Betrug; CVE-IDs bei 3 von 12, Verweis auf einen Beitrag im Hub bei 4 von 12 |
 | Änderungen | keine Validatoren; Erkennung über `updatedAt`; Seiten werden nachträglich bearbeitet |
 | Schlüssel | stabile Dokument-ID und Gruppen-ID über die Sprachfassungen; die Adresse ist nicht stabil |
 | Bedingungen | Vervielfältigung verlangt schriftliche Zustimmung |
 
-Folgen für den Adapter: Abruf der Übersicht alle 15 Minuten, Vergleich über `updatedAt`, Einzelseiten nur bei Änderung. Als Rückfall dient das HTML derselben Seiten.
+Folgen für den Adapter:
+
+- Der Hub liefert die Advisories, die Website die Warnungen ohne technischen Bezug. Verweist eine Warnung der Website auf einen Beitrag im Hub, sind beide ein Eintrag mit zwei Belegen.
+- Hub: alle 30 Minuten die erste Seite mit 50 Beiträgen, eine Anfrage. Einzelbeiträge nur, wenn sie neu sind oder ihr `lastChange` sich geändert hat. Einmal täglich alle Seiten, weil die Reihenfolge nicht verlässlich ist; das sind heute sieben Anfragen.
+- Website: Übersicht alle 30 Minuten, Vergleich über `updatedAt`, Einzelseiten nur bei Änderung. Als Rückfall dient das HTML derselben Seiten.
+- Schlüssel im Hub ist die Nummer des Beitrags. Der Änderungsverlauf des Hubs wird als Änderungsgrund übernommen.
+- Jede Instanz fragt selbst ab. Der zufällige Versatz aus 5.4 und das Intervall von 30 Minuten halten die Last für das NCSC klein; ein kürzeres Intervall lässt die Konfiguration nicht zu.
 
 **Was eine NCSC-Warnung im Produkt bewirkt:**
 
@@ -122,8 +144,11 @@ Folgen für den Adapter: Abruf der Übersicht alle 15 Minuten, Vergleich über `
 |---|---|
 | Warnung nennt eine CVE | Sie wird Beleg dieses Eintrags. Der Eintrag erhält das Merkmal «Warnung einer nationalen Stelle»; das Regelwerk zählt dafür einen Punkt (Kapitel 7.6), und Massnahme und Meldung zeigen das Etikett «NCSC warning» mit Verweis. |
 | Warnung ohne CVE | Sie wird ein Eintrag der Art Warnung ohne Projektbezug. Das Bulletin zeigt die jüngsten in einem eigenen Abschnitt; sie stehen in der wöchentlichen Sammelnachricht und lösen das Ereignis `warning.published` aus (Kapitel 8.2). |
+| Advisory erhält nachträglich eine CVE | Der Beitrag wird Beleg des CVE-Eintrags; die Warnung ohne Kennung wird zurückgezogen und verweist auf ihn. |
 
-**Abhängigkeit vom BACS.** Angefragt wird, ob die öffentliche Schnittstelle des Cyber Security Hub automatisiert abgefragt werden darf und ob Warntexte in der Instanz gespeichert werden dürfen (Kapitel 15, E10). Der Hub ist die fachlich reichere Quelle. Die Umsetzung wartet nicht auf die Antwort: Phase 1 baut den Adapter auf den öffentlichen Daten der Website und speichert Titel, Kurztext und Verweis. Kommt die Zustimmung, kommen Volltext und Hub als Erweiterung dazu; kommt sie nicht, bleibt es dabei.
+Ein Advisory des Hubs erscheint oft, bevor eine CVE vergeben ist, und nennt das Produkt im Titel. Daraus liesse sich ein Projektbezug ohne CVE ableiten («betrifft eine Technologie in Ihrem Profil»). Das ist eine Ausbaustufe: Die Schreibweise der Titel ist eine Gewohnheit der Redaktion und keine Zusage, und der saubere Übergang zum späteren CVE-Eintrag braucht das Verschmelzen von Einträgen, das mit der ersten Quellenwelle kommt.
+
+**Abhängigkeit vom BACS.** Die Schnittstelle des Hubs ist öffentlich erreichbar, aber nicht dokumentiert, und die `robots.txt` des Hubs wünscht keine automatisierten Zugriffe. Ein Produkt, das viele Betreiber bei sich installieren, sollte deshalb nicht stillschweigend darauf bauen. Angefragt wird, ob die öffentliche Schnittstelle in dieser Form abgefragt werden darf, welches Intervall dem NCSC recht ist und ob Texte der Advisories in der Instanz gespeichert werden dürfen (Kapitel 15, E10). Die Umsetzung wartet nicht auf die Antwort: Phase 1 baut beide Leser und speichert vom Hub Titel, Kurztext, Verweis und CVE-IDs. Kommt die Zustimmung, kommt der Volltext dazu. Wünscht das NCSC die Abfrage nicht, wird der Leser für den Hub per Einstellung abgeschaltet und die Website bleibt als Quelle.
 
 ### CISA KEV und FIRST EPSS
 

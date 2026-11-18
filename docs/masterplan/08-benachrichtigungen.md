@@ -30,7 +30,7 @@ Diese Tabelle ist die einzige Liste der Ereignisse; andere Kapitel verweisen hie
 | `action.level_lowered`, `action.withdrawn` | Entwarnung | In-App; per E-Mail oder Push einmal, wenn zuvor dorthin gemeldet wurde |
 | `action.assigned` | Zuweisung | an die zugewiesene Person |
 | `action.status_changed`, `action.note_added` | Bearbeitung durch das Team | nur In-App |
-| `warning.published` | neue Warnung ohne Schwachstellenkennung, etwa eine Phishing-Warnung des BACS | In-App und in der wöchentlichen Sammelnachricht; sofort nur, wenn eine Regel es verlangt |
+| `warning.published` | neue Warnung ohne Schwachstellenkennung, etwa eine Phishing-Warnung des BACS oder ein Advisory des NCSC, dem noch keine CVE zugeordnet ist | In-App und in der wöchentlichen Sammelnachricht; sofort nur, wenn eine Regel es verlangt |
 | `backfill.completed` | Ersteinschätzung eines neuen Projekts fertig | eine Sammelnachricht statt Einzelalarme |
 
 Jedes Ereignis trägt eine eindeutige Kennung, die der Auslöser in derselben Transaktion vergibt wie die Änderung selbst; bei Massnahmen ist es die Kennung der Verlaufszeile. Sein Gegenstand ist eine Massnahme, bei `warning.published` ein Eintrag, bei `backfill.completed` ein Projekt. `warning.published` entsteht einmal für die Instanz und wird je Organisation ausgewertet, die eine Regel dafür hat.

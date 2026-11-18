@@ -25,12 +25,12 @@ A startable instance with sign-in, job system, build chain and a first administr
 | No. | Task | Depends on | Status |
 |---|---|---|---|
 | 0.1 | Repository per chapter 13: solution, module skeletons, central package management, analyzers | | ✅ |
-| 0.2 | Build chain: build, tests, lint, licence check, image for two architectures by cross-compiling; timing | 0.1 | 🔄 pipeline and licence gate done; image open |
-| 0.3 | Host program with `api`, `worker`, `migrate`, `healthcheck`, `init-env`, `doctor`; Dockerfile; Compose with TLS proxy | 0.1 | 🔄 |
+| 0.2 | Build chain: build, tests, lint, licence check, image for two architectures by cross-compiling; timing | 0.1 | ✅ |
+| 0.3 | Host program with `api`, `worker`, `migrate`, `healthcheck`, `init-env`, `doctor`; Dockerfile; Compose with TLS proxy | 0.1 | ✅ |
 | 0.4 | Job system per chapter 3.4; tests with forced aborts | 0.3 | ⬜ |
 | 0.5 | Tenant context and unit of work across modules; audit; settings; secret encryption; telemetry | 0.3 | ⬜ |
 | 0.6 | **Spike:** row-level security with EF Core, Npgsql, connection pool and shared transaction; ADR | 0.5 | ⬜ |
-| 0.7 | **Spike:** target image with time zones and culture; health check without shell; dump before migration; work volume for large archives | 0.3 | ⬜ |
+| 0.7 | **Spike:** target image with time zones and culture; health check without shell; dump before migration; work volume for large archives | 0.3 | ✅ [ADR 028](docs/adr/0028-runtime-image-and-pre-migration-dump.md) |
 | 0.8 | Sign-in: setup token, registration, server-side sessions with list and revoke, TOTP, password rules, CSRF protection, rate limiting | 0.5 | ⬜ |
 | 0.9 | Basic e-mail for confirmation, password reset and invitations; behaviour without SMTP | 0.3 | ⬜ |
 | 0.10 | Web: workspace with app and `ui` library; tokens from the mockups; header band, navigation, sign-in pages; i18n scaffold with English; component pages with visual comparison | 0.1 | ⬜ |
@@ -166,6 +166,23 @@ dotnet test --solution Ardea.slnx
 dotnet format Ardea.slnx --verify-no-changes
 build/check-licenses.sh            # NuGet licences against the allow-list
 python3 build/check-banned-packages.py
+```
+
+Run an instance locally from source:
+
+```bash
+docker compose -f deploy/compose.dev.yaml up -d      # PostgreSQL 18 and a mail catcher
+set -a; . deploy/dev.env; set +a
+dotnet run --project src/Hosts/Ardea.Host -- migrate
+dotnet run --project src/Hosts/Ardea.Host -- api     # http://localhost:5080
+dotnet run --project src/Hosts/Ardea.Host -- worker
+```
+
+Or build the image and start a complete instance the way an operator would (`deploy/compose.yaml`):
+
+```bash
+docker build -f deploy/Dockerfile -t ardea:dev .
+build/smoke-test.sh ardea:dev
 ```
 
 The repository layout and the rules for code, dependencies and tests are in chapter 13 of the

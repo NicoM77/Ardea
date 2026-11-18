@@ -1,0 +1,23 @@
+{
+  "kind": "warning",
+  "title": "Java security updates announced: Operators should check their systems",
+  "summary": "Oracle has announced security updates for 17 November 2026, including eleven security patches for Java SE. According to the vendor, the associated vulnerabilities can be exploited over a network without credentials. The National Cyber Security Centre (NCSC) recommends that operators check their systems and prepare to update them.",
+  "language": "en",
+  "publishedAt": "2026-11-17T16:24:00+00:00",
+  "modifiedAt": "2026-11-18T06:33:40.41+00:00",
+  "claims": [],
+  "references": [
+    {
+      "url": "https://www.bacs.admin.ch/en/warnung-java-en",
+      "tags": [
+        "warning"
+      ]
+    },
+    {
+      "url": "https://security-hub.ncsc.admin.ch/#/posts/13198",
+      "tags": [
+        "related"
+      ]
+    }
+  ]
+}

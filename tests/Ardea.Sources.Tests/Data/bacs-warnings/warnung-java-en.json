@@ -1,0 +1,27 @@
+{
+  "documentId": 5119,
+  "tenantDocumentId": "ld_5119",
+  "documentType": "page",
+  "contentType": "content-page",
+  "lang": "en",
+  "visiblePublicationDate": "2026-11-17T16:24:00.000Z",
+  "updatedAt": "2026-11-18T06:33:40.410Z",
+  "metadata": {
+    "groupId": "-NHeJ2F6Inqe",
+    "lang": "en",
+    "slug": "warnung-java-en",
+    "title": "Java security updates announced: Operators should check their systems",
+    "teaserTitle": "Java security updates announced: Operators should check their systems",
+    "teaserText": "Oracle has announced security updates for 17 November 2026, including eleven security patches for Java SE. According to the vendor, the associated vulnerabilities can be exploited over a network without credentials. The National Cyber Security Centre (NCSC) recommends that operators check their systems and prepare to update them.",
+    "description": "Oracle has announced security updates for 17 November 2026, including eleven security patches for Java SE. According to the vendor, the associated vulnerabilities can be exploited over a network without credentials. The National Cyber Security Centre (NCSC) recommends that operators check their systems and prepare to update them.",
+    "publishDate": "2026-11-17T16:24:00.000Z"
+  },
+  "content": [
+    {
+      "identifier": "p",
+      "properties": {
+        "text": "SYNTHETIC PLACEHOLDER, not BACS text. <a href=\"https://security-hub.ncsc.admin.ch/#/posts/13198\">hub</a>"
+      }
+    }
+  ]
+}

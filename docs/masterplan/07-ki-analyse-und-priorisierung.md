@@ -145,7 +145,7 @@ Regelwerk Version 1 addiert ganzzahlige Punkte. Jeder Faktor erscheint in der Ob
 | Kritikalität des Systems | hoch · normal · tief | 1 · 0 · −1 |
 | Erreichbarkeit | Internet · intern · isoliert | 1 · 0 · −1 |
 | Schutzmassnahme | wirksam · keine Angabe | −1 · 0 |
-| Warnung einer nationalen Stelle zu diesem Eintrag | ja · nein | 1 · 0 |
+| Warnung einer nationalen Stelle zu diesem Eintrag (Trägerschaft Behörde oder staatlicher Auftrag, Kapitel 5.6) | ja · nein | 1 · 0 |
 | EPSS | über 50 % · darunter | 1 · 0 |
 
 | Summe | Stufe |

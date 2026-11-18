@@ -51,7 +51,7 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | 2 | [Technologie-Stack](02-technologie-stack.md) | Geprüfte Versionen, Bewertung von Job-Verarbeitung und KI-Anbindung, ausgeschlossene Bibliotheken |
 | 3 | [Softwarearchitektur](03-architektur.md) | Module, Abhängigkeitsregeln, Verarbeitungskette, Jobs |
 | 4 | [Datenmodell](04-datenmodell.md) | Schemata, Entitäten, Beziehungen, Festlegungen, Mengen |
-| 5 | [Quellen und Synchronisation](05-quellen-und-synchronisation.md) | Provider-SDK, Abrufstrategie, Quellenkatalog mit 54 Quellen |
+| 5 | [Quellen und Synchronisation](05-quellen-und-synchronisation.md) | Provider-SDK, Abrufstrategie, Quellenkatalog mit 54 Quellen und ihrer Trägerschaft |
 | 6 | [Normalisierung, Zusammenführung, Datenqualität](06-korrelation-und-datenqualitaet.md) | Identität, Vorrangregeln, Änderungserkennung, Versionen |
 | 7 | [Relevanzprüfung, KI-Analyse, Priorisierung](07-ki-analyse-und-priorisierung.md) | Trichter, Massnahme, Einschätzung, Regelwerk, Qualitätsmessung |
 | 8 | [Benachrichtigungen und Eskalation](08-benachrichtigungen.md) | Ereignisse, Regeln, Benachrichtigungsstand, Kanäle |

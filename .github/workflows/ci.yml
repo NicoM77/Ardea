@@ -63,3 +63,32 @@ jobs:
           name: licences
           path: artifacts/nuget-licenses.md
           if-no-files-found: ignore
+
+  image:
+    name: Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image (amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          platforms: linux/amd64
+          load: true
+          tags: ardea:ci
+          cache-from: type=gha,scope=image-amd64
+          cache-to: type=gha,mode=max,scope=image-amd64
+      - name: Smoke test (compose up, healthy, doctor)
+        run: build/smoke-test.sh ardea:ci
+      - name: Build image (arm64, cross-compiled)
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          platforms: linux/arm64
+          cache-from: type=gha,scope=image-arm64
+          cache-to: type=gha,mode=max,scope=image-arm64

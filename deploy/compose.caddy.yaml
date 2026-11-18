@@ -1,0 +1,21 @@
+# HTTPS in front of the API with Caddy (master plan 12.2). Use together with compose.yaml:
+#   ARDEA_DOMAIN=ardea.example.com docker compose -f compose.yaml -f compose.caddy.yaml up -d
+# Caddy obtains a certificate for a public domain automatically. For a test on one machine use
+# ARDEA_DOMAIN=localhost: Caddy then issues a certificate from its own local authority.
+services:
+  caddy:
+    image: caddy:2
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      ARDEA_DOMAIN: ${ARDEA_DOMAIN:?set ARDEA_DOMAIN to the public host name}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+
+volumes:
+  caddy-data: {}
+  caddy-config: {}

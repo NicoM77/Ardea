@@ -1,0 +1,30 @@
+# Development environment only (master plan 12.10): API and worker run with `dotnet watch`,
+# the web app with the Angular dev server.
+#   docker compose -f deploy/compose.dev.yaml up -d
+name: ardea-dev
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ardea
+      POSTGRES_USER: ardea_migrator
+      POSTGRES_PASSWORD: dev-owner
+    ports: ["127.0.0.1:5433:5432"]
+    volumes: ["dev-db:/var/lib/postgresql"]
+
+  mail:
+    # Catches every e-mail; web UI on http://localhost:8025
+    image: axllent/mailpit:latest
+    ports: ["127.0.0.1:1025:1025", "127.0.0.1:8025:8025"]
+
+  aspire:
+    # Optional telemetry viewer on http://localhost:18888
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    profiles: [observability]
+    environment:
+      DASHBOARD__FRONTEND__AUTHMODE: Unsecured
+    ports: ["127.0.0.1:18888:18888", "127.0.0.1:4317:18889"]
+
+volumes:
+  dev-db: {}

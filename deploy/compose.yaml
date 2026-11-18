@@ -1,0 +1,79 @@
+# Ardea: a complete instance with one file and one command (master plan 12).
+#   docker run --rm -v "$PWD:/out" ghcr.io/nicom77/ardea:0 init-env --dir /out
+#   docker compose up -d
+# The API listens on 127.0.0.1:8080 only. It needs HTTPS in front: use compose.caddy.yaml,
+# or your own proxy or tunnel (see examples in this folder).
+name: ardea
+
+x-image: &image ${ARDEA_IMAGE:-ghcr.io/nicom77/ardea:0}
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ardea
+      POSTGRES_USER: ardea_migrator
+      POSTGRES_PASSWORD: ${ARDEA_DB_OWNER_PASSWORD:?set in .env (ardea init-env)}
+    volumes:
+      # From PostgreSQL 18 on, the volume target is /var/lib/postgresql; dumps land in backup/ there.
+      - db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ardea_migrator -d ardea"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    # The only service that knows the owner password.
+    image: *image
+    command: ["migrate"]
+    environment:
+      ARDEA_DB_OWNER_PASSWORD: ${ARDEA_DB_OWNER_PASSWORD}
+      ARDEA_DB_APP_PASSWORD: ${ARDEA_DB_APP_PASSWORD:?set in .env (ardea init-env)}
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    image: *image
+    command: ["api"]
+    env_file: .env.app
+    ports: ["127.0.0.1:${ARDEA_HOST_PORT:-8080}:8080"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "/app/ardea", "healthcheck", "api"]
+      interval: 15s
+      start_period: 20s
+      start_interval: 2s
+      retries: 5
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
+  worker:
+    image: *image
+    command: ["worker"]
+    env_file: .env.app
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "/app/ardea", "healthcheck", "worker"]
+      interval: 30s
+      start_period: 30s
+      start_interval: 2s
+      retries: 5
+    read_only: true
+    tmpfs: ["/tmp"]
+    volumes:
+      # Working space for large archives, e.g. the full CVE archive on first start.
+      - scratch:/scratch
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
+volumes:
+  db: {}
+  scratch: {}

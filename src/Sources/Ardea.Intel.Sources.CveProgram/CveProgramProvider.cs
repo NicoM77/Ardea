@@ -21,7 +21,7 @@ namespace Ardea.Intel.Sources.CveProgram;
 /// <item><b>Single:</b> one record from the CVE Services API.</item>
 /// </list>
 /// </summary>
-public sealed class CveProgramProvider : ISourceProvider
+public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
 {
     public const string Key = "cve-program";
     internal const string DeltaLogUrl = "https://raw.githubusercontent.com/CVEProject/cvelistV5/main/cves/deltaLog.json";
@@ -69,6 +69,22 @@ public sealed class CveProgramProvider : ISourceProvider
 
         var cursor = CveCursor.Parse(context.Cursor);
         return cursor is null ? FetchArchiveAsync(context, cancellationToken) : FetchDeltasAsync(context, cursor, cancellationToken);
+    }
+
+    /// <summary>The 30-day change log as the reference for the completeness check (master plan 6.8).</summary>
+    public async IAsyncEnumerable<ChangedRecord> ListChangesAsync(SyncContext context, DateTimeOffset since, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var log = await context.Http.GetFromJsonAsync<List<DeltaEntry>>(new Uri(DeltaLogUrl), Json, cancellationToken) ?? [];
+        foreach (var entry in log.Where(e => e.FetchTime >= since))
+        {
+            foreach (var change in (entry.New ?? []).Concat(entry.Updated ?? []))
+            {
+                if (CveId.IsValid(change.CveId))
+                {
+                    yield return new ChangedRecord(change.CveId, change.DateUpdated ?? entry.FetchTime);
+                }
+            }
+        }
     }
 
     private async IAsyncEnumerable<FetchItem> FetchSingleAsync(SyncContext context, [EnumeratorCancellation] CancellationToken cancellationToken)

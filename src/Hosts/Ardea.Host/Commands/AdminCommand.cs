@@ -36,6 +36,7 @@ internal static class AdminCommand
         services.AddArdeaPlatform(configuration, "admin");
         services.AddUnitOfWork();
         services.AddJobQueue();
+        services.AddSourceAdapters();
         services.AddArdeaSecrets(MasterKey.FromBase64(configuration[HostConfiguration.MasterKeyKey]!));
         foreach (var module in Modules.All)
         {

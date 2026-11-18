@@ -63,6 +63,11 @@ Binding constraints the owner stated in the brief:
 - The interface must read as serious, professional, and trustworthy; it is a security-critical tool.
 - Guiding line: "Understand the risk. Know what matters. Act immediately."
 
+Standing design preference, stated by the owner on 2026-11-18 after rejecting the first direction ("hazard bulletin"):
+
+- Simple and intuitive, like a professional work application that follows Apple's design guidelines: familiar platform controls, the system font, no invented visual metaphor. It must not look AI-generated.
+- Priority is shown as a word with its own symbol, never as a numeral.
+
 ## Evidence on Hand
 
 - Real CVE records from the CVE Program (record format 5.2), fetched 2026-11-18, including CISA SSVC and KEV data embedded in them. They may be used as demonstration content.

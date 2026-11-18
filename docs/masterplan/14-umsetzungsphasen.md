@@ -9,7 +9,7 @@ Sieben Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen
 | 0 | Startbare Instanz mit Anmeldung, Job-System, Build-Kette, Administration in erster Form; technische Risiken geklärt | 5–6 Wochen |
 | 1 | Konsolidierte Einträge aus vier Quellen, durchsuchbar | 5–7 Wochen |
 | 2 | Organisationen mit Projekten und Technologieprofil; Setup-Wizard | 4–5 Wochen |
-| 3 | Befunde, Massnahmen und Meldungen mit Stufe und Begründung; Bulletin, Liste, Detail | 6–8 Wochen |
+| 3 | Befunde, Massnahmen und Meldungen mit Stufe und Begründung; Übersicht, Liste, Detail | 6–8 Wochen |
 | 4 | KI-Einschätzung als zuschaltbarer Schritt | 2–3 Wochen |
 | 5 | Benachrichtigungen über vier Kanäle | 3–4 Wochen |
 | 6 | Geprüftes, dokumentiertes Release 1.0 | 3–4 Wochen |
@@ -113,15 +113,15 @@ Abnahme:
 
 | Nr. | Aufgabe | Abhängig von |
 |---|---|---|
-| 3.1 | Mockups: Liste und Bulletin mit Massnahmen, Detail einer Massnahme, Fassung ohne Sprachmodell, ruhiges Bulletin; Freigabe durch den Eigentümer | |
+| 3.1 | Mockups: ruhige Übersicht, Massnahme mit mehreren Befunden, Fassung mit KI-Einschätzung; Freigabe durch den Eigentümer | |
 | 3.2 | Kandidatensuche vorwärts und rückwärts; Trefferstärke; schwache Treffer als Stufe 1 | 1.7, 2.5 |
 | 3.3 | Versionsprüfung mit den drei Ergebnissen einschliesslich Vorgabezustand der Records (Kapitel 6.6); Pakete aus Distributionen als unbekannt | 3.2, 1.1 |
 | 3.4 | Regelwerk Version 1 als Datei; Faktoren, Ober- und Untergrenzen, Fristen | 3.3 |
 | 3.5 | Befunde, Massnahmen, Meldungen, Verlauf; die Ereignisse aus Kapitel 8.2 als Verlaufszeilen mit Kennung; Abschluss durch Anheben der Version im Profil; Erstbefüllung ohne Einzelereignisse | 3.4 |
 | 3.6 | Antworten aus Vorlagen ohne Sprachmodell | 3.5 |
 | 3.7 | Referenzsatz mit mindestens 200 beschrifteten Paaren; die Wochendaten des Spikes als Testdatensatz; Bewertungslauf im Build; Kalibrierung der Gewichte | 3.4 |
-| 3.8 | Bulletin mit Warnungen ohne Kennung und ruhigem Zustand | 3.5, 3.1 |
-| 3.9 | Liste der Massnahmen mit Leiter als Filter, Suche, Projekt, Status | 3.5, 3.1 |
+| 3.8 | Übersicht mit Warnungen ohne Kennung und ruhigem Zustand | 3.5, 3.1 |
+| 3.9 | Liste der Massnahmen mit Filter nach Priorität und Projekt, Suche, offen und abgeschlossen | 3.5, 3.1 |
 | 3.10 | Massnahme und Schwachstelle im Detail; Status, Zuweisung, Frist, Notiz, Rücknahme | 3.5, 3.1 |
 | 3.11 | Live-Aktualisierung über Server-Sent Events; Befehl zum Neuberechnen der Stufen | 3.8 |
 
@@ -134,7 +134,7 @@ Abnahme:
 - Ein neues Projekt mit 40 Treffern im Rückblick erzeugt Befunde mit dem Vermerk Erstbefüllung, im Verlauf kein `action.raised` und genau ein `backfill.completed`.
 - Wird im Profil eine Version angehoben, schliessen sich die Befunde, die sie nicht mehr betreffen.
 - Mit den Beispieldaten liegen bei 390 × 844 Punkten alle drei Antworten über der Aktionsleiste (automatischer Layouttest).
-- Ohne Sprachmodell zeigen Bulletin, Massnahme und Meldung alle drei Antworten aus strukturierten Daten.
+- Ohne Sprachmodell zeigen Übersicht, Massnahme und Meldung alle drei Antworten aus strukturierten Daten.
 - Automatische Zugänglichkeitsprüfung der Seiten ohne Befund.
 
 ## Phase 4 · KI-Einschätzung

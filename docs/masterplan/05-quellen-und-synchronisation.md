@@ -87,7 +87,7 @@ Unabhängig vom Verfahren wird jeder Rohdatensatz gehasht. Ein unveränderter Da
 
 **Rücksicht.** Kennzeichnender `User-Agent` mit Projektadresse; Obergrenze je Host und Worker-Prozess; dokumentierte Limits der Quelle als Vorgabe (NVD laut Dokumentation 5 Anfragen in 30 Sekunden ohne Schlüssel, nicht nachgemessen; GitHub 60 pro Stunde ohne Token, gemessen). Quellen, die automatisierte Clients abweisen, werden nicht durch einen vorgetäuschten Browser umgangen.
 
-**Überwachung.** Jeder Lauf steht in `intel.source_run` mit Dauer, Anzahl geholt, geändert, in Quarantäne und Fehler. Die Seite «Quellen» zeigt je Quelle Stand, Verzögerung und Fehlerserie. Fällt eine Quelle länger als sechs Stunden aus, erfährt es der Instanz-Administrator und das Bulletin weist darauf hin.
+**Überwachung.** Jeder Lauf steht in `intel.source_run` mit Dauer, Anzahl geholt, geändert, in Quarantäne und Fehler. Die Seite «Quellen» zeigt je Quelle Stand, Verzögerung und Fehlerserie. Fällt eine Quelle länger als sechs Stunden aus, erfährt es der Instanz-Administrator und die Übersicht weist darauf hin.
 
 ## 5.5 Die Startquellen
 
@@ -143,7 +143,7 @@ Folgen für den Adapter:
 | Fall | Wirkung |
 |---|---|
 | Warnung nennt eine CVE | Sie wird Beleg dieses Eintrags. Der Eintrag erhält das Merkmal «Warnung einer nationalen Stelle»; das Regelwerk zählt dafür einen Punkt (Kapitel 7.6), und Massnahme und Meldung zeigen das Etikett «NCSC warning» mit Verweis. |
-| Warnung ohne CVE | Sie wird ein Eintrag der Art Warnung ohne Projektbezug. Das Bulletin zeigt die jüngsten in einem eigenen Abschnitt; sie stehen in der wöchentlichen Sammelnachricht und lösen das Ereignis `warning.published` aus (Kapitel 8.2). |
+| Warnung ohne CVE | Sie wird ein Eintrag der Art Warnung ohne Projektbezug. Die Übersicht zeigt die jüngsten in einem eigenen Abschnitt; sie stehen in der wöchentlichen Sammelnachricht und lösen das Ereignis `warning.published` aus (Kapitel 8.2). |
 | Advisory erhält nachträglich eine CVE | Der Beitrag wird Beleg des CVE-Eintrags; die Warnung ohne Kennung wird zurückgezogen und verweist auf ihn. |
 
 Ein Advisory des Hubs erscheint oft, bevor eine CVE vergeben ist, und nennt das Produkt im Titel. Daraus liesse sich ein Projektbezug ohne CVE ableiten («betrifft eine Technologie in Ihrem Profil»). Das ist eine Ausbaustufe: Die Schreibweise der Titel ist eine Gewohnheit der Redaktion und keine Zusage, und der saubere Übergang zum späteren CVE-Eintrag braucht das Verschmelzen von Einträgen, das mit der ersten Quellenwelle kommt.

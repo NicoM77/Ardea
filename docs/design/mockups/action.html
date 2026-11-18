@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Update Puppet Enterprise · Ardea (mockup, sample data)</title>
+<link rel="icon" href="../brand/ardea-favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body data-page="action" data-section="actions">
+<main class="main" id="main">
+  <div class="content content--narrow" data-action>
+
+    <a class="back" href="actions.html"><svg class="icon" aria-hidden="true"><use href="#chevron-left"/></svg>Actions</a>
+
+    <header class="page-head">
+      <div>
+        <h1>Update Puppet Enterprise to 2025.12.1</h1>
+        <p class="detail-meta">
+          <span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span><span class="sep" aria-hidden="true"></span>
+          <span>Platform Ops</span>
+        </p>
+        <p class="detail-meta">
+          <span class="due-soon">Due tomorrow, 19 Nov at 22:05</span>
+          <span class="tag tag--strong">Exploited in the wild</span>
+        </p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn--primary" type="button" data-take>Take into review</button>
+      </div>
+    </header>
+
+    <div role="status">
+      <div class="note note--done" id="confirm" hidden>
+        <svg class="icon" aria-hidden="true"><use href="#check-circle"/></svg>
+        <p id="confirm-text"></p>
+        <button class="btn btn--plain" type="button" id="undo">Undo</button>
+      </div>
+    </div>
+
+    <div class="detail">
+      <section class="section" aria-labelledby="summary">
+        <div class="section-head"><h2 id="summary">Summary</h2></div>
+        <ul class="group answers">
+          <li>
+            <h3>What happened</h3>
+            <blockquote>Deserialization of untrusted data in the report-processing code of Puppet, as used by Puppet Server, allows a client that holds any CA-signed agent certificate to execute arbitrary code on the Puppet Server…</blockquote>
+            <span class="source">From the CVE record · <a href="vulnerability.html#description">Full description</a></span>
+            <p class="fact">CISA lists the flaw as actively exploited since 17 November 2026.</p>
+          </li>
+          <li>
+            <h3>Are we affected?</h3>
+            <p><strong>Yes.</strong> Platform Ops runs Puppet Enterprise 2025.9.0. Affected are versions 2025.0.0 up to, not including, 2025.12.1.</p>
+          </li>
+          <li>
+            <h3>What to do</h3>
+            <p>Update Puppet Enterprise to <strong>2025.12.1</strong>, the fixed release for the 2025 branch.</p>
+            <span class="source">From the affected and fixed versions in the CVE record</span>
+          </li>
+        </ul>
+        <p class="note-plain"><svg class="icon" aria-hidden="true"><use href="#info"/></svg><span>These answers are built from the source data; no AI assessment is configured. <a href="vulnerability.html#why">How the priority was set</a></span></p>
+      </section>
+
+      <aside class="inspector" aria-label="Details">
+        <dl class="group props">
+          <div>
+            <dt><label for="status">Status</label></dt>
+            <dd>
+              <select class="select" id="status" data-status-select>
+                <option value="open">Open</option>
+                <option value="in_review">In review</option>
+                <option value="remediated">Remediated</option>
+                <option value="risk_accepted">Risk accepted</option>
+                <option value="not_affected">Not affected</option>
+              </select>
+            </dd>
+          </div>
+          <div>
+            <dt><label for="assignee">Assignee</label></dt>
+            <dd>
+              <select class="select" id="assignee">
+                <option value="">Unassigned</option>
+                <option value="Nina Meier">Nina Meier (you)</option>
+                <option value="Marc Keller">Marc Keller</option>
+              </select>
+            </dd>
+          </div>
+          <div><dt>Due</dt><dd>19 Nov 2026, 22:05</dd></div>
+          <div><dt>Project</dt><dd>Platform Ops</dd></div>
+          <div><dt>Component</dt><dd>Puppet Enterprise</dd></div>
+          <div><dt>Installed</dt><dd><span class="id">2025.9.0</span></dd></div>
+          <div><dt>Target</dt><dd><span class="id">2025.12.1</span></dd></div>
+        </dl>
+
+        <form class="group reason" id="reason" hidden novalidate>
+          <label class="field">
+            <span id="reason-label">Reason</span>
+            <textarea class="textarea" id="reason-text" aria-describedby="reason-error" placeholder="Kept in the activity, visible to the team"></textarea>
+          </label>
+          <p class="error" id="reason-error" hidden>Write a short reason to close this action.</p>
+          <div class="reason-actions">
+            <button class="btn btn--secondary" type="button" id="reason-cancel">Cancel</button>
+            <button class="btn btn--primary" type="submit">Close action</button>
+          </div>
+        </form>
+
+        <form class="note-form" id="note-form">
+          <label class="field">
+            <span>Note</span>
+            <textarea class="textarea" id="note-text" placeholder="Visible to the team and kept in the activity"></textarea>
+          </label>
+          <button class="btn btn--secondary" type="submit">Save note</button>
+        </form>
+      </aside>
+
+      <section class="section" aria-labelledby="vulns">
+        <div class="section-head"><h2 id="vulns">Vulnerabilities in this action</h2></div>
+        <ul class="group list">
+          <li>
+            <a class="row" href="vulnerability.html">
+              <span class="row-body">
+                <span class="row-text">
+                  <span class="row-title">Puppet Enterprise: code execution through crafted reports</span>
+                  <span class="row-sub"><span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span> · <span class="id">CVE-2026-115731</span> · CVSS 9.4 · Fixed in 2025.12.1</span>
+                </span>
+                <svg class="icon row-chevron" aria-hidden="true"><use href="#chevron-right"/></svg>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="section" aria-labelledby="activity">
+        <div class="section-head"><h2 id="activity">Activity</h2></div>
+        <ol class="group timeline" id="timeline">
+          <li>
+            <time datetime="2026-11-17T22:07">17 Nov, 22:07</time>
+            <p>Notification sent by email and push to 3 people, rule “Critical at once”.</p>
+          </li>
+          <li>
+            <time datetime="2026-11-17T22:05">17 Nov, 22:05</time>
+            <div>
+              <p class="change">
+                <span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#p-high"/></svg>High</span>
+                <svg class="icon arrow" aria-hidden="true"><use href="#arrow-right"/></svg><span class="sr-only">raised to</span>
+                <span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span>
+              </p>
+              <p>CISA lists the flaw as actively exploited. Due date moved forward from 20 Nov to 19 Nov.</p>
+            </div>
+          </li>
+          <li>
+            <time datetime="2026-11-13T09:12">13 Nov, 09:12</time>
+            <p>Action created at High after Puppet Enterprise 2025.9.0 was added to the profile of Platform Ops. Installed version in the affected range, no known exploitation. Due 20 Nov.</p>
+          </li>
+        </ol>
+      </section>
+    </div>
+
+    <p class="footnote">Mockup with sample data. The CVE record is real; the organization, people, project, installed version and dates are invented. This installation runs without an AI provider, the default of a fresh install. <a href="design-system.html">Design system</a></p>
+  </div>
+</main>
+<div class="actionbar">
+  <button class="btn btn--primary" type="button" data-take>Take into review</button>
+  <label class="sr-only" for="status-bar">Status</label>
+  <select class="select" id="status-bar" data-status-select>
+    <option value="open">Status: Open</option>
+    <option value="in_review">Status: In review</option>
+    <option value="remediated">Status: Remediated</option>
+    <option value="risk_accepted">Status: Risk accepted</option>
+    <option value="not_affected">Status: Not affected</option>
+  </select>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

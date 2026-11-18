@@ -37,11 +37,11 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | E8 | Deutsch in der Oberfläche | nach 1.0; Texte von Beginn an übersetzbar | Phase 6, Ausbau |
 | E9 | Telefon | PWA im MVP; Capacitor-App erst nach Entscheidung über das Relay | Kapitel 11.9 |
 | E10 | Anfrage an das BACS: Abfrage der öffentlichen Schnittstelle des Hubs trotz `robots.txt`, gewünschtes Intervall, Speicherung der Texte | jetzt stellen; die Umsetzung baut auf der Schnittstelle und wartet nicht darauf | Kapitel 5.5 |
-| E11 | Stufe 1: Name und Sichtbarkeit | «Not relevant», in der Leiter sichtbar, in der Liste erst auf Wunsch | Oberfläche |
+| E11 | Stufe 1: Name und Sichtbarkeit | «Not relevant»; nicht in Zählern und Liste, sondern in einem aufklappbaren Abschnitt unter der Liste | Oberfläche |
 | E12 | Registrierung | nur auf Einladung nach dem ersten Benutzer | Kapitel 9.1 |
 | E13 | Fristen je Stufe | 48 Stunden, 7, 30 und 90 Tage; je Organisation änderbar | Kapitel 7.6 |
 | E14 | Rückblick beim Erststart | 180 Tage; Gesamtbestand als Befehl | Kapitel 4.10 |
-| E15 | Weitere Mockups | Liste und Bulletin mit Massnahmen, Fassung ohne Sprachmodell und ruhiges Bulletin vor Phase 3; Wizard und Projektprofil vor Phase 2; Regeln vor Phase 5 | Phasen 1, 2, 3, 5 |
+| E15 | Weitere Mockups | Ruhige Übersicht, Massnahme mit mehreren Befunden und Fassung mit KI-Einschätzung vor Phase 3; Wizard und Projektprofil vor Phase 2; Regeln vor Phase 5 | Phasen 1, 2, 3, 5 |
 | E16 | Arbeitseinheit | die Massnahme (Komponente in einem Projekt) statt der einzelnen CVE | Kapitel 7.4, 8 |
 | E17 | Umfang und Dauer | MVP wie in Kapitel 1.5 gekürzt; 28 bis 37 Wochen für eine Person; nach Phase 3 neu beurteilen | Kapitel 14 |
 
@@ -54,7 +54,7 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | Nutzer: verantwortliche Person plus Entwickler, die ereignisgetrieben dazukommen | Rückfrage vom 18.11.2026 |
 | Englisch zuerst, Deutsch als Übersetzung | Rückfrage vom 18.11.2026 |
 | Name Ardea; Logo: Reiher als Outline (Kopf und Hals), Wortmarke in Inter Tight SemiBold; Dateien und Regeln in `docs/design/brand/` | Rückfrage und Wahl des Eigentümers vom 18.11.2026 |
-| Visuelle Richtung «Gefahrenbulletin» | Auswahl des Eigentümers vom 18.11.2026 |
+| Visuelle Richtung: schlichte Arbeitsanwendung nach den Gestaltungsrichtlinien von Apple; Priorität als Wort mit Symbol; «Gefahrenbulletin» verworfen | Vorgabe des Eigentümers vom 18.11.2026 |
 | Helles Design als einziges | Vorgabe des Eigentümers |
 
 ## 15.4 Unabhängige Durchsicht des Plans

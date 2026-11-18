@@ -76,7 +76,7 @@ Schema-Erzwingung garantiert die Form, nicht den Inhalt. Die Prüfung der Verwei
 
 | Option | Lizenz | Passung |
 |---|---|---|
-| **Angular CDK und Angular Aria mit eigenen Komponenten** | MIT | **Empfehlung.** Aria ist seit Version 22 stabil und liefert Combobox, Listbox, Menü, Tabs, Baum und Grid ohne Aussehen; das CDK liefert Dialog, Overlay, Stepper, Fokusfalle und virtuelles Scrollen. Selbst zu bauen: Toast, sortierbarer Tabellenkopf, Stufenzeichen und Leiter, zusammen 15 bis 20 kleine Komponenten. |
+| **Angular CDK und Angular Aria mit eigenen Komponenten** | MIT | **Empfehlung.** Aria ist seit Version 22 stabil und liefert Combobox, Listbox, Menü, Tabs, Baum und Grid ohne Aussehen; das CDK liefert Dialog, Overlay, Stepper, Fokusfalle und virtuelles Scrollen. Selbst zu bauen: Toast, sortierbarer Tabellenkopf, Prioritätszeichen, Segmentschalter und Listenzeile, zusammen 15 bis 20 kleine Komponenten. |
 | spartan/ui | MIT | Ausweichlösung. Seit Juni 2026 in Version 1; bringt fertige, kopierte Komponenten, verlangt aber Tailwind 4 und das Umschreiben fast aller Stilklassen. |
 | Angular Material | MIT | Über Tokens umfärbbar, bleibt aber erkennbar Material; die innere Struktur ist nicht änderbar. |
 | PrimeNG | kommerziell ab Version 22 | **Ausgeschlossen.** Seit Juli 2026 geschlossen mit Lizenzschlüssel; die letzte freie Version unterstützt nur Angular 21. |
@@ -88,7 +88,7 @@ Keine freie Bibliothek veröffentlicht einen Konformitätsbericht nach WCAG 2.2.
 
 | Thema | Entscheidung | Grund |
 |---|---|---|
-| Styling | Eine Token-Datei mit CSS Custom Properties, Stylesheets je Komponente, Kaskadenebenen | Die Tokens der Mockups (`csh.css`) lassen sich direkt übernehmen. |
+| Styling | Eine Token-Datei mit CSS Custom Properties, Stylesheets je Komponente, Kaskadenebenen | Die Tokens der Mockups (`app.css`) lassen sich direkt übernehmen. |
 | Daten vom Server | `httpResource` für Lesen, `HttpClient` für Schreiben, danach `reload()`; kein Store | Offizielle Empfehlung; TanStack Query ist für Angular erst seit dem 17.11.2026 stabil und bleibt der Ausbaupfad. |
 | Aktualität | Server-Sent Events lösen `reload()` aus | Kein Polling im Client. |
 | API-Client | orval 8 mit Ausgabe für `httpResource` und `HttpClient`; Basis-URL zur Laufzeit über einen Interceptor | Die spätere App verbindet sich mit einer frei wählbaren Serveradresse. |

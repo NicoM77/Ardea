@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Actions · Ardea (mockup, sample data)</title>
+<link rel="icon" href="../brand/ardea-favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body data-page="actions">
+<main class="main" id="main">
+  <div class="content">
+
+    <header class="page-head">
+      <div>
+        <h1>Actions</h1>
+        <p class="page-sub" id="count" role="status">6 open actions</p>
+      </div>
+    </header>
+
+    <div class="toolbar" role="search">
+      <div class="seg" role="group" aria-label="Show">
+        <button type="button" data-view="open" aria-pressed="true">Open <span class="seg-count">6</span></button>
+        <button type="button" data-view="closed" aria-pressed="false">Closed <span class="seg-count">0</span></button>
+      </div>
+      <label class="search">
+        <span class="sr-only">Search actions</span>
+        <svg class="icon" aria-hidden="true"><use href="#search"/></svg>
+        <input class="input" type="search" id="q" placeholder="Search component, CVE or project" autocomplete="off">
+      </label>
+      <label class="field">
+        <span class="sr-only">Project</span>
+        <select class="select" id="project">
+          <option value="">All projects</option>
+          <option value="platform-ops">Platform Ops</option>
+          <option value="webshop">Webshop</option>
+          <option value="customer-portal">Customer Portal</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="sr-only">Priority</span>
+        <select class="select" id="priority">
+          <option value="">All priorities</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="group">
+      <table class="table table--stack" data-action-table>
+        <thead>
+          <tr>
+            <th scope="col">Priority</th>
+            <th scope="col">Action</th>
+            <th scope="col">Due</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr data-href="action.html" data-state="open" data-project="webshop" data-priority="critical">
+            <td class="cell-prio"><span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span></td>
+            <td class="cell-full">
+              <a class="row-title" href="action.html">Update PHP to 8.3.36</a>
+              <span class="row-sub">Webshop · PHP 8.3.30 · <span class="id">CVE-2026-109619</span></span>
+              <span class="tags"><span class="tag tag--strong">Exploited in the wild</span></span>
+            </td>
+            <td class="cell-due cell-trail due-soon">Today</td>
+            <td class="cell-status cell-full"><span class="status"><svg class="sym" aria-hidden="true"><use href="#s-review"/></svg>In review <small>· Marc Keller</small></span></td>
+          </tr>
+          <tr data-href="action.html" data-state="open" data-project="platform-ops" data-priority="critical">
+            <td class="cell-prio"><span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span></td>
+            <td class="cell-full">
+              <a class="row-title" href="action.html">Update Puppet Enterprise to 2025.12.1</a>
+              <span class="row-sub">Platform Ops · Puppet Enterprise 2025.9.0 · <span class="id">CVE-2026-115731</span></span>
+              <span class="tags"><span class="tag tag--strong">Exploited in the wild</span></span>
+            </td>
+            <td class="cell-due cell-trail due-soon">Tomorrow</td>
+            <td class="cell-status cell-full"><span class="status"><svg class="sym" aria-hidden="true"><use href="#s-open"/></svg>Open <small>· Unassigned</small></span></td>
+          </tr>
+          <tr data-href="action.html" data-state="open" data-project="platform-ops" data-priority="high">
+            <td class="cell-prio"><span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#p-high"/></svg>High</span></td>
+            <td class="cell-full">
+              <a class="row-title" href="action.html">Update PostgreSQL to 17.12</a>
+              <span class="row-sub">Platform Ops · PostgreSQL 17.9 · <span class="id">CVE-2026-116325</span></span>
+            </td>
+            <td class="cell-due cell-trail">24 Nov</td>
+            <td class="cell-status cell-full"><span class="status"><svg class="sym" aria-hidden="true"><use href="#s-open"/></svg>Open <small>· Unassigned</small></span></td>
+          </tr>
+          <tr data-href="action.html" data-state="open" data-project="webshop" data-priority="high">
+            <td class="cell-prio"><span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#p-high"/></svg>High</span></td>
+            <td class="cell-full">
+              <a class="row-title" href="action.html">Update MySQL Server</a>
+              <span class="row-sub">Webshop · MySQL Server 8.4.11 · <span class="id">CVE-2026-114952</span></span>
+            </td>
+            <td class="cell-due cell-trail">24 Nov</td>
+            <td class="cell-status cell-full"><span class="status"><svg class="sym" aria-hidden="true"><use href="#s-open"/></svg>Open <small>· Unassigned</small></span></td>
+          </tr>
+          <tr data-href="action.html" data-state="open" data-project="customer-portal" data-priority="medium">
+            <td class="cell-prio"><span class="prio prio--medium"><svg class="sym" aria-hidden="true"><use href="#p-medium"/></svg>Medium</span></td>
+            <td class="cell-full">
+              <a class="row-title" href="action.html">Update Umbraco CMS to 17.7.1</a>
+              <span class="row-sub">Customer Portal · Umbraco CMS 17.5 · <span class="id">CVE-2026-130068</span></span>
+            </td>
+            <td class="cell-due cell-trail">16 Dec</td>
+            <td class="cell-status cell-full"><span class="status"><svg class="sym" aria-hidden="true"><use href="#s-open"/></svg>Open <small>· Nina Meier</small></span></td>
+          </tr>
+          <tr data-href="action.html" data-state="open" data-project="platform-ops" data-priority="low">
+            <td class="cell-prio"><span class="prio prio--low"><svg class="sym" aria-hidden="true"><use href="#p-low"/></svg>Low</span></td>
+            <td class="cell-full">
+              <a class="row-title" href="action.html">Mitigate ingress-nginx</a>
+              <span class="row-sub">Platform Ops · ingress-nginx 1.13.2 · <span class="id">CVE-2026-116472</span></span>
+              <span class="tags"><span class="tag">No fix listed</span></span>
+            </td>
+            <td class="cell-due cell-trail">10 Feb</td>
+            <td class="cell-status cell-full"><span class="status"><svg class="sym" aria-hidden="true"><use href="#s-open"/></svg>Open <small>· Unassigned</small></span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty" id="empty-filtered" hidden>
+        <h2>No actions match these filters</h2>
+        <p>Try another project or priority, or clear the search.</p>
+        <button class="btn btn--secondary" type="button" id="clear">Clear filters</button>
+      </div>
+      <div class="empty" id="empty-closed" hidden>
+        <h2>No closed actions yet</h2>
+        <p>An action closes once every vulnerability in it is remediated, accepted as a risk or confirmed as not affecting you.</p>
+      </div>
+    </div>
+
+    <details class="disclosure">
+      <summary><svg class="icon" aria-hidden="true"><use href="#chevron-right"/></svg>Not relevant: 1 vulnerability</summary>
+      <div class="group">
+        <table class="table table--stack">
+          <thead>
+            <tr>
+              <th scope="col">Priority</th>
+              <th scope="col">Vulnerability</th>
+              <th scope="col">Why it does not affect you</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="cell-prio"><span class="prio prio--none"><svg class="sym" aria-hidden="true"><use href="#p-none"/></svg>Not relevant</span></td>
+              <td class="cell-full">
+                <span class="row-title">Microsoft SQL Server: remote code execution</span>
+                <span class="row-sub"><span class="id">CVE-2026-67374</span> · Customer Portal</span>
+              </td>
+              <td class="cell-full">Affects self-managed SQL Server 2017 to 2022. Customer Portal uses Azure SQL Database, which is not among the affected products.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="section-note">Vulnerabilities that were checked and do not affect any project. They create no action and send no notification.</p>
+    </details>
+
+    <p class="footnote">Mockup with sample data. The CVE records are real; the organization, people, projects and installed versions are invented. Every row opens the same example action. <a href="design-system.html">Design system</a></p>
+  </div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

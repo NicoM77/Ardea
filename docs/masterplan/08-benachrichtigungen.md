@@ -126,7 +126,7 @@ Bei einer Massnahme mit vielen Befunden nennt die Nachricht die Anzahl und die d
 
 Eine Eskalationsregel beschreibt Schritte mit Wartezeit: «Stufe 5, nach 2 Stunden noch offen und niemand zugewiesen: an Owner; nach 8 Stunden: an die Eskalationsadresse». Technisch ist jeder Schritt ein Job mit Fälligkeit, eingereiht beim Auslösen. Er prüft bei Ausführung den Zustand und tut nichts, wenn die Massnahme inzwischen bearbeitet wird. Für die Ausbaustufe kommen eine Tabelle für Eskalationsregeln, ihre Oberfläche und der Job hinzu; Regeln, Ziele und Zustellung werden wiederverwendet.
 
-Fristen sind im MVP sichtbar, lösen aber noch nichts aus: Jede Massnahme trägt ein Fälligkeitsdatum aus der Vorgabe ihrer Stufe (Kapitel 7.6); Liste und Bulletin zeigen Überfälliges.
+Fristen sind im MVP sichtbar, lösen aber noch nichts aus: Jede Massnahme trägt ein Fälligkeitsdatum aus der Vorgabe ihrer Stufe (Kapitel 7.6); Liste und Übersicht zeigen Überfälliges.
 
 ## 8.8 Abnahmekriterien
 

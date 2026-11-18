@@ -125,7 +125,7 @@ Diese Fassung ist die Vorgabe einer frischen Installation und erhält vor Phase 
 
 ## 7.6 Das Regelwerk für die Stufe
 
-Fünf Stufen, in der Oberfläche als Ziffer und Wort (englisch «Level»):
+Fünf Stufen, in der Oberfläche als Priorität: das Wort mit einem eigenen Symbol, ohne Ziffer (Kapitel 11.3). Die Zahl ordnet die Stufen intern.
 
 | Stufe | Name | Typische Fälle | Vorgabe für die Frist |
 |---|---|---|---|

@@ -21,7 +21,7 @@ Instanz
 
 | Recht | Owner | Admin | Member | Viewer |
 |---|:-:|:-:|:-:|:-:|
-| Massnahmen, Meldungen, Projekte, Bulletin lesen | ● | ● | ● | ● |
+| Massnahmen, Meldungen, Projekte, Übersicht lesen | ● | ● | ● | ● |
 | Status setzen, zuweisen, Notiz, Einschätzung korrigieren | ● | ● | ● | |
 | Projekte und Komponenten pflegen | ● | ● | ● | |
 | Benachrichtigungsregeln, Webhook-Ziele | ● | ● | | |

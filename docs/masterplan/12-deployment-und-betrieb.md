@@ -122,7 +122,7 @@ docker compose pull && docker compose up -d
 | Traces | aus | ein Trace von der Quelle bis zur Zustellung per OTLP |
 | Betrachter | keiner | Compose-Profil `observability` mit dem eigenständigen Aspire-Dashboard |
 
-Das System warnt selbst, wenn es nicht mehr zuverlässig arbeitet: Eine Quelle, die länger als sechs Stunden nicht abgerufen werden konnte, ein stehender Worker oder dauerhaft fehlschlagende Zustellungen erzeugen eine Benachrichtigung an den Instanz-Administrator und einen Hinweis im Bulletin («Stand von 02:10, Quelle nicht erreichbar»).
+Das System warnt selbst, wenn es nicht mehr zuverlässig arbeitet: Eine Quelle, die länger als sechs Stunden nicht abgerufen werden konnte, ein stehender Worker oder dauerhaft fehlschlagende Zustellungen erzeugen eine Benachrichtigung an den Instanz-Administrator und einen Hinweis in der Übersicht («Stand von 02:10, Quelle nicht erreichbar»).
 
 ## 12.8 Wartungsbefehle
 

@@ -32,13 +32,13 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | Arbeitseinheit | Die Massnahme: alle offenen Befunde einer Komponente in einem Projekt |
 | Mandanten | Zugriffsprüfung und Abfragefilter als Fundament, Row-Level Security als Härtung nach einem Versuch |
 | Alarmierung | Je Massnahme, Empfänger und Kanal ein Benachrichtigungsstand; erneut nur bei wesentlicher Änderung |
-| Oberfläche | Angular 22 mit eigener Komponentenbibliothek; Richtung «Gefahrenbulletin»: Stufe als Ziffer und Wort, die drei Antworten zuerst |
+| Oberfläche | Angular 22 mit eigener Komponentenbibliothek; schlicht wie eine Systemanwendung: Priorität als Wort mit Symbol, die drei Antworten zuerst |
 | Betrieb | `docker compose up -d`, automatische Migrationen mit Sicherung davor, Updates per `pull` und `up` |
 | Tests | Jede Pipeline läuft in 15 bis höchstens 25 Minuten: viele Unit-Tests, sechs Ende-zu-Ende-Abläufe; keine Langläufer, keine zeitgesteuerten Tests |
 
 **Umfang.** Sieben Phasen bis Version 1.0, geschätzt 28 bis 37 Wochen für eine erfahrene Person mit KI-Unterstützung. Nach Phase 3 liegt ein nutzbares System ohne KI und ohne Benachrichtigung vor.
 
-**Was dieser Stand nicht leistet.** Die Mockups zeigen die Liste noch je Schwachstelle statt je Massnahme. Die Gewichte des Regelwerks sind ungeeicht, bis der Referenzsatz steht. Der Plan wurde zweimal unabhängig gegengelesen. Die Korrekturen aus der zweiten Durchsicht sind eingearbeitet, aber nicht ein drittes Mal geprüft (Kapitel 15.4).
+**Was dieser Stand nicht leistet.** Die Mockups zeigen nur die Fassung ohne Sprachmodell und eine Massnahme mit einem einzigen Befund. Die Gewichte des Regelwerks sind ungeeicht, bis der Referenzsatz steht. Der Plan wurde zweimal unabhängig gegengelesen. Die Korrekturen aus der zweiten Durchsicht sind eingearbeitet, aber nicht ein drittes Mal geprüft (Kapitel 15.4).
 
 ## Kapitel
 
@@ -64,15 +64,15 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 
 | Begriff im Plan | In der Oberfläche | Bedeutung |
 |---|---|---|
-| Eintrag | Entry | Konsolidierte Schwachstelle oder Warnung, für alle Organisationen gleich |
+| Eintrag | Vulnerability, Warning | Konsolidierte Schwachstelle oder Warnung, für alle Organisationen gleich |
 | Warnung | Warning | Eintrag ohne Schwachstellenkennung, etwa eine Phishing-Warnung |
 | Beobachtung | | Normalisierte Aussagen einer Quelle zu einem Rohdatensatz |
 | Komponente | Component | Eingesetzte Technologie in einem Projekt |
 | Befund | Finding | Betroffenheit einer Komponente durch einen Eintrag, mit Stufe und Status. Befunde der Stufe 1 gehören zu keiner Massnahme. |
 | Massnahme | Action | Alle offenen Befunde einer Komponente in einem Projekt; Einheit für Arbeit und Benachrichtigung |
-| Meldung | Alert | Eine Schwachstelle aus Sicht einer Organisation, mit Einschätzung und Quellen |
-| Stufe | Level | Priorität 1 bis 5 eines Befunds, einer Massnahme oder Meldung. Das Wort wird im Plan nur dafür verwendet. |
-| Bulletin | Bulletin | Die Übersichtsseite mit der Lage des Tages |
+| Meldung | Vulnerability (Detailseite) | Eine Schwachstelle aus Sicht einer Organisation, mit Einschätzung und Quellen |
+| Stufe | Priority | Priorität 1 bis 5 eines Befunds, einer Massnahme oder Meldung; in der Oberfläche nur als Wort mit Symbol (Critical, High, Medium, Low, Not relevant). Das Wort «Stufe» wird im Plan nur dafür verwendet. |
+| Übersicht | Overview | Die Startseite mit der Lage des Tages |
 | Sammelnachricht | Summary, digest | Zeitgesteuerte Nachricht mit allem seit der letzten |
 | Signal | | Angabe zu Ausnutzung oder Wahrscheinlichkeit je Kennung (KEV, EPSS) |
 | Ausbaustufe | | Lieferumfang nach Version 1.0 |
@@ -86,7 +86,7 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | Bericht der unabhängigen Durchsicht | [`docs/research/2026-11-18-independent-plan-review.md`](../research/2026-11-18-independent-plan-review.md) |
 | Daten-Spike mit Skripten und Messwerten | [`prototypes/relevance-funnel/`](../../prototypes/relevance-funnel/README.md) |
 | Produktgrundlage und Designsystem | [`PRODUCT.md`](../../PRODUCT.md), [`DESIGN.md`](../../DESIGN.md) |
-| UI-Mockups | [`docs/design/mockups/`](../design/mockups/) · Bildtafel: https://claude.ai/artifact/X8uDvTNkNao2FocrXbnTMf |
+| UI-Mockups | [`docs/design/mockups/`](../design/mockups/), Einstieg `overview.html` |
 
 ## Zur Freigabe
 
@@ -94,11 +94,11 @@ Die Freigabe umfasst drei Dinge:
 
 1. **Den Plan als Ganzes,** einschliesslich MVP-Abgrenzung (Kapitel 1.5) und Phasen (Kapitel 14).
 2. **Die siebzehn Entscheidungen** in Kapitel 15.2. Wo nichts anderes vermerkt wird, gilt die jeweilige Empfehlung.
-3. **Die visuelle Richtung** mit Designsystem und Mockups (Kapitel 11), im Wissen, dass Liste und Bulletin vor Phase 3 auf Massnahmen umgestellt werden.
+3. **Die visuelle Richtung** mit Designsystem und Mockups (Kapitel 11).
 
 ## Woher die Zahlen stammen
 
 - Mengen und Anteile zu CVEs: Auswertung der Daten des CVE Program vom 19.10. bis 18.11.2026 mit den Skripten in `prototypes/relevance-funnel/`. Die Befundzahlen sind Bandbreiten unter einheitlichen Annahmen, keine Prognose.
 - Versionen, Lizenzen und Pflegestände: Recherche am 18.11.2026 (`docs/research/`). Was nicht bestätigt werden konnte, steht in Kapitel 2.8; Bedingungen rund der Hälfte der späteren Quellen sind ungeprüft (Kapitel 5.6).
 - Aufwände, Token-Mengen und Speicherbedarf: Schätzungen, als solche gekennzeichnet.
-- Beispieldaten der Mockups: echte CVE-Records; Organisation, Personen, Projekte, installierte Versionen und die Zähler im Bulletin sind erfunden.
+- Beispieldaten der Mockups: echte CVE-Records; Organisation, Personen, Projekte, installierte Versionen und die Warnung der nationalen Stelle sind erfunden.

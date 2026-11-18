@@ -20,7 +20,7 @@ Alle Einträge haben den Status **vorgeschlagen**, soweit nicht anders vermerkt.
 | 014 | Benachrichtigungsstand je Massnahme, Empfänger und Kanal; gesendet wird nur, was darüber hinausgeht; eindeutig sind Empfänger, Kanal und Ereignis, die Regel gehört nicht dazu | Benachrichtigung bei jeder Änderung; Schlüssel je Regel | 8.4 | vorgeschlagen |
 | 015 | Der Server sendet ausschliesslich Web Push; PWA im MVP, native App über ein inhaltsblindes Relay | FCM und APNs direkt vom Server | 8.5, 11.9 | vorgeschlagen |
 | 016 | Eigene Komponentenbibliothek auf Angular CDK und Aria; CSS Custom Properties statt Utility-Framework | Angular Material, PrimeNG, spartan/ui mit Tailwind | 2.4 | vorgeschlagen |
-| 017 | Visuelle Richtung «Gefahrenbulletin»: Stufe als Ziffer und Wort auf einer fünfstufigen Skala | Agenturmeldung, Abfahrtstafel, Kategoriestandard | 11.1 | **entschieden** (Auswahl vom 18.11.2026) |
+| 017 | Visuelle Richtung: schlichte Arbeitsanwendung nach den Gestaltungsrichtlinien von Apple; Priorität als Wort mit eigenem Symbol, ohne Ziffer | «Gefahrenbulletin» mit Ziffer und Gefahrenleiter (gewählt und am selben Tag verworfen), Agenturmeldung, Abfahrtstafel | 11.1 | **entschieden** (Vorgabe vom 18.11.2026) |
 | 018 | Englisch als Leitsprache; Übersetzung zur Laufzeit | Deutsch zuerst; ein Build je Sprache | 11.7, 13.2 | **entschieden** (Rückfrage vom 18.11.2026) |
 | 019 | Abhängigkeiten nur mit Lizenz von einer Positivliste; Prüfung im Build | Einzelfallentscheidung | 13.5 | vorgeschlagen |
 | 020 | Erststart mit 180 Tagen Rückblick; Gesamtbestand auf Befehl | immer Gesamtbestand | 4.10 | vorgeschlagen |

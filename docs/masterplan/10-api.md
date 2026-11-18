@@ -58,7 +58,7 @@ Die API ist der einzige Zugang zu den Daten: Die Web-App, die spätere Mobile-Ap
 
 | Methode und Pfad | Zweck |
 |---|---|
-| `GET /orgs/{orgId}/bulletin` | Alles für das Bulletin in einem Aufruf: Zähler je Stufe, führende Massnahme, Stufe je Projekt, Änderungen seit gestern, jüngste Warnungen |
+| `GET /orgs/{orgId}/overview` | Alles für die Übersicht in einem Aufruf: Zähler je Stufe, die dringendsten Massnahmen, Stufe je Projekt, Änderungen seit gestern, jüngste Warnungen, Stand der Quellen |
 | `GET /orgs/{orgId}/actions?level=&status=&project=&q=` | Liste der Massnahmen mit Filtern |
 | `GET /orgs/{orgId}/actions/{number}` | Massnahme mit Ziel, Befunden und Verlauf |
 | `PATCH …/actions/{number}` | Zuweisen, Frist ändern |

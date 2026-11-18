@@ -36,7 +36,8 @@ public sealed class PostgresServer : IAsyncLifetime
     /// <summary>Creates a fresh, empty database and returns its name.</summary>
     public async Task<string> CreateDatabaseAsync(string prefix = "ardea")
     {
-        var name = $"{prefix}_{Interlocked.Increment(ref _counter)}_{Guid.NewGuid():N}"[..40];
+        var name = $"{prefix}_{Interlocked.Increment(ref _counter)}_{Guid.NewGuid():N}";
+        name = name.Length > 40 ? name[..40] : name;
         await using var connection = new NpgsqlConnection(_container.GetConnectionString());
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand($"CREATE DATABASE \"{name}\"", connection);

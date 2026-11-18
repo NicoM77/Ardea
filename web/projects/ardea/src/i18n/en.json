@@ -231,6 +231,8 @@
       "intro": {
         "heading": "Protect your account with a second step",
         "text": "Someone who learns your password still cannot sign in without your phone. Any authenticator app works, such as the one built into your password manager.",
+        "passwordLabel": "Current password",
+        "passwordHint": "To protect your account, confirm it is you.",
         "start": "Set up authenticator app"
       },
       "scan": {
@@ -258,6 +260,8 @@
         "done": "I saved them"
       },
       "errors": {
+        "passwordRequired": "Enter your current password.",
+        "wrongPassword": "The password is not right.",
         "codeRequired": "Enter the code from your app.",
         "codeFormat": "The code has 6 digits.",
         "invalid": "That code did not work. Wait for the next one and check that your phone’s clock is right.",

@@ -39,6 +39,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Ardea.Architecture.Tests/Ardea.Architecture.Tests.csproj" />
     <Project Path="tests/Ardea.Host.Tests/Ardea.Host.Tests.csproj" />
+    <Project Path="tests/Ardea.Iam.Tests/Ardea.Iam.Tests.csproj" />
     <Project Path="tests/Ardea.Platform.Tests/Ardea.Platform.Tests.csproj" />
     <Project Path="tests/Ardea.TestSupport/Ardea.TestSupport.csproj" />
   </Folder>

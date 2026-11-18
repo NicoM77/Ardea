@@ -12,6 +12,7 @@ import {
   UiInput,
   UiNotice,
   UiPageHeader,
+  UiPasswordToggle,
   UiQrCode,
 } from 'ui';
 import { AccountApi } from '../../core/api/account-api';
@@ -42,6 +43,7 @@ type Step = 'intro' | 'scan' | 'codes';
     UiInput,
     UiNotice,
     UiPageHeader,
+    UiPasswordToggle,
     UiQrCode,
     RecoveryCodes,
   ],
@@ -67,20 +69,30 @@ type Step = 'intro' | 'scan' | 'codes';
           } @else {
             <ui-card [heading]="'account.twoFactor.intro.heading' | transloco">
               <p class="muted">{{ 'account.twoFactor.intro.text' | transloco }}</p>
-              @if (problem()) {
-                <ui-notice class="gap-top" tone="error">{{ problem() | transloco }}</ui-notice>
-              }
-              <div class="gap-top">
-                <button
-                  uiButton
-                  variant="primary"
-                  type="button"
-                  [loading]="starting()"
-                  (click)="start()"
+              <form class="confirm gap-top" [formRoot]="intro">
+                @if (problem()) {
+                  <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
+                }
+                <ui-field
+                  [label]="'account.twoFactor.intro.passwordLabel' | transloco"
+                  [hint]="'account.twoFactor.intro.passwordHint' | transloco"
+                  [error]="fieldErrorKey(intro.password, passwordErrors) | transloco"
                 >
-                  {{ 'account.twoFactor.intro.start' | transloco }}
-                </button>
-              </div>
+                  <input
+                    uiInput
+                    #pw
+                    type="password"
+                    autocomplete="current-password"
+                    [formField]="intro.password"
+                  />
+                  <ui-password-toggle [control]="pw" />
+                </ui-field>
+                <div>
+                  <button uiButton variant="primary" type="submit" [loading]="intro().submitting()">
+                    {{ 'account.twoFactor.intro.start' | transloco }}
+                  </button>
+                </div>
+              </form>
             </ui-card>
           }
         }
@@ -258,8 +270,9 @@ export class EnableTwoFactorPage {
     totp: 'account.twoFactor.errors.codeFormat',
   };
 
+  protected readonly passwordErrors = { required: 'account.twoFactor.errors.passwordRequired' };
+
   protected readonly step = signal<Step>('intro');
-  protected readonly starting = signal(false);
   protected readonly problem = signal<string | null>(null);
   protected readonly setup = signal<TwoFactorSetup | null>(null);
   protected readonly recoveryCodes = signal<string[]>([]);
@@ -271,6 +284,37 @@ export class EnableTwoFactorPage {
     const uri = this.setup()?.authenticatorUri ?? '';
     return uri.startsWith('otpauth://totp/') ? this.sanitizer.bypassSecurityTrustUrl(uri) : null;
   });
+
+  /** Setup starts only with the password re-entered: a stolen session alone cannot bind the account to another phone. */
+  private readonly introModel = signal({ password: '' });
+  protected readonly intro = form(
+    this.introModel,
+    (p) => {
+      required(p.password);
+    },
+    {
+      submission: {
+        action: async () => {
+          this.problem.set(null);
+          try {
+            this.setup.set(
+              await this.account.startTwoFactorSetup({ password: this.introModel().password }),
+            );
+            this.introModel.set({ password: '' });
+            this.step.set('scan');
+          } catch (error) {
+            this.problem.set(
+              problemMessageKey(error, {
+                codes: { invalid_password: 'account.twoFactor.errors.wrongPassword' },
+                fallback: 'account.twoFactor.errors.failed',
+              }),
+            );
+          }
+        },
+        onInvalid: () => focusFirstInvalid(this.host),
+      },
+    },
+  );
 
   private readonly model = signal({ code: '' });
   protected readonly confirm = form(
@@ -305,19 +349,6 @@ export class EnableTwoFactorPage {
       },
     },
   );
-
-  protected async start(): Promise<void> {
-    this.problem.set(null);
-    this.starting.set(true);
-    try {
-      this.setup.set(await this.account.startTwoFactorSetup());
-      this.step.set('scan');
-    } catch (error) {
-      this.problem.set(problemMessageKey(error, { fallback: 'account.twoFactor.errors.failed' }));
-    } finally {
-      this.starting.set(false);
-    }
-  }
 
   protected async finish(): Promise<void> {
     await this.session.refresh();

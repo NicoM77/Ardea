@@ -69,6 +69,10 @@ internal static class InitEnvCommand
             ARDEA_SETUP_TOKEN={v.SetupToken}
             # invite (default), open or closed
             ARDEA_REGISTRATION=invite
+            # Proxies whose X-Forwarded-For and X-Forwarded-Proto are trusted, besides loopback. The
+            # default covers Docker's networks: the bundled Caddy and a tunnel on the host reach the API
+            # from there. Narrow it if other machines can reach port 8080 from a private address.
+            ARDEA_TRUSTED_PROXIES=172.16.0.0/12
 
             # E-mail (optional; without it invitations show a link to pass on)
             # ARDEA_SMTP__HOST=

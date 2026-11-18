@@ -4,8 +4,12 @@ import { expect, test } from '@playwright/test';
 const PAGES = ['foundations', 'buttons', 'fields', 'feedback', 'signals', 'two-factor', 'shell'];
 
 test.beforeEach(async ({ page }) => {
-  // No backend: the app's start-up antiforgery call is answered here, nothing else reaches /api.
-  await page.route('**/api/**', (route) => route.fulfill({ status: 204 }));
+  // No backend: the reads the app starts with are answered here as for a signed-out visitor.
+  await page.route('**/api/**', (route) =>
+    route.request().url().endsWith('/api/v1/setup/status')
+      ? route.fulfill({ json: { setupRequired: false } })
+      : route.fulfill({ status: 401, json: { status: 401 } }),
+  );
 });
 
 for (const name of PAGES) {

@@ -19,11 +19,6 @@ import {
 export class AuthApi {
   private readonly http = inject(HttpClient);
 
-  /** Refreshes the antiforgery cookie. Its token is bound to the user, so call it after every sign-in and sign-out. */
-  antiforgery(): Promise<void> {
-    return firstValueFrom(this.http.get<void>('/api/v1/auth/antiforgery'));
-  }
-
   setup(body: SetupRequest): Promise<void> {
     return firstValueFrom(this.http.post<void>('/api/v1/setup', body));
   }

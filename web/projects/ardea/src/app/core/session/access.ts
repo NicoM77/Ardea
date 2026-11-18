@@ -6,7 +6,7 @@ export type SignInState = 'signedIn' | 'signedOut' | 'unavailable';
 /** Where a guard sends someone. */
 export type AccessDecision = 'allow' | 'setup' | 'signIn' | 'home' | 'unavailable';
 
-/** Reads the outcome of `GET /api/v1/me`: 401 and 403 mean signed out, anything else is an outage. */
+/** Reads the outcome of `GET /api/v1/auth/session`: 401 and 403 mean signed out, anything else is an outage. */
 export function signInStateOf(hasValue: boolean, error: unknown): SignInState {
   if (hasValue) return 'signedIn';
   if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {

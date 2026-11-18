@@ -320,7 +320,7 @@ export class EnableTwoFactorPage {
   }
 
   protected async finish(): Promise<void> {
-    this.session.me.reload();
+    await this.session.refresh();
     await this.router.navigateByUrl('/');
   }
 }

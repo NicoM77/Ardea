@@ -21,8 +21,8 @@ import { TranslocoService } from '@jsverse/transloco';
 import { provideLucideConfig } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
 import { routes } from './app.routes';
-import { AuthApi } from './core/api/auth-api';
 import { sessionExpiredInterceptor } from './core/http/session-expired.interceptor';
+import { Session } from './core/session/session';
 import { provideTranslations } from './core/i18n/translations';
 import { TranslatedTitleStrategy } from './core/i18n/title-strategy';
 
@@ -46,11 +46,9 @@ export const appConfig: ApplicationConfig = {
     // Icons: 1.6px line drawings on a 24px grid, shown at 16px (DESIGN.md, Shapes)
     provideLucideConfig({ size: 16, strokeWidth: 1.6 }),
     provideAppInitializer(() => {
-      // The antiforgery cookie must exist before the first write; a failure here is not fatal,
-      // the pages say so when their request fails.
-      void inject(AuthApi)
-        .antiforgery()
-        .catch(() => undefined);
+      // Start reading the session at once: it tells the guards who is signed in and sets the
+      // XSRF-TOKEN cookie before the first write. A failure is not fatal; the guards show it.
+      inject(Session);
       return firstValueFrom(inject(TranslocoService).load('en')).then(() => undefined);
     }),
   ],

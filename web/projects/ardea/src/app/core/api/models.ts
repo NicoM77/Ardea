@@ -54,14 +54,22 @@ export interface MembershipSummary {
   role: OrganizationRole;
 }
 
-export interface Me {
+export interface SessionUser {
   id: string;
   email: string;
   displayName: string;
   isInstanceAdmin: boolean;
   twoFactorEnabled: boolean;
+}
+
+/** `GET /api/v1/auth/session` (master plan 10.2); 401 when signed out. Also sets the XSRF-TOKEN cookie. */
+export interface SessionResponse {
+  user: SessionUser;
   organizations: MembershipSummary[];
 }
+
+/** The signed-in person as the pages use it: the user with their memberships. */
+export type Me = SessionUser & { organizations: MembershipSummary[] };
 
 export interface TwoFactorSetup {
   sharedKey: string;

@@ -5,7 +5,7 @@ import { catchError, throwError } from 'rxjs';
 import { Session } from '../session/session';
 
 /** Requests whose 401 is an answer the caller handles itself, not an expired session. */
-const OWN_401 = ['/api/v1/me', '/api/v1/auth/', '/api/v1/setup'];
+const OWN_401 = ['/api/v1/auth/', '/api/v1/setup'];
 
 /**
  * When a session ends while someone works (expired cookie, revoked elsewhere), any API call

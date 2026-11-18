@@ -34,6 +34,8 @@ internal sealed class IntelDbContext(DbContextOptions<IntelDbContext> options, I
 
     public DbSet<EntrySignalRow> EntrySignals => Set<EntrySignalRow>();
 
+    public DbSet<ReviewItemRow> ReviewItems => Set<ReviewItemRow>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -225,6 +227,22 @@ internal sealed class IntelDbContext(DbContextOptions<IntelDbContext> options, I
             signal.Property(s => s.KevUrl).HasMaxLength(500);
             signal.Property(s => s.EpssClass).HasMaxLength(10);
             signal.HasIndex(s => new { s.Scheme, s.Value }).IsUnique().HasDatabaseName("ux_entry_signal");
+        });
+
+        modelBuilder.Entity<ReviewItemRow>(item =>
+        {
+            item.ToTable("review_item", t =>
+            {
+                t.HasCheckConstraint("ck_review_item_kind", "kind IN ('cve_conflict')");
+                t.HasCheckConstraint("ck_review_item_state", "state IN ('open', 'kept_separate')");
+            });
+            item.HasKey(i => i.Id);
+            item.Property(i => i.Id).HasDefaultValueSql("uuidv7()");
+            item.Property(i => i.Kind).HasMaxLength(30);
+            item.Property(i => i.SubjectKey).HasMaxLength(1000);
+            item.Property(i => i.State).HasMaxLength(20);
+            item.HasIndex(i => new { i.Kind, i.SubjectKey }).IsUnique().HasDatabaseName("ux_review_item_subject");
+            item.HasIndex(i => i.State).HasDatabaseName("ix_review_item_state");
         });
 
         ApplyTenantFilters(modelBuilder);

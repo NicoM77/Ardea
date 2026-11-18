@@ -66,6 +66,7 @@ public sealed class IntelModule : IModule
     {
         Features.EntryEndpoints.Map(endpoints);
         Features.SourceEndpoints.Map(endpoints);
+        Features.ReviewEndpoints.Map(endpoints);
     }
 
     private static HttpMessageHandler PrimaryHandler() => new SocketsHttpHandler

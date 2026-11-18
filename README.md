@@ -69,7 +69,7 @@ Organisations with projects and technology profile; profile from GitHub reposito
 | 2.3 | Projects and components with version, origin, exposure, criticality, mitigation; profile replacement as an ID-preserving reconcile | 2.1 | ⬜ |
 | 2.4 | Fill the catalogue: about 300 products with aliases, CPE mapping, related products; search | 1.1 | ⬜ |
 | 2.5 | Search index `component_key` with match strength | 2.3, 2.4 | ⬜ |
-| 2.6 | Mockups for the setup wizard and the project profile; owner approval | | ⬜ |
+| 2.6 | Mockups for the setup wizard and the project profile; owner reviews afterwards | | ⬜ |
 | 2.7 | Setup wizard (repository, operations, technologies); project pages with links, packages and suggestions; organisation settings with access and audit log | 2.3, 2.4, 2.6, 2.13 | ⬜ |
 | 2.8 | Coverage hints: missing versions, platforms without components, distro packages, packages without lock file, ecosystems not yet checkable | 2.5 | ⬜ |
 | 2.9 | **Spike:** asynchronous SBOM export with a public and a private repository and a fine-grained token; ADR | | ⬜ |
@@ -84,7 +84,7 @@ Findings, actions and alerts with level and reasoning; overview, list, detail.
 
 | No. | Task | Depends on | Status |
 |---|---|---|---|
-| 3.1 | Mockups: calm overview, action with several findings, version with AI assessment; owner approval | | ⬜ |
+| 3.1 | Mockups: calm overview, action with several findings, version with AI assessment; owner reviews afterwards | | ⬜ |
 | 3.2 | Candidate search forward and backward, including OSV package coordinates; match strength; weak matches as level 1 | 1.7, 1.12, 2.5 | ⬜ |
 | 3.3 | Version check with three outcomes including the records' default status; distro packages as unknown | 3.2, 1.1 | ⬜ |
 | 3.4 | Rule set version 1 as a file; factors, upper and lower bounds, deadlines | 3.3 | ⬜ |
@@ -124,7 +124,7 @@ Notifications over four channels.
 | 5.5 | Web Push channel: key pair, subscriptions, service worker, manifest, iOS install guide | 5.2 | ⬜ |
 | 5.6 | Webhook channel with signature and protection against internal targets | 5.2 | ⬜ |
 | 5.7 | Default rules; scheduled digests; personal mute | 5.2, 5.4 | ⬜ |
-| 5.8 | Mockup and pages for rules, targets, delivery log, personal settings; mockup approval | 5.1 | ⬜ |
+| 5.8 | Mockup and pages for rules, targets, delivery log, personal settings; owner reviews afterwards | 5.1 | ⬜ |
 
 ### Phase 6 · Hardening and release 1.0 (3–4 weeks)
 

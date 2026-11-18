@@ -152,7 +152,7 @@ Der Server sendet für die Web-App wie für die native App nur Web Push. Die nat
 
 ## 11.10 Offen
 
-- Mockups für Setup-Wizard mit Repository und Vorschlägen, Projektprofil mit Verknüpfungen und Paketen je Ökosystem, Benachrichtigungsregeln und Quellenstatus; sie folgen nach Freigabe der Richtung.
+- Mockups für Setup-Wizard mit Repository und Vorschlägen, Projektprofil mit Verknüpfungen und Paketen je Ökosystem, Benachrichtigungsregeln und Quellenstatus. Die Umsetzung entwirft sie selbst nach `DESIGN.md` und wartet nicht auf eine Freigabe; der Eigentümer korrigiert im Nachhinein (Kapitel 15, E15).
 - Darstellung von über tausend Paketen je Projekt: Zusammenfassung je Ökosystem, Filter nach direkt, transitiv und «nur Entwicklung», Suche; welche Spalten die Liste braucht, klärt das Mockup.
 - Eine eigene Seite für die ruhige Übersicht. Heute existiert der Zustand nur als Muster im Designsystem.
 - Die Massnahme mit mehreren Befunden und die Fassung mit KI-Einschätzung als eigene Mockups.

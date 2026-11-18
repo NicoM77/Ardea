@@ -19,8 +19,8 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
         }
 
         // Role names and passwords cannot be bound as parameters in DDL; format() quotes them safely.
-        // Roles are global to the server: a concurrent migrate on another database may create the
-        // role between our check and our CREATE, so a duplicate is retried as ALTER.
+        // Roles are global to the server: a concurrent migrate on another database may create or
+        // alter the role at the same moment. A duplicate is retried as ALTER, a concurrent update again.
         for (var attempt = 0; ; attempt++)
         {
             try
@@ -39,8 +39,9 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
                 await apply.ExecuteNonQueryAsync(cancellationToken);
                 break;
             }
-            catch (PostgresException ex) when (attempt == 0 && ex.SqlState is PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.DuplicateObject)
+            catch (PostgresException ex) when (attempt < 5 && IsConcurrentRoleChange(ex))
             {
+                await Task.Delay(TimeSpan.FromMilliseconds(50 * (attempt + 1)), cancellationToken);
             }
         }
 
@@ -121,6 +122,10 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
 
         return behind;
     }
+
+    private static bool IsConcurrentRoleChange(PostgresException exception) =>
+        exception.SqlState is PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.DuplicateObject
+        || (exception.SqlState == PostgresErrorCodes.InternalError && exception.MessageText.Contains("concurrently updated", StringComparison.Ordinal));
 
     private static async Task EnsureOpenAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
     {

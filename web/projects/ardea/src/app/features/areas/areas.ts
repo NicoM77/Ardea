@@ -1,0 +1,135 @@
+import { Routes } from '@angular/router';
+import {
+  LucideBell,
+  LucideFolder,
+  LucideLayoutGrid,
+  LucideListChecks,
+  LucideRadioTower,
+  LucideServerCog,
+  LucideShieldExclamationPoint,
+  LucideSlidersHorizontal,
+  LucideUsers,
+  type LucideIconData,
+} from '@lucide/angular';
+
+export type AreaId =
+  | 'overview'
+  | 'actions'
+  | 'vulnerabilities'
+  | 'projects'
+  | 'sources'
+  | 'rules'
+  | 'team'
+  | 'settings'
+  | 'administration';
+
+/** A destination in the navigation (master plan 11.4) with what its page says while it is empty. */
+export interface Area {
+  id: AreaId;
+  /** Below `/o/:slug`, or absolute for instance-wide areas. */
+  path: string;
+  label: string;
+  icon: LucideIconData;
+  emptyHeading: string;
+  emptyText: string;
+  /** Main list or the group at the foot of the sidebar. */
+  group: 'main' | 'foot';
+}
+
+export const AREAS: readonly Area[] = [
+  {
+    id: 'overview',
+    path: 'overview',
+    label: 'nav.overview',
+    icon: LucideLayoutGrid.icon,
+    emptyHeading: 'areas.overview.emptyHeading',
+    emptyText: 'areas.overview.emptyText',
+    group: 'main',
+  },
+  {
+    id: 'actions',
+    path: 'actions',
+    label: 'nav.actions',
+    icon: LucideListChecks.icon,
+    emptyHeading: 'areas.actions.emptyHeading',
+    emptyText: 'areas.actions.emptyText',
+    group: 'main',
+  },
+  {
+    id: 'vulnerabilities',
+    path: 'vulnerabilities',
+    label: 'nav.vulnerabilities',
+    icon: LucideShieldExclamationPoint.icon,
+    emptyHeading: 'areas.vulnerabilities.emptyHeading',
+    emptyText: 'areas.vulnerabilities.emptyText',
+    group: 'main',
+  },
+  {
+    id: 'projects',
+    path: 'projects',
+    label: 'nav.projects',
+    icon: LucideFolder.icon,
+    emptyHeading: 'areas.projects.emptyHeading',
+    emptyText: 'areas.projects.emptyText',
+    group: 'main',
+  },
+  {
+    id: 'sources',
+    path: 'sources',
+    label: 'nav.sources',
+    icon: LucideRadioTower.icon,
+    emptyHeading: 'areas.sources.emptyHeading',
+    emptyText: 'areas.sources.emptyText',
+    group: 'main',
+  },
+  {
+    id: 'rules',
+    path: 'notification-rules',
+    label: 'nav.rules',
+    icon: LucideBell.icon,
+    emptyHeading: 'areas.rules.emptyHeading',
+    emptyText: 'areas.rules.emptyText',
+    group: 'main',
+  },
+  {
+    id: 'team',
+    path: 'team',
+    label: 'nav.team',
+    icon: LucideUsers.icon,
+    emptyHeading: 'areas.team.emptyHeading',
+    emptyText: 'areas.team.emptyText',
+    group: 'foot',
+  },
+  {
+    id: 'settings',
+    path: 'settings',
+    label: 'nav.settings',
+    icon: LucideSlidersHorizontal.icon,
+    emptyHeading: 'areas.settings.emptyHeading',
+    emptyText: 'areas.settings.emptyText',
+    group: 'foot',
+  },
+];
+
+/** Instance-wide, for the instance administrator only; not below an organization. */
+export const ADMINISTRATION: Area = {
+  id: 'administration',
+  path: '/admin',
+  label: 'nav.administration',
+  icon: LucideServerCog.icon,
+  emptyHeading: 'areas.administration.emptyHeading',
+  emptyText: 'areas.administration.emptyText',
+  group: 'foot',
+};
+
+export function areaById(id: AreaId): Area {
+  return id === 'administration' ? ADMINISTRATION : (AREAS.find((a) => a.id === id) ?? AREAS[0]);
+}
+
+/** The organization's pages below `/o/:slug`. Each is a placeholder with its empty state for now. */
+export const AREA_ROUTES: Routes = AREAS.map((area) => ({
+  path: area.path,
+  title: area.label,
+  data: { area: area.id },
+  loadComponent: () => import('./area-page').then((m) => m.AreaPage),
+}));

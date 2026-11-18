@@ -33,7 +33,7 @@ A startable instance with sign-in, job system, build chain and a first administr
 | 0.7 | **Spike:** target image with time zones and culture; health check without shell; dump before migration; work volume for large archives | 0.3 | ✅ [ADR 028](docs/adr/0028-runtime-image-and-pre-migration-dump.md) |
 | 0.8 | Sign-in: setup token, registration, server-side sessions with list and revoke, TOTP, password rules, CSRF protection, rate limiting | 0.5 | ⬜ |
 | 0.9 | Basic e-mail for confirmation, password reset and invitations; behaviour without SMTP | 0.3 | ⬜ |
-| 0.10 | Web: workspace with app and `ui` library; tokens from the mockups; header band, navigation, sign-in pages; i18n scaffold with English; component pages with visual comparison | 0.1 | ⬜ |
+| 0.10 | Web: workspace with app and `ui` library; tokens from the mockups; header band, navigation, sign-in pages; i18n scaffold with English; component pages with visual comparison | 0.1 | ✅ |
 | 0.11 | OpenAPI document at build time, check in the build, generated client | 0.8, 0.10 | ⬜ |
 | 0.12 | Architecture tests for module boundaries | 0.1 | ✅ |
 | 0.13 | First administration: instance settings (registration, SMTP with test mail), abandoned jobs with retry, installed version | 0.4, 0.8, 0.10 | ⬜ |
@@ -167,6 +167,10 @@ dotnet format Ardea.slnx --verify-no-changes
 build/check-licenses.sh            # NuGet licences against the allow-list
 python3 build/check-banned-packages.py
 ```
+
+Web app (`web/`, Angular 22, Node 24): `npm ci`, then `npm start` for the dev server (proxies
+`/api` to `http://localhost:5080`), `npm test`, `npm run lint`, `npm run build`. The component
+library pages are at `/ui` in development builds. Details in [`web/README.md`](web/README.md).
 
 Run an instance locally from source:
 

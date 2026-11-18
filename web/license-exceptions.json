@@ -1,0 +1,20 @@
+{
+  "$comment": "Production npm packages whose licence is not on build/licenses/allowed-licenses.json. Each entry names the exact package, its licence and why it is accepted. scripts/check-licenses.mjs fails on anything else, and on an entry that no longer matches.",
+  "exceptions": [
+    {
+      "package": "tslib",
+      "license": "0BSD",
+      "reason": "TypeScript's runtime helpers; every Angular package depends on it and it is bundled into the app. 0BSD is a public-domain-equivalent permissive licence without attribution duty."
+    },
+    {
+      "package": "make-plural",
+      "license": "Unicode-DFS-2016",
+      "reason": "CLDR plural rules used by @messageformat/core, which the Transloco ICU plugin needs for plurals (master plan 11.7). Bundled. The Unicode data licence is permissive (OSI-approved) and only asks to keep the notice, which the build's 3rdpartylicenses.txt does."
+    },
+    {
+      "package": "argparse",
+      "license": "Python-2.0",
+      "reason": "Pulled in by @jsverse/transloco-utils -> cosmiconfig -> js-yaml, which load Transloco's tooling configuration in Node. Never imported by the browser bundle. Python-2.0 is permissive."
+    }
+  ]
+}

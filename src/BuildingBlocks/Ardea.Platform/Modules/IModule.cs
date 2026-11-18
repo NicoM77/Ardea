@@ -25,4 +25,7 @@ public interface IModule
     }
 
     void MapEndpoints(IEndpointRouteBuilder endpoints);
+
+    /// <summary>Commands under <c>ardea admin</c>.</summary>
+    IReadOnlyList<MaintenanceCommand> Commands => [];
 }

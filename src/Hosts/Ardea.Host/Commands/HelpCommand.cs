@@ -27,6 +27,7 @@ internal static class HelpCommand
               init-env            Write .env and .env.app with generated secrets
                 --dir <path>        Target directory (default: current directory)
               doctor              Check configuration, database, schema and the runtime image
+              admin <command>     Maintenance commands, e.g. `admin reset-password <email>`; `admin` lists them
               version             Print the installed version
             """);
         return known ? 0 : 64;

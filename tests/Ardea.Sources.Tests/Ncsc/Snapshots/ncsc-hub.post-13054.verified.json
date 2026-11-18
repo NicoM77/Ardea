@@ -1,0 +1,97 @@
+{
+  "kind": "advisory",
+  "title": "[Advisory] Refrigeration Controllers: Attacks Reported in Switzerland and Across Europe",
+  "summary": "Attackers have taken remote control of Danfoss AK-SM and AK-SC controllers at hundreds of supermarkets, mostly in France. Most affected units are alleged to be end-of-life models that no longer receive security updates. Some current-generation controllers running outdated firmware were also allegedly compromised. We have been made aware that this attack is relevant besides Food Supply and could affect other sectors, such as healthcare for specialized cooling equipment, we strongly recommend to review if affected devices are in use at your organization and apply recommended mitigations",
+  "description": "##### SEVERITY AND IMPACT:\n- Successful compromise lets remote attackers manipulate refrigeration settings through internet-exposed management interfaces, causi \u2026 (6471 characters)",
+  "language": "en",
+  "publishedAt": "2026-10-13T14:04:55.054206+00:00",
+  "modifiedAt": "2026-11-16T16:25:32.145759+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "CVE",
+          "value": "CVE-2025-41451"
+        }
+      ],
+      "related": [
+        {
+          "scheme": "NCSC-HUB",
+          "value": "13054"
+        }
+      ],
+      "state": "published",
+      "metrics": [],
+      "affected": [],
+      "references": [
+        {
+          "url": "https://security-hub.ncsc.admin.ch/#/posts/13054",
+          "tags": [
+            "advisory"
+          ]
+        }
+      ],
+      "weaknesses": []
+    },
+    {
+      "aliases": [
+        {
+          "scheme": "CVE",
+          "value": "CVE-2025-41450"
+        }
+      ],
+      "related": [
+        {
+          "scheme": "NCSC-HUB",
+          "value": "13054"
+        }
+      ],
+      "state": "published",
+      "metrics": [],
+      "affected": [],
+      "references": [
+        {
+          "url": "https://security-hub.ncsc.admin.ch/#/posts/13054",
+          "tags": [
+            "advisory"
+          ]
+        }
+      ],
+      "weaknesses": []
+    },
+    {
+      "aliases": [
+        {
+          "scheme": "CVE",
+          "value": "CVE-2025-41452"
+        }
+      ],
+      "related": [
+        {
+          "scheme": "NCSC-HUB",
+          "value": "13054"
+        }
+      ],
+      "state": "published",
+      "metrics": [],
+      "affected": [],
+      "references": [
+        {
+          "url": "https://security-hub.ncsc.admin.ch/#/posts/13054",
+          "tags": [
+            "advisory"
+          ]
+        }
+      ],
+      "weaknesses": []
+    }
+  ],
+  "references": [
+    {
+      "url": "https://security-hub.ncsc.admin.ch/#/posts/13054",
+      "tags": [
+        "advisory"
+      ]
+    }
+  ]
+}

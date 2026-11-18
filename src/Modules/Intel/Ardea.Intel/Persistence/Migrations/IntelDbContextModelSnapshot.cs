@@ -24,6 +24,91 @@ namespace Ardea.Intel.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Ardea.Intel.Persistence.ObservationRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.PrimitiveCollection<string[]>("Aliases")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("aliases");
+
+                    b.Property<JsonDocument>("Claims")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("claims");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("language");
+
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("origin");
+
+                    b.Property<int>("ParserVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("parser_version");
+
+                    b.Property<int>("RecordRevision")
+                        .HasColumnType("integer")
+                        .HasColumnName("record_revision");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_id");
+
+                    b.Property<Guid>("SourceRecordId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_record_id");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_observation");
+
+                    b.HasIndex("Aliases")
+                        .HasDatabaseName("ix_observation_aliases");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Aliases"), "gin");
+
+                    b.HasIndex("SourceId")
+                        .HasDatabaseName("ix_observation_source_id");
+
+                    b.HasIndex("SourceRecordId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_observation_source_record");
+
+                    b.ToTable("observation", "intel", t =>
+                        {
+                            t.HasCheckConstraint("ck_observation_kind", "kind IN ('vulnerability', 'advisory', 'warning')");
+                        });
+                });
+
             modelBuilder.Entity("Ardea.Intel.Persistence.SourceRecordRevisionRow", b =>
                 {
                     b.Property<Guid>("Id")
@@ -105,10 +190,19 @@ namespace Ardea.Intel.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("parse_status");
 
+                    b.Property<int?>("ParserVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("parser_version");
+
                     b.Property<string>("Payload")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("payload");
+
+                    b.Property<string>("QuarantineReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("quarantine_reason");
 
                     b.Property<int>("Revision")
                         .HasColumnType("integer")
@@ -340,6 +434,23 @@ namespace Ardea.Intel.Persistence.Migrations
                         .HasDatabaseName("ix_source_run_source_started");
 
                     b.ToTable("source_run", "intel");
+                });
+
+            modelBuilder.Entity("Ardea.Intel.Persistence.ObservationRow", b =>
+                {
+                    b.HasOne("Ardea.Intel.Persistence.SourceRow", null)
+                        .WithMany()
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_observation_source_source_id");
+
+                    b.HasOne("Ardea.Intel.Persistence.SourceRecordRow", null)
+                        .WithMany()
+                        .HasForeignKey("SourceRecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_observation_source_record_source_record_id");
                 });
 
             modelBuilder.Entity("Ardea.Intel.Persistence.SourceRecordRevisionRow", b =>

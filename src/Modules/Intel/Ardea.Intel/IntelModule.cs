@@ -48,6 +48,7 @@ public sealed class IntelModule : IModule
 
         services.AddJob<ScheduleDueSources, ScheduleDueSourcesHandler>(new JobKindOptions { MaxConcurrency = 1, MaxAttempts = 1, Priority = JobPriority.Urgent, Timeout = TimeSpan.FromMinutes(1) });
         services.AddJob<SyncSource, SyncSourceHandler>(new JobKindOptions { MaxConcurrency = 4, MaxAttempts = 1, Timeout = SyncSource.Timeout });
+        services.AddJob<NormalizeRecords, NormalizeRecordsHandler>(new JobKindOptions { MaxConcurrency = 2, MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(30) });
         services.AddSchedule("intel.schedule-due-sources", "* * * * *", new ScheduleDueSources());
     }
 

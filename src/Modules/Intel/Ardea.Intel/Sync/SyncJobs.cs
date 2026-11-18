@@ -107,17 +107,17 @@ internal sealed partial class SyncSourceHandler(
                         if (buffer.Count >= FlushSize)
                         {
                             // Records without moving the cursor: safe, a repeat delivery changes nothing.
-                            await CommitAsync(sourceId, runId, buffer, newCursor: null, run, cancellationToken);
+                            await CommitAsync(sourceId, job.SourceKey, runId, buffer, newCursor: null, run, cancellationToken);
                         }
 
                         break;
                     case Checkpoint checkpoint:
-                        await CommitAsync(sourceId, runId, buffer, checkpoint.Cursor, run, cancellationToken);
+                        await CommitAsync(sourceId, job.SourceKey, runId, buffer, checkpoint.Cursor, run, cancellationToken);
                         break;
                 }
             }
 
-            await CommitAsync(sourceId, runId, buffer, newCursor: null, run, cancellationToken);
+            await CommitAsync(sourceId, job.SourceKey, runId, buffer, newCursor: null, run, cancellationToken);
             await FinishAsync(sourceId, runId, run, interval, sync.NextSyncHint, error: null, cancellationToken);
             LogSucceeded(job.SourceKey, run.Fetched, run.Changed);
         }
@@ -163,7 +163,7 @@ internal sealed partial class SyncSourceHandler(
     }
 
     /// <summary>Records up to a checkpoint and the checkpoint's cursor in one transaction (master plan 5.2).</summary>
-    private async Task CommitAsync(Guid sourceId, Guid runId, List<RawRecord> buffer, string? newCursor, RunCounters run, CancellationToken cancellationToken)
+    private async Task CommitAsync(Guid sourceId, string sourceKey, Guid runId, List<RawRecord> buffer, string? newCursor, RunCounters run, CancellationToken cancellationToken)
     {
         if (buffer.Count == 0 && newCursor is null)
         {
@@ -179,6 +179,12 @@ internal sealed partial class SyncSourceHandler(
         {
             await batchDb.Sources.Where(s => s.Id == sourceId).ExecuteUpdateAsync(s => s.SetProperty(x => x.Cursor, newCursor), cancellationToken);
             run.Checkpoints++;
+        }
+
+        if (stored.Changed > 0)
+        {
+            // The follow-up job commits with the records it is for.
+            await scope.ServiceProvider.GetRequiredService<IJobQueue>().EnqueueAsync(new NormalizeRecords(sourceKey), NormalizeRecords.Options(sourceKey), cancellationToken);
         }
 
         run.Fetched += stored.Fetched;

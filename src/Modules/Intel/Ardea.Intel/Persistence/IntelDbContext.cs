@@ -18,6 +18,8 @@ internal sealed class IntelDbContext(DbContextOptions<IntelDbContext> options, I
 
     public DbSet<SourceRecordRevisionRow> SourceRecordRevisions => Set<SourceRecordRevisionRow>();
 
+    public DbSet<ObservationRow> Observations => Set<ObservationRow>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -70,6 +72,7 @@ internal sealed class IntelDbContext(DbContextOptions<IntelDbContext> options, I
             record.Property(r => r.ContentType).HasMaxLength(100);
             record.Property(r => r.ContentHash).HasMaxLength(64);
             record.Property(r => r.ParseStatus).HasMaxLength(20);
+            record.Property(r => r.QuarantineReason).HasMaxLength(2000);
             record.HasIndex(r => new { r.SourceId, r.ExternalId }).IsUnique().HasDatabaseName("ux_source_record_external_id");
             record.HasIndex(r => new { r.SourceId, r.ParseStatus }).HasFilter("parse_status = 'pending'").HasDatabaseName("ix_source_record_pending");
             record.HasOne<SourceRow>().WithMany().HasForeignKey(r => r.SourceId).OnDelete(DeleteBehavior.Cascade);
@@ -83,6 +86,22 @@ internal sealed class IntelDbContext(DbContextOptions<IntelDbContext> options, I
             revision.Property(r => r.ContentHash).HasMaxLength(64);
             revision.HasIndex(r => new { r.SourceRecordId, r.Revision }).IsUnique().HasDatabaseName("ux_source_record_revision");
             revision.HasOne<SourceRecordRow>().WithMany().HasForeignKey(r => r.SourceRecordId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ObservationRow>(observation =>
+        {
+            observation.ToTable("observation", t => t.HasCheckConstraint("ck_observation_kind", "kind IN ('vulnerability', 'advisory', 'warning')"));
+            observation.HasKey(o => o.Id);
+            observation.Property(o => o.Id).HasDefaultValueSql("uuidv7()");
+            observation.HasIndex(o => o.SourceRecordId).IsUnique().HasDatabaseName("ux_observation_source_record");
+            observation.Property(o => o.Kind).HasMaxLength(20);
+            observation.Property(o => o.Title).HasMaxLength(1000);
+            observation.Property(o => o.Language).HasMaxLength(20);
+            observation.Property(o => o.Claims).HasColumnType("jsonb");
+            observation.Property(o => o.Origin).HasMaxLength(20);
+            observation.HasIndex(o => o.Aliases).HasMethod("gin").HasDatabaseName("ix_observation_aliases");
+            observation.HasOne<SourceRecordRow>().WithMany().HasForeignKey(o => o.SourceRecordId).OnDelete(DeleteBehavior.Cascade);
+            observation.HasOne<SourceRow>().WithMany().HasForeignKey(o => o.SourceId).OnDelete(DeleteBehavior.Cascade);
         });
 
         ApplyTenantFilters(modelBuilder);

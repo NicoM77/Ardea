@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Ardea.Intel.Sources.Abstractions;
 using Ardea.Intel.Sources.Formats.Osv;
 
@@ -19,13 +20,14 @@ namespace Ardea.Intel.Sources.Osv;
 /// <item><b>First start, or more changes than <see cref="ArchiveThreshold"/>:</b> the ecosystem's
 /// <c>all.zip</c> (2.8 MB for NuGet up to 222 MB for npm) on the working volume, of which only records
 /// changed since the start of the window are kept. The position then stands at the newest change in the
-/// archive.</item>
+/// archive. An entry larger than <see cref="MaxRecordBytes"/>, by its header or by what it unpacks to, is
+/// skipped.</item>
 /// <item><b>Single:</b> one record by id from <c>api.osv.dev/v1/vulns/{id}</c>; it sends nothing but the id.</item>
 /// </list>
 /// Records of the OpenSSF malicious-packages feed (<c>MAL-</c>) are skipped: they report malicious
 /// package versions, not vulnerabilities, and make up 96 % of npm's list (decision in ADR 031).
 /// </summary>
-public sealed class OsvProvider : ISourceProvider
+public sealed class OsvProvider : ISourceProvider, IChangeLogSource
 {
     public const string Key = "osv";
     internal const string BucketUrl = "https://osv-vulnerabilities.storage.googleapis.com/";
@@ -59,10 +61,41 @@ public sealed class OsvProvider : ISourceProvider
 
     internal int CheckpointEvery { get; init; } = 200;
 
+    /// <summary>
+    /// The largest record read from an archive. The largest of the six ecosystems measured 177 KB
+    /// (18 Nov 2026); anything above 4 MB is not a record but a broken or hostile archive entry.
+    /// </summary>
+    internal int MaxRecordBytes { get; init; } = 4 * 1024 * 1024;
+
     public NormalizationResult Normalize(RawRecord record) => OsvRecordReader.Read(record.Content);
 
     public IAsyncEnumerable<FetchItem> FetchAsync(SyncContext context, CancellationToken cancellationToken) =>
         context.Mode == SyncMode.Single ? FetchSingleAsync(context, cancellationToken) : FetchEcosystemsAsync(context, cancellationToken);
+
+    /// <summary>
+    /// For the completeness check (task 1.11): every record each ecosystem's change list names as changed at
+    /// or after <paramref name="since"/>, read only down to that time; malicious-package reports are left out.
+    /// A record listed in several ecosystems comes once per ecosystem.
+    /// </summary>
+    public async IAsyncEnumerable<ChangedRecord> ListChangesAsync(SyncContext context, DateTimeOffset since, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        foreach (var ecosystem in OsvEcosystems.Mvp)
+        {
+            ChangeList changes;
+            using (var response = await context.Http.GetAsync(new Uri($"{BucketUrl}{ecosystem}/modified_id.csv"), HttpCompletionOption.ResponseHeadersRead, cancellationToken))
+            {
+                response.EnsureSuccessStatusCode();
+                await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                // The list stops at the first line at or before its bound; one tick earlier keeps «since» itself.
+                changes = await ChangeList.ReadAsync(stream, since.AddTicks(-1), cancellationToken);
+            }
+
+            foreach (var change in changes.Pending.Where(c => !IsSkipped(c.Id)))
+            {
+                yield return new ChangedRecord(change.Id, change.Modified);
+            }
+        }
+    }
 
     /// <summary>Malicious-package reports (OpenSSF) are not vulnerabilities; see the class remarks.</summary>
     internal static bool IsSkipped(string id) => id.StartsWith("MAL-", StringComparison.OrdinalIgnoreCase);
@@ -184,7 +217,7 @@ public sealed class OsvProvider : ISourceProvider
     /// The ecosystem's full archive: written once to the working volume (a zip cannot be read without
     /// seeking), its records read one by one and kept when changed at or after <paramref name="from"/>.
     /// </summary>
-    private static async IAsyncEnumerable<(FetchItem Item, OsvCursor? Cursor)> FetchArchiveAsync(
+    private async IAsyncEnumerable<(FetchItem Item, OsvCursor? Cursor)> FetchArchiveAsync(
         SyncContext context, string ecosystem, DateTimeOffset from, OsvCursor cursor, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var path = Path.Combine(context.WorkDirectory, ecosystem + "-all.zip");
@@ -212,11 +245,10 @@ public sealed class OsvProvider : ISourceProvider
                     continue;
                 }
 
-                string json;
-                await using (var stream = entry.Open())
-                using (var reader = new StreamReader(stream))
+                // The declared size is checked first, the read itself is bounded too: the header may lie.
+                if (entry.Length > MaxRecordBytes || await ReadBoundedAsync(entry, MaxRecordBytes, cancellationToken) is not { } json)
                 {
-                    json = await reader.ReadToEndAsync(cancellationToken);
+                    continue;
                 }
 
                 var metadata = OsvRecordReader.Metadata(json);
@@ -236,6 +268,34 @@ public sealed class OsvProvider : ISourceProvider
         File.Delete(path);
         cursor = cursor.With(ecosystem, new EcosystemCursor(newest, null));
         yield return (new Checkpoint(cursor.ToString()), cursor);
+    }
+    /// <summary>The entry's text, or <c>null</c> when it holds more than <paramref name="limit"/> bytes or cannot be unpacked.</summary>
+    private static async Task<string?> ReadBoundedAsync(ZipArchiveEntry entry, int limit, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var stream = entry.Open();
+            using var buffer = new MemoryStream();
+            var chunk = new byte[81920];
+            int read;
+            while ((read = await stream.ReadAsync(chunk, cancellationToken)) > 0)
+            {
+                if (buffer.Length + read > limit)
+                {
+                    return null;
+                }
+
+                buffer.Write(chunk, 0, read);
+            }
+
+            var bytes = buffer.GetBuffer().AsSpan(0, (int)buffer.Length);
+            return Encoding.UTF8.GetString(bytes.StartsWith(Encoding.UTF8.Preamble) ? bytes[Encoding.UTF8.Preamble.Length..] : bytes);
+        }
+        catch (InvalidDataException)
+        {
+            // A damaged entry, e.g. sizes that do not match its data.
+            return null;
+        }
     }
 }
 

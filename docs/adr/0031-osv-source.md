@@ -73,7 +73,14 @@ Timestamps are cut to the seven fractional digits of `DateTimeOffset`.
 **Archive.** On the first start and when more than 2,000 changes are pending in one ecosystem (a long pause, or a
 re-import at OSV.dev like the one of 10 Sep 2026 that touched most records), the ecosystem's `all.zip` is written
 to the work volume and read entry by entry; records changed at or after the window start (or the old position)
-are kept. The position then stands at the newest change in the archive.
+are kept. The position then stands at the newest change in the archive. An entry is skipped when its header
+declares more than 4 MB (the largest record measured is 177 KB, in NuGet), and the read itself stops at 4 MB;
+an entry whose header claims less than it holds is cut off at the claimed size when unpacked, is then no valid
+record and ends up in quarantine.
+
+**Change log.** For the completeness check (task 1.11) the source implements `IChangeLogSource`: each
+ecosystem's change list read down to the requested time, without `MAL-` records. Missing or stale records are
+then fetched singly through the API by id.
 
 **Malicious packages are skipped.** `MAL-` records (OpenSSF) report malicious package versions, not
 vulnerabilities, and make up 96 % of npm's list and 45 % of PyPI's. They are filtered by id before any request.

@@ -148,6 +148,59 @@ public sealed class OsvProviderTests : IDisposable
     }
 
     [Fact]
+    public async Task Archive_entries_above_the_record_cap_are_skipped_and_a_lying_header_cannot_inflate_the_read()
+    {
+        // GHSA-xvcc is 14.5 KB, GHSA-fc5q 2.1 KB; the cap is set between them.
+        var honest = ZipBytes(Archive("npm", "GHSA-xvcc-vqjv-phqh", "GHSA-fc5q-39xc-vjpf"));
+        var lying = WithDeclaredSize(ZipBytes(Archive("npm", "GHSA-xvcc-vqjv-phqh", "GHSA-fc5q-39xc-vjpf")), "GHSA-xvcc-vqjv-phqh.json", 100);
+        var provider = new OsvProvider { MaxRecordBytes = 10_000 };
+
+        var fromHonest = (await Collect(provider, ArchiveContext(honest))).OfType<RawRecord>().ToList();
+        var fromLying = (await Collect(provider, ArchiveContext(lying))).OfType<RawRecord>().ToList();
+
+        Assert.Equal(["GHSA-fc5q-39xc-vjpf"], fromHonest.Select(r => r.ExternalId));
+        // A header that claims less than the entry holds: the unpacking stops at the claimed size, so the
+        // read stays bounded; the cut-off text is no record and goes to quarantine instead of being lost.
+        var cut = Assert.Single(fromLying, r => r.ExternalId == "GHSA-xvcc-vqjv-phqh");
+        Assert.True(cut.Content.Length <= 100);
+        Assert.NotNull(provider.Normalize(cut).QuarantineReason);
+        Assert.Contains(fromLying, r => r.ExternalId == "GHSA-fc5q-39xc-vjpf");
+
+        SyncContext ArchiveContext(byte[] archive) => Context(
+            new RecordedHttp()
+                .On("/all.zip", () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(ZipBytes()) })
+                .On(Bucket + "npm/all.zip", () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(archive) }),
+            cursor: null,
+            backfillFrom: Date("2026-11-01T00:00:00Z"),
+            mode: SyncMode.Backfill);
+    }
+
+    [Fact]
+    public async Task Change_log_lists_every_ecosystem_from_the_given_time_on_without_malicious_packages()
+    {
+        var http = new RecordedHttp()
+            .On("/modified_id.csv", () => Csv(string.Empty, "\"empty\""))
+            .On(Bucket + "npm/modified_id.csv", () => Csv(TestData.Read("osv", "npm.modified_id-head.csv"), "\"npm-2\""))
+            .On(Bucket + "Go/modified_id.csv", () => Csv(TestData.Read("osv", "Go.modified_id-head.csv"), "\"go-2\""));
+        var changes = new List<ChangedRecord>();
+
+        await foreach (var change in new OsvProvider().ListChangesAsync(Context(http, null), Date("2026-11-18T16:30:05.599117675Z"), CancellationToken.None))
+        {
+            changes.Add(change);
+        }
+
+        // GHSA-xvcc changed exactly at the given time and counts; the malicious-package reports above it do not.
+        Assert.Equal(
+            [
+                new ChangedRecord("GHSA-xvcc-vqjv-phqh", Date("2026-11-18T16:30:05.599117675Z")),
+                new ChangedRecord("GHSA-6qr9-g2xw-cw92", Date("2026-11-18T17:10:32.607698555Z")),
+                new ChangedRecord("GO-2026-4527", Date("2026-11-18T17:10:32.607698555Z")),
+            ],
+            changes);
+        Assert.Equal(6, http.Requests.Count);
+    }
+
+    [Fact]
     public void Descriptor_names_operator_terms_and_hosts()
     {
         var descriptor = new OsvProvider().Descriptor;
@@ -242,7 +295,10 @@ public sealed class OsvProviderTests : IDisposable
     }
 
     /// <summary>The archive's shape in small: record files named by id at the root of the zip.</summary>
-    private static HttpResponseMessage Zip(params (string Name, string Content)[] files)
+    private static HttpResponseMessage Zip(params (string Name, string Content)[] files) =>
+        new(HttpStatusCode.OK) { Content = new ByteArrayContent(ZipBytes(files)) };
+
+    private static byte[] ZipBytes(params (string Name, string Content)[] files)
     {
         using var buffer = new MemoryStream();
         using (var zip = new ZipArchive(buffer, ZipArchiveMode.Create, leaveOpen: true))
@@ -254,7 +310,29 @@ public sealed class OsvProviderTests : IDisposable
             }
         }
 
-        return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(buffer.ToArray()) };
+        return buffer.ToArray();
+    }
+
+    /// <summary>
+    /// Rewrites the uncompressed size an entry declares, in its local header (offset 22) and its central
+    /// directory record (offset 24), as a hostile archive would.
+    /// </summary>
+    private static byte[] WithDeclaredSize(byte[] zip, string name, uint size)
+    {
+        var bytes = (byte[])zip.Clone();
+        var file = Encoding.UTF8.GetBytes(name);
+        foreach (var (signature, sizeOffset, nameOffset) in new[] { (0x04034b50u, 22, 30), (0x02014b50u, 24, 46) })
+        {
+            for (var i = 0; i + nameOffset + file.Length <= bytes.Length; i++)
+            {
+                if (BitConverter.ToUInt32(bytes, i) == signature && bytes.AsSpan(i + nameOffset, file.Length).SequenceEqual(file))
+                {
+                    BitConverter.GetBytes(size).CopyTo(bytes, i + sizeOffset);
+                }
+            }
+        }
+
+        return bytes;
     }
 
     /// <summary>

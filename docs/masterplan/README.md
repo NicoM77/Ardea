@@ -39,7 +39,7 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | Betrieb | `docker compose up -d`, automatische Migrationen mit Sicherung davor, Updates per `pull` und `up` |
 | Tests | Jede Pipeline läuft in 15 bis höchstens 25 Minuten: viele Unit-Tests, sechs Ende-zu-Ende-Abläufe; keine Langläufer, keine zeitgesteuerten Tests |
 
-**Umfang.** Sieben Phasen bis Version 1.0, geschätzt 33 bis 44 Wochen für eine erfahrene Person mit KI-Unterstützung. Nach Phase 3 liegt ein nutzbares System ohne KI und ohne Benachrichtigung vor.
+**Umfang.** Sieben Phasen bis Version 1.0, geschätzt 34 bis 45 Wochen für eine erfahrene Person mit KI-Unterstützung. Nach Phase 3 liegt ein nutzbares System ohne KI und ohne Benachrichtigung vor.
 
 **Was dieser Stand nicht leistet.** Die Mockups zeigen nur die Fassung ohne Sprachmodell und eine Massnahme mit einem einzigen Befund. Die Gewichte des Regelwerks sind ungeeicht, bis der Referenzsatz steht. Das Profil aus dem Repository (Kapitel 16) baut auf einem GitHub-Export, dessen Rechte und Inhalt erst Versuch 2.9 klärt; wie viele Massnahmen echte Repositories erzeugen, ist nicht gemessen. Der Plan wurde zweimal unabhängig gegengelesen. Die Korrekturen aus der zweiten Durchsicht sind eingearbeitet, aber nicht ein drittes Mal geprüft (Kapitel 15.4). Die Erweiterung um Repositories kam danach und ist nicht unabhängig gegengelesen.
 

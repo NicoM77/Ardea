@@ -210,7 +210,7 @@ Eine Neubewertung ändert den Befund nur, wenn sich Stufe, Urteil, Ausnutzungsst
 - **Grenzen:** Parallelität, Tageskontingent an Tokens je Instanz und je Organisation, Zeitlimit je Aufruf. Bei erschöpftem Kontingent gelten die Regeln allein.
 - **Telemetrie:** Aufrufe, Tokens, Dauer, Fehler und Wiederholungen als Metriken; keine Prompt-Inhalte in Logs.
 
-Die Extraktion von Produkten aus Freitextquellen durch ein Modell (Kapitel 6.5) ist eine Ausbaustufe.
+Ein zweiter Einsatz des Modells gehört zum MVP: Der Katalog lernt neue Produkte und Schreibweisen aus den Quellen (Kapitel 6.9). Er nutzt dieselbe Anbindung, aber nur öffentliche Daten und ein eigenes Tageskontingent. Die Extraktion von Produkten aus Freitextquellen durch ein Modell (Kapitel 6.5) ist eine Ausbaustufe.
 
 ## 7.9 Qualität messen, bevor man ihr vertraut
 

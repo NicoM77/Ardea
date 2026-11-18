@@ -10,10 +10,10 @@ Sieben Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen
 | 1 | Konsolidierte Einträge aus fünf Quellen einschliesslich OSV für Pakete, mit Verschmelzen; durchsuchbar | 7–10 Wochen |
 | 2 | Organisationen mit Projekten und Technologieprofil; Profil aus GitHub-Repositories; Setup-Wizard | 7–9 Wochen |
 | 3 | Befunde, Massnahmen und Meldungen mit Stufe und Begründung; Übersicht, Liste, Detail | 6–8 Wochen |
-| 4 | KI-Einschätzung als zuschaltbarer Schritt | 2–3 Wochen |
+| 4 | KI-Einschätzung als zuschaltbarer Schritt; Katalog, der selbst wächst | 3–4 Wochen |
 | 5 | Benachrichtigungen über vier Kanäle | 3–4 Wochen |
 | 6 | Geprüftes, dokumentiertes Release 1.0 | 3–4 Wochen |
-| | **Summe** | **33–44 Wochen** |
+| | **Summe** | **34–45 Wochen** |
 
 Die Zahlen gelten für eine erfahrene Person mit KI-Unterstützung und sind Schätzungen, keine Zusage. Drei Posten treiben sie und sind schwer zu verkürzen, weil sie Handarbeit an Daten sind: der Katalog mit rund 300 Produkten samt Aliassen, der Referenzsatz mit 200 von Hand beschrifteten Paaren und die 15 bis 20 Oberflächenkomponenten mit allen Zuständen. Nicht enthalten sind Wartezeiten auf Dritte (eine externe Sicherheitsprüfung). Die Mockups halten nichts auf: Die Umsetzung entwirft sie selbst, der Eigentümer prüft sie im Nachhinein (Kapitel 15, E15).
 
@@ -165,6 +165,8 @@ Abnahme:
 | 4.6 | Grenzen: Parallelität, Kontingente, Zeitlimit; Messwerte | 4.1 |
 | 4.7 | «Einschätzung korrigieren» mit Neubewertung | 4.2, 3.10 |
 | 4.8 | Tests der Einbindung mit aufgezeichneten Antworten des Modells, auch ungültigen und manipulierten; Empfehlung für ein lokales Modell in der Anleitung | 4.2 |
+| 4.9 | Katalog lernt (Kapitel 6.9): unbekannte Produkte mit Häufigkeit sammeln, Zuordnung ohne Modell (läuft auch ohne Anbieter), Job `GrowCatalog` mit Modell, Prüfung, Übernahme nach Sicherheit, Prüfliste, Neuberechnung | 4.2, 1.11, 2.4 |
+| 4.10 | Gelernte Einträge zurücknehmen; Hinweis am Treffer; Vorschläge für freie Einträge der Organisationen; Export im Format des Grundstocks; Messgrössen in der Administration | 4.9, 3.10 |
 
 Abnahme:
 
@@ -173,6 +175,10 @@ Abnahme:
 - Ein Test, der ausgehende Anfragen mitliest, findet darin keine Komponenten ausserhalb der Treffer und keine Projektnamen.
 - Eine Organisation mit der Richtlinie «nur lokal» erzeugt keinen Aufruf an einen nicht lokalen Anbieter, auch nicht bei Ausfall des lokalen.
 - Die Daten des Spikes (eine Woche, acht Massnahmen) lösen höchstens 40 Aufrufe aus.
+- Ein gelernter Katalogeintrag ändert keinen kuratierten Eintrag und entfernt keinen bestehenden Treffer (schneller Test).
+- Produktnamen mit eingebetteten Anweisungen führen zu keiner ungültigen Übernahme (aufgezeichnete Antworten).
+- Ohne Anbieter läuft die Zuordnung ohne Modell, sonst nichts.
+- Einmal in der Entwicklung mit einem lokalen Modell an 50 unbekannten Schlüsseln aus echten Records beobachtet und dokumentiert: keine falsche Zuordnung wird sofort wirksam, mindestens die Hälfte wird sofort übernommen.
 
 ## Phase 5 · Benachrichtigungen
 

@@ -67,6 +67,8 @@ public sealed class JobSystemTests(PostgresServer server)
         Assert.Equal(total, await host.CountAsync("SELECT count(*) FROM public.test_effect"));
         Assert.Equal(total, await host.CountAsync("SELECT count(DISTINCT job_ref) FROM public.test_effect"));
         Assert.Equal(0, await host.CountAsync("SELECT count(*) FROM platform.job WHERE state <> 'succeeded'"));
+        // The kill really stranded work that a second attempt then finished.
+        Assert.True(await host.CountAsync("SELECT count(*) FROM platform.job WHERE attempts >= 2") > 0);
     }
 
     [Fact]
@@ -173,15 +175,93 @@ public sealed class JobSystemTests(PostgresServer server)
         });
         await host.InUnitOfWorkAsync(s => s.GetRequiredService<IJobQueue>().EnqueueAsync(new GatedJob("contested")));
 
-        host.StartWorker("worker-a", Fast with { Lease = TimeSpan.FromMinutes(5) });
+        var worker = host.StartWorker("worker-a", Fast with { Lease = TimeSpan.FromMinutes(5) });
         await host.WaitForAsync("SELECT count(*) FROM platform.job WHERE state = 'running'", 1, TimeSpan.FromSeconds(10));
 
-        // Another worker takes the job over, as after a lease that ran out during a network partition.
-        await host.ExecuteAsync("UPDATE platform.job SET lease_owner = 'worker-b', lease_until = now() + interval '5 minutes'");
+        // Another claim takes the job over, as after a lease that ran out during a network partition;
+        // it may even be the same worker id (two processes on one host share it).
+        await host.ExecuteAsync("UPDATE platform.job SET lease_token = gen_random_uuid(), lease_until = now() + interval '5 minutes'");
         gate.Open.SetResult();
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await WaitUntilIdleAsync(worker);
 
         Assert.Equal(0, await host.CountAsync("SELECT count(*) FROM public.test_effect"));
-        Assert.Equal(1, await host.CountAsync("SELECT count(*) FROM platform.job WHERE state = 'running' AND lease_owner = 'worker-b'"));
+        Assert.Equal(1, await host.CountAsync("SELECT count(*) FROM platform.job WHERE state = 'running' AND lease_owner = 'worker-a'"));
+    }
+
+    [Fact]
+    public async Task Stopping_worker_lets_running_jobs_finish_within_the_grace_period()
+    {
+        var gate = new Gate();
+        await using var host = await JobTestHost.CreateAsync(server, s =>
+        {
+            s.AddSingleton(gate);
+            s.AddJob<GatedJob, GatedJobHandler>();
+        });
+        await host.InUnitOfWorkAsync(s => s.GetRequiredService<IJobQueue>().EnqueueAsync(new GatedJob("deploy")));
+        var worker = host.StartWorker("worker-a", Fast with { ShutdownGrace = TimeSpan.FromSeconds(10) });
+        await host.WaitForAsync("SELECT count(*) FROM platform.job WHERE state = 'running'", 1, TimeSpan.FromSeconds(10));
+
+        var stopping = worker.StopAsync(CancellationToken.None);
+        await Task.Delay(300);
+        gate.Open.SetResult();
+        await stopping;
+
+        Assert.Equal(1, await host.CountAsync("SELECT count(*) FROM platform.job WHERE state = 'succeeded' AND attempts = 1"));
+        Assert.Equal(1, await host.CountAsync("SELECT count(*) FROM public.test_effect"));
+    }
+
+    [Fact]
+    public async Task Job_still_running_after_the_grace_period_is_given_back_without_counting_the_attempt()
+    {
+        await using var host = await JobTestHost.CreateAsync(server, s => s.AddJob<HangingJob, HangingJobHandler>());
+        await host.InUnitOfWorkAsync(s => s.GetRequiredService<IJobQueue>().EnqueueAsync(new HangingJob("long")));
+        var worker = host.StartWorker("worker-a", Fast with { ShutdownGrace = TimeSpan.FromMilliseconds(300) });
+        await host.WaitForAsync("SELECT count(*) FROM platform.job WHERE state = 'running'", 1, TimeSpan.FromSeconds(10));
+
+        await worker.StopAsync(CancellationToken.None);
+
+        Assert.Equal(1, await host.CountAsync("SELECT count(*) FROM platform.job WHERE state = 'pending' AND attempts = 0 AND lease_token IS NULL"));
+    }
+
+    [Fact]
+    public async Task Expired_job_with_a_waiting_successor_is_superseded_and_finished()
+    {
+        await using var host = await JobTestHost.CreateAsync(server, s => s.AddJob<EffectJob, EffectJobHandler>());
+        await host.ExecuteAsync(
+            """
+            INSERT INTO platform.job (kind, payload, coalesce_key, run_at, priority, state, attempts, max_attempts, timeout_seconds, lease_owner, lease_until, lease_token)
+            VALUES ('test.effect', '{"ref":"old"}', 'k', now(), 1, 'running', 1, 5, 60, 'gone', now() - interval '1 minute', gen_random_uuid()),
+                   ('test.effect', '{"ref":"new"}', 'k', now(), 1, 'pending', 0, 5, 60, NULL, NULL, NULL)
+            """);
+
+        await JobStore.ReclaimExpiredAsync(host.DataSource, CancellationToken.None);
+
+        Assert.Equal(1, await host.CountAsync(
+            "SELECT count(*) FROM platform.job WHERE payload->>'ref' = 'old' AND state = 'succeeded' AND finished_at IS NOT NULL AND last_error LIKE '%Superseded%'"));
+        Assert.Equal(1, await host.CountAsync("SELECT count(*) FROM platform.job WHERE payload->>'ref' = 'new' AND state = 'pending'"));
+    }
+
+    [Fact]
+    public async Task Handler_cannot_commit_the_jobs_unit_of_work_itself()
+    {
+        await using var host = await JobTestHost.CreateAsync(server, s => s.AddJob<SelfCommittingJob, SelfCommittingJobHandler>(new JobKindOptions { MaxAttempts = 1 }));
+        await host.InUnitOfWorkAsync(s => s.GetRequiredService<IJobQueue>().EnqueueAsync(new SelfCommittingJob("x")));
+
+        host.StartWorker("worker-a", Fast);
+        await host.WaitForAsync("SELECT count(*) FROM platform.job WHERE state = 'failed'", 1, TimeSpan.FromSeconds(10));
+
+        Assert.Equal(0, await host.CountAsync("SELECT count(*) FROM public.test_effect"));
+        Assert.Equal(1, await host.CountAsync("SELECT count(*) FROM platform.job WHERE last_error LIKE '%committed by the job system%'"));
+    }
+
+    private static async Task WaitUntilIdleAsync(JobProcessor worker)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        while (worker.RunningCount > 0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(20);
+        }
+
+        Assert.Equal(0, worker.RunningCount);
     }
 }

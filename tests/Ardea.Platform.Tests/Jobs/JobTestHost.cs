@@ -194,3 +194,21 @@ internal sealed class HangingJobHandler : IJobHandler<HangingJob>
     public Task HandleAsync(HangingJob job, JobContext context, CancellationToken cancellationToken) =>
         Task.Delay(Timeout.Infinite, cancellationToken);
 }
+
+/// <summary>Tries to commit the job's own unit of work, which only the job system may do.</summary>
+internal sealed record SelfCommittingJob(string Ref) : IJob
+{
+    public static string Kind => "test.self-committing";
+}
+
+internal sealed class SelfCommittingJobHandler(IUnitOfWork unitOfWork) : IJobHandler<SelfCommittingJob>
+{
+    public async Task HandleAsync(SelfCommittingJob job, JobContext context, CancellationToken cancellationToken)
+    {
+        var connection = await unitOfWork.GetConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand("INSERT INTO public.test_effect (job_ref) VALUES ($1)", connection);
+        command.Parameters.Add(new NpgsqlParameter { Value = job.Ref });
+        await command.ExecuteNonQueryAsync(cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
+    }
+}

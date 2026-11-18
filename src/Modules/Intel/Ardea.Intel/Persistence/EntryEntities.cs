@@ -190,3 +190,35 @@ internal sealed class EntrySignalRow
 
     public DateTimeOffset UpdatedAt { get; set; }
 }
+
+/// <summary>
+/// A case for the instance administrator's review list (master plan 6.2 rule 5, 6.9): an identifier
+/// that would join entries which each carry their own CVE id. Such entries are never merged
+/// automatically; the case stays here until the administrator decides it.
+/// </summary>
+internal sealed class ReviewItemRow
+{
+    public Guid Id { get; set; }
+
+    /// <summary><c>cve_conflict</c>.</summary>
+    public required string Kind { get; set; }
+
+    /// <summary>What the case is about, unique per kind: the CVE ids, sorted and comma-separated.</summary>
+    public required string SubjectKey { get; set; }
+
+    public Guid[] EntryIds { get; set; } = [];
+
+    /// <summary>The identifiers that connect the entries, e.g. a GHSA id listing both CVE ids.</summary>
+    public string[] SharedAliases { get; set; } = [];
+
+    /// <summary><c>open</c> or <c>kept_separate</c>; a decided case is not reopened by the same evidence.</summary>
+    public required string State { get; set; }
+
+    public DateTimeOffset FirstSeenAt { get; set; }
+
+    public DateTimeOffset LastSeenAt { get; set; }
+
+    public DateTimeOffset? DecidedAt { get; set; }
+
+    public Guid? DecidedBy { get; set; }
+}

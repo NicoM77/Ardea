@@ -34,8 +34,10 @@ import type {
 
 import type {
   ListQuarantineParams,
+  ListReviewItemsParams,
   ListSourceRunsParams,
   QuarantinedRecord,
+  ReviewItemView,
   SourceRunView,
   SourceStatus,
   UpdateSourceRequest
@@ -249,6 +251,25 @@ export function listQuarantineResource(key: Signal<string | undefined>,
   }, options);
 }
 
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function listReviewItemsResource(params: Signal<ListReviewItemsParams | undefined> | undefined,
+  options: OrvalHttpResourceOptions<ReviewItemView[], unknown> & { defaultValue: NoInfer<ReviewItemView[]> }): HttpResourceRef<ReviewItemView[]>;
+export function listReviewItemsResource(params?: Signal<ListReviewItemsParams | undefined>,
+  options?: OrvalHttpResourceOptions<ReviewItemView[], unknown>): HttpResourceRef<ReviewItemView[] | undefined>;
+export function listReviewItemsResource(params?: Signal<ListReviewItemsParams | undefined>,
+  options?: OrvalHttpResourceOptions<ReviewItemView[], unknown>): HttpResourceRef<ReviewItemView[] | undefined> {
+  return httpResource<ReviewItemView[]>(() => {
+    if (params && params() === undefined) return undefined;
+    const request = ({
+      url: `/api/v1/instance/review`,
+      params: filterParams(params?.() ?? {}, new Set<string>([]))
+    });
+    return applyOrvalRequestExtension(request, options);
+  }, options);
+}
+
 
 interface HttpClientOptions {
   readonly headers?: HttpHeaders | Record<string, string | string[]>;
@@ -353,11 +374,46 @@ export class SourcesService {
     );
   }
 
+ keepReviewItemSeparate<TData = void>(id: string, options?: HttpClientBodyOptions): Observable<TData>;
+  keepReviewItemSeparate<TData = void>(
+    id: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/instance/review/${id}/keep-separate`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/instance/review/${id}/keep-separate`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/instance/review/${id}/keep-separate`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
 };
 
 export type ListSourcesResourceResult = NonNullable<SourceStatus[]>
 export type ListSourceRunsResourceResult = NonNullable<SourceRunView[]>
 export type ListQuarantineResourceResult = NonNullable<QuarantinedRecord[]>
+export type ListReviewItemsResourceResult = NonNullable<ReviewItemView[]>
+
+
 
 
 
@@ -365,6 +421,7 @@ export type ListQuarantineResourceResult = NonNullable<QuarantinedRecord[]>
 
 export type UpdateSourceClientResult = NonNullable<SourceStatus>
 export type SyncSourceClientResult = NonNullable<void>
+export type KeepReviewItemSeparateClientResult = NonNullable<void>
 
 /**
  * Utility type for httpResource results with status tracking.

@@ -55,6 +55,8 @@ public sealed class IamModule : IModule
         services.AddJob<SendPasswordResetEmail, AccountEmailHandlers>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });
         services.AddJob<SendEmailConfirmation, AccountEmailHandlers>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });
         services.AddJob<SendAlreadyRegisteredNotice, AccountEmailHandlers>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });
+        services.AddJob<SendInvitationEmail, InvitationEmailHandler>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });
+        services.AddScoped<IOrganizationMembership, MembershipCheck>();
         if (int.TryParse(configuration["PASSWORD_HASH_ITERATIONS"], CultureInfo.InvariantCulture, out var iterations) && iterations > 0)
         {
             services.Configure<PasswordHasherOptions>(o => o.IterationCount = iterations);
@@ -135,6 +137,7 @@ public sealed class IamModule : IModule
     {
         AuthEndpoints.Map(endpoints);
         AccountEndpoints.Map(endpoints);
+        OrganizationEndpoints.Map(endpoints);
     }
 
     /// <summary>Real instances have an HTTPS public address; only development runs on plain HTTP.</summary>

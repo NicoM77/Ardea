@@ -11,4 +11,5 @@ export interface SessionOrganization {
   slug: string;
   name: string;
   role: string;
+  mfaRequired: boolean;
 }

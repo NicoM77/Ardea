@@ -5,6 +5,13 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Modules/Intel/Ardea.Intel/Ardea.Intel.csproj" />
     <ProjectReference Include="../../src/Modules/Catalog/Ardea.Catalog/Ardea.Catalog.csproj" />
+    <!-- Real adapters for the acceptance tests with recorded records. -->
+    <ProjectReference Include="../../src/Sources/Ardea.Intel.Sources.CveProgram/Ardea.Intel.Sources.CveProgram.csproj" />
+    <ProjectReference Include="../../src/Sources/Ardea.Intel.Sources.Osv/Ardea.Intel.Sources.Osv.csproj" />
     <ProjectReference Include="../Ardea.TestSupport/Ardea.TestSupport.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Data/**/*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Ardea.Sources.Tests/Data/osv/Go.GHSA-pfrf-9r5f-73f5*.json" LinkBase="Data" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,66 @@
+{
+  "kind": "vulnerability",
+  "description": "Drupal 11.3 comes with support for completing entity suggestions whilst adding a link to CKEditor 5.\n\nThe suggestions aren\u0027t sufficiently sanitized and a malicious user could trigger a stored cross site scripting attack against another user.",
+  "language": "en",
+  "publishedAt": "2026-04-15T19:27:21+00:00",
+  "modifiedAt": "2026-09-10T03:45:14.6563745+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "OSV",
+          "value": "DRUPAL-CORE-2026-003"
+        },
+        {
+          "scheme": "OSV",
+          "value": "BIT-drupal-2026-6367"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2026-6367"
+        },
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-pw6f-3999-xp7g"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "description": "Drupal 11.3 comes with support for completing entity suggestions whilst adding a link to CKEditor 5.\n\nThe suggestions aren\u0027t sufficiently sanitized and a malicious user could trigger a stored cross site scripting attack against another user.",
+      "metrics": [],
+      "affected": [
+        {
+          "product": "drupal/core",
+          "cpes": [],
+          "purl": "pkg:composer/drupal/core",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "11.3.0",
+              "fixed": "11.3.7",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u002211.3.0\u0022},{\u0022fixed\u0022:\u002211.3.7\u0022}],\u0022database_specific\u0022:{\u0022constraint\u0022:\u0022\u003E= 11.3.0 \u003C 11.3.7\u0022}}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://www.drupal.org/sa-core-2026-003",
+          "tags": []
+        }
+      ],
+      "weaknesses": [],
+      "publishedAt": "2026-04-15T19:27:21+00:00",
+      "modifiedAt": "2026-09-10T03:45:14.6563745+00:00"
+    }
+  ],
+  "references": []
+}

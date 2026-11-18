@@ -1,0 +1,90 @@
+{
+  "kind": "vulnerability",
+  "title": "Withdrawn Advisory: picomatch vulnerable to ReDoS through single-branch repeated extglobs",
+  "description": "## Withdrawn Advisory\n\nThis advisory has been withdrawn because it is a security issue. See https://github.com/micromatch/picomatch/pull/235#issuecomment-6315749381 for more information. This link is maintained to preserve external references.\n\n## Original Description\nPicomatch through 4.0.7 contains a regular expression denial of service vulnerability that allows attackers to block the event loop by supplying single-branch repeated extglob patterns. Attackers can provide globs like \u002B(*) or \u002B(*a), which analyzeRepeatedExtglob in lib/parse.js skips, causing exponential backtracking against short crafted strings and denying service to Node.js applications.",
+  "language": "en",
+  "publishedAt": "2026-10-19T18:32:12+00:00",
+  "modifiedAt": "2026-11-18T15:56:12.1770934+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-fc5q-39xc-vjpf"
+        }
+      ],
+      "related": [],
+      "state": "rejected",
+      "title": "Withdrawn Advisory: picomatch vulnerable to ReDoS through single-branch repeated extglobs",
+      "description": "## Withdrawn Advisory\n\nThis advisory has been withdrawn because it is a security issue. See https://github.com/micromatch/picomatch/pull/235#issuecomment-6315749381 for more information. This link is maintained to preserve external references.\n\n## Original Description\nPicomatch through 4.0.7 contains a regular expression denial of service vulnerability that allows attackers to block the event loop by supplying single-branch repeated extglob patterns. Attackers can provide globs like \u002B(*) or \u002B(*a), which analyzeRepeatedExtglob in lib/parse.js skips, causing exponential backtracking against short crafted strings and denying service to Node.js applications.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+          "assigner": "GitHub"
+        },
+        {
+          "system": "CVSS",
+          "version": "4.0",
+          "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "picomatch",
+          "cpes": [],
+          "purl": "pkg:npm/picomatch",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "lastAffected": "4.0.7",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022last_affected\u0022:\u00224.0.7\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": false,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-112366",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/micromatch/picomatch/pull/194",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/micromatch/picomatch",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://github.com/micromatch/picomatch/blob/4.0.7/lib/parse.js#L287-L307",
+          "tags": []
+        },
+        {
+          "url": "https://www.vulncheck.com/advisories/picomatch-through-4.0.7-redos-via-single-branch-repeated-extglob-patterns",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-1333"
+      ],
+      "publishedAt": "2026-10-19T18:32:12+00:00",
+      "modifiedAt": "2026-11-18T15:56:12.1770934+00:00"
+    }
+  ],
+  "references": []
+}

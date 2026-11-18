@@ -15,6 +15,8 @@ internal sealed class IamDbContext(DbContextOptions<IamDbContext> options, ITena
 {
     public const string Schema = "iam";
 
+    private static readonly System.Text.Json.JsonSerializerOptions SettingsJson = new(System.Text.Json.JsonSerializerDefaults.Web);
+
     public DbSet<ArdeaUser> Users => Set<ArdeaUser>();
 
     public DbSet<IdentityUserClaim<Guid>> UserClaims => Set<IdentityUserClaim<Guid>>();
@@ -24,6 +26,12 @@ internal sealed class IamDbContext(DbContextOptions<IamDbContext> options, ITena
     public DbSet<IdentityUserToken<Guid>> UserTokens => Set<IdentityUserToken<Guid>>();
 
     public DbSet<UserSession> Sessions => Set<UserSession>();
+
+    public DbSet<Organization> Organizations => Set<Organization>();
+
+    public DbSet<Membership> Memberships => Set<Membership>();
+
+    public DbSet<Invitation> Invitations => Set<Invitation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -78,6 +86,50 @@ internal sealed class IamDbContext(DbContextOptions<IamDbContext> options, ITena
             session.Property(s => s.UserAgent).HasMaxLength(500);
             session.Property(s => s.IpAddress).HasMaxLength(64);
             session.HasIndex(s => new { s.UserId, s.CreatedAt }).HasDatabaseName("ix_session_user");
+        });
+
+        modelBuilder.Entity<Organization>(organization =>
+        {
+            organization.ToTable("organization", t => t.HasCheckConstraint("ck_organization_slug", "slug ~ '^[a-z0-9]([a-z0-9-]{0,48}[a-z0-9])?$'"));
+            organization.HasKey(o => o.OrganizationId);
+            organization.Property(o => o.OrganizationId).HasColumnName("id");
+            organization.Property(o => o.Name).HasMaxLength(200);
+            organization.Property(o => o.Slug).HasMaxLength(50);
+            organization.Property(o => o.Locale).HasMaxLength(10);
+            organization.Property(o => o.TimeZone).HasMaxLength(64);
+            organization.Property(o => o.Settings).HasColumnType("jsonb").HasConversion(
+                v => System.Text.Json.JsonSerializer.Serialize(v, SettingsJson),
+                v => System.Text.Json.JsonSerializer.Deserialize<OrganizationSettings>(v, SettingsJson) ?? new OrganizationSettings());
+            organization.HasIndex(o => o.Slug).IsUnique().HasDatabaseName("ux_organization_slug");
+        });
+
+        modelBuilder.Entity<Membership>(membership =>
+        {
+            membership.ToTable("membership", t => t.HasCheckConstraint("ck_membership_role", "role IN ('owner', 'admin', 'member', 'viewer')"));
+            membership.HasKey(m => m.Id);
+            membership.Property(m => m.Id).HasDefaultValueSql("uuidv7()");
+            membership.Property(m => m.Role).HasMaxLength(20);
+            membership.HasIndex(m => new { m.OrganizationId, m.UserId }).IsUnique().HasDatabaseName("ux_membership_org_user");
+            membership.HasIndex(m => m.UserId).HasDatabaseName("ix_membership_user");
+            // At most one owner; the transfer changes both rows in one unit of work.
+            membership.HasIndex(m => m.OrganizationId).IsUnique().HasFilter("role = 'owner'").HasDatabaseName("ux_membership_owner");
+            membership.HasOne<Organization>().WithMany().HasForeignKey(m => m.OrganizationId).OnDelete(DeleteBehavior.Cascade);
+            membership.HasOne<ArdeaUser>().WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Invitation>(invitation =>
+        {
+            invitation.ToTable("invitation", t => t.HasCheckConstraint("ck_invitation_role", "role IN ('admin', 'member', 'viewer')"));
+            invitation.HasKey(i => i.Id);
+            invitation.Property(i => i.Id).HasDefaultValueSql("uuidv7()");
+            invitation.Property(i => i.Email).HasMaxLength(256);
+            invitation.Property(i => i.NormalizedEmail).HasMaxLength(256);
+            invitation.Property(i => i.Role).HasMaxLength(20);
+            invitation.Property(i => i.TokenHash).HasMaxLength(64);
+            invitation.HasIndex(i => i.TokenHash).IsUnique().HasDatabaseName("ux_invitation_token");
+            invitation.HasIndex(i => new { i.OrganizationId, i.NormalizedEmail }).IsUnique().HasDatabaseName("ux_invitation_org_email");
+            invitation.HasOne<Organization>().WithMany().HasForeignKey(i => i.OrganizationId).OnDelete(DeleteBehavior.Cascade);
+            invitation.HasOne<ArdeaUser>().WithMany().HasForeignKey(i => i.InvitedBy).OnDelete(DeleteBehavior.Cascade);
         });
 
         ApplyTenantFilters(modelBuilder);

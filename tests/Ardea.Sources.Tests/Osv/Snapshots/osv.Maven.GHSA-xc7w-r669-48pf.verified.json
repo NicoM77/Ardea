@@ -1,0 +1,126 @@
+{
+  "kind": "vulnerability",
+  "title": "ExecuTorch vulnerable to Heap-based Buffer Overflow",
+  "description": "A group of related buffer overflow vulnerabilities in the loading of ExecuTorch models can cause the runtime to crash and potentially result in code execution or other undesirable effects. This issue affects ExecuTorch prior to commit cea9b23aa8ff78aff92829a466da97461cc7930c.",
+  "language": "en",
+  "publishedAt": "2025-08-08T00:30:26+00:00",
+  "modifiedAt": "2026-10-27T16:45:04.5592352+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-xc7w-r669-48pf"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2025-54951"
+        },
+        {
+          "scheme": "OSV",
+          "value": "PYSEC-2026-336"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "ExecuTorch vulnerable to Heap-based Buffer Overflow",
+      "description": "A group of related buffer overflow vulnerabilities in the loading of ExecuTorch models can cause the runtime to crash and potentially result in code execution or other undesirable effects. This issue affects ExecuTorch prior to commit cea9b23aa8ff78aff92829a466da97461cc7930c.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "executorch",
+          "cpes": [],
+          "purl": "pkg:pypi/executorch",
+          "platforms": [],
+          "versionScheme": "pep440",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "0.7.0",
+              "scheme": "pep440",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00220.7.0\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.pytorch:executorch-android",
+          "cpes": [],
+          "purl": "pkg:maven/org.pytorch/executorch-android",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "0.7.0",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00220.7.0\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "github.com/pytorch/executorch",
+          "cpes": [],
+          "purl": "pkg:swift/github.com/pytorch/executorch",
+          "platforms": [],
+          "versionScheme": "swifturl",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "0.7.0",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00220.7.0\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-54951",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/pytorch/executorch/commit/cea9b23aa8ff78aff92829a466da97461cc7930c",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/pypa/advisory-database/tree/main/vulns/executorch/PYSEC-2026-336.yaml",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/pytorch/executorch",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://pypi.org/project/executorch",
+          "tags": []
+        },
+        {
+          "url": "https://www.facebook.com/security/advisories/cve-2025-54951",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-122"
+      ],
+      "publishedAt": "2025-08-08T00:30:26+00:00",
+      "modifiedAt": "2026-10-27T16:45:04.5592352+00:00"
+    }
+  ],
+  "references": []
+}

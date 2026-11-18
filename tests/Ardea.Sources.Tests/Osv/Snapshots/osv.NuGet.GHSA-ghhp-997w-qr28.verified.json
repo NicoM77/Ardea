@@ -1,0 +1,165 @@
+{
+  "kind": "vulnerability",
+  "title": ".NET Core Remote Code Execution Vulnerability",
+  "description": ".NET Core Remote Code Execution Vulnerability This CVE ID is unique from CVE-2021-24112.\n\n### Executive summary\n\nMicrosoft is releasing this security advisory to provide information about a vulnerability in .NET 5.0, .NET Core 3.1, and .NET Core 2.1. This advisory also provides guidance on what developers can do to update their applications to remove this vulnerability.\n\nA remote code execution vulnerability exists in .NET 5 and .NET Core due to how text encoding is performed.\n\n### Discussion\n\nDiscussion for this issue can be found at dotnet/runtime#49377\n\n### Mitigation factors\n\nMicrosoft has not identified any mitigating factors for this vulnerability.\n\n### Affected software\n\nThe vulnerable package is \u0060System.Text.Encodings.Web\u0060 . Upgrading your package and redeploying your app should be sufficient to address this vulnerability.\n\nVulnerable package versions:\n\nAny .NET 5, .NET Core, or .NET Framework based application that uses the System.Text.Encodings.Web package with a vulnerable version listed below.\n\nPackage Name | Vulnerable Versions | Secure Versions\n-|-|-\nSystem.Text.Encodings.Web | 4.0.0 - 4.5.0 | 4.5.1\nSystem.Text.Encodings.Web |  4.6.0-4.7.1 | 4.7.2\nSystem.Text.Encodings.Web | 5.0.0 |  5.0.1\n\n\nPlease validate that each of the .NET versions you are using is in support. Security updates are only provided for supported .NET versions.",
+  "language": "en",
+  "publishedAt": "2021-04-21T19:38:01+00:00",
+  "modifiedAt": "2024-12-07T05:45:57.337833+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-ghhp-997w-qr28"
+        },
+        {
+          "scheme": "OSV",
+          "value": "BIT-dotnet-2021-26701"
+        },
+        {
+          "scheme": "OSV",
+          "value": "BIT-dotnet-sdk-2021-26701"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2021-26701"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": ".NET Core Remote Code Execution Vulnerability",
+      "description": ".NET Core Remote Code Execution Vulnerability This CVE ID is unique from CVE-2021-24112.\n\n### Executive summary\n\nMicrosoft is releasing this security advisory to provide information about a vulnerability in .NET 5.0, .NET Core 3.1, and .NET Core 2.1. This advisory also provides guidance on what developers can do to update their applications to remove this vulnerability.\n\nA remote code execution vulnerability exists in .NET 5 and .NET Core due to how text encoding is performed.\n\n### Discussion\n\nDiscussion for this issue can be found at dotnet/runtime#49377\n\n### Mitigation factors\n\nMicrosoft has not identified any mitigating factors for this vulnerability.\n\n### Affected software\n\nThe vulnerable package is \u0060System.Text.Encodings.Web\u0060 . Upgrading your package and redeploying your app should be sufficient to address this vulnerability.\n\nVulnerable package versions:\n\nAny .NET 5, .NET Core, or .NET Framework based application that uses the System.Text.Encodings.Web package with a vulnerable version listed below.\n\nPackage Name | Vulnerable Versions | Secure Versions\n-|-|-\nSystem.Text.Encodings.Web | 4.0.0 - 4.5.0 | 4.5.1\nSystem.Text.Encodings.Web |  4.6.0-4.7.1 | 4.7.2\nSystem.Text.Encodings.Web | 5.0.0 |  5.0.1\n\n\nPlease validate that each of the .NET versions you are using is in support. Security updates are only provided for supported .NET versions.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "System.Text.Encodings.Web",
+          "cpes": [],
+          "purl": "pkg:nuget/System.Text.Encodings.Web",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "4.0.0",
+              "fixed": "4.5.1",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00224.0.0\u0022},{\u0022fixed\u0022:\u00224.5.1\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "System.Text.Encodings.Web",
+          "cpes": [],
+          "purl": "pkg:nuget/System.Text.Encodings.Web",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "4.6.0",
+              "fixed": "4.7.2",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00224.6.0\u0022},{\u0022fixed\u0022:\u00224.7.2\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "System.Text.Encodings.Web",
+          "cpes": [],
+          "purl": "pkg:nuget/System.Text.Encodings.Web",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "5.0.0",
+              "fixed": "5.0.1",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00225.0.0\u0022},{\u0022fixed\u0022:\u00225.0.1\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2021-26701",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/dotnet/announcements/issues/178",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/S2AZOUKMCHT2WBHR7MYDTYXWOBHZW5P5",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/TW3ZSJTTMZAFKGW7NJWTVVFZUYYU2SJZ",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/UBOSSX7U6BSHV5RI74FCOW4ITJ5RRJR5",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/WA5WQJVHUL5C4XMJTLY3C67R4WP35EF4",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/XPUKFHIGP5YNJRRFWKDJ2XRS4WTFJNNK",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/YLFATXASXW4OV2ZBSRP4G55HJH73QPBP",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/S2AZOUKMCHT2WBHR7MYDTYXWOBHZW5P5",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/TW3ZSJTTMZAFKGW7NJWTVVFZUYYU2SJZ",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/UBOSSX7U6BSHV5RI74FCOW4ITJ5RRJR5",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/WA5WQJVHUL5C4XMJTLY3C67R4WP35EF4",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/XPUKFHIGP5YNJRRFWKDJ2XRS4WTFJNNK",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/YLFATXASXW4OV2ZBSRP4G55HJH73QPBP",
+          "tags": []
+        },
+        {
+          "url": "https://portal.msrc.microsoft.com/en-US/security-guidance/advisory/CVE-2021-26701",
+          "tags": []
+        }
+      ],
+      "weaknesses": [],
+      "publishedAt": "2021-04-21T19:38:01+00:00",
+      "modifiedAt": "2024-12-07T05:45:57.337833+00:00"
+    }
+  ],
+  "references": []
+}

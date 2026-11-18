@@ -1,0 +1,336 @@
+{
+  "kind": "vulnerability",
+  "title": "HTTP Proxy header vulnerability",
+  "description": "PHP through 7.0.8 does not attempt to address RFC 3875 section 4.1.18 namespace conflicts and therefore does not protect applications from the presence of untrusted client data in the HTTP_PROXY environment variable, which might allow remote attackers to redirect an application\u0027s outbound HTTP traffic to an arbitrary proxy server via a crafted Proxy header in an HTTP request, as demonstrated by (1) an application that makes a getenv(\u0027HTTP_PROXY\u0027) call or (2) a CGI configuration of PHP, aka an \u0022httpoxy\u0022 issue.",
+  "language": "en",
+  "publishedAt": "2022-04-07T13:59:22+00:00",
+  "modifiedAt": "2023-11-08T03:58:31.02457+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-m6ch-gg5f-wxx3"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2016-5385"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "HTTP Proxy header vulnerability",
+      "description": "PHP through 7.0.8 does not attempt to address RFC 3875 section 4.1.18 namespace conflicts and therefore does not protect applications from the presence of untrusted client data in the HTTP_PROXY environment variable, which might allow remote attackers to redirect an application\u0027s outbound HTTP traffic to an arbitrary proxy server via a crafted Proxy header in an HTTP request, as demonstrated by (1) an application that makes a getenv(\u0027HTTP_PROXY\u0027) call or (2) a CGI configuration of PHP, aka an \u0022httpoxy\u0022 issue.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "guzzlehttp/guzzle",
+          "cpes": [],
+          "purl": "pkg:composer/guzzlehttp/guzzle",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "6",
+              "fixed": "6.2.1",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00226\u0022},{\u0022fixed\u0022:\u00226.2.1\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "guzzlehttp/guzzle",
+          "cpes": [],
+          "purl": "pkg:composer/guzzlehttp/guzzle",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "4.0.0-rc2",
+              "fixed": "4.2.4",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00224.0.0-rc2\u0022},{\u0022fixed\u0022:\u00224.2.4\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "guzzlehttp/guzzle",
+          "cpes": [],
+          "purl": "pkg:composer/guzzlehttp/guzzle",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "5",
+              "fixed": "5.3.1",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00225\u0022},{\u0022fixed\u0022:\u00225.3.1\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "drupal/core",
+          "cpes": [],
+          "purl": "pkg:composer/drupal/core",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "8.0",
+              "fixed": "8.1.7",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00228.0\u0022},{\u0022fixed\u0022:\u00228.1.7\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "bugsnag/bugsnag-laravel",
+          "cpes": [],
+          "purl": "pkg:composer/bugsnag/bugsnag-laravel",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "2.0.2",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00222.0.2\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "amphp/artax",
+          "cpes": [],
+          "purl": "pkg:composer/amphp/artax",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "1.0.4",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00221.0.4\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "amphp/artax",
+          "cpes": [],
+          "purl": "pkg:composer/amphp/artax",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "2.0.0",
+              "fixed": "2.0.4",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00222.0.0\u0022},{\u0022fixed\u0022:\u00222.0.4\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "padraic/humbug_get_contents",
+          "cpes": [],
+          "purl": "pkg:composer/padraic/humbug_get_contents",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "1.1.2",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00221.1.2\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2016-5385",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/bugsnag/bugsnag-laravel/pull/143",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/bugsnag/bugsnag-laravel/pull/145",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/humbug/file_get_contents/pull/23",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/humbug/file_get_contents/pull/23/commits/848e8c282a863654e76bd958acfb57c81cb739b5",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/amphp/artax/commit/81254742812a5a9adf4b085f543f3f21daedcd97",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/amphp/artax/commit/b60cf493c9e577a3678865f620b1eb61ab3d7ca9",
+          "tags": []
+        },
+        {
+          "url": "https://bugzilla.redhat.com/show_bug.cgi?id=1353794",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/FriendsOfPHP/security-advisories/blob/master/guzzlehttp/guzzle/CVE-2016-5385.yaml",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/bugsnag/bugsnag-laravel/releases/tag/v2.0.2",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/guzzle/guzzle/blob/4.x/CHANGELOG.md#424-2016-07-18",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/guzzle/guzzle/blob/5.3/CHANGELOG.md#531---2016-07-18",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/guzzle/guzzle/blob/master/CHANGELOG.md#622---2016-10-08",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/guzzle/guzzle/releases/tag/6.2.1",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/humbug/file_get_contents/releases/tag/1.1.2",
+          "tags": []
+        },
+        {
+          "url": "https://h20566.www2.hpe.com/hpsc/doc/public/display?docLocale=en_US\u0026docId=emr_na-hpesbhf03770en_us",
+          "tags": []
+        },
+        {
+          "url": "https://h20566.www2.hpe.com/portal/site/hpsc/public/kb/docDisplay?docId=emr_na-c05320149",
+          "tags": []
+        },
+        {
+          "url": "https://h20566.www2.hpe.com/portal/site/hpsc/public/kb/docDisplay?docId=emr_na-c05333297",
+          "tags": []
+        },
+        {
+          "url": "https://h20566.www2.hpe.com/portal/site/hpsc/public/kb/docDisplay?docId=emr_na-c05390722",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/7RMYXAVNYL2MOBJTFATE73TOVOEZYC5R/",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/GXFEIMZPSVGZQQAYIQ7U7DFVX3IBSDLF/",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce%40lists.fedoraproject.org/message/KZOIUYZDBWNDDHC6XTOLZYRMRXZWTJCP/",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/7RMYXAVNYL2MOBJTFATE73TOVOEZYC5R/",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/GXFEIMZPSVGZQQAYIQ7U7DFVX3IBSDLF/",
+          "tags": []
+        },
+        {
+          "url": "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/KZOIUYZDBWNDDHC6XTOLZYRMRXZWTJCP/",
+          "tags": []
+        },
+        {
+          "url": "https://security.gentoo.org/glsa/201611-22",
+          "tags": []
+        },
+        {
+          "url": "https://www.drupal.org/SA-CORE-2016-003",
+          "tags": []
+        },
+        {
+          "url": "http://lists.opensuse.org/opensuse-updates/2016-08/msg00003.html",
+          "tags": []
+        },
+        {
+          "url": "http://rhn.redhat.com/errata/RHSA-2016-1609.html",
+          "tags": []
+        },
+        {
+          "url": "http://rhn.redhat.com/errata/RHSA-2016-1610.html",
+          "tags": []
+        },
+        {
+          "url": "http://rhn.redhat.com/errata/RHSA-2016-1611.html",
+          "tags": []
+        },
+        {
+          "url": "http://rhn.redhat.com/errata/RHSA-2016-1612.html",
+          "tags": []
+        },
+        {
+          "url": "http://rhn.redhat.com/errata/RHSA-2016-1613.html",
+          "tags": []
+        },
+        {
+          "url": "http://www.debian.org/security/2016/dsa-3631",
+          "tags": []
+        },
+        {
+          "url": "http://www.kb.cert.org/vuls/id/797896",
+          "tags": []
+        },
+        {
+          "url": "http://www.oracle.com/technetwork/security-advisory/cpujan2018-3236628.html",
+          "tags": []
+        },
+        {
+          "url": "http://www.oracle.com/technetwork/security-advisory/cpujul2017-3236622.html",
+          "tags": []
+        },
+        {
+          "url": "http://www.oracle.com/technetwork/topics/security/linuxbulletinjul2016-3090544.html",
+          "tags": []
+        },
+        {
+          "url": "http://www.securityfocus.com/bid/91821",
+          "tags": []
+        },
+        {
+          "url": "http://www.securitytracker.com/id/1036335",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-601"
+      ],
+      "publishedAt": "2022-04-07T13:59:22+00:00",
+      "modifiedAt": "2023-11-08T03:58:31.02457+00:00"
+    }
+  ],
+  "references": []
+}

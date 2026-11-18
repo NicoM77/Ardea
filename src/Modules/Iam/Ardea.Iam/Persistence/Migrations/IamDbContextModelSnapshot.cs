@@ -122,6 +122,177 @@ namespace Ardea.Iam.Persistence.Migrations
                     b.ToTable("user", "iam");
                 });
 
+            modelBuilder.Entity("Ardea.Iam.Domain.Invitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("email");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("InvitedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("invited_by");
+
+                    b.Property<string>("NormalizedEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_email");
+
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("role");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("token_hash");
+
+                    b.HasKey("Id")
+                        .HasName("pk_invitation");
+
+                    b.HasIndex("InvitedBy")
+                        .HasDatabaseName("ix_invitation_invited_by");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ux_invitation_token");
+
+                    b.HasIndex("OrganizationId", "NormalizedEmail")
+                        .IsUnique()
+                        .HasDatabaseName("ux_invitation_org_email");
+
+                    b.ToTable("invitation", "iam", t =>
+                        {
+                            t.HasCheckConstraint("ck_invitation_role", "role IN ('admin', 'member', 'viewer')");
+                        });
+                });
+
+            modelBuilder.Entity("Ardea.Iam.Domain.Membership", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("role");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_membership");
+
+                    b.HasIndex("OrganizationId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_membership_owner")
+                        .HasFilter("role = 'owner'");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_membership_user");
+
+                    b.HasIndex("OrganizationId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_membership_org_user");
+
+                    b.ToTable("membership", "iam", t =>
+                        {
+                            t.HasCheckConstraint("ck_membership_role", "role IN ('owner', 'admin', 'member', 'viewer')");
+                        });
+                });
+
+            modelBuilder.Entity("Ardea.Iam.Domain.Organization", b =>
+                {
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Locale")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("locale");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Settings")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("settings");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("slug");
+
+                    b.Property<string>("TimeZone")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("time_zone");
+
+                    b.HasKey("OrganizationId")
+                        .HasName("pk_organization");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ux_organization_slug");
+
+                    b.ToTable("organization", "iam", t =>
+                        {
+                            t.HasCheckConstraint("ck_organization_slug", "slug ~ '^[a-z0-9]([a-z0-9-]{0,48}[a-z0-9])?$'");
+                        });
+                });
+
             modelBuilder.Entity("Ardea.Iam.Domain.UserSession", b =>
                 {
                     b.Property<Guid>("Id")
@@ -251,6 +422,40 @@ namespace Ardea.Iam.Persistence.Migrations
                         .HasName("pk_user_token");
 
                     b.ToTable("user_token", "iam");
+                });
+
+            modelBuilder.Entity("Ardea.Iam.Domain.Invitation", b =>
+                {
+                    b.HasOne("Ardea.Iam.Domain.ArdeaUser", null)
+                        .WithMany()
+                        .HasForeignKey("InvitedBy")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_invitation_user_invited_by");
+
+                    b.HasOne("Ardea.Iam.Domain.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_invitation_organization_organization_id");
+                });
+
+            modelBuilder.Entity("Ardea.Iam.Domain.Membership", b =>
+                {
+                    b.HasOne("Ardea.Iam.Domain.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_membership_organization_organization_id");
+
+                    b.HasOne("Ardea.Iam.Domain.ArdeaUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_membership_user_user_id");
                 });
 
             modelBuilder.Entity("Ardea.Iam.Domain.UserSession", b =>

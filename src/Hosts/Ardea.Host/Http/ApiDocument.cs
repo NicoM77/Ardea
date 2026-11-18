@@ -28,6 +28,29 @@ internal static class ApiDocument
             return Task.CompletedTask;
         });
 
+        // Route parameters a group filter reads, not the handler (the organisation of /orgs/{orgId}),
+        // are still part of the path and must be declared for the generated client.
+        options.AddOperationTransformer((operation, context, _) =>
+        {
+            var route = context.Description.RelativePath ?? string.Empty;
+            foreach (var name in RouteParameters(route))
+            {
+                operation.Parameters ??= [];
+                if (!operation.Parameters.Any(p => p.In == ParameterLocation.Path && string.Equals(p.Name, name, StringComparison.Ordinal)))
+                {
+                    operation.Parameters.Insert(0, new OpenApiParameter
+                    {
+                        Name = name,
+                        In = ParameterLocation.Path,
+                        Required = true,
+                        Schema = new OpenApiSchema { Type = JsonSchemaType.String, Format = "uuid" },
+                    });
+                }
+            }
+
+            return Task.CompletedTask;
+        });
+
         // Every problem carries the code the web app maps to a message.
         options.AddSchemaTransformer((schema, context, _) =>
         {
@@ -41,6 +64,11 @@ internal static class ApiDocument
             return Task.CompletedTask;
         });
     }
+
+    /// <summary>The names of the <c>{…}</c> segments of a route template that are UUIDs, e.g. <c>orgId</c>.</summary>
+    private static IEnumerable<string> RouteParameters(string route) =>
+        System.Text.RegularExpressions.Regex.Matches(route, @"\{(?<name>orgId)(:[^}]*)?\}", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromMilliseconds(100))
+            .Select(m => m.Groups["name"].Value);
 
     /// <summary>Stable formatting for the committed file.</summary>
     public static string Normalize(string json) =>

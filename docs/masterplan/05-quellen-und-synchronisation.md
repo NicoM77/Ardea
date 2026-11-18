@@ -211,7 +211,7 @@ Zusammen 54 Quellen, davon 13 allein über den CSAF-Leser.
 | CISA-Feeds und CSAF bei cisa.gov | 403 für automatisierte Clients | GitHub-Repositorys von CISA |
 | Citrix | kein maschinenlesbarer Feed mehr | CVE-Records des Herstellers, KEV, Stellen wie CERT-Bund |
 | SAP, Apple, Android-Bulletins, PostgreSQL, Tomcat | nur HTML | über CVE-Records und OSV abgedeckt; kein Auslesen von Webseiten im Kern |
-| Broadcom/VMware | nur eine undokumentierte Portal-Schnittstelle | spät und mit Vertragstest, oder gar nicht |
+| Broadcom/VMware | nur eine undokumentierte Portal-Schnittstelle | spät, oder gar nicht |
 | WPScan, Patchstack | restriktive Bedingungen | nicht vorgesehen |
 | inTheWild | nicht erreichbar | nicht vorgesehen |
 | NCSC UK, ACSC | fast keine Hinweise mit CVE | erst, wenn Warnungen ohne Kennung breiter gefragt sind |
@@ -233,6 +233,6 @@ Zusammen 54 Quellen, davon 13 allein über den CSAF-Leser.
 3. Abgleichverfahren messen: Validatoren, Fenster, Grösse, Limits.
 4. Abbildung auf die Beobachtung schreiben; das Ergebnis der Testdaten als Snapshot prüfen.
 5. Lizenz, Namensnennung und Vorgabeintervall eintragen.
-6. Vertragstest, der im Betrieb täglich prüft, ob die Struktur noch stimmt.
+6. Grenzwerte für den Zustand `degraded`: Anteil Quarantäne und leere Abrufe. Ändert die Quelle ihre Struktur, merkt es der Betrieb, nicht ein eigener Testlauf.
 
 Fertig ist eine Quelle, wenn ein zweiter Lauf über dieselben Daten nichts ändert, ein simulierter Ausfall aufgeholt wird und die Anleitung in `docs/guides/` den Eintrag enthält.

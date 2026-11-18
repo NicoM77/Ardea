@@ -64,7 +64,7 @@ Anbieter hinter derselben Schnittstelle, alle geprüft:
 
 Im MVP werden drei davon angeboten: der OpenAI-kompatible Endpunkt, Ollama und Anthropic. Azure OpenAI und Gemini folgen ohne Änderung an den Modulen (Entscheidung E6).
 
-Für den lokalen Betrieb kommen nach heutigem Stand Modelle der 8- bis 12-Milliarden-Klasse in Frage, etwa `qwen3.5:9b`, `granite4.1:8b` oder `gemma4:12b`, bei grob 6 bis 10 GB für das Modell selbst, also 8 bis 16 GB Arbeitsspeicher auf dem Modell-Server (Schätzung, nicht gemessen). Kleinere Modelle liefern gültiges JSON, aber schwache Extraktion. Einen unabhängigen Vergleich für Sicherheitstexte gibt es nicht; die Wahl muss am Referenzsatz aus Kapitel 7.9 gemessen werden. Modelle mit Denkmodus brauchen diesen abgeschaltet, sonst landet die Antwort im falschen Kanal.
+Für den lokalen Betrieb kommen nach heutigem Stand Modelle der 8- bis 12-Milliarden-Klasse in Frage, etwa `qwen3.5:9b`, `granite4.1:8b` oder `gemma4:12b`, bei grob 6 bis 10 GB für das Modell selbst, also 8 bis 16 GB Arbeitsspeicher auf dem Modell-Server (Schätzung, nicht gemessen). Kleinere Modelle liefern gültiges JSON, aber schwache Extraktion. Einen unabhängigen Vergleich für Sicherheitstexte gibt es nicht; die Wahl trifft der Betreiber; die Korrekturquote im Betrieb zeigt, wie gut sie war (Kapitel 7.9). Modelle mit Denkmodus brauchen diesen abgeschaltet, sonst landet die Antwort im falschen Kanal.
 
 Schema-Erzwingung garantiert die Form, nicht den Inhalt. Die Prüfung der Verweise und die Untergrenzen des Regelwerks bleiben in jedem Fall bestehen.
 
@@ -143,10 +143,10 @@ Diese Punkte beeinflussen Entscheidungen und werden in Phase 0 durch kleine Vers
 
 | Punkt | Betrifft | Klärung |
 |---|---|---|
-| Row-Level Security mit EF Core, Npgsql und Verbindungspool: Sitzungs- oder Transaktionsbereich, Rücksetzen im Pool, gemeinsame Transaktion über mehrere `DbContext` | Kapitel 9.2 | Versuch mit Lasttest und parallelem Mandantenwechsel; bis dahin gilt Row-Level Security als Härtung, nicht als Fundament |
+| Row-Level Security mit EF Core, Npgsql und Verbindungspool: Sitzungs- oder Transaktionsbereich, Rücksetzen im Pool, gemeinsame Transaktion über mehrere `DbContext` | Kapitel 9.2 | Versuch mit parallelem Mandantenwechsel; bis dahin gilt Row-Level Security als Härtung, nicht als Fundament |
 | Zeitzonendaten und ICU im Image `chiseled-extra` | Zeitpläne mit Zeitzone | Rauchtest im Zielimage |
 | Schema-Erzwingung über OpenAI-kompatible Endpunkte bei vLLM und llama.cpp | Kapitel 7 | Test je Anbieter; Rückfall ist Prüfung mit einem Wiederholungsversuch |
-| Qualität lokaler Modelle für Sicherheitstexte | Kapitel 7.9 | Messung am Referenzsatz |
+| Qualität lokaler Modelle für Sicherheitstexte | Kapitel 7.9 | Korrekturquote im Betrieb; kein eigener Messlauf |
 | CvssSuite für CVSS 4.0 | Schweregrad | Testvektoren von FIRST; sonst eigener Rechner |
 | Declarative Web Push ausserhalb von Safari; iOS-Web-Apps in der EU | Kapitel 11 | Nachricht in beiden Formen senden, Service Worker als Rückfall |
 | Lizenzangaben einzelner Pakete, die NuGet nicht ausweist (OllamaSharp, CodeHollow.FeedReader) | Lizenzabgleich | Prüfung am Repository beim ersten Einbinden |

@@ -125,7 +125,7 @@ Die fünfte Zeile ist eine bewusste Auslegung: Die meisten Herausgeber nennen nu
 |---|---|
 | Referenzdaten je Adapter | Echte Rohdatensätze als Testfälle im Repository; jede Parser-Änderung zeigt ihr Diff. |
 | Vollständigkeitsprüfung | Für Quellen mit Änderungsprotokoll (CVE `deltaLog`) wird täglich geprüft, ob alle gemeldeten IDs angekommen sind. |
-| Messgrössen je Quelle | Verzögerung zwischen Veröffentlichung und Eintreffen, Quarantäne-Anteil, Anteil unbekannter Produkte, Fehlerserie. Sichtbar in der Oberfläche und als Metriken. |
+| Messgrössen je Quelle | Verzögerung zwischen Veröffentlichung und Eintreffen, Quarantäne-Anteil, Anteil unbekannter Produkte, Fehlerserie. Sichtbar in der Oberfläche und als Metriken. Steigt die Quarantäne einer Quelle über 5 % eines Laufs oder liefert sie drei Läufe nacheinander nichts, wo sonst etwas kommt, wechselt sie auf `degraded`. |
 | Kuratierte Korrekturen | Alias- und Produktzuordnungen als versionierte Daten im Repository; sie überstimmen Quellenangaben und sind nachvollziehbar. |
 | Neuberechnung | Parser, Vorrangregeln und Katalog lassen sich ändern und rückwirkend anwenden; der Befehl dazu gehört zum Lieferumfang. |
 | Prüfliste | Quarantäne-Fälle und widersprüchliche Angaben sammeln sich an einem Ort für den Instanz-Administrator. Im MVP als einfache Liste auf der Quellenseite. |

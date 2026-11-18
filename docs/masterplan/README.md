@@ -34,7 +34,7 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | Alarmierung | Je Massnahme, Empfänger und Kanal ein Benachrichtigungsstand; erneut nur bei wesentlicher Änderung |
 | Oberfläche | Angular 22 mit eigener Komponentenbibliothek; Richtung «Gefahrenbulletin»: Stufe als Ziffer und Wort, die drei Antworten zuerst |
 | Betrieb | `docker compose up -d`, automatische Migrationen mit Sicherung davor, Updates per `pull` und `up` |
-| Tests | Jede Pipeline läuft in 15 bis höchstens 25 Minuten: viele Unit-Tests, sechs Ende-zu-Ende-Abläufe, Langläufer ausserhalb der Pipeline |
+| Tests | Jede Pipeline läuft in 15 bis höchstens 25 Minuten: viele Unit-Tests, sechs Ende-zu-Ende-Abläufe; keine Langläufer, keine zeitgesteuerten Tests |
 
 **Umfang.** Sieben Phasen bis Version 1.0, geschätzt 28 bis 37 Wochen für eine erfahrene Person mit KI-Unterstützung. Nach Phase 3 liegt ein nutzbares System ohne KI und ohne Benachrichtigung vor.
 

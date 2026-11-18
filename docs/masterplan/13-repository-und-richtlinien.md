@@ -114,18 +114,13 @@ Was ein Test leisten muss:
 
 Ein neuer Ende-zu-Ende-Test braucht eine Begründung im Pull Request und ersetzt im Zweifel einen bestehenden.
 
-**Nicht in der Pipeline,** weil es lange dauert, ein Netz oder einen Menschen braucht:
+**Keine Langläufer, keine zeitgesteuerten Tests.** CSH Alert ist ein schlankes Projekt. Getestet wird ausschliesslich in der Pipeline eines Pull Requests oder des Hauptzweigs, innerhalb des Zeitbudgets. Es gibt keine Lasttests, keine Dauerläufe über Tage, keine nächtlichen oder täglichen Testläufe und keine Testläufe gegen echte Quellen oder echte Sprachmodelle. Was sich nicht als schneller Test formulieren lässt, wird nicht als Test geführt:
 
-| Prüfung | Wann |
-|---|---|
-| Lasttest, Dauerbetrieb über sieben Tage, Messung des Speicherbedarfs | einmal, zur Abnahme der Phase |
-| Sicherung, Wiederherstellung und Update üben | vor jedem Release mit Migration |
-| Bewertungslauf mit einem Sprachmodell | von Hand, bei Wechsel von Modell oder Prompt |
-| Vertragstest der Adapter gegen die echten Quellen | zeitgesteuert einmal täglich, wenige Minuten; meldet, blockiert aber keinen Pull Request |
-| Web Push und Installation als PWA in Firefox, Safari und auf Android und iOS | von Hand, vor einem Release, das diese Teile berührt |
-| Zugänglichkeit mit Tastatur und Screenreader | von Hand, vor jeder Hauptversion |
+- Abnahmekriterien zu Dauer und Menge (etwa die Erstbefüllung) werden in der Entwicklung einmal beobachtet und festgehalten, nicht wiederholt geprüft.
+- Strukturänderungen einer Quelle zeigt der Betrieb selbst: steigende Quarantäne oder leere Abrufe setzen die Quelle auf `degraded` (Kapitel 6.8).
+- Die Güte eines Sprachmodells zeigt die Quote der Korrekturen im Betrieb (Kapitel 7.9).
 
-Abnahmekriterien aus Kapitel 14 werden einmal je Phase nachgewiesen. Dauerhaft in die Pipeline kommt nur, was sich als schneller Test formulieren lässt.
+Von Hand bleiben vor einem Release genau zwei kurze Durchgänge: die Kernabläufe mit Tastatur und Screenreader, und Web Push an einer installierten Web-App auf iOS, das sich nicht automatisieren lässt.
 
 ## 13.7 Automatisierung
 
@@ -146,7 +141,7 @@ Vorabstände werden ab Phase 1 als `0.x` markiert, damit sich Updates üben lass
 
 ## 13.8 Fertig heisst
 
-- Abnahmekriterien der Aufgabe erfüllt und belegt: durch einen schnellen Test, wo das möglich ist, sonst durch einen dokumentierten einmaligen Nachweis
+- Abnahmekriterien der Aufgabe erfüllt und belegt: durch einen schnellen Test, wo das möglich ist, sonst durch eine einmalige Beobachtung in der Entwicklung
 - Pipeline weiterhin innerhalb ihrer Obergrenze
 - kein neuer Befund in Lint, Analyzer, Lizenz- und Zugänglichkeitsprüfung
 - Migration vorwärts verträglich, Stammdaten aktualisiert

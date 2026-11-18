@@ -140,7 +140,7 @@ Das System warnt selbst, wenn es nicht mehr zuverlässig arbeitet: Eine Quelle, 
 
 | Einsatz | Empfehlung |
 |---|---|
-| Kleine Instanz, bis etwa 20 Organisationen, ohne lokale KI | 2 vCPU, 4 GB RAM, 20 GB Speicher; das ist auch die Referenzmaschine der Abnahmekriterien (Schätzung; in Phase 6 gemessen) |
+| Kleine Instanz, bis etwa 20 Organisationen, ohne lokale KI | 2 vCPU, 4 GB RAM, 20 GB Speicher; das ist auch die Referenzmaschine der Abnahmekriterien (Schätzung; an der eigenen Instanz des Projekts beobachtet) |
 | Mit lokalem Sprachmodell | zusätzlich ein Modell-Server mit 8 bis 16 GB Arbeitsspeicher (Modell von grob 6 bis 10 GB plus Kontext) für ein Modell der 8- bis 12-Milliarden-Klasse; getrennt betrieben, per URL angebunden |
 | Gesamter CVE-Bestand | zusätzlich rund 10 GB Speicher |
 

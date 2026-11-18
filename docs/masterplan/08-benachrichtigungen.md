@@ -139,5 +139,5 @@ Fristen sind im MVP sichtbar, lösen aber noch nichts aus: Jede Massnahme trägt
 - Eine Warnung ohne Kennung erscheint bei jeder Organisation einmal In-App und einmal in der nächsten Sammelnachricht.
 - Sammelnachricht: Sie kommt zur eingestellten Zeit in der Zeitzone der Organisation, enthält alles seit der letzten und kommt auch leer, wenn die Regel das vorsieht.
 - E-Mail: Ein nicht erreichbarer SMTP-Server verzögert die Zustellung, verliert sie aber nicht.
-- Web Push: Abo anlegen und entfernen funktioniert in Chrome, Firefox und Safari am Desktop sowie in Chrome auf Android; ein abgelaufenes Abo verschwindet nach dem ersten Fehlversuch. iOS wird von Hand an einer installierten Web-App geprüft.
+- Web Push: Abo anlegen und entfernen funktioniert im automatischen Test in Chromium; ein abgelaufenes Abo verschwindet nach dem ersten Fehlversuch. iOS wird von Hand an einer installierten Web-App geprüft.
 - Webhook: Ein Empfänger kann die Echtheit jeder Nachricht mit dem gemeinsamen Geheimnis prüfen; ein Ziel im privaten Netz wird ohne Freigabe abgelehnt.

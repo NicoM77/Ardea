@@ -216,7 +216,7 @@ Die Extraktion von Produkten aus Freitextquellen durch ein Modell (Kapitel 6.5) 
 - **Messgrössen:** *Übersehen* ist ein als betroffen beschriftetes Paar, das Stufe 1 erhält. *Unbegründet* ist ein als nicht betroffen beschriftetes Paar mit Stufe 3 oder höher.
 - **Schwellen:** kein übersehenes Paar unter den exakten Treffern; höchstens 2 % übersehene insgesamt; höchstens 20 % unbegründete. Der Build scheitert sonst.
 - **Kalibrierung:** Die Gewichte aus 7.6 werden am Referenzsatz geprüft und bei Bedarf angepasst, bevor Phase 3 abgenommen wird. Gemessen wird auch der Anteil der Paare mit Ergebnis *unbekannt*; er bestimmt, wie viel Arbeit beim Modell und beim Menschen landet.
-- **Regressionslauf:** Jede Änderung an Regelwerk oder Katalog läuft in der Pipeline gegen den Referenzsatz, nur mit Regeln und in unter einer Minute. Änderungen an Prompt oder Modell laufen von Hand dagegen: Ein Lauf mit Sprachmodell passt nicht in das Zeitbudget der Pipeline (Kapitel 13.6).
+- **Regressionslauf:** Jede Änderung an Regelwerk oder Katalog läuft in der Pipeline gegen den Referenzsatz, nur mit Regeln und in unter einer Minute. Ein Lauf mit echtem Sprachmodell gibt es nicht, weder in der Pipeline noch daneben (Kapitel 13.6). Die Einbindung des Modells wird mit aufgezeichneten Antworten getestet; seine Güte zeigt die Korrekturquote im Betrieb.
 - **Rückmeldung im Betrieb:** «Einschätzung korrigieren» erfasst falsches Urteil oder falsche Stufe mit Begründung. Die Quote der Korrekturen je Modell und Prompt-Version ist eine Kennzahl in der Administration.
 
 ## 7.10 Aufwand

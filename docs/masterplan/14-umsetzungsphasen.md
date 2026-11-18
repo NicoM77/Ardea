@@ -1,6 +1,6 @@
 # 14 · Umsetzungsphasen
 
-Sieben Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen lässt. Enthalten ist nur, was in Kapitel 1.5 in der Spalte MVP steht. Abnahmekriterien werden einmal je Phase nachgewiesen; dauerhaft in die Pipeline kommt nur, was als schneller Test läuft, denn jede Pipeline bleibt unter 25 Minuten (Kapitel 13.6 und 13.7).
+Sieben Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen lässt. Enthalten ist nur, was in Kapitel 1.5 in der Spalte MVP steht. Abnahmekriterien werden als schnelle Tests in der Pipeline geprüft; wo das nicht geht, einmal in der Entwicklung beobachtet. Langläufer und zeitgesteuerte Tests gibt es nicht, und jede Pipeline bleibt unter 25 Minuten (Kapitel 13.6 und 13.7).
 
 ## 14.1 Aufwand
 
@@ -73,16 +73,16 @@ Abnahme:
 | 1.6 | Zusammenführung über die CVE-ID mit festen Vorrangregeln und Herkunft je Feld | 1.5 |
 | 1.7 | Änderungserkennung mit beiden Fingerabdrücken; Änderungshistorie; Folgejob bei wesentlicher Änderung | 1.6 |
 | 1.8 | Signale: KEV und EPSS in `entry_signal`, Klassenwechsel mit Schwelle | 1.6 |
-| 1.9 | Adapter NCSC mit zwei Lesern: öffentliche Schnittstelle des Cyber Security Hub (Liste, Einzelbeitrag, Änderungsverlauf) und Warnungen der Website des BACS; Titel, Kurztext, Verweis, CVE-IDs aus Titel und Text; Vertragstest im Betrieb | 1.6 |
+| 1.9 | Adapter NCSC mit zwei Lesern: öffentliche Schnittstelle des Cyber Security Hub (Liste, Einzelbeitrag, Änderungsverlauf) und Warnungen der Website des BACS; Titel, Kurztext, Verweis, CVE-IDs aus Titel und Text; Zustand `degraded` bei auffälligen Abrufen | 1.6 |
 | 1.10 | API für Einträge; Seiten «Entries» und «Sources» mit Quarantäne-Liste und Kennzahlen je Quelle; Mockup der Quellenseite | 1.7, 0.11 |
 | 1.11 | Befehle zum Neu-Normalisieren und Neuberechnen; Vollständigkeitsprüfung gegen das Änderungsprotokoll | 1.7 |
 
 Abnahme:
 
-- Erstbefüllung mit 180 Tagen Rückblick in unter 60 Minuten auf der Referenzmaschine (2 vCPU, 4 GB).
+- Erstbefüllung mit 180 Tagen Rückblick läuft ohne Handarbeit durch; ihre Dauer auf der Referenzmaschine (2 vCPU, 4 GB) wird einmal beobachtet und dokumentiert, Ziel unter 60 Minuten.
 - Ein neuer oder geänderter CVE-Record ist spätestens 90 Minuten nach Veröffentlichung im System.
 - Dasselbe Delta zweimal verarbeitet ändert nichts: keine neue Revision, kein Folgejob.
-- Sieben Tage Dauerbetrieb ohne fehlende ID gegenüber dem Änderungsprotokoll der Quelle.
+- Gegen ein aufgezeichnetes Änderungsprotokoll mit Lücken und Doppellieferungen fehlt nach dem Abgleich keine ID (schneller Test).
 - Eine CVE, die in CVE Program, KEV und EPSS vorkommt, ist ein Eintrag; jedes Feld nennt seine Quelle. Nennt ein Advisory des NCSC die CVE, erscheint es als weiterer Beleg und setzt das Merkmal «Warnung einer nationalen Stelle». Wird die CVE erst nachträglich in ein Advisory eingetragen, geschieht dasselbe beim nächsten Abruf.
 - Quarantäne-Anteil für CVE Program unter 0,5 %.
 - Ein simulierter Ausfall einer Quelle über 48 Stunden wird ohne Handarbeit und ohne Lücke aufgeholt. Der Weg für Pausen über 30 Tage (Gesamtarchiv) hat einen eigenen Test mit einem verkleinerten Archiv.
@@ -148,7 +148,7 @@ Abnahme:
 | 4.5 | Urteil des Modells als Faktor nur bei unbekannter Version; «nicht betroffen» als Vorschlag zum Bestätigen | 4.2, 3.4 |
 | 4.6 | Grenzen: Parallelität, Kontingente, Zeitlimit; Messwerte | 4.1 |
 | 4.7 | «Einschätzung korrigieren» mit Neubewertung | 4.2, 3.10 |
-| 4.8 | Bewertungslauf je Modell; dokumentierte Ausgangswerte für mindestens ein lokales Modell | 4.2, 3.7 |
+| 4.8 | Tests der Einbindung mit aufgezeichneten Antworten des Modells, auch ungültigen und manipulierten; Empfehlung für ein lokales Modell in der Anleitung | 4.2 |
 
 Abnahme:
 
@@ -157,7 +157,6 @@ Abnahme:
 - Ein Test, der ausgehende Anfragen mitliest, findet darin keine Komponenten ausserhalb der Treffer und keine Projektnamen.
 - Eine Organisation mit der Richtlinie «nur lokal» erzeugt keinen Aufruf an einen nicht lokalen Anbieter, auch nicht bei Ausfall des lokalen.
 - Die Daten des Spikes (eine Woche, acht Massnahmen) lösen höchstens 40 Aufrufe aus.
-- Für das dokumentierte lokale Modell liegen Messwerte am Referenzsatz vor.
 
 ## Phase 5 · Benachrichtigungen
 
@@ -183,8 +182,8 @@ Keine neuen Funktionen für Benutzer. Hinzu kommen nur Werkzeuge für den Betrie
 | 6.1 | Sicherheitsdurchgang entlang der Bedrohungstabelle aus Kapitel 9.7; Header, Ratenbegrenzung, Tests gegen interne Ziele und eingeschleuste Inhalte |
 | 6.2 | Unabhängige Sicherheitsprüfung durch eine Person ausserhalb der Entwicklung, mindestens für Anmeldung, Mandantentrennung und ausgehende Verbindungen |
 | 6.3 | Manueller Zugänglichkeitsdurchgang der Kernabläufe mit Tastatur und Screenreader |
-| 6.4 | Lasttest: Listen und Suche mit dem gesamten CVE-Bestand; Abruf unter Spitzenlast (2 100 neue Records an einem Tag, knapp über der gemessenen Spitze); Messung des Speicherbedarfs |
-| 6.5 | Sicherung und Wiederherstellung geübt; Update von einem Vorabstand auf 1.0 geübt, einschliesslich Rückweg über den Dump |
+| 6.4 | Indizes für Listen und Suche anhand der Abfragepläne geprüft; Speicherbedarf und Antwortzeiten an der eigenen Instanz des Projekts (6.8) beobachtet, ohne eigenen Lasttest |
+| 6.5 | Ein schneller Integrationstest spielt einen kleinen Dump des Vorabstands ein, migriert auf 1.0 und stellt wieder her |
 | 6.6 | Wartungsbefehle: Zugang wiederherstellen, Gesamtbestand einspielen, Organisation exportieren und löschen; Warnungen des Systems über sich selbst; Kennzahlen des Betriebs in der Administration |
 | 6.7 | Dokumentation: Installation, Konfiguration, Betrieb, Update, «Eine Quelle hinzufügen»; `SECURITY.md` mit Meldeweg und Hinweis, wie Betreiber von Sicherheitsupdates des Projekts erfahren |
 | 6.8 | SBOM, Lizenzdatei, Images für beide Architekturen; eigene Instanz des Projekts mit dem eigenen Technologieprofil |

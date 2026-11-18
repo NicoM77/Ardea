@@ -119,7 +119,10 @@ export class SignInPage {
           } catch (error) {
             this.problem.set(
               problemMessageKey(error, {
-                codes: { locked_out: 'auth.signIn.errors.lockedOut' },
+                codes: {
+                  invalid_credentials: 'auth.signIn.errors.invalid',
+                  locked_out: 'auth.signIn.errors.lockedOut',
+                },
                 statuses: { 400: 'auth.signIn.errors.invalid', 401: 'auth.signIn.errors.invalid' },
                 fallback: 'auth.signIn.errors.invalid',
               }),

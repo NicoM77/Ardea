@@ -5,7 +5,12 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiField, UiInput, UiNotice, UiPasswordToggle } from 'ui';
 import { AuthApi } from '../../core/api/auth-api';
 import { problemMessageKey } from '../../core/api/problem';
-import { fieldErrorKey, NEW_PASSWORD_ERRORS, newPasswordRules } from './auth-forms';
+import {
+  fieldErrorKey,
+  NEW_PASSWORD_ERRORS,
+  newPasswordRules,
+  weakPasswordError,
+} from './auth-forms';
 import { focusFirstInvalid } from './focus-invalid';
 
 /** Choosing a new password from the emailed link (`/reset-password?email=...&token=...`). */
@@ -106,6 +111,11 @@ export class ResetPasswordPage {
           });
           await this.router.navigate(['/sign-in'], { queryParams: { notice: 'passwordChanged' } });
         } catch (error) {
+          const weak = weakPasswordError(error, this.reset.newPassword);
+          if (weak) {
+            focusFirstInvalid(this.host);
+            return weak;
+          }
           const key = problemMessageKey(error, {
             codes: { invalid_token: 'auth.reset.errors.linkInvalid' },
             statuses: { 400: 'auth.reset.errors.linkInvalid' },
@@ -114,6 +124,7 @@ export class ResetPasswordPage {
           this.linkExpired.set(key === 'auth.reset.errors.linkInvalid');
           this.problem.set(key);
         }
+        return undefined;
       },
       onInvalid: () => focusFirstInvalid(this.host),
     },

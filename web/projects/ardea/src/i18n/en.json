@@ -125,7 +125,8 @@
         "hint": "At least 12 characters. A few words in a row are easy to remember.",
         "required": "Choose a password.",
         "tooShort": "Use at least 12 characters.",
-        "tooLong": "Use at most 256 characters."
+        "tooLong": "Use at most 256 characters.",
+        "weak": "This password is too easy to guess. Choose a longer one, or a few unrelated words."
       }
     },
     "signIn": {

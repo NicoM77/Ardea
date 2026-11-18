@@ -14,6 +14,7 @@ import {
   NAME_ERRORS,
   NEW_PASSWORD_ERRORS,
   newPasswordRules,
+  weakPasswordError,
 } from './auth-forms';
 import { focusFirstInvalid } from './focus-invalid';
 
@@ -132,6 +133,11 @@ export class RegisterPage {
               await this.router.navigate(['/sign-in'], { queryParams: { notice: 'registered' } });
             }
           } catch (error) {
+            const weak = weakPasswordError(error, this.register.password);
+            if (weak) {
+              focusFirstInvalid(this.host);
+              return weak;
+            }
             this.problem.set(
               problemMessageKey(error, {
                 codes: {
@@ -147,6 +153,7 @@ export class RegisterPage {
               }),
             );
           }
+          return undefined;
         },
         onInvalid: () => focusFirstInvalid(this.host),
       },

@@ -14,6 +14,7 @@ import {
   NAME_ERRORS,
   NEW_PASSWORD_ERRORS,
   newPasswordRules,
+  weakPasswordError,
 } from './auth-forms';
 import { focusFirstInvalid } from './focus-invalid';
 
@@ -128,6 +129,11 @@ export class SetupPage {
             await this.session.refresh();
             await this.router.navigateByUrl('/');
           } catch (error) {
+            const weak = weakPasswordError(error, this.setup.password);
+            if (weak) {
+              focusFirstInvalid(this.host);
+              return weak;
+            }
             const key = problemMessageKey(error, {
               codes: {
                 invalid_setup_token: 'auth.setup.errors.tokenInvalid',
@@ -143,10 +149,11 @@ export class SetupPage {
             if (key === 'auth.setup.errors.completed') {
               await this.session.refresh();
               await this.router.navigate(['/sign-in']);
-              return;
+              return undefined;
             }
             this.problem.set(key);
           }
+          return undefined;
         },
         onInvalid: () => focusFirstInvalid(this.host),
       },

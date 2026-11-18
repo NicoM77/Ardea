@@ -1,5 +1,6 @@
 import { email, maxLength, minLength, required, SchemaPath } from '@angular/forms/signals';
-import type { FieldTree } from '@angular/forms/signals';
+import type { FieldTree, TreeValidationResult } from '@angular/forms/signals';
+import { problemOf } from '../../core/api/problem';
 
 /** Master plan 9: at least 12 characters; length is the rule, not character classes. */
 export const PASSWORD_MIN_LENGTH = 12;
@@ -27,7 +28,22 @@ export const NEW_PASSWORD_ERRORS: ErrorKeys = {
   required: 'auth.fields.newPassword.required',
   minLength: 'auth.fields.newPassword.tooShort',
   maxLength: 'auth.fields.newPassword.tooLong',
+  weakPassword: 'auth.fields.newPassword.weak',
 };
+
+/**
+ * The API rejects a password the client cannot judge (a known or guessable one) with the problem
+ * code `weak_password`. That answer belongs to the password field, not to the form, so it comes
+ * back as a submission error on the field and shows like any other error there.
+ */
+export function weakPasswordError(
+  error: unknown,
+  password: FieldTree<string>,
+): TreeValidationResult | null {
+  return problemOf(error)?.code === 'weak_password'
+    ? [{ kind: 'weakPassword', fieldTree: password }]
+    : null;
+}
 
 export function emailRules(path: SchemaPath<string>): void {
   required(path);

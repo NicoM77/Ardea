@@ -5,6 +5,7 @@ Der Masterplan ist seit dem 18.11.2026 freigegeben; damit sind alle Einträge **
 | Datei | Inhalt |
 |---|---|
 | [0028](0028-runtime-image-and-pre-migration-dump.md) | Runtime image and dump before migration (experiment 0.7); confirms 002 and 024 |
+| [0029](0029-row-level-security-as-hardening.md) | Row-level security as hardening (experiment 0.6); refines 012 and 023 |
 
 | Nr. | Entscheidung | Wichtigste verworfene Alternative | Kapitel | Status |
 |---|---|---|---|---|
@@ -19,7 +20,7 @@ Der Masterplan ist seit dem 18.11.2026 freigegeben; damit sind alle Einträge **
 | 009 | Microsoft.Extensions.AI als einzige Abstraktion; Anbieter per Konfiguration | Semantic Kernel, direkte Anbindung | 2.3, 7.8 | angenommen |
 | 010 | Matching nur über strukturierte Felder (Vendor, Produkt, CPE, Paket); Freitext zählt nicht | Stichwortsuche | 6.5, 7.2 | angenommen, durch Spike belegt |
 | 011 | Stufe je Befund und damit je Komponente; die Massnahme (Komponente in einem Projekt) ist die Einheit für Arbeit und Benachrichtigung; Befunde der Stufe 1 gehören zu keiner Massnahme | eine Meldung je CVE als Arbeitseinheit | 4.6, 7.4 | angenommen, durch Spike belegt |
-| 012 | Mandantentrennung über Zugriffsprüfung, Abfragefilter und Fremdzugriffstest; abschliessende Liste der Systemoperationen und der Zugriffe auf Benutzerdaten; Row-Level Security als Härtung | Row-Level Security als Fundament; nur Abfragefilter | 9.2 | angenommen, Versuch in Phase 0 |
+| 012 | Mandantentrennung über Zugriffsprüfung, Abfragefilter und Fremdzugriffstest; abschliessende Liste der Systemoperationen und der Zugriffe auf Benutzerdaten; Row-Level Security als Härtung | Row-Level Security als Fundament; nur Abfragefilter | 9.2 | **bestätigt** durch Versuch 0.6 ([ADR 029](0029-row-level-security-as-hardening.md)) |
 | 013 | Cookie-Sitzung mit eigenen Endpunkten auf Identity; Token-Anmeldung erst für die native App | `MapIdentityApi`, Tokens im Browser | 9.3 | angenommen |
 | 014 | Benachrichtigungsstand je Massnahme, Empfänger und Kanal; gesendet wird nur, was darüber hinausgeht; eindeutig sind Empfänger, Kanal und Ereignis, die Regel gehört nicht dazu | Benachrichtigung bei jeder Änderung; Schlüssel je Regel | 8.4 | angenommen |
 | 015 | Der Server sendet ausschliesslich Web Push; PWA im MVP, native App über ein inhaltsblindes Relay | FCM und APNs direkt vom Server | 8.5, 11.9 | angenommen |

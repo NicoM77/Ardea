@@ -1,5 +1,6 @@
 using Ardea.Platform.Configuration;
 using Ardea.Platform.Hosting;
+using Ardea.Platform.Jobs;
 using Ardea.Platform.Persistence;
 using Npgsql;
 
@@ -47,6 +48,8 @@ internal static partial class ApiRole
         builder.WebHost.ConfigureKestrel(k => k.AddServerHeader = false);
 
         builder.Services.AddArdeaPlatform(builder.Configuration, "api");
+        builder.Services.AddUnitOfWork();
+        builder.Services.AddJobQueue();
         builder.Services.AddProblemDetails();
         foreach (var module in Modules.All)
         {

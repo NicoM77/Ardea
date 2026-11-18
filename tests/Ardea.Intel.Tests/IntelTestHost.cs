@@ -16,8 +16,9 @@ namespace Ardea.Intel.Tests;
 /// <summary>Platform and Intel schemas on a fresh database, with a scripted provider.</summary>
 internal sealed class IntelTestHost : IAsyncDisposable
 {
-    private IntelTestHost(ServiceProvider services, DatabaseOptions database, ScriptedProvider provider, FakeTimeProvider clock)
+    private IntelTestHost(ServiceProvider services, DatabaseOptions database, ScriptedProvider provider, ScriptedSignalProvider signals, FakeTimeProvider clock)
     {
+        Signals = signals;
         Services = services;
         Database = database;
         Provider = provider;
@@ -25,6 +26,8 @@ internal sealed class IntelTestHost : IAsyncDisposable
     }
 
     public ServiceProvider Services { get; }
+
+    public ScriptedSignalProvider Signals { get; }
 
     public DatabaseOptions Database { get; }
 
@@ -67,19 +70,21 @@ internal sealed class IntelTestHost : IAsyncDisposable
         services.AddUnitOfWork();
         services.AddJobQueue();
         services.AddSingleton<ISourceProvider>(provider);
+        var signals = new ScriptedSignalProvider();
+        services.AddSingleton<ISignalProvider>(signals);
         new IntelModule().AddServices(services, configuration);
         new IntelModule().AddWorkerServices(services, configuration);
         var built = services.BuildServiceProvider(validateScopes: true);
         await built.GetRequiredService<IEnumerable<Microsoft.Extensions.Hosting.IHostedService>>().OfType<SourceRegistrar>().Single().StartAsync(CancellationToken.None);
-        return new IntelTestHost(built, database, provider, clock);
+        return new IntelTestHost(built, database, provider, signals, clock);
     }
 
-    /// <summary>Runs one sync of the scripted source the way the worker does, and commits the job's unit of work.</summary>
-    public async Task SyncAsync()
+    /// <summary>Runs one sync of a scripted source the way the worker does, and commits the job's unit of work.</summary>
+    public async Task SyncAsync(string key = ScriptedProvider.Key)
     {
         await using var scope = Services.CreateAsyncScope();
         var handler = scope.ServiceProvider.GetRequiredService<SyncSourceHandler>();
-        await handler.HandleAsync(new SyncSource(ScriptedProvider.Key), new JobContext(Guid.CreateVersion7(), SyncSource.Kind, 1, null), CancellationToken.None);
+        await handler.HandleAsync(new SyncSource(key), new JobContext(Guid.CreateVersion7(), SyncSource.Kind, 1, null), CancellationToken.None);
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 
@@ -247,4 +252,35 @@ internal sealed class ScriptedProvider : ISourceProvider
     }
 
     public static RawRecord Json(string id, string json) => new(id, json, "application/json");
+}
+
+/// <summary>Delivers the signals the test scripts.</summary>
+internal sealed class ScriptedSignalProvider : ISignalProvider
+{
+    public const string Key = "scripted-signals";
+
+    public SourceDescriptor Descriptor { get; } = new()
+    {
+        Key = Key,
+        Name = "Scripted signals",
+        Kind = SourceKind.Signal,
+        Operator = "Tests",
+        OperatorKind = OperatorKind.Mandated,
+        DefaultInterval = TimeSpan.FromHours(1),
+        AllowedHosts = ["example.org"],
+        Attribution = "Test data",
+    };
+
+    public List<Signal> Signals { get; } = [];
+
+    public async IAsyncEnumerable<Signal> FetchSignalsAsync(SyncContext context, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        foreach (var signal in Signals)
+        {
+            await Task.Yield();
+            yield return signal;
+        }
+
+        context.SaveCursor("scripted-cursor");
+    }
 }

@@ -58,7 +58,7 @@ public sealed class NormalizationTests(PostgresServer server)
         await host.SyncAsync();
         await host.NormalizeAsync();
 
-        Assert.Equal("degraded", await host.ScalarAsync<string>("SELECT health FROM intel.source"));
-        Assert.Contains("3 of 30", await host.ScalarAsync<string>("SELECT health_reason FROM intel.source"), StringComparison.Ordinal);
+        Assert.Equal("degraded", await host.ScalarAsync<string>("SELECT health FROM intel.source WHERE key = 'scripted'"));
+        Assert.Contains("3 of 30", await host.ScalarAsync<string>("SELECT health_reason FROM intel.source WHERE key = 'scripted'"), StringComparison.Ordinal);
     }
 }

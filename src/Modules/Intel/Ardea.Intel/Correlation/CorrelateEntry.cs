@@ -46,12 +46,46 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         }
 
         // Identity: everything that shares an alias belongs together (master plan 6.2 rule 1).
-        var aliasSet = new HashSet<string>([job.Key], StringComparer.Ordinal);
+        var (aliasSet, observations) = await ClosureAsync(job.Key, exclude: [], cancellationToken);
+        var keyArray = aliasSet.ToArray();
+        var linked = await db.EntryAliases.Where(a => keyArray.Contains(a.Scheme + ":" + a.Value)).Select(a => a.EntryId).Distinct().ToListAsync(cancellationToken);
+        var entries = await db.Entries.Where(e => linked.Contains(e.Id) && e.State != "merged").ToListAsync(cancellationToken);
+
+        var cveEntries = entries.Where(e => IsCve(e.PrimaryKey)).OrderBy(e => e.PrimaryKey, StringComparer.Ordinal).ToList();
+        if (cveEntries.Count >= 2)
+        {
+            // Two entries that both carry their own CVE id are never merged automatically (master plan 6.2 rule 5).
+            await SeparateAsync(cveEntries, observations, sources, job.Key, cancellationToken);
+            return;
+        }
+
+        var (projection, triggeredBy) = Project(observations, aliasSet, sources);
+        if (projection is null)
+        {
+            return;
+        }
+
+        var target = entries.FirstOrDefault(e => e.PrimaryKey == projection.PrimaryKey) ?? entries.OrderBy(e => e.Id).FirstOrDefault();
+        await MergeIntoAsync(target, entries.Where(e => e != target), cancellationToken);
+        projection = await WithSignalsAsync(projection, sources, cancellationToken);
+        projection = await WithCatalogKeysAsync(projection, cancellationToken);
+        await WriteAsync(target, projection, triggeredBy, cancellationToken);
+    }
+
+    /// <summary>
+    /// Follows shared aliases from <paramref name="key"/>; observations that carry one of
+    /// <paramref name="exclude"/> are not followed (they lead to an entry kept apart).
+    /// </summary>
+    private async Task<(HashSet<string> Aliases, List<ObservationRow> Observations)> ClosureAsync(string key, IReadOnlyCollection<string> exclude, CancellationToken cancellationToken)
+    {
+        var aliasSet = new HashSet<string>([key], StringComparer.Ordinal);
         List<ObservationRow> observations = [];
         for (var round = 0; round < MaxClosureRounds; round++)
         {
             var keys = aliasSet.ToArray();
-            observations = await db.Observations.AsNoTracking().Where(o => o.Aliases.Any(a => keys.Contains(a))).ToListAsync(cancellationToken);
+            observations = (await db.Observations.AsNoTracking().Where(o => o.Aliases.Any(a => keys.Contains(a))).ToListAsync(cancellationToken))
+                .Where(o => !o.Aliases.Any(exclude.Contains))
+                .ToList();
             var before = aliasSet.Count;
             aliasSet.UnionWith(observations.SelectMany(o => o.Aliases));
             if (aliasSet.Count == before)
@@ -60,6 +94,12 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
             }
         }
 
+        return (aliasSet, observations);
+    }
+
+    /// <summary>The merged view of the claim blocks that name one of the aliases; <c>null</c> when none does.</summary>
+    private static (EntryProjection? Projection, string TriggeredBy) Project(List<ObservationRow> observations, HashSet<string> aliasSet, Dictionary<Guid, SourceRow> sources)
+    {
         var contributions = observations
             .Select(o => (Row: o, Observation: JsonSerializer.Deserialize<Observation>(o.Claims, NormalizeRecordsHandler.Json)!))
             .Select(o => new Contribution(
@@ -72,37 +112,88 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
                 [.. o.Observation.Claims.Where(b => b.Aliases.Any(a => aliasSet.Contains(AliasKey(a))))]))
             .Where(c => c.Claims.Count > 0)
             .ToList();
-        if (contributions.Count == 0)
-        {
-            return;
-        }
+        return contributions.Count == 0 ? (null, string.Empty) : (Projection.Compute(contributions), contributions[0].SourceKey);
+    }
 
-        var projection = Projection.Compute(contributions);
-        var keyArray = aliasSet.ToArray();
-        var linked = await db.EntryAliases.Where(a => keyArray.Contains(a.Scheme + ":" + a.Value)).Select(a => a.EntryId).Distinct().ToListAsync(cancellationToken);
-        var entries = await db.Entries.Where(e => linked.Contains(e.Id) && e.State != "merged").ToListAsync(cancellationToken);
-
-        var target = entries.FirstOrDefault(e => e.PrimaryKey == projection.PrimaryKey) ?? entries.OrderBy(e => e.Id).FirstOrDefault();
-        var losers = entries.Where(e => e != target).ToList();
-        if (losers.Any(l => IsCve(l.PrimaryKey)) && target is not null && IsCve(target.PrimaryKey))
-        {
-            // Two entries that both carry their own CVE id are never merged automatically (master plan 6.2 rule 5).
-            LogConflict(target.PrimaryKey, string.Join(", ", losers.Select(l => l.PrimaryKey)), job.Key);
-            return;
-        }
-
+    /// <summary>The later discovered shared identifier joins the entries; the losers stay as redirects (6.2 rule 4).</summary>
+    private async Task MergeIntoAsync(EntryRow? target, IEnumerable<EntryRow> losers, CancellationToken cancellationToken)
+    {
         foreach (var loser in losers)
         {
-            // The later discovered shared identifier joins the entries; the loser stays as a redirect (6.2 rule 4).
             loser.State = "merged";
             loser.MergedIntoId = target!.Id;
             loser.ChangedAt = time.GetUtcNow();
             await db.EntryAliases.Where(a => a.EntryId == loser.Id).ExecuteDeleteAsync(cancellationToken);
         }
+    }
 
-        projection = await WithSignalsAsync(projection, sources, cancellationToken);
-        projection = await WithCatalogKeysAsync(projection, cancellationToken);
-        await WriteAsync(target, projection, contributions[0].SourceKey, cancellationToken);
+    /// <summary>
+    /// Keeps entries with different CVE ids apart: each is built from what its own CVE id reaches
+    /// without passing an observation that names another of them. Identifiers both sides reach (the
+    /// bridge, e.g. a GHSA id listing both CVE ids) belong to neither; the case goes to the review
+    /// list. Entries without a CVE id that only one side reaches merge into that side as usual.
+    /// </summary>
+    private async Task SeparateAsync(List<EntryRow> cveEntries, List<ObservationRow> joined, Dictionary<Guid, SourceRow> sources, string via, CancellationToken cancellationToken)
+    {
+        var keys = cveEntries.ToDictionary(e => e.Id, e => "CVE:" + e.PrimaryKey);
+        var closures = new Dictionary<Guid, (HashSet<string> Aliases, List<ObservationRow> Observations)>();
+        foreach (var entry in cveEntries)
+        {
+            closures[entry.Id] = await ClosureAsync(keys[entry.Id], [.. keys.Values.Where(k => k != keys[entry.Id])], cancellationToken);
+        }
+
+        // Reached from more than one side, or named by an observation that names several of the CVE ids.
+        var shared = closures.Values.SelectMany(c => c.Aliases).GroupBy(a => a, StringComparer.Ordinal).Where(g => g.Count() > 1).Select(g => g.Key)
+            .Concat(joined.Where(o => o.Aliases.Count(keys.ContainsValue) > 1).SelectMany(o => o.Aliases))
+            .Where(a => !keys.ContainsValue(a))
+            .ToHashSet(StringComparer.Ordinal);
+
+        await RecordConflictAsync(cveEntries, shared, via, cancellationToken);
+
+        // Free identifiers that move or become shared before any entry writes its own.
+        foreach (var entry in cveEntries)
+        {
+            var own = closures[entry.Id].Aliases.Where(a => !shared.Contains(a)).ToArray();
+            await db.EntryAliases.Where(a => a.EntryId == entry.Id && !own.Contains(a.Scheme + ":" + a.Value)).ExecuteDeleteAsync(cancellationToken);
+        }
+
+        foreach (var entry in cveEntries)
+        {
+            var aliasSet = closures[entry.Id].Aliases.Where(a => !shared.Contains(a)).ToHashSet(StringComparer.Ordinal);
+            var (projection, triggeredBy) = Project(closures[entry.Id].Observations, aliasSet, sources);
+            if (projection is null)
+            {
+                continue;
+            }
+
+            var own = aliasSet.ToArray();
+            var others = await db.EntryAliases.Where(a => own.Contains(a.Scheme + ":" + a.Value) && a.EntryId != entry.Id).Select(a => a.EntryId).Distinct().ToListAsync(cancellationToken);
+            var losers = await db.Entries.Where(e => others.Contains(e.Id) && e.State != "merged" && !keys.Keys.Contains(e.Id)).ToListAsync(cancellationToken);
+            await MergeIntoAsync(entry, losers.Where(l => !IsCve(l.PrimaryKey)), cancellationToken);
+
+            projection = projection with { Aliases = [.. projection.Aliases.Where(a => !shared.Contains(AliasKey(a)))] };
+            projection = await WithSignalsAsync(projection, sources, cancellationToken);
+            projection = await WithCatalogKeysAsync(projection, cancellationToken);
+            await WriteAsync(entry, projection, triggeredBy, cancellationToken);
+        }
+    }
+
+    /// <summary>Opens the case on the review list, or notes that it was seen again; a decided case stays decided.</summary>
+    private async Task RecordConflictAsync(List<EntryRow> cveEntries, HashSet<string> shared, string via, CancellationToken cancellationToken)
+    {
+        var subject = string.Join(",", cveEntries.Select(e => e.PrimaryKey));
+        var now = time.GetUtcNow();
+        var item = await db.ReviewItems.SingleOrDefaultAsync(i => i.Kind == "cve_conflict" && i.SubjectKey == subject, cancellationToken);
+        if (item is null)
+        {
+            LogConflict(subject, via);
+            item = db.ReviewItems.Add(new ReviewItemRow { Id = Guid.CreateVersion7(), Kind = "cve_conflict", SubjectKey = subject, State = "open", FirstSeenAt = now }).Entity;
+        }
+
+        item.EntryIds = [.. cveEntries.Select(e => e.Id)];
+        item.SharedAliases = [.. shared.Order(StringComparer.Ordinal)];
+        item.LastSeenAt = now;
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>
@@ -401,8 +492,8 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
 
     private static bool IsCve(string primaryKey) => primaryKey.StartsWith("CVE-", StringComparison.Ordinal);
 
-    [LoggerMessage(EventId = 4201, Level = LogLevel.Warning, Message = "Entries {Entry} and {Others} share aliases but carry different CVE ids; not merged automatically (via {Key})")]
-    private partial void LogConflict(string entry, string others, string key);
+    [LoggerMessage(EventId = 4201, Level = LogLevel.Warning, Message = "Entries {Entries} share aliases but carry different CVE ids; kept apart and put on the review list (via {Key})")]
+    private partial void LogConflict(string entries, string key);
 }
 
 internal sealed class NotifyEntryChangedHandler(IntelDbContext db, IEnumerable<IEntryChangeSubscriber> subscribers) : IJobHandler<NotifyEntryChanged>

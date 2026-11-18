@@ -82,6 +82,62 @@ public sealed class CorrelationTests(PostgresServer server)
         await DeliverAsync(host, ("X", """{"aliases":["GHSA:GHSA-dddd-eeee-ffff","CVE:CVE-2026-10","CVE:CVE-2026-11"]}"""));
 
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.security_entry WHERE state = 'merged'"));
+        Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.security_entry"));
+
+        // The case is on the review list once, with the identifier that joins them.
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.review_item"));
+        Assert.Equal("CVE-2026-10,CVE-2026-11|open|GHSA:GHSA-dddd-eeee-ffff", await host.ScalarAsync<string>(
+            "SELECT subject_key || '|' || state || '|' || array_to_string(shared_aliases, ',') FROM intel.review_item"));
+
+        // The bridge belongs to neither entry; each keeps only its own identifier.
+        Assert.Equal("CVE:CVE-2026-10,CVE:CVE-2026-11", await host.ScalarAsync<string>(
+            "SELECT string_agg(scheme || ':' || value, ',' ORDER BY value) FROM intel.entry_alias"));
+    }
+
+    [Fact]
+    public async Task Entries_kept_apart_still_follow_their_own_records()
+    {
+        await using var host = await IntelTestHost.StartAsync(server);
+        await DeliverAsync(host, ("A", """{"aliases":["CVE:CVE-2026-10"],"title":"First"}"""), ("B", """{"aliases":["CVE:CVE-2026-11"],"title":"Second"}"""));
+        await DeliverAsync(host, ("X", """{"aliases":["GHSA:GHSA-dddd-eeee-ffff","CVE:CVE-2026-10","CVE:CVE-2026-11"]}"""));
+
+        await DeliverAsync(host, ("A", """{"aliases":["CVE:CVE-2026-10"],"title":"First, revised"}"""));
+
+        Assert.Equal("First, revised", await host.ScalarAsync<string>("SELECT title FROM intel.security_entry WHERE primary_key = 'CVE-2026-10'"));
+        Assert.Equal("Second", await host.ScalarAsync<string>("SELECT title FROM intel.security_entry WHERE primary_key = 'CVE-2026-11'"));
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.review_item"));
+    }
+
+    [Fact]
+    public async Task A_case_kept_separate_stays_decided_when_the_same_evidence_comes_again()
+    {
+        await using var host = await IntelTestHost.StartAsync(server);
+        await DeliverAsync(host, ("A", """{"aliases":["CVE:CVE-2026-10"]}"""), ("B", """{"aliases":["CVE:CVE-2026-11"]}"""));
+        await DeliverAsync(host, ("X", """{"aliases":["GHSA:GHSA-dddd-eeee-ffff","CVE:CVE-2026-10","CVE:CVE-2026-11"]}"""));
+        await host.ExecuteAsync("UPDATE intel.review_item SET state = 'kept_separate', decided_at = now()");
+
+        await DeliverAsync(host, ("X", """{"aliases":["GHSA:GHSA-dddd-eeee-ffff","CVE:CVE-2026-10","CVE:CVE-2026-11"],"title":"again"}"""));
+
+        Assert.Equal("kept_separate", await host.ScalarAsync<string>("SELECT state FROM intel.review_item"));
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.security_entry WHERE state = 'merged'"));
+    }
+
+    [Fact]
+    public async Task A_package_advisory_reached_from_one_side_only_still_merges_into_that_side()
+    {
+        await using var host = await IntelTestHost.StartAsync(server);
+        await DeliverAsync(host, ("P", """{"aliases":["GHSA:GHSA-1111-2222-3333"],"title":"Only package"}"""));
+        await DeliverAsync(host, ("A", """{"aliases":["CVE:CVE-2026-10"]}"""), ("B", """{"aliases":["CVE:CVE-2026-11"]}"""));
+        await DeliverAsync(host, ("X", """{"aliases":["GHSA:GHSA-dddd-eeee-ffff","CVE:CVE-2026-10","CVE:CVE-2026-11"]}"""));
+
+        // The package advisory learns its CVE id: it joins CVE-2026-10, not the bridge.
+        await DeliverAsync(host, ("P", """{"aliases":["GHSA:GHSA-1111-2222-3333","CVE:CVE-2026-10"],"title":"Only package"}"""));
+
+        Assert.Equal("merged", await host.ScalarAsync<string>("SELECT state FROM intel.security_entry WHERE primary_key = 'GHSA-1111-2222-3333'"));
+        Assert.True(await host.ScalarAsync<bool>(
+            "SELECT m.merged_into_id = w.id FROM intel.security_entry m, intel.security_entry w WHERE m.primary_key = 'GHSA-1111-2222-3333' AND w.primary_key = 'CVE-2026-10'"));
+        Assert.Equal("CVE-2026-10", await host.ScalarAsync<string>(
+            "SELECT e.primary_key FROM intel.entry_alias a JOIN intel.security_entry e ON e.id = a.entry_id WHERE a.value = 'GHSA-1111-2222-3333'"));
     }
 
     [Fact]

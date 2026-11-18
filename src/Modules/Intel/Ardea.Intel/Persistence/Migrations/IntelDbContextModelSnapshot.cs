@@ -582,6 +582,76 @@ namespace Ardea.Intel.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Ardea.Intel.Persistence.ReviewItemRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<DateTimeOffset?>("DecidedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("decided_at");
+
+                    b.Property<Guid?>("DecidedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("decided_by");
+
+                    b.PrimitiveCollection<Guid[]>("EntryIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("entry_ids");
+
+                    b.Property<DateTimeOffset>("FirstSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_seen_at");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("kind");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at");
+
+                    b.PrimitiveCollection<string[]>("SharedAliases")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("shared_aliases");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("state");
+
+                    b.Property<string>("SubjectKey")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("subject_key");
+
+                    b.HasKey("Id")
+                        .HasName("pk_review_item");
+
+                    b.HasIndex("State")
+                        .HasDatabaseName("ix_review_item_state");
+
+                    b.HasIndex("Kind", "SubjectKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_review_item_subject");
+
+                    b.ToTable("review_item", "intel", t =>
+                        {
+                            t.HasCheckConstraint("ck_review_item_kind", "kind IN ('cve_conflict')");
+
+                            t.HasCheckConstraint("ck_review_item_state", "state IN ('open', 'kept_separate')");
+                        });
+                });
+
             modelBuilder.Entity("Ardea.Intel.Persistence.SourceRecordRevisionRow", b =>
                 {
                     b.Property<Guid>("Id")

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { form, FormField, FormRoot } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -355,12 +355,13 @@ export class EntriesPage {
 
   constructor() {
     // Kind and time apply as soon as they are chosen; the words wait for Search or Enter.
-    const lastChoice = signal({ kind: '', since: '' });
+    // A plain variable, not a signal: the effect must not depend on what it writes.
+    let lastChoice = { kind: '', since: '' };
     effect(() => {
       const { kind, since } = this.model();
       const current = this.filters();
-      const previous = lastChoice();
-      lastChoice.set({ kind, since });
+      const previous = lastChoice;
+      lastChoice = { kind, since };
       if (
         (kind !== previous.kind || since !== previous.since) &&
         (kind !== current.kind || since !== current.since)

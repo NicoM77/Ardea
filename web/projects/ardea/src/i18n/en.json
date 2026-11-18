@@ -593,5 +593,23 @@
       "noReason": "No reason given",
       "seen": "Last seen {when}, revision {revision}"
     }
+  },
+  "review": {
+    "title": "Data-quality review",
+    "intro": "CVE entries that share an identifier but were not merged automatically. Check them; if they describe different vulnerabilities, keep them separate.",
+    "showDecided": "Show decided cases",
+    "loading": "Loading the review list",
+    "loadFailed": "The review list could not be loaded.",
+    "joinedBy": "Joined by",
+    "seen": "seen from {first} to {last}",
+    "keepSeparate": "Keep separate",
+    "keptSeparate": "{keys} stay separate.",
+    "gone": "This case is no longer open. The list is up to date again.",
+    "failed": "The decision could not be saved. Try again in a moment.",
+    "emptyHeading": "Nothing to review",
+    "emptyText": "Every entry that shares an identifier with another one has been decided.",
+    "decidedTitle": "Decided",
+    "decidedAt": "Kept separate on {when}",
+    "noDecided": "No case has been decided yet."
   }
 }

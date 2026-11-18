@@ -6,6 +6,7 @@ import { UiButton, UiEmptyState, UiField, UiInput, UiLoader, UiNotice, UiPageHea
 import { listSourcesResource, type SourceStatus } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { Session } from '../../core/session/session';
+import { ReviewList } from './review-list';
 import { SourceAdmin } from './source-admin';
 import {
   count,
@@ -28,6 +29,7 @@ import { SourceHealth } from './source-health';
     TranslocoPipe,
     LucideChevronDown,
     LucideRadioTower,
+    ReviewList,
     SourceAdmin,
     SourceHealth,
     UiButton,
@@ -201,6 +203,10 @@ import { SourceHealth } from './source-health';
         <ui-loader size="page" [label]="'sources.loading' | transloco" />
       </div>
     }
+
+    @if (isAdmin()) {
+      <ardea-review-list class="review" />
+    }
   `,
   styles: `
     .summary {
@@ -286,6 +292,10 @@ import { SourceHealth } from './source-health';
     }
     .is-open .toggle svg {
       transform: rotate(180deg);
+    }
+    .review {
+      display: block;
+      margin-top: var(--gap);
     }
     .admin {
       padding-top: var(--space-md);

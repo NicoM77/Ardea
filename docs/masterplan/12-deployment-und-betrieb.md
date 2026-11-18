@@ -87,6 +87,7 @@ Umgebungsvariablen mit Präfix `ARDEA_`; verschachtelte Werte mit doppeltem Unte
 | `ARDEA_SMTP__HOST`, `__PORT`, `__USER`, `__PASSWORD`, `__FROM` | | E-Mail-Versand |
 | `ARDEA_AI__PROVIDERS__<Name>__KIND`, `__ENDPOINT`, `__MODEL`, `__API_KEY`, `__LOCAL` | | benannte KI-Anbieter; ohne Angabe läuft das System mit Regeln und Vorlagen |
 | `ARDEA_INTEL__BACKFILL_DAYS` | | Rückblick beim Erststart, Vorgabe 180 |
+| `ARDEA_REPOSITORIES__CHECK_INTERVAL` | | Abstand, in dem verbundene Repositories auf neue Commits geprüft werden, Vorgabe 60 Minuten (Kapitel 16.6) |
 | `ARDEA_TRUSTED_PROXIES` | | Adressen vorgeschalteter Proxys für weitergereichte Header |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | | Ziel für Traces, Metriken und Logs; ohne Angabe kein Export |
 
@@ -118,7 +119,7 @@ docker compose pull && docker compose up -d
 | Signal | Vorgabe | Auf Wunsch |
 |---|---|---|
 | Logs | strukturiertes JSON auf der Standardausgabe; keine Geheimnisse, keine Profilinhalte | Export per OTLP |
-| Metriken | in der Administration: Verzögerung und Fehlerserie je Quelle, Quarantäne, Jobs wartend und fehlgeschlagen, Zustellungen, KI-Aufrufe und Tokens | Export per OTLP |
+| Metriken | in der Administration: Verzögerung und Fehlerserie je Quelle, Quarantäne, Jobs wartend und fehlgeschlagen, Zustellungen, KI-Aufrufe und Tokens, Einlesen von Repositories mit Dauer, Fehlern und verbleibendem Kontingent bei GitHub | Export per OTLP |
 | Traces | aus | ein Trace von der Quelle bis zur Zustellung per OTLP |
 | Betrachter | keiner | Compose-Profil `observability` mit dem eigenständigen Aspire-Dashboard |
 

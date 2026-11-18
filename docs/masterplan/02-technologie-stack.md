@@ -109,8 +109,10 @@ Keine freie Bibliothek veröffentlicht einen Konformitätsbericht nach WCAG 2.2.
 | **CPE lesen und abgleichen** | **selbst bauen**: keine brauchbare .NET-Bibliothek gefunden | |
 | **Versionsbereiche über Ökosysteme** | **selbst bauen**, je Schema eine Klasse (Kapitel 6.6) | |
 | **CSAF** | **selbst bauen**: Datentypen für den benötigten Ausschnitt aus dem veröffentlichten JSON-Schema | |
+| **SPDX-SBOM und Lockdateien lesen** | **selbst bauen**: Ausschnitt aus SPDX JSON (Pakete, purl, Beziehungen), `packages.lock.json`, `package-lock.json`; je Datei eine Klasse. Ein vollständiges SPDX-Modell wird nicht gebraucht. | |
+| Anbindung an GitHub | eigene schmale Schicht auf `HttpClientFactory` für die fünf benötigten Aufrufe; Octokit wäre für fünf Aufrufe zu viel Abhängigkeit | |
 
-Die drei Eigenbauten sind der fachliche Kern des Systems und bekommen eigene Testkorpora aus echten Daten.
+Die vier Eigenbauten sind der fachliche Kern des Systems und bekommen eigene Testkorpora aus echten Daten.
 
 ## 2.6 Ausgeschlossene Bibliotheken
 
@@ -154,3 +156,6 @@ Diese Punkte beeinflussen Entscheidungen und werden in Phase 0 durch kleine Vers
 | Dokumentierte Limits der NVD; Lizenz- und Nutzungsbedingungen vieler Quellen | Kapitel 5 | Prüfung je Quelle vor ihrer Aufnahme |
 | Einzelheiten zu UnifiedPush und zu den Relays anderer Projekte | Kapitel 11.9 | erst für die App nötig |
 | Aufwand und Verhalten der eigenen Job-Verarbeitung unter Last | Kapitel 3.4 | Tests mit erzwungenen Abbrüchen in Phase 0 |
+| Asynchroner SBOM-Export von GitHub: Rechte für feingranulare Tokens, Antwort ohne Token bei öffentlichen Repositories, SPDX-Version, Kennzeichnung von Entwicklungsabhängigkeiten und Abhängigkeitspfad, Download-Hosts. Der synchrone Export ist laut Dokumentation seit dem 13.11.2026 abgeschaltet. | Kapitel 16 | Versuch 2.9 mit einem öffentlichen und einem privaten Repository, bevor die Anbindung gebaut wird |
+| Dependency Graph bei privaten Repositories ohne Zutun eingeschaltet; NuGet mit zentraler Paketverwaltung; Verfügbarkeit des Exports in GitHub Enterprise Server | Kapitel 16.3, 16.4 | Versuch 2.9; Rückfall sind die eigenen Leser für Lockdateien |
+| Bedingungen der Datenquellen in OSV ausserhalb der GitHub Advisory Database für die sechs Ökosysteme des MVP | Kapitel 5.6 | Prüfung je Datenquelle vor Aufgabe 1.12 |

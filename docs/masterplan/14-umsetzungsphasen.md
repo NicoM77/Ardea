@@ -7,17 +7,17 @@ Sieben Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen
 | Phase | Ergebnis | Schätzung |
 |---|---|---|
 | 0 | Startbare Instanz mit Anmeldung, Job-System, Build-Kette, Administration in erster Form; technische Risiken geklärt | 5–6 Wochen |
-| 1 | Konsolidierte Einträge aus vier Quellen, durchsuchbar | 5–7 Wochen |
-| 2 | Organisationen mit Projekten und Technologieprofil; Setup-Wizard | 4–5 Wochen |
+| 1 | Konsolidierte Einträge aus fünf Quellen einschliesslich OSV für Pakete, mit Verschmelzen; durchsuchbar | 7–10 Wochen |
+| 2 | Organisationen mit Projekten und Technologieprofil; Profil aus GitHub-Repositories; Setup-Wizard | 7–9 Wochen |
 | 3 | Befunde, Massnahmen und Meldungen mit Stufe und Begründung; Übersicht, Liste, Detail | 6–8 Wochen |
 | 4 | KI-Einschätzung als zuschaltbarer Schritt | 2–3 Wochen |
 | 5 | Benachrichtigungen über vier Kanäle | 3–4 Wochen |
 | 6 | Geprüftes, dokumentiertes Release 1.0 | 3–4 Wochen |
-| | **Summe** | **28–37 Wochen** |
+| | **Summe** | **33–44 Wochen** |
 
 Die Zahlen gelten für eine erfahrene Person mit KI-Unterstützung und sind Schätzungen, keine Zusage. Drei Posten treiben sie und sind schwer zu verkürzen, weil sie Handarbeit an Daten sind: der Katalog mit rund 300 Produkten samt Aliassen, der Referenzsatz mit 200 von Hand beschrifteten Paaren und die 15 bis 20 Oberflächenkomponenten mit allen Zuständen. Nicht enthalten sind Wartezeiten auf Dritte (Antwort des BACS, eine externe Sicherheitsprüfung) und die Mockups, die vor einzelnen Phasen freizugeben sind.
 
-Eine erste Fassung dieses Plans nannte 16 bis 23 Wochen. Die unabhängige Durchsicht hat das als unrealistisch beanstandet; der Umfang wurde daraufhin gekürzt und der Rest neu geschätzt. Die zweite Durchsicht fand die Oberfläche für den Instanz-Administrator in keiner Aufgabe; sie ist jetzt Aufgabe 0.13 und mit einer Woche in Phase 0 eingerechnet.
+Eine erste Fassung dieses Plans nannte 16 bis 23 Wochen. Die unabhängige Durchsicht hat das als unrealistisch beanstandet; der Umfang wurde daraufhin gekürzt und der Rest neu geschätzt. Die zweite Durchsicht fand die Oberfläche für den Instanz-Administrator in keiner Aufgabe; sie ist jetzt Aufgabe 0.13 und mit einer Woche in Phase 0 eingerechnet. Am 18.11.2026 kamen das Profil aus GitHub-Repositories und mit ihm OSV, zwei weitere Versionsschemata und das Verschmelzen von Einträgen ins MVP (Kapitel 16); das sind 5 bis 7 Wochen mehr, 2 bis 3 in Phase 1 und 3 bis 4 in Phase 2.
 
 ```mermaid
 flowchart LR
@@ -65,7 +65,7 @@ Abnahme:
 
 | Nr. | Aufgabe | Abhängig von |
 |---|---|---|
-| 1.1 | Modul Catalog: Produktschlüssel, CPE-Leser, Versionsschemata (SemVer, numerisch, RPM), Format des Katalogs | 0.1 |
+| 1.1 | Modul Catalog: Produktschlüssel, CPE-Leser, Versionsschemata (SemVer, NuGet, PEP 440, Maven, RPM, numerisch), Format des Katalogs | 0.1 |
 | 1.2 | Provider-SDK mit Haltepunkten und der Schnittstelle für Signale; Abrufsteuerung: Fälligkeit, Cursor, Wartezeit nach Fehlern, Zustand, Abrufprotokoll | 0.4 |
 | 1.3 | HTTP-Grundlage für Adapter: Zeitlimit, Wiederholung, Ratenbegrenzung, bedingte Abfragen, Grössenlimits | 1.2 |
 | 1.4 | Adapter CVE Program: Deltas, Erstbefüllung und lange Pausen über das Gesamtarchiv, Einzelabruf | 1.3 |
@@ -76,6 +76,8 @@ Abnahme:
 | 1.9 | Adapter NCSC mit zwei Lesern: öffentliche Schnittstelle des Cyber Security Hub (Liste, Einzelbeitrag, Änderungsverlauf) und Warnungen der Website des BACS; Titel, Kurztext, Verweis, CVE-IDs aus Titel und Text; Zustand `degraded` bei auffälligen Abrufen | 1.6 |
 | 1.10 | API für Einträge; Seiten «Entries» und «Sources» mit Quarantäne-Liste und Kennzahlen je Quelle; Mockup der Quellenseite | 1.7, 0.11 |
 | 1.11 | Befehle zum Neu-Normalisieren und Neuberechnen; Vollständigkeitsprüfung gegen das Änderungsprotokoll | 1.7 |
+| 1.12 | Adapter OSV für npm, NuGet, Packagist, PyPI, Maven und Go: `modified_id.csv` je Ökosystem, Erstbefüllung über das Archiv des Ökosystems, Paketkoordinaten und Bereiche je Ökosystem; Bedingungen der Datenquellen vorher geprüft | 1.3, 1.5 |
+| 1.13 | Verschmelzen von Einträgen über eine später auftauchende gemeinsame Kennung, mit Weiterleitung und Prüfliste für Fälle mit zwei CVE-IDs (Kapitel 6.2) | 1.6, 1.12 |
 
 Abnahme:
 
@@ -87,6 +89,8 @@ Abnahme:
 - Quarantäne-Anteil für CVE Program unter 0,5 %.
 - Ein simulierter Ausfall einer Quelle über 48 Stunden wird ohne Handarbeit und ohne Lücke aufgeholt. Der Weg für Pausen über 30 Tage (Gesamtarchiv) hat einen eigenen Test mit einem verkleinerten Archiv.
 - Der tägliche EPSS-Lauf berührt nur Einträge, deren Klasse wechselt.
+- Ein OSV-Record, der zuerst nur mit GHSA-Kennung kommt und dessen CVE-Record schon einen Eintrag erzeugt hat, ergibt nach Eintreffen der CVE-ID genau einen Eintrag; der andere Schlüssel leitet weiter (schneller Test mit aufgezeichneten Records).
+- Für die sechs Ökosysteme liefert die Versionsprüfung an je zehn aufgezeichneten Records das erwartete Ergebnis.
 
 ## Phase 2 · Organisationen, Projekte und Profil
 
@@ -97,9 +101,14 @@ Abnahme:
 | 2.3 | Projekte und Komponenten mit Version, Herkunft, Erreichbarkeit, Kritikalität, Schutzmassnahme; Ersetzen eines Profils als Abgleich, der Kennungen erhält | 2.1 |
 | 2.4 | Katalog füllen: rund 300 Produkte mit Aliassen, CPE-Zuordnung, verwandten Produkten; Suche | 1.1 |
 | 2.5 | Suchindex `component_key` mit Trefferstärke | 2.3, 2.4 |
-| 2.6 | Mockups für Setup-Wizard und Projektprofil; Freigabe durch den Eigentümer | |
-| 2.7 | Setup-Wizard und Projektseiten; Einstellungen der Organisation mit Ansicht des Audit-Protokolls | 2.3, 2.4, 2.6 |
-| 2.8 | Hinweise zur Abdeckung: fehlende Versionen, Plattformen ohne Komponenten, Pakete aus Distributionen | 2.5 |
+| 2.6 | Mockups für Setup-Wizard mit Repository und Vorschlägen und für das Projektprofil mit Paketen; Freigabe durch den Eigentümer | |
+| 2.7 | Setup-Wizard mit den Schritten Repository, Betrieb und Technologien in drei Gruppen (Kapitel 11.6); Projektseiten mit Verknüpfungen, Paketen je Ökosystem und Vorschlägen; Einstellungen der Organisation mit Zugängen und Ansicht des Audit-Protokolls | 2.3, 2.4, 2.6, 2.13 |
+| 2.8 | Hinweise zur Abdeckung: fehlende Versionen, Plattformen ohne Komponenten, Pakete aus Distributionen, Pakete ohne Lockdatei, noch nicht prüfbare Ökosysteme | 2.5 |
+| 2.9 | **Versuch:** asynchroner SBOM-Export mit einem öffentlichen und einem privaten Repository und einem feingranularen Token; offene Punkte aus Kapitel 16.10; Ergebnis als ADR | |
+| 2.10 | Zugänge zu GitHub mit verschlüsseltem Token, Prüfung, Ablaufdatum, Liste der lesbaren Repositories; Hosts für GitHub Enterprise Server in der Administration | 2.3, 2.9 |
+| 2.11 | Anbindung über `IRepositoryHost`: Zweigkopf mit ETag, SBOM anfordern und abholen, Dateibaum, Dateien mit Grenzen; Leser für SPDX, `packages.lock.json` und `package-lock.json` | 2.10 |
+| 2.12 | Erkennungsregeln für Dockerfile, Compose, `global.json`, Projektdateien, `engines` und `.nvmrc`, `composer.json`, `go.mod`; Image-Namen im Katalog; Vorschläge mit Beleg | 2.4, 2.11 |
+| 2.13 | Job `IndexRepository` mit Fälligkeit und Systemoperation; Abgleich nach Kapitel 16.5 mit Zurückhalten deutlich kleinerer Stände; Zustand, Ereignis `repository.unavailable`; Audit mit Commit als Herkunft | 2.5, 2.11, 2.12 |
 
 Abnahme:
 
@@ -108,13 +117,18 @@ Abnahme:
 - Die Katalogsuche liefert für 50 vorab festgelegte Prüfeingaben einschliesslich Schreibvarianten das richtige Produkt an erster Stelle.
 - Jede Änderung am Profil steht im Audit-Protokoll und reiht den Job der Rückwärtssuche für das Projekt ein. Was der Job tut, liefert Phase 3.
 - Wird ein Profil als Ganzes ersetzt und ändert sich dabei nur eine Version, behalten alle Komponenten ihre Kennung.
+- Ein Repository, dessen neuer Commit nur eine Paketversion anhebt, ändert genau diese Komponente; alle Kennungen bleiben (schneller Test mit aufgezeichneten SBOMs).
+- Eine leere oder um mehr als die Hälfte geschrumpfte SBOM entfernt keine Komponente, sondern wird zur Bestätigung zurückgehalten; ein fehlgeschlagenes Einlesen ändert das Profil nicht.
+- Während des Einlesens wird kein Prozess gestartet und keine Datei ausserhalb der Grenzen gelesen (Test mit präpariertem Repository: übergrosse Datei, Lockdatei mit Skript-Einträgen, XML mit externer Entität).
+- Die Testperson erfasst die drei Beispielprojekte auch dann in unter 10 Minuten, wenn eines davon über ein Repository angelegt wird.
+- Ardeas eigenes Repository und zwei weitere werden eingelesen; Zahl der Komponenten, Anteil «Version unbekannt» und Dauer werden einmal beobachtet und festgehalten (Kapitel 16.8).
 
 ## Phase 3 · Befunde, Massnahmen und die Oberfläche dazu
 
 | Nr. | Aufgabe | Abhängig von |
 |---|---|---|
 | 3.1 | Mockups: ruhige Übersicht, Massnahme mit mehreren Befunden, Fassung mit KI-Einschätzung; Freigabe durch den Eigentümer | |
-| 3.2 | Kandidatensuche vorwärts und rückwärts; Trefferstärke; schwache Treffer als Stufe 1 | 1.7, 2.5 |
+| 3.2 | Kandidatensuche vorwärts und rückwärts, auch über Paketkoordinaten aus OSV; Trefferstärke; schwache Treffer als Stufe 1 | 1.7, 1.12, 2.5 |
 | 3.3 | Versionsprüfung mit den drei Ergebnissen einschliesslich Vorgabezustand der Records (Kapitel 6.6); Pakete aus Distributionen als unbekannt | 3.2, 1.1 |
 | 3.4 | Regelwerk Version 1 als Datei; Faktoren, Ober- und Untergrenzen, Fristen | 3.3 |
 | 3.5 | Befunde, Massnahmen, Meldungen, Verlauf; die Ereignisse aus Kapitel 8.2 als Verlaufszeilen mit Kennung; Abschluss durch Anheben der Version im Profil; Erstbefüllung ohne Einzelereignisse | 3.4 |
@@ -132,7 +146,9 @@ Abnahme:
 - Gleiche gespeicherte Eingabe ergibt bei erneuter Berechnung dieselbe Stufe und dieselben Faktoren.
 - Die Daten des Spikes (eine Woche, drei Projekte) ergeben höchstens 8 offene Massnahmen.
 - Ein neues Projekt mit 40 Treffern im Rückblick erzeugt Befunde mit dem Vermerk Erstbefüllung, im Verlauf kein `action.raised` und genau ein `backfill.completed`.
-- Wird im Profil eine Version angehoben, schliessen sich die Befunde, die sie nicht mehr betreffen.
+- Wird im Profil eine Version angehoben, von Hand oder durch einen neuen Commit im Repository, schliessen sich die Befunde, die sie nicht mehr betreffen.
+- Ein Befund an einer Komponente mit dem Merkmal «nur Entwicklung» erhält höchstens Stufe 2, ausser eine Untergrenze greift.
+- Die drei eingelesenen Repositories aus Phase 2 ergeben eine Zahl offener Massnahmen, die festgehalten wird; liegt sie deutlich über der des Spikes, entscheidet der Eigentümer vor der Abnahme über das Bündeln transitiver Pakete (Kapitel 16.8).
 - Mit den Beispieldaten liegen bei 390 × 844 Punkten alle drei Antworten über der Aktionsleiste (automatischer Layouttest).
 - Ohne Sprachmodell zeigen Übersicht, Massnahme und Meldung alle drei Antworten aus strukturierten Daten.
 - Automatische Zugänglichkeitsprüfung der Seiten ohne Befund.
@@ -186,7 +202,7 @@ Keine neuen Funktionen für Benutzer. Hinzu kommen nur Werkzeuge für den Betrie
 | 6.5 | Ein schneller Integrationstest spielt einen kleinen Dump des Vorabstands ein, migriert auf 1.0 und stellt wieder her |
 | 6.6 | Wartungsbefehle: Zugang wiederherstellen, Gesamtbestand einspielen, Organisation exportieren und löschen; Warnungen des Systems über sich selbst; Kennzahlen des Betriebs in der Administration |
 | 6.7 | Dokumentation: Installation, Konfiguration, Betrieb, Update, «Eine Quelle hinzufügen»; `SECURITY.md` mit Meldeweg und Hinweis, wie Betreiber von Sicherheitsupdates des Projekts erfahren |
-| 6.8 | SBOM, Lizenzdatei, Images für beide Architekturen; eigene Instanz des Projekts mit dem eigenen Technologieprofil |
+| 6.8 | SBOM, Lizenzdatei, Images für beide Architekturen; eigene Instanz des Projekts, gespeist aus dem eigenen Repository |
 
 Abnahme: alle Kriterien aus Kapitel 1.6, nachgewiesen auf einer frischen Installation für `amd64` und `arm64`; jede Pipeline läuft mit dem vollen Umfang in höchstens 25 Minuten; keine offenen Feststellungen mit hohem Schweregrad aus 6.1 und 6.2.
 
@@ -194,8 +210,8 @@ Abnahme: alle Kriterien aus Kapitel 1.6, nachgewiesen auf einer frischen Install
 
 In dieser Reihenfolge, weil sie in dieser Reihenfolge Nutzen bringen:
 
-1. **SBOM- und Lockfile-Import.** Plattformen mit Plugins und Paketen sind ohne Inventar auf Komponentenebene nicht prüfbar.
-2. **Erste Quellenwelle** mit generischem OSV- und CSAF-Leser, einschliesslich der Daten der Distributionen und des Verschmelzens von Einträgen mit später entdeckter gemeinsamer Kennung.
+1. **Erste Quellenwelle** mit generischem CSAF-Leser und OSV für Distributionen und weitere Ökosysteme; damit werden auch Pakete aus RubyGems, crates.io und GitHub Actions prüfbar.
+2. **Mehr Wege ins Profil:** GitHub App mit Webhooks, Hochladen von SBOM-Dateien (CycloneDX, SPDX), weitere Lockdateien; danach GitLab und Azure DevOps.
 3. **Deutsch** in der Oberfläche und in Nachrichten.
 4. **Eskalation** in Schritten; Vorlagen für Teams und Slack.
 5. **Passkeys und OIDC-Anmeldung;** API-Tokens.

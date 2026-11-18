@@ -54,7 +54,7 @@ Massgeblich ist `DESIGN.md`; die Tokens stehen in `docs/design/mockups/app.css`.
 | **Action** | Eine Massnahme: die drei Antworten, Schwachstellen nach Priorität, Status, Zuweisung, Frist, Notiz, Verlauf | ein Befund, viele Befunde, keine Korrektur verfügbar |
 | **Vulnerability** | Eine Schwachstelle aus Sicht der Organisation: betroffene Projekte, Begründung der Priorität als Punkterechnung, Beschreibung, Details, Quellen, Verlauf | ohne KI-Einschätzung (Vorlagen), Vorschlag des Modells zu bestätigen, zurückgezogen |
 | **Vulnerabilities** | Suche über alle konsolidierten Einträge, unabhängig vom eigenen Profil | kein Treffer |
-| **Projects** | Projekte und ihr Technologieprofil; Hinweise auf Lücken im Profil | ohne Komponenten, Version fehlt |
+| **Projects** | Projekte und ihr Technologieprofil; verbundene Repositories mit Commit und Zeitpunkt des letzten Einlesens; Pakete je Ökosystem; offene Vorschläge; Hinweise auf Lücken im Profil | ohne Komponenten, Version fehlt, Repository wird eingelesen, Repository nicht lesbar, Stand zur Bestätigung zurückgehalten, Token läuft ab |
 | **Sources** | Stand der Quellen; für den Instanz-Administrator auch Steuerung | Quelle fehlerhaft, deaktiviert |
 | **Notification rules** | Regeln, Webhook-Ziele, Zustellprotokoll | Zustellung fehlgeschlagen |
 | **Team** | Mitglieder, Rollen, Einladungen | Einladung offen |
@@ -82,12 +82,16 @@ Noch nicht als Mockup gebaut; der Aufbau steht fest.
 |---|---|---|
 | 1 Organisation | Name, Sprache, Zeitzone | Vorgaben aus dem Browser |
 | 2 Erstes Projekt | Name, getragener Geschäftsprozess, Kritikalität, Erreichbarkeit | je drei Wahlmöglichkeiten mit einem Satz Erklärung |
-| 3 Technologien | Suche im Katalog, gruppiert nach Betriebssystem, Laufzeit und Framework, CMS und Shop, Datenbank und Messaging, Cloud und Hosting, Container und Virtualisierung, Netzwerk und Sicherheit, weitere Software und Abhängigkeiten, externe Dienste | Version ist erwünscht, aber nicht Pflicht; «Version unbekannt» ist eine gültige Angabe. Bei Paketen fragt der Wizard, ob sie aus einer Distribution stammen. Externe Dienste haben keine Version. Freie Einträge sind möglich und als ungeprüft gekennzeichnet. Je Technologie lässt sich eine Schutzmassnahme mit Begründung angeben. |
-| 4 Abdeckung | Zeigt, was sich prüfen lässt und was nicht: fehlende Versionen, Plattformen ohne Plugins | Hinweise, keine Sperren |
-| 5 Benachrichtigung | Die drei Vorgaberegeln, Push auf diesem Gerät, Team einladen | alles überspringbar |
-| 6 Erste Übersicht | Die Ersteinschätzung läuft im Hintergrund; die Seite zeigt den Fortschritt und dann das Ergebnis | eine Sammelnachricht statt Einzelalarme |
+| 3 Repository | Optional, empfohlen. Zugang wählen oder anlegen (öffentlich ohne Token, oder feingranulares Token mit Anleitung und vorbelegten Rechten), ein oder mehrere Repositories aus der Liste des Zugangs wählen, Zweig und bei Monorepos Unterordner. Das Einlesen startet sofort im Hintergrund (Kapitel 16.2). | Überspringbar; wer kein Repository hat oder es nicht verbinden will, erfasst alles im nächsten Schritt von Hand. Fehlt der Dependency Graph, sagt der Wizard, wie man ihn einschaltet, und fährt mit dem fort, was die eigenen Leser finden. |
+| 4 Betrieb | Fragen, die das Repository nicht beantwortet und die der Wizard bis zum Ende des Einlesens stellt: Wo läuft das Projekt (eigener Server, Container-Plattform, verwalteter Dienst), welches Betriebssystem hat der Host, was steht davor | je eine Frage mit wenigen Wahlmöglichkeiten; «weiss nicht» ist gültig |
+| 5 Technologien | Drei Gruppen (Kapitel 16.7): **aus dem Repository** als Zusammenfassung je Ökosystem; **Vorschläge** mit Beleg zum Bestätigen, Ändern oder Ablehnen; **ergänzen**: gezielte Fragen aus dem Gefundenen, darunter die Suche im Katalog, gruppiert nach Betriebssystem, Laufzeit und Framework, CMS und Shop, Datenbank und Messaging, Cloud und Hosting, Container und Virtualisierung, Netzwerk und Sicherheit, weitere Software und Abhängigkeiten, externe Dienste | Version ist erwünscht, aber nicht Pflicht; «Version unbekannt» ist eine gültige Angabe. Bei Paketen fragt der Wizard, ob sie aus einer Distribution stammen. Externe Dienste haben keine Version. Freie Einträge sind möglich und als ungeprüft gekennzeichnet. Je Technologie lässt sich eine Schutzmassnahme mit Begründung angeben. Ohne Repository ist nur die Gruppe «ergänzen» sichtbar. |
+| 6 Abdeckung | Zeigt, was sich prüfen lässt und was nicht: fehlende Versionen, Plattformen ohne Plugins, Pakete ohne Lockdatei, noch nicht prüfbare Ökosysteme | Hinweise, keine Sperren |
+| 7 Benachrichtigung | Die drei Vorgaberegeln, Push auf diesem Gerät, Team einladen | alles überspringbar |
+| 8 Erste Übersicht | Die Ersteinschätzung läuft im Hintergrund; die Seite zeigt den Fortschritt und dann das Ergebnis | eine Sammelnachricht statt Einzelalarme |
 
-Der Wizard speichert nach jedem Schritt und lässt sich jederzeit fortsetzen. Wer ihn abbricht, landet in einer funktionierenden, leeren Organisation mit einem Hinweis in der Übersicht. Weitere Projekte entstehen später über denselben Ablauf ab Schritt 2. Einmal eingegebene Angaben werden nie erneut abgefragt.
+Der Wizard speichert nach jedem Schritt und lässt sich jederzeit fortsetzen. Wer ihn abbricht, landet in einer funktionierenden, leeren Organisation mit einem Hinweis in der Übersicht; ein bereits verbundenes Repository wird trotzdem eingelesen. Weitere Projekte entstehen später über denselben Ablauf ab Schritt 2, ein weiteres Repository für ein bestehendes Projekt über die Projektseite mit den Schritten 3 bis 6. Einmal eingegebene Angaben werden nie erneut abgefragt: Ein Zugang wird einmal angelegt und danach nur ausgewählt, ein abgelehnter Vorschlag kommt nicht wieder.
+
+Ist das Einlesen bei Schritt 5 noch nicht fertig, zeigt die Gruppe «aus dem Repository» den Fortschritt, und die beiden anderen Gruppen lassen sich schon bearbeiten. Vorschläge erscheinen, sobald sie da sind; nichts springt unter dem Zeiger weg.
 
 ## 11.7 Technischer Aufbau
 
@@ -144,7 +148,8 @@ Der Server sendet für die Web-App wie für die native App nur Web Push. Die nat
 
 ## 11.10 Offen
 
-- Mockups für Setup-Wizard, Projektprofil, Benachrichtigungsregeln und Quellenstatus; sie folgen nach Freigabe der Richtung.
+- Mockups für Setup-Wizard mit Repository und Vorschlägen, Projektprofil mit Verknüpfungen und Paketen je Ökosystem, Benachrichtigungsregeln und Quellenstatus; sie folgen nach Freigabe der Richtung.
+- Darstellung von über tausend Paketen je Projekt: Zusammenfassung je Ökosystem, Filter nach direkt, transitiv und «nur Entwicklung», Suche; welche Spalten die Liste braucht, klärt das Mockup.
 - Eine eigene Seite für die ruhige Übersicht. Heute existiert der Zustand nur als Muster im Designsystem.
 - Die Massnahme mit mehreren Befunden und die Fassung mit KI-Einschätzung als eigene Mockups.
 - Deutsche Texte in allen Komponenten; die Layouts sind für längere Wörter ausgelegt, geprüft ist es noch nicht.

@@ -39,10 +39,16 @@ Die API ist der einzige Zugang zu den Daten: Die Web-App, die spätere Mobile-Ap
 |---|---|
 | `GET, POST /orgs/{orgId}/projects` · `GET, PATCH, DELETE …/{projectId}` | Projekte |
 | `GET, POST …/projects/{projectId}/components` · `PATCH, DELETE …/components/{id}` | Komponenten eines Projekts |
-| `PUT …/projects/{projectId}/components` | Profil als Ganzes ersetzen (Wizard, späterer SBOM-Import). Der Server gleicht über die Kennungen ab, statt zu löschen und neu anzulegen (Kapitel 4.9). |
+| `PUT …/projects/{projectId}/components` | Manuelle Komponenten als Ganzes ersetzen (Wizard). Der Server gleicht über die Kennungen ab, statt zu löschen und neu anzulegen (Kapitel 4.9); Komponenten aus einem Repository bleiben unberührt. |
+| `POST …/components/{id}/detach` | Komponente von ihrer Verknüpfung lösen; sie wird manuell (Kapitel 16.5) |
+| `GET, POST /orgs/{orgId}/repository-connections` · `PATCH, DELETE …/{id}` · `POST …/{id}/test` | Zugänge zu GitHub. Das Token wird nur geschrieben, nie zurückgegeben; Antworten nennen die letzten vier Zeichen und das Ablaufdatum. |
+| `GET …/repository-connections/{id}/repositories?q=` | Repositories, die der Zugang lesen kann, für die Auswahl im Wizard |
+| `GET, POST …/projects/{projectId}/repositories` · `PATCH, DELETE …/{linkId}` | Verknüpfungen eines Projekts mit Zustand, Commit und Zeitpunkt des letzten Einlesens. Löschen entfernt die Komponenten der Verknüpfung. |
+| `POST …/repositories/{linkId}/sync` · `POST …/{linkId}/confirm-shrink` | Jetzt einlesen; einen zurückgehaltenen, deutlich kleineren Stand bestätigen |
+| `GET …/projects/{projectId}/suggestions` · `PATCH …/suggestions/{id}` | Vorschläge aus dem Repository ansehen, bestätigen (mit korrigierter Version) oder ablehnen |
 | `GET /catalog/products?q=` | Suche im Technologie-Katalog für die Eingabehilfe |
 | `GET /orgs/{orgId}/setup` · `POST …/setup/complete` | Zustand des Setup-Wizards |
-| `GET /orgs/{orgId}/profile/coverage` | Hinweise auf Lücken im Profil (nicht prüfbare Plattform-Treffer, fehlende Versionen) |
+| `GET /orgs/{orgId}/profile/coverage` | Hinweise auf Lücken im Profil: nicht prüfbare Plattform-Treffer, fehlende Versionen, Pakete nur aus Manifesten ohne Lockdatei, noch nicht prüfbare Ökosysteme, offene Vorschläge, Repositories mit Zustand `partial` oder `failing` |
 
 ### Einträge und Quellen (`Intel`)
 
@@ -87,7 +93,7 @@ Die API ist der einzige Zugang zu den Daten: Die Web-App, die spätere Mobile-Ap
 | Methode und Pfad | Zweck |
 |---|---|
 | `GET /setup/status` · `POST /setup` | Ersteinrichtung mit Einrichtungstoken |
-| `GET, PATCH /instance/settings` | Registrierung, SMTP, KI-Anbieter, Grenzen |
+| `GET, PATCH /instance/settings` | Registrierung, SMTP, KI-Anbieter, Grenzen, Hosts für GitHub Enterprise Server, Intervall für das Einlesen von Repositories |
 | `POST /instance/settings/smtp/test` · `…/ai/test` | Verbindung prüfen |
 | `GET /instance/jobs?state=dead` · `POST …/{id}/retry` | Fehlgeschlagene Jobs |
 | `GET /health/live` · `/health/ready` | Health Checks, ohne Anmeldung |
@@ -144,4 +150,5 @@ Gekürzt; die Felder entsprechen dem, was die Detailansicht zeigt.
 ## 10.4 Ausgehende Schnittstellen
 
 - **Webhook:** `POST` an das Ziel der Organisation mit `X-Ardea-Event`, `X-Ardea-Delivery`, `X-Ardea-Timestamp` und `X-Ardea-Signature` (HMAC-SHA256 über Zeitstempel und Inhalt). Der Inhalt ist die Massnahme mit ihren wichtigsten Befunden und dem auslösenden Ereignis; das Schema trägt eine Versionsnummer.
+- **Code-Plattformen:** Einlesen ausschliesslich vom Worker aus. Die API spricht GitHub nur für zwei kurze, vom Benutzer ausgelöste Abfragen an: Zugang prüfen und Repositories zur Auswahl auflisten. Beide über denselben benannten Client mit festen Hosts (Kapitel 16.9) und mit kurzem Zeitlimit; wie bei Jobs mit Aussenkontakt bleibt dabei keine Transaktion offen (Kapitel 9.2).
 - **Quellen und KI-Anbieter:** ausschliesslich vom Worker aus, über benannte HTTP-Clients mit Zeitlimit, Wiederholung, Ratenbegrenzung und kennzeichnendem `User-Agent` (Kapitel 5).

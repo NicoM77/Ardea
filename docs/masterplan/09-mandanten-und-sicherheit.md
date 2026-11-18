@@ -23,7 +23,8 @@ Instanz
 |---|:-:|:-:|:-:|:-:|
 | Massnahmen, Meldungen, Projekte, Übersicht lesen | ● | ● | ● | ● |
 | Status setzen, zuweisen, Notiz, Einschätzung korrigieren | ● | ● | ● | |
-| Projekte und Komponenten pflegen | ● | ● | ● | |
+| Projekte und Komponenten pflegen, Repositories mit einem Projekt verbinden, Vorschläge bestätigen | ● | ● | ● | |
+| Zugänge zu GitHub anlegen und löschen | ● | ● | | |
 | Benachrichtigungsregeln, Webhook-Ziele | ● | ● | | |
 | Mitglieder einladen und Rollen ändern | ● | ● | | |
 | KI-Datenrichtlinie, MFA-Pflicht, Fristen | ● | ● | | |
@@ -76,6 +77,7 @@ Keine Transaktion bleibt über einen Aufruf nach aussen offen, und Zeilensperren
 | Neues Regelwerk | Welche Organisationen haben offene Befunde? |
 | Warnung ohne Kennung | Welche Organisationen haben eine Regel für Warnungen? |
 | Sammelnachrichten, Eskalation | Welche Ziele sind jetzt fällig? |
+| Repositories einlesen | Welche Verknüpfungen sind jetzt fällig? |
 | Anmeldung | Welches Konto gehört zu dieser E-Mail-Adresse, und welchen Organisationen gehört es an? (benutzerbezogene Regel auf `membership`) |
 | Einladung annehmen | Zu welcher Organisation gehört dieser Token? |
 | Kennzahlen der Instanz | Zählwerte ohne Inhalte |
@@ -104,8 +106,8 @@ Export und Löschen einer Organisation sowie das Aufräumen alter Daten sind kei
 
 | Daten | Einstufung | Schutz |
 |---|---|---|
-| Geheimnisse: SMTP-Passwort, KI-Schlüssel, Webhook-URLs und -Geheimnisse, VAPID-Privatschlüssel | kritisch | In der Datenbank verschlüsselt über ASP.NET Data Protection. Deren Schlüssel liegen in der Datenbank und sind mit einem Hauptschlüssel aus `ARDEA_MASTER_KEY` oder einer Secret-Datei geschützt. Nie im Klartext in API-Antworten oder Logs. |
-| Technologieprofile, Meldungen, Einschätzungen | hoch | Mandantentrennung (9.2), Verschlüsselung des Datenträgers durch den Betreiber, keine Inhalte in Logs oder Telemetrie. |
+| Geheimnisse: SMTP-Passwort, KI-Schlüssel, Webhook-URLs und -Geheimnisse, VAPID-Privatschlüssel, Tokens für GitHub | kritisch | In der Datenbank verschlüsselt über ASP.NET Data Protection. Deren Schlüssel liegen in der Datenbank und sind mit einem Hauptschlüssel aus `ARDEA_MASTER_KEY` oder einer Secret-Datei geschützt. Nie im Klartext in API-Antworten oder Logs. |
+| Technologieprofile einschliesslich eingelesener Abhängigkeiten und gespeicherter SBOMs, Meldungen, Einschätzungen | hoch | Mandantentrennung (9.2), Verschlüsselung des Datenträgers durch den Betreiber, keine Inhalte in Logs oder Telemetrie. Quellcode wird nicht gespeichert (Kapitel 16.9). |
 | Konten: E-Mail, Passwort-Hash, MFA-Schlüssel | hoch | Identity-Standard; MFA-Schlüssel zusätzlich verschlüsselt. |
 | Quellen, Einträge, Katalog | öffentlich | keine besonderen Massnahmen |
 
@@ -126,6 +128,7 @@ Das System liest fremde Inhalte und ruft fremde Adressen auf. Beides ist Angriff
 | Anweisungen an das Sprachmodell in Quelltexten | Keine Werkzeuge für das Modell, Schema-Prüfung der Ausgabe, kein «nicht betroffen» ohne Bestätigung durch einen Menschen, Untergrenzen im Regelwerk (Kapitel 7.5, 7.6). |
 | Webhook oder Push-Abo als Sprungbrett ins interne Netz (SSRF) | Webhook-Ziele werden aufgelöst und gegen private, lokale und Metadaten-Adressbereiche geprüft; die geprüfte Adresse wird für die Verbindung verwendet. Interne Ziele nur über eine Freigabeliste des Instanz-Administrators. Keine Weiterleitungen. Push-Abos werden nur für die Push-Dienste der Browserhersteller angenommen. |
 | Manipulierte oder übergrosse Antworten von Quellen | Adapter rufen nur die konfigurierten Hosts auf; Grössen- und Zeitlimits; XML ohne DTD und externe Entitäten; Entpacken mit Obergrenzen für Grösse und Dateizahl. |
+| Manifeste, Lockdateien und SBOMs aus Repositories | Nur lesen, nie ausführen: kein Build, keine Installation, kein Skript. Grenzen für Zahl und Grösse der Dateien; JSON- und XML-Leser ohne DTD. Ziele fest auf die API von GitHub und die Download-Hosts der SBOM; Adressen für GitHub Enterprise Server nur vom Instanz-Administrator (Kapitel 16.9). |
 | Kompromittierte Quelle liefert falsche Daten | Rangfolge der Quellen, Herkunft je Feld sichtbar. Ein Anhalten bei auffälligen Massenänderungen ist eine Ausbaustufe. |
 
 ## 9.6 Härtung der Anwendung
@@ -134,7 +137,7 @@ Das System liest fremde Inhalte und ruft fremde Adressen auf. Beides ist Angriff
 - **Container:** läuft als nicht privilegierter Benutzer auf einem Image ohne Shell und Paketmanager, Dateisystem schreibgeschützt, keine zusätzlichen Capabilities.
 - **Datenbank:** nur im Compose-Netz erreichbar, kein veröffentlichter Port in der Vorgabe.
 - **Lieferkette:** Lockfiles für NuGet und npm; automatische Abhängigkeits-Updates; Lizenzprüfung im Build gegen eine Positivliste (Kapitel 13); SBOM je Release; signierte Images sind eine Ausbaustufe.
-- **Selbstanwendung:** Das Projekt pflegt das eigene Technologieprofil in einer eigenen Instanz und meldet sich Lücken in seinen Abhängigkeiten selbst.
+- **Selbstanwendung:** Das Projekt verbindet sein eigenes Repository mit einer eigenen Instanz und meldet sich Lücken in seinen Abhängigkeiten selbst.
 - **Meldeweg:** `SECURITY.md` mit Kontakt und Frist für die Antwort; koordinierte Offenlegung.
 
 ## 9.7 Bedrohungen im Überblick
@@ -147,6 +150,7 @@ Das System liest fremde Inhalte und ruft fremde Adressen auf. Beides ist Angriff
 | Datenbank-Dump gerät in falsche Hände | Profile lesbar, Geheimnisse nicht | Spaltenverschlüsselung der Geheimnisse, Hauptschlüssel ausserhalb der Datenbank, Empfehlung zur Datenträgerverschlüsselung |
 | Unterdrückung einer Warnung über manipulierten Quelltext | übersehene Lücke | das Modell kann Stufe 1 nicht allein setzen; Untergrenzen im Regelwerk; Schema-Prüfung |
 | Alarmflut durch fehlerhafte oder böswillige Quelle | Abstumpfung, Ausfall | Benachrichtigung je Massnahme statt je CVE, Wesentlichkeitsprüfung, Obergrenzen je Kanal |
-| Missbrauch als Proxy ins interne Netz | Zugriff auf interne Dienste | SSRF-Schutz für Webhooks und Quellen |
+| Missbrauch als Proxy ins interne Netz | Zugriff auf interne Dienste | SSRF-Schutz für Webhooks, Quellen und Code-Plattformen |
+| Abgezogenes Token für GitHub | Lesezugriff auf Quellcode der Organisation | feingranular, nur lesend, nur ausgewählte Repositories, mit Ablauf; verschlüsselt, nie angezeigt, nie geloggt |
 | Abgezogene Sitzung oder Token | Handeln im Namen des Benutzers | `HttpOnly`-Cookie, CSP, kurze Laufzeit, CSRF-Schutz |
 | Schädliche Abhängigkeit | Codeausführung im System | Lockfiles, Lizenz- und Update-Automatik, minimales Image |

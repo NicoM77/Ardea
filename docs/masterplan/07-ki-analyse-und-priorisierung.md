@@ -159,7 +159,9 @@ Die Rechnung läuft für jeden Befund in fester Reihenfolge:
 
 1. **Ausschluss, Stufe 1 ohne Rechnung:** Der Treffer ist schwach, die Versionsprüfung ergibt *ausserhalb*, der Hersteller erklärt das Produkt in strukturierten Daten für nicht betroffen, der Eintrag ist zurückgezogen, oder ein Mensch stuft den Befund so ein. Ein Ausschluss beruht immer auf strukturierten Angaben oder auf einem Menschen. Er geht allen folgenden Schritten vor, auch den Untergrenzen.
 2. **Punkte** nach der Tabelle, daraus die Stufe.
-3. **Obergrenze 4,** solange die Betroffenheit nicht durch die Versionsprüfung oder einen Menschen bestätigt ist. «Critical» bleibt Bestätigtem vorbehalten.
+3. **Obergrenzen:**
+   - 4, solange die Betroffenheit nicht durch die Versionsprüfung oder einen Menschen bestätigt ist. «Critical» bleibt Bestätigtem vorbehalten.
+   - 2 für Komponenten, die nur in der Entwicklung verwendet werden (Merkmal `development` aus dem Repository, Kapitel 16.5), solange kein Mensch sie anders einstuft. Sie werden nicht ausgeliefert; die Untergrenzen im nächsten Schritt gelten für sie trotzdem.
 4. **Untergrenzen,** die kein anderer Faktor unterschreitet:
    - 3, wenn die Lücke aktiv ausgenutzt wird und kein Ausschluss greift, die Version also im Bereich liegt oder unbekannt ist;
    - 4, wenn die Lücke aktiv ausgenutzt wird und die Version im Bereich liegt;
@@ -190,13 +192,13 @@ Die Gewichte sind eine erste Fassung. Sie werden in Phase 3 am Referenzsatz kali
 | Auslöser | Umfang |
 |---|---|
 | Eintrag wesentlich geändert (Kapitel 6.4) | alle Organisationen mit Befund oder neuem Treffer zu diesem Eintrag |
-| Profil geändert | das Projekt gegen die Einträge im Rückblick und gegen seine offenen Befunde |
+| Profil geändert, von Hand oder durch ein Einlesen aus dem Repository | das Projekt gegen die Einträge im Rückblick und gegen seine offenen Befunde |
 | Mensch bestätigt, verwirft oder korrigiert eine Einschätzung | dieser Befund |
 | Regelwerk in neuer Version | alle offenen Befunde, gedrosselt |
 
 Eine Neubewertung ändert den Befund nur, wenn sich Stufe, Urteil, Ausnutzungsstand, verfügbare Korrektur, Massnahme oder betroffene Projekte ändern. Ändert sich an einem Eintrag nur der Text der Abhilfe (etwa eine neue Umgehung), wird die Antwort «Was ist zu tun» aktualisiert, ohne die Stufe neu zu rechnen; dafür führt der Eintrag einen eigenen Fingerabdruck über seine Abhilfetexte.
 
-**Erstbefüllung.** Wer ein Projekt neu anlegt, bekommt nicht hunderte Alarme. Die Rückwärtssuche rechnet nur mit dem Regelwerk, markiert ihre Befunde als Erstbefüllung und löst eine einzige Sammelnachricht aus: «Ersteinschätzung für Projekt X: 3 Massnahmen, höchste Stufe 4».
+**Erstbefüllung.** Wer ein Projekt neu anlegt, bekommt nicht hunderte Alarme. Die Rückwärtssuche rechnet nur mit dem Regelwerk, markiert ihre Befunde als Erstbefüllung und löst eine einzige Sammelnachricht aus: «Ersteinschätzung für Projekt X: 3 Massnahmen, höchste Stufe 4». Dasselbe gilt für das erste Einlesen eines neu verbundenen Repositorys, auch an einem bestehenden Projekt (Kapitel 16.5).
 
 ## 7.8 Anbindung der KI
 

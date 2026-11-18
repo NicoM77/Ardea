@@ -32,6 +32,10 @@ erDiagram
   ORGANIZATION ||--o{ PROJECT : betreibt
   PROJECT ||--o{ COMPONENT : "setzt ein"
   CATALOG_PRODUCT ||--o{ COMPONENT : identifiziert
+  REPOSITORY_CONNECTION ||--o{ REPOSITORY_LINK : "gewährt Zugang"
+  PROJECT ||--o{ REPOSITORY_LINK : "wird gespeist von"
+  REPOSITORY_LINK ||--o{ COMPONENT : "liefert"
+  REPOSITORY_LINK ||--o{ COMPONENT_SUGGESTION : "schlägt vor"
 
   ORGANIZATION ||--o{ ALERT : erhält
   SECURITY_ENTRY ||--o{ ALERT : "führt zu"
@@ -67,7 +71,7 @@ Ein Hersteller-Advisory, das zwölf CVEs nennt, erzeugt keinen eigenen Eintrag. 
 | `source_record` | Aktueller Rohdatensatz je externer ID | `source_id`, `external_id` (zusammen eindeutig), `url`, `content_hash`, `payload`, `revision`, `source_published_at`, `source_modified_at`, `first_seen_at`, `last_seen_at`, `parse_status` |
 | `source_record_revision` | Frühere Rohstände | `source_record_id`, `revision`, `content_hash`, `payload`, `fetched_at` |
 | `observation` | Normalisierte Aussagen des aktuellen Rohdatensatzes, genau eine je Rohdatensatz; eine neue Revision überschreibt sie | `source_record_id` (eindeutig), `record_revision`, `kind`, `title`, `description`, `language`, `claims jsonb` (Liste von Aussagenblöcken, je einer pro Kennung: Aliasse, Zustand, Metriken, betroffene Produkte, Ausnutzung, Abhilfe, Verweise), `origin` (parsed, extracted), `parser_version` |
-| `security_entry` | Der konsolidierte Eintrag | `kind`, `primary_key` (eindeutig, z. B. `CVE-2026-115731`), `title`, `summary`, `description`, `state`, `published_at`, `changed_at`, `revision`, `material_fingerprint`, `remediation_fingerprint`, `cvss_score`, `cvss_version`, `cvss_vector`, `exploitation` (none, poc, active) mit `exploitation_evidence jsonb`, `epss_class`, `fix_available`, `cwe_ids`, `authority_warning`, `provenance jsonb`, `search tsvector` |
+| `security_entry` | Der konsolidierte Eintrag | `kind`, `primary_key` (eindeutig, z. B. `CVE-2026-115731`), `title`, `summary`, `description`, `state` (published, rejected, disputed, merged), `merged_into_id`, `published_at`, `changed_at`, `revision`, `material_fingerprint`, `remediation_fingerprint`, `cvss_score`, `cvss_version`, `cvss_vector`, `exploitation` (none, poc, active) mit `exploitation_evidence jsonb`, `epss_class`, `fix_available`, `cwe_ids`, `authority_warning`, `provenance jsonb`, `search tsvector` |
 | `entry_alias` | Alle Kennungen eines Eintrags | `entry_id`, `scheme`, `value`; (`scheme`, `value`) eindeutig |
 | `entry_affected` | Betroffene Produkte und Versionsbereiche | `entry_id`, `vendor`, `product`, `product_key`, `cpe_vendor`, `cpe_product`, `purl_type`, `purl_name`, `version_scheme`, `introduced`, `fixed`, `last_affected`, `exact`, `status` (affected, unaffected, unknown), `default_status` (Angabe des Records für alle nicht genannten Versionen; ohne Angabe `unknown`), `source_id` |
 | `entry_signal` | Signale je Kennung, getrennt vom Eintrag fortgeschrieben | `scheme`, `value` (zusammen eindeutig), `kev_listed_on`, `kev_url`, `epss_score`, `epss_percentile`, `epss_class`, `updated_at` |
@@ -79,18 +83,23 @@ Ein Hersteller-Advisory, das zwölf CVEs nennt, erzeugt keinen eigenen Eintrag. 
 
 Indizes, die das Verhalten tragen: `entry_affected (product_key)`, `(cpe_vendor, cpe_product)` und `(purl_type, purl_name)` für die Kandidatensuche; `security_entry (changed_at desc)`; GIN auf `search`; `source (next_sync_at) WHERE enabled`.
 
-Das Verschmelzen zweier Einträge, die eine später entdeckte Kennung verbindet, kommt mit den Quellen des MVP nicht vor: Alle führen die CVE-ID. Es wird mit der ersten Quellenwelle eingeführt (Kapitel 6.2).
+Das Verschmelzen zweier Einträge, die eine später entdeckte Kennung verbindet, kommt mit OSV schon im MVP vor (Kapitel 6.2). Der unterlegene Eintrag erhält den Zustand `merged` und einen Verweis auf den überlegenen; seine Schlüssel bleiben als Weiterleitung auflösbar.
 
 ## 4.5 Schemata `catalog` und `assets`
 
 | Tabelle | Zweck | Wichtige Spalten |
 |---|---|---|
-| `catalog.product` (global) | Kuratierter Technologie-Katalog | `key`, `name`, `vendor`, `kind`, `cpe_pairs text[]`, `purl_types`, `aliases jsonb` (Namensmuster je Hersteller-Schreibweise), `version_scheme`, `platform_key` (bei Plugins: zugehörige Plattform), `related_keys` (verwandte, eigenständige Produkte) |
+| `catalog.product` (global) | Kuratierter Technologie-Katalog | `key`, `name`, `vendor`, `kind`, `cpe_pairs text[]`, `purl_types`, `aliases jsonb` (Namensmuster je Hersteller-Schreibweise), `version_scheme`, `platform_key` (bei Plugins: zugehörige Plattform), `related_keys` (verwandte, eigenständige Produkte), `image_names text[]` (Container-Images, aus denen die Erkennung im Repository das Produkt ableitet, Kapitel 16.3) |
 | `assets.project` | Projekt oder System einer Organisation | `organization_id`, `name`, `description`, `criticality` (low, normal, high), `exposure` (internet, internal, isolated), `archived_at` |
-| `assets.component` | Eingesetzte Technologie eines Projekts | `organization_id`, `project_id`, `product_key` (aus dem Katalog) oder `custom_vendor`, `custom_name`; `kind` (os, runtime, framework, cms, database, messaging, container, network, virtualization, library, plugin, service, other); `version`, `version_scheme`, `packaging` (upstream, distribution, unknown), `parent_component_id`, `exposure`, `criticality`, `protection` (none, effective) mit `protection_note`, `origin` (manual, sbom, lockfile) |
+| `assets.component` | Eingesetzte Technologie eines Projekts | `organization_id`, `project_id`, `product_key` (aus dem Katalog) oder `custom_vendor`, `custom_name`; `kind` (os, runtime, framework, cms, database, messaging, container, network, virtualization, library, plugin, service, other); `version`, `version_scheme`, `packaging` (upstream, distribution, unknown), `parent_component_id`, `exposure`, `criticality`, `protection` (none, effective) mit `protection_note`, `origin` (manual, repository); bei Herkunft `repository` zusätzlich `repository_link_id`, `purl`, `dependency_scope` (runtime, development, unknown), `dependency_relation` (direct, transitive, unknown), `evidence` (Datei und Zeile) |
 | `assets.component_key` | Suchindex für die Kandidatensuche | `organization_id`, `project_id`, `component_id`, `key_type` (cpe, product, purl), `key_value`, `strength` (strong, weak) |
+| `assets.repository_connection` | Zugang einer Organisation zu GitHub (Kapitel 16.4) | `organization_id`, `name`, `host_id` (leer für github.com), `token_enc` (leer für Zugang ohne Token), `token_hint`, `token_expires_at`, `created_by`, `last_ok_at` |
+| `assets.repository_link` | Ein Repository, das ein Projekt speist | `organization_id`, `project_id`, `connection_id`, `owner`, `name`, `ref` (leer: Standardzweig), `path` (Unterordner), `state` (ok, partial, failing), `state_reason`, `failing_since`, `last_commit_sha`, `last_indexed_at`, `next_check_at`, `head_etag`, `last_sbom` (komprimiert), `pending_shrink` (zur Bestätigung zurückgehaltener Stand) |
+| `assets.component_suggestion` | Vorschlag aus einer Erkennungsregel | `organization_id`, `project_id`, `repository_link_id`, `product_key`, `version`, `evidence` (Datei, Zeile, gelesener Wert), `state` (open, accepted, dismissed), `decided_by`, `decided_at` |
 
 Der Katalog ist ein eigenes kleines Modul, weil ihn zwei Seiten brauchen: `Intel` zum Bilden der Produktschlüssel, `Assets` für die Eingabe.
+
+Die Hosts für GitHub Enterprise Server stehen als globale Einstellung in `platform.setting`; nur der Instanz-Administrator legt sie an. Eine Organisation wählt daraus, sie kann keine eigene Adresse eintragen (Kapitel 16.9).
 
 Das Organisationsprofil aus den Anforderungen ist kein eigenes Objekt: Der Setup-Wizard legt das erste Projekt an. Damit gibt es genau einen Weg vom Profil zur Meldung. Die Kritikalität eines Geschäftsprozesses wird als Kritikalität des Projekts erfasst, das ihn trägt; die Beschreibung nennt den Prozess.
 
@@ -126,7 +135,7 @@ Auch Ergebnisse mit Stufe 1 werden gespeichert: als Befund mit dem Status `not_a
 | `push_subscription` | Web-Push-Abo eines Geräts | `user_id`, `endpoint`, `p256dh`, `auth`, `user_agent`, `failed_count` |
 | `user_preference` | Persönliche Einstellungen | `user_id`, `organization_id`, `muted_channels`, `locale` |
 
-«Gegenstand» steht für drei Spalten, von denen genau eine gesetzt ist: `remediation_id` für Ereignisse an einer Massnahme, `entry_id` für eine Warnung ohne Kennung, `project_id` für eine abgeschlossene Erstbefüllung. `recipient_key` ist die Benutzerkennung, die bestätigte externe Adresse oder das Webhook-Ziel.
+«Gegenstand» steht für drei Spalten, von denen genau eine gesetzt ist: `remediation_id` für Ereignisse an einer Massnahme, `entry_id` für eine Warnung ohne Kennung, `project_id` für eine abgeschlossene Erstbefüllung und ein nicht mehr lesbares Repository. `recipient_key` ist die Benutzerkennung, die bestätigte externe Adresse oder das Webhook-Ziel.
 
 ## 4.8 Schemata `iam` und `platform`
 
@@ -141,7 +150,7 @@ Auch Ergebnisse mit Stufe 1 werden gespeichert: als Befund mit dem Status `not_a
 | Urteil ohne Modell | Version im Bereich → `affected`; unbekannt → `uncertain`; ausserhalb → `not_affected`; schwacher Treffer → `not_affected` |
 | Status einer Massnahme | `open` oder `in_review`, gesetzt an der Massnahme; beides gilt für ihre nicht abgeschlossenen Befunde. Sie wird `closed`, sobald kein Befund mehr offen oder in Prüfung ist; `close_reason` ist das häufigste Ergebnis ihrer Befunde. Ein späterer Befund zur selben Komponente öffnet eine neue Massnahme. |
 | Vorgabestatus eines Befunds | ab Stufe 2: der Status seiner Massnahme, also `open` oder `in_review`. Stufe 1 aus den Regeln: `not_affected`, gesetzt vom System, ohne Massnahme. Steigt ein solcher Befund später, wird er `open` und tritt einer Massnahme bei. |
-| Identität einer Komponente | Eine Komponente behält ihre Kennung, wenn Version, Kontext oder Schutzmassnahme geändert werden. Das Ersetzen eines ganzen Profils gleicht ab: vorhandene Komponenten über ihre Kennung oder, wo sie fehlt, über Produktschlüssel und übergeordnete Komponente; nur was in der neuen Liste fehlt, wird entfernt. Eine entfernte Komponente schliesst ihre Massnahme mit dem Grund «Komponente entfernt». |
+| Identität einer Komponente | Eine Komponente behält ihre Kennung, wenn Version, Kontext oder Schutzmassnahme geändert werden. Das Ersetzen eines ganzen Profils gleicht ab: vorhandene Komponenten über ihre Kennung oder, wo sie fehlt, über Produktschlüssel und übergeordnete Komponente; nur was in der neuen Liste fehlt, wird entfernt. Eine entfernte Komponente schliesst ihre Massnahme mit dem Grund «Komponente entfernt». Für Komponenten aus einem Repository gelten zusätzlich die Regeln aus Kapitel 16.5: Ersetzen betrifft nur manuelle Komponenten, das Einlesen nur die der eigenen Verknüpfung. |
 | Nummern | je Organisation ein Zähler in `assess.org_counter`, erhöht unter Zeilensperre in der schreibenden Transaktion; Massnahmen und Meldungen teilen den Nummernkreis, eine Nummer kommt also nur einmal vor |
 | Frist | Beginn plus Vorgabe der aktuellen Stufe. Beginn ist das Öffnen der Massnahme oder ihr letzter Anstieg (`level_raised_at`). Sinkt die Stufe, bleibt der Beginn stehen und es gilt die längere Vorgabe der tieferen Stufe. |
 | Umfang einer Einschätzung | eine Meldung, also ein Eintrag aus Sicht einer Organisation, mit allen getroffenen Komponenten; das Urteil steht je Komponente im Ergebnis und wird an den Befund übernommen |
@@ -162,6 +171,7 @@ Gemessen am 18.11.2026 für das CVE Program (`prototypes/relevance-funnel/`): im
 | Gesamtbestand CVE | optional; mehrere GB, einmaliger Import eines Archivs von 666 MB |
 | Signale | eine Zeile je Kennung, rund 400 000, ohne Revisionen |
 | Mandantendaten | hängt von Profil und Patchstand ab: im Spike 173 Befunde aus starken Treffern pro Woche für drei Projekte, davon je nach Versionen 6 bis 170 ab Stufe 3. Dazu kommen schwache Treffer als Befunde der Stufe 1: 477 in der Woche allein für eine WordPress-Plattform. Eine Zeile misst unter 1 kB. |
+| Komponenten aus Repositories | Schätzung: 100 bis 1 300 je Repository, rund 20 000 für eine Organisation mit 20 Repositories; dazu je Verknüpfung die letzte SBOM, komprimiert meist unter 200 kB (Kapitel 16.8) |
 
 Vorgaben, alle konfigurierbar: Rückblick beim Erststart 180 Tage; ältere Einträge werden bei Bedarf einzeln nachgeladen. Von jedem Rohdatensatz bleiben der erste und die letzten zehn Stände. `source_run` wird nach 90 Tagen ausgedünnt, erledigte Jobs nach 7 Tagen. Massnahmen, Befunde, Einschätzungen und Verlauf werden nie automatisch gelöscht.
 

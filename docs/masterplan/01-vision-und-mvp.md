@@ -37,20 +37,20 @@ Architektur:
 
 ## 1.4 Was das System nicht ist
 
-- Kein Schwachstellen-Scanner: Es prüft keine Systeme, sondern gleicht Einträge mit einem deklarierten Profil ab.
+- Kein Schwachstellen-Scanner: Es prüft keine Systeme, sondern gleicht Einträge mit einem deklarierten Profil ab. Repositories liest es nur; es baut, installiert und analysiert keinen Code.
 - Kein SIEM, SOAR oder Ticketsystem: Es erzeugt Massnahmen und führt deren Status; Abarbeitung in Fremdsystemen läuft über Webhooks.
 - Keine Threat-Intelligence-Plattform: keine Indikatoren, kein STIX/TAXII im MVP.
 - Kein gehosteter Dienst: Ein SaaS-Angebot, Lizenzmodell und kommerzielle Angebote sind offen und nicht Teil dieses Plans.
 
 ## 1.5 MVP-Abgrenzung
 
-Das MVP beweist den Kern von der Quelle bis zur Benachrichtigung mit vier Quellen, vier Kanälen und einem vollständigen, aber schmalen Bedienfluss. Alles, was Breite bringt, folgt danach. Diese Tabelle ist massgeblich: Die Phasen in Kapitel 14 enthalten nichts, was hier nicht in der Spalte MVP steht.
+Das MVP beweist den Kern von der Quelle bis zur Benachrichtigung mit fünf Quellen, vier Kanälen, einem Profil, das sich aus GitHub-Repositories füllt, und einem vollständigen, aber schmalen Bedienfluss. Alles, was Breite bringt, folgt danach. Diese Tabelle ist massgeblich: Die Phasen in Kapitel 14 enthalten nichts, was hier nicht in der Spalte MVP steht.
 
 | Bereich | MVP (Version 1.0) | Ausbaustufe 1 | Später |
 |---|---|---|---|
-| Quellen | CVE Program inkl. eingebetteter CISA-Daten (SSVC, KEV), NCSC.ch, dazu CISA KEV und FIRST EPSS als Anreicherung | die erste Welle mit elf Quellen (Kapitel 5.6): OSV, GitHub Advisories, NVD, CISA-Advisories, CERT-Bund, Microsoft, Red Hat, Ubuntu, Debian, Kubernetes, CERT-FR | Ausbau auf 30–50, generischer CSAF-Adapter für Herstellerfeeds |
-| Profil | Projekte mit Komponenten aus einem kuratierten Katalog, freie Einträge, Version, Erreichbarkeit, Kritikalität; geführter Setup-Wizard | SBOM-Import (CycloneDX, SPDX), Lockfile-Import | Erkennung aus Repositories, Agent für installierte Pakete |
-| Abgleich | Vendor/Produkt mit Aliassen, CPE, Paketangaben, soweit die CVE-Records sie tragen, Versionsbereiche; Zustände «Version unbekannt» und «aus Distribution»; verwandte Produkte und Plattform-Treffer als schwach | Paketdaten aus OSV und GitHub Advisories; Daten der Distributionen | Lernende Alias-Vorschläge |
+| Quellen | CVE Program inkl. eingebetteter CISA-Daten (SSVC, KEV), NCSC.ch, OSV für die Paket-Ökosysteme npm, NuGet, Packagist, PyPI, Maven und Go, dazu CISA KEV und FIRST EPSS als Anreicherung | die erste Welle mit zehn Quellen (Kapitel 5.6): OSV für Distributionen und weitere Ökosysteme, GitHub Advisories, NVD, CISA-Advisories, CERT-Bund, Microsoft, Red Hat, Ubuntu, Kubernetes, CERT-FR | Ausbau auf 30–50, generischer CSAF-Adapter für Herstellerfeeds |
+| Profil | Projekte mit Komponenten aus einem kuratierten Katalog, freie Einträge, Version, Erreichbarkeit, Kritikalität; GitHub-Repositories je Projekt mit automatischem Einlesen aller Abhängigkeiten und Vorschlägen für Plattformen (Kapitel 16); geführter Setup-Wizard, der ergänzt, was das Repository nicht zeigt | Hochladen von SBOM-Dateien (CycloneDX, SPDX), weitere Lockdateien, GitHub App mit Webhooks | GitLab, Azure DevOps, Bitbucket; Agent für installierte Pakete |
+| Abgleich | Vendor/Produkt mit Aliassen, CPE, Paketkoordinaten aus CVE-Records und OSV, Versionsbereiche; Zustände «Version unbekannt», «aus Distribution» und «nur Entwicklung»; verwandte Produkte und Plattform-Treffer als schwach | Daten der Distributionen | Lernende Alias-Vorschläge |
 | Bewertung | Regelwerk für Stufe 1–5 mit nachvollziehbaren Faktoren, darunter Schutzmassnahmen; Antworten aus Vorlagen ohne KI; KI-Einschätzung optional und ab einer Schwelle; Korrektur durch Benutzer mit Neubewertung | Korrekturen fliessen als Kontext in spätere Einschätzungen ein; Produkte aus Freitext durch ein Modell; Gewichte je Organisation | Mehrere Modelle im Vergleich |
 | Massnahmen und Meldungen | Übersicht, Liste der Massnahmen, Detail der Schwachstelle; Status je Befund und je Massnahme; Zuweisung; Frist sichtbar; Notizen; Verlauf | Sammelaktionen, Export, Eskalation bei Fristablauf | Berichte für Kunden und Management |
 | Benachrichtigung | In-App, E-Mail (SMTP), Web Push, generischer Webhook; Regeln nach Stufe und Projekt; Sammelnachrichten nach Zeitplan; je Massnahme, erneut nur bei wesentlicher Änderung | Eskalation in Schritten, Teams- und Slack-Vorlagen, Ruhezeiten | Native Push über Relay, ntfy |
@@ -78,5 +78,6 @@ Bewusst nicht im MVP, obwohl in den Anforderungen genannt: die native Mobile-App
 
 - Eine Instanz bedient wenige bis einige hundert Organisationen. Tausende Mandanten auf einer Instanz sind kein Ziel des MVP.
 - Jede Instanz ruft die Quellen selbst ab. Das Projekt verteilt keine Daten weiter; Lizenzfragen der Quellen betreffen damit den Abruf, nicht eine Weitergabe.
-- Das Technologieprofil wird von Menschen gepflegt. Seine Qualität begrenzt die Qualität jeder Meldung; die Oberfläche muss Pflege leicht und Lücken sichtbar machen.
+- Das Technologieprofil wird für Pakete aus dem Repository gelesen und für alles andere von Menschen gepflegt. Seine Qualität begrenzt die Qualität jeder Meldung; die Oberfläche muss Pflege leicht und Lücken sichtbar machen.
+- Der Code der meisten Organisationen liegt auf GitHub. Andere Plattformen kommen über dieselbe Schnittstelle später dazu.
 - Entwickelt wird von einem kleinen Team mit KI-Unterstützung. Der Plan bevorzugt deshalb wenige, gut verstandene Bausteine.

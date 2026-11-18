@@ -8,6 +8,8 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 
 **Was gebaut wird.** Ein selbst gehostetes Open-Source-Frühwarnsystem. Es sammelt Sicherheitshinweise aus Quellen, führt sie je Schwachstelle zu einem Eintrag zusammen und sagt jeder Organisation, welche davon ihre Projekte betreffen, wie dringend das ist und was zu tun ist.
 
+**Woher es das Profil kennt.** Ein Projekt wird mit seinen GitHub-Repositories verbunden. Ardea liest daraus alle Abhängigkeiten mit Version ein, hält sie stündlich aktuell und schlägt Plattformen wie Laufzeit, Datenbank und Basis-Image zur Bestätigung vor. Was das Repository nicht zeigen kann, etwa Hosting, verwaltete Dienste oder nachträglich installierte Plugins, fragt der Wizard gezielt ab.
+
 **Wie es das tut.** Als Trichter aus deterministischen Schritten auf strukturierten Daten. Von 6 432 Einträgen einer Woche bleiben für eine Organisation mit drei Projekten 173 Kandidaten. Daraus werden je nach Versionen und Erreichbarkeit zwischen 6 und 170 Befunde ab Stufe 3, verteilt auf 8 Massnahmen. Gearbeitet und benachrichtigt wird deshalb je Massnahme («PostgreSQL in Projekt C aktualisieren»), nicht je CVE. Ein Sprachmodell erklärt und schätzt ein, wo die Regeln «unbekannt» sagen; es vergibt keine Stufe und kann keine Meldung verschwinden lassen. Ohne es bleibt das System vollständig nutzbar.
 
 **Was die Planung an Neuem ergeben hat.**
@@ -15,7 +17,7 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 1. Die Menge ist gross: im Mittel 590 neue CVEs pro Tag, Spitzen über 2 000, dazu rund 2 800 Änderungen pro Tag. Mehr als die Hälfte der Kandidaten einer Woche sind Änderungen an älteren Records.
 2. Stichwortsuche ist unbrauchbar. Bei «PHP» waren 295 von 297 Treffern falsch. Abgeglichen wird nur über Vendor, Produkt, CPE und Paket.
 3. Ein Vorfilter allein genügt nicht. Erst die Bündelung je Massnahme macht aus hundert Befunden einer Woche eine Handvoll Aufgaben.
-4. WordPress-Plugins machten 7,4 % aller CVEs der Woche aus, der Core keinen einzigen. Profile brauchen Komponenten unterhalb der Plattform; der SBOM-Import ist die wichtigste Ausbaustufe.
+4. WordPress-Plugins machten 7,4 % aller CVEs der Woche aus, der Core keinen einzigen. Profile brauchen Komponenten unterhalb der Plattform. Deshalb liest das MVP die Abhängigkeiten aus dem Repository; weil nur 12,9 % der CVE-Records Paketkoordinaten tragen, gehört OSV als Paketquelle dazu.
 5. Die Startquelle NCSC liefert ihre Advisories über die öffentliche JSON-Schnittstelle des Cyber Security Hub: rund vier pro Woche, gut die Hälfte mit CVE-ID. Die Schnittstelle ist nicht dokumentiert und die `robots.txt` des Hubs wünscht keine automatisierten Zugriffe; eine Anfrage beim BACS klärt Form und Intervall. Die Website des BACS ergänzt die Warnungen an die Öffentlichkeit.
 6. NVD reichert neue CVEs kaum noch an und taugt nicht mehr als Hauptquelle. Schweregrad und Ausnutzungssignale kommen aus den CVE-Records selbst.
 7. Mehrere verbreitete Bibliotheken sind inzwischen kommerziell (MediatR, AutoMapper, MassTransit, FluentAssertions, PrimeNG, TickerQ). Der Plan kommt ohne sie aus und prüft Lizenzen im Build.
@@ -26,6 +28,7 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | Thema | Entscheidung |
 |---|---|
 | Form | Modularer Monolith, ein Image mit den Rollen API, Worker und Migration, eine PostgreSQL-Datenbank |
+| Profil | Pakete aus GitHub-Repositories über den SBOM-Export des Dependency Graph und eigene Leser für Lockdateien; Plattformen als Vorschlag; nur lesen, nie ausführen |
 | Daten | Je Quelle Rohdaten und normalisierte Beobachtungen; der konsolidierte Eintrag wird daraus berechnet und kennt die Herkunft jedes Feldes |
 | Jobs | Eigene Job-Tabelle in PostgreSQL mit begrenztem Umfang statt Scheduler-Bibliothek |
 | Bewertung | Fünf Stufen aus einem versionierten Regelwerk mit Ober- und Untergrenzen; KI optional, lokal oder gehostet, hinter einer Abstraktion |
@@ -36,9 +39,9 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | Betrieb | `docker compose up -d`, automatische Migrationen mit Sicherung davor, Updates per `pull` und `up` |
 | Tests | Jede Pipeline läuft in 15 bis höchstens 25 Minuten: viele Unit-Tests, sechs Ende-zu-Ende-Abläufe; keine Langläufer, keine zeitgesteuerten Tests |
 
-**Umfang.** Sieben Phasen bis Version 1.0, geschätzt 28 bis 37 Wochen für eine erfahrene Person mit KI-Unterstützung. Nach Phase 3 liegt ein nutzbares System ohne KI und ohne Benachrichtigung vor.
+**Umfang.** Sieben Phasen bis Version 1.0, geschätzt 33 bis 44 Wochen für eine erfahrene Person mit KI-Unterstützung. Nach Phase 3 liegt ein nutzbares System ohne KI und ohne Benachrichtigung vor.
 
-**Was dieser Stand nicht leistet.** Die Mockups zeigen nur die Fassung ohne Sprachmodell und eine Massnahme mit einem einzigen Befund. Die Gewichte des Regelwerks sind ungeeicht, bis der Referenzsatz steht. Der Plan wurde zweimal unabhängig gegengelesen. Die Korrekturen aus der zweiten Durchsicht sind eingearbeitet, aber nicht ein drittes Mal geprüft (Kapitel 15.4).
+**Was dieser Stand nicht leistet.** Die Mockups zeigen nur die Fassung ohne Sprachmodell und eine Massnahme mit einem einzigen Befund. Die Gewichte des Regelwerks sind ungeeicht, bis der Referenzsatz steht. Das Profil aus dem Repository (Kapitel 16) baut auf einem GitHub-Export, dessen Rechte und Inhalt erst Versuch 2.9 klärt; wie viele Massnahmen echte Repositories erzeugen, ist nicht gemessen. Der Plan wurde zweimal unabhängig gegengelesen. Die Korrekturen aus der zweiten Durchsicht sind eingearbeitet, aber nicht ein drittes Mal geprüft (Kapitel 15.4). Die Erweiterung um Repositories kam danach und ist nicht unabhängig gegengelesen.
 
 ## Kapitel
 
@@ -59,6 +62,7 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | 13 | [Repository und Richtlinien](13-repository-und-richtlinien.md) | Struktur, Arbeitsweise, Tests, Lizenzfrage |
 | 14 | [Umsetzungsphasen](14-umsetzungsphasen.md) | Aufgaben, Abhängigkeiten, Abnahmekriterien |
 | 15 | [Risiken und offene Entscheidungen](15-risiken-und-offene-entscheidungen.md) | Risiken, Entscheidungen beim Eigentümer, Umgang mit der Durchsicht |
+| 16 | [Profil aus dem Repository](16-profil-aus-repositories.md) | GitHub verbinden, Abhängigkeiten einlesen und aktuell halten, Vorschläge, Ergänzen im Wizard |
 
 ## Begriffe
 
@@ -76,6 +80,8 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | Sammelnachricht | Summary, digest | Zeitgesteuerte Nachricht mit allem seit der letzten |
 | Signal | | Angabe zu Ausnutzung oder Wahrscheinlichkeit je Kennung (KEV, EPSS) |
 | Ausbaustufe | | Lieferumfang nach Version 1.0 |
+| Verknüpfung | Repository | Ein GitHub-Repository, das ein Projekt mit Komponenten speist |
+| Vorschlag | Suggestion | Aus einer Datei im Repository abgeleitete Plattform, die erst nach Bestätigung zur Komponente wird |
 
 ## Weitere Unterlagen
 
@@ -93,7 +99,7 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 Die Freigabe umfasst drei Dinge:
 
 1. **Den Plan als Ganzes,** einschliesslich MVP-Abgrenzung (Kapitel 1.5) und Phasen (Kapitel 14).
-2. **Die siebzehn Entscheidungen** in Kapitel 15.2. Wo nichts anderes vermerkt wird, gilt die jeweilige Empfehlung.
+2. **Die neunzehn Entscheidungen** in Kapitel 15.2. Wo nichts anderes vermerkt wird, gilt die jeweilige Empfehlung.
 3. **Die visuelle Richtung** mit Designsystem und Mockups (Kapitel 11).
 
 ## Woher die Zahlen stammen

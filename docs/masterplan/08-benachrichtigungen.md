@@ -31,9 +31,10 @@ Diese Tabelle ist die einzige Liste der Ereignisse; andere Kapitel verweisen hie
 | `action.assigned` | Zuweisung | an die zugewiesene Person |
 | `action.status_changed`, `action.note_added` | Bearbeitung durch das Team | nur In-App |
 | `warning.published` | neue Warnung ohne Schwachstellenkennung, etwa eine Phishing-Warnung des BACS oder ein Advisory des NCSC, dem noch keine CVE zugeordnet ist | In-App und in der wöchentlichen Sammelnachricht; sofort nur, wenn eine Regel es verlangt |
-| `backfill.completed` | Ersteinschätzung eines neuen Projekts fertig | eine Sammelnachricht statt Einzelalarme |
+| `backfill.completed` | Ersteinschätzung eines neuen Projekts oder eines neu verbundenen Repositorys fertig | eine Sammelnachricht statt Einzelalarme |
+| `repository.unavailable` | ein verbundenes Repository lässt sich seit 3 Tagen nicht einlesen, oder das Token seines Zugangs läuft in 14 Tagen ab (Kapitel 16.6) | In-App an Owner und Admins; per E-Mail, wenn eine Regel es verlangt; je Verknüpfung und Ursache einmal |
 
-Jedes Ereignis trägt eine eindeutige Kennung, die der Auslöser in derselben Transaktion vergibt wie die Änderung selbst; bei Massnahmen ist es die Kennung der Verlaufszeile. Sein Gegenstand ist eine Massnahme, bei `warning.published` ein Eintrag, bei `backfill.completed` ein Projekt. `warning.published` entsteht einmal für die Instanz und wird je Organisation ausgewertet, die eine Regel dafür hat.
+Jedes Ereignis trägt eine eindeutige Kennung, die der Auslöser in derselben Transaktion vergibt wie die Änderung selbst; bei Massnahmen ist es die Kennung der Verlaufszeile. Sein Gegenstand ist eine Massnahme, bei `warning.published` ein Eintrag, bei `backfill.completed` und `repository.unavailable` ein Projekt. `warning.published` entsteht einmal für die Instanz und wird je Organisation ausgewertet, die eine Regel dafür hat.
 
 Kein Ereignis und damit nie eine Benachrichtigung: weitere Befunde in einer Massnahme ohne Anstieg von Stufe oder Ausnutzungsstand, geänderte Beschreibungen, neue Verweise, EPSS-Bewegungen innerhalb einer Klasse, Neubewertungen mit gleichem Ergebnis.
 

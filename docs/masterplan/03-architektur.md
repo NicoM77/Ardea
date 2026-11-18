@@ -16,6 +16,7 @@ Beide dauerhaften Prozesse laden dieselben Module. Der Unterschied liegt nur dar
 flowchart LR
   subgraph Extern
     Q[Sicherheitsquellen]
+    GH[GitHub<br/>Repositories]
     KI[KI-Anbieter<br/>lokal oder Cloud]
     K[SMTP · Push-Dienste · Webhooks]
   end
@@ -31,6 +32,7 @@ flowchart LR
   API <--> DB
   W <--> DB
   W --> Q
+  W --> GH
   W --> KI
   W --> K
   DB -. LISTEN/NOTIFY .-> API
@@ -47,7 +49,7 @@ Die acht geforderten Bereiche verteilen sich auf sieben Module und einen Host mi
 | **Intel** | Abrufsteuerung, Rohdatenablage, Normalisierung, Identitätsauflösung, Zusammenführung, Änderungshistorie, konsolidierte Einträge | 2 Ingestion & Normalization, 3 Correlation & Deduplication |
 | **Assessment** | Kandidatensuche gegen Profile, Regelwerk für die Stufe, KI-Einschätzung, Befunde, Massnahmen und Meldungen mit Status | 4 Risk Assessment & AI Analysis |
 | **Iam** | Benutzer, Anmeldung, MFA, Organisationen, Mitgliedschaften, Einladungen, Rollen | 5 Organization … |
-| **Assets** | Projekte, Komponenten, Setup-Wizard-Zustand | 5 … & Asset Management |
+| **Assets** | Projekte, Komponenten, Setup-Wizard-Zustand; Zugänge zu GitHub, Verknüpfung von Repositories, Einlesen und Abgleich der Abhängigkeiten, Vorschläge (Kapitel 16) | 5 … & Asset Management |
 | **Catalog** | Technologie-Katalog: Produkte, Aliasse, Produktschlüssel, Versionsschemata | Grundlage für 3, 4 und 5 |
 | **Notifications** | Regeln, Empfängerauflösung, Kanäle, Zustellung mit Wiederholung, Sammelnachrichten, In-App-Benachrichtigungen | 6 Notification Engine |
 | **Platform** | Jobs und Zeitpläne, Mandantenkontext und Arbeitseinheit, Audit-Protokoll, Einstellungen, Geheimnisschutz, Telemetrie | Querschnitt |
@@ -131,7 +133,8 @@ sequenceDiagram
 | Normalisierung | `NormalizeRecords(batch)` | neue oder geänderte Rohdatensätze | eine Beobachtung je Rohdatensatz, die mit jeder Revision überschrieben wird; dieselbe Revision ergibt dieselbe Beobachtung |
 | Zusammenführung | `CorrelateEntry(entryKey)` | neue Beobachtungen | Neuberechnung aus allen Beobachtungen; Revisionsnummer |
 | Kandidatensuche | `MatchEntry(entryId)` | Eintrag wesentlich geändert | arbeitet immer auf dem aktuellen Stand; ein wartender Job je Eintrag |
-| Rückwärtssuche | `MatchProject(projectId)` | Profil geändert | arbeitet auf dem aktuellen Profil; ein wartender Job je Projekt |
+| Repository einlesen | `IndexRepository(linkId)` | Verknüpfung fällig, neu verbunden oder «Jetzt einlesen» (Kapitel 16.2) | Commit-SHA; Abgleich über die Identität der Komponenten; ein wartender Job je Verknüpfung |
+| Rückwärtssuche | `MatchProject(projectId)` | Profil geändert, von Hand oder durch ein Einlesen | arbeitet auf dem aktuellen Profil; ein wartender Job je Projekt |
 | Bewertung | `AssessAlert(orgId, entryId)` | Kandidat gefunden | rechnet Regeln und Massnahmen aus dem aktuellen Stand; gleiche Eingabe ändert nichts |
 | KI-Einschätzung | `EstimateAlert(orgId, alertId)` | Regelstufe ab Schwelle und Kontingent der Massnahme frei (Kapitel 7.5) | Fingerabdruck der Eingabe; gleiche Eingabe erzeugt keine neue Einschätzung |
 | Benachrichtigung | `EvaluateRules(event)` → `Deliver(deliveryId)` | Ereignisse nach Kapitel 8.2 | Benachrichtigungsstand; Empfänger, Kanal und Ereignis zusammen eindeutig (Kapitel 8.4) |
@@ -195,6 +198,8 @@ Der Baustein bleibt hinter `IJobQueue` und `IScheduler`. Sollte er sich als zu k
 | Benachrichtigungskanal | `INotificationChannel` (Kapitel 8) | eine Klasse plus Einstellungsformular |
 | KI-Anbieter | `IChatClient` aus Microsoft.Extensions.AI (Kapitel 7.8) | Konfiguration, kein Code bei OpenAI-kompatiblen Endpunkten |
 | Versionsvergleich | `IVersionScheme` (Kapitel 6) | eine Klasse je Schema |
+| Code-Plattform | `IRepositoryHost` (Kapitel 16.4): Zweigkopf, SBOM, Dateibaum, Datei | eine Klasse je Plattform; im MVP GitHub |
+| Lockdatei oder Plattformdatei | `IManifestReader`, `IStackDetector` (Kapitel 16.3) | eine Klasse je Dateiart, Testfälle aus echten Dateien |
 | Katalog | Stammdaten als versionierte Dateien im Repository | ein Eintrag mit Aliassen |
 
 ## 3.7 Wachstumspfad

@@ -104,12 +104,12 @@ Was ein Test leisten muss:
 
 | Ebene | Gegenstand | Werkzeug | Umfang und Zeit |
 |---|---|---|---|
-| Unit | Versionsvergleich, Produktschlüssel, Vorrangregeln, Regelwerk mit Ober- und Untergrenzen, Fingerabdrücke, Bildung der Massnahmen, Benachrichtigungsstand; in der Web-App Logik und Zustände der Komponenten | xUnit v3, Vitest | der grösste Teil aller Tests; zusammen unter 3 Minuten |
-| Adapter | Jeder Quellenadapter gegen aufgezeichnete echte Antworten; Ausgabe als Snapshot | xUnit v3, Verify | ohne Netz, zählt zeitlich zu Unit |
+| Unit | Versionsvergleich, Produktschlüssel, Vorrangregeln, Regelwerk mit Ober- und Untergrenzen, Fingerabdrücke, Bildung der Massnahmen, Benachrichtigungsstand, Abgleich eingelesener Komponenten mit dem Profil, Verschmelzen von Einträgen; in der Web-App Logik und Zustände der Komponenten | xUnit v3, Vitest | der grösste Teil aller Tests; zusammen unter 3 Minuten |
+| Adapter | Jeder Quellenadapter gegen aufgezeichnete echte Antworten; ebenso die Anbindung an GitHub, jeder Leser für Lockdateien und jede Erkennungsregel gegen echte Dateien und SBOMs; Ausgabe als Snapshot | xUnit v3, Verify | ohne Netz, zählt zeitlich zu Unit |
 | Bewertung | Referenzsatz für Treffer und Stufe mit den Schwellen als Abnahmekriterium; nur Regeln, kein Sprachmodell | eigener Lauf | 200 Paare, unter 1 Minute |
 | Integration | Nur was allein die echte Datenbank zeigt: Idempotenz der Kette, Wiederholung und Leases, gemeinsame Transaktion, Mandantentrennung, Migrationen | Testcontainers, Respawn | eine Datenbank für den ganzen Lauf, parallel; unter 6 Minuten |
 | Architektur und Vertrag | Modulgrenzen; OpenAPI-Dokument stimmt mit dem Code überein; Fremdzugriffstest für jeden Mandanten-Endpunkt, aus dem OpenAPI-Dokument erzeugt | ArchUnitNET, eigener Test | unter 2 Minuten |
-| Ende zu Ende | Sechs Kernabläufe, nicht mehr: Ersteinrichtung und Anmeldung mit TOTP; Projekt im Wizard anlegen; von der Übersicht in die Massnahme, in Prüfung nehmen und zurücknehmen; Massnahme mit Ergebnis abschliessen; Regel anlegen und In-App-Benachrichtigung erhalten; Einladung annehmen. In Chromium, Desktopbreite; der dritte Ablauf zusätzlich in Telefonbreite. Die Zugänglichkeitsprüfung läuft auf den dabei besuchten Seiten mit. | Playwright, axe | unter 5 Minuten |
+| Ende zu Ende | Sechs Kernabläufe, nicht mehr: Ersteinrichtung und Anmeldung mit TOTP; Projekt im Wizard mit Repository anlegen, Vorschlag bestätigen und ergänzen (GitHub durch einen lokalen Stellvertreter mit aufgezeichneten Antworten ersetzt); von der Übersicht in die Massnahme, in Prüfung nehmen und zurücknehmen; Massnahme mit Ergebnis abschliessen; Regel anlegen und In-App-Benachrichtigung erhalten; Einladung annehmen. In Chromium, Desktopbreite; der dritte Ablauf zusätzlich in Telefonbreite. Die Zugänglichkeitsprüfung läuft auf den dabei besuchten Seiten mit. | Playwright, axe | unter 5 Minuten |
 | Visuell | Seiten der Komponentenbibliothek mit allen Zuständen im Bildvergleich | Playwright | ein Bild je Seite, unter 1 Minute |
 
 Ein neuer Ende-zu-Ende-Test braucht eine Begründung im Pull Request und ersetzt im Zweifel einen bestehenden.

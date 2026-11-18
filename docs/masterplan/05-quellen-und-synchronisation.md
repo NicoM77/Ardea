@@ -146,7 +146,7 @@ Folgen für den Adapter:
 | Warnung ohne CVE | Sie wird ein Eintrag der Art Warnung ohne Projektbezug. Die Übersicht zeigt die jüngsten in einem eigenen Abschnitt; sie stehen in der wöchentlichen Sammelnachricht und lösen das Ereignis `warning.published` aus (Kapitel 8.2). |
 | Advisory erhält nachträglich eine CVE | Der Beitrag wird Beleg des CVE-Eintrags; die Warnung ohne Kennung wird zurückgezogen und verweist auf ihn. |
 
-Ein Advisory des Hubs erscheint oft, bevor eine CVE vergeben ist, und nennt das Produkt im Titel. Daraus liesse sich ein Projektbezug ohne CVE ableiten («betrifft eine Technologie in Ihrem Profil»). Das ist eine Ausbaustufe: Die Schreibweise der Titel ist eine Gewohnheit der Redaktion und keine Zusage, und der saubere Übergang zum späteren CVE-Eintrag braucht das Verschmelzen von Einträgen, das mit der ersten Quellenwelle kommt.
+Ein Advisory des Hubs erscheint oft, bevor eine CVE vergeben ist, und nennt das Produkt im Titel. Daraus liesse sich ein Projektbezug ohne CVE ableiten («betrifft eine Technologie in Ihrem Profil»). Das ist eine Ausbaustufe: Die Schreibweise der Titel ist eine Gewohnheit der Redaktion und keine Zusage, und der saubere Übergang zum späteren CVE-Eintrag braucht ein Verschmelzen über eine Zuordnung aus Freitext, die das MVP nicht kennt; es verschmilzt nur über gemeinsame Kennungen (Kapitel 6.2).
 
 **Abhängigkeit vom BACS.** Die Schnittstelle des Hubs ist öffentlich erreichbar, aber nicht dokumentiert, und die `robots.txt` des Hubs wünscht keine automatisierten Zugriffe. Ein Produkt, das viele Betreiber bei sich installieren, sollte deshalb nicht stillschweigend darauf bauen. Angefragt wird, ob die öffentliche Schnittstelle in dieser Form abgefragt werden darf, welches Intervall dem NCSC recht ist und ob Texte der Advisories in der Instanz gespeichert werden dürfen (Kapitel 15, E10). Die Umsetzung wartet nicht auf die Antwort: Phase 1 baut beide Leser und speichert vom Hub Titel, Kurztext, Verweis und CVE-IDs. Kommt die Zustimmung, kommt der Volltext dazu. Wünscht das NCSC die Abfrage nicht, wird der Leser für den Hub per Einstellung abgeschaltet und die Website bleibt als Quelle.
 
@@ -158,20 +158,25 @@ KEV ist eine Datei mit 1 782 Einträgen, wenige Zugänge pro Woche, gemeinfrei. 
 
 Reihenfolge nach Nutzen für die Bewertung, nicht nach Bekanntheit.
 
-**MVP (4)**
+**MVP (5)**
 
 | Quelle | Familie | Art |
 |---|---|---|
 | CVE Program | CVE JSON 5 | Record |
 | NCSC / BACS | JSON-API | Advisory, Warnung |
+| OSV.dev, Ökosysteme npm, NuGet, Packagist, PyPI, Maven, Go | OSV | Record |
 | CISA KEV | Massendatei | Signal |
 | FIRST EPSS | Massendatei | Signal |
 
-**Erste Welle nach 1.0 (elf Quellen): Pakete, Distributionen, grosse Hersteller**
+OSV ist im MVP, weil Projekte ihre Abhängigkeiten aus dem Repository einlesen (Kapitel 16). Nur 12,9 % der CVE-Records tragen Paketkoordinaten; ohne OSV blieben die meisten eingelesenen Pakete ungeprüft. OSV enthält für diese Ökosysteme die Daten der GitHub Advisory Database. Abgerufen wird je Ökosystem über `modified_id.csv` und das Archiv des Ökosystems, nie über die Abfrage-API: Sie würde die Abhängigkeiten der Organisationen an einen fremden Dienst senden. Die sechs Ökosysteme sind die, deren Versionsschema das MVP vergleichen kann (Kapitel 6.6).
+
+Mit OSV kommen Einträge, die zuerst nur eine GHSA- oder OSV-Kennung tragen und ihre CVE-ID später erhalten. Das Verschmelzen von Einträgen (Kapitel 6.2) gehört deshalb zum MVP.
+
+**Erste Welle nach 1.0 (zehn Quellen): weitere Ökosysteme, Distributionen, grosse Hersteller**
 
 | Quelle | Familie | Hinweis |
 |---|---|---|
-| OSV.dev | OSV | erschliesst Paket-Ökosysteme und mehrere Distributionen auf einmal |
+| OSV.dev, weitere Ökosysteme und Distributionen | OSV | derselbe Leser wie im MVP; Debian, Ubuntu und weitere Distributionen, RubyGems, crates.io, GitHub Actions |
 | GitHub Advisory Database | JSON-API | ohne Token nur 60 Anfragen pro Stunde je Adresse; Token als empfohlene Einstellung |
 | NVD | JSON-API | nur Anreicherung: CPE, wo vorhanden |
 | CISA CSAF | CSAF | über das GitHub-Repository; die Adressen bei CISA selbst antworten mit 403 |
@@ -179,7 +184,6 @@ Reihenfolge nach Nutzen für die Bewertung, nicht nach Bekanntheit.
 | Microsoft | CSAF | ein Dokument je CVE |
 | Red Hat | CSAF | Advisories und VEX; Abruf höchstens alle 15 bis 30 Minuten |
 | Ubuntu | JSON-API | der RSS-Feed fasst nur zehn Einträge und läuft an vollen Tagen in unter einer Stunde über |
-| Debian | über OSV, ergänzend die DSA-Liste | |
 | Kubernetes | JSON-API | offizieller CVE-Feed |
 | CERT-FR | RSS, Details als JSON je Dokument | Feed ist nicht chronologisch sortiert |
 
@@ -193,7 +197,7 @@ Exploit-DB, Metasploit-Metadaten, Nuclei-Vorlagen (öffentlich verfügbare Explo
 
 Zusammen 54 Quellen, davon 13 allein über den CSAF-Leser.
 
-**Bedingungen.** Geprüft und frei nutzbar sind die Startquellen CVE Program, KEV und EPSS sowie unter den späteren unter anderem GitHub Advisories, Red Hat und SUSE (jeweils mit Namensnennung). Für rund zwanzig Quellen der späteren Wellen nennt die Recherche Bedingungen nur ungeprüft, für sieben weitere gar keine, und für CERT.at fand sie keine offene Lizenz. Vor der Aufnahme einer Quelle werden ihre Bedingungen geprüft (5.8, Schritt 5); bis dahin gilt für sie der Modus «nur Metadaten und Verweis».
+**Bedingungen.** Geprüft und frei nutzbar sind die Startquellen CVE Program, KEV und EPSS sowie unter den späteren unter anderem GitHub Advisories, Red Hat und SUSE (jeweils mit Namensnennung). OSV führt die Bedingungen je Datenquelle: Für die Daten der GitHub Advisory Database sind sie geprüft, für die übrigen Datenquellen der sechs Ökosysteme des MVP werden sie in Phase 1 vor dem Bau des Adapters geprüft. Für rund zwanzig Quellen der späteren Wellen nennt die Recherche Bedingungen nur ungeprüft, für sieben weitere gar keine, und für CERT.at fand sie keine offene Lizenz. Vor der Aufnahme einer Quelle werden ihre Bedingungen geprüft (5.8, Schritt 5); bis dahin gilt für sie der Modus «nur Metadaten und Verweis».
 
 **Nur auf Wunsch des Betreibers, weil ein eigener Schlüssel nötig ist**
 

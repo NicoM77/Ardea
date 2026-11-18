@@ -70,9 +70,10 @@ internal static class InitEnvCommand
             # invite (default), open or closed
             ARDEA_REGISTRATION=invite
             # Proxies whose X-Forwarded-For and X-Forwarded-Proto are trusted, besides loopback. The
-            # default covers Docker's networks: the bundled Caddy and a tunnel on the host reach the API
-            # from there. Narrow it if other machines can reach port 8080 from a private address.
-            ARDEA_TRUSTED_PROXIES=172.16.0.0/12
+            # default covers the address pools Docker uses for its networks: the bundled Caddy and a
+            # tunnel on the host reach the API from there. compose.yaml publishes port 8080 on
+            # 127.0.0.1 only; if you publish it further, narrow this to your proxy's address.
+            ARDEA_TRUSTED_PROXIES=172.16.0.0/12,192.168.0.0/16,10.0.0.0/8
 
             # E-mail (optional; without it invitations show a link to pass on)
             # ARDEA_SMTP__HOST=

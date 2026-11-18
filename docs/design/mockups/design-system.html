@@ -5,192 +5,175 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Design system · Ardea (mockup)</title>
 <link rel="icon" href="../brand/ardea-favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css">
 </head>
 <body data-page="design-system">
-<main class="main" id="main">
-  <div class="content content--reading">
+<main class="sheet" id="main">
+  <div class="content">
 
-    <header class="page-head">
+    <header class="title-row">
       <div>
         <h1>Design system</h1>
-        <p class="page-sub">Tokens and components of the mockups. The source of truth is <code>app.css</code>.</p>
+        <p class="title-sub">Tokens and components of the mockups, drawn from <span class="id">app.css</span>.</p>
       </div>
     </header>
 
-    <section class="section" aria-labelledby="principles">
-      <div class="section-head"><h2 id="principles">Principles</h2></div>
-      <ul class="group feed">
-        <li><p><strong>Familiar before clever.</strong> Standard controls in their platform form: segmented controls, pop-up buttons, inset lists, a sidebar on desktop and a tab bar on phones.</p></li>
-        <li><p><strong>One next step per screen.</strong> One blue primary button per view. Everything else is secondary or plain.</p></li>
-        <li><p><strong>Colour means priority.</strong> Apart from the blue for actions and links, colour appears only on a priority, and always with its symbol and its word.</p></li>
-        <li><p><strong>Calm by default.</strong> Grey canvas, white groups, hairlines. No shadows except the segmented thumb, no motion except state changes of 150 ms.</p></li>
-      </ul>
-    </section>
+    <div class="grid">
+      <section class="card span-8 rise" aria-labelledby="h-colours">
+        <header><h2 id="h-colours">Colours</h2><span class="meta">Contrast against the white sheet</span></header>
+        <div class="swatches" id="swatches"></div>
+      </section>
 
-    <section class="section" aria-labelledby="colours">
-      <div class="section-head"><h2 id="colours">Colours</h2></div>
-      <div class="group">
-        <div class="swatches">
-          <div class="swatch"><i style="background:var(--canvas)"></i><b>Canvas</b><span>#F5F5F7</span></div>
-          <div class="swatch"><i style="background:var(--surface)"></i><b>Surface</b><span>#FFFFFF</span></div>
-          <div class="swatch"><i style="background:var(--sidebar)"></i><b>Sidebar</b><span>#EBEBEF</span></div>
-          <div class="swatch"><i style="background:var(--fill)"></i><b>Fill</b><span>#EDEDF0</span></div>
-          <div class="swatch"><i style="background:var(--label)"></i><b>Label</b><span>#1D1D1F · 16.8:1</span></div>
-          <div class="swatch"><i style="background:var(--secondary)"></i><b>Secondary</b><span>#5E5E64 · 6.4:1</span></div>
-          <div class="swatch"><i style="background:var(--separator)"></i><b>Separator</b><span>#E3E3E8</span></div>
-          <div class="swatch"><i style="background:var(--field-border)"></i><b>Field border</b><span>#85858B · 3.7:1</span></div>
-          <div class="swatch"><i style="background:var(--accent)"></i><b>Accent</b><span>#0062C4 · 5.9:1</span></div>
-          <div class="swatch"><i style="background:var(--critical)"></i><b>Critical</b><span>#C8102E · 5.9:1</span></div>
-          <div class="swatch"><i style="background:var(--high)"></i><b>High</b><span>#B84A00 · 5.2:1</span></div>
-          <div class="swatch"><i style="background:var(--medium)"></i><b>Medium</b><span>#8A6100 · 5.5:1</span></div>
-          <div class="swatch"><i style="background:var(--low)"></i><b>Low, Not relevant</b><span>#5E5E64 · 6.4:1</span></div>
-          <div class="swatch"><i style="background:var(--done)"></i><b>Done</b><span>#1E7D34 · 5.2:1</span></div>
+      <section class="card span-4 rise" aria-labelledby="h-rules">
+        <header><h2 id="h-rules">Rules</h2></header>
+        <div class="rows">
+          <div><span class="row-main"><b>Colour sits on data</b><small>The frame and the controls stay grey</small></span></div>
+          <div><span class="row-main"><b>Priority is symbol, word, colour</b><small>Never colour alone, never a number</small></span></div>
+          <div><span class="row-main"><b>One dark button per screen</b><small>The next step, nothing else</small></span></div>
+          <div><span class="row-main"><b>Charts draw once</b><small>After that, motion is feedback</small></span></div>
         </div>
-      </div>
-      <p class="section-note">Contrast ratios are against the white surface.</p>
-    </section>
+      </section>
+    </div>
 
-    <section class="section" aria-labelledby="type">
-      <div class="section-head"><h2 id="type">Typography</h2></div>
-      <dl class="group kv">
-        <div><dt>Title · 28 / 700</dt><dd><span class="t-title">Actions</span></dd></div>
-        <div><dt>Headline · 17 / 600</dt><dd><span class="t-headline">Vulnerabilities in this action</span></dd></div>
-        <div><dt>Reading · 16 / 400</dt><dd><span class="t-reading">Platform Ops runs Puppet Enterprise 2025.9.0.</span></dd></div>
-        <div><dt>Body · 15 / 400–600</dt><dd>Update Puppet Enterprise to 2025.12.1</dd></div>
-        <div><dt>Sub · 13 / 400</dt><dd><span class="t-sub">Platform Ops · Puppet Enterprise 2025.9.0</span></dd></div>
-        <div><dt>Identifier · tabular</dt><dd><span class="id">CVE-2026-115731</span> · <span class="id">2025.12.1</span></dd></div>
-        <div><dt>Code · mono</dt><dd><code>CVSS:4.0/AV:N/AC:L/AT:N/PR:L</code></dd></div>
-      </dl>
-      <p class="section-note">The platform's own system font: SF Pro on Apple devices, Segoe UI on Windows, Roboto on Android. Nothing is downloaded. Identifiers and versions use tabular figures; monospace is kept for strings people copy verbatim, such as a CVSS vector.</p>
-    </section>
+    <div class="grid">
+      <section class="card span-7 rise" aria-labelledby="h-type">
+        <header><h2 id="h-type">Type</h2><span class="meta">IBM Plex Sans, IBM Plex Mono for identifiers</span></header>
+        <div>
+          <div class="type-row"><span>Figure · 36 / 500</span><span class="figure">1<small>d</small>13<small>h</small>29<small>m</small></span></div>
+          <div class="type-row"><span>Number · 28 / 500</span><span class="kpi">6,432</span></div>
+          <div class="type-row"><span>Title · 22 / 600</span><span style="font-size:var(--fs-title);font-weight:600;line-height:28px">Actions</span></div>
+          <div class="type-row"><span>Section · 16 / 600</span><span style="font-size:var(--fs-section);font-weight:600">Deadlines</span></div>
+          <div class="type-row"><span>Body · 14 / 400–500</span><span>Platform Ops runs 2025.9.0, inside the affected range.</span></div>
+          <div class="type-row"><span>Small · 12 / 400</span><span class="muted" style="font-size:var(--fs-small)">Webshop · PHP 8.3.30</span></div>
+          <div class="type-row"><span>Identifier · mono 13</span><span><span class="id">CVE-2026-115731</span> &nbsp; <span class="id">2025.12.1</span></span></div>
+        </div>
+      </section>
 
-    <section class="section" aria-labelledby="priority">
-      <div class="section-head"><h2 id="priority">Priority</h2></div>
-      <div class="group">
+      <section class="card span-5 rise" aria-labelledby="h-prio">
+        <header><h2 id="h-prio">Priority and status</h2></header>
+        <div class="demo" id="demo-prio"></div>
+        <div class="demo" id="demo-status"></div>
         <div class="demo">
-          <span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span>
-          <span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#p-high"/></svg>High</span>
-          <span class="prio prio--medium"><svg class="sym" aria-hidden="true"><use href="#p-medium"/></svg>Medium</span>
-          <span class="prio prio--low"><svg class="sym" aria-hidden="true"><use href="#p-low"/></svg>Low</span>
-          <span class="prio prio--none"><svg class="sym" aria-hidden="true"><use href="#p-none"/></svg>Not relevant</span>
+          <span class="pill pill--alert">Exploited in the wild</span>
+          <span class="pill pill--done">Fix available</span>
+          <span class="pill">No fix yet</span>
         </div>
-        <div class="demo">
-          <p class="change">
-            <span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#p-high"/></svg>High</span>
-            <svg class="icon arrow" aria-hidden="true"><use href="#arrow-right"/></svg><span class="sr-only">raised to</span>
-            <span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span>
-          </p>
-        </div>
-      </div>
-      <p class="section-note">Each priority has its own shape: octagon, triangle, diamond, circle with arrow, circle with dash. Shape and word carry the meaning; colour repeats it. The word is always visible.</p>
-    </section>
+        <div class="demo" id="demo-people"></div>
+      </section>
+    </div>
 
-    <section class="section" aria-labelledby="states">
-      <div class="section-head"><h2 id="states">Status and tags</h2></div>
-      <div class="group">
+    <div class="grid">
+      <section class="card span-7 rise" aria-labelledby="h-controls">
+        <header><h2 id="h-controls">Controls</h2><span class="meta">32 px high, 40 to 44 px on phones</span></header>
         <div class="demo">
-          <span class="status"><svg class="sym" aria-hidden="true"><use href="#s-open"/></svg>Open</span>
-          <span class="status"><svg class="sym" aria-hidden="true"><use href="#s-review"/></svg>In review <small>· Marc Keller</small></span>
-          <span class="status status--done"><svg class="sym" aria-hidden="true"><use href="#s-done"/></svg>Remediated</span>
-          <span class="status"><svg class="sym" aria-hidden="true"><use href="#s-accepted"/></svg>Risk accepted</span>
-          <span class="status"><svg class="sym" aria-hidden="true"><use href="#s-not-affected"/></svg>Not affected</span>
+          <button class="btn primary" type="button">Take into review</button>
+          <button class="btn" type="button">Save note</button>
+          <button class="btn ghost" type="button">Cancel</button>
+          <button class="btn" type="button" disabled>Disabled</button>
         </div>
         <div class="demo">
-          <span class="tag tag--strong">Exploited in the wild</span>
-          <span class="tag">Fix available</span>
-          <span class="tag">No fix listed</span>
-        </div>
-      </div>
-      <p class="section-note">Statuses are neutral and told apart by shape. Only a remediated check is green. A dark tag marks the one fact that raises urgency.</p>
-    </section>
-
-    <section class="section" aria-labelledby="controls">
-      <div class="section-head"><h2 id="controls">Controls</h2></div>
-      <div class="group">
-        <div class="demo">
-          <span class="demo-label">Buttons: 36 px high, 44 px on phones, 8 px corners</span>
-          <button class="btn btn--primary" type="button">Take into review</button>
-          <button class="btn btn--secondary" type="button">Save note</button>
-          <button class="btn btn--plain" type="button">Undo</button>
-          <button class="btn btn--primary" type="button" disabled>Disabled</button>
-        </div>
-        <div class="demo">
-          <span class="demo-label">Segmented control</span>
-          <div class="seg" role="group" aria-label="Example">
-            <button type="button" aria-pressed="true">Open <span class="seg-count">6</span></button>
-            <button type="button" aria-pressed="false">Closed <span class="seg-count">0</span></button>
+          <button class="chip c-critical" type="button" aria-pressed="true"><svg class="sym" aria-hidden="true"><use href="#i-p-critical"/></svg>Critical <b>2</b></button>
+          <button class="chip c-high" type="button" aria-pressed="false"><svg class="sym" aria-hidden="true"><use href="#i-p-high"/></svg>High <b>2</b></button>
+          <div class="segmented" role="group" aria-label="Example" id="demo-seg">
+            <button type="button" aria-pressed="false">13 Nov</button>
+            <button type="button" aria-pressed="true">17 Nov</button>
+            <span class="segmented-thumb" aria-hidden="true"></span>
           </div>
         </div>
         <div class="demo">
-          <label class="search">
+          <label class="search" style="flex:1 1 220px">
             <span class="sr-only">Search</span>
-            <svg class="icon" aria-hidden="true"><use href="#search"/></svg>
-            <input class="input" type="search" placeholder="Search component, CVE or project">
+            <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+            <input class="input" type="search" placeholder="Component, CVE or project">
           </label>
-          <label class="field">
-            <span>Project</span>
-            <select class="select"><option>All projects</option><option>Platform Ops</option></select>
-          </label>
+          <label><span class="sr-only">Project</span><select class="select"><option>All projects</option><option>Platform Ops</option></select></label>
         </div>
         <div class="demo">
-          <label class="field field--grow">
+          <label class="field" style="flex:1 1 100%">
             <span>Why is the risk accepted?</span>
             <textarea class="textarea" aria-invalid="true" aria-describedby="ds-error"></textarea>
-            <span class="error" id="ds-error">Write a short reason to close this action.</span>
+            <span class="error" id="ds-error" style="margin-top:0">Write a short reason to close this action.</span>
           </label>
         </div>
-      </div>
-      <p class="section-note">Errors are stated in words next to the field and are not red: red means Critical.</p>
-    </section>
+        <div class="demo">
+          <button class="btn" type="button" id="demo-toast">Show a confirmation</button>
+          <span class="muted">Changes are confirmed in place, with Undo. Errors are words beside the field, not red: red means Critical.</span>
+        </div>
+      </section>
 
-    <section class="section" aria-labelledby="lists">
-      <div class="section-head"><h2 id="lists">Lists</h2></div>
-      <ul class="group list">
-        <li>
-          <a class="row" href="action.html">
-                        <span class="row-body">
-              <span class="row-text">
-                <span class="row-title">Update Puppet Enterprise to 2025.12.1</span>
-                <span class="row-sub"><span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span> · Platform Ops · Puppet Enterprise 2025.9.0</span>
-              </span>
-              <span class="row-trail">
-                <span class="due-soon">Due tomorrow</span>
-                <span class="status"><svg class="sym" aria-hidden="true"><use href="#s-open"/></svg>Open <small>· Unassigned</small></span>
-              </span>
-              <svg class="icon row-chevron" aria-hidden="true"><use href="#chevron-right"/></svg>
-            </span>
-          </a>
-        </li>
-        <li>
-          <div class="row" aria-hidden="true">
-            <span class="row-body">
-              <span class="row-text"><span class="skeleton"></span><span class="skeleton skeleton--short"></span></span>
-            </span>
-          </div>
-        </li>
-      </ul>
-      <p class="section-note">The second row is the loading state: grey bars in the row's own shape, no spinner.</p>
-    </section>
+      <section class="card span-5 rise" aria-labelledby="h-motion">
+        <header>
+          <h2 id="h-motion">Motion</h2>
+          <button class="btn ghost icon-only" type="button" id="motion-play" aria-label="Play" data-tip="Play"><svg class="icon" aria-hidden="true"><use href="#i-replay"/></svg></button>
+        </header>
+        <div>
+          <div class="motion-demo"><span>Arriving · 220 ms</span><div class="motion-lane"><i data-ease="out" data-ms="220"></i></div></div>
+          <div class="motion-demo"><span>Moving · 220 ms</span><div class="motion-lane"><i data-ease="inout" data-ms="220"></i></div></div>
+          <div class="motion-demo"><span>Drawing a chart · 700 ms</span><div class="motion-lane"><i data-ease="out" data-ms="700"></i></div></div>
+        </div>
+        <div class="rows" style="margin-top:16px">
+          <div><span class="row-main"><b>Transform and opacity only</b><small>Bars grow with scale, never with width</small></span></div>
+          <div><span class="row-main"><b>Press answers in 140 ms</b><small>Buttons scale to 0.97</small></span></div>
+          <div><span class="row-main"><b>The keyboard gets no animation</b><small>Search opened with / simply appears</small></span></div>
+          <div><span class="row-main"><b>Reduced motion keeps the fades</b><small>Travel and drawing are dropped</small></span></div>
+        </div>
+      </section>
+    </div>
 
-    <section class="section" aria-labelledby="feedback">
-      <div class="section-head"><h2 id="feedback">Feedback and empty states</h2></div>
-      <div class="note note--done">
-        <svg class="icon" aria-hidden="true"><use href="#check-circle"/></svg>
-        <p>In review and assigned to you.</p>
-        <button class="btn btn--plain" type="button">Undo</button>
-      </div>
-      <p class="note-plain"><svg class="icon" aria-hidden="true"><use href="#info"/></svg><span>These answers are built from the source data; no AI assessment is configured.</span></p>
-      <div class="group empty">
-        <h3>Nothing needs your attention</h3>
-        <p>No open actions. All 4 sources were checked today at 08:36.</p>
-      </div>
-      <p class="section-note">Changes are confirmed in place with Undo, never with a dialog. A quiet day is a sentence, not an empty chart.</p>
-    </section>
-
-    <p class="footnote"><a href="overview.html">Back to the overview</a></p>
+    <p class="footnote"><a class="link" href="overview.html">Back to the overview</a></p>
   </div>
 </main>
+<script src="data.js"></script>
 <script src="app.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = window.ARDEA, A = window.A;
+  var byId = function (id) { return document.getElementById(id); };
+
+  var SWATCHES = [
+    ['Ground', '--ground', 'the frame'], ['Surface', '--surface', 'the sheet'], ['Raised', '--raised', 'wells, hover'], ['Active', '--active', 'selected'],
+    ['Border', '--border', 'card edges'], ['Field', '--field', 'inputs · 3.7:1'], ['Text', '--text', '18.4:1'], ['Muted', '--muted', '7.1:1'], ['Faint', '--faint', '5.4:1'],
+    ['Accent', '--accent', 'data · 6.0:1'], ['Critical', '--critical', '5.9:1'], ['High', '--high', '5.2:1'], ['Medium', '--medium', '5.5:1'],
+    ['Low', '--low', '7.1:1'], ['Positive', '--positive', '5.2:1']
+  ];
+  var style = getComputedStyle(document.documentElement);
+  byId('swatches').innerHTML = SWATCHES.map(function (s) {
+    return '<div class="swatch"><i style="background:var(' + s[1] + ')"></i><b>' + s[0] + '</b><span>' + style.getPropertyValue(s[1]).trim() + '</span><br><span style="font-family:var(--font)">' + s[2] + '</span></div>';
+  }).join('');
+
+  byId('demo-prio').innerHTML = Object.keys(D.PRIORITIES).map(function (p) { return A.prio(p); }).join('');
+  byId('demo-status').innerHTML = Object.keys(D.STATUSES).map(function (s) { return A.status(s); }).join('');
+  byId('demo-people').innerHTML = Object.keys(D.PEOPLE).map(function (p) { return A.owner(p); }).join('') + A.owner(null);
+
+  var seg = byId('demo-seg'), segButtons = A.$$('button', seg);
+  var slide = A.slider(seg, A.$('.segmented-thumb', seg), '[aria-pressed="true"]');
+  segButtons.forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      segButtons.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      slide(e.detail > 0);
+    });
+  });
+
+  byId('demo-toast').addEventListener('click', function () {
+    A.toast('In review and assigned to you', { undo: function () {} });
+  });
+
+  function play() {
+    A.$$('.motion-lane i').forEach(function (dot) {
+      var lane = dot.parentNode.offsetWidth - dot.offsetWidth;
+      dot.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(' + lane + 'px)' }], {
+        duration: +dot.getAttribute('data-ms'), fill: 'forwards',
+        easing: dot.getAttribute('data-ease') === 'out' ? A.EASE_OUT : A.EASE_IN_OUT
+      });
+    });
+  }
+  byId('motion-play').addEventListener('click', play);
+  if (!A.reduced) setTimeout(play, 600);
+})();
+</script>
 </body>
 </html>

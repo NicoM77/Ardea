@@ -1,7 +1,20 @@
 /* Ardea — planning-phase mockups.
-   Builds the shared shell (icons, sidebar, phone bars) and the few interactions the mockups demonstrate. */
+   The shared shell (icons, sidebar, top bar, command palette) and the small helpers every page uses.
+   Motion rules: transform and opacity only, a strong ease-out for anything arriving, nothing on
+   keyboard-initiated actions, and everything skipped when the visitor prefers reduced motion. */
 (function () {
   'use strict';
+
+  var D = window.ARDEA;
+  var A = window.A = {};
+
+  /* ?static draws every chart in its final state: used for screenshots and by reduced motion */
+  A.reduced = /[?&]static\b/.test(location.search) ||
+    (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (/[?&]static\b/.test(location.search)) document.documentElement.classList.add('static');
+
+  A.EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)';
+  A.EASE_IN_OUT = 'cubic-bezier(0.77, 0, 0.175, 1)';
 
   /* ---------- Icons: one sprite, referenced with <use href="#name"> ---------- */
   var WHITE = 'fill="#fff" stroke="none"';
@@ -14,16 +27,24 @@
     rules: '<path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15l1.5-2ZM10 20.5a2.2 2.2 0 0 0 4 0"/>',
     team: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17 14.8c2 .6 3.2 2.3 3.5 4.7"/>',
     settings: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 4.5v5M9 14.5v5"/>',
-    more: '<circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/>',
+    design: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17"/>',
     'chevron-right': '<path d="m9.5 5.5 6.5 6.5-6.5 6.5"/>',
     'chevron-left': '<path d="M14.5 5.5 8 12l6.5 6.5"/>',
-    'chevron-updown': '<path d="m8 9 4-4 4 4M8 15l4 4 4-4"/>', /* also inlined as the .select arrow in app.css */
+    'chevron-updown': '<path d="m8 9 4-4 4 4M8 15l4 4 4-4"/>',
     'arrow-right': '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    'arrow-up': '<path d="M12 19V5M6 11l6-6 6 6"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
     search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
+    check: '<path d="m5 12.5 4.5 4.5L19 7"/>',
     'check-circle': '<circle cx="12" cy="12" r="8.5"/><path d="m8.2 12.3 2.6 2.6 5-5.4"/>',
     info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.2M12 7.8v.2"/>',
     external: '<path d="M14 4.5h5.5V10M19.5 4.5 11 13M17 14v4.5a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1H10"/>',
-    /* Priority symbols: shape + colour + word, never colour alone */
+    copy: '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5v-2a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/>',
+    replay: '<path d="M4.5 12a7.5 7.5 0 1 0 2.4-5.5"/><path d="M4.5 4.5v4h4"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    close: '<path d="m6 6 12 12M18 6 6 18"/>',
+    megaphone: '<path d="M4.5 10v4l10 4.5v-13L4.5 10Z"/><path d="M7.5 15.4v2.4a1.7 1.7 0 0 0 3.4 0v-.9M18 9.5a3.5 3.5 0 0 1 0 5"/>',
+    /* Priority symbols: shape, colour and word, never colour alone */
     'p-critical': '<path d="M7.4 1.5h9.2l5.9 5.9v9.2l-5.9 5.9H7.4l-5.9-5.9V7.4l5.9-5.9Z" fill="currentColor"/><rect x="10.9" y="6.6" width="2.2" height="7.6" rx="1.1" ' + WHITE + '/><circle cx="12" cy="17" r="1.3" ' + WHITE + '/>',
     'p-high': '<path d="M10.3 3.6a2 2 0 0 1 3.4 0l8 13.9a2 2 0 0 1-1.7 3H4a2 2 0 0 1-1.7-3l8-13.9Z" fill="currentColor"/><rect x="10.9" y="8.4" width="2.2" height="6.6" rx="1.1" ' + WHITE + '/><circle cx="12" cy="17.6" r="1.25" ' + WHITE + '/>',
     'p-medium': '<path d="M12 1.2 22.8 12 12 22.8 1.2 12 12 1.2Z" fill="currentColor"/><rect x="10.9" y="6.8" width="2.2" height="7" rx="1.1" ' + WHITE + '/><circle cx="12" cy="16.6" r="1.25" ' + WHITE + '/>',
@@ -40,304 +61,319 @@
   function sprite() {
     var out = '<svg xmlns="http://www.w3.org/2000/svg" style="display:none">';
     Object.keys(ICONS).forEach(function (name) {
-      out += '<symbol id="' + name + '" viewBox="0 0 24 24">' + ICONS[name] + '</symbol>';
+      out += '<symbol id="i-' + name + '" viewBox="0 0 24 24">' + ICONS[name] + '</symbol>';
     });
     return out + '</svg>';
   }
 
-  function icon(name) {
-    return '<svg class="icon" aria-hidden="true"><use href="#' + name + '"/></svg>';
-  }
+  /* ---------- Small builders ---------- */
+  A.esc = function (s) {
+    return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+  };
+  A.icon = function (name) { return '<svg class="icon" aria-hidden="true"><use href="#i-' + name + '"/></svg>'; };
+  A.sym = function (name) { return '<svg class="sym" aria-hidden="true"><use href="#i-' + name + '"/></svg>'; };
+  A.prio = function (p, extra) {
+    var def = D.PRIORITIES[p];
+    return '<span class="prio prio--' + p + (extra ? ' ' + extra : '') + '">' + A.sym(def.sym) + def.label + '</span>';
+  };
+  A.status = function (s) {
+    var def = D.STATUSES[s];
+    return '<span class="status status--' + s + '">' + A.sym(def.sym) + def.label + '</span>';
+  };
+  A.who = function (id) {
+    var p = D.PEOPLE[id];
+    return p ? '<span class="who who--' + p.hue + '" data-tip="' + A.esc(p.name) + '" aria-hidden="true">' + p.initials + '</span>'
+      : '<span class="who who--none" data-tip="Unassigned" aria-hidden="true"></span>';
+  };
+  A.owner = function (id) {
+    var p = D.PEOPLE[id];
+    return '<span class="owner">' + A.who(id) + '<span' + (p ? '' : ' class="muted"') + '>' + (p ? A.esc(p.name) : 'Unassigned') + '</span></span>';
+  };
+  A.$ = function (sel, root) { return (root || document).querySelector(sel); };
+  A.$$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
 
-  function toArray(list) { return Array.prototype.slice.call(list); }
+  /* ---------- Motion helpers ---------- */
+  /* Runs fn once, when el first comes into view */
+  A.onView = function (el, fn) {
+    if (!('IntersectionObserver' in window) || A.reduced) { fn(); return; }
+    var io = new IntersectionObserver(function (entries) {
+      if (entries.some(function (e) { return e.isIntersecting; })) { io.disconnect(); fn(); }
+    }, { threshold: 0.2 });
+    io.observe(el);
+  };
+  /* A bar growing from its left edge; scaleX, never width */
+  A.grow = function (el, delay, duration) {
+    if (A.reduced || !el.animate) return;
+    el.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }],
+      { duration: duration || 600, delay: delay || 0, easing: A.EASE_OUT, fill: 'backwards' });
+  };
+  A.fadeIn = function (el, delay, duration) {
+    if (A.reduced || !el.animate) return;
+    el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: duration || 300, delay: delay || 0, easing: 'ease', fill: 'backwards' });
+  };
+  /* A number counting up to its value, once */
+  A.countUp = function (el, to, opts) {
+    opts = opts || {};
+    var format = opts.format || D.fmt.int;
+    if (A.reduced) { el.textContent = format(to); return; }
+    var from = opts.from || 0, start = null, dur = opts.duration || 700, delay = opts.delay || 0;
+    var run = el._count = (el._count || 0) + 1;   /* a newer count on the same element takes over */
+    el.textContent = format(from);
+    function frame(t) {
+      if (el._count !== run) return;
+      if (start === null) start = t + delay;
+      var k = Math.min(1, Math.max(0, (t - start) / dur));
+      var eased = 1 - Math.pow(1 - k, 4);
+      el.textContent = format(from + (to - from) * eased);
+      if (k < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    /* Frames pause in a background tab; the value must be right when the tab is opened */
+    setTimeout(function () { if (el._count === run) { el._count = run + 1; el.textContent = format(to); } }, delay + dur + 200);
+  };
+  /* One indicator that slides to the selected tab or segment */
+  A.slider = function (track, ink, selected) {
+    function place(animate) {
+      var el = A.$(selected, track);
+      if (!el) return;
+      if (!animate) ink.style.transition = 'none';
+      ink.style.transform = 'translateX(' + el.offsetLeft + 'px) scaleX(' + (el.offsetWidth / 100) + ')';
+      if (!animate) { void ink.offsetWidth; ink.style.transition = ''; }
+    }
+    place(false);
+    window.addEventListener('resize', function () { place(false); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { place(false); });
+    return place;
+  };
+  /* A change inside the page (filtering, reordering) as one view transition, when the browser has them */
+  A.transition = function (fn) {
+    if (A.reduced || !document.startViewTransition) { fn(); return; }
+    document.startViewTransition(fn);
+  };
 
-  /* Several controls exist twice (desktop and phone bar); act on the one that is shown */
-  function firstVisible(elements) {
-    return elements.filter(function (el) { return el.offsetParent; })[0];
-  }
+  /* ---------- Tooltip: a short delay for the first, none for the next ---------- */
+  var tipEl, tipTimer, tipWarm = 0;
+  A.tip = {
+    show: function (html, x, y, now) {
+      if (!tipEl) { tipEl = document.createElement('div'); tipEl.className = 'tip'; tipEl.setAttribute('role', 'tooltip'); document.body.appendChild(tipEl); }
+      clearTimeout(tipTimer);
+      var open = function () {
+        tipEl.innerHTML = html;
+        var w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+        var left = Math.max(8, Math.min(window.innerWidth - w - 8, x - w / 2));
+        var top = y - h - 10 < 8 ? y + 16 : y - h - 10;
+        tipEl.style.transform = 'translate(' + Math.round(left) + 'px,' + Math.round(top) + 'px)';
+        tipEl.classList.add('show');
+      };
+      if (now || Date.now() - tipWarm < 400 || tipEl.classList.contains('show')) open();
+      else tipTimer = setTimeout(open, 350);
+    },
+    hide: function () {
+      clearTimeout(tipTimer);
+      if (tipEl && tipEl.classList.contains('show')) { tipEl.classList.remove('show'); tipWarm = Date.now(); }
+    }
+  };
+  document.addEventListener('pointerover', function (e) {
+    if (e.pointerType === 'touch') return;
+    var el = e.target.closest && e.target.closest('[data-tip]');
+    if (!el) return;
+    var r = el.getBoundingClientRect();
+    A.tip.show(el.getAttribute('data-tip'), r.left + r.width / 2, r.top);
+  });
+  document.addEventListener('pointerout', function (e) {
+    var el = e.target.closest && e.target.closest('[data-tip]');
+    if (el && !el.contains(e.relatedTarget)) A.tip.hide();
+  });
+
+  /* ---------- Toast: confirms a change in place, with Undo ---------- */
+  var toastEl, toastTimer;
+  A.toast = function (text, opts) {
+    opts = opts || {};
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.className = 'toast is-hidden';
+      toastEl.setAttribute('role', 'status');
+      document.body.appendChild(toastEl);
+      void toastEl.offsetWidth;
+    }
+    clearTimeout(toastTimer);
+    toastEl.innerHTML = (opts.plain ? '' : A.icon('check-circle')) + '<span>' + A.esc(text) + '</span>' +
+      (opts.undo ? '<button class="btn" type="button">Undo</button>' : '');
+    toastEl.classList.remove('is-hidden');
+    var btn = A.$('button', toastEl);
+    if (btn) btn.addEventListener('click', function () { A.toast.hide(); opts.undo(); });
+    toastTimer = setTimeout(A.toast.hide, opts.undo ? 7000 : 3200);
+  };
+  A.toast.hide = function () { clearTimeout(toastTimer); if (toastEl) toastEl.classList.add('is-hidden'); };
 
   /* ---------- Shell ---------- */
-  var ME = { name: 'Nina Meier', initials: 'NM', role: 'Owner' };
+  var ME = D.PEOPLE[D.ME];
   var NAV = [
     { id: 'overview', label: 'Overview', href: 'overview.html', icon: 'overview' },
-    { id: 'actions', label: 'Actions', href: 'actions.html', icon: 'actions', count: 6 },
-    { id: 'vulnerabilities', label: 'Vulnerabilities', href: '#', icon: 'vulnerabilities' },
-    { id: 'projects', label: 'Projects', href: '#', icon: 'projects', count: 3 },
-    { id: 'sources', label: 'Sources', href: '#', icon: 'sources' },
-    { id: 'rules', label: 'Notification rules', href: '#', icon: 'rules' }
+    { id: 'actions', label: 'Actions', href: 'actions.html', icon: 'actions', count: D.ACTIONS.length },
+    { id: 'vulnerabilities', label: 'Vulnerabilities', icon: 'vulnerabilities' },
+    { id: 'projects', label: 'Projects', icon: 'projects' },
+    { id: 'sources', label: 'Sources', icon: 'sources' },
+    { id: 'rules', label: 'Notification rules', icon: 'rules' }
   ];
   var NAV_FOOT = [
-    { id: 'team', label: 'Team', href: '#', icon: 'team' },
-    { id: 'settings', label: 'Settings', href: '#', icon: 'settings' }
+    { id: 'team', label: 'Team', icon: 'team' },
+    { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'design-system', label: 'Design system', href: 'design-system.html', icon: 'design' }
   ];
-  /* Phone tab bar: three main sections plus More */
-  var TABS = NAV.filter(function (item) { return ['overview', 'actions', 'projects'].indexOf(item.id) !== -1; })
-    .concat({ id: 'more', label: 'More', href: '#', icon: 'more' });
 
-  function navLinks(items, current, withCounts) {
+  function navLinks(items, current) {
     return items.map(function (item) {
-      var here = item.id === current ? ' aria-current="page"' : '';
-      var count = withCounts && item.count ? '<span class="nav-count">' + item.count + '<span class="sr-only"> open</span></span>' : '';
-      return '<a href="' + item.href + '"' + here + '>' + icon(item.icon) + '<span>' + item.label + '</span>' + count + '</a>';
+      var inner = A.icon(item.icon) + '<span>' + item.label + '</span>' +
+        (item.count ? '<span class="nav-count">' + item.count + '<span class="sr-only"> open</span></span>' : '');
+      if (!item.href) return '<button type="button" data-soon="' + item.label + '">' + inner + '</button>';
+      return '<a href="' + item.href + '"' + (item.id === current ? ' aria-current="page"' : '') + '>' + inner + '</a>';
     }).join('');
-  }
-
-  function orgSwitch() {
-    return '<button class="org-switch" type="button" aria-label="Organization: Example Digital AG. Switch organization">' +
-      '<span class="org-avatar" aria-hidden="true">E</span>' +
-      '<span class="org-name">Example Digital AG<small>3 projects</small></span>' +
-      icon('chevron-updown') + '</button>';
-  }
-
-  function avatar() {
-    return '<span class="user-avatar" aria-hidden="true">' + ME.initials + '</span>';
   }
 
   function buildShell() {
     var body = document.body;
     var section = body.getAttribute('data-section') || body.getAttribute('data-page');
-    var back = document.querySelector('.content > .back');
-
     var sidebar =
-      '<nav class="sidebar" aria-label="Main">' +
-        '<div class="brand"><img src="../brand/ardea-logo.svg" alt="Ardea" width="105" height="32"></div>' +
-        orgSwitch() +
-        '<div class="nav">' + navLinks(NAV, section, true) + '</div>' +
+      '<nav class="sidebar" id="sidebar" aria-label="Main">' +
+        '<div class="brand"><a href="overview.html"><img src="../brand/ardea-logo.svg" alt="Ardea" width="85" height="26"></a>' +
+          '<button class="btn ghost icon-only sidebar-close" type="button" aria-label="Close menu">' + A.icon('close') + '</button></div>' +
+        '<button class="org-switch" type="button" data-soon="Switching organizations" aria-label="Organization: Example Digital AG. Switch organization">' +
+          '<span class="org-mark" aria-hidden="true">E</span>' +
+          '<span class="org-name">Example Digital AG<small>' + D.PROJECTS.length + ' projects</small></span>' + A.icon('chevron-updown') + '</button>' +
+        '<div class="nav">' + navLinks(NAV, section) + '</div>' +
         '<div class="sidebar-foot nav">' + navLinks(NAV_FOOT, section) +
-          '<div class="user">' + avatar() + '<span class="user-name">' + ME.name + '<small>' + ME.role + '</small></span></div>' +
+          '<div class="sync"><span class="live" aria-hidden="true"></span>' + D.SOURCES.count + ' sources synced at ' + D.fmt.clock(D.SOURCES.synced) + '</div>' +
+          '<div class="user"><span class="who who--' + ME.hue + '" aria-hidden="true">' + ME.initials + '</span><span class="user-name">' + ME.name + '<small>' + ME.role + '</small></span></div>' +
         '</div>' +
       '</nav>';
+    var topbar =
+      '<header class="topbar">' +
+        '<button class="btn ghost icon-only menu-toggle" type="button" aria-label="Open menu" aria-controls="sidebar">' + A.icon('menu') + '</button>' +
+        '<img class="brand-mark" src="../brand/ardea-mark.svg" alt="Ardea" width="24" height="24">' +
+        '<button class="search-trigger" type="button" data-palette>' + A.icon('search') + '<span>Search actions, CVEs, pages</span><kbd>/</kbd></button>' +
+        '<button class="account" type="button" data-soon="The account menu" aria-label="Account: ' + ME.name + '"><span class="who who--' + ME.hue + '" aria-hidden="true">' + ME.initials + '</span></button>' +
+      '</header>';
+    body.insertAdjacentHTML('afterbegin', '<a class="skip-link" href="#main">Skip to content</a>' + sprite() + sidebar + topbar);
 
-    /* Detail pages carry their back link in the content; the phone top bar shows the same link */
-    var topbar = '<div class="topbar">' + (back ? back.outerHTML : orgSwitch()) +
-      '<button class="account" type="button" aria-label="Account: ' + ME.name + '">' + avatar() + '</button></div>';
+    var side = document.getElementById('sidebar');
+    A.$('.menu-toggle').addEventListener('click', function () { side.classList.add('open'); A.$('.sidebar-close').focus(); });
+    A.$('.sidebar-close').addEventListener('click', function () { side.classList.remove('open'); A.$('.menu-toggle').focus(); });
 
-    body.insertAdjacentHTML('afterbegin', '<a class="skip-link" href="#main">Skip to content</a>' + sprite() + sidebar);
-    var main = document.querySelector('.main');
-    main.insertAdjacentHTML('afterbegin', topbar);
-    main.insertAdjacentHTML('afterend', '<nav class="tabbar" aria-label="Main">' + navLinks(TABS, section) + '</nav>');
-  }
-
-  /* ---------- Actions list: segmented view, search and filters ---------- */
-  function initActionList() {
-    var table = document.querySelector('[data-action-table]');
-    if (!table) return;
-
-    var rows = toArray(table.querySelectorAll('tbody tr[data-state]')).map(function (row) {
-      return { el: row, text: row.textContent.toLowerCase() };
-    });
-    var search = document.getElementById('q');
-    var project = document.getElementById('project');
-    var priority = document.getElementById('priority');
-    var segButtons = toArray(document.querySelectorAll('[data-view]'));
-    var countLine = document.getElementById('count');
-    var emptyFiltered = document.getElementById('empty-filtered');
-    var emptyClosed = document.getElementById('empty-closed');
-    var view = 'open';
-    var preset = location.hash.replace('#', '');
-
-    /* #critical presets the priority filter, #webshop the project filter */
-    [priority, project].forEach(function (select) {
-      if (preset && select.querySelector('option[value="' + preset + '"]')) select.value = preset;
-    });
-
-    function apply() {
-      var q = search.value.trim().toLowerCase();
-      var shown = 0;
-      rows.forEach(function (row) {
-        var match = row.el.getAttribute('data-state') === view &&
-          (!project.value || row.el.getAttribute('data-project') === project.value) &&
-          (!priority.value || row.el.getAttribute('data-priority') === priority.value) &&
-          (!q || row.text.indexOf(q) !== -1);
-        row.el.hidden = !match;
-        if (match) shown++;
-      });
-      var filtered = q || project.value || priority.value;
-      table.hidden = shown === 0;
-      emptyFiltered.hidden = !(shown === 0 && filtered);
-      emptyClosed.hidden = !(shown === 0 && !filtered && view === 'closed');
-      countLine.textContent = shown + (view === 'open' ? ' open ' : ' closed ') + (shown === 1 ? 'action' : 'actions') +
-        (filtered ? (shown === 1 ? ' matches' : ' match') + ' your filters' : '');
-
-      var next = priority.value || project.value;
-      if (next !== preset) {
-        preset = next;
-        try {
-          history.replaceState(null, '', next ? '#' + next : location.pathname + location.search);
-        } catch (err) { /* some browsers refuse this on file:// pages; the filter still works */ }
-      }
-    }
-
-    segButtons.forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        view = btn.getAttribute('data-view');
-        segButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
-        apply();
-      });
-    });
-    [search, project, priority].forEach(function (el) { el.addEventListener('input', apply); });
-    document.getElementById('clear').addEventListener('click', function () {
-      search.value = ''; project.value = ''; priority.value = '';
-      apply();
-      search.focus();
-    });
-    apply();
-  }
-
-  /* Whole table row opens its link; the link itself stays the keyboard target */
-  function initRowLinks() {
+    /* Destinations that are not drawn yet say so instead of doing nothing */
     document.addEventListener('click', function (e) {
-      var row = e.target.closest('tr[data-href]');
-      if (!row || e.target.closest('a, button, input, select, label')) return;
-      if (window.getSelection && String(window.getSelection())) return;
-      location.href = row.getAttribute('data-href');
+      var soon = e.target.closest('[data-soon]');
+      if (soon) A.toast(soon.getAttribute('data-soon') + ' is not part of this mockup yet', { plain: true });
     });
+
+    /* A row's title travels into the next page's title */
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest('a[data-morph]');
+      if (!link || A.reduced) return;
+      var title = A.$('[data-title]', link), h1 = A.$('h1');
+      if (!title) return;
+      if (h1) h1.style.viewTransitionName = 'none';
+      title.style.viewTransitionName = 'page-title';
+    });
+    window.addEventListener('pageshow', function (e) {
+      if (!e.persisted) return;
+      A.$$('[data-title]').forEach(function (el) { el.style.viewTransitionName = ''; });
+      var h1 = A.$('h1'); if (h1) h1.style.viewTransitionName = '';
+    });
+
+    A.$$('.rise').forEach(function (el, i) { el.style.setProperty('--i', Math.min(i, 8)); });
   }
 
-  /* ---------- Action: take into review with undo, close with a reason, notes ---------- */
-  /* Closing states ask for a reason; this map is also the list of closing states */
-  var REASON_PROMPTS = {
-    remediated: 'How was it remediated?',
-    risk_accepted: 'Why is the risk accepted?',
-    not_affected: 'Why is the project not affected?'
-  };
+  /* ---------- Command palette ---------- */
+  function paletteItems() {
+    var items = [
+      { group: 'Pages', label: 'Overview', href: 'overview.html', icon: 'overview' },
+      { group: 'Pages', label: 'Actions', href: 'actions.html', icon: 'actions' },
+      { group: 'Pages', label: 'Design system', href: 'design-system.html', icon: 'design' }
+    ];
+    D.ACTIONS.forEach(function (a) {
+      items.push({ group: 'Open actions', label: a.title, href: a.href, sym: D.PRIORITIES[a.priority].sym, priority: a.priority,
+        note: D.project(a.project).name, search: a.title + ' ' + a.cve + ' ' + a.component + ' ' + D.project(a.project).name });
+    });
+    items.push({ group: 'Vulnerabilities', label: D.VULN.id + ' · ' + D.VULN.title, href: 'vulnerability.html', sym: 'p-critical', priority: 'critical', search: D.VULN.id + ' ' + D.VULN.title });
+    return items;
+  }
 
-  function initAction() {
-    if (!document.querySelector('[data-action]')) return;
-
-    var statusSelect = document.getElementById('status');
-    var selects = toArray(document.querySelectorAll('[data-status-select]'));
-    var takeButtons = toArray(document.querySelectorAll('[data-take]'));
-    var assignee = document.getElementById('assignee');
-    var confirmBox = document.getElementById('confirm');
-    var confirmText = document.getElementById('confirm-text');
-    var undo = document.getElementById('undo');
-    var timeline = document.getElementById('timeline');
-    var reason = document.getElementById('reason');
-    var reasonText = document.getElementById('reason-text');
-    var reasonLabel = document.getElementById('reason-label');
-    var reasonError = document.getElementById('reason-error');
-    var noteForm = document.getElementById('note-form');
-    var noteText = document.getElementById('note-text');
-
-    var current = { state: 'open', assignee: assignee.value };
-    var pending = null; /* closing state waiting for its reason */
-    var last = null;    /* what Undo restores */
-
-    function label(state) {
-      return statusSelect.querySelector('option[value="' + state + '"]').text;
-    }
+  var palette = null;
+  function openPalette(byPointer) {
+    if (palette) return;
+    var all = paletteItems(), shown = all, index = 0, opener = document.activeElement;
+    var back = document.createElement('div');
+    /* Opened from the keyboard it simply appears; opened with the pointer it scales in */
+    back.className = 'palette-back' + (byPointer && !A.reduced ? ' by-pointer' : '');
+    back.innerHTML = '<div class="palette" role="dialog" aria-modal="true" aria-label="Search">' +
+      '<label class="palette-input">' + A.icon('search') + '<span class="sr-only">Search</span>' +
+      '<input type="text" placeholder="Search actions, CVEs, pages" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="palette-list"><kbd>Esc</kbd></label>' +
+      '<div class="palette-list" id="palette-list" role="listbox"></div></div>';
+    document.body.appendChild(back);
+    palette = back;
+    var input = A.$('input', back), list = A.$('.palette-list', back);
 
     function render() {
-      selects.forEach(function (s) { s.value = current.state; });
-      assignee.value = current.assignee;
-      takeButtons.forEach(function (b) { b.hidden = current.state !== 'open'; });
-    }
-
-    function addActivity(text) {
-      var li = document.createElement('li');
-      var time = document.createElement('time');
-      var p = document.createElement('p');
-      time.textContent = 'Just now';
-      p.textContent = text;
-      li.appendChild(time);
-      li.appendChild(p);
-      timeline.insertBefore(li, timeline.firstChild);
-      return li;
-    }
-
-    function commit(next, message, activity) {
-      last = { state: current.state, assignee: current.assignee, entry: addActivity(activity) };
-      current = next;
-      render();
-      confirmText.textContent = message;
-      confirmBox.hidden = false;
-      undo.focus();
-    }
-
-    function resetReason() {
-      pending = null;
-      reason.hidden = true;
-      reasonText.value = '';
-      reasonText.removeAttribute('aria-invalid');
-      reasonError.hidden = true;
-    }
-
-    takeButtons.forEach(function (b) {
-      b.addEventListener('click', function () {
-        resetReason();
-        commit({ state: 'in_review', assignee: ME.name }, 'In review and assigned to you.', ME.name + ' took the action into review.');
+      var group = '', html = '';
+      shown.forEach(function (it, i) {
+        if (it.group !== group) { group = it.group; html += '<h3>' + group + '</h3>'; }
+        html += '<div class="palette-item' + (it.priority ? ' c-' + it.priority : '') + '" role="option" data-i="' + i + '" aria-selected="' + (i === index) + '">' +
+          (it.sym ? A.sym(it.sym) : A.icon(it.icon)) + '<span>' + A.esc(it.label) + '</span>' + (it.note ? '<small>' + A.esc(it.note) + '</small>' : '') + '</div>';
       });
-    });
+      list.innerHTML = html || '<p class="palette-empty">Nothing matches “' + A.esc(input.value) + '”.</p>';
+      var sel = A.$('[aria-selected="true"]', list);
+      if (sel) sel.scrollIntoView({ block: 'nearest' });
+    }
+    function close() { back.remove(); palette = null; if (opener && opener.focus) opener.focus(); }
+    function go(it) { if (it) location.href = it.href; }
 
-    undo.addEventListener('click', function () {
-      if (!last) return;
-      timeline.removeChild(last.entry);
-      current = { state: last.state, assignee: last.assignee };
-      last = null;
-      render();
-      confirmBox.hidden = true;
-      (firstVisible(takeButtons) || firstVisible(selects)).focus();
+    input.addEventListener('input', function () {
+      var q = input.value.trim().toLowerCase();
+      shown = all.filter(function (it) { return !q || (it.search || it.label).toLowerCase().indexOf(q) !== -1; });
+      index = 0; render();
     });
-
-    selects.forEach(function (s) {
-      s.addEventListener('change', function () {
-        var next = s.value;
-        if (next in REASON_PROMPTS) {
-          pending = next;
-          reasonLabel.textContent = REASON_PROMPTS[next];
-          reason.hidden = false;
-          selects.forEach(function (o) { o.value = next; });
-          reason.scrollIntoView({ block: 'nearest' });
-          reasonText.focus();
-          return;
-        }
-        resetReason();
-        commit({ state: next, assignee: current.assignee }, 'Status set to ' + label(next) + '.',
-          ME.name + ' set the status to ' + label(next) + '.');
-      });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (shown.length) index = (index + (e.key === 'ArrowDown' ? 1 : shown.length - 1)) % shown.length;
+        render();
+      } else if (e.key === 'Enter') { e.preventDefault(); go(shown[index]); }
+      else if (e.key === 'Escape') { e.preventDefault(); close(); }
+      else if (e.key === 'Tab') e.preventDefault();
     });
-
-    assignee.addEventListener('change', function () {
-      var who = assignee.value;
-      commit({ state: current.state, assignee: who }, who ? 'Assigned to ' + (who === ME.name ? 'you' : who) + '.' : 'Unassigned.',
-        who ? ME.name + ' assigned the action to ' + who + '.' : ME.name + ' removed the assignment.');
+    list.addEventListener('click', function (e) {
+      var item = e.target.closest('.palette-item');
+      if (item) go(shown[+item.getAttribute('data-i')]);
     });
-
-    reason.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var text = reasonText.value.trim();
-      if (!text) {
-        reasonText.setAttribute('aria-invalid', 'true');
-        reasonError.hidden = false;
-        reasonText.focus();
-        return;
-      }
-      var next = pending;
-      resetReason();
-      commit({ state: next, assignee: current.assignee }, 'Closed as ' + label(next).toLowerCase() + '.',
-        ME.name + ' closed the action as ' + label(next).toLowerCase() + ': “' + text + '”');
-    });
-
-    document.getElementById('reason-cancel').addEventListener('click', function () {
-      resetReason();
-      render();
-      firstVisible(selects).focus();
-    });
-
-    noteForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var text = noteText.value.trim();
-      if (!text) { noteText.focus(); return; }
-      noteText.value = '';
-      commit({ state: current.state, assignee: current.assignee }, 'Note saved to the activity.', 'Note by ' + ME.name + ': ' + text);
-    });
-
+    back.addEventListener('pointerdown', function (e) { if (e.target === back) close(); });
     render();
+    input.focus();
   }
 
+  function initPalette() {
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('[data-palette]')) openPalette(e.detail > 0);
+    });
+    document.addEventListener('keydown', function (e) {
+      var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+      if (((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !typing)) {
+        e.preventDefault();
+        openPalette(false);
+      }
+    });
+  }
+
+  /* Copy a string people need verbatim */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-copy]');
+    if (!btn) return;
+    var text = btn.getAttribute('data-copy');
+    var done = function () { A.toast('Copied ' + text); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, done);
+    else done();
+  });
+
   buildShell();
-  initActionList();
-  initRowLinks();
-  initAction();
+  initPalette();
 })();

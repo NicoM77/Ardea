@@ -5,213 +5,176 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Overview · Ardea (mockup, sample data)</title>
 <link rel="icon" href="../brand/ardea-favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css">
 </head>
 <body data-page="overview">
-<main class="main" id="main">
+<main class="sheet" id="main">
   <div class="content">
 
-    <header class="page-head">
+    <header class="title-row">
       <div>
         <h1>Overview</h1>
-        <p class="page-sub">Wednesday, 18 November 2026</p>
+        <p class="title-sub" id="finding"></p>
       </div>
     </header>
 
-    <p class="lede"><strong>2 critical actions are open.</strong> One is due today, the other has nobody assigned yet.</p>
-
-    <section aria-labelledby="by-priority">
-      <h2 class="sr-only" id="by-priority">Open actions by priority</h2>
-      <nav class="group prio-bar" aria-label="Open actions by priority">
-        <a href="actions.html#critical">
-          <span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span>
-          <span class="prio-count">2<small>actions</small></span>
-        </a>
-        <a href="actions.html#high">
-          <span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#p-high"/></svg>High</span>
-          <span class="prio-count">2<small>actions</small></span>
-        </a>
-        <a href="actions.html#medium">
-          <span class="prio prio--medium"><svg class="sym" aria-hidden="true"><use href="#p-medium"/></svg>Medium</span>
-          <span class="prio-count">1<small>action</small></span>
-        </a>
-        <a href="actions.html#low">
-          <span class="prio prio--low"><svg class="sym" aria-hidden="true"><use href="#p-low"/></svg>Low</span>
-          <span class="prio-count">1<small>action</small></span>
-        </a>
-      </nav>
-    </section>
-
-    <div class="overview-grid">
-      <section class="section" aria-labelledby="next-up">
-        <div class="section-head">
-          <h2 id="next-up">Next up</h2>
-        </div>
-        <ul class="group list">
-          <li>
-            <a class="row" href="action.html">
-              <span class="row-body">
-                <span class="row-text">
-                  <span class="row-title">Update PHP to 8.3.36</span>
-                  <span class="row-sub"><span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span> · Webshop · PHP 8.3.30</span>
-                </span>
-                <span class="row-trail">
-                  <span class="due-soon">Due today</span>
-                  <span class="status"><svg class="sym" aria-hidden="true"><use href="#s-review"/></svg>In review <small>· Marc Keller</small></span>
-                </span>
-                <svg class="icon row-chevron" aria-hidden="true"><use href="#chevron-right"/></svg>
-              </span>
-            </a>
-          </li>
-          <li>
-            <a class="row" href="action.html">
-              <span class="row-body">
-                <span class="row-text">
-                  <span class="row-title">Update Puppet Enterprise to 2025.12.1</span>
-                  <span class="row-sub"><span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span> · Platform Ops · Puppet Enterprise 2025.9.0</span>
-                </span>
-                <span class="row-trail">
-                  <span class="due-soon">Due tomorrow</span>
-                  <span class="status"><svg class="sym" aria-hidden="true"><use href="#s-open"/></svg>Open <small>· Unassigned</small></span>
-                </span>
-                <svg class="icon row-chevron" aria-hidden="true"><use href="#chevron-right"/></svg>
-              </span>
-            </a>
-          </li>
-          <li>
-            <a class="row" href="action.html">
-              <span class="row-body">
-                <span class="row-text">
-                  <span class="row-title">Update PostgreSQL to 17.12</span>
-                  <span class="row-sub"><span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#p-high"/></svg>High</span> · Platform Ops · PostgreSQL 17.9</span>
-                </span>
-                <span class="row-trail">
-                  <span>Due 24 Nov</span>
-                  <span class="status"><svg class="sym" aria-hidden="true"><use href="#s-open"/></svg>Open <small>· Unassigned</small></span>
-                </span>
-                <svg class="icon row-chevron" aria-hidden="true"><use href="#chevron-right"/></svg>
-              </span>
-            </a>
-          </li>
-          <li>
-            <a class="row" href="action.html">
-              <span class="row-body">
-                <span class="row-text">
-                  <span class="row-title">Update MySQL Server</span>
-                  <span class="row-sub"><span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#p-high"/></svg>High</span> · Webshop · MySQL Server 8.4.11</span>
-                </span>
-                <span class="row-trail">
-                  <span>Due 24 Nov</span>
-                  <span class="status"><svg class="sym" aria-hidden="true"><use href="#s-open"/></svg>Open <small>· Unassigned</small></span>
-                </span>
-                <svg class="icon row-chevron" aria-hidden="true"><use href="#chevron-right"/></svg>
-              </span>
-            </a>
-          </li>
-          <li>
-            <a class="row row--more" href="actions.html">
-              <span class="row-body">
-                <span class="row-text"><span class="row-title">Show all 6 open actions</span></span>
-                <svg class="icon row-chevron" aria-hidden="true"><use href="#chevron-right"/></svg>
-              </span>
-            </a>
-          </li>
-        </ul>
+    <div class="grid">
+      <section class="card span-8 rise" aria-labelledby="h-deadlines">
+        <header>
+          <h2 id="h-deadlines">Deadlines</h2>
+          <a class="card-link" href="actions.html">All actions<svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+        </header>
+        <div class="runway" id="runway"></div>
       </section>
 
-      <section class="section" aria-labelledby="changes">
-        <div class="section-head">
-          <h2 id="changes">Recent changes</h2>
+      <div class="stack span-4 unstack">
+        <section class="card rise lead" aria-labelledby="h-next">
+          <header>
+            <h2 id="h-next">Next deadline</h2>
+            <span class="meta" id="next-when"></span>
+          </header>
+          <p class="figure" id="next-figure"></p>
+          <p class="next-sub" id="next-sub"></p>
+          <a class="btn primary" id="next-open" href="action.html">Open action</a>
+        </section>
+        <section class="card fill rise" aria-labelledby="h-priority">
+          <header><h2 id="h-priority">By priority</h2></header>
+          <div class="ring-row">
+            <div class="ring" id="ring"></div>
+            <div class="legend" id="legend"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="card span-8 rise" id="sieve" aria-labelledby="h-sieve">
+        <header>
+          <h2 id="h-sieve">This week’s CVE records</h2>
+          <div class="tools">
+            <span class="meta" id="sieve-period"></span>
+            <button class="btn ghost icon-only" type="button" data-replay aria-label="Play again" data-tip="Play again"><svg class="icon" aria-hidden="true"><use href="#i-replay"/></svg></button>
+          </div>
+        </header>
+        <div class="sieve-field"><canvas aria-hidden="true"></canvas></div>
+        <div class="stages">
+          <button class="stage" type="button" data-stage-btn="published" aria-pressed="false"><b data-n="published"></b><span><i></i>published</span></button>
+          <button class="stage" type="button" data-stage-btn="candidates" aria-pressed="false"><b data-n="candidates"></b><span><i style="background:var(--accent)"></i>name your stack</span></button>
+          <button class="stage" type="button" data-stage-btn="matched" aria-pressed="true"><b data-n="matched"></b><span><i style="background:var(--critical)"></i>hit your versions</span></button>
+          <a class="stage" href="actions.html"><b data-n="actions"></b><span>actions to take</span></a>
         </div>
-        <ol class="group feed">
-          <li>
-            <time datetime="2026-11-17T22:35">Yesterday, 22:35</time>
-            <p>New action: <a href="action.html">Update MySQL Server</a></p>
-            <p><span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#p-high"/></svg>High</span> · Webshop</p>
-          </li>
-          <li>
-            <time datetime="2026-11-17T22:05">Yesterday, 22:05</time>
-            <p>Raised to Critical: <a href="action.html">Update Puppet Enterprise</a></p>
-            <p>CISA lists the flaw as actively exploited.</p>
-          </li>
-          <li>
-            <time datetime="2026-11-17T06:10">Yesterday, 06:10</time>
-            <p>New action: <a href="action.html">Update PostgreSQL to 17.12</a></p>
-            <p><span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#p-high"/></svg>High</span> · Platform Ops</p>
-          </li>
-          <li>
-            <time datetime="2026-11-16T14:20">16 Nov, 14:20</time>
-            <p>New action: <a href="action.html">Update PHP to 8.3.36</a></p>
-            <p><span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span> · Webshop · exploited in the wild</p>
-          </li>
-          <li class="feed-more">
-            <a class="row row--more" href="#">
-              <span class="row-body">
-                <span class="row-text"><span class="row-title">Show earlier changes</span></span>
-                <svg class="icon row-chevron" aria-hidden="true"><use href="#chevron-right"/></svg>
-              </span>
-            </a>
-          </li>
-        </ol>
+      </section>
+
+      <section class="card span-4 rise" aria-labelledby="h-trend">
+        <header>
+          <h2 id="h-trend">Open actions</h2>
+          <span class="meta">30 days</span>
+        </header>
+        <p class="kpi" id="trend-now"></p>
+        <p class="kpi-note" id="trend-note"></p>
+        <div class="chart" id="trend"></div>
       </section>
     </div>
 
-    <section class="section" aria-labelledby="projects">
-      <div class="section-head">
-        <h2 id="projects">Projects</h2>
-      </div>
-      <div class="group">
-        <table class="table table--stack">
-          <thead>
-            <tr>
-              <th scope="col">Project</th>
-              <th scope="col" class="cell-hide">Technology</th>
-              <th scope="col">Highest priority</th>
-              <th scope="col" class="num">Open actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr data-href="actions.html#platform-ops">
-              <td class="cell-full"><a class="row-title" href="actions.html#platform-ops">Platform Ops</a></td>
-              <td class="cell-hide">Kubernetes, Linux, PostgreSQL, Puppet</td>
-              <td><span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span></td>
-              <td class="num" data-label="Open actions">3</td>
-            </tr>
-            <tr data-href="actions.html#webshop">
-              <td class="cell-full"><a class="row-title" href="actions.html#webshop">Webshop</a></td>
-              <td class="cell-hide">WordPress, PHP, MySQL</td>
-              <td><span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#p-critical"/></svg>Critical</span></td>
-              <td class="num" data-label="Open actions">2</td>
-            </tr>
-            <tr data-href="actions.html#customer-portal">
-              <td class="cell-full"><a class="row-title" href="actions.html#customer-portal">Customer Portal</a></td>
-              <td class="cell-hide">.NET, Angular, Umbraco, Azure SQL</td>
-              <td><span class="prio prio--medium"><svg class="sym" aria-hidden="true"><use href="#p-medium"/></svg>Medium</span></td>
-              <td class="num" data-label="Open actions">1</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <div class="grid">
+      <section class="card span-7 rise" aria-labelledby="h-projects">
+        <header><h2 id="h-projects">Projects</h2></header>
+        <div class="rows" id="projects"></div>
+      </section>
+      <section class="card span-5 rise" aria-labelledby="h-latest">
+        <header><h2 id="h-latest">Latest</h2></header>
+        <div class="rows" id="feed"></div>
+      </section>
+    </div>
 
-    <section class="section" aria-labelledby="warnings">
-      <div class="section-head">
-        <h2 id="warnings">Warnings without a CVE</h2>
-      </div>
-      <ul class="group feed">
-        <li>
-          <time datetime="2026-11-17">17 Nov · National Cyber Security Centre</time>
-          <p>Phishing emails impersonate software vendors and ask administrators to install an "urgent security update".</p>
-          <p>Not linked to a project. Shown so the team is aware of it.</p>
-        </li>
-      </ul>
-    </section>
-
-    <p class="statusline"><svg class="icon" aria-hidden="true"><use href="#check-circle"/></svg>All 4 sources are up to date. Last sync today at 08:36. <a href="#">Sources</a></p>
-
-    <p class="footnote">Mockup with sample data. The CVE records are real; the organization, people, projects, installed versions, dates and the national warning are invented. <a href="design-system.html">Design system</a></p>
+    <p class="footnote">Mockup with sample data. The CVE identifiers and the first two figures of the week (records published, records naming a profiled technology; 11–17 Nov 2026) are real. The organization, people, projects, installed versions, dates, closed actions and the national warning are invented. Every action opens the same example.</p>
   </div>
 </main>
+<script src="data.js"></script>
 <script src="app.js"></script>
+<script src="charts.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = window.ARDEA, A = window.A, C = window.C, F = D.fmt;
+  var byId = function (id) { return document.getElementById(id); };
+
+  /* The finding: what most needs attention, from the rows */
+  var critical = D.ACTIONS.filter(function (a) { return a.priority === 'critical'; });
+  var dueToday = D.count(critical, function (a) { return a.due.toDateString() === D.NOW.toDateString(); });
+  var unowned = D.count(critical, function (a) { return !a.assignee; });
+  byId('finding').innerHTML = critical.length
+    ? '<strong>' + critical.length + ' critical ' + (critical.length === 1 ? 'action is' : 'actions are') + ' open.</strong> ' + dueToday + ' due today, ' + unowned + ' without an owner.'
+    : 'No critical actions are open.';
+
+  C.runway(byId('runway'), D.ACTIONS);
+
+  /* Next deadline: the first row of the runway, as a countdown */
+  var next = D.ACTIONS[0];
+  byId('next-when').textContent = F.when(next.due);
+  byId('next-figure').setAttribute('data-countdown', next.id);
+  byId('next-sub').innerHTML = A.sym(D.PRIORITIES[next.priority].sym) + '<span>' + A.esc(next.title) + '</span>';
+  byId('next-sub').className = 'next-sub c-' + next.priority;
+  byId('next-open').href = next.href;
+  C.clock();
+
+  /* Priority split: the ring, and its legend as the list of counts */
+  C.ring(byId('ring'), D.byPriority, D.ACTIONS.length);
+  var legend = byId('legend');
+  legend.innerHTML = D.byPriority.map(function (p) {
+    return '<a href="actions.html#' + p.priority + '" data-priority="' + p.priority + '">' + A.prio(p.priority) + '<b>' + p.count + '</b></a>';
+  }).join('');
+  A.$$('a', legend).forEach(function (row) {
+    var focus = function (p) { document.dispatchEvent(new CustomEvent('ardea:focus', { detail: p })); };
+    row.addEventListener('pointerenter', function () { focus(row.getAttribute('data-priority')); });
+    row.addEventListener('pointerleave', function () { focus(null); });
+    row.addEventListener('focus', function () { focus(row.getAttribute('data-priority')); });
+    row.addEventListener('blur', function () { focus(null); });
+  });
+
+  /* The week's records */
+  byId('sieve-period').textContent = F.day(D.FUNNEL.from) + ' to ' + F.day(D.FUNNEL.to);
+  C.sieve(byId('sieve'), D.FUNNEL, D.ACTIONS);
+
+  /* Open actions, 31 day ends */
+  var points = D.trend(31), first = points[0], last = points[points.length - 1];
+  var peak = Math.max.apply(null, points.map(function (p) { return p.open; }));
+  A.countUp(byId('trend-now'), last.open, { duration: 700 });
+  byId('trend-note').textContent = (last.open === peak ? 'The most in 30 days. ' : '') + first.open + ' on ' + F.day(first.date) + '.';
+  C.line(byId('trend'), points);
+
+  /* Projects: one block per open action, in its priority's colour */
+  var most = Math.max.apply(null, D.PROJECTS.map(function (p) { return D.count(D.ACTIONS, function (a) { return a.project === p.id; }); }));
+  byId('projects').innerHTML = D.PROJECTS.map(function (p) {
+    var mine = D.ACTIONS.filter(function (a) { return a.project === p.id; })
+      .sort(function (a, b) { return D.PRIORITIES[a.priority].rank - D.PRIORITIES[b.priority].rank; });
+    var words = D.byPriority.map(function (bp) {
+      var n = D.count(mine, function (a) { return a.priority === bp.priority; });
+      return n ? n + ' ' + D.PRIORITIES[bp.priority].label : '';
+    }).filter(Boolean).join(' · ');
+    return '<a href="actions.html#' + p.id + '">' +
+      '<span class="row-main"><b>' + A.esc(p.name) + '</b><small>' + p.stack.map(A.esc).join(' · ') + '</small></span>' +
+      '<span class="blocks" style="--n:' + most + '" data-tip="' + A.esc(words) + '">' + mine.map(function (a) { return '<i class="c-' + a.priority + '"></i>'; }).join('') + '</span>' +
+      '<span class="count">' + mine.length + '<span class="sr-only"> open: ' + A.esc(words) + '</span></span>' +
+    '</a>';
+  }).join('');
+  A.$$('#projects .blocks i').forEach(function (b, k) { A.grow(b, 200 + k * 60, 500); });
+
+  /* Latest changes */
+  byId('feed').innerHTML = D.FEED.map(function (f) {
+    var a = f.action && D.action(f.action), when = '<span class="row-end">' + F.when(f.at) + '</span>';
+    if (f.kind === 'warning') return '<button type="button" data-soon="The warning" style="border:0;background:none;text-align:left;cursor:pointer;width:calc(100% + 16px)">' +
+      '<span class="row-icon">' + A.icon('megaphone') + '</span><span class="row-main"><b>' + A.esc(f.title) + '</b><small>' + A.esc(f.source) + ' warning, no project linked</small></span>' + when + '</button>';
+    var title = f.kind === 'raised' ? 'Raised to ' + D.PRIORITIES[f.to].label + ': ' + a.component : 'New: ' + a.title;
+    var sub = f.kind === 'raised' ? f.why : D.PRIORITIES[a.priority].label + ' · ' + D.project(a.project).name;
+    var mark = f.kind === 'raised' ? A.icon('arrow-up') : A.sym(D.PRIORITIES[a.priority].sym);
+    return '<a href="' + a.href + '"><span class="row-icon c-' + (f.to || a.priority) + '">' + mark + '</span>' +
+      '<span class="row-main"><b>' + A.esc(title) + '</b><small>' + A.esc(sub) + '</small></span>' + when + '</a>';
+  }).join('');
+})();
+</script>
 </body>
 </html>

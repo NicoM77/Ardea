@@ -1,0 +1,305 @@
+{
+  "app": {
+    "name": "Ardea",
+    "tagline": "Understand the risk. Know what matters. Act immediately."
+  },
+  "ui": {
+    "field": {
+      "optional": "Optional"
+    },
+    "password": {
+      "show": "Show password",
+      "hide": "Hide password"
+    },
+    "copy": {
+      "done": "Copied"
+    },
+    "priority": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "none": "Not relevant"
+    },
+    "status": {
+      "open": "Open",
+      "review": "In review",
+      "remediated": "Remediated",
+      "accepted": "Risk accepted",
+      "notAffected": "Not affected"
+    }
+  },
+  "errors": {
+    "offline": "Ardea’s server did not answer. Check your connection and try again.",
+    "tooManyRequests": "Too many attempts in a short time. Wait a minute, then try again.",
+    "server": "Something went wrong on the server. Try again in a moment."
+  },
+  "nav": {
+    "overview": "Overview",
+    "actions": "Actions",
+    "vulnerabilities": "Vulnerabilities",
+    "projects": "Projects",
+    "sources": "Sources",
+    "rules": "Notification rules",
+    "team": "Team",
+    "settings": "Settings",
+    "administration": "Administration"
+  },
+  "areas": {
+    "overview": {
+      "emptyHeading": "Nothing to triage yet",
+      "emptyText": "Once sources are synced and a project describes what it runs, open actions and their deadlines appear here."
+    },
+    "actions": {
+      "emptyHeading": "No open actions",
+      "emptyText": "An action appears when a vulnerability affects a component of one of your projects."
+    },
+    "vulnerabilities": {
+      "emptyHeading": "No vulnerabilities collected yet",
+      "emptyText": "Every consolidated entry from every source appears here after the first sync, whether it affects you or not."
+    },
+    "projects": {
+      "emptyHeading": "No projects yet",
+      "emptyText": "A project describes what you run, so Ardea can tell which vulnerabilities affect it."
+    },
+    "sources": {
+      "emptyHeading": "No source has reported yet",
+      "emptyText": "Each source shows here when it last synced and whether it is healthy."
+    },
+    "rules": {
+      "emptyHeading": "No notification rules yet",
+      "emptyText": "Rules decide who hears about which actions, by email, push or webhook."
+    },
+    "team": {
+      "emptyHeading": "No one else here yet",
+      "emptyText": "Members, their roles and open invitations appear here."
+    },
+    "settings": {
+      "emptyHeading": "Nothing to set yet",
+      "emptyText": "The organization, its deadlines and its AI data policy will be set here."
+    },
+    "administration": {
+      "emptyHeading": "Nothing to administer yet",
+      "emptyText": "Registration, mail, AI providers and background jobs of this instance will be managed here."
+    }
+  },
+  "home": {
+    "noOrganization": {
+      "title": "Welcome",
+      "heading": "You are not in an organization yet",
+      "text": "Ask someone in your organization to invite you. The link in their email adds you to it.",
+      "textAdmin": "This instance has no organization yet. The setup wizard that creates one is not part of this version yet."
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "heading": "There is nothing at this address",
+    "text": "The link may be old, or the page belongs to an organization you are not part of.",
+    "home": "Go to the overview"
+  },
+  "unavailable": {
+    "title": "Ardea is not reachable",
+    "text": "The server did not answer. It may be restarting or your connection may be down.",
+    "retry": "Try again"
+  },
+  "auth": {
+    "backToSignIn": "Back to sign in",
+    "fields": {
+      "email": {
+        "label": "Email",
+        "required": "Enter your email address.",
+        "invalid": "Enter an email address, such as name@example.org."
+      },
+      "displayName": {
+        "label": "Name",
+        "hint": "Shown to your team next to what you change.",
+        "required": "Enter the name your team knows you by.",
+        "tooLong": "Use at most 100 characters."
+      },
+      "password": {
+        "label": "Password",
+        "required": "Enter your password."
+      },
+      "newPassword": {
+        "label": "New password",
+        "hint": "At least 12 characters. A few words in a row are easy to remember.",
+        "required": "Choose a password.",
+        "tooShort": "Use at least 12 characters.",
+        "tooLong": "Use at most 256 characters."
+      }
+    },
+    "signIn": {
+      "title": "Sign in",
+      "lead": "See what affects your projects and what to do about it.",
+      "submit": "Sign in",
+      "forgot": "Forgot your password?",
+      "notices": {
+        "passwordChanged": "Your password is changed. Sign in with the new one.",
+        "registered": "Your account is ready. Sign in to continue.",
+        "signedOut": "You are signed out.",
+        "twoFactorExpired": "The sign-in took too long. Enter your email and password again."
+      },
+      "errors": {
+        "invalid": "The email address or the password is not right.",
+        "lockedOut": "Too many failed attempts. This account is locked for a few minutes."
+      }
+    },
+    "twoFactor": {
+      "title": "Two-factor authentication",
+      "lead": "Enter the 6-digit code from your authenticator app.",
+      "leadRecovery": "Enter one of the recovery codes you saved when you turned on two-factor authentication. Each code works once.",
+      "codeLabel": "Code",
+      "recoveryLabel": "Recovery code",
+      "submit": "Verify",
+      "useRecovery": "Use a recovery code",
+      "useApp": "Use the authenticator app",
+      "errors": {
+        "codeRequired": "Enter the code from your app.",
+        "codeFormat": "The code has 6 digits.",
+        "recoveryRequired": "Enter a recovery code.",
+        "expired": "The sign-in took too long. Start again.",
+        "invalid": "That code did not work. Wait for the next one and check that your device’s clock is right.",
+        "invalidRecovery": "That recovery code did not work. It may have been used already."
+      }
+    },
+    "setup": {
+      "title": "Set up Ardea",
+      "lead": "Create the first account. It becomes the administrator of this instance.",
+      "tokenLabel": "Setup token",
+      "tokenHint": "The one-time token from the server’s log at its first start.",
+      "submit": "Create account",
+      "errors": {
+        "tokenRequired": "Enter the setup token.",
+        "tokenInvalid": "This setup token is not right. Copy it again from the server’s log.",
+        "completed": "This instance is already set up. Sign in instead.",
+        "rejected": "The account could not be created. Check the entries and try again."
+      }
+    },
+    "register": {
+      "title": "Create your account",
+      "lead": "You were invited to Ardea. Choose how you will sign in.",
+      "emailHint": "Use the address the invitation was sent to.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "missing": {
+        "heading": "This invitation link is incomplete",
+        "text": "Open the link from the invitation email again, or ask the person who invited you to send a new one."
+      },
+      "errors": {
+        "invitation": "This invitation is no longer valid. Ask the person who invited you to send a new one.",
+        "emailTaken": "An account with this email address exists already. Sign in instead.",
+        "rejected": "The account could not be created. Check the entries and try again."
+      }
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "lead": "Enter your email address and we will send you a link to choose a new password.",
+      "submit": "Send link",
+      "sent": {
+        "heading": "Check your inbox",
+        "text": "If an account exists for {email}, a link to choose a new password is on its way. It is valid for a limited time."
+      },
+      "errors": {
+        "failed": "The link could not be sent. Try again in a moment."
+      }
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "lead": "For {email}. You will sign in with it from now on.",
+      "submit": "Change password",
+      "requestNew": "Request a new link",
+      "missing": {
+        "heading": "This link is incomplete",
+        "text": "Open the link from the email again, or request a new one."
+      },
+      "errors": {
+        "linkInvalid": "This link has expired or was used already.",
+        "rejected": "The password could not be changed. Check it and try again."
+      }
+    }
+  },
+  "account": {
+    "twoFactor": {
+      "title": "Two-factor authentication",
+      "sub": "A code from an app on your phone, in addition to your password.",
+      "step": "Step {current} of {total}",
+      "on": {
+        "heading": "Two-factor authentication is on",
+        "text": "You sign in with your password and a code from your authenticator app."
+      },
+      "intro": {
+        "heading": "Protect your account with a second step",
+        "text": "Someone who learns your password still cannot sign in without your phone. Any authenticator app works, such as the one built into your password manager.",
+        "start": "Set up authenticator app"
+      },
+      "scan": {
+        "heading": "Add Ardea to your authenticator app",
+        "text": "Scan the code with your authenticator app. If you cannot scan it, enter the key by hand.",
+        "qrLabel": "QR code to add Ardea to your authenticator app",
+        "keyLabel": "Key",
+        "copyKey": "Copy key",
+        "openApp": "Open in authenticator app"
+      },
+      "confirm": {
+        "heading": "Enter the code the app shows",
+        "codeLabel": "6-digit code",
+        "submit": "Turn on"
+      },
+      "codes": {
+        "enabled": "Two-factor authentication is on.",
+        "heading": "Save your recovery codes",
+        "count": "{count, plural, one {# code} other {# codes}}",
+        "text": "Each code signs you in once if you lose your phone. Keep them somewhere safe, such as your password manager. They are shown only now.",
+        "listLabel": "Recovery codes",
+        "copy": "Copy codes",
+        "download": "Download",
+        "fileHeader": "Ardea recovery codes. Each code works once.",
+        "done": "I saved them"
+      },
+      "errors": {
+        "codeRequired": "Enter the code from your app.",
+        "codeFormat": "The code has 6 digits.",
+        "invalid": "That code did not work. Wait for the next one and check that your phone’s clock is right.",
+        "failed": "Two-factor authentication could not be set up. Try again in a moment."
+      }
+    }
+  },
+  "shell": {
+    "skip": "Skip to content",
+    "nav": "Main",
+    "home": "Ardea, overview",
+    "menu": {
+      "open": "Open menu",
+      "close": "Close menu"
+    },
+    "org": {
+      "switchLabel": "Organization: {name}. Switch organization",
+      "count": "{count, plural, one {# organization} other {# organizations}}",
+      "none": "No organization",
+      "menuLabel": "Switch to"
+    },
+    "account": {
+      "label": "Account: {name}",
+      "twoFactor": "Two-factor authentication",
+      "signOut": "Sign out"
+    }
+  },
+  "search": {
+    "trigger": "Search pages",
+    "label": "Search",
+    "placeholder": "Search pages",
+    "results": "Results",
+    "empty": "Nothing matches “{query}”.",
+    "escKey": "Esc",
+    "ctrlK": "Ctrl K",
+    "hintMove": "to move",
+    "hintOpen": "to open",
+    "groups": {
+      "account": "Your account",
+      "instance": "This instance"
+    },
+    "keywords": {
+      "twoFactor": "MFA TOTP authenticator security"
+    }
+  }
+}

@@ -32,6 +32,8 @@ internal sealed class IntelDbContext(DbContextOptions<IntelDbContext> options, I
 
     public DbSet<EntryChangeRow> EntryChanges => Set<EntryChangeRow>();
 
+    public DbSet<EntrySignalRow> EntrySignals => Set<EntrySignalRow>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -211,6 +213,18 @@ internal sealed class IntelDbContext(DbContextOptions<IntelDbContext> options, I
             change.Property(c => c.TriggeredBy).HasMaxLength(100);
             change.HasIndex(c => new { c.EntryId, c.Revision }).IsUnique().HasDatabaseName("ux_entry_change_revision");
             change.HasOne<EntryRow>().WithMany().HasForeignKey(c => c.EntryId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EntrySignalRow>(signal =>
+        {
+            signal.ToTable("entry_signal", t => t.HasCheckConstraint("ck_entry_signal_epss_class", "epss_class IN ('high', 'low')"));
+            signal.HasKey(s => s.Id);
+            signal.Property(s => s.Id).HasDefaultValueSql("uuidv7()");
+            signal.Property(s => s.Scheme).HasMaxLength(50);
+            signal.Property(s => s.Value).HasMaxLength(300);
+            signal.Property(s => s.KevUrl).HasMaxLength(500);
+            signal.Property(s => s.EpssClass).HasMaxLength(10);
+            signal.HasIndex(s => new { s.Scheme, s.Value }).IsUnique().HasDatabaseName("ux_entry_signal");
         });
 
         ApplyTenantFilters(modelBuilder);

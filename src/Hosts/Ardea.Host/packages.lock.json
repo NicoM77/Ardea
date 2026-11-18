@@ -250,6 +250,12 @@
           "Ardea.Intel.Sources.Formats": "[0.0.0, )"
         }
       },
+      "ardea.intel.sources.signals": {
+        "type": "Project",
+        "dependencies": {
+          "Ardea.Intel.Sources.Abstractions": "[0.0.0, )"
+        }
+      },
       "ardea.notifications": {
         "type": "Project",
         "dependencies": {

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Ardea.Catalog.Contracts;
 using Ardea.Intel.Contracts;
 using Ardea.Intel.Persistence;
 using Ardea.Intel.Sources.Abstractions;
@@ -29,7 +30,7 @@ internal sealed record NotifyEntryChanged(Guid EntryId) : IJob
     public static readonly TimeSpan Delay = TimeSpan.FromMinutes(1);
 }
 
-internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue jobs, TimeProvider time, ILogger<CorrelateEntryHandler> logger)
+internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue jobs, IProductCatalog catalog, TimeProvider time, ILogger<CorrelateEntryHandler> logger)
     : IJobHandler<CorrelateEntry>
 {
     /// <summary>Rounds of following shared aliases; identity chains are short in practice.</summary>
@@ -99,7 +100,85 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
             await db.EntryAliases.Where(a => a.EntryId == loser.Id).ExecuteDeleteAsync(cancellationToken);
         }
 
+        projection = await WithSignalsAsync(projection, sources, cancellationToken);
+        projection = await WithCatalogKeysAsync(projection, cancellationToken);
         await WriteAsync(target, projection, contributions[0].SourceKey, cancellationToken);
+    }
+
+    /// <summary>
+    /// Folds the signals of the entry's identifiers in (master plan 4.4): a KEV listing means active
+    /// exploitation with its evidence; the EPSS class is high when any identifier's class is high.
+    /// </summary>
+    private async Task<EntryProjection> WithSignalsAsync(EntryProjection projection, Dictionary<Guid, SourceRow> sources, CancellationToken cancellationToken)
+    {
+        var keys = projection.Aliases.Select(a => a.Scheme.ToUpperInvariant() + ":" + a.Value).ToArray();
+        var signals = await db.EntrySignals.AsNoTracking().Where(s => keys.Contains(s.Scheme + ":" + s.Value)).ToListAsync(cancellationToken);
+        if (signals.Count == 0)
+        {
+            return projection;
+        }
+
+        var kev = signals.Where(s => s.KevListedOn is not null).OrderBy(s => s.KevListedOn).FirstOrDefault();
+        var evidence = projection.ExploitationEvidence.ToList();
+        var provenance = new Dictionary<string, string>(projection.Provenance, StringComparer.Ordinal);
+        var links = projection.Sources.ToList();
+        if (kev is not null)
+        {
+            evidence.Add(new ExploitationEvidence("cisa-kev", "active", kev.KevUrl, kev.KevListedOn?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)));
+            provenance["exploitation"] = "cisa-kev";
+            AddSignalLink(links, sources, "cisa-kev", kev.KevUrl);
+        }
+
+        var epss = signals.Any(s => s.EpssClass == "high") ? "high" : signals.Any(s => s.EpssClass == "low") ? "low" : null;
+        if (epss is not null)
+        {
+            provenance["epss"] = "first-epss";
+            AddSignalLink(links, sources, "first-epss", null);
+        }
+
+        return projection with
+        {
+            Exploitation = kev is not null ? "active" : projection.Exploitation,
+            ExploitationEvidence = evidence,
+            EpssClass = epss,
+            Provenance = provenance,
+            Sources = links,
+        };
+    }
+
+    /// <summary>
+    /// The catalogue's key for every affected product it knows by CPE pair, package or name (master
+    /// plan 6.5); unknown products keep their raw key and stay findable.
+    /// </summary>
+    private async Task<EntryProjection> WithCatalogKeysAsync(EntryProjection projection, CancellationToken cancellationToken)
+    {
+        var resolved = new Dictionary<(string?, string?, string?, string?, string?, string?), string?>();
+        var affected = new List<AffectedData>(projection.Affected.Count);
+        foreach (var row in projection.Affected)
+        {
+            var lookup = (row.Vendor, row.Product, row.CpeVendor, row.CpeProduct, row.PurlType, row.PurlName);
+            if (!resolved.TryGetValue(lookup, out var key))
+            {
+                var name = row.Product ?? row.PurlName;
+                CpePair? cpe = row.CpeVendor is not null && row.CpeProduct is not null ? new CpePair(row.CpeVendor, row.CpeProduct) : null;
+                PackageCoordinate? package = row.PurlType is not null && row.PurlName is not null ? new PackageCoordinate(row.PurlType, row.PurlName) : null;
+                key = name is null && cpe is null ? row.ProductKey
+                    : (await catalog.ResolveKeyAsync(row.Vendor, name ?? cpe!.Value.Product, cpe, package, cancellationToken))?.Value ?? row.ProductKey;
+                resolved[lookup] = key;
+            }
+
+            affected.Add(row with { ProductKey = key });
+        }
+
+        return projection with { Affected = affected };
+    }
+
+    private static void AddSignalLink(List<SourceLink> links, Dictionary<Guid, SourceRow> sources, string key, string? url)
+    {
+        if (sources.Values.FirstOrDefault(s => s.Key == key) is { } source)
+        {
+            links.Add(new SourceLink(source.Id, null, "signal", url));
+        }
     }
 
     private async Task CorrelateWarningAsync(string key, Dictionary<Guid, SourceRow> sources, CancellationToken cancellationToken)
@@ -142,7 +221,9 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         }).Entity;
 
         var before = created ? null : await SnapshotAsync(entry, cancellationToken);
-        var material = projection.MaterialFingerprint(entry.EpssClass);
+        var material = projection.MaterialFingerprint(projection.EpssClass == "high" ? "high" : null);
+        var epssChanged = (entry.EpssClass == "high") != (projection.EpssClass == "high");
+        entry.EpssClass = projection.EpssClass;
         var remediation = projection.RemediationFingerprint();
 
         entry.Kind = projection.Kind;
@@ -164,6 +245,11 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
 
         var after = Snapshot(projection);
         var kinds = created ? ["created"] : Compare(before!, after, entry.MaterialFingerprint != material, entry.RemediationFingerprint != remediation);
+        if (!created && epssChanged)
+        {
+            kinds.Remove("material");
+            kinds.Add("epss");
+        }
         if (kinds.Count == 0)
         {
             // Same observations, same entry: nothing to write beyond what is already there.
@@ -203,7 +289,7 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
             await db.EntryAliases.Where(a => a.EntryId == entryId).ExecuteDeleteAsync(cancellationToken);
             await db.EntryAffected.Where(a => a.EntryId == entryId).ExecuteDeleteAsync(cancellationToken);
             await db.EntryReferences.Where(r => r.EntryId == entryId).ExecuteDeleteAsync(cancellationToken);
-            await db.EntrySources.Where(s => s.EntryId == entryId && s.Relation != "signal").ExecuteDeleteAsync(cancellationToken);
+            await db.EntrySources.Where(s => s.EntryId == entryId).ExecuteDeleteAsync(cancellationToken);
         }
 
         db.EntryAliases.AddRange(projection.Aliases.Select(a => new EntryAliasRow { Id = Guid.CreateVersion7(), EntryId = entryId, Scheme = a.Scheme.ToUpperInvariant(), Value = a.Value }));

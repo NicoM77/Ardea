@@ -65,9 +65,15 @@ internal sealed partial class SyncSourceHandler(
 
     public async Task HandleAsync(SyncSource job, JobContext context, CancellationToken cancellationToken)
     {
+        if (registry.TryGetSignalProvider(job.SourceKey, out var signals))
+        {
+            await SyncSignalsAsync(job, signals, cancellationToken);
+            return;
+        }
+
         if (!registry.TryGetProvider(job.SourceKey, out var provider))
         {
-            // Signal sources run through their own path (task 1.8); an unknown key is a removed adapter.
+            // An unknown key is an adapter that is no longer in the image.
             LogNoProvider(job.SourceKey);
             return;
         }
@@ -130,6 +136,102 @@ internal sealed partial class SyncSourceHandler(
         {
             TryDelete(work);
         }
+    }
+
+    /// <summary>Batch size of the bulk signal write; EPSS brings about 400,000 values a day.</summary>
+    internal const int SignalBatchSize = 20_000;
+
+    /// <summary>
+    /// Signal sources (KEV, EPSS) write per identifier into <c>entry_signal</c> instead of storing raw
+    /// records (master plan 4.4, 5.2); only identifiers whose class changed recompute their entry.
+    /// </summary>
+    private async Task SyncSignalsAsync(SyncSource job, ISignalProvider provider, CancellationToken cancellationToken)
+    {
+        var (sourceId, cursor, interval, settings) = await ReadStateAsync(job.SourceKey, cancellationToken);
+        var startedAt = time.GetUtcNow();
+        var runId = await StartRunAsync(sourceId, SyncMode.Incremental, startedAt, cancellationToken);
+        var work = Path.Combine(configuration["SCRATCH_DIR"] ?? Path.Combine(Path.GetTempPath(), "ardea"), job.SourceKey, runId.ToString("N"));
+        Directory.CreateDirectory(work);
+        var run = new RunCounters();
+        SyncContext? sync = null;
+        try
+        {
+            using var client = http.Create(provider.Descriptor, SyncMode.Incremental);
+            sync = new SyncContext
+            {
+                SourceKey = job.SourceKey,
+                Cursor = cursor,
+                Http = client,
+                Mode = SyncMode.Incremental,
+                Clock = time,
+                Limits = new SyncLimits(provider.Descriptor.MaxResponseBytes, SyncSource.Timeout, int.MaxValue),
+                WorkDirectory = work,
+                Configuration = settings,
+            };
+
+            var batch = new List<Signal>(SignalBatchSize);
+            await foreach (var signal in provider.FetchSignalsAsync(sync, cancellationToken))
+            {
+                batch.Add(signal);
+                if (batch.Count >= SignalBatchSize)
+                {
+                    await StoreSignalsAsync(runId, batch, run, cancellationToken);
+                }
+            }
+
+            await StoreSignalsAsync(runId, batch, run, cancellationToken);
+            if (sync.NewCursor is { } newCursor)
+            {
+                await using var scope = units.CreateScope();
+                await scope.ServiceProvider.GetRequiredService<IntelDbContext>().Sources.Where(s => s.Id == sourceId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.Cursor, newCursor), cancellationToken);
+                await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
+            }
+
+            await FinishAsync(sourceId, runId, run, interval, sync.NextSyncHint, error: null, cancellationToken);
+            LogSucceeded(job.SourceKey, run.Fetched, run.Changed);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            LogFailed(ex, job.SourceKey);
+            await FinishAsync(sourceId, runId, run, interval, sync?.NextSyncHint, $"{ex.GetType().Name}: {ex.Message}", cancellationToken);
+        }
+        finally
+        {
+            TryDelete(work);
+        }
+    }
+
+    /// <summary>One batch of signals and the recomputation of the entries whose class changed, in one transaction.</summary>
+    private async Task StoreSignalsAsync(Guid runId, List<Signal> batch, RunCounters run, CancellationToken cancellationToken)
+    {
+        if (batch.Count == 0)
+        {
+            return;
+        }
+
+        await using var scope = units.CreateScope();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var connection = await unitOfWork.GetConnectionAsync(cancellationToken);
+        var changed = await SignalStore.StoreAsync(connection, batch, cancellationToken);
+
+        // Only identifiers that already belong to an entry need it recomputed.
+        var batchDb = scope.ServiceProvider.GetRequiredService<IntelDbContext>();
+        var known = changed.Count == 0 ? [] : await batchDb.EntryAliases
+            .Where(a => changed.Contains(a.Scheme + ":" + a.Value))
+            .Select(a => a.Scheme + ":" + a.Value).Distinct().ToListAsync(cancellationToken);
+        var jobs = scope.ServiceProvider.GetRequiredService<IJobQueue>();
+        foreach (var key in known)
+        {
+            await jobs.EnqueueAsync(new Correlation.CorrelateEntry(key), Correlation.CorrelateEntry.Options(key), cancellationToken);
+        }
+
+        run.Fetched += batch.Count;
+        run.Changed += known.Count;
+        await batchDb.SourceRuns.Where(r => r.Id == runId).ExecuteUpdateAsync(
+            s => s.SetProperty(x => x.Fetched, run.Fetched).SetProperty(x => x.Changed, run.Changed), cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
+        batch.Clear();
     }
 
     private async Task<(Guid Id, string? Cursor, TimeSpan Interval, IReadOnlyDictionary<string, string> Settings)> ReadStateAsync(string key, CancellationToken cancellationToken)

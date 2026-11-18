@@ -391,6 +391,69 @@ namespace Ardea.Intel.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Ardea.Intel.Persistence.EntrySignalRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<string>("EpssClass")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("epss_class");
+
+                    b.Property<double?>("EpssPercentile")
+                        .HasColumnType("double precision")
+                        .HasColumnName("epss_percentile");
+
+                    b.Property<double?>("EpssScore")
+                        .HasColumnType("double precision")
+                        .HasColumnName("epss_score");
+
+                    b.Property<bool?>("KevKnownRansomware")
+                        .HasColumnType("boolean")
+                        .HasColumnName("kev_known_ransomware");
+
+                    b.Property<DateOnly?>("KevListedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("kev_listed_on");
+
+                    b.Property<string>("KevUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("kev_url");
+
+                    b.Property<string>("Scheme")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("scheme");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("value");
+
+                    b.HasKey("Id")
+                        .HasName("pk_entry_signal");
+
+                    b.HasIndex("Scheme", "Value")
+                        .IsUnique()
+                        .HasDatabaseName("ux_entry_signal");
+
+                    b.ToTable("entry_signal", "intel", t =>
+                        {
+                            t.HasCheckConstraint("ck_entry_signal_epss_class", "epss_class IN ('high', 'low')");
+                        });
+                });
+
             modelBuilder.Entity("Ardea.Intel.Persistence.EntrySourceRow", b =>
                 {
                     b.Property<Guid>("Id")

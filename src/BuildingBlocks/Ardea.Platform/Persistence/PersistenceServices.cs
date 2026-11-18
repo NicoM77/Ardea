@@ -17,6 +17,7 @@ public static class PersistenceServices
         services.AddScoped<Audit.AuditOrigin>();
         services.AddScoped<Audit.IAuditLog, Audit.AuditLog>();
         services.AddScoped<Settings.IInstanceSettings, Settings.InstanceSettings>();
+        services.AddScoped<Email.IEmailSender, Email.SmtpEmailSender>();
         return services;
     }
 

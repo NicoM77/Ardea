@@ -61,6 +61,7 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | Name Ardea; Logo: Reiher als Outline (Kopf und Hals), Wortmarke in Inter Tight SemiBold; Dateien und Regeln in `docs/design/brand/` | Rückfrage und Wahl des Eigentümers vom 18.11.2026 |
 | Visuelle Richtung: schlichte Arbeitsanwendung nach den Gestaltungsrichtlinien von Apple; Priorität als Wort mit Symbol; «Gefahrenbulletin» verworfen | Vorgabe des Eigentümers vom 18.11.2026 |
 | Helles Design als einziges | Vorgabe des Eigentümers |
+| Ladeanzeige: Variante «Draw», der Reiher zeichnet sich vom Schnabel her; Prototyp in `docs/design/loader/` | Wahl des Eigentümers vom 18.11.2026 |
 | Profil aus GitHub-Repositories im MVP, mit OSV als Paketquelle für npm, NuGet, Packagist, PyPI, Maven und Go und dem Verschmelzen von Einträgen | Vorgabe und Rückfrage vom 18.11.2026 |
 
 ## 15.4 Unabhängige Durchsicht des Plans

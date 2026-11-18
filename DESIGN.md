@@ -270,7 +270,7 @@ Each chart answers one question and is drawn from the dataset.
 - **Inside a page.** Filtered rows glide to their new place.
 - **Only transform and opacity** are animated. Bars grow with scale, never with width.
 - **The keyboard gets no animation.** Search opened with `/` simply appears; opened with the pointer it scales in from 0.97.
-- **Nothing pulses.** The only thing that keeps moving is the countdown, because its value changes.
+- **Nothing pulses.** Two things keep moving: the countdown, because its value changes, and the loader, because the wait is a state.
 - **Reduced motion** keeps short fades and drops travel and drawing.
 
 ## Components
@@ -297,6 +297,9 @@ White, 1px Border, 8px corners, 20px padding, a 16px title and optional meta on 
 
 ### Navigation
 Sidebar on the ground: logo, organization switch, items at 32px with 16px icons. The selected item has an Active fill. A count appears only on a queue that needs action. The top bar holds the search, which opens with `/` or Ctrl K.
+
+### Loader
+The heron draws itself, variant Draw from `docs/design/loader/index.html`, chosen by the owner on 18 Nov 2026. Both neck lines run from the beak to the feet, the front line 90ms behind, then the crest and the eye appear; the mark holds and the line leaves the way it came. 2.4 s per cycle, on the across-the-screen easing. When loading ends, the loop fades out in 150ms and the mark draws once in 700ms, the eye last. Ink only, no Accent. Sizes: 96px for a loading page, 20px inline, 16px in a button; from 24px down the line is 4.6 and the eye is left out, as on the favicon. A loader sits in a `role="status"` region with a word beside it or in the label, and its container carries `aria-busy`. Reduced motion: the finished mark fades slowly between full and 35 % opacity, without drawing. A loader appears only after 300ms of waiting, so quick answers never flash it.
 
 ### Feedback
 A change is confirmed by a dark toast at the bottom with Undo, never by a dialog. Tooltips wait 350ms for the first and open at once for the next.

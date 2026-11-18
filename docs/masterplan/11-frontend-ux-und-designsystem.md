@@ -46,6 +46,7 @@ Massgeblich ist `DESIGN.md`; die Tokens stehen in `docs/design/mockups/app.css`.
 | Arbeitszustände | Form und Wort (Kreis, halber Kreis, Haken, Fahne, durchgestrichener Kreis), neutral; nur der Haken für «Remediated» ist grün. |
 | Signale | Kleine Etiketten: «Exploited» hellrot mit rotem Punkt, «Fix available» hellgrün. |
 | Layout | Seitenleiste 228 px und Kopfzeile 48 px auf dem Rahmen, gewählter Eintrag grau hinterlegt; Raster mit 12 Spalten und 24 px Abstand, Inhalt bis 1240 px. Unter 900 px wird die Seitenleiste zum Menü hinter einer Schaltfläche. Unter 640 px werden Tabellenzeilen zu zweizeiligen Datensätzen. |
+| Ladeanzeige | Der Reiher zeichnet sich vom Schnabel her und löst sich wieder (Variante «Draw», Wahl des Eigentümers vom 18.11.2026), in 96, 20 und 16 px; am Ende des Ladens zeichnet sich die Marke einmal fertig. Erscheint erst nach 300 ms. Prototyp in `docs/design/loader/`, Regeln in `DESIGN.md`. |
 | Ziele | 32 px am Desktop, 40 bis 44 px bei Telefonbreite; Fokusring 2 px in der Datenfarbe. |
 
 ## 11.4 Aufbau der Anwendung

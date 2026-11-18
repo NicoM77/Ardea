@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alert #142 · CSH Alert (mockup, sample data)</title>
+<link rel="stylesheet" href="csh.css">
+</head>
+<body class="has-actionbar">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></symbol>
+  <symbol id="i-flat" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></symbol>
+  <symbol id="i-review" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"/></symbol>
+</svg>
+
+<header class="band">
+  <a class="wordmark" href="bulletin.html">CSH Alert</a>
+  <nav class="nav" aria-label="Primary">
+    <a href="bulletin.html">Bulletin</a>
+    <a href="alerts.html" aria-current="page">Alerts</a>
+    <a href="#">Projects</a>
+    <a href="#">Sources</a>
+    <a href="#">Notification rules</a>
+  </nav>
+  <div class="tools">
+    <button class="bandbtn" type="button"><span class="lbl">Example Digital AG</span><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg><span class="vh">Switch organization</span></button>
+    <button class="bandbtn" type="button" aria-label="Notifications, 2 unread"><svg class="i" aria-hidden="true"><use href="#i-bell"/></svg><span class="count" aria-hidden="true">2</span></button>
+    <button class="bandbtn" type="button" aria-label="Account: Nina Marti"><span class="avatar" aria-hidden="true">NM</span></button>
+  </div>
+</header>
+
+<div class="page single">
+  <main class="main">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="alerts.html">Alerts</a> / <span class="mono">#142</span></nav>
+
+    <div class="alerthead">
+      <p class="lvl"><span class="tile lg l5" aria-hidden="true">5</span><strong>Critical</strong></p>
+      <div>
+        <h1>Puppet Enterprise: code execution through crafted reports</h1>
+        <p class="meta"><span class="mono">#142 · CVE-2026-115731</span><span class="m-hide">Published 3 Nov 2026</span><span class="m-hide">Updated 17 Nov 2026</span><a href="#sources">4 sources</a></p>
+        <p class="meta"><span class="tag solid">Exploited in the wild</span><span class="tag">Fix available</span><span class="change"><span class="tile l4" aria-hidden="true">4</span><svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg><span class="tile l5" aria-hidden="true">5</span><span class="vh">Raised from level 4 to 5</span></span><span class="m-hide">Raised from level 4 on 17 Nov</span><span class="status m-only"><svg class="i" aria-hidden="true"><use data-status-icon href="#i-open"/></svg><span data-status-text>Open</span></span></p>
+      </div>
+      <div class="actions">
+        <div class="fieldrow"><label for="status">Status</label>
+          <select class="field" id="status" data-status><option>Open</option><option>In review</option><option>Remediated</option><option>Risk accepted</option><option>Not affected</option></select></div>
+        <button class="btn primary" type="button" data-advance>Take into review</button>
+        <button class="btn" type="button">Assign</button>
+      </div>
+    </div>
+
+    <p class="inline-note" id="status-note" role="status" hidden><svg class="i" aria-hidden="true"><use href="#i-check"/></svg><span id="status-note-text"></span><button class="btn text" type="button" id="status-undo">Undo</button></p>
+
+    <section class="answers" aria-label="Summary">
+      <div>
+        <h2>What happened</h2>
+        <p>Anyone holding a CA-signed agent certificate can run code on the Puppet Server by submitting a crafted report. CISA has listed the flaw as actively exploited since 17 November 2026.</p>
+      </div>
+      <div>
+        <h2>Are we affected</h2>
+        <p><strong>Yes, very likely.</strong> Platform Ops runs Puppet Enterprise 2025.9.0, inside the affected range.</p>
+        <div class="range" role="img" aria-label="Installed version 2025.9.0 lies between 2025.0.0 and the fixed release 2025.12.1">
+          <div class="range-track"><span class="aff"></span><span class="fix"></span><span class="you"></span></div>
+          <div class="range-labels"><span>2025.0.0 · affected</span><span>2025.12.1 · fixed</span></div>
+          <div class="range-you">Installed: 2025.9.0</div>
+        </div>
+      </div>
+      <div>
+        <h2>What to do</h2>
+        <ol class="steps">
+          <li>Upgrade to Puppet Enterprise 2025.12.1 and restart Puppet Server.</li>
+          <li>Check whether the CA autosigns certificate requests, and restrict it.</li>
+        </ol>
+        <p class="steps-src">From the vendor advisory <a href="#sources">[3]</a></p>
+      </div>
+    </section>
+
+    <div class="cols">
+      <div class="stack">
+        <section class="section" aria-labelledby="assess">
+          <h2 id="assess">Assessment for Example Digital AG</h2>
+          <p class="quiet">AI-assisted and checkable against the sources. Assessed on 17 Nov 2026 at 22:05 by a local language model; the level follows rule set 1.</p>
+          <div class="facts">
+            <p><span class="label">Verdict</span><strong>Very likely affected</strong></p>
+            <p><span class="label">Confidence</span><span class="meter" role="img" aria-label="Confidence high, 3 of 3"><i><b></b><b></b><b></b></i>High</span></p>
+            <p><span class="label">Possible impact</span><strong>Full takeover of the Puppet Server</strong></p>
+          </div>
+          <div class="prose">
+            <h3 class="sub">Reasoning</h3>
+            <ul>
+              <li>The profile of Platform Ops lists Puppet Enterprise 2025.9.0. The vendor names 2025.0.0 up to, not including, 2025.12.1 as affected.<sup><a href="#sources">[1]</a><a href="#sources">[3]</a></sup></li>
+              <li>The flaw is being exploited, and an attack is simple once a signed agent certificate is at hand.<sup><a href="#sources">[2]</a></sup></li>
+              <li>Puppet Server holds the configuration of every node. Taking it over reaches the whole platform; the profile marks the system as business-critical.</li>
+            </ul>
+          </div>
+          <div class="unknowns">
+            <h3>Assumptions and unknowns</h3>
+            <ul>
+              <li>Unknown: does the Puppet CA autosign requests? If so, the attack needs no credentials.</li>
+              <li>The profile says Puppet Server is reachable from the internal network only. That lowers the risk; it does not remove it.</li>
+              <li>Based on the technology profile of 2 Nov 2026.</li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="sub">How level 5 was determined</h3>
+            <div class="tablewrap">
+              <table class="table">
+                <thead><tr><th scope="col">Factor</th><th scope="col">Evidence</th><th scope="col">Effect</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Exploitation</strong></td><td>Actively exploited (CISA KEV since 17 Nov 2026)</td><td><span class="effect"><svg class="i" aria-hidden="true"><use href="#i-up"/></svg>Raises strongly</span></td></tr>
+                  <tr><td><strong>Severity</strong></td><td>CVSS 4.0: 9.4, critical</td><td><span class="effect"><svg class="i" aria-hidden="true"><use href="#i-up"/></svg>Raises</span></td></tr>
+                  <tr><td><strong>Match</strong></td><td>Installed version inside the affected range</td><td><span class="effect"><svg class="i" aria-hidden="true"><use href="#i-up"/></svg>Raises</span></td></tr>
+                  <tr><td><strong>Criticality</strong></td><td>System marked business-critical in the profile</td><td><span class="effect"><svg class="i" aria-hidden="true"><use href="#i-up"/></svg>Raises</span></td></tr>
+                  <tr><td><strong>Exposure</strong></td><td>Reachable from the internal network only</td><td><span class="effect"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg>Lowers slightly</span></td></tr>
+                  <tr><td><strong>EPSS</strong></td><td>0.4 %, 31st percentile</td><td><span class="effect"><svg class="i" aria-hidden="true"><use href="#i-flat"/></svg>Neutral</span></td></tr>
+                  <tr><td><strong>Result</strong></td><td>Rule set 1, reproducible from the evidence above</td><td><span class="level"><span class="tile l5" aria-hidden="true">5</span>Critical</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p><button class="btn" type="button">Correct this assessment</button></p>
+        </section>
+
+        <section class="section" aria-labelledby="area">
+          <h2 id="area">Affected area</h2>
+          <div class="tablewrap">
+            <table class="table stack-sm">
+              <thead><tr><th scope="col">Project</th><th scope="col">Component</th><th scope="col">Finding</th><th scope="col">Status</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="c-first"><a class="t-title" href="#">Platform Ops</a></td>
+                  <td class="c-wide">Puppet Enterprise <span class="mono">2025.9.0</span><div class="t-meta">Business-critical · internal network only</div></td>
+                  <td class="c-wide"><span class="tag solid">Affected</span> <span class="quiet">version in range</span></td>
+                  <td class="c-right"><label class="vh" for="st-ops">Status for Platform Ops</label><select class="field" id="st-ops"><option>Open</option><option>In review</option><option>Remediated</option><option>Risk accepted</option><option>Not affected</option></select></td>
+                </tr>
+                <tr>
+                  <td class="c-first"><span class="t-title">Webshop, Customer Portal</span></td>
+                  <td class="c-wide quiet">No Puppet in the technology profile</td>
+                  <td class="c-wide"><span class="tag soft">Unaffected</span></td>
+                  <td class="c-right quiet">None needed</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="tech">
+          <h2 id="tech">Technical details</h2>
+          <div class="prose">
+            <h3 class="sub">Description, as published by the source</h3>
+            <p>Deserialization of untrusted data in the report-processing code of Puppet, as used by Puppet Server, in the affected releases, allows a client that holds any CA-signed agent certificate to execute arbitrary code on the Puppet Server as its service user by submitting a report containing a crafted rich-data type via PUT request. Where the certificate authority autosigns requests without strong verification, an unauthenticated network attacker can obtain such a certificate.</p>
+          </div>
+          <dl class="kv">
+            <dt>CVSS 4.0</dt><dd>9.4, critical</dd>
+            <dt>Vector</dt><dd class="mono">CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H</dd>
+            <dt>Weakness</dt><dd>CWE-502, deserialization of untrusted data · CWE-94, code injection</dd>
+            <dt>SSVC (CISA)</dt><dd>Exploitation active · automatable no · technical impact total</dd>
+            <dt>Affected versions</dt><dd>2023.8.0 up to 2023.8.13 · 2025.0.0 up to 2025.12.1 · 2026.0.0 up to 2026.0.1, upper bounds not included</dd>
+            <dt>Fixed in</dt><dd>2023.8.13 · 2025.12.1 · 2026.0.1</dd>
+          </dl>
+        </section>
+      </div>
+
+      <aside class="stack">
+        <section class="section" id="sources" aria-labelledby="src">
+          <h2 id="src">Sources</h2>
+          <ol class="refs">
+            <li><div><a href="https://www.cve.org/CVERecord?id=CVE-2026-115731">CVE Program, record by Perforce</a><span>Record last changed 17 Nov 2026</span></div></li>
+            <li><div><a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2026-115731">CISA Known Exploited Vulnerabilities</a><span>Added 17 Nov 2026</span></div></li>
+            <li><div><a href="https://portal.perforce.com/s/cve/a91Qi000003IaHpIAK/report-deserialization-code-execution">Vendor advisory, Perforce</a><span>Affected versions and upgrade notes</span></div></li>
+            <li><div><a href="https://www.first.org/epss/">FIRST EPSS</a><span>Score of 17 Nov 2026</span></div></li>
+          </ol>
+        </section>
+
+        <section class="section" aria-labelledby="hist">
+          <h2 id="hist">History</h2>
+          <ol class="history">
+            <li><time datetime="2026-11-17T22:07">17 Nov 2026, 22:07</time><strong>Notification sent</strong> by email and push to 3 people, rule "Critical at once".</li>
+            <li><time datetime="2026-11-17T22:05">17 Nov 2026, 22:05</time><span class="change"><span class="tile l4" aria-hidden="true">4</span><svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg><span class="tile l5" aria-hidden="true">5</span></span> <strong>Raised to level 5.</strong> Trigger: listed by CISA as actively exploited.</li>
+            <li><time datetime="2026-11-03T22:10">3 Nov 2026, 22:10</time><span class="level"><span class="tile l4" aria-hidden="true">4</span></span> <strong>First assessed at level 4.</strong> Version in range, no known exploitation.</li>
+            <li><time datetime="2026-11-03T21:40">3 Nov 2026, 21:40</time><strong>CVE published,</strong> received through the CVE Program.</li>
+          </ol>
+        </section>
+
+        <section class="section" aria-labelledby="note-h">
+          <h2 id="note-h">Note</h2>
+          <div class="fieldrow"><label for="note">Visible to the team and kept in the history</label><textarea class="field" id="note" rows="3"></textarea></div>
+          <p><button class="btn" type="button">Save note</button></p>
+        </section>
+      </aside>
+    </div>
+    <p class="pagefoot">Mockup with sample data. The CVE records are real; the organization, the people, the projects and the installed versions are invented.</p>
+  </main>
+</div>
+
+<div class="actionbar">
+  <button class="btn primary" type="button" data-advance>Take into review</button>
+  <label class="vh" for="status-m">Status</label>
+  <select class="field" id="status-m" data-status><option>Open</option><option>In review</option><option>Remediated</option><option>Risk accepted</option><option>Not affected</option></select>
+  <button class="btn assign" type="button">Assign</button>
+</div>
+<script src="csh.js"></script>
+</body>
+</html>

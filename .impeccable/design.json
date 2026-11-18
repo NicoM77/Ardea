@@ -1,0 +1,669 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-18T11:08:32Z",
+  "title": "Design System: CSH Alert",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "oklch(100.0% 0.000 90)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      },
+      "wash": {
+        "role": "neutral",
+        "displayName": "Wash",
+        "canonical": "oklch(96.7% 0.002 248)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#414243",
+          "#606162",
+          "#818283",
+          "#A4A5A6",
+          "#C8C9CA",
+          "#EEEEEF"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Anthracite Ink",
+        "canonical": "oklch(25.3% 0.008 240)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232527",
+          "#3F4245",
+          "#5E6265",
+          "#7E8387",
+          "#A1A6A9",
+          "#C6CACC",
+          "#ECEFF1"
+        ]
+      },
+      "ink-hover": {
+        "role": "primary",
+        "displayName": "Pressed Ink",
+        "canonical": "oklch(18.5% 0.005 248)",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#242526",
+          "#404244",
+          "#5F6164",
+          "#808385",
+          "#A3A5A8",
+          "#C7C9CB",
+          "#EDEFF0"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "oklch(42.8% 0.013 248)",
+        "tonalRamp": [
+          "#090B0D",
+          "#222528",
+          "#3E4247",
+          "#5D6267",
+          "#7D838A",
+          "#A0A6AC",
+          "#C5CACF",
+          "#EBEFF3"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "oklch(50.6% 0.013 244)",
+        "tonalRamp": [
+          "#090B0D",
+          "#222628",
+          "#3E4347",
+          "#5C6267",
+          "#7C838A",
+          "#9FA6AB",
+          "#C4CACF",
+          "#EAEFF3"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "oklch(88.7% 0.005 248)",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#242526",
+          "#404244",
+          "#5F6164",
+          "#808385",
+          "#A3A5A8",
+          "#C7C9CB",
+          "#EDEFF0"
+        ]
+      },
+      "rule-2": {
+        "role": "neutral",
+        "displayName": "Rule 2",
+        "canonical": "oklch(78.0% 0.009 248)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232528",
+          "#3F4245",
+          "#5E6266",
+          "#7E8388",
+          "#A1A5AA",
+          "#C6CACD",
+          "#ECEFF2"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Field",
+        "canonical": "oklch(58.6% 0.014 248)",
+        "tonalRamp": [
+          "#090B0E",
+          "#222529",
+          "#3E4347",
+          "#5C6268",
+          "#7C838A",
+          "#A0A6AC",
+          "#C4CACF",
+          "#EBEFF3"
+        ]
+      },
+      "on-ink": {
+        "role": "neutral",
+        "displayName": "On Ink",
+        "canonical": "oklch(100.0% 0.000 90)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      },
+      "on-ink-2": {
+        "role": "neutral",
+        "displayName": "On Ink 2",
+        "canonical": "oklch(84.3% 0.007 248)",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#232527",
+          "#404245",
+          "#5F6265",
+          "#7F8386",
+          "#A2A5A9",
+          "#C7C9CC",
+          "#ECEFF1"
+        ]
+      },
+      "band-hover": {
+        "role": "neutral",
+        "displayName": "Band Hover",
+        "canonical": "oklch(32.6% 0.011 248)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232528",
+          "#3F4246",
+          "#5D6267",
+          "#7D8389",
+          "#A0A6AB",
+          "#C5CACE",
+          "#EBEFF3"
+        ]
+      },
+      "link": {
+        "role": "secondary",
+        "displayName": "Bulletin Blue",
+        "canonical": "oklch(46.9% 0.157 257)",
+        "tonalRamp": [
+          "#000925",
+          "#012350",
+          "#12407D",
+          "#2660AD",
+          "#3D82DE",
+          "#6CA7F7",
+          "#A8CCFD",
+          "#E4F0FF"
+        ]
+      },
+      "link-hover": {
+        "role": "secondary",
+        "displayName": "Deep Bulletin Blue",
+        "canonical": "oklch(37.7% 0.125 257)",
+        "tonalRamp": [
+          "#000A21",
+          "#0A2447",
+          "#204271",
+          "#36619E",
+          "#4F83CB",
+          "#79A7E7",
+          "#A8CCFE",
+          "#E5EFFF"
+        ]
+      },
+      "select": {
+        "role": "secondary",
+        "displayName": "Selection Blue",
+        "canonical": "oklch(90.1% 0.037 256)",
+        "tonalRamp": [
+          "#070B12",
+          "#1E262F",
+          "#394350",
+          "#566273",
+          "#748498",
+          "#99A6B9",
+          "#BECADA",
+          "#E6EFFD"
+        ]
+      },
+      "ok": {
+        "role": "neutral",
+        "displayName": "Confirmation Green",
+        "canonical": "oklch(45.2% 0.103 154)",
+        "tonalRamp": [
+          "#001004",
+          "#062D17",
+          "#1C4D2F",
+          "#327049",
+          "#4C9466",
+          "#79B58C",
+          "#A5D8B4",
+          "#D1FBDD"
+        ]
+      },
+      "l1": {
+        "role": "tertiary",
+        "displayName": "Level 1 Pale Green",
+        "canonical": "oklch(92.4% 0.108 122)",
+        "tonalRamp": [
+          "#080E00",
+          "#202A01",
+          "#3B4812",
+          "#586927",
+          "#778C3E",
+          "#9BAF6D",
+          "#C0D29A",
+          "#E7F6C9"
+        ],
+        "scale": [
+          "#D9F2A0",
+          "#FFD500",
+          "#FF9500",
+          "#D4111E",
+          "#7A0A12"
+        ]
+      },
+      "l2": {
+        "role": "tertiary",
+        "displayName": "Level 2 Yellow",
+        "canonical": "oklch(88.3% 0.181 94)",
+        "tonalRamp": [
+          "#100B00",
+          "#2E2400",
+          "#4F4101",
+          "#746003",
+          "#9A8001",
+          "#C3A203",
+          "#E4C85F",
+          "#FFEFB4"
+        ],
+        "scale": [
+          "#D9F2A0",
+          "#FFD500",
+          "#FF9500",
+          "#D4111E",
+          "#7A0A12"
+        ]
+      },
+      "l3": {
+        "role": "tertiary",
+        "displayName": "Level 3 Orange",
+        "canonical": "oklch(76.5% 0.175 63)",
+        "tonalRamp": [
+          "#170600",
+          "#3A1D00",
+          "#623500",
+          "#8C5108",
+          "#BA6D0B",
+          "#E58D2E",
+          "#FEB879",
+          "#FFEADA"
+        ],
+        "scale": [
+          "#D9F2A0",
+          "#FFD500",
+          "#FF9500",
+          "#D4111E",
+          "#7A0A12"
+        ]
+      },
+      "l4": {
+        "role": "tertiary",
+        "displayName": "Level 4 Signal Red",
+        "canonical": "oklch(55.2% 0.218 27)",
+        "tonalRamp": [
+          "#200000",
+          "#4D0004",
+          "#80030C",
+          "#B4161C",
+          "#E73232",
+          "#FE7469",
+          "#FFB3AA",
+          "#FEE9E6"
+        ],
+        "scale": [
+          "#D9F2A0",
+          "#FFD500",
+          "#FF9500",
+          "#D4111E",
+          "#7A0A12"
+        ]
+      },
+      "l5": {
+        "role": "tertiary",
+        "displayName": "Level 5 Oxblood",
+        "canonical": "oklch(37.0% 0.143 26)",
+        "tonalRamp": [
+          "#1F0001",
+          "#450F0E",
+          "#6F2724",
+          "#9B403B",
+          "#C95B55",
+          "#E7867D",
+          "#FEB3AB",
+          "#FFE9E6"
+        ],
+        "scale": [
+          "#D9F2A0",
+          "#FFD500",
+          "#FF9500",
+          "#D4111E",
+          "#7A0A12"
+        ]
+      },
+      "tile-edge": {
+        "role": "neutral",
+        "displayName": "Tile Edge",
+        "canonical": "rgba(31, 35, 38, 0.6)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232527",
+          "#3F4245",
+          "#5E6265",
+          "#7E8387",
+          "#A1A6A9",
+          "#C6CACC",
+          "#ECEFF1"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "page-title": {
+        "displayName": "Page title",
+        "purpose": "One per page, above the 3px ink rule. 1.5rem at 760px and below; the alert title 1.25rem."
+      },
+      "lead-headline": {
+        "displayName": "Lead headline",
+        "purpose": "The headline of the bulletin lead. 1.25rem on phones."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Section heads inside a page, and the wordmark."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "The three answers, lead columns and assessment prose; prose capped at 38rem."
+      },
+      "interface": {
+        "displayName": "Interface",
+        "purpose": "Body default: tables, controls, navigation. Weights 400, 600, 700."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Timestamps, notes, captions and footers in Ink 2."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Table heads and field labels; sentence case, no tracking, Ink 2."
+      },
+      "identifier": {
+        "displayName": "Identifier",
+        "purpose": "Alert numbers, CVE IDs, versions, vectors. Source Code Pro only here."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "The level numeral in a working tile: 1.0625rem at 28px, 1.5rem at 40px, 1.875rem at 56px."
+      },
+      "numeral-lead": {
+        "displayName": "Lead numeral",
+        "purpose": "Numeral of the 132px bulletin lead tile (--t-numeral-lead). The one size outside the six-step scale."
+      },
+      "numeral-lead-sm": {
+        "displayName": "Lead numeral, phone",
+        "purpose": "The same numeral in the 72px lead tile at 760px and below (--t-numeral-lead-sm)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "tile-edge",
+        "value": "inset 0 0 0 1px rgba(31, 35, 38, 0.6)",
+        "purpose": "Outline of level 1 to 3 tiles, whose fills fall below 3:1 on paper."
+      },
+      {
+        "name": "selected-edge",
+        "value": "inset 0 0 0 1px #1F2326",
+        "purpose": "With a 1px ink border, the 2px frame of a selected ladder step or an invalid field."
+      },
+      {
+        "name": "outline-segment",
+        "value": "inset 0 0 0 1px #767D84",
+        "purpose": "Empty segment of the confidence meter (1.5px ink on the version range)."
+      },
+      {
+        "name": "current-tab",
+        "value": "inset 0 3px 0 #FFFFFF",
+        "purpose": "Marker of the current item in the phone tab bar."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The only easing; used for every state transition."
+      },
+      {
+        "name": "duration-state",
+        "value": "150ms",
+        "purpose": "background-color, color and border-color on hover, press and selection. Nothing animates on load; reduced motion collapses it."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "1180px",
+        "purpose": "max-width: ladder column 248px, detail side stack below the main stack, the three answers stacked."
+      },
+      {
+        "name": "phone",
+        "value": "760px",
+        "purpose": "max-width: tab bar or action bar fixed at the bottom, ladder as five equal segments, tables as stacked records, 44px controls."
+      }
+    ],
+    "focus": {
+      "value": "2px solid #0B57B0, offset 2px",
+      "onInk": "2px solid #FFFFFF",
+      "purpose": "Focus ring on every interactive element; white on the header band and tab bar."
+    },
+    "fonts": [
+      {
+        "family": "Source Sans 3",
+        "files": [
+          "fonts/SourceSans3-Variable-latin.woff2",
+          "fonts/SourceSans3-Variable-latin-ext.woff2"
+        ],
+        "weights": "200 900 (variable); used: 400, 600, 700, 900",
+        "licence": "SIL OFL 1.1",
+        "hosting": "self-hosted"
+      },
+      {
+        "family": "Source Code Pro",
+        "files": [
+          "fonts/SourceCodePro-Variable-latin.woff2"
+        ],
+        "weights": "200 900 (variable); used: 400",
+        "licence": "SIL OFL 1.1",
+        "hosting": "self-hosted"
+      }
+    ],
+    "tokenSource": "docs/design/mockups/csh.css (:root custom properties; frontmatter keys equal the property names without the leading dashes)"
+  },
+  "components": [
+    {
+      "name": "Level tile",
+      "kind": "custom",
+      "refersTo": "tile",
+      "description": "Square numeral tile on the danger ramp, always shown with its word. Sizes 28, 40, 56 and 132px.",
+      "html": "<div class=\"ds-tiles\"><span class=\"ds-level\"><span class=\"ds-tile ds-tile-l5\" aria-hidden=\"true\">5</span>Critical</span><span class=\"ds-level\"><span class=\"ds-tile ds-tile-l4\" aria-hidden=\"true\">4</span>High</span><span class=\"ds-level\"><span class=\"ds-tile ds-tile-l3\" aria-hidden=\"true\">3</span>Medium</span><span class=\"ds-level\"><span class=\"ds-tile ds-tile-l2\" aria-hidden=\"true\">2</span>Low</span><span class=\"ds-level\"><span class=\"ds-tile ds-tile-l1\" aria-hidden=\"true\">1</span>Not relevant</span><span class=\"ds-tile ds-tile-lg ds-tile-l5\" aria-hidden=\"true\">5</span></div>",
+      "css": ".ds-tile { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; font: 900 1.0625rem/1 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); font-variant-numeric: lining-nums tabular-nums; } .ds-tile-l1 { background: var(--l1, #D9F2A0); color: var(--ink, #1F2326); box-shadow: inset 0 0 0 1px var(--tile-edge, rgba(31, 35, 38, 0.6)); } .ds-tile-l2 { background: var(--l2, #FFD500); color: var(--ink, #1F2326); box-shadow: inset 0 0 0 1px var(--tile-edge, rgba(31, 35, 38, 0.6)); } .ds-tile-l3 { background: var(--l3, #FF9500); color: var(--ink, #1F2326); box-shadow: inset 0 0 0 1px var(--tile-edge, rgba(31, 35, 38, 0.6)); } .ds-tile-l4 { background: var(--l4, #D4111E); color: #FFFFFF; } .ds-tile-l5 { background: var(--l5, #7A0A12); color: #FFFFFF; } .ds-tile-lg { width: 56px; height: 56px; font-size: 1.875rem; } .ds-level { display: inline-flex; align-items: center; gap: 10px; font: 700 0.9375rem/1.5 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); color: var(--ink, #1F2326); white-space: nowrap; } .ds-tiles { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }"
+    },
+    {
+      "name": "Level change",
+      "kind": "custom",
+      "refersTo": "tile",
+      "description": "A change of level: previous tile, arrow, new tile, with a sentence beside it.",
+      "html": "<span class=\"ds-change-line\"><span class=\"ds-change\"><span class=\"ds-tile ds-tile-l4\" aria-hidden=\"true\">4</span><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg><span class=\"ds-tile ds-tile-l5\" aria-hidden=\"true\">5</span></span> Raised from level 4 yesterday at 22:05</span>",
+      "css": ".ds-tile { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; font: 900 1.0625rem/1 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); font-variant-numeric: lining-nums tabular-nums; } .ds-tile-l1 { background: var(--l1, #D9F2A0); color: var(--ink, #1F2326); box-shadow: inset 0 0 0 1px var(--tile-edge, rgba(31, 35, 38, 0.6)); } .ds-tile-l2 { background: var(--l2, #FFD500); color: var(--ink, #1F2326); box-shadow: inset 0 0 0 1px var(--tile-edge, rgba(31, 35, 38, 0.6)); } .ds-tile-l3 { background: var(--l3, #FF9500); color: var(--ink, #1F2326); box-shadow: inset 0 0 0 1px var(--tile-edge, rgba(31, 35, 38, 0.6)); } .ds-tile-l4 { background: var(--l4, #D4111E); color: #FFFFFF; } .ds-tile-l5 { background: var(--l5, #7A0A12); color: #FFFFFF; } .ds-ico { width: 1.125em; height: 1.125em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; } .ds-change { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; } .ds-change .ds-ico { color: var(--ink-2, #4A5056); } .ds-change-line { font: 400 0.9375rem/1.5 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); color: var(--ink-2, #4A5056); }"
+    },
+    {
+      "name": "Danger ladder",
+      "kind": "custom",
+      "refersTo": "ladder-step",
+      "description": "The signature: five steps from 5 to 1 that are filter, count and legend at once. Toggle buttons on the alert list, links on the bulletin; the ink frame means selected filter only, the highest step is marked in words.",
+      "html": "<ul class=\"ds-ladder\"><li><button class=\"ds-step\" type=\"button\" aria-pressed=\"false\"><span class=\"ds-tile ds-tile-l5\" aria-hidden=\"true\">5</span><span class=\"ds-step-name\">Critical<small>Highest today</small></span><span class=\"ds-step-count\">2</span></button></li><li><button class=\"ds-step\" type=\"button\" aria-pressed=\"true\"><span class=\"ds-tile ds-tile-l4\" aria-hidden=\"true\">4</span><span class=\"ds-step-name\">High</span><span class=\"ds-step-count\">2</span></button></li><li><button class=\"ds-step\" type=\"button\" aria-pressed=\"false\"><span class=\"ds-tile ds-tile-l3\" aria-hidden=\"true\">3</span><span class=\"ds-step-name\">Medium</span><span class=\"ds-step-count\">1</span></button></li><li><button class=\"ds-step\" type=\"button\" aria-pressed=\"false\"><span class=\"ds-tile ds-tile-l2\" aria-hidden=\"true\">2</span><span class=\"ds-step-name\">Low</span><span class=\"ds-step-count\">1</span></button></li><li><button class=\"ds-step ds-step-zero\" type=\"button\" aria-pressed=\"false\"><span class=\"ds-tile ds-tile-l1\" aria-hidden=\"true\">1</span><span class=\"ds-step-name\">Not relevant</span><span class=\"ds-step-count\">0</span></button></li></ul>",
+      "css": ".ds-tile { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; font: 900 1.0625rem/1 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); font-variant-numeric: lining-nums tabular-nums; } .ds-tile-l1 { background: var(--l1, #D9F2A0); color: var(--ink, #1F2326); box-shadow: inset 0 0 0 1px var(--tile-edge, rgba(31, 35, 38, 0.6)); } .ds-tile-l2 { background: var(--l2, #FFD500); color: var(--ink, #1F2326); box-shadow: inset 0 0 0 1px var(--tile-edge, rgba(31, 35, 38, 0.6)); } .ds-tile-l3 { background: var(--l3, #FF9500); color: var(--ink, #1F2326); box-shadow: inset 0 0 0 1px var(--tile-edge, rgba(31, 35, 38, 0.6)); } .ds-tile-l4 { background: var(--l4, #D4111E); color: #FFFFFF; } .ds-tile-l5 { background: var(--l5, #7A0A12); color: #FFFFFF; } .ds-ladder { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; width: 252px; } .ds-ladder li + li { margin-top: -1px; } .ds-step { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 14px; width: 100%; min-height: 58px; padding: 0 14px 0 0; background: var(--paper, #FFFFFF); border: 1px solid var(--rule, #D7DADD); color: var(--ink, #1F2326); font: 400 0.9375rem/1.5 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); text-align: left; cursor: pointer; transition: border-color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)), background-color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-step .ds-tile { width: 56px; height: 100%; min-height: 56px; font-size: 1.875rem; } .ds-step:hover { border-color: var(--ink, #1F2326); z-index: 1; } .ds-step:active { background: var(--wash, #F3F4F5); } .ds-step[aria-pressed=\"true\"] { border-color: var(--ink, #1F2326); box-shadow: inset 0 0 0 1px var(--ink, #1F2326); z-index: 2; } .ds-step:focus-visible { outline: 2px solid var(--link, #0B57B0); outline-offset: 2px; z-index: 3; } .ds-step-name { font-weight: 700; font-size: var(--t-read, 1.0625rem); line-height: 1.2; } .ds-step-name small { display: block; font-size: var(--t-meta, 0.8125rem); font-weight: 600; color: var(--ink-2, #4A5056); } .ds-step-count { font-weight: 700; font-size: var(--t-read, 1.0625rem); font-variant-numeric: lining-nums tabular-nums; } .ds-step-zero .ds-step-count { font-weight: 400; color: var(--ink-3, #5F666C); }"
+    },
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Solid ink. The one primary action of a view.",
+      "html": "<button class=\"ds-btn ds-btn-primary\" type=\"button\">Take into review</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 1.5px solid var(--ink, #1F2326); border-radius: 2px; background: var(--paper, #FFFFFF); color: var(--ink, #1F2326); font: 700 0.9375rem/1 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); cursor: pointer; white-space: nowrap; transition: background-color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)), color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)), border-color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-btn:focus-visible { outline: 2px solid var(--link, #0B57B0); outline-offset: 2px; } .ds-btn-primary { background: var(--ink, #1F2326); color: var(--on-ink, #FFFFFF); } .ds-btn-primary:hover { background: var(--ink-hover, #111315); border-color: var(--ink-hover, #111315); } .ds-btn-primary:active { background: var(--ink-hover, #111315); border-color: var(--ink-hover, #111315); } .ds-btn[disabled] { opacity: 0.45; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Paper with an ink border, for actions beside the primary one.",
+      "html": "<button class=\"ds-btn\" type=\"button\">Assign</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 1.5px solid var(--ink, #1F2326); border-radius: 2px; background: var(--paper, #FFFFFF); color: var(--ink, #1F2326); font: 700 0.9375rem/1 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); cursor: pointer; white-space: nowrap; transition: background-color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)), color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)), border-color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-btn:focus-visible { outline: 2px solid var(--link, #0B57B0); outline-offset: 2px; } .ds-btn:hover { background: var(--wash, #F3F4F5); } .ds-btn:active { background: var(--rule, #D7DADD); }"
+    },
+    {
+      "name": "Text button",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Borderless blue action for undo and reset.",
+      "html": "<button class=\"ds-btn ds-btn-text\" type=\"button\">Undo</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 1.5px solid var(--ink, #1F2326); border-radius: 2px; background: var(--paper, #FFFFFF); color: var(--ink, #1F2326); font: 700 0.9375rem/1 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); cursor: pointer; white-space: nowrap; transition: background-color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)), color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)), border-color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-btn:focus-visible { outline: 2px solid var(--link, #0B57B0); outline-offset: 2px; } .ds-btn-text { border-color: transparent; background: none; padding: 0 6px; color: var(--link, #0B57B0); } .ds-btn-text:hover { color: var(--link-hover, #083F82); text-decoration: underline; }"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Labelled input; hover takes an ink border, an error takes a 2px ink frame and an ink message. Errors are not red.",
+      "html": "<div class=\"ds-fields\"><div class=\"ds-fieldrow\"><label for=\"ds-f1\">Search</label><input class=\"ds-field\" id=\"ds-f1\" type=\"search\" placeholder=\"CVE ID, product or project\"></div><div class=\"ds-fieldrow\"><label for=\"ds-f2\">Installed version</label><input class=\"ds-field\" id=\"ds-f2\" value=\"2025.x\" aria-invalid=\"true\"><span class=\"ds-fielderr\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01\"/></svg>Enter a full version, for example 2025.9.0.</span></div></div>",
+      "css": ".ds-ico { width: 1.125em; height: 1.125em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; } .ds-fields { display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: flex-start; font-family: var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); } .ds-fieldrow { display: flex; flex-direction: column; gap: 4px; } .ds-fieldrow label { font-size: 0.8125rem; font-weight: 700; color: var(--ink-2, #4A5056); } .ds-field { min-height: 40px; padding: 0 12px; border: 1px solid var(--field, #767D84); border-radius: 2px; background: var(--paper, #FFFFFF); color: var(--ink, #1F2326); font: 400 0.9375rem/1.3 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); } .ds-field:hover { border-color: var(--ink, #1F2326); } .ds-field::placeholder { color: var(--ink-3, #5F666C); opacity: 1; } .ds-field:focus-visible { outline: 2px solid var(--link, #0B57B0); outline-offset: 2px; } .ds-field[aria-invalid=\"true\"] { border-color: var(--ink, #1F2326); box-shadow: inset 0 0 0 1px var(--ink, #1F2326); } .ds-fielderr { display: inline-flex; align-items: center; gap: 5px; font-size: 0.8125rem; font-weight: 700; color: var(--ink, #1F2326); }"
+    },
+    {
+      "name": "Tags and working state",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "Outline, solid and soft tags for signals; working states as icon shape plus word. Neither takes a ramp colour.",
+      "html": "<div class=\"ds-signals\"><span class=\"ds-tag ds-tag-solid\">Exploited in the wild</span><span class=\"ds-tag\">Fix available</span><span class=\"ds-tag ds-tag-soft\">No fix listed</span><span class=\"ds-tag ds-tag-soft\">Unaffected</span><span class=\"ds-status\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/></svg>Open</span><span class=\"ds-status\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>In review <span class=\"ds-who\">· MK</span></span><span class=\"ds-status\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8 12.5l3 3 5-6\"/></svg>Remediated</span></div>",
+      "css": ".ds-ico { width: 1.125em; height: 1.125em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; } .ds-signals { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; font: 400 0.9375rem/1.5 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); color: var(--ink, #1F2326); } .ds-tag { display: inline-flex; align-items: center; min-height: 22px; padding: 0 7px; border: 1px solid var(--ink, #1F2326); border-radius: 2px; font-size: 0.8125rem; font-weight: 600; line-height: 1.2; white-space: nowrap; } .ds-tag-solid { background: var(--ink, #1F2326); color: var(--on-ink, #FFFFFF); } .ds-tag-soft { border-color: var(--rule-2, #B3B8BD); color: var(--ink-2, #4A5056); } .ds-status { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; white-space: nowrap; } .ds-who { font-weight: 400; color: var(--ink-2, #4A5056); }"
+    },
+    {
+      "name": "Header band",
+      "kind": "nav",
+      "refersTo": "band",
+      "description": "Anthracite band with wordmark and primary navigation; the current page is a paper chip.",
+      "html": "<div class=\"ds-band\"><a class=\"ds-wordmark\" href=\"#\">CSH Alert</a><nav class=\"ds-nav\" aria-label=\"Primary\"><a href=\"#\" aria-current=\"page\">Bulletin</a><a href=\"#\">Alerts</a><a href=\"#\">Projects</a></nav></div>",
+      "css": ".ds-band { background: var(--ink, #1F2326); color: var(--on-ink, #FFFFFF); height: 60px; display: flex; align-items: center; gap: 32px; padding: 0 32px; font-family: var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); } .ds-wordmark { color: var(--on-ink, #FFFFFF); font-weight: 900; font-size: 1.25rem; letter-spacing: -0.01em; text-decoration: none; white-space: nowrap; } .ds-nav { display: flex; gap: 4px; } .ds-nav a { color: var(--on-ink-2, #C8CCD0); font-size: 0.9375rem; font-weight: 600; text-decoration: none; padding: 8px 14px; border-radius: 2px; white-space: nowrap; transition: background-color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)), color 0.15s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)); } .ds-nav a:hover { color: var(--on-ink, #FFFFFF); background: var(--band-hover, #30353A); } .ds-nav a[aria-current=\"page\"] { background: var(--paper, #FFFFFF); color: var(--ink, #1F2326); } .ds-band a:focus-visible { outline: 2px solid var(--on-ink, #FFFFFF); outline-offset: 2px; }"
+    },
+    {
+      "name": "Inline note",
+      "kind": "custom",
+      "refersTo": "inline-note",
+      "description": "Confirmation in place with undo. The stale-source variant takes an ink border and an ink warning icon.",
+      "html": "<p class=\"ds-note\"><svg class=\"ds-ico\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>Status set to In review. You are assigned. <button class=\"ds-note-undo\" type=\"button\">Undo</button></p>",
+      "css": ".ds-ico { width: 1.125em; height: 1.125em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; } .ds-note { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0; padding: 10px 14px; background: var(--wash, #F3F4F5); border: 1px solid var(--rule, #D7DADD); font: 600 0.9375rem/1.5 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); color: var(--ink, #1F2326); } .ds-note .ds-ico { color: var(--ok, #17663A); } .ds-note-undo { min-height: 40px; padding: 0 6px; border: 0; background: none; color: var(--link, #0B57B0); font: 700 0.9375rem/1 var(--sans, 'Source Sans 3', 'Segoe UI', system-ui, sans-serif); cursor: pointer; } .ds-note-undo:hover { color: var(--link-hover, #083F82); text-decoration: underline; } .ds-note-undo:focus-visible { outline: 2px solid var(--link, #0B57B0); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Hazard Bulletin",
+    "overview": "Risk is reported the way an avalanche or weather service reports it: one numbered danger level, the area it applies to, and the recommended action. The interface borrows four things from that world and nothing else: a humanist sans with black-weight numerals, a five-step danger ramp, a ruled and compact density, and the danger ladder. Navigation, tables and form controls are the standard ones, drawn plainly.\n\nThe surface is white paper under an anthracite header band. Structure comes from rules of three fixed weights and from whole columns, never from boxes: there are no cards, no cast shadows, no gradients, and corners are square or at most 2px. Colour is scarce by construction. The five ramp colours appear only where a level is stated; everything else is ink, paper, two greys and one blue for links and focus. Light theme only.\n\nThe system is built for two readings. At a desk the bulletin is scanned across projects; on a phone one alert is opened from a notification and has to answer what happened, whether we are affected, and what to do before anything else is seen. Silence is a valid state: when nothing is at level 2 or above, the page says so in a sentence instead of filling the space.",
+    "keyCharacteristics": [
+      "One signature, the danger ladder: filter, count and legend at once.",
+      "Level is a square tile with a black-weight numeral, always accompanied by its word.",
+      "Ramp colours mean level and nothing else.",
+      "Ink rules of 3px, 2px and 1px carry the hierarchy; no cards, no cast shadows.",
+      "One type family in four weights (400, 600, 700, 900), a monospace only for identifiers.",
+      "Solid ink is the primary action; blue is links and focus.",
+      "Motion is state change only, 150ms, nothing on load."
+    ],
+    "rules": [
+      {
+        "name": "The Level-Only Rule",
+        "body": "The five ramp colours mean level and nothing else. Counts, badges, focus rings, selection, errors, working states, tags and data graphics use ink, paper or blue. Red never means \"error\" or \"status\".",
+        "section": "colors"
+      },
+      {
+        "name": "The Numeral-And-Word Rule",
+        "body": "A level is always a numeral plus a word. The tile carries the numeral; the level name (Critical, High, Medium, Low, Not relevant) or a sentence naming the level stands beside it. Colour only repeats what they say.",
+        "section": "colors"
+      },
+      {
+        "name": "The Darkening Ramp Rule",
+        "body": "The ramp darkens step by step from 1 to 5, so the order survives greyscale and colour-blind viewing. Levels 1 to 3 take an ink numeral and the tile edge; levels 4 and 5 take a white numeral and no edge. A new ramp colour must keep that order.",
+        "section": "colors"
+      },
+      {
+        "name": "The Solid Ink Rule",
+        "body": "The primary action is solid ink. Blue is reserved for links, text buttons and focus; it is never a button fill.",
+        "section": "colors"
+      },
+      {
+        "name": "The Fixed Step Rule",
+        "body": "Every text size is one of six fixed custom properties (13, 15, 17, 20, 24, 30px). The only size outside the scale is the numeral of the lead tile, which has its own two tokens. No fluid scaling, no `clamp()`; the phone moves a role down a step.",
+        "section": "typography"
+      },
+      {
+        "name": "The Black Or Regular Rule",
+        "body": "Headings and level numerals are 900. Emphasis in running text is 700, controls are 600 or 700. Nothing is set in a light weight, nothing is uppercase, and tracking is only ever tightened slightly on titles and identifiers.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mono Is Identity Rule",
+        "body": "Source Code Pro marks things a person may copy or compare: identifiers, versions, vectors. It is never used for labels, numbers in tables, or atmosphere.",
+        "section": "typography"
+      },
+      {
+        "name": "The Whole-Column Rule",
+        "body": "Responsive change moves or stacks whole columns and swaps a component for its phone form. Nothing scales fluidly and nothing is hidden that carries an answer.",
+        "section": "layout"
+      },
+      {
+        "name": "The Three Answers Rule",
+        "body": "On a phone alert, level, title, and the three answers (what happened, are we affected, what to do) sit in the first viewport above the action bar. Supporting graphics, dates and long meta give way first.",
+        "section": "layout"
+      },
+      {
+        "name": "The Three Rules Rule",
+        "body": "3px ink opens a page or its answer block, 2px ink opens a table or list, 1px hairline separates rows. A fourth weight does not exist.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Inset-Only Rule",
+        "body": "A shadow is a line drawn inside an element. Any shadow with an offset, a blur or a spread outward is out of the system.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do state every level as a tile plus its word, and every level change as two tiles joined by an arrow with a sentence beside it.",
+      "Do keep the ramp for levels only; draw counts, selection, errors, tags and data graphics in ink, paper or Bulletin Blue.",
+      "Do mark working states with an icon shape and a word.",
+      "Do build hierarchy from the three rule weights (3px, 2px, 1px) and from 900-weight headings.",
+      "Do use solid ink for the one primary action of a view, and blue for links, text buttons and the 2px focus ring.",
+      "Do keep controls 40px high on desktop and 44px at touch widths.",
+      "Do reflow by whole columns at 1180px and 760px, and keep the phone ladder as five equal segments.",
+      "Do keep level, title and the three answers in the first phone viewport of an alert.",
+      "Do ship Source Sans 3 and Source Code Pro with the application.",
+      "Do write an empty list as a calm sentence in the list's place."
+    ],
+    "donts": [
+      "Don't use a ramp colour for anything that is not a level: no red errors, no green success fills, no yellow warnings, no coloured status dots.",
+      "Don't show a level by colour alone, or a tile without its word or sentence.",
+      "Don't add cards, cast shadows, gradients, or any radius above 2px.",
+      "Don't fill a button with blue, or use a second accent hue.",
+      "Don't introduce fluid type, uppercase or letter-spaced labels, or a weight below 400.",
+      "Don't set anything but identifiers, versions and vectors in the monospace.",
+      "Don't animate on load, or animate anything but background, text and border colour on a state change.",
+      "Don't add a dark theme; light is the only theme.",
+      "Don't summarise the bulletin as KPI tiles, a severity donut or a feed of pill badges.",
+      "Don't load fonts from a font service."
+    ]
+  }
+}

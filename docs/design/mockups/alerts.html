@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alerts · CSH Alert (mockup, sample data)</title>
+<link rel="stylesheet" href="csh.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></symbol>
+  <symbol id="i-review" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM9 9h6M9 13h6"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01"/></symbol>
+</svg>
+
+<header class="band">
+  <a class="wordmark" href="bulletin.html">CSH Alert</a>
+  <nav class="nav" aria-label="Primary">
+    <a href="bulletin.html">Bulletin</a>
+    <a href="alerts.html" aria-current="page">Alerts</a>
+    <a href="#">Projects</a>
+    <a href="#">Sources</a>
+    <a href="#">Notification rules</a>
+  </nav>
+  <div class="tools">
+    <button class="bandbtn" type="button"><span class="lbl">Example Digital AG</span><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg><span class="vh">Switch organization</span></button>
+    <button class="bandbtn" type="button" aria-label="Notifications, 2 unread"><svg class="i" aria-hidden="true"><use href="#i-bell"/></svg><span class="count" aria-hidden="true">2</span></button>
+    <button class="bandbtn" type="button" aria-label="Account: Nina Marti"><span class="avatar" aria-hidden="true">NM</span></button>
+  </div>
+</header>
+
+<div class="page">
+  <aside class="side" aria-label="Filter by danger level">
+    <div>
+      <h2 id="ladder-label">Filter by level</h2>
+      <ul class="ladder" aria-labelledby="ladder-label">
+        <li><button class="step" type="button" data-level="5" aria-pressed="false"><span class="tile l5" aria-hidden="true">5</span><span class="step-name">Critical</span><span class="step-count">2<span class="vh"> alerts at level 5</span></span></button></li>
+        <li><button class="step" type="button" data-level="4" aria-pressed="false"><span class="tile l4" aria-hidden="true">4</span><span class="step-name">High</span><span class="step-count">2<span class="vh"> alerts at level 4</span></span></button></li>
+        <li><button class="step" type="button" data-level="3" aria-pressed="false"><span class="tile l3" aria-hidden="true">3</span><span class="step-name">Medium</span><span class="step-count">1<span class="vh"> alert at level 3</span></span></button></li>
+        <li><button class="step" type="button" data-level="2" aria-pressed="false"><span class="tile l2" aria-hidden="true">2</span><span class="step-name">Low</span><span class="step-count">1<span class="vh"> alert at level 2</span></span></button></li>
+        <li><button class="step" type="button" data-level="1" aria-pressed="false"><span class="tile l1" aria-hidden="true">1</span><span class="step-name">Not relevant</span><span class="step-count">167<span class="vh"> records at level 1</span></span></button></li>
+      </ul>
+      <button class="btn text ladder-reset" type="button" id="ladder-reset" hidden>Show levels 2 to 5</button>
+    </div>
+    <p class="note">Level 1 holds everything that was checked and found not to concern you. It stays out of the list until you ask for it.</p>
+  </aside>
+
+  <main class="main">
+    <div class="rulehead">
+      <h1>Alerts</h1>
+      <p class="quiet" id="count" role="status">6 alerts at levels 2 to 5</p>
+    </div>
+
+    <form class="toolbar" role="search" aria-label="Filter alerts" onsubmit="return false">
+      <div class="fieldrow grow"><label for="q">Search</label><input class="field" id="q" type="search" placeholder="CVE ID, product or project"></div>
+      <div class="fieldrow"><label for="f-project">Project</label><select class="field" id="f-project"><option>All projects</option><option>Platform Ops</option><option>Webshop</option><option>Customer Portal</option></select></div>
+      <div class="fieldrow"><label for="f-status">Status</label><select class="field" id="f-status"><option>Open and in review</option><option>Open</option><option>In review</option><option>Remediated</option><option>Risk accepted</option><option>Not affected</option></select></div>
+    </form>
+
+    <p class="inline-note" id="l1-note" hidden>167 records were assessed as not relevant this week. Listed are those with a written assessment.</p>
+
+    <div class="tablewrap">
+      <table class="table stack-sm" id="alerts">
+        <thead><tr>
+          <th scope="col" aria-sort="descending"><button class="sortbtn" type="button">Level<svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></button></th>
+          <th scope="col">Alert</th>
+          <th scope="col">Affected area</th>
+          <th scope="col">Status</th>
+          <th scope="col"><button class="sortbtn" type="button">Updated<svg class="i" aria-hidden="true"><use href="#i-sort"/></svg></button></th>
+        </tr></thead>
+        <tbody>
+          <tr data-level="5">
+            <td class="c-first"><span class="level"><span class="tile l5" aria-hidden="true">5</span>Critical</span></td>
+            <td class="c-wide"><a class="t-title" href="alert.html">Puppet Enterprise: code execution through crafted reports</a>
+              <p class="t-sum">Attackers can run code on Puppet Server. Platform Ops runs an affected version; upgrade to 2025.12.1.</p>
+              <p class="t-meta"><span class="mono">#142 · CVE-2026-115731</span><span class="tag solid">Exploited in the wild</span><span class="tag">Fix available</span><span class="change" title="Raised from level 4 to 5 on 17 Nov"><span class="tile l4" aria-hidden="true">4</span><svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg><span class="tile l5" aria-hidden="true">5</span><span class="vh">Raised from level 4 to 5</span></span></p></td>
+            <td class="c-wide" data-k="Affected">Platform Ops</td>
+            <td class="c-right"><span class="status"><svg class="i" aria-hidden="true"><use href="#i-open"/></svg>Open</span></td>
+            <td class="c-hide">17 Nov</td>
+          </tr>
+          <tr data-level="5">
+            <td class="c-first"><span class="level"><span class="tile l5" aria-hidden="true">5</span>Critical</span></td>
+            <td class="c-wide"><a class="t-title" href="alert.html">PHP: remote code execution via stale global state</a>
+              <p class="t-sum">A memory bug that allows remote code execution. Webshop runs 8.3.30, below the fixed 8.3.36.</p>
+              <p class="t-meta"><span class="mono">#131 · CVE-2026-109619</span><span class="tag solid">Exploited in the wild</span><span class="tag">Fix available</span></p></td>
+            <td class="c-wide" data-k="Affected">Webshop</td>
+            <td class="c-right"><span class="status"><svg class="i" aria-hidden="true"><use href="#i-review"/></svg>In review <span class="who">· MK</span></span></td>
+            <td class="c-hide">16 Nov</td>
+          </tr>
+          <tr data-level="4">
+            <td class="c-first"><span class="level"><span class="tile l4" aria-hidden="true">4</span>High</span></td>
+            <td class="c-wide"><a class="t-title" href="alert.html">PostgreSQL: SQL injection in reindexdb</a>
+              <p class="t-sum">A crafted index name runs SQL as the account that runs reindexdb. Platform Ops runs 17.9, fixed in 17.12.</p>
+              <p class="t-meta"><span class="mono">#139 · CVE-2026-116325</span><span class="tag">Fix available</span></p></td>
+            <td class="c-wide" data-k="Affected">Platform Ops</td>
+            <td class="c-right"><span class="status"><svg class="i" aria-hidden="true"><use href="#i-open"/></svg>Open</span></td>
+            <td class="c-hide">17 Nov</td>
+          </tr>
+          <tr data-level="4">
+            <td class="c-first"><span class="level"><span class="tile l4" aria-hidden="true">4</span>High</span></td>
+            <td class="c-wide"><a class="t-title" href="alert.html">MySQL Server: unauthorised data access via client programs</a>
+              <p class="t-sum">An unauthenticated network attacker can read or change data. Webshop runs 8.4.11; its database is not internet-facing.</p>
+              <p class="t-meta"><span class="mono">#143 · CVE-2026-114952</span><span class="tag">Fix available</span></p></td>
+            <td class="c-wide" data-k="Affected">Webshop</td>
+            <td class="c-right"><span class="status"><svg class="i" aria-hidden="true"><use href="#i-open"/></svg>Open</span></td>
+            <td class="c-hide">17 Nov</td>
+          </tr>
+          <tr data-level="3">
+            <td class="c-first"><span class="level"><span class="tile l3" aria-hidden="true">3</span>Medium</span></td>
+            <td class="c-wide"><a class="t-title" href="alert.html">Umbraco CMS: authorisation bypass in the document version API</a>
+              <p class="t-sum">Back-office users can read document versions outside their start node. Customer Portal runs 17.5, fixed in 17.7.1.</p>
+              <p class="t-meta"><span class="mono">#141 · CVE-2026-130068</span><span class="tag">Fix available</span></p></td>
+            <td class="c-wide" data-k="Affected">Customer Portal</td>
+            <td class="c-right"><span class="status"><svg class="i" aria-hidden="true"><use href="#i-open"/></svg>Open <span class="who">· NM</span></span></td>
+            <td class="c-hide">16 Nov</td>
+          </tr>
+          <tr data-level="2">
+            <td class="c-first"><span class="level"><span class="tile l2" aria-hidden="true">2</span>Low</span></td>
+            <td class="c-wide"><a class="t-title" href="alert.html">ingress-nginx: denial of service via mirror-target annotation</a>
+              <p class="t-sum">A user allowed to create an Ingress can stall the data plane. All versions are affected.</p>
+              <p class="t-meta"><span class="mono">#136 · CVE-2026-116472</span><span class="tag soft">No fix listed</span></p></td>
+            <td class="c-wide" data-k="Affected">Platform Ops</td>
+            <td class="c-right"><span class="status"><svg class="i" aria-hidden="true"><use href="#i-open"/></svg>Open</span></td>
+            <td class="c-hide">12 Nov</td>
+          </tr>
+          <tr data-level="1" hidden>
+            <td class="c-first"><span class="level"><span class="tile l1" aria-hidden="true">1</span>Not relevant</span></td>
+            <td class="c-wide"><a class="t-title" href="alert.html">Microsoft SQL Server: remote code execution</a>
+              <p class="t-sum">Affects self-managed SQL Server 2017 to 2022. Customer Portal uses Azure SQL Database, which is not among the affected products.</p>
+              <p class="t-meta"><span class="mono">#140 · CVE-2026-67374</span><span class="tag">Fix available</span></p></td>
+            <td class="c-wide" data-k="Checked against">Customer Portal</td>
+            <td class="c-right"><span class="status"><svg class="i" aria-hidden="true"><use href="#i-none"/></svg>Not affected</span></td>
+            <td class="c-hide">16 Nov</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="pagefoot">Mockup with sample data. The CVE records are real; the organization, the people, the projects and the installed versions are invented.</p>
+  </main>
+</div>
+
+<nav class="tabbar" aria-label="Primary, mobile">
+  <a href="bulletin.html"><svg class="i" aria-hidden="true"><use href="#i-doc"/></svg>Bulletin</a>
+  <a href="alerts.html" aria-current="page"><svg class="i" aria-hidden="true"><use href="#i-warn"/></svg>Alerts</a>
+  <a href="#"><svg class="i" aria-hidden="true"><use href="#i-layers"/></svg>Projects</a>
+  <a href="#"><svg class="i" aria-hidden="true"><use href="#i-more"/></svg>More</a>
+</nav>
+<script src="csh.js"></script>
+</body>
+</html>

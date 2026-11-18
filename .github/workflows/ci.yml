@@ -80,6 +80,12 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Install
         run: npm ci
+      # The committed client must be what the committed OpenAPI document generates (master plan 10.1).
+      - name: API client matches the OpenAPI document
+        run: |
+          npm run generate:api
+          git status --porcelain -- projects/ardea/src/app/core/api/generated
+          test -z "$(git status --porcelain -- projects/ardea/src/app/core/api/generated)"
       - name: Lint
         run: npm run lint
       - name: Translations

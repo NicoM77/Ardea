@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Modules/Catalog/Ardea.Catalog/Ardea.Catalog.csproj" />
+    <ProjectReference Include="../Ardea.TestSupport/Ardea.TestSupport.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Recorded/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

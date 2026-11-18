@@ -1,0 +1,25 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "OpenJS Foundation",
+  "products": [
+    {
+      "key": "nodejs",
+      "name": "Node.js",
+      "kind": "runtime",
+      "versionScheme": "semver",
+      "cpe": ["nodejs:node.js"],
+      "aliases": [{ "names": ["Node.js"] }],
+      "images": ["node"]
+    },
+    {
+      "key": "express",
+      "name": "Express",
+      "kind": "library",
+      "versionScheme": "semver",
+      "cpe": ["expressjs:express"],
+      "packages": ["pkg:npm/express"],
+      "aliases": [{ "vendor": "expressjs", "names": ["Express", "Express.js"] }],
+      "related": ["nodejs"]
+    }
+  ]
+}

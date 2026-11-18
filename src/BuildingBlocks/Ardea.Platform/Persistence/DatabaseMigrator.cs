@@ -7,10 +7,17 @@ namespace Ardea.Platform.Persistence;
 /// <summary>
 /// What <c>ardea migrate</c> does (master plan 4.11, 12.2): create the application role, take a dump
 /// through the database server when migrations are pending on a database with data, apply every
-/// schema's migrations in fixed order, and grant the application role its rights.
+/// schema's migrations in fixed order, load the master data, and grant the application role its rights.
 /// </summary>
-public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyList<IModuleDatabase> databases, IBackupWriter backup, ILogger<DatabaseMigrator> logger)
+public sealed partial class DatabaseMigrator(
+    DatabaseOptions options,
+    IReadOnlyList<IModuleDatabase> databases,
+    IBackupWriter backup,
+    ILogger<DatabaseMigrator> logger,
+    MasterDataOptions? masterData = null)
 {
+    private readonly MasterDataOptions _masterData = masterData ?? new MasterDataOptions(MasterDataOptions.FindDefault());
+
     public async Task EnsureAppRoleAsync(NpgsqlConnection owner, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(options.AppPassword))
@@ -98,6 +105,17 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
             LogSchemaMigrated(database.Schema, migrations.Count);
         }
 
+        // Master data after all migrations, in the same order: a module may rely on the schemas before it.
+        foreach (var database in databases)
+        {
+            var changed = await database.SeedAsync(owner, _masterData, cancellationToken);
+            await EnsureOpenAsync(owner, cancellationToken);
+            if (changed > 0)
+            {
+                LogMasterDataLoaded(database.Schema, changed);
+            }
+        }
+
         foreach (var database in databases)
         {
             await GrantAsync(owner, database, cancellationToken);
@@ -171,6 +189,9 @@ public sealed partial class DatabaseMigrator(DatabaseOptions options, IReadOnlyL
 
     [LoggerMessage(EventId = 1002, Level = LogLevel.Information, Message = "Schema {Schema}: applied {Count} migration(s)")]
     private partial void LogSchemaMigrated(string schema, int count);
+
+    [LoggerMessage(EventId = 1003, Level = LogLevel.Information, Message = "Schema {Schema}: master data loaded, {Count} row(s) changed")]
+    private partial void LogMasterDataLoaded(string schema, int count);
 }
 
 public sealed record MigrationOutcome(int Applied, string? DumpPath);

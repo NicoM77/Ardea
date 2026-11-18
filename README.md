@@ -22,6 +22,8 @@ Status: ✅ done · 🔄 in progress · ⬜ open
 
 A startable instance with sign-in, job system, build chain and a first administration; technical risks resolved.
 
+The phase 0 acceptance (healthy within 3 minutes of loading the images, then sign-in over HTTPS with setup token, password and TOTP) is checked on every pull request by the end-to-end test in [`tests/e2e/`](tests/e2e/) (`tests/e2e/run.sh <image>`).
+
 | No. | Task | Depends on | Status |
 |---|---|---|---|
 | 0.1 | Repository per chapter 13: solution, module skeletons, central package management, analyzers | | ✅ |
@@ -44,7 +46,7 @@ Consolidated entries from five sources, including OSV for packages, with merging
 
 | No. | Task | Depends on | Status |
 |---|---|---|---|
-| 1.1 | Catalog module: product keys, CPE reader, version schemes (SemVer, NuGet, PEP 440, Maven, RPM, numeric), catalogue format | 0.1 | ⬜ |
+| 1.1 | Catalog module: product keys, CPE reader, version schemes (SemVer, NuGet, PEP 440, Maven, RPM, numeric), catalogue format | 0.1 | ✅ [ADR 030](docs/adr/0030-catalogue-format-and-master-data.md) |
 | 1.2 | Provider SDK with checkpoints and signal interface; sync control: due time, cursor, back-off, health, run log | 0.4 | ✅ |
 | 1.3 | HTTP foundation for adapters: timeout, retry, rate limiting, conditional requests, size limits | 1.2 | ✅ |
 | 1.4 | CVE Program adapter: deltas, initial load and long gaps via the full archive, single fetch | 1.3 | ✅ |

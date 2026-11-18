@@ -1,0 +1,23 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Broadcom",
+  "products": [
+    {
+      "key": "rabbitmq",
+      "name": "RabbitMQ",
+      "kind": "messaging",
+      "versionScheme": "semver",
+      "cpe": ["vmware:rabbitmq", "pivotal_software:rabbitmq"],
+      "aliases": [{ "names": ["RabbitMQ", "RabbitMQ Server"] }],
+      "images": ["rabbitmq"]
+    },
+    {
+      "key": "esxi",
+      "name": "VMware ESXi",
+      "kind": "virtualization",
+      "versionScheme": "numeric",
+      "cpe": ["vmware:esxi"],
+      "aliases": [{ "vendor": "VMware", "names": ["ESXi", "VMware ESXi"] }]
+    }
+  ]
+}

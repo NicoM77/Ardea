@@ -1,0 +1,39 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Microsoft",
+  "products": [
+    {
+      "key": "dotnet",
+      "name": ".NET",
+      "kind": "runtime",
+      "versionScheme": "semver",
+      "cpe": ["microsoft:.net", "microsoft:.net_core"],
+      // CVE records write e.g. «.NET 10.0 installed on Linux»: version line and platform come from the name.
+      "aliases": [
+        {
+          "vendor": "Microsoft",
+          "names": [".NET Core", ".NET {line}", ".NET Core {line}", ".NET {line} installed on {platform}", "Microsoft .NET {line}"]
+        }
+      ],
+      "related": ["aspnetcore"],
+      "images": ["mcr.microsoft.com/dotnet/runtime", "mcr.microsoft.com/dotnet/runtime-deps"]
+    },
+    {
+      "key": "aspnetcore",
+      "name": "ASP.NET Core",
+      "kind": "framework",
+      "versionScheme": "semver",
+      "cpe": ["microsoft:asp.net_core"],
+      "aliases": [{ "vendor": "Microsoft", "names": ["ASP.NET Core {line}", "ASP.NET Core {line} installed on {platform}"] }],
+      "related": ["dotnet"],
+      "images": ["mcr.microsoft.com/dotnet/aspnet"]
+    },
+    {
+      "key": "entra-id",
+      "name": "Microsoft Entra ID",
+      "kind": "service",
+      "versionScheme": "numeric",
+      "aliases": [{ "vendor": "Microsoft", "names": ["Entra ID", "Azure Active Directory", "Azure AD"] }]
+    }
+  ]
+}

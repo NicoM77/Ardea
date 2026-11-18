@@ -29,6 +29,19 @@ const PAGES: { path: string; signedIn: boolean; title: string; heading: string }
     title: 'Two-factor authentication · Ardea',
     heading: 'Two-factor authentication',
   },
+  {
+    path: '/entries',
+    signedIn: true,
+    title: 'Vulnerabilities · Ardea',
+    heading: 'Vulnerabilities',
+  },
+  {
+    path: '/entries/CVE-2026-0001',
+    signedIn: true,
+    title: 'Entry · Ardea',
+    heading: 'Sample: remote code execution in an example library',
+  },
+  { path: '/sources', signedIn: true, title: 'Sources · Ardea', heading: 'Sources' },
 ];
 
 for (const target of PAGES) {

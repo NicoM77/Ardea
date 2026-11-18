@@ -62,12 +62,9 @@ import { count } from './source-format';
     @if (runs.hasValue() && runs.value(); as list) {
       @if (list.length) {
         <div class="table-wrap">
-          <table>
-            <caption class="sr-only">
-              {{
-                'sources.admin.runsCaption' | transloco: { name: source().name }
-              }}
-            </caption>
+          <table
+            [attr.aria-label]="'sources.admin.runsCaption' | transloco: { name: source().name }"
+          >
             <thead>
               <tr>
                 <th scope="col">{{ 'sources.admin.started' | transloco }}</th>

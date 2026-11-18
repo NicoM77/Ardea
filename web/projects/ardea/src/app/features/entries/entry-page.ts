@@ -96,12 +96,7 @@ const OPERATOR_KINDS: Record<string, string> = {
             }}</span>
             @if (d.affected.length) {
               <div class="table-wrap">
-                <table>
-                  <caption class="sr-only">
-                    {{
-                      'entryDetail.affected' | transloco
-                    }}
-                  </caption>
+                <table [attr.aria-label]="'entryDetail.affected' | transloco">
                   <thead>
                     <tr>
                       <th scope="col">{{ 'entryDetail.product' | transloco }}</th>
@@ -231,10 +226,12 @@ const OPERATOR_KINDS: Record<string, string> = {
               <ul class="list">
                 @for (e of d.exploitationEvidence; track $index) {
                   <li>
-                    <span class="mono">{{ e.source }}</span> · {{ e.state }}
-                    @if (e.since) {
-                      · <time [attr.datetime]="e.since">{{ when(e.since) }}</time>
-                    }
+                    <span>
+                      <span class="mono">{{ e.source }}</span> · {{ e.state }}
+                      @if (e.since) {
+                        · <time [attr.datetime]="e.since">{{ when(e.since) }}</time>
+                      }
+                    </span>
                     @if (web(e.evidence); as href) {
                       <a
                         class="link ext sub"

@@ -28,8 +28,19 @@ internal static class InitEnvCommand
         var appPassword = Secret(24);
         var values = new InitialValues(ownerPassword, appPassword, Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)), Secret(18), publicUrl);
 
-        Write(env, Render.Env(values));
-        Write(envApp, Render.EnvApp(values));
+        try
+        {
+            Write(env, Render.Env(values));
+            Write(envApp, Render.EnvApp(values));
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+        {
+            // The image runs as an unprivileged user; a mounted folder of the host user is not writable for it.
+            Console.Error.WriteLine($"Cannot write to {directory}: {ex.Message}");
+            Console.Error.WriteLine("Run the command as your own user: docker run --rm --user \"$(id -u):$(id -g)\" -v \"$PWD:/out\" … init-env --dir /out");
+            return 73;
+        }
+
         Console.WriteLine($"Wrote {env} and {envApp}.");
         Console.WriteLine($"Set ARDEA_PUBLIC_URL in .env.app (now {publicUrl}). Keep ARDEA_MASTER_KEY in a separate backup.");
         return 0;

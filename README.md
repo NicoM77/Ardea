@@ -66,17 +66,17 @@ Organisations with projects and technology profile; profile from GitHub reposito
 
 | No. | Task | Depends on | Status |
 |---|---|---|---|
-| 2.1 | Organisations, memberships, roles, invitations, MFA requirement per organisation; «Team» page | 0.8, 0.9 | ⬜ |
+| 2.1 | Organisations, memberships, roles, invitations, MFA requirement per organisation; «Team» page | 0.8, 0.9 | ✅ |
 | 2.2 | Tenant isolation per the result of 0.6; member directory; database functions for system operations; cross-tenant test for all endpoints | 2.1 | ✅ |
 | 2.3 | Projects and components with version, origin, exposure, criticality, mitigation; profile replacement as an ID-preserving reconcile | 2.1 | ✅ |
 | 2.4 | Fill the catalogue: about 300 products with aliases, CPE mapping, related products; search | 1.1 | ✅ [ADR 030](docs/adr/0030-catalogue-format-and-master-data.md) |
 | 2.5 | Search index `component_key` with match strength | 2.3, 2.4 | ✅ |
-| 2.6 | Mockups for the setup wizard and the project profile; owner reviews afterwards | | ⬜ |
+| 2.6 | Mockups for the setup wizard and the project profile; owner reviews afterwards | | ✅ |
 | 2.7 | Setup wizard (repository, operations, technologies); project pages with links, packages and suggestions; organisation settings with access and audit log | 2.3, 2.4, 2.6, 2.13 | ⬜ |
 | 2.8 | Coverage hints: missing versions, platforms without components, distro packages, packages without lock file, ecosystems not yet checkable | 2.5 | ⬜ |
 | 2.9 | **Spike:** asynchronous SBOM export with a public and a private repository and a fine-grained token; ADR | | ✅ [ADR 032](docs/adr/0032-github-sbom-export.md) |
-| 2.10 | GitHub access with encrypted token, check, expiry, list of readable repositories; GitHub Enterprise Server hosts in administration | 2.3, 2.9 | ⬜ |
-| 2.11 | Connection via `IRepositoryHost`: branch head with ETag, SBOM request, file tree, files with limits; readers for SPDX, `packages.lock.json`, `package-lock.json` | 2.10 | ⬜ |
+| 2.10 | GitHub access with encrypted token, check, expiry, list of readable repositories; GitHub Enterprise Server hosts in administration | 2.3, 2.9 | ✅ |
+| 2.11 | Connection via `IRepositoryHost`: branch head with ETag, SBOM request, file tree, files with limits; readers for SPDX, `packages.lock.json`, `package-lock.json` | 2.10 | ✅ |
 | 2.12 | Detection rules for Dockerfile, Compose, `global.json`, project files, `engines` and `.nvmrc`, `composer.json`, `go.mod`; image names in the catalogue; suggestions with evidence | 2.4, 2.11 | ✅ |
 | 2.13 | `IndexRepository` job with due time and system operation; reconcile per 16.5 holding back much smaller states; `repository.unavailable`; audit with commit as origin | 2.5, 2.11, 2.12 | ⬜ |
 

@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Customer Portal · Ardea (mockup, sample data)</title>
+<link rel="icon" href="../brand/ardea-favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="profile.css">
+<style>
+/* Project profile (task 2.6). Mockup only. */
+.facts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.facts .pill { height: 24px; }
+.facts .link { margin-left: 4px; font-size: var(--fs-sub); }
+.comp-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.comp-tools .search { flex: 0 1 280px; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.filter-row .chip { height: 28px; }
+.ptable .act { width: 1%; white-space: nowrap; text-align: right; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 24px 0 8px; }
+.section-title:first-child, .card > header + .section-title { margin-top: 0; }
+.section-title h3 { font-weight: 600; }
+</style>
+</head>
+<body data-page="projects">
+<main class="sheet" id="main">
+  <div class="content">
+
+    <a class="crumb" href="overview.html"><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Overview</a>
+    <header class="title-row">
+      <div>
+        <h1>Customer Portal</h1>
+        <p class="title-sub">Online self-service for customers: orders, invoices, support.</p>
+        <div class="facts">
+          <span class="pill">Internet-facing</span>
+          <span class="pill">High criticality</span>
+          <a class="link" href="setup-wizard.html#operations">Change</a>
+        </div>
+      </div>
+      <div class="title-actions btn-row">
+        <button class="btn" type="button" data-read-all><svg class="icon" aria-hidden="true"><use href="#i-replay"/></svg>Read all now</button>
+        <a class="btn" href="setup-wizard.html#repository"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Add repository</a>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="span-8 stack">
+
+        <!-- Linked repositories -->
+        <section class="card rise" aria-labelledby="h-links">
+          <header><h2 id="h-links">Repositories</h2><span class="meta">Read every hour</span></header>
+          <div class="links">
+
+            <div class="link-row" data-link="customer-portal">
+              <div>
+                <div class="link-name"><svg class="icon" aria-hidden="true"><use href="#i-repo"/></svg><span>example-digital/customer-portal</span></div>
+                <div class="link-meta">
+                  <span><svg class="icon" aria-hidden="true"><use href="#i-branch"/></svg>main</span>
+                  <span>Commit <span class="mono">4f2a9c1</span>, read 12 minutes ago</span>
+                  <span>Example Digital on GitHub</span>
+                </div>
+              </div>
+              <div class="link-state"><span class="state is-ok"><svg class="sym" aria-hidden="true"><use href="#i-s-done"/></svg>OK</span><small>1,198 packages</small></div>
+              <div class="btn-row"><button class="btn small" type="button" data-read-now>Read now</button></div>
+
+              <div class="shrink" role="group" aria-labelledby="h-shrink">
+                <h3 id="h-shrink">A new commit lists far fewer packages: held back</h3>
+                <div class="shrink-figures">
+                  <div><b>1,198</b><span>now, commit 4f2a9c1</span></div>
+                  <div><b>212</b><span>in commit 7d01e3a, 40 minutes ago</span></div>
+                </div>
+                <p class="hint">More than half would go, and with them their actions. Often a lock file was removed or moved, or the dependency graph was switched off. Ardea keeps the current state until you decide.</p>
+                <div class="evidence"><span><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg>Missing in 7d01e3a</span><code>web/package-lock.json</code></div>
+                <div class="btn-row">
+                  <button class="btn" type="button" data-shrink="keep">Keep the current state</button>
+                  <button class="btn ghost" type="button" data-shrink="apply">Apply 7d01e3a: remove 986 packages</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="link-row">
+              <div>
+                <div class="link-name"><svg class="icon" aria-hidden="true"><use href="#i-repo"/></svg><span>example-digital/portal-infrastructure</span></div>
+                <div class="link-meta">
+                  <span><svg class="icon" aria-hidden="true"><use href="#i-branch"/></svg>main</span>
+                  <span>Commit <span class="mono">a52e8b0</span>, read 12 minutes ago</span>
+                  <span>Example Digital on GitHub</span>
+                </div>
+              </div>
+              <div class="link-state"><span class="state"><svg class="sym" aria-hidden="true"><use href="#i-s-review"/></svg>Partial</span><small>46 packages</small></div>
+              <div class="btn-row"><button class="btn small" type="button" data-read-now>Read now</button></div>
+              <div class="note"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><div><p><b>Dependency graph not enabled.</b> GitHub gives no export for this repository, so Ardea read lock files and platform files itself. GitHub Actions and packages without a lock file are missing.</p><p class="sub">On GitHub: <b>Settings → Advanced Security → Dependency graph → Enable</b>, then Read now.</p></div></div>
+            </div>
+
+            <div class="link-row">
+              <div>
+                <div class="link-name"><svg class="icon" aria-hidden="true"><use href="#i-repo"/></svg><span>example-digital/legacy-admin</span></div>
+                <div class="link-meta">
+                  <span><svg class="icon" aria-hidden="true"><use href="#i-branch"/></svg>release/2025</span>
+                  <span><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg>src/admin</span>
+                  <span>Last good: commit <span class="mono">e83b17f</span>, 2 days ago</span>
+                </div>
+              </div>
+              <div class="link-state"><span class="state"><svg class="sym" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m9 9 6 6M15 9l-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Failing</span><small>since 17 Nov, 09:40</small></div>
+              <div class="btn-row"><button class="btn small" type="button" data-read-now>Read now</button></div>
+              <div class="note"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><div><p><b>Access denied.</b> The token of “Example Digital on GitHub” no longer includes this repository. The profile stays at the last good state; nothing was removed.</p><p class="sub"><a class="link" href="#" data-soon="The access settings">Check the access</a> or add the repository to the token’s repository access on GitHub.</p></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Components -->
+        <section class="card rise" aria-labelledby="h-components">
+          <header><h2 id="h-components">Components</h2><span class="meta">1,251 in total</span></header>
+
+          <div class="section-title"><h3>Platforms and services</h3><span class="sub">7</span></div>
+          <table class="ptable" aria-label="Platforms and services">
+            <thead><tr><th scope="col">Technology</th><th scope="col" class="end">Version</th><th scope="col">Origin</th><th scope="col" class="act"><span class="sr-only">Actions</span></th></tr></thead>
+            <tbody data-platforms></tbody>
+          </table>
+
+          <div class="section-title"><h3>Packages</h3><span class="sub">1,244 in 3 ecosystems</span></div>
+          <p class="hint" style="margin-bottom:12px">Packages follow their repository: it decides whether they exist and in which version. To pin a version by hand, detach the package; reading leaves it alone from then on.</p>
+          <div class="comp-tools">
+            <div class="segmented" role="group" aria-label="Ecosystem" data-eco-switch>
+              <span class="segmented-thumb" aria-hidden="true"></span>
+              <button type="button" aria-pressed="true" data-eco="npm">npm <span class="muted">1,088</span></button>
+              <button type="button" aria-pressed="false" data-eco="nuget">NuGet <span class="muted">142</span></button>
+              <button type="button" aria-pressed="false" data-eco="actions">GitHub Actions <span class="muted">14</span></button>
+            </div>
+            <label class="search"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span class="sr-only">Search packages</span><input class="input" type="search" placeholder="Search packages" data-pkg-search></label>
+          </div>
+          <div class="filter-row" role="group" aria-label="Filter packages" data-filters>
+            <button class="chip" type="button" aria-pressed="false" data-f="Direct">Direct</button>
+            <button class="chip" type="button" aria-pressed="false" data-f="Transitive">Transitive</button>
+            <button class="chip" type="button" aria-pressed="false" data-f="Runtime">Runtime</button>
+            <button class="chip" type="button" aria-pressed="false" data-f="Development">Development</button>
+            <button class="chip" type="button" aria-pressed="false" data-f="unknown">Version unknown</button>
+          </div>
+          <p class="sub" role="status" data-pkg-status></p>
+          <table class="ptable" aria-label="Packages">
+            <thead><tr><th scope="col">Package</th><th scope="col" class="end">Version</th><th scope="col">Relation</th><th scope="col">Used for</th><th scope="col" class="act"><span class="sr-only">Actions</span></th></tr></thead>
+            <tbody data-packages></tbody>
+          </table>
+          <p class="ptable-foot" style="margin-top:8px" data-pkg-foot></p>
+        </section>
+      </div>
+
+      <div class="span-4 stack">
+        <!-- Coverage (task 2.8) -->
+        <section class="card rise" aria-labelledby="h-coverage">
+          <header><h2 id="h-coverage">Coverage</h2></header>
+          <div class="cover">
+            <div class="cover-figure"><b>1,226</b><span>of 1,251 components fully checkable</span></div>
+            <div class="cover-bar" aria-hidden="true"><i style="width:98%"></i></div>
+          </div>
+          <ul class="hints">
+            <li><span class="n">14</span><div><b>GitHub Actions not checkable yet</b><p>No source in this version reports on actions. They count once one does.</p></div></li>
+            <li><span class="n">6</span><div><b>NuGet packages without a version</b><p><span class="mono">tools/Migrator</span> has no packages.lock.json.</p><a class="link" href="#" data-show-unknown>Show them</a></div></li>
+            <li><span class="n">3</span><div><b>Services without a version</b><p>Azure SQL Database, Azure Kubernetes Service and Cloudflare are found only by advisories that name them.</p></div></li>
+            <li><span class="n">1</span><div><b>A version line, not a version</b><p>ASP.NET Core 10.0 comes from an image tag; the running patch is unknown.</p></div></li>
+            <li><span class="n">1</span><div><b>Free entry, unchecked</b><p>Contoso Forms is in no catalogue; no source can match it.</p></div></li>
+            <li><span class="n">1</span><div><b>Repository read partly</b><p>portal-infrastructure: dependency graph not enabled.</p></div></li>
+          </ul>
+        </section>
+
+        <!-- New suggestion after a later reading -->
+        <section class="card rise" aria-labelledby="h-to-confirm">
+          <header><h2 id="h-to-confirm">To confirm</h2><span class="meta" data-confirm-count>1 suggestion</span></header>
+          <div data-later-suggestion>
+            <div class="suggest">
+              <span class="suggest-head"><b>Redis 8</b><small>Database and messaging · new in commit a52e8b0</small></span>
+              <div class="evidence"><span><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg>portal-infrastructure · compose.yaml, line 31</span><code>image: redis:8-alpine</code></div>
+              <div class="btn-row" style="justify-content:flex-start;grid-column:1 / -1">
+                <button class="btn small" type="button" data-later="confirm">Confirm</button>
+                <a class="btn small ghost" href="setup-wizard.html#technologies">Change</a>
+                <button class="btn small ghost" type="button" data-later="dismiss">Dismiss</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <p class="footnote">Sample data. The project’s technology profile (master plan 4.5, 16.5, 16.6): repositories with their state, components grouped by platform and package, where each comes from, and the coverage hints of task 2.8. <a class="link" href="setup-wizard.html#repository">The setup wizard</a></p>
+  </div>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = window.A;
+  var HERON = '<svg class="heron" viewBox="-1.5 6.25 56 56" aria-hidden="true"><g stroke-width="4.6"><path class="back" pathLength="100" d="M6 25 L27 16.5 C29 11.5 36 10.5 39 14.5 C42 18.5 40 23.5 36.5 27.5 C33 31.5 33 36 37 40 C42 45 46 50 46 58"/><path class="front" pathLength="100" d="M6 25 L28 22 C29.5 26 27.5 29.5 26 32.5 C24 37 24.5 42 28.5 46 C31.5 49 32 53 32 58"/><path class="crest" pathLength="100" d="M39 14.5 L47 12"/></g></svg>';
+
+  /* ---------- Platforms and services ---------- */
+  var PLATFORMS = [
+    { name: 'ASP.NET Core', kind: 'Runtime and framework', version: '10.0', line: true, origin: 'repo', from: 'customer-portal · Dockerfile, line 14' },
+    { name: 'Umbraco CMS', kind: 'CMS and shop', version: '16.3.2', origin: 'repo', from: 'customer-portal · package Umbraco.Cms' },
+    { name: 'nginx', kind: 'Network and security', version: '1.29', line: true, origin: 'repo', from: 'customer-portal · web/Dockerfile, line 9' },
+    { name: 'uSync', kind: 'Plugin of Umbraco CMS', version: '16.0.4', origin: 'manual' },
+    { name: 'Contoso Forms', kind: 'Plugin of Umbraco CMS · free entry, unchecked', version: '3.2', origin: 'manual' },
+    { name: 'Azure SQL Database', kind: 'Database · service', version: null, origin: 'manual' },
+    { name: 'Azure Kubernetes Service', kind: 'Cloud and hosting · service', version: null, origin: 'manual' }
+  ];
+  function platformRow(p, i) {
+    var version = p.version ? '<span class="mono">' + p.version + '</span>' + (p.line ? '<small>version line</small>' : '') : '<span class="muted">No version</span>';
+    var origin = p.origin === 'repo'
+      ? '<span class="origin">' + A.icon('repo') + 'Repository</span><small>' + A.esc(p.from) + '</small>'
+      : '<span class="origin">Manual</span>';
+    var act = p.origin === 'repo'
+      ? '<button class="btn small ghost" type="button" data-detach="' + i + '" data-tip="Becomes manual: you set the version, reading no longer changes it">Detach</button>'
+      : '<button class="btn small ghost" type="button" data-soon="Editing a component">Edit</button>';
+    return '<tr><td><b>' + A.esc(p.name) + '</b><small>' + A.esc(p.kind) + '</small></td><td class="end">' + version + '</td><td class="wrap">' + origin + '</td><td class="act">' + act + '</td></tr>';
+  }
+  function renderPlatforms() { A.$('[data-platforms]').innerHTML = PLATFORMS.map(platformRow).join(''); }
+  A.$('[data-platforms]').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-detach]');
+    if (!btn) return;
+    var p = PLATFORMS[+btn.getAttribute('data-detach')], before = { origin: p.origin, from: p.from };
+    p.origin = 'manual';
+    renderPlatforms();
+    A.toast(p.name + ' is manual now; reading no longer changes it', { undo: function () { p.origin = before.origin; p.from = before.from; renderPlatforms(); } });
+  });
+  renderPlatforms();
+
+  /* ---------- Packages per ecosystem ---------- */
+  var PACKAGES = {
+    npm: { total: '1,088', rows: [
+      ['@angular/core', '22.2.1', 'Direct', 'Runtime', 'customer-portal'],
+      ['@angular/router', '22.2.1', 'Direct', 'Runtime', 'customer-portal'],
+      ['@jsverse/transloco', '8.1.0', 'Direct', 'Runtime', 'customer-portal'],
+      ['rxjs', '7.8.2', 'Direct', 'Runtime', 'customer-portal'],
+      ['tslib', '2.8.1', 'Transitive', 'Runtime', 'customer-portal', '@angular/core'],
+      ['@angular/build', '22.2.0', 'Direct', 'Development', 'customer-portal'],
+      ['esbuild', '0.25.9', 'Transitive', 'Development', 'customer-portal', '@angular/build'],
+      ['vite', '7.1.5', 'Transitive', 'Development', 'customer-portal', '@angular/build'],
+      ['postcss', '8.5.6', 'Transitive', 'Development', 'customer-portal', '@angular/build'],
+      ['zx', '8.8.1', 'Direct', 'Development', 'portal-infrastructure']
+    ] },
+    nuget: { total: '142', rows: [
+      ['Umbraco.Cms', '16.3.2', 'Direct', 'Runtime', 'customer-portal'],
+      ['Microsoft.EntityFrameworkCore.SqlServer', '10.0.0', 'Direct', 'Runtime', 'customer-portal'],
+      ['Microsoft.Data.SqlClient', '6.1.1', 'Transitive', 'Runtime', 'customer-portal', 'Microsoft.EntityFrameworkCore.SqlServer'],
+      ['Azure.Identity', '1.17.0', 'Direct', 'Runtime', 'customer-portal'],
+      ['Serilog.AspNetCore', '9.0.0', 'Direct', 'Runtime', 'customer-portal'],
+      ['DbUp.SqlServer', null, 'Direct', 'Unknown', 'customer-portal · tools/Migrator'],
+      ['Spectre.Console', null, 'Direct', 'Unknown', 'customer-portal · tools/Migrator']
+    ] },
+    actions: { total: '14', note: 'Not checkable yet: kept and shown, no findings.', rows: [
+      ['actions/checkout', 'v5', 'Direct', 'Unknown', 'customer-portal'],
+      ['actions/setup-node', 'v5', 'Direct', 'Unknown', 'customer-portal'],
+      ['actions/setup-dotnet', 'v5', 'Direct', 'Unknown', 'customer-portal'],
+      ['docker/build-push-action', 'v6', 'Direct', 'Unknown', 'customer-portal']
+    ] }
+  };
+  var eco = 'npm', filters = {}, query = '';
+  function renderPackages() {
+    var set = PACKAGES[eco];
+    var rows = set.rows.filter(function (r) {
+      if (query && r[0].toLowerCase().indexOf(query) === -1) return false;
+      if (filters.Direct && r[2] !== 'Direct') return false;
+      if (filters.Transitive && r[2] !== 'Transitive') return false;
+      if (filters.Runtime && r[3] !== 'Runtime') return false;
+      if (filters.Development && r[3] !== 'Development') return false;
+      if (filters.unknown && r[1]) return false;
+      return true;
+    });
+    A.$('[data-packages]').innerHTML = rows.length ? rows.map(function (r) {
+      return '<tr><td><b>' + A.esc(r[0]) + '</b><small>' + A.esc(r[4]) + '</small></td>' +
+        '<td class="end">' + (r[1] ? '<span class="mono">' + r[1] + '</span>' : '<span class="unknown">Version unknown</span>') + '</td>' +
+        '<td class="wrap">' + (r[2] === 'Transitive' ? 'Transitive<small>via ' + A.esc(r[5]) + '</small>' : r[2]) + '</td>' +
+        '<td class="wrap">' + (r[3] === 'Development' ? '<span class="tag dev">Development</span>' : r[3] === 'Unknown' ? '<span class="muted">Unknown</span>' : 'Runtime') + '</td>' +
+        '<td class="act"><button class="btn small ghost" type="button" data-soon="Detaching a package">Detach</button></td></tr>';
+    }).join('') : '<tr><td colspan="5" class="sub">No package of this sample matches.</td></tr>';
+    var any = query || Object.keys(filters).some(function (k) { return filters[k]; });
+    A.$('[data-pkg-status]').textContent = any ? rows.length + ' of this sample match' : '';
+    A.$('[data-pkg-foot]').textContent = (set.note ? set.note + ' ' : '') + 'Showing ' + set.rows.length + ' of ' + set.total + ' (sample).';
+  }
+  var thumbPlace = A.slider(A.$('[data-eco-switch]'), A.$('.segmented-thumb'), '[aria-pressed="true"]');
+  A.$$('[data-eco]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      A.$$('[data-eco]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      eco = b.getAttribute('data-eco');
+      thumbPlace(true);
+      A.transition(renderPackages);
+    });
+  });
+  A.$$('[data-f]').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var f = chip.getAttribute('data-f');
+      filters[f] = !filters[f];
+      chip.setAttribute('aria-pressed', String(!!filters[f]));
+      A.transition(renderPackages);
+    });
+  });
+  A.$('[data-pkg-search]').addEventListener('input', function (e) { query = e.target.value.trim().toLowerCase(); renderPackages(); });
+  A.$('[data-show-unknown]').addEventListener('click', function (e) {
+    e.preventDefault();
+    A.$('[data-eco="nuget"]').click();
+    if (!filters.unknown) A.$('[data-f="unknown"]').click();
+    A.$('#h-components').scrollIntoView({ behavior: A.reduced ? 'auto' : 'smooth', block: 'start' });
+  });
+  renderPackages();
+
+  /* ---------- Read now: the Draw loader in place, then the new time ---------- */
+  function readNow(row) {
+    var btn = A.$('[data-read-now]', row), state = A.$('.link-state', row), was = state.innerHTML;
+    btn.disabled = true;
+    state.innerHTML = '<span class="running" role="status">' + HERON + 'Reading</span>';
+    setTimeout(function () {
+      state.innerHTML = was;
+      btn.disabled = false;
+      var meta = A.$('.link-meta span:nth-child(2)', row);
+      if (meta && /read/.test(meta.textContent)) meta.innerHTML = meta.innerHTML.replace(/read [^<]*$/, 'read just now');
+      A.toast('Read ' + A.$('.link-name span', row).textContent.split('/')[1] + ': no change since the last commit');
+    }, A.reduced ? 600 : 2400);
+  }
+  A.$$('[data-read-now]').forEach(function (b) { b.addEventListener('click', function () { readNow(b.closest('.link-row')); }); });
+  A.$('[data-read-all]').addEventListener('click', function () { A.$$('.link-row').forEach(readNow); });
+
+  /* ---------- The held-back shrink ---------- */
+  A.$$('[data-shrink]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var box = A.$('.shrink');
+      if (b.getAttribute('data-shrink') === 'keep') {
+        box.outerHTML = '<p class="sub" style="grid-column:1/-1">Kept commit 4f2a9c1. Ardea asks again when a new commit changes the package list.</p>';
+        A.toast('Kept the current 1,198 packages');
+      } else {
+        A.toast('Applying 7d01e3a is not part of this mockup', { plain: true });
+      }
+    });
+  });
+
+  /* ---------- A suggestion from a later reading ---------- */
+  A.$$('[data-later]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var confirm = b.getAttribute('data-later') === 'confirm';
+      A.$('[data-later-suggestion]').innerHTML = '<p class="sub">' + (confirm ? 'Redis 8 is part of the profile now, from compose.yaml.' : 'Dismissed. Not suggested again while compose.yaml keeps this line.') + '</p>';
+      A.$('[data-confirm-count]').textContent = 'Nothing open';
+      if (confirm) { PLATFORMS.push({ name: 'Redis', kind: 'Database and messaging', version: '8', line: true, origin: 'repo', from: 'portal-infrastructure · compose.yaml, line 31' }); renderPlatforms(); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

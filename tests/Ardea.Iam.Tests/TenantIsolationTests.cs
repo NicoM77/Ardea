@@ -85,6 +85,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["PATCH /api/v1/orgs/{orgId}/projects/{projectId}/repositories/{linkId}"] = _ => new { @ref = "main" },
         ["DELETE /api/v1/orgs/{orgId}/projects/{projectId}/repositories/{linkId}"] = _ => null,
         ["POST /api/v1/orgs/{orgId}/projects/{projectId}/repositories/{linkId}/sync"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/projects/{projectId}/repositories/{linkId}/confirm-shrink"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/projects/{projectId}/suggestions"] = _ => null,
         ["PATCH /api/v1/orgs/{orgId}/projects/{projectId}/suggestions/{id}"] = _ => new { decision = "accept" },
     };

@@ -417,6 +417,42 @@ export class RepositoriesService {
     );
   }
 
+ confirmRepositoryShrink<TData = void>(orgId: string,
+    projectId: string,
+    linkId: string, options?: HttpClientBodyOptions): Observable<TData>;
+  confirmRepositoryShrink<TData = void>(
+    orgId: string,
+    projectId: string,
+    linkId: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/orgs/${orgId}/projects/${projectId}/repositories/${linkId}/confirm-shrink`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/orgs/${orgId}/projects/${projectId}/repositories/${linkId}/confirm-shrink`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/orgs/${orgId}/projects/${projectId}/repositories/${linkId}/confirm-shrink`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
  decideSuggestion<TData = SuggestionView>(orgId: string,
     projectId: string,
     id: string,
@@ -466,10 +502,12 @@ export type ListSuggestionsResourceResult = NonNullable<SuggestionView[]>
 
 
 
+
 export type CreateRepositoryLinkClientResult = NonNullable<LinkView>
 export type UpdateRepositoryLinkClientResult = NonNullable<LinkView>
 export type DeleteRepositoryLinkClientResult = NonNullable<void>
 export type SyncRepositoryLinkClientResult = NonNullable<void>
+export type ConfirmRepositoryShrinkClientResult = NonNullable<void>
 export type DecideSuggestionClientResult = NonNullable<SuggestionView>
 
 /**

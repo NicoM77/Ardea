@@ -78,7 +78,7 @@ Organisations with projects and technology profile; profile from GitHub reposito
 | 2.10 | GitHub access with encrypted token, check, expiry, list of readable repositories; GitHub Enterprise Server hosts in administration | 2.3, 2.9 | ✅ |
 | 2.11 | Connection via `IRepositoryHost`: branch head with ETag, SBOM request, file tree, files with limits; readers for SPDX, `packages.lock.json`, `package-lock.json` | 2.10 | ✅ |
 | 2.12 | Detection rules for Dockerfile, Compose, `global.json`, project files, `engines` and `.nvmrc`, `composer.json`, `go.mod`; image names in the catalogue; suggestions with evidence | 2.4, 2.11 | ✅ |
-| 2.13 | `IndexRepository` job with due time and system operation; reconcile per 16.5 holding back much smaller states; `repository.unavailable`; audit with commit as origin | 2.5, 2.11, 2.12 | ⬜ |
+| 2.13 | `IndexRepository` job with due time and system operation; reconcile per 16.5 holding back much smaller states; `repository.unavailable`; audit with commit as origin | 2.5, 2.11, 2.12 | ✅ |
 
 ### Phase 3 · Findings, actions and their UI (6–8 weeks)
 

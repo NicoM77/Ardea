@@ -6,7 +6,7 @@ using Ardea.Catalog.Contracts;
 namespace Ardea.Assets.Repositories.Detection;
 
 /// <summary>A file of the repository at the read commit; paths are compared, never resolved (master plan 16.9).</summary>
-internal sealed record RepositoryFile(string Path, string Content);
+internal sealed record FileContent(string Path, string Content);
 
 /// <summary>Where a suggestion comes from: file, line (1-based) and the value read, e.g. <c>FROM mcr.microsoft.com/dotnet/aspnet:10.0</c>.</summary>
 internal sealed record Evidence(string File, int Line, string Value);
@@ -48,7 +48,7 @@ internal static partial class PlatformDetection
     }
 
     /// <summary>Applies every rule; one suggestion per product and version line, with all its evidence.</summary>
-    public static async Task<IReadOnlyList<PlatformSuggestion>> DetectAsync(IEnumerable<RepositoryFile> files, IProductCatalog catalog, CancellationToken cancellationToken)
+    public static async Task<IReadOnlyList<PlatformSuggestion>> DetectAsync(IEnumerable<FileContent> files, IProductCatalog catalog, CancellationToken cancellationToken)
     {
         var found = new List<(string Key, string? Line, Evidence Evidence)>();
         foreach (var file in files)
@@ -90,7 +90,7 @@ internal static partial class PlatformDetection
         return match is { Success: true } ? match.Groups["line"].Value : null;
     }
 
-    private static IEnumerable<(string, bool, string?, Evidence)> Dockerfile(RepositoryFile file)
+    private static IEnumerable<(string, bool, string?, Evidence)> Dockerfile(FileContent file)
     {
         var args = new Dictionary<string, string>(StringComparer.Ordinal);
         var stages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -126,7 +126,7 @@ internal static partial class PlatformDetection
         }
     }
 
-    private static IEnumerable<(string, bool, string?, Evidence)> Compose(RepositoryFile file)
+    private static IEnumerable<(string, bool, string?, Evidence)> Compose(FileContent file)
     {
         var lines = Lines(file.Content);
         for (var i = 0; i < lines.Length; i++)
@@ -139,13 +139,13 @@ internal static partial class PlatformDetection
         }
     }
 
-    private static IEnumerable<(string, bool, string?, Evidence)> GlobalJson(RepositoryFile file)
+    private static IEnumerable<(string, bool, string?, Evidence)> GlobalJson(FileContent file)
     {
         var version = ReadJson(file, root => root.TryGetProperty("sdk", out var sdk) && sdk.TryGetProperty("version", out var v) ? v.GetString() : null);
         return version is null ? [] : [("dotnet", false, VersionLine(version), new Evidence(file.Path, LineOf(file.Content, version), $"sdk.version {version}"))];
     }
 
-    private static IEnumerable<(string, bool, string?, Evidence)> ProjectFile(RepositoryFile file)
+    private static IEnumerable<(string, bool, string?, Evidence)> ProjectFile(FileContent file)
     {
         var results = new List<(string, bool, string?, Evidence)>();
         string? sdk = null;
@@ -204,7 +204,7 @@ internal static partial class PlatformDetection
         return results;
     }
 
-    private static IEnumerable<(string, bool, string?, Evidence)> PackageJson(RepositoryFile file)
+    private static IEnumerable<(string, bool, string?, Evidence)> PackageJson(FileContent file)
     {
         var node = ReadJson(file, root => root.TryGetProperty("engines", out var engines) && engines.ValueKind == JsonValueKind.Object
             && engines.TryGetProperty("node", out var n) && n.ValueKind == JsonValueKind.String ? n.GetString() : null);
@@ -214,14 +214,14 @@ internal static partial class PlatformDetection
             : [("nodejs", false, line.Split('.')[0], new Evidence(file.Path, LineOf(file.Content, node), $"engines.node {node}"))];
     }
 
-    private static IEnumerable<(string, bool, string?, Evidence)> NodeVersionFile(RepositoryFile file)
+    private static IEnumerable<(string, bool, string?, Evidence)> NodeVersionFile(FileContent file)
     {
         var text = Lines(file.Content).FirstOrDefault(l => l.Trim().Length > 0)?.Trim();
         // lts/iron and similar aliases name no version.
         return VersionLine(text) is { } line ? [("nodejs", false, line.Split('.')[0], new Evidence(file.Path, 1, text!))] : [];
     }
 
-    private static IEnumerable<(string, bool, string?, Evidence)> ComposerJson(RepositoryFile file)
+    private static IEnumerable<(string, bool, string?, Evidence)> ComposerJson(FileContent file)
     {
         var php = ReadJson(file, root => root.TryGetProperty("require", out var require) && require.ValueKind == JsonValueKind.Object
             && require.TryGetProperty("php", out var p) && p.ValueKind == JsonValueKind.String ? p.GetString() : null);
@@ -230,7 +230,7 @@ internal static partial class PlatformDetection
             : [("php", false, line, new Evidence(file.Path, LineOf(file.Content, php), $"require.php {php}"))];
     }
 
-    private static IEnumerable<(string, bool, string?, Evidence)> GoMod(RepositoryFile file)
+    private static IEnumerable<(string, bool, string?, Evidence)> GoMod(FileContent file)
     {
         var lines = Lines(file.Content);
         for (var i = 0; i < lines.Length; i++)
@@ -244,7 +244,7 @@ internal static partial class PlatformDetection
         return [];
     }
 
-    private static string? ReadJson(RepositoryFile file, Func<JsonElement, string?> read)
+    private static string? ReadJson(FileContent file, Func<JsonElement, string?> read)
     {
         try
         {

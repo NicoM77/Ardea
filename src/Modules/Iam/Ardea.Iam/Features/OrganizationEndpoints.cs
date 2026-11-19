@@ -1,5 +1,6 @@
 using Ardea.Iam.Domain;
 using Ardea.Iam.Persistence;
+using Ardea.Platform.Ai;
 using Ardea.Platform.Audit;
 using Ardea.Platform.Email;
 using Ardea.Platform.Http;
@@ -18,9 +19,15 @@ namespace Ardea.Iam.Features;
 
 internal sealed record CreateOrganizationRequest(string? Name, string? Slug);
 
-internal sealed record UpdateOrganizationRequest(string? Name, string? Locale, string? TimeZone, bool? RequireMfa);
+/// <summary>Changes the organisation's settings; a field left out stays as it is.</summary>
+/// <param name="Name">The name.</param>
+/// <param name="Locale">The language of e-mails and analyses.</param>
+/// <param name="TimeZone">The IANA time zone for digests and deadlines.</param>
+/// <param name="RequireMfa">Whether members must use two-factor authentication.</param>
+/// <param name="AiPolicy">The data policy for language models: <c>none</c>, <c>local_only</c> (the default) or <c>cloud_allowed</c>.</param>
+internal sealed record UpdateOrganizationRequest(string? Name, string? Locale, string? TimeZone, bool? RequireMfa, string? AiPolicy);
 
-internal sealed record OrganizationView(Guid Id, string Slug, string Name, string Locale, string TimeZone, bool RequireMfa, string Role, DateTimeOffset CreatedAt);
+internal sealed record OrganizationView(Guid Id, string Slug, string Name, string Locale, string TimeZone, bool RequireMfa, string AiPolicy, string Role, DateTimeOffset CreatedAt);
 
 internal sealed record MemberView(Guid UserId, string DisplayName, string Email, string Role, DateTimeOffset JoinedAt);
 
@@ -130,7 +137,8 @@ internal static class OrganizationEndpoints
             .Check("name", request.Name is null || name!.Length > 0, "Enter a name.")
             .MaxLength("name", name, 200)
             .Check("locale", request.Locale is null || Locales.Contains(request.Locale), $"Choose one of {string.Join(", ", Locales)}.")
-            .Check("timeZone", request.TimeZone is null || IsTimeZone(request.TimeZone), "Choose a time zone such as Europe/Zurich.");
+            .Check("timeZone", request.TimeZone is null || IsTimeZone(request.TimeZone), "Choose a time zone such as Europe/Zurich.")
+            .Check("aiPolicy", request.AiPolicy is null || AiDataPolicies.All.Contains(request.AiPolicy), $"Choose one of {string.Join(", ", AiDataPolicies.All)}.");
         if (errors.Any)
         {
             return IamErrors.Validation(errors.Errors);
@@ -150,6 +158,11 @@ internal static class OrganizationEndpoints
         if (request.RequireMfa is { } requireMfa)
         {
             organization.Settings = organization.Settings with { RequireMfa = requireMfa };
+        }
+
+        if (request.AiPolicy is { } aiPolicy)
+        {
+            organization.Settings = organization.Settings with { AiPolicy = aiPolicy };
         }
 
         await db.SaveChangesAsync(cancellationToken);
@@ -406,7 +419,7 @@ internal static class OrganizationEndpoints
     }
 
     private static OrganizationView View(Organization o, string role) =>
-        new(o.OrganizationId, o.Slug, o.Name, o.Locale, o.TimeZone, o.Settings.RequireMfa, role, o.CreatedAt);
+        new(o.OrganizationId, o.Slug, o.Name, o.Locale, o.TimeZone, o.Settings.RequireMfa, o.Settings.AiPolicy ?? AiDataPolicies.Default, role, o.CreatedAt);
 
     private static InvitationView View(Invitation i, string inviter, DateTimeOffset now) =>
         new(i.Id, i.Email, i.Role, i.ExpiresAt, i.ExpiresAt <= now, inviter, i.CreatedAt);

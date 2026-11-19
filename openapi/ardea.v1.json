@@ -7951,6 +7951,7 @@
           "locale",
           "timeZone",
           "requireMfa",
+          "aiPolicy",
           "role",
           "createdAt"
         ],
@@ -7974,6 +7975,9 @@
           },
           "requireMfa": {
             "type": "boolean"
+          },
+          "aiPolicy": {
+            "type": "string"
           },
           "role": {
             "type": "string"
@@ -9354,7 +9358,8 @@
           "name",
           "locale",
           "timeZone",
-          "requireMfa"
+          "requireMfa",
+          "aiPolicy"
         ],
         "type": "object",
         "properties": {
@@ -9380,6 +9385,12 @@
             "type": [
               "null",
               "boolean"
+            ]
+          },
+          "aiPolicy": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }

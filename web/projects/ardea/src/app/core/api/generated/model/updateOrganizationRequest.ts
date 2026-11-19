@@ -15,4 +15,6 @@ export interface UpdateOrganizationRequest {
   timeZone: string | null;
   /** @nullable */
   requireMfa: boolean | null;
+  /** @nullable */
+  aiPolicy: string | null;
 }

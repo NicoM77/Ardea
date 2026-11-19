@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Ardea.TestSupport;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
 
@@ -169,6 +170,31 @@ public sealed class OrganizationTests(PostgresServer server)
         await EnableTotpAsync(member);
         Assert.Equal(HttpStatusCode.OK, (await member.GetAsync($"/api/v1/orgs/{orgId}/members")).StatusCode);
         await ExpectProblem(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}", new { locale = "xx" }), HttpStatusCode.BadRequest, "validation_failed");
+    }
+
+    [Fact]
+    public async Task The_ai_data_policy_starts_local_only_and_only_administrators_change_it()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var owner = await SetUpAsync(host);
+        var orgId = await CreateOrgAsync(owner, "Acme");
+        using var member = await JoinAsync(host, owner, orgId, "member@example.org", "member");
+
+        // Nothing leaves the operator's control until the organisation allows it (master plan 7.8).
+        Assert.Equal("local_only", (await Json(await owner.GetAsync($"/api/v1/orgs/{orgId}"))).GetProperty("aiPolicy").GetString());
+        await ExpectProblem(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}", new { aiPolicy = "everywhere" }), HttpStatusCode.BadRequest, "validation_failed");
+        await ExpectProblem(await member.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}", new { aiPolicy = "cloud_allowed" }), HttpStatusCode.Forbidden, "insufficient_role");
+
+        var updated = await Json(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}", new { aiPolicy = "cloud_allowed" }));
+        Assert.Equal("cloud_allowed", updated.GetProperty("aiPolicy").GetString());
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.audit_event WHERE action = 'org.settings_changed' AND data->>'aiPolicy' = 'cloud_allowed'"));
+
+        // Other modules read it through the contract, inside the organisation's unit of work.
+        await using var scope = host.Services.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<Ardea.Platform.Tenancy.TenantContext>().SetOrganization(orgId);
+        var profile = await scope.ServiceProvider.GetRequiredService<Ardea.Iam.Contracts.IOrganizationProfiles>().FindAsync(orgId, TestContext.Current.CancellationToken);
+        Assert.Equal(("cloud_allowed", "en"), (profile!.AiPolicy, profile.Locale));
+        Assert.Null(await scope.ServiceProvider.GetRequiredService<Ardea.Iam.Contracts.IOrganizationProfiles>().FindAsync(Guid.CreateVersion7(), TestContext.Current.CancellationToken));
     }
 
     private static async Task<ApiClient> SetUpAsync(ApiTestHost host)

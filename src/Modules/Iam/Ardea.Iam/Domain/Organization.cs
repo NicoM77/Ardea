@@ -32,6 +32,12 @@ internal sealed record OrganizationSettings
     /// <summary>Members must use two-factor authentication to work in the organisation (master plan 9.3).</summary>
     public bool RequireMfa { get; init; }
 
+    /// <summary>
+    /// Where requests to language models may go (master plan 7.8): <c>none</c>, <c>local_only</c> or
+    /// <c>cloud_allowed</c>; empty means the default, <c>local_only</c>.
+    /// </summary>
+    public string? AiPolicy { get; init; }
+
     /// <summary>Where the setup wizard stands (master plan 11.6, 10.2); empty until it is first saved.</summary>
     public SetupState? Setup { get; init; }
 }

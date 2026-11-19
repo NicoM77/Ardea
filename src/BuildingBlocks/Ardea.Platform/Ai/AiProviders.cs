@@ -128,3 +128,30 @@ public interface IAiProviders
     /// <summary>Asks the provider for a one-word answer, with a time limit.</summary>
     Task<AiConnectionResult?> TestAsync(string name, CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// An organisation's data policy for language models (master plan 7.8, 9.4): <c>none</c> sends nothing,
+/// <c>local_only</c> only to providers marked local, <c>cloud_allowed</c> to any. The default is
+/// <c>local_only</c>: nothing leaves the operator's control until an administrator of the organisation allows it.
+/// </summary>
+public static class AiDataPolicies
+{
+    public const string None = "none";
+    public const string LocalOnly = "local_only";
+    public const string CloudAllowed = "cloud_allowed";
+    public const string Default = LocalOnly;
+
+    public static readonly string[] All = [None, LocalOnly, CloudAllowed];
+
+    /// <summary>
+    /// The providers an organisation's requests may go to, in the order to try them: local providers first,
+    /// then, only under <c>cloud_allowed</c>, the others. A provider outside this list is never used, not even
+    /// when every listed one fails (phase 4 acceptance).
+    /// </summary>
+    public static IReadOnlyList<AiProviderInfo> Allowed(string? policy, IReadOnlyList<AiProviderInfo> providers) => (policy ?? Default) switch
+    {
+        LocalOnly => [.. providers.Where(p => p.Local)],
+        CloudAllowed => [.. providers.Where(p => p.Local), .. providers.Where(p => !p.Local)],
+        _ => [],
+    };
+}

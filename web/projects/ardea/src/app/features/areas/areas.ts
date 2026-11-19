@@ -95,8 +95,6 @@ export const AREAS: readonly Area[] = [
     path: 'team',
     label: 'nav.team',
     icon: LucideUsers.icon,
-    emptyHeading: 'areas.team.emptyHeading',
-    emptyText: 'areas.team.emptyText',
     group: 'foot',
   },
   {
@@ -134,8 +132,13 @@ export function areaUrl(area: Area, organizationSlug: string | null | undefined)
   return organizationSlug ? `/o/${organizationSlug}/${area.path}` : null;
 }
 
-/** The organization's pages below `/o/:slug`. Each is a placeholder with its empty state for now. */
-export const AREA_ROUTES: Routes = AREAS.filter((area) => !isInstanceWide(area)).map((area) => ({
+/**
+ * The organization's pages below `/o/:slug` that are still placeholders: their empty state says
+ * what will appear. A built page (Team) has its own route and no empty state here.
+ */
+export const AREA_ROUTES: Routes = AREAS.filter(
+  (area) => !isInstanceWide(area) && !!area.emptyHeading,
+).map((area) => ({
   path: area.path,
   title: area.label,
   data: { area: area.id },

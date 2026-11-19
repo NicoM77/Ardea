@@ -21,7 +21,20 @@ const PAGES: { path: string; signedIn: boolean; title: string; heading: string }
     title: 'Confirm your e-mail address · Ardea',
     heading: 'Confirm your e-mail address',
   },
+  {
+    path: '/invitations/sample-token',
+    signedIn: false,
+    title: 'Invitation · Ardea',
+    heading: 'Join Example Org',
+  },
   { path: '/o/example/overview', signedIn: true, title: 'Overview · Ardea', heading: 'Overview' },
+  { path: '/o/example/team', signedIn: true, title: 'Team · Ardea', heading: 'Team' },
+  {
+    path: '/organizations/new',
+    signedIn: true,
+    title: 'Create organization · Ardea',
+    heading: 'Create organization',
+  },
   { path: '/admin', signedIn: true, title: 'Administration · Ardea', heading: 'Administration' },
   {
     path: '/account/two-factor',

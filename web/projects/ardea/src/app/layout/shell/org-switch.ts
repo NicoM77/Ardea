@@ -2,12 +2,12 @@ import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { LucideCheck, LucideChevronsUpDown } from '@lucide/angular';
+import { LucideCheck, LucideChevronsUpDown, LucidePlus } from '@lucide/angular';
 import type { SessionOrganization } from '../../core/api/client';
 
 /**
- * The organization the pages belong to, and a menu to switch to another one. With no membership
- * it says so instead of offering an empty menu.
+ * The organization the pages belong to, and a menu to switch to another one or create one. With
+ * no membership it says so and leads to creating one instead of offering an empty menu.
  */
 @Component({
   selector: 'ardea-org-switch',
@@ -19,27 +19,30 @@ import type { SessionOrganization } from '../../core/api/client';
     TranslocoPipe,
     LucideCheck,
     LucideChevronsUpDown,
+    LucidePlus,
   ],
   template: `
     @if (current(); as org) {
-      <button
-        type="button"
-        class="switch"
-        [cdkMenuTriggerFor]="menu"
-        [attr.aria-label]="'shell.org.switchLabel' | transloco: { name: org.name }"
-      >
+      <!-- The name comes from the visible text, framed by hidden words (WCAG 2.5.3, label in name). -->
+      <button type="button" class="switch" [cdkMenuTriggerFor]="menu">
         <span class="mark" aria-hidden="true">{{ mark() }}</span>
         <span class="name">
+          <span class="sr-only">{{ 'shell.org.switchPrefix' | transloco }}</span>
           {{ org.name }}
           <small>{{ 'shell.org.count' | transloco: { count: organizations().length } }}</small>
+          <span class="sr-only">{{ 'shell.org.switchHint' | transloco }}</span>
         </span>
         <svg lucideChevronsUpDown aria-hidden="true"></svg>
       </button>
     } @else {
-      <div class="switch is-empty">
+      <a class="switch is-empty" routerLink="/organizations/new">
         <span class="mark" aria-hidden="true">–</span>
-        <span class="name">{{ 'shell.org.none' | transloco }}</span>
-      </div>
+        <span class="name">
+          {{ 'shell.org.none' | transloco }}
+          <small>{{ 'shell.org.createShort' | transloco }}</small>
+        </span>
+        <svg lucidePlus aria-hidden="true"></svg>
+      </a>
     }
 
     <ng-template #menu>
@@ -59,6 +62,11 @@ import type { SessionOrganization } from '../../core/api/client';
             }
           </a>
         }
+        <div class="ui-menu-sep" role="separator"></div>
+        <a class="ui-menu-item" cdkMenuItem routerLink="/organizations/new">
+          <svg lucidePlus aria-hidden="true"></svg>
+          <span class="grow">{{ 'shell.org.create' | transloco }}</span>
+        </a>
       </div>
     </ng-template>
   `,
@@ -84,7 +92,7 @@ import type { SessionOrganization } from '../../core/api/client';
         border-color var(--t-hover) ease,
         transform var(--t-press) var(--ease-out);
     }
-    .switch:active:not(.is-empty) {
+    .switch:active {
       transform: scale(0.98);
     }
     .switch:focus-visible {
@@ -92,7 +100,6 @@ import type { SessionOrganization } from '../../core/api/client';
       outline-offset: var(--focus-offset);
     }
     .switch.is-empty {
-      cursor: default;
       color: var(--muted);
     }
     .mark {
@@ -137,7 +144,7 @@ import type { SessionOrganization } from '../../core/api/client';
       white-space: nowrap;
     }
     @media (hover: hover) and (pointer: fine) {
-      .switch:not(.is-empty):hover {
+      .switch:hover {
         border-color: var(--control);
       }
     }

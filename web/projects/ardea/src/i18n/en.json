@@ -67,10 +67,6 @@
       "emptyHeading": "No notification rules yet",
       "emptyText": "Rules decide who hears about which actions, by email, push or webhook."
     },
-    "team": {
-      "emptyHeading": "No one else here yet",
-      "emptyText": "Members, their roles and open invitations appear here."
-    },
     "settings": {
       "emptyHeading": "Nothing to set yet",
       "emptyText": "The organization, its deadlines and its AI data policy will be set here."
@@ -173,8 +169,8 @@
     "noOrganization": {
       "title": "Welcome",
       "heading": "You are not in an organization yet",
-      "text": "Ask someone in your organization to invite you. The link in their email adds you to it.",
-      "textAdmin": "This instance has no organization yet. The setup wizard that creates one is not part of this version yet."
+      "text": "Create one to start, or ask someone in your organization to invite you. The link in their invitation adds you to it.",
+      "create": "Create organization"
     }
   },
   "notFound": {
@@ -273,7 +269,8 @@
         "invitation": "This invitation is no longer valid. Ask the person who invited you to send a new one.",
         "invitationRequired": "This instance takes new accounts by invitation only. Open the link from your invitation e-mail.",
         "closed": "This instance does not take new accounts. Ask its administrator.",
-        "rejected": "The account could not be created. Check the entries and try again."
+        "rejected": "The account could not be created. Check the entries and try again.",
+        "signedIn": "You are already signed in. Sign out first to create another account."
       }
     },
     "forgot": {
@@ -379,10 +376,13 @@
       "close": "Close menu"
     },
     "org": {
-      "switchLabel": "Organization: {name}. Switch organization",
+      "switchPrefix": "Organization:",
+      "switchHint": "Switch organization",
       "count": "{count, plural, one {# organization} other {# organizations}}",
       "none": "No organization",
-      "menuLabel": "Switch to"
+      "menuLabel": "Switch to",
+      "create": "Create organization",
+      "createShort": "Create one"
     },
     "account": {
       "label": "Account: {name}",
@@ -611,5 +611,140 @@
     "decidedTitle": "Decided",
     "decidedAt": "Kept separate on {when}",
     "noDecided": "No case has been decided yet."
+  },
+  "organizations": {
+    "create": {
+      "title": "Create organization",
+      "lead": "An organization holds your projects, actions and team. You become its owner.",
+      "name": "Name",
+      "nameHint": "Your company, team or project, as members know it.",
+      "slug": "Address",
+      "slugHint": "Its pages will be at {path}. Leave empty to use the name.",
+      "submit": "Create organization",
+      "cancel": "Cancel",
+      "errors": {
+        "nameRequired": "Enter a name.",
+        "nameTooLong": "Use at most 200 characters.",
+        "slugFormat": "Use lower-case letters, digits and hyphens, at most 50 characters, starting and ending with a letter or digit.",
+        "slugTaken": "This address is taken. Type another one.",
+        "failed": "The organization could not be created. Try again."
+      }
+    }
+  },
+  "team": {
+    "lead": "Who works in {name}, with which role, and who is invited.",
+    "cancel": "Cancel",
+    "tryAgain": "Try again",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member",
+      "viewer": "Viewer"
+    },
+    "roleHints": {
+      "owner": "Everything an admin can do, and hands ownership on.",
+      "admin": "Invites members, changes roles and sets rules and the two-factor requirement.",
+      "member": "Works on actions and projects: sets status, assigns and adds notes.",
+      "viewer": "Reads actions, projects and the overview, and changes nothing."
+    },
+    "members": {
+      "title": "Members",
+      "count": "{count, plural, one {# member} other {# members}}",
+      "you": "(you)",
+      "roleOf": "Role of {name}",
+      "transfer": "Make owner",
+      "transferLabel": "Make owner: {name}",
+      "remove": "Remove",
+      "removeLabel": "Remove {name}",
+      "leave": "Leave organization",
+      "confirmTransfer": "Make {name} the owner of {organization}? You become an admin, and only the new owner can hand ownership back.",
+      "confirmRemove": "Remove {name} from {organization}? They lose access at once. An invitation brings them back.",
+      "confirmLeave": "Leave {organization}? You lose access at once. Only a new invitation brings you back.",
+      "transferred": "{name} is now the owner. You are an admin.",
+      "removed": "{name} is no longer a member.",
+      "roleChanged": "{name} is now {role}.",
+      "loading": "Loading members",
+      "loadFailed": "The members could not be loaded."
+    },
+    "invite": {
+      "title": "Invite someone",
+      "email": "Email",
+      "role": "Role",
+      "roleInvalid": "Choose admin, member or viewer.",
+      "submit": "Send invitation",
+      "sent": "Invitation sent to {email}.",
+      "linkHeading": "Pass this link on",
+      "linkText": "This instance does not send email, so give the link to {email} yourself. It works until {until} and is shown only now.",
+      "linkLabel": "Invitation link",
+      "copy": "Copy link",
+      "done": "Done",
+      "failed": "The invitation could not be created. Try again."
+    },
+    "invitations": {
+      "title": "Open invitations",
+      "meta": "{role} · invited by {by}",
+      "until": "Until {date}",
+      "expired": "Expired",
+      "revoke": "Revoke",
+      "revokeLabel": "Revoke the invitation for {email}",
+      "revoked": "The invitation for {email} no longer works.",
+      "none": "No open invitations.",
+      "loading": "Loading invitations",
+      "loadFailed": "The invitations could not be loaded."
+    },
+    "mfa": {
+      "title": "Two-factor authentication",
+      "label": "Require two-factor authentication",
+      "hint": "Members without it see only a prompt to turn it on until they do.",
+      "save": "Save",
+      "savedOn": "Every member now needs two-factor authentication.",
+      "savedOff": "Two-factor authentication is no longer required.",
+      "turnOnOwn": "Turn it on for your account"
+    },
+    "mfaRequired": {
+      "title": "Two-factor authentication required",
+      "heading": "{name} requires two-factor authentication",
+      "text": "Turn it on for your account to open this organization. It takes a minute with an authenticator app.",
+      "action": "Turn on two-factor authentication"
+    },
+    "errors": {
+      "alreadyMember": "This person is already a member.",
+      "ownerRole": "The owner’s role changes only by handing ownership to another member.",
+      "insufficientRole": "Your role in this organization does not allow this.",
+      "mfaRequired": "This organization requires two-factor authentication. Turn it on for your account first.",
+      "mfaRequiredForYou": "Turn on two-factor authentication for your own account before you require it of others.",
+      "memberNotFound": "This person is no longer a member.",
+      "invitationNotFound": "This invitation was accepted or revoked in the meantime.",
+      "organizationNotFound": "This organization no longer exists, or you are no longer a member.",
+      "failed": "That did not work. Try again."
+    }
+  },
+  "invitation": {
+    "title": "Invitation",
+    "heading": "Join {organization}",
+    "lead": "{by} invited you to {organization} as {role, select, admin {an admin} member {a member} viewer {a viewer} other {a member}}.",
+    "for": "For",
+    "until": "Valid until",
+    "role": "Role",
+    "loading": "Loading the invitation",
+    "accept": "Accept invitation",
+    "signedOut": "Sign in with {email} to accept, or create an account with that address.",
+    "register": "Create account",
+    "signIn": "Sign in",
+    "home": "Go to Ardea",
+    "otherAccount": {
+      "heading": "This invitation is for another address",
+      "text": "You are signed in as {current}. Sign out, then sign in or create an account with {invited}.",
+      "signOut": "Sign out"
+    },
+    "invalid": {
+      "heading": "This invitation does not work"
+    },
+    "errors": {
+      "invalid": "It has expired, was revoked or was accepted already. Ask the person who invited you for a new one.",
+      "mismatch": "This invitation is for another email address. Sign in with that address.",
+      "signedIn": "You are already signed in.",
+      "failed": "The invitation could not be accepted. Try again."
+    }
   }
 }

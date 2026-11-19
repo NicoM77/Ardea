@@ -1,26 +1,34 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { LucideBuilding } from '@lucide/angular';
-import { UiEmptyState, UiPageHeader } from 'ui';
-import { Session } from '../../core/session/session';
+import { LucideBuilding, LucidePlus } from '@lucide/angular';
+import { UiButton, UiEmptyState, UiPageHeader } from 'ui';
 
-/** Signed in, but not a member of any organization yet: after setup, or before an invitation. */
+/**
+ * Signed in, but not a member of any organization yet: after setup, or after leaving the last
+ * one. Anyone may create an organization; joining an existing one takes an invitation.
+ */
 @Component({
   selector: 'ardea-no-organization-page',
-  imports: [TranslocoPipe, LucideBuilding, UiEmptyState, UiPageHeader],
+  imports: [
+    RouterLink,
+    TranslocoPipe,
+    LucideBuilding,
+    LucidePlus,
+    UiButton,
+    UiEmptyState,
+    UiPageHeader,
+  ],
   template: `
     <ui-page-header [heading]="'home.noOrganization.title' | transloco" />
     <ui-empty-state [heading]="'home.noOrganization.heading' | transloco">
       <svg uiEmptyIcon lucideBuilding aria-hidden="true"></svg>
-      @if (isAdmin()) {
-        {{ 'home.noOrganization.textAdmin' | transloco }}
-      } @else {
-        {{ 'home.noOrganization.text' | transloco }}
-      }
+      {{ 'home.noOrganization.text' | transloco }}
+      <a uiEmptyActions uiButton variant="primary" routerLink="/organizations/new">
+        <svg lucidePlus aria-hidden="true"></svg>
+        {{ 'home.noOrganization.create' | transloco }}
+      </a>
     </ui-empty-state>
   `,
 })
-export class NoOrganizationPage {
-  private readonly session = inject(Session);
-  protected readonly isAdmin = computed(() => this.session.user()?.isInstanceAdmin === true);
-}
+export class NoOrganizationPage {}

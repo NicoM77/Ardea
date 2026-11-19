@@ -63,6 +63,13 @@ export const routes: Routes = [
           import('./features/auth/confirm-email-page').then((m) => m.ConfirmEmailPage),
       },
       {
+        // The link from an invitation: signed in or out.
+        path: 'invitations/:token',
+        title: 'invitation.title',
+        loadComponent: () =>
+          import('./features/invitations/invitation-page').then((m) => m.InvitationPage),
+      },
+      {
         path: 'unavailable',
         title: 'unavailable.title',
         loadComponent: () =>
@@ -82,6 +89,14 @@ export const routes: Routes = [
         title: 'home.noOrganization.title',
         loadComponent: () =>
           import('./features/home/no-organization-page').then((m) => m.NoOrganizationPage),
+      },
+      {
+        path: 'organizations/new',
+        title: 'organizations.create.title',
+        loadComponent: () =>
+          import('./features/organizations/create-organization-page').then(
+            (m) => m.CreateOrganizationPage,
+          ),
       },
       {
         path: 'account/two-factor',
@@ -114,11 +129,19 @@ export const routes: Routes = [
       {
         path: 'o/:slug',
         canActivate: [organizationGuard],
+        // Holds the pages back while the organization requires two-factor authentication.
+        loadComponent: () =>
+          import('./features/organizations/organization-frame').then((m) => m.OrganizationFrame),
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'overview' },
           // Addresses from before entries and sources became instance-wide.
           { path: 'vulnerabilities', redirectTo: '/entries' },
           { path: 'sources', redirectTo: '/sources' },
+          {
+            path: 'team',
+            title: 'nav.team',
+            loadComponent: () => import('./features/team/team-page').then((m) => m.TeamPage),
+          },
           ...AREA_ROUTES,
         ],
       },

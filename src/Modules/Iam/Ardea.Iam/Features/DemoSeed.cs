@@ -65,13 +65,18 @@ internal sealed class DemoSeed : IDemoSeedStep
         var db = services.GetRequiredService<IamDbContext>();
         if (role == "owner")
         {
-            // The wizard counts as done, so the overview shows the data instead of offering the setup.
+            // The wizard counts as done, so the overview shows the data instead of offering the setup. No language model
+            // sees the demo: on an instance with one, the policy «none» keeps estimates from being queued for the worker.
             db.Organizations.Add(new Organization
             {
                 OrganizationId = organizationId,
                 Name = OrganizationName,
                 Slug = OrganizationSlug,
-                Settings = new OrganizationSettings { Setup = new SetupState { StepsDone = SetupEndpoints.Steps, CompletedAt = now } },
+                Settings = new OrganizationSettings
+                {
+                    AiPolicy = Platform.Ai.AiDataPolicies.None,
+                    Setup = new SetupState { StepsDone = SetupEndpoints.Steps, CompletedAt = now },
+                },
                 CreatedAt = now,
             });
         }

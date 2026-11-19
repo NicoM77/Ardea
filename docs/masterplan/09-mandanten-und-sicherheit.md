@@ -81,6 +81,7 @@ Keine Transaktion bleibt über einen Aufruf nach aussen offen, und Zeilensperren
 | Anmeldung | Welches Konto gehört zu dieser E-Mail-Adresse, und welchen Organisationen gehört es an? (benutzerbezogene Regel auf `membership`) |
 | Einladung annehmen | Zu welcher Organisation gehört dieser Token? |
 | Kennzahlen der Instanz | Zählwerte ohne Inhalte |
+| Selbstprüfung der Instanz | Welche Konten sind Instanz-Administratoren? (nur Kennungen; gelesen wird je Konto mit diesem Konto als Benutzer, ADR 043) |
 
 Jede dieser Fragen ist eine eigene, schmale Datenbankfunktion, die nur Kennungen oder Zählwerte liefert. Die Liste ist abschliessend; eine neue Systemoperation verlangt eine neue Funktion und einen ADR. Empfänger einer Regel werden nicht organisationsübergreifend aufgelöst: Das geschieht im Job der Organisation über das Mitgliederverzeichnis.
 

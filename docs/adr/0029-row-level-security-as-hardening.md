@@ -84,6 +84,7 @@ Every query bypasses the EF filter, so only the database separates tenants.
   | `notify.failed_event_count()` | instance status: notification events set aside after repeated failures, a count only (ADR 038) |
   | `notify.address_confirmations_since(address, since)` | limit on confirmation mails: how many organisations asked an address since a point in time, a count only (ADR 038) |
   | `assess.model_feedback_counts()` | quality of the model: per provider, model and prompt version, assessments, verdicts and the reviews that confirmed or corrected them, counts only (ADR 039) |
+  | `iam.instance_administrators()` | self-check: the accounts with the instance role, to mail an instance warning to, ids only; each account's row is then read acting as that account (ADR 043) |
 
 - `TenantIsolationTests` checks that every table has exactly one kind and the matching policy, and calls
   every organisation endpoint with foreign organisations and foreign object ids.

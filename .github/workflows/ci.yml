@@ -38,7 +38,9 @@ jobs:
       - name: Build
         run: dotnet build Ardea.slnx --no-restore -c Release
       - name: Test
-        run: dotnet test --solution Ardea.slnx --no-build -c Release
+        # A hanging test assembly fails after 8 minutes with its name, instead of the job's time limit
+        # cancelling everything silently (seen once in Ardea.Platform.Tests).
+        run: dotnet test --solution Ardea.slnx --no-build -c Release --timeout 8m
 
   dependencies:
     name: Dependencies

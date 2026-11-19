@@ -10195,7 +10195,7 @@
             "description": "The active warnings the instance administrators were mailed about, with the time of the last mail (ADR 043)."
           }
         },
-        "description": "The first administration (task 0.13, master plan 11.4): registration, SMTP with a test mail,\r\nabandoned jobs with retry, the installed version. Instance administrator only."
+        "description": "The first administration (task 0.13, master plan 11.4): registration, SMTP with a test mail,\nabandoned jobs with retry, the installed version. Instance administrator only."
       },
       "InvitationPreview": {
         "required": [
@@ -11997,7 +11997,7 @@
             }
           }
         },
-        "description": "Name patterns of a product under one spelling of its vendor (\u0060aliases\u0060, master plan 6.5).\r\nA pattern without placeholders matches every spelling with the same product key; \u0060*\u0060 stands\r\nfor any text, \u0060{line}\u0060 captures a version line, \u0060{platform}\u0060 a platform, e.g.\r\n\u0060.NET {line} installed on {platform}\u0060. Without string? ProductAlias.Vendor, the names match whatever\r\nvendor a source gives, so they must be distinctive."
+        "description": "Name patterns of a product under one spelling of its vendor (\u0060aliases\u0060, master plan 6.5).\nA pattern without placeholders matches every spelling with the same product key; \u0060*\u0060 stands\nfor any text, \u0060{line}\u0060 captures a version line, \u0060{platform}\u0060 a platform, e.g.\n\u0060.NET {line} installed on {platform}\u0060. Without string? ProductAlias.Vendor, the names match whatever\nvendor a source gives, so they must be distinctive."
       },
       "ProjectDetail": {
         "required": [
@@ -13122,7 +13122,7 @@
             ]
           }
         },
-        "description": "The system warns about itself when it no longer works reliably (master plan 12.7): a source not\r\nfetched for six hours, a stalled worker, failing deliveries. Users see the warning on the overview;\r\nthe instance administrator also sees the operating figures."
+        "description": "The system warns about itself when it no longer works reliably (master plan 12.7): a source not\nfetched for six hours, a stalled worker, failing deliveries. Users see the warning on the overview;\nthe instance administrator also sees the operating figures."
       },
       "SuggestionEvidenceView": {
         "required": [

@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, input, signal } from '@angular/core';
 import { form, FormField, FormRoot, required, validate } from '@angular/forms/signals';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -18,6 +18,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { AccountService, type MfaSetupResponse } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { safeReturnUrl } from '../../core/session/access';
 import { Session } from '../../core/session/session';
 import { fieldErrorKey, formatSharedKey, normalizeTotp } from '../auth/auth-forms';
 import { focusFirstInvalid } from '../auth/focus-invalid';
@@ -258,6 +259,9 @@ type Step = 'intro' | 'scan' | 'codes';
   `,
 })
 export class EnableTwoFactorPage {
+  /** Where to go once it is on, such as an organization that requires it. */
+  readonly returnUrl = input<string | null>(null);
+
   private readonly account = inject(AccountService);
   private readonly session = inject(Session);
   private readonly router = inject(Router);
@@ -356,6 +360,6 @@ export class EnableTwoFactorPage {
 
   protected async finish(): Promise<void> {
     await this.session.refresh();
-    await this.router.navigateByUrl('/');
+    await this.router.navigateByUrl(safeReturnUrl(this.returnUrl()) ?? '/');
   }
 }

@@ -16,8 +16,19 @@ const SESSION = {
       slug: 'example',
       name: 'Example Org',
       role: 'owner',
+      mfaRequired: false,
     },
   ],
+};
+const ORG_ID = SESSION.organizations[0].id;
+const INVITATION = {
+  id: '0190a000-0000-7000-8000-000000000005',
+  email: 'invited.person@example.org',
+  role: 'member',
+  expiresAt: '2026-11-25T08:00:00Z',
+  expired: false,
+  invitedBy: 'Sample Person',
+  createdAt: '2026-11-18T08:00:00Z',
 };
 const SETTING = (value: string | null, locked = false) => ({
   value,
@@ -118,6 +129,37 @@ export async function api(page: Page, signedIn: boolean): Promise<void> {
               decidedAt: null,
             },
           ],
+        });
+      case `/api/v1/orgs/${ORG_ID}/members`:
+        return route.fulfill({
+          json: [
+            {
+              userId: SESSION.user.id,
+              displayName: SESSION.user.displayName,
+              email: SESSION.user.email,
+              role: 'owner',
+              joinedAt: '2026-11-17T08:00:00Z',
+            },
+            {
+              userId: '0190a000-0000-7000-8000-000000000004',
+              displayName: 'Second Person',
+              email: 'second.person@example.org',
+              role: 'viewer',
+              joinedAt: '2026-11-18T08:00:00Z',
+            },
+          ],
+        });
+      case `/api/v1/orgs/${ORG_ID}/invitations`:
+        return route.fulfill({ json: [INVITATION] });
+      case '/api/v1/invitations/sample-token':
+        return route.fulfill({
+          json: {
+            organizationName: 'Example Org',
+            email: INVITATION.email,
+            role: 'member',
+            invitedBy: SESSION.user.displayName,
+            expiresAt: INVITATION.expiresAt,
+          },
         });
       default:
         return route.fulfill({ status: 204 });

@@ -4,8 +4,9 @@ import { Authenticator, expectAccessible, openFirstPage, watchConsole } from './
 /**
  * Core flow 1 of master plan 13.6 and the acceptance of phase 0: on a fresh instance, set up the
  * first user with the setup token, turn on two-factor authentication, sign out, and sign in again
- * with password and TOTP over HTTPS. Every visited page is checked with axe (WCAG 2.2 AA) and the
- * test fails on any console error.
+ * with password and TOTP over HTTPS. Then the core flow «accept an invitation»: create an
+ * organization, invite a second person, who registers through the link and joins. Every visited
+ * page is checked with axe (WCAG 2.2 AA) and the test fails on any console error.
  */
 const setupToken = process.env['E2E_SETUP_TOKEN'] ?? '';
 const person = {
@@ -13,6 +14,11 @@ const person = {
   name: 'First Admin',
   // A long passphrase: the password rules ask for length, not character classes.
   password: 'heron stands still in the reeds',
+};
+const invitee = {
+  email: 'invited.viewer@example.org',
+  name: 'Invited Viewer',
+  password: 'egret wades through the shallows',
 };
 
 test('set up the first user, turn on two-factor, sign in again with TOTP', async ({ page }) => {
@@ -106,6 +112,51 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await expect(page.getByRole('heading', { level: 1, name: 'Vulnerabilities' })).toBeVisible();
   await expect(page.locator('section[aria-busy="false"]')).toBeVisible();
   await expectAccessible(page, 'entries');
+
+  // Task 2.1 and core flow «accept an invitation» (master plan 13.6): create an organization,
+  // invite someone, and let them join through the link. The instance sends no e-mail, so the
+  // Team page hands the link over once.
+  // Without an organization yet, the switch in the sidebar leads to creating one.
+  await page.getByRole('link', { name: /No organization/ }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Create organization' })).toBeVisible();
+  await page.getByLabel('Name').fill('Heron Works');
+  await expect(page.getByText('/o/heron-works')).toBeVisible();
+  await expectAccessible(page, 'create organization');
+  await page.getByRole('button', { name: 'Create organization' }).click();
+
+  await expect(page).toHaveURL(/\/o\/heron-works\/team$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Team' })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Members' }).getByText(person.email)).toBeVisible();
+  await page.getByLabel('Email').fill(invitee.email);
+  await page.getByLabel('Role', { exact: true }).selectOption('viewer');
+  await page.getByRole('button', { name: 'Send invitation' }).click();
+  const link = await page.getByLabel('Invitation link').inputValue();
+  expect(link).toMatch(/\/invitations\/[\w-]+$/);
+  await expect(page.getByRole('list', { name: 'Open invitations' })).toContainText(invitee.email);
+  await expectAccessible(page, 'team');
+
+  await page.getByRole('button', { name: `Account: ${person.name}` }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  await expect(page).toHaveURL(/\/sign-in\?notice=signedOut$/);
+
+  // The invited person opens the link, creates an account with the address filled in, and joins.
+  await page.goto(link);
+  await expect(page.getByRole('heading', { level: 1, name: 'Join Heron Works' })).toBeVisible();
+  await expectAccessible(page, 'invitation');
+  await page.getByRole('link', { name: 'Create account' }).click();
+  await expect(page.getByLabel('Email')).toHaveValue(invitee.email);
+  await page.getByLabel('Name').fill(invitee.name);
+  await page.getByLabel('Password', { exact: true }).fill(invitee.password);
+  await page.getByRole('button', { name: 'Create account' }).click();
+
+  await expect(page).toHaveURL(/\/o\/heron-works\/overview$/);
+  await navigation.getByRole('link', { name: 'Team' }).click();
+  const members = page.getByRole('list', { name: 'Members' });
+  await expect(members.getByRole('listitem')).toHaveCount(2);
+  await expect(members.getByText(invitee.email)).toBeVisible();
+  // A viewer reads the directory and may leave, but invites no one.
+  await expect(page.getByRole('button', { name: 'Leave organization' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send invitation' })).toHaveCount(0);
 
   expect(problems).toEqual([]);
 });

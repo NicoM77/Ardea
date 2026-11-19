@@ -1,9 +1,5 @@
 import type { ActionSummary, OverviewView, SourceStatus } from '../../core/api/client';
-import { overviewFinding, projectBlocks, runway, warningSource } from './overview-format';
-
-const NOW = new Date(2026, 10, 18, 8, 36);
-const at = (days: number, hours = 0) =>
-  new Date(NOW.getTime() + days * 86_400_000 + hours * 3_600_000).toISOString();
+import { overviewFinding, projectBlocks, warningSource } from './overview-format';
 
 function action(
   number: number,
@@ -21,10 +17,7 @@ function action(
     openFindings: 1,
     exploitation: 'none',
     fixAvailable: true,
-    assignedTo: null,
-    dueAt: at(3),
-    overdue: false,
-    openedAt: at(-2),
+    openedAt: '2026-11-16T08:36:00Z',
     levelRaisedAt: null,
     closedAt: null,
     closeReason: null,
@@ -34,14 +27,13 @@ function action(
   };
 }
 
-function overview(counts: Record<string, number>, overdue = 0): OverviewView {
+function overview(counts: Record<string, number>): OverviewView {
   return {
     openByLevel: Object.entries(counts).map(([levelName, actions]) => ({
       level: 0,
       levelName,
       actions,
     })),
-    overdue,
     urgent: [],
     projects: [
       { project: { id: 'p1', name: 'Platform Ops' }, level: 5, levelName: 'critical', actions: 2 },
@@ -51,58 +43,32 @@ function overview(counts: Record<string, number>, overdue = 0): OverviewView {
 }
 
 describe('overview format', () => {
-  it('leads with the critical actions: how many, due today and without an owner', () => {
+  it('leads with the critical actions: how many, how many exploited and how many with a fix', () => {
     const open = [
-      action(1, 'critical', { dueAt: at(0, 2), assignedTo: 'u1' }),
-      action(2, 'critical', { dueAt: at(1) }),
+      action(1, 'critical', { exploitation: 'active' }),
+      action(2, 'critical', { fixAvailable: false }),
       action(3, 'high'),
     ];
-    expect(overviewFinding(overview({ critical: 2, high: 1 }), open, NOW)).toEqual({
+    expect(overviewFinding(overview({ critical: 2, high: 1 }), open)).toEqual({
       lead: { key: 'overview.finding.critical', params: { count: 2 } },
-      detail: { key: 'overview.finding.criticalDetail', params: { today: 1, unowned: 1 } },
+      detail: { key: 'overview.finding.criticalDetail', params: { exploited: 1, fix: 1 } },
     });
   });
 
   it('says how many high actions are open when no critical one is', () => {
-    const result = overviewFinding(overview({ critical: 0, high: 2 }, 1), [action(3, 'high')], NOW);
+    const result = overviewFinding(overview({ critical: 0, high: 2 }), [action(3, 'high')]);
     expect(result.lead.key).toBe('overview.finding.noCritical');
-    expect(result.detail).toEqual({
-      key: 'overview.finding.highDetail',
-      params: { count: 2, overdue: 1 },
-    });
+    expect(result.detail).toEqual({ key: 'overview.finding.highDetail', params: { count: 2 } });
   });
 
-  it('is calm without critical and high actions, and says when the next deadline is', () => {
-    const result = overviewFinding(
-      overview({ critical: 0, high: 0, medium: 1, low: 1 }),
-      [action(5, 'medium', { dueAt: at(28) }), action(6, 'low', { dueAt: at(84) })],
-      NOW,
-    );
+  it('is calm without critical and high actions, and names no deadline (master plan 17.5)', () => {
+    const result = overviewFinding(overview({ critical: 0, high: 0, medium: 1, low: 1 }), [
+      action(5, 'medium'),
+      action(6, 'low'),
+    ]);
     expect(result.lead.key).toBe('overview.finding.calm');
-    expect(result.detail).toEqual({
-      key: 'overview.finding.calmDetail',
-      params: { days: 28, overdue: 0 },
-    });
-    expect(overviewFinding(overview({}), [], NOW).lead.key).toBe('overview.finding.nothing');
-  });
-
-  it('lays the deadlines on fourteen days, soonest first, a far deadline clipped at the edge', () => {
-    const { axis, rows } = runway(
-      [
-        action(1, 'low', { openedAt: at(-1), dueAt: at(60) }),
-        action(2, 'critical', { openedAt: at(-1), dueAt: at(1) }),
-        action(3, 'high', { dueAt: null }),
-      ],
-      NOW,
-    );
-    expect(axis.days).toHaveLength(14);
-    expect(axis.now).toBeGreaterThan(42);
-    expect(axis.now).toBeLessThan(50);
-    expect(rows.map((r) => r.action.number)).toEqual([2, 1]);
-    expect(rows[0].used).toBeCloseTo(50, 0);
-    expect(rows[0].clipped).toBe(false);
-    expect(rows[1].clipped).toBe(true);
-    expect(rows[1].to).toBe(100);
+    expect(result.detail).toEqual({ key: 'overview.finding.calmDetail', params: {} });
+    expect(overviewFinding(overview({}), []).lead.key).toBe('overview.finding.nothing');
   });
 
   it('gives each project one block per open action, highest priority first', () => {

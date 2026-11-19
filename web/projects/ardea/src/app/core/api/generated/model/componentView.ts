@@ -37,5 +37,7 @@ export interface ComponentView {
   dependencyScope: string | null;
   /** @nullable */
   dependencyRelation: string | null;
+  versionPrecision: string;
+  noticeThreshold: string;
   catalogMatch?: null | CatalogMatchView;
 }

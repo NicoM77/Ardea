@@ -49,6 +49,8 @@ const manual: ComponentView = {
   purl: null,
   dependencyScope: null,
   dependencyRelation: null,
+  versionPrecision: 'exact',
+  noticeThreshold: 'only_important',
 };
 
 describe('SetupWizard', () => {

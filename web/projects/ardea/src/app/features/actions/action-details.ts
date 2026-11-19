@@ -1,21 +1,20 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { UiCard, UiInput, UiStatus } from 'ui';
-import type { ActionSummary, MemberView } from '../../core/api/client';
-import { num, statusKindOf, timeLeft, type Outcome } from './action-format';
-import { CLOSING_QUESTIONS, dueDay } from './action-status';
-import { Duration } from './duration';
+import { UiCard, UiStatus } from 'ui';
+import type { ActionSummary } from '../../core/api/client';
+import { num, statusKindOf, type Outcome } from './action-format';
+import { CLOSING_QUESTIONS } from './action-status';
 import { ReasonForm } from './reason-form';
 
 /**
- * The facts and settings of an action (mockup remediation.html «Details»): status, owner, deadline,
- * project, component, versions and number. Owner and deadline change in place; a closing asks for
- * its reason here.
+ * The facts of an action (mockup remediation.html «Details»): status, project, component, versions,
+ * number and when it opened. A reminder has no owner and no deadline (master plan 17.5); a closing
+ * asks for its reason here.
  */
 @Component({
   selector: 'ardea-action-details',
-  imports: [RouterLink, TranslocoPipe, UiCard, UiInput, UiStatus, Duration, ReasonForm],
+  imports: [RouterLink, TranslocoPipe, UiCard, UiStatus, ReasonForm],
   template: `
     @let a = action();
     <ui-card>
@@ -25,57 +24,6 @@ import { ReasonForm } from './reason-form';
           <dt>{{ 'actionDetail.details.status' | transloco }}</dt>
           <dd><ui-status [kind]="kind()" /></dd>
         </div>
-        <div>
-          <dt>
-            <label for="action-owner">{{ 'actionDetail.details.owner' | transloco }}</label>
-          </dt>
-          <dd>
-            <select
-              uiInput
-              id="action-owner"
-              [disabled]="!editable() || busy()"
-              (change)="assign.emit(value($event) || null)"
-            >
-              <option value="" [selected]="!a.assignedTo">
-                {{ 'actionDetail.details.unassigned' | transloco }}
-              </option>
-              @for (m of members(); track m.userId) {
-                <option [value]="m.userId" [selected]="m.userId === a.assignedTo">
-                  {{
-                    m.userId === me()
-                      ? ('actionDetail.details.you' | transloco: { name: m.displayName })
-                      : m.displayName
-                  }}
-                </option>
-              }
-            </select>
-          </dd>
-        </div>
-        <div>
-          <dt>
-            <label for="action-due">{{ 'actionDetail.details.due' | transloco }}</label>
-          </dt>
-          <dd>
-            <input
-              uiInput
-              type="date"
-              id="action-due"
-              [value]="day()"
-              [disabled]="!editable() || busy()"
-              (change)="due.emit(value($event))"
-            />
-          </dd>
-        </div>
-        @if (left(); as ms) {
-          <div>
-            <dt>
-              {{
-                (ms < 0 ? 'actionDetail.details.overdue' : 'actionDetail.details.left') | transloco
-              }}
-            </dt>
-            <dd><ardea-duration [ms]="ms" /></dd>
-          </div>
-        }
         <div>
           <dt>{{ 'actionDetail.details.project' | transloco }}</dt>
           <dd>
@@ -150,12 +98,6 @@ import { ReasonForm } from './reason-form';
       color: var(--muted);
       font-weight: 400;
     }
-    dd select,
-    dd input {
-      width: auto;
-      max-width: 190px;
-      font-weight: 500;
-    }
     .reason {
       display: block;
       margin-top: var(--space-lg);
@@ -164,38 +106,21 @@ import { ReasonForm } from './reason-form';
 })
 export class ActionDetails {
   readonly action = input.required<ActionSummary>();
-  readonly members = input<readonly MemberView[]>([]);
-  readonly me = input<string | null>(null);
-  readonly canEdit = input(false);
   readonly busy = input(false);
-  readonly now = input.required<Date>();
   /** The outcome waiting for its reason. */
   readonly pending = input<Outcome | null>(null);
 
-  readonly assign = output<string | null>();
-  readonly due = output<string>();
   readonly reason = output<string>();
   readonly cancelReason = output();
 
   private readonly transloco = inject(TranslocoService);
 
-  /** A closed action keeps its owner and deadline (the API refuses changes). */
-  protected readonly editable = computed(() => this.canEdit() && this.action().status !== 'closed');
   protected readonly kind = computed(() =>
     statusKindOf(this.action().status, this.action().closeReason),
   );
   protected readonly number = computed(() => num(this.action().number));
-  protected readonly day = computed(() => dueDay(this.action().dueAt));
-  protected readonly left = computed(() => {
-    const a = this.action();
-    return a.dueAt && a.status !== 'closed' ? timeLeft(a.dueAt, this.now()) || 1 : null;
-  });
   protected question(outcome: Outcome): string {
     return CLOSING_QUESTIONS[outcome];
-  }
-
-  protected value(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLSelectElement).value;
   }
 
   protected when(value: string): string {

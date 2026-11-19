@@ -85,19 +85,13 @@ export function historyLines(
         line.params = {};
         line.reason = SYSTEM_REASON_LABELS[text(d, 'reason') ?? ''] ?? null;
         break;
-      case 'action.assigned': {
-        const to = person(text(d, 'to'));
-        line.key = to ? 'actionDetail.history.assigned' : 'actionDetail.history.unassigned';
-        line.params = { who, to: to ?? '' };
-        break;
-      }
       case 'action.status_changed':
       case 'finding.status_changed': {
         const to = text(d, 'to') ?? '';
         const from = text(d, 'from') ?? '';
         const finding = event.kind === 'finding.status_changed';
         line.key =
-          from === 'closed' && (to === 'open' || to === 'in_review')
+          from === 'closed' && to === 'open'
             ? finding
               ? 'actionDetail.history.findingReopenedBy'
               : 'actionDetail.history.reopened'

@@ -62,7 +62,6 @@ export const EVENT_GROUPS: readonly { label: string; events: readonly EventOptio
   {
     label: 'notify.events.groups.team',
     events: [
-      { value: 'action.assigned', label: 'notify.events.assigned', hint: null },
       {
         value: 'action.status_changed',
         label: 'notify.events.statusChanged',

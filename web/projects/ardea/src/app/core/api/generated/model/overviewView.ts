@@ -12,8 +12,6 @@ import type { UrgentActionView } from './urgentActionView';
 
 export interface OverviewView {
   openByLevel: LevelCountView[];
-  /** @pattern ^-?(?:0|[1-9]\d*)$ */
-  overdue: number | string;
   urgent: UrgentActionView[];
   projects: ProjectLevelView[];
   last24Hours: ChangeCountView[];

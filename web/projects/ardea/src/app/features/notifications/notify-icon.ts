@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 
 export type NotifyIconName =
-  'mail' | 'smartphone' | 'webhook' | 'trash' | 'share' | 'square-plus' | 'user-check' | 'inbox';
+  'mail' | 'smartphone' | 'webhook' | 'trash' | 'share' | 'square-plus' | 'inbox';
 
 /**
  * The few line icons only the notification pages use, drawn like the Lucide set the app is configured with
@@ -47,11 +47,6 @@ export type NotifyIconName =
         @case ('square-plus') {
           <rect width="18" height="18" x="3" y="3" rx="2" />
           <path d="M8 12h8M12 8v8" />
-        }
-        @case ('user-check') {
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="m16 11 2 2 4-4" />
         }
         @case ('inbox') {
           <path d="M22 12h-6l-2 3h-4l-2-3H2" />

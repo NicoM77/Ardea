@@ -168,7 +168,6 @@ const CHANGE_LABELS: Readonly<Record<string, string>> = {
   'action.exploitation_escalated': 'overview.changes.exploited',
   'action.fix_available': 'overview.changes.fixAvailable',
   'action.withdrawn': 'overview.changes.withdrawn',
-  'action.assigned': 'overview.changes.assigned',
   'action.status_changed': 'overview.changes.status',
   'action.note_added': 'overview.changes.notes',
   'backfill.completed': 'overview.changes.backfill',

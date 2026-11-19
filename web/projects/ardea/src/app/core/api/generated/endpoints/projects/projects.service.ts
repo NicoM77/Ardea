@@ -43,6 +43,7 @@ import type {
   ProjectView,
   ReplaceComponentsRequest,
   ReplaceComponentsResponse,
+  StackView,
   UpdateProjectRequest
 } from '../../model';
 
@@ -235,6 +236,18 @@ export function getProjectResource(orgId: Signal<string | undefined>,
     projectId: Signal<string | undefined>,
   options?: OrvalHttpResourceOptions<ProjectDetail, unknown>): HttpResourceRef<ProjectDetail | undefined> {
   return httpResource<ProjectDetail>(() => (orgId() === undefined || projectId() === undefined ? undefined : applyOrvalRequestExtension(`/api/v1/orgs/${orgId()}/projects/${projectId()}`, options)), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function getStackResource(orgId: Signal<string | undefined>,
+  options: OrvalHttpResourceOptions<StackView, unknown> & { defaultValue: NoInfer<StackView> }): HttpResourceRef<StackView>;
+export function getStackResource(orgId: Signal<string | undefined>,
+  options?: OrvalHttpResourceOptions<StackView, unknown>): HttpResourceRef<StackView | undefined>;
+export function getStackResource(orgId: Signal<string | undefined>,
+  options?: OrvalHttpResourceOptions<StackView, unknown>): HttpResourceRef<StackView | undefined> {
+  return httpResource<StackView>(() => (orgId() === undefined ? undefined : applyOrvalRequestExtension(`/api/v1/orgs/${orgId()}/stack`, options)), options);
 }
 
 /**
@@ -597,8 +610,10 @@ export class ProjectsService {
 
 export type ListProjectsResourceResult = NonNullable<ProjectView[]>
 export type GetProjectResourceResult = NonNullable<ProjectDetail>
+export type GetStackResourceResult = NonNullable<StackView>
 export type ListComponentsResourceResult = NonNullable<ComponentView[]>
 export type GetProfileCoverageResourceResult = NonNullable<CoverageView>
+
 
 
 

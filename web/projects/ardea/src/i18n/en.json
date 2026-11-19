@@ -52,7 +52,7 @@
   "areas": {
     "overview": {
       "emptyHeading": "Nothing to triage yet",
-      "emptyText": "Once sources are synced and a project describes what it runs, open actions and their deadlines appear here."
+      "emptyText": "Once sources are synced and a project describes what it runs, open actions and what to do about them appear here."
     },
     "actions": {
       "emptyHeading": "No open actions",
@@ -676,7 +676,7 @@
     "roleHints": {
       "owner": "Everything an admin can do, and hands ownership on.",
       "admin": "Invites members, changes roles and sets rules and the two-factor requirement.",
-      "member": "Works on actions and projects: sets status, assigns and adds notes.",
+      "member": "Works on actions and projects: sets status and adds notes.",
       "viewer": "Reads actions, projects and the overview, and changes nothing."
     },
     "members": {
@@ -1110,7 +1110,7 @@
       "locale": "Language",
       "localeHint": "For e-mails and analyses.",
       "timeZone": "Time zone",
-      "timeZoneHint": "For digests and deadlines.",
+      "timeZoneHint": "For digests and reminders.",
       "timeZoneInvalid": "Choose a time zone from the list.",
       "saved": "The organization is saved."
     },
@@ -1206,12 +1206,6 @@
       "open": "Your notification settings"
     }
   },
-  "time": {
-    "d": "d",
-    "h": "h",
-    "m": "m",
-    "s": "s"
-  },
   "actions": {
     "title": "Actions",
     "loading": "Loading the actions",
@@ -1231,27 +1225,20 @@
       "projectArchived": "The project was archived",
       "noLongerMatched": "No longer matched",
       "outOfRange": "The version is outside the affected range",
-      "weakMatch": "Weak match"
+      "weakMatch": "Weak match",
+      "movedToNotice": "Moved to a notice: the component has no version"
     },
     "pill": {
       "exploited": "Exploited",
       "noFix": "No fix yet",
-      "fix": "Fix available",
-      "overdue": "Overdue"
+      "fix": "Fix available"
     },
     "table": {
       "priority": "Priority",
       "action": "Action",
-      "left": "Time left",
-      "took": "Time to close",
-      "owner": "Owner",
       "status": "Status",
-      "of": "of",
-      "overdue": "Overdue",
-      "leftWord": "left",
-      "used": "{percent}% of the time used",
-      "noDeadline": "No deadline",
-      "unassigned": "Unassigned"
+      "since": "Since",
+      "closedOn": "Closed"
     },
     "filters": {
       "view": "Show",
@@ -1266,7 +1253,7 @@
       "closed": "Closed"
     },
     "summary": {
-      "open": "{more, select, yes {More than } other {}}{count} open. {critical} critical, {unassigned} unassigned.",
+      "open": "{more, select, yes {More than } other {}}{count} open. {critical} critical.",
       "closed": "{more, select, yes {More than } other {}}{count} closed.",
       "matchOpen": "{count, plural, =0 {No open action matches.} one {# open action matches.} other {# open actions match.}}",
       "matchClosed": "{count, plural, =0 {No closed action matches.} one {# closed action matches.} other {# closed actions match.}}"
@@ -1281,36 +1268,16 @@
       "closedHeading": "No closed actions yet",
       "closedText": "Actions appear here once they are remediated, accepted or found not to affect you.",
       "clear": "Clear filters"
-    },
-    "owners": {
-      "title": "Owners",
-      "meta": "{count} in view",
-      "unassigned": "Unassigned",
-      "none": "No action in view."
-    },
-    "speed": {
-      "title": "Time to close",
-      "meta": "{count} closed",
-      "share": "Median {percent}% of the time allowed, {count} closed",
-      "none": "None closed yet"
     }
   },
   "actionDetail": {
     "title": "Action",
     "loading": "Loading the action",
     "loadFailed": "The action could not be loaded.",
-    "take": "Take into review",
-    "giveBack": "Give back",
     "reopen": "Reopen",
     "details": {
       "title": "Details",
       "status": "Status",
-      "owner": "Owner",
-      "unassigned": "Unassigned",
-      "you": "{name} (you)",
-      "due": "Due",
-      "left": "Time left",
-      "overdue": "Overdue by",
       "project": "Project",
       "component": "Component",
       "removed": "No longer in the profile",
@@ -1340,14 +1307,8 @@
       "failed": "That did not work. Try again in a moment."
     },
     "toast": {
-      "taken": "In review and assigned to you",
-      "givenBack": "Back to open, no owner",
       "reopened": "Closing taken back: the action is open again",
-      "closed": "Closed as {status, select, open {open} in_review {in review} remediated {remediated} risk_accepted {risk accepted} not_affected {not affected} other {another status}} for all findings",
-      "status": "Status set to {status, select, open {Open} in_review {In review} remediated {Remediated} risk_accepted {Risk accepted} not_affected {Not affected} other {another status}}",
-      "assigned": "Assigned to {name}",
-      "unassigned": "Owner removed",
-      "due": "Due date moved to {date}",
+      "closed": "Closed as {status, select, open {open} remediated {remediated} risk_accepted {risk accepted} not_affected {not affected} other {another status}} for all findings",
       "note": "Note saved",
       "finding": "{entry}: {status, select, open {open again} remediated {remediated} risk_accepted {risk accepted} not_affected {not affected} other {another status}}",
       "undone": "Undone",
@@ -1367,11 +1328,9 @@
       "proofOfConcept": "A proof of concept is public now",
       "fixAvailable": "A fix is available: {version}",
       "withdrawn": "Closed by Ardea",
-      "assigned": "{who} assigned it to {to}",
-      "unassigned": "{who} removed the owner",
-      "status": "{who} set the status to {status, select, open {Open} in_review {In review} remediated {Remediated} risk_accepted {Risk accepted} not_affected {Not affected} other {another status}}",
+      "status": "{who} set the status to {status, select, open {Open} remediated {Remediated} risk_accepted {Risk accepted} not_affected {Not affected} other {another status}}",
       "reopened": "{who} took the closing back",
-      "findingStatus": "{who} set {entry} to {status, select, open {Open} in_review {In review} remediated {Remediated} risk_accepted {Risk accepted} not_affected {Not affected} other {another status}}",
+      "findingStatus": "{who} set {entry} to {status, select, open {Open} remediated {Remediated} risk_accepted {Risk accepted} not_affected {Not affected} other {another status}}",
       "findingReopenedBy": "{who} reopened {entry}",
       "note": "Note by {who}",
       "backfill": "First fill completed",
@@ -1387,7 +1346,8 @@
       "label": "Note",
       "placeholder": "Add a note for the team",
       "save": "Save note"
-    }
+    },
+    "resolve": "Mark as remediated"
   },
   "answers": {
     "label": "The three answers",
@@ -1527,25 +1487,12 @@
     "tryAgain": "Try again",
     "finding": {
       "critical": "{count, plural, one {# critical action is open.} other {# critical actions are open.}}",
-      "criticalDetail": "{today} due today, {unowned} without an owner.",
+      "criticalDetail": "{exploited} actively exploited, {fix} with a fix.",
       "noCritical": "No critical action is open.",
-      "highDetail": "{count} high{overdue, plural, =0 {} other {, # overdue}}.",
+      "highDetail": "{count, plural, one {# high action is open.} other {# high actions are open.}}",
       "calm": "Nothing urgent.",
-      "calmDetail": "No critical or high action is open; the next deadline is in {days, plural, one {# day} other {# days}}{overdue, plural, =0 {} other {, # overdue}}.",
+      "calmDetail": "No critical or high action is open.",
       "nothing": "Nothing open: no action needs you right now."
-    },
-    "runway": {
-      "title": "Deadlines",
-      "all": "All actions",
-      "none": "No open action has a deadline.",
-      "now": "Now",
-      "overdue": "Overdue",
-      "left": "left"
-    },
-    "next": {
-      "title": "Next deadline",
-      "open": "Open action",
-      "none": "No deadline ahead."
     },
     "ring": {
       "title": "By priority",
@@ -1553,8 +1500,8 @@
     },
     "urgent": {
       "title": "Most urgent",
-      "meta": "{count} urgent",
-      "none": "Nothing urgent: no action is open."
+      "none": "Nothing urgent: no action is open.",
+      "all": "All actions"
     },
     "projects": {
       "title": "Projects",
@@ -1571,7 +1518,6 @@
       "exploited": "{count, plural, one {# action now exploited} other {# actions now exploited}}",
       "fixAvailable": "{count, plural, one {# fix became available} other {# fixes became available}}",
       "withdrawn": "{count, plural, one {# action closed by Ardea} other {# actions closed by Ardea}}",
-      "assigned": "{count, plural, one {# assignment} other {# assignments}}",
       "status": "{count, plural, one {# status change} other {# status changes}}",
       "notes": "{count, plural, one {# note} other {# notes}}",
       "backfill": "{count, plural, one {# first fill completed} other {# first fills completed}}"
@@ -1709,7 +1655,6 @@
       "levelLowered": "Priority lowered",
       "withdrawn": "Withdrawn",
       "allClearHint": "Only where it was reported before",
-      "assigned": "Assigned",
       "statusChanged": "Status changed",
       "noteAdded": "Note added",
       "teamHint": "In-app and webhooks only",
@@ -1894,7 +1839,7 @@
       "more": "Show older",
       "empty": "No notifications yet",
       "caughtUp": "You are up to date",
-      "emptyText": "New actions, rises and the team's work on your actions appear here as they happen."
+      "emptyText": "New actions, rises and the team's work appear here as they happen."
     },
     "settings": {
       "title": "Your notifications",

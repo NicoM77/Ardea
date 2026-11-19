@@ -151,8 +151,6 @@ export function dayKey(createdAt: string, now: Date): string {
             <ui-priority [level]="p" symbolOnly />
           } @else if (n.kind === 'warning.published') {
             <svg lucideMegaphone aria-hidden="true"></svg>
-          } @else if (n.kind === 'action.assigned') {
-            <ardea-notify-icon name="user-check" />
           } @else if (n.kind === 'digest') {
             <ardea-notify-icon name="inbox" />
           } @else {

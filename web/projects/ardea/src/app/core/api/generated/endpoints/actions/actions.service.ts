@@ -48,8 +48,7 @@ import type {
   OverviewView,
   ReviewVerdictRequest,
   SetActionStatusRequest,
-  SetFindingStatusRequest,
-  UpdateActionRequest
+  SetFindingStatusRequest
 } from '../../model';
 
 import type {
@@ -369,42 +368,6 @@ type HttpClientObserveOptions = HttpClientOptions & {
 export class ActionsService {
   private readonly http = inject(HttpClient);
 
- updateAction<TData = ActionDetailView>(orgId: string,
-    number: number,
-    updateActionRequest: UpdateActionRequest, options?: HttpClientBodyOptions): Observable<TData>;
-  updateAction<TData = ActionDetailView>(
-    orgId: string,
-    number: number,
-    updateActionRequest: UpdateActionRequest, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
-    if (options?.observe === 'events') {
-      return this.http.patch<TData>(
-      `/api/v1/orgs/${orgId}/actions/${number}`,
-      updateActionRequest,{
-        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
-        observe: 'events',
-      }
-    );
-    }
-
-    if (options?.observe === 'response') {
-      return this.http.patch<TData>(
-      `/api/v1/orgs/${orgId}/actions/${number}`,
-      updateActionRequest,{
-        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
-        observe: 'response',
-      }
-    );
-    }
-
-    return this.http.patch<TData>(
-      `/api/v1/orgs/${orgId}/actions/${number}`,
-      updateActionRequest,{
-        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
-        observe: 'body',
-      }
-    );
-  }
-
  setActionStatus<TData = ActionDetailView>(orgId: string,
     number: number,
     setActionStatusRequest: SetActionStatusRequest, options?: HttpClientBodyOptions): Observable<TData>;
@@ -604,8 +567,6 @@ export type GetAlertResourceResult = NonNullable<AlertDetailView>
 
 
 
-
-export type UpdateActionClientResult = NonNullable<ActionDetailView>
 export type SetActionStatusClientResult = NonNullable<ActionDetailView>
 export type AddActionNoteClientResult = NonNullable<ActionEventView>
 export type SetFindingStatusClientResult = NonNullable<FindingView>

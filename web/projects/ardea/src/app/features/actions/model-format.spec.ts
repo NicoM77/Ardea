@@ -7,7 +7,6 @@ const finding = (extra: Partial<FindingView>) =>
 describe('the model’s estimate of a finding', () => {
   it('waits for a person while the model’s verdict counts and the finding is open', () => {
     expect(hasModelEstimate(finding({}))).toBe(true);
-    expect(hasModelEstimate(finding({ status: 'in_review' }))).toBe(true);
     expect(hasModelEstimate(finding({ verdictSource: 'human' }))).toBe(false);
     expect(hasModelEstimate(finding({ status: 'not_affected' }))).toBe(false);
   });

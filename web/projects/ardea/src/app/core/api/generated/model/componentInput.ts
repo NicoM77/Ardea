@@ -35,4 +35,8 @@ export interface ComponentInput {
   protection: string | null;
   /** @nullable */
   protectionNote: string | null;
+  /** @nullable */
+  versionPrecision?: string | null;
+  /** @nullable */
+  noticeThreshold?: string | null;
 }

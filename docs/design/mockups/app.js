@@ -215,7 +215,7 @@
   var NAV = [
     { id: 'overview', label: 'Overview', href: 'overview.html', icon: 'overview' },
     { id: 'actions', label: 'Actions', href: 'actions.html', icon: 'actions', count: D.ACTIONS.length },
-    { id: 'vulnerabilities', label: 'Vulnerabilities', icon: 'vulnerabilities' },
+    { id: 'vulnerabilities', label: 'Vulnerabilities', href: 'alert.html', icon: 'vulnerabilities' },
     { id: 'projects', label: 'Projects', href: 'project.html', icon: 'projects' },
     { id: 'sources', label: 'Sources', href: 'sources.html', icon: 'sources' },
     { id: 'rules', label: 'Notification rules', icon: 'rules' }
@@ -297,6 +297,11 @@
       { group: 'Pages', label: 'Customer Portal (project)', href: 'project.html', icon: 'projects' },
       { group: 'Pages', label: 'Sources', href: 'sources.html', icon: 'sources' },
       { group: 'Pages', label: 'Setup wizard', href: 'setup-wizard.html', icon: 'route' },
+      { group: 'Pages', label: 'Overview on a quiet day', href: 'overview.html?state=calm', icon: 'overview' },
+      { group: 'Pages', label: 'Update PostgreSQL to 17.12 (4 findings)', href: 'remediation.html', icon: 'actions' },
+      { group: 'Pages', label: 'Update PostgreSQL to 17.12, with AI assessment', href: 'remediation.html?ai', icon: 'actions' },
+      { group: 'Pages', label: 'Update vite (transitive, development only)', href: 'remediation.html?example=vite', icon: 'actions' },
+      { group: 'Pages', label: 'Alert #142 · CVE-2026-116325', href: 'alert.html', icon: 'vulnerabilities' },
       { group: 'Pages', label: 'Design system', href: 'design-system.html', icon: 'design' }
     ];
     D.ACTIONS.forEach(function (a) {

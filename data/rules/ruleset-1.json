@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "description": "Rule set version 1 (master plan 7.6): integer points per factor, levels from the sum, then upper and lower bounds. A first draft of the weights, to be calibrated against the reference set (task 3.7).",
+  "severityClasses": {
+    "critical": 9.0,
+    "high": 7.0,
+    "medium": 4.0,
+    "low": 0.0
+  },
+  "points": {
+    "severity": { "critical": 4, "high": 3, "medium": 2, "low": 1, "unrated": 2 },
+    "exploitation": { "active": 3, "poc": 2, "none": 0 },
+    "affectedness": { "confirmed": 1, "unknown": 0, "unlikely": -2 },
+    "criticality": { "high": 1, "normal": 0, "low": -1 },
+    "exposure": { "internet": 1, "internal": 0, "isolated": -1 },
+    "protection": { "effective": -1, "none": 0 },
+    "authorityWarning": { "yes": 1, "no": 0 },
+    "epss": { "high": 1, "low": 0 }
+  },
+  "levels": [
+    { "minPoints": 8, "level": 5 },
+    { "minPoints": 5, "level": 4 },
+    { "minPoints": 4, "level": 3 },
+    { "level": 2 }
+  ],
+  "caps": {
+    "unconfirmed": 4,
+    "development": 2
+  },
+  "floors": {
+    "active": 3,
+    "activeInRange": 4,
+    "activeInRangeSevere": 5,
+    "modelMaxDrop": 1
+  },
+  "deadlineHours": {
+    "5": 48,
+    "4": 168,
+    "3": 720,
+    "2": 2160
+  }
+}

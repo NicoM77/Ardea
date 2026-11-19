@@ -227,6 +227,8 @@ internal sealed class ScriptedProvider : ISourceProvider, IChangeLogSource
 
     public SyncMode? ModeSeen { get; private set; }
 
+    public DateTimeOffset? BackfillFromSeen { get; private set; }
+
     /// <summary>What the change log lists; may hold duplicates and records <see cref="Items"/> never delivered in a run.</summary>
     public List<ChangedRecord> ChangeLog { get; } = [];
 
@@ -246,6 +248,7 @@ internal sealed class ScriptedProvider : ISourceProvider, IChangeLogSource
     {
         CursorSeen = context.Cursor;
         ModeSeen = context.Mode;
+        BackfillFromSeen = context.BackfillFrom;
         if (context.Mode == SyncMode.Single)
         {
             var single = Singles.GetValueOrDefault(context.SingleId!) ?? Items.OfType<RawRecord>().LastOrDefault(r => r.ExternalId == context.SingleId);

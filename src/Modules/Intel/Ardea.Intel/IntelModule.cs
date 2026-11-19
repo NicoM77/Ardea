@@ -62,7 +62,7 @@ public sealed class IntelModule : IModule
     public void AddWorkerServices(IServiceCollection services, IConfiguration configuration) =>
         services.AddSingleton<IHostedService, SourceRegistrar>();
 
-    public IReadOnlyList<MaintenanceCommand> Commands { get; } = [Features.IntelCommands.Renormalize, Features.IntelCommands.Recompute];
+    public IReadOnlyList<MaintenanceCommand> Commands { get; } = [Features.IntelCommands.Renormalize, Features.IntelCommands.Recompute, Features.IntelCommands.ImportFull];
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {

@@ -10,6 +10,8 @@ Der Masterplan ist seit dem 18.11.2026 freigegeben; damit sind alle Einträge **
 | [0031](0031-osv-source.md) | OSV source for six package ecosystems: endpoints, terms of the data sources, cursor per ecosystem; refines 027 |
 | [0032](0032-github-sbom-export.md) | GitHub SBOM export (experiment 2.9): asynchronous flow, rights, download host, what Ardea's own readers must supply; refines 026 |
 | [0033](0033-candidate-search-and-version-verdicts.md) | Candidate search, version verdicts from several sources and the assessment job chain; refines 010, 011 and 029 |
+| [0034](0034-rule-set-file.md) | Rule set version 1 as a checked JSON file in the image; severity classes, exclusions, stored explanation; refines 007 |
+| [0035](0035-actions-history-and-first-fill.md) | Actions kept in step once per unit of work, events as history rows, first fill by match scope, numbers, people's decisions, read API; refines 011 and 014 |
 
 | Nr. | Entscheidung | Wichtigste verworfene Alternative | Kapitel | Status |
 |---|---|---|---|---|

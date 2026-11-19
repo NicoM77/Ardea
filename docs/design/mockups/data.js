@@ -7,6 +7,8 @@
   'use strict';
 
   var LOADED = Date.now();
+  /* ?state=calm: the same organization on a quiet day, nothing urgent open (task 3.1). */
+  var CALM = /[?&]state=calm\b/.test(location.search);
   var NOW = new Date('2026-11-18T08:36:00');
   var HOUR = 3600e3, DAY = 24 * HOUR;
 
@@ -62,6 +64,8 @@
       created: '2026-11-12T11:30', due: '2027-02-10T11:30', status: 'open', assignee: null }
   ];
 
+  if (CALM) ACTIONS = ACTIONS.filter(function (a) { return a.priority === 'medium' || a.priority === 'low'; });
+
   /* Closed in the last weeks. Invented history, so no CVE identifiers are shown for them. */
   var CLOSED = [
     { id: 'c-dotnet-2', title: 'Update .NET runtime to 10.0.4', project: 'customer-portal', priority: 'high', created: '2026-11-11T08:05', closed: '2026-11-11T17:40', status: 'remediated', assignee: 'nina' },
@@ -82,7 +86,32 @@
     { at: '2026-11-16T14:20', kind: 'new', action: 'php' }
   ];
 
-  var SOURCES = { count: 4, synced: '2026-11-18T08:36' };
+  /* On a quiet day the changes are closures and checks that changed nothing. */
+  if (CALM) FEED = [
+    { at: '2026-11-18T07:50', kind: 'closed', title: 'Update PostgreSQL to 17.12', project: 'platform-ops', by: 'marc', status: 'remediated' },
+    { at: '2026-11-17T17:10', kind: 'closed', title: 'Update PHP to 8.3.36', project: 'webshop', by: 'lea', status: 'remediated' },
+    { at: '2026-11-17T09:00', kind: 'warning', title: 'Phishing mails pose as vendor security updates', source: 'NCSC' }
+  ];
+
+  /* Warnings without a vulnerability identifier (master plan 8.2, warning.published): national
+     centres warn about campaigns and products before, or without, a CVE. Invented examples. */
+  var WARNINGS = [
+    { at: '2026-11-17T09:00', title: 'Phishing mails pose as vendor security updates', source: 'NCSC', operator: 'National Cyber Security Centre', kind: 'Authority',
+      text: 'Mails with a vendor logo ask administrators to install an “urgent patch” from a lookalike domain.' },
+    { at: '2026-11-15T14:30', title: 'Ransomware group targets unpatched VPN gateways', source: 'BACS', operator: 'Federal Office for Cyber Security', kind: 'Authority',
+      text: 'Scans for edge devices without the October updates; no specific product or CVE named yet.' },
+    { at: '2026-11-12T10:05', title: 'Fake invoices with HTML attachments', source: 'BACS', operator: 'Federal Office for Cyber Security', kind: 'Authority',
+      text: 'Attachments open a login page that collects Microsoft 365 credentials.' }
+  ];
+
+  /* The sources and their state (master plan 5.6); health is a symbol and a word. */
+  var SOURCE_LIST = [
+    { name: 'CVE Program', health: 'healthy', synced: '2026-11-18T08:36' },
+    { name: 'CISA KEV', health: 'healthy', synced: '2026-11-18T08:30' },
+    { name: 'OSV', health: 'healthy', synced: '2026-11-18T08:20' },
+    { name: 'BACS warnings', health: CALM ? 'healthy' : 'degraded', synced: CALM ? '2026-11-18T08:05' : '2026-11-17T22:00', note: CALM ? null : 'Last fetch returned no records' }
+  ];
+  var SOURCES = { count: SOURCE_LIST.length, synced: '2026-11-18T08:36' };
 
   /* The week's CVE records, 11–17 Nov 2026. The first two figures are measured, the rest follow from ACTIONS. */
   var FUNNEL = { from: '2026-11-11', to: '2026-11-17', published: 6432, candidates: 173 };
@@ -164,7 +193,7 @@
   function sum(list, f) { return list.reduce(function (acc, x) { return acc + f(x); }, 0); }
   function byId(list, id) { return list.filter(function (x) { return x.id === id; })[0]; }
 
-  ACTIONS.forEach(function (a) { a.created = date(a.created); a.due = date(a.due); a.total = sum(a.score, Number); a.href = 'action.html'; });
+  ACTIONS.forEach(function (a) { a.created = date(a.created); a.due = date(a.due); a.total = sum(a.score, Number); a.href = a.id === 'postgres' ? 'remediation.html' : 'action.html'; });
   CLOSED.forEach(function (a) { a.created = date(a.created); a.closed = date(a.closed); a.days = (a.closed - a.created) / DAY; });
   ACTIONS.sort(function (a, b) { return a.due - b.due; });
 
@@ -224,8 +253,8 @@
 
   /* ---------- the figures that must agree ---------- */
   console.assert(sum(byPriority, function (p) { return p.count; }) === ACTIONS.length, 'priority counts sum to the open actions');
-  console.assert(FUNNEL.matched === 14 && FUNNEL.matched + FUNNEL.dismissed === FUNNEL.candidates, 'funnel stages add up');
-  console.assert(byId(ACTIONS, 'puppet').total === sum(VULN.factors, function (f) { return f.points; }), 'Puppet score equals its factors');
+  console.assert(CALM || (FUNNEL.matched === 14 && FUNNEL.matched + FUNNEL.dismissed === FUNNEL.candidates), 'funnel stages add up');
+  console.assert(CALM || byId(ACTIONS, 'puppet').total === sum(VULN.factors, function (f) { return f.points; }), 'Puppet score equals its factors');
   console.assert(sum(PROJECTS, function (p) { return count(ACTIONS, function (a) { return a.project === p.id; }); }) === ACTIONS.length, 'every action belongs to a project');
   console.assert(trend(31).slice(-1)[0].open === ACTIONS.length, 'the trend ends at the open count');
   console.assert(ACTIONS.every(function (a) {
@@ -236,6 +265,7 @@
   window.ARDEA = {
     NOW: NOW, now: now, DAY: DAY, HOUR: HOUR, ME: ME,
     PRIORITIES: PRIORITIES, STATUSES: STATUSES, PEOPLE: PEOPLE, PROJECTS: PROJECTS,
+    CALM: CALM, WARNINGS: WARNINGS, SOURCE_LIST: SOURCE_LIST,
     ACTIONS: ACTIONS, CLOSED: CLOSED, FEED: FEED, SOURCES: SOURCES, FUNNEL: FUNNEL, VULN: VULN, ACTIVITY: ACTIVITY,
     byPriority: byPriority, trend: trend, remediated: remediated,
     medianFixDays: median(remediated.map(function (a) { return a.days; })),

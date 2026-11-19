@@ -48,9 +48,23 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("entry_id");
 
+                    b.Property<string>("EntryKey")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("entry_key");
+
+                    b.Property<DateTimeOffset?>("FirstRaisedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_raised_at");
+
                     b.Property<int>("Level")
                         .HasColumnType("integer")
                         .HasColumnName("level");
+
+                    b.Property<int?>("Number")
+                        .HasColumnType("integer")
+                        .HasColumnName("number");
 
                     b.Property<Guid>("OrganizationId")
                         .IsConcurrencyToken()
@@ -67,10 +81,73 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_alert_entry");
 
+                    b.HasIndex("OrganizationId", "Number")
+                        .IsUnique()
+                        .HasDatabaseName("ux_alert_number");
+
                     b.ToTable("alert", "assess", t =>
                         {
                             t.HasCheckConstraint("ck_alert_level", "level BETWEEN 1 AND 5");
                         });
+                });
+
+            modelBuilder.Entity("Ardea.Assessment.Persistence.AssessEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<Guid?>("Actor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at");
+
+                    b.Property<JsonDocument>("Data")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("data");
+
+                    b.Property<Guid?>("FindingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("finding_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<Guid?>("RemediationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("remediation_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_assess_event");
+
+                    b.HasIndex("FindingId")
+                        .HasDatabaseName("ix_assess_event_finding");
+
+                    b.HasIndex("OrganizationId", "At")
+                        .HasDatabaseName("ix_assess_event_org_at");
+
+                    b.HasIndex("RemediationId", "At")
+                        .HasDatabaseName("ix_assess_event_remediation");
+
+                    b.ToTable("assess_event", "assess");
                 });
 
             modelBuilder.Entity("Ardea.Assessment.Persistence.Finding", b =>
@@ -89,6 +166,15 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("changed_at");
 
+                    b.Property<int?>("ClosedLevel")
+                        .HasColumnType("integer")
+                        .HasColumnName("closed_level");
+
+                    b.Property<string>("ClosedVersionVerdict")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("closed_version_verdict");
+
                     b.Property<Guid>("ComponentId")
                         .HasColumnType("uuid")
                         .HasColumnName("component_id");
@@ -105,6 +191,21 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("evidence");
+
+                    b.Property<string>("Exploitation")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("exploitation");
+
+                    b.Property<JsonDocument>("Factors")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("factors");
+
+                    b.Property<bool>("FixAvailable")
+                        .HasColumnType("boolean")
+                        .HasColumnName("fix_available");
 
                     b.Property<string>("FixedVersion")
                         .HasMaxLength(100)
@@ -133,6 +234,10 @@ namespace Ardea.Assessment.Persistence.Migrations
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uuid")
                         .HasColumnName("project_id");
+
+                    b.Property<Guid?>("RemediationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("remediation_id");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -186,9 +291,15 @@ namespace Ardea.Assessment.Persistence.Migrations
                     b.HasIndex("ComponentId")
                         .HasDatabaseName("ix_finding_component");
 
+                    b.HasIndex("RemediationId")
+                        .HasDatabaseName("ix_finding_remediation");
+
                     b.HasIndex("AlertId", "ComponentId")
                         .IsUnique()
                         .HasDatabaseName("ux_finding_component");
+
+                    b.HasIndex("OrganizationId", "Level")
+                        .HasDatabaseName("ix_finding_org_level");
 
                     b.HasIndex("ProjectId", "EntryId")
                         .HasDatabaseName("ix_finding_project_entry");
@@ -209,6 +320,177 @@ namespace Ardea.Assessment.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Ardea.Assessment.Persistence.MatchScope", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<DateTimeOffset>("MatchedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("matched_at");
+
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<Guid?>("RepositoryLinkId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("repository_link_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_match_scope");
+
+                    b.HasIndex("ProjectId", "RepositoryLinkId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_match_scope");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("ProjectId", "RepositoryLinkId"), false);
+
+                    b.ToTable("match_scope", "assess");
+                });
+
+            modelBuilder.Entity("Ardea.Assessment.Persistence.OrgCounter", b =>
+                {
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<int>("NextNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("next_number");
+
+                    b.HasKey("OrganizationId")
+                        .HasName("pk_org_counter");
+
+                    b.ToTable("org_counter", "assess");
+                });
+
+            modelBuilder.Entity("Ardea.Assessment.Persistence.Remediation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<Guid?>("AssignedTo")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assigned_to");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<string>("CloseReason")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("close_reason");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<Guid>("ComponentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("component_id");
+
+                    b.Property<DateTimeOffset?>("DueAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("due_at");
+
+                    b.Property<bool>("DueAtManual")
+                        .HasColumnType("boolean")
+                        .HasColumnName("due_at_manual");
+
+                    b.Property<string>("Exploitation")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("exploitation");
+
+                    b.Property<bool>("FixAvailable")
+                        .HasColumnType("boolean")
+                        .HasColumnName("fix_available");
+
+                    b.Property<bool>("IsBackfill")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_backfill");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer")
+                        .HasColumnName("level");
+
+                    b.Property<DateTimeOffset?>("LevelRaisedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("level_raised_at");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer")
+                        .HasColumnName("number");
+
+                    b.Property<int>("OpenFindings")
+                        .HasColumnType("integer")
+                        .HasColumnName("open_findings");
+
+                    b.Property<DateTimeOffset>("OpenedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("opened_at");
+
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("TargetVersion")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("target_version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_remediation");
+
+                    b.HasIndex("ComponentId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_remediation_component_open")
+                        .HasFilter("status <> 'closed'");
+
+                    b.HasIndex("OrganizationId", "Number")
+                        .IsUnique()
+                        .HasDatabaseName("ux_remediation_number");
+
+                    b.HasIndex("OrganizationId", "Status", "Level", "Number")
+                        .HasDatabaseName("ix_remediation_list");
+
+                    b.ToTable("remediation", "assess", t =>
+                        {
+                            t.HasCheckConstraint("ck_remediation_exploitation", "exploitation IN ('none', 'poc', 'active')");
+
+                            t.HasCheckConstraint("ck_remediation_level", "level BETWEEN 1 AND 5");
+
+                            t.HasCheckConstraint("ck_remediation_status", "status IN ('open', 'in_review', 'closed')");
+                        });
+                });
+
             modelBuilder.Entity("Ardea.Assessment.Persistence.Finding", b =>
                 {
                     b.HasOne("Ardea.Assessment.Persistence.Alert", null)
@@ -217,6 +499,12 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_finding_alert_alert_id");
+
+                    b.HasOne("Ardea.Assessment.Persistence.Remediation", null)
+                        .WithMany()
+                        .HasForeignKey("RemediationId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_finding_remediations_remediation_id");
                 });
 #pragma warning restore 612, 618
         }

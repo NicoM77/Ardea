@@ -76,6 +76,28 @@ public sealed class ActionApiTests(PostgresServer server)
         Assert.Equal("action.status_changed", await host.ScalarAsync<string>($"SELECT action FROM platform.audit_event WHERE subject_type = 'action' LIMIT 1"));
     }
 
+    [Fact]
+    public async Task Concurrent_status_changes_from_the_same_status_let_exactly_one_through()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        var client = host.Client();
+        await client.PostAsync("/api/v1/setup", new { setupToken = ApiTestHost.SetupTokenValue, email = "owner@example.org", displayName = "Owner", password = ApiTestHost.Password });
+        using var _ = client;
+        var org = (await Json(await client.PostAsync("/api/v1/orgs", new { name = "Acme" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
+        var project = (await Json(await client.PostAsync($"/api/v1/orgs/{org}/projects", new { name = "Platform Ops" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
+        var component = (await Json(await client.PostAsync($"/api/v1/orgs/{org}/projects/{project}/components", new { productKey = "postgresql", version = "16.2" }), HttpStatusCode.Created))
+            .GetProperty("id").GetGuid();
+        await SeedAsync(host, org, project, component);
+
+        // Several people decide at once from what they all saw: open. One decision wins, the others reload.
+        var responses = await Task.WhenAll(Enumerable.Range(0, 6).Select(i => client.PostAsync(
+            $"/api/v1/orgs/{org}/actions/2/status",
+            i % 2 == 0 ? new { status = "in_review", expectedStatus = "open" } : (object)new { status = "risk_accepted", expectedStatus = "open" })));
+        Assert.Equal(1, responses.Count(r => r.StatusCode == HttpStatusCode.OK));
+        Assert.Equal(5, responses.Count(r => r.StatusCode == HttpStatusCode.Conflict));
+        Assert.Equal(1, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'action.status_changed'"));
+    }
+
     /// <summary>An alert, an action and a finding as the assessment would have written them.</summary>
     private static async Task<Guid> SeedAsync(ApiTestHost host, Guid org, Guid project, Guid component)
     {

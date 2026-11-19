@@ -39,7 +39,7 @@ internal sealed class ActionCommands(
             return Refusal.Validation("invalid_status_change", "The status change is not valid.", errors);
         }
 
-        var action = await db.Remediations.SingleOrDefaultAsync(r => r.Number == number, cancellationToken);
+        var action = await LockedActionAsync(number, cancellationToken);
         if (action is null)
         {
             return NotFound();
@@ -132,6 +132,10 @@ internal sealed class ActionCommands(
             return Refusal.NotFound("finding_not_found", "No such finding.");
         }
 
+        // The status the caller saw is compared under the component's lock, so two changes cannot both pass.
+        await remediations.LockAsync(finding.ComponentId, cancellationToken);
+        await db.Entry(finding).ReloadAsync(cancellationToken);
+
         if (finding.Status != request.ExpectedStatus)
         {
             return Refusal.Conflict("status_conflict", $"The finding is {finding.Status} by now; reload it and decide again.");
@@ -167,7 +171,7 @@ internal sealed class ActionCommands(
 
     public async Task<CommandResult<Remediation>> UpdateActionAsync(int number, UpdateActionRequest request, Guid user, IOrganizationMembership members, CancellationToken cancellationToken)
     {
-        var action = await db.Remediations.SingleOrDefaultAsync(r => r.Number == number, cancellationToken);
+        var action = await LockedActionAsync(number, cancellationToken);
         if (action is null)
         {
             return NotFound();
@@ -250,6 +254,22 @@ internal sealed class ActionCommands(
         var row = history.Add(EventKinds.ActionNoteAdded, new { text = request.Text!.Trim() }, action.Id, actor: user);
         await db.SaveChangesAsync(cancellationToken);
         return row;
+    }
+
+    /// <summary>
+    /// The action, read again after taking its component's lock: a check against the status the caller saw
+    /// then holds until the unit of work commits, and a concurrent change waits instead of being overwritten.
+    /// </summary>
+    private async Task<Remediation?> LockedActionAsync(int number, CancellationToken cancellationToken)
+    {
+        var action = await db.Remediations.SingleOrDefaultAsync(r => r.Number == number, cancellationToken);
+        if (action is not null)
+        {
+            await remediations.LockAsync(action.ComponentId, cancellationToken);
+            await db.Entry(action).ReloadAsync(cancellationToken);
+        }
+
+        return action;
     }
 
     private static Refusal NotFound() => Refusal.NotFound("action_not_found", "No such action.");

@@ -23,12 +23,20 @@ internal sealed class Remediations(AssessDbContext db, Numbers numbers, History 
         foreach (var component in componentIds.Distinct().Order())
         {
             // Two jobs touching one component take turns; the order of the ids keeps them from deadlocking.
-            await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"assess.component:" + component}, 0))", cancellationToken);
+            await LockAsync(component, cancellationToken);
             await SyncComponentAsync(component, actor, cancellationToken);
         }
 
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    /// <summary>
+    /// Takes the component's lock until the unit of work ends. Jobs and people's changes take it before they
+    /// read findings or actions of the component, so they take turns and always lock in the same order.
+    /// The lock is re-entrant: <see cref="SyncAsync"/> may take it again in the same unit of work.
+    /// </summary>
+    public async Task LockAsync(Guid componentId, CancellationToken cancellationToken) =>
+        await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"assess.component:" + componentId}, 0))", cancellationToken);
 
     private async Task SyncComponentAsync(Guid componentId, Guid? actor, CancellationToken cancellationToken)
     {

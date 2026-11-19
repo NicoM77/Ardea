@@ -3,7 +3,9 @@ export { applyOrvalRequestExtension, toResourceState } from './account/account.s
 export * from './account/account.service';
 export * from './administration/administration.service';
 export * from './authentication/authentication.service';
+export * from './catalog/catalog.service';
 export * from './entries/entries.service';
 export * from './organizations/organizations.service';
+export * from './projects/projects.service';
 export * from './setup/setup.service';
 export * from './sources/sources.service';

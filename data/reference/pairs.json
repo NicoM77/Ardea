@@ -1,0 +1,4626 @@
+{
+  "format": "ardea-reference-set",
+  "version": 1,
+  "pairs": [
+    {
+      "id": "P001",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-108500",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "activemq",
+        "name": "Apache ActiveMQ",
+        "kind": "messaging",
+        "version": "6.3.4",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names activemq via name; installed version above every range (highest bound 6.3.3); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P002",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-110941",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "mattermost",
+        "name": "Mattermost Server",
+        "kind": "other",
+        "version": "6.3.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names mattermost via name; installed version above every range (highest bound 6.3.2); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P003",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-111245",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.openejb:openejb-cxf@4.7.6",
+        "name": "org.apache.openejb:openejb-cxf",
+        "kind": "library",
+        "version": "4.7.6",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-cxf via package; installed version above every range (highest bound 4.7.5); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P004",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-111247",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.tomee:tomee-catalina@10.3.1",
+        "name": "org.apache.tomee:tomee-catalina",
+        "kind": "library",
+        "version": "10.3.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.tomee:tomee-catalina via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P005",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-111251",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.openejb:openejb-server@4.7.6",
+        "name": "org.apache.openejb:openejb-server",
+        "kind": "library",
+        "version": "4.7.6",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-server via package; installed version above every range (highest bound 4.7.5); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P006",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-111258",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.tomee:tomee-catalina@10.3.1",
+        "name": "org.apache.tomee:tomee-catalina",
+        "kind": "library",
+        "version": "10.3.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[1] names pkg:maven/org.apache.tomee:tomee-catalina via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P007",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-111259",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.tomee:tomee-embedded@10.3.1",
+        "name": "org.apache.tomee:tomee-embedded",
+        "kind": "library",
+        "version": "10.3.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.tomee:tomee-embedded via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P008",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-111261",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.tomee:tomee-security@10.3.1",
+        "name": "org.apache.tomee:tomee-security",
+        "kind": "library",
+        "version": "10.3.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.tomee:tomee-security via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P009",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-111262",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.tomee:tomee-security@10.3.1",
+        "name": "org.apache.tomee:tomee-security",
+        "kind": "library",
+        "version": "10.3.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.tomee:tomee-security via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P010",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-121590",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "mattermost",
+        "name": "Mattermost Server",
+        "kind": "other",
+        "version": "6.3.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names mattermost via name; installed version above every range (highest bound 6.3.2); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P011",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-122096",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.datasketches:datasketches-java@9.0.1",
+        "name": "org.apache.datasketches:datasketches-java",
+        "kind": "library",
+        "version": "9.0.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.datasketches:datasketches-java via package; installed version above every range (highest bound 9.0.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P012",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-124024",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "glibc",
+        "name": "GNU C Library",
+        "kind": "library",
+        "version": "0.0.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names glibc via name; installed version above every range (highest bound 0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P013",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-126216",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "fortimanager",
+        "name": "FortiManager",
+        "kind": "network",
+        "version": "8.0.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names fortimanager via cpe; installed version above every range (highest bound 8.0.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P014",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-126381",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "n8n",
+        "name": "n8n",
+        "kind": "other",
+        "version": "2.44.2",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names n8n via name; installed version above every range (highest bound 2.44.1); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P015",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-126388",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "n8n",
+        "name": "n8n",
+        "kind": "other",
+        "version": "2.45.6",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names n8n via name; installed version above every range (highest bound 2.45.5); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P016",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-127425",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "virtualbox",
+        "name": "Oracle VM VirtualBox",
+        "kind": "virtualization",
+        "version": "7.2.23",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names virtualbox via name; installed version above every range (highest bound 7.2.22); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P017",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-127427",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "virtualbox",
+        "name": "Oracle VM VirtualBox",
+        "kind": "virtualization",
+        "version": "7.2.23",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names virtualbox via name; installed version above every range (highest bound 7.2.22); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P018",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-21602",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "jira",
+        "name": "Jira Software Data Center",
+        "kind": "other",
+        "version": "10.3.27",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names jira via name; installed version above every range (highest bound 10.3.26); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P019",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-21606",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "jira",
+        "name": "Jira Software Data Center",
+        "kind": "other",
+        "version": "11.3.13",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names jira via name; installed version above every range (highest bound 11.3.12); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P020",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-21607",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "jira",
+        "name": "Jira Software Data Center",
+        "kind": "other",
+        "version": "11.3.13",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names jira via name; installed version above every range (highest bound 11.3.12); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P021",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-40853",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.xmlgraphics:batik-svggen@1.19.1",
+        "name": "org.apache.xmlgraphics:batik-svggen",
+        "kind": "library",
+        "version": "1.19.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-svggen via package; installed version above every range (highest bound 1.19.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P022",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-44929",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.xmlgraphics:batik-util@1.19.1",
+        "name": "org.apache.xmlgraphics:batik-util",
+        "kind": "library",
+        "version": "1.19.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-util via package; installed version above every range (highest bound 1.19.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P023",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-85240",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "mattermost",
+        "name": "Mattermost Server",
+        "kind": "other",
+        "version": "6.3.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names mattermost via name; installed version above every range (highest bound 6.3.2); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P024",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-86532",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.tomee:openejb-core@10.3.1",
+        "name": "org.apache.tomee:openejb-core",
+        "kind": "library",
+        "version": "10.3.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[1] names pkg:maven/org.apache.tomee:openejb-core via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P025",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-87755",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.tomee:openejb-core@10.3.1",
+        "name": "org.apache.tomee:openejb-core",
+        "kind": "library",
+        "version": "10.3.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[1] names pkg:maven/org.apache.tomee:openejb-core via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P026",
+      "group": "exact",
+      "subgroup": "above_hint",
+      "aboveRanges": true,
+      "record": "CVE-2026-97849",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.tomee:openejb-derbynet@10.3.1",
+        "name": "org.apache.tomee:openejb-derbynet",
+        "kind": "library",
+        "version": "10.3.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[1] names pkg:maven/org.apache.tomee:openejb-derbynet via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
+      "label": null
+    },
+    {
+      "id": "P027",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-102236",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "vscode",
+        "name": "Visual Studio Code",
+        "kind": "other",
+        "version": "1.145.4",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names vscode via name; installed version above every range (highest bound 1.145.3); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P028",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-105608",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "consul",
+        "name": "HashiCorp Consul",
+        "kind": "other",
+        "version": "2.1.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names consul via name; installed version above every range (highest bound 2.1.0); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P029",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-105739",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "gitlab",
+        "name": "GitLab",
+        "kind": "other",
+        "version": "19.5.7",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names gitlab via cpe; installed version above every range (highest bound 19.5.6); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P030",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-113508",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "airflow",
+        "name": "Apache Airflow",
+        "kind": "other",
+        "version": "3.4.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names airflow via name; installed version above every range (highest bound 3.4.0); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P031",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-114157",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "dotnet",
+        "name": ".NET",
+        "kind": "runtime",
+        "version": "11.0.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names dotnet via name; installed version above every range (highest bound 11.0.0); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P032",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-116947",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "sql-server",
+        "name": "Microsoft SQL Server",
+        "kind": "database",
+        "version": "17.0.5045.4",
+        "packaging": "upstream"
+      },
+      "selection": "affected[6] names sql-server via name; installed version above every range (highest bound 17.0.5045.3); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P033",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-118748",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "dotnet",
+        "name": ".NET",
+        "kind": "runtime",
+        "version": "11.0.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names dotnet via name; installed version above every range (highest bound 11.0.0); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P034",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-118961",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "gitlab",
+        "name": "GitLab",
+        "kind": "other",
+        "version": "19.5.7",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names gitlab via cpe; installed version above every range (highest bound 19.5.6); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P035",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-120143",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "postgresql",
+        "name": "PostgreSQL",
+        "kind": "database",
+        "version": "18.7.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names postgresql via name; installed version above every range (highest bound 18.7); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P036",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-120153",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "postgresql",
+        "name": "PostgreSQL",
+        "kind": "database",
+        "version": "18.7.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names postgresql via name; installed version above every range (highest bound 18.7); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P037",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-120796",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "system-text-json",
+        "name": "System.Text.Json",
+        "kind": "library",
+        "version": "11.0.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[3] names system-text-json via name; installed version above every range (highest bound 11.0.0); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P038",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-121865",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "purl": "pkg:pypi/nanobot-ai@0.4.2",
+        "name": "nanobot-ai",
+        "kind": "library",
+        "version": "0.4.2",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:pypi/nanobot-ai via package; installed version above every range (highest bound 0.4.1); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P039",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-123875",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "nodejs",
+        "name": "Node.js",
+        "kind": "runtime",
+        "version": "26.13.2",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names nodejs via name; installed version above every range (highest bound 26.13.1); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P040",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-125160",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "typo3",
+        "name": "TYPO3",
+        "kind": "cms",
+        "version": "14.3.13",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names typo3 via name; installed version above every range (highest bound 14.3.12); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P041",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-126167",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "fortimail",
+        "name": "FortiMail",
+        "kind": "network",
+        "version": "8.0.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names fortimail via cpe; installed version above every range (highest bound 8.0.2); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P042",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-126214",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "fortianalyzer",
+        "name": "FortiAnalyzer",
+        "kind": "network",
+        "version": "8.0.2",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names fortianalyzer via cpe; installed version above every range (highest bound 8.0.1); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P043",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-35190",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "openssl",
+        "name": "OpenSSL",
+        "kind": "library",
+        "version": "4.1.2",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names openssl via name; installed version above every range (highest bound 4.1.1); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P044",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-74763",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "shiro",
+        "name": "Apache Shiro",
+        "kind": "library",
+        "version": "3.0.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[3] names shiro via name; installed version above every range (highest bound 3.0.2); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P045",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-97043",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:golang/cmd/go@1.27.5",
+        "name": "cmd/go",
+        "kind": "library",
+        "version": "1.27.5",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:golang/cmd/go via package; installed version above every range (highest bound 1.27.4); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P046",
+      "group": "exact",
+      "subgroup": "above_plain",
+      "aboveRanges": true,
+      "record": "CVE-2026-99290",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "linux-kernel",
+        "name": "Linux kernel",
+        "kind": "os",
+        "version": "6.9.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names linux-kernel via name; installed version above every range (highest bound 6.9); the description names no higher version",
+      "label": null
+    },
+    {
+      "id": "P047",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-109475",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "dotnet",
+        "name": ".NET",
+        "kind": "runtime",
+        "version": "8.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[5] names dotnet via name; installed version inside lessThan 8.0.34",
+      "label": null
+    },
+    {
+      "id": "P048",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-109476",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "dotnet",
+        "name": ".NET",
+        "kind": "runtime",
+        "version": "10.9.9",
+        "packaging": "upstream"
+      },
+      "selection": "affected[3] names dotnet via name; installed version inside lessThan 11.0.0",
+      "label": null
+    },
+    {
+      "id": "P049",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-110992",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "grafana",
+        "name": "Grafana",
+        "kind": "other",
+        "version": "13.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names grafana via name; installed version inside lessThanOrEqual 13.0.12",
+      "label": null
+    },
+    {
+      "id": "P050",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-111291",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "office",
+        "name": "Microsoft Office",
+        "kind": "other",
+        "version": "16.0.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names office via name; installed version inside lessThan 16.0.14334.21048",
+      "label": null
+    },
+    {
+      "id": "P051",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-111452",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "airflow",
+        "name": "Apache Airflow",
+        "kind": "other",
+        "version": "3.3.9",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names airflow via name; installed version inside lessThan 3.4.0",
+      "label": null
+    },
+    {
+      "id": "P052",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-112810",
+      "project": {
+        "criticality": "low",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "windows-server",
+        "name": "Windows Server",
+        "kind": "os",
+        "version": "10.0.26100.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[12] names windows-server via name; installed version inside lessThan 10.0.26100.33822",
+      "label": null
+    },
+    {
+      "id": "P053",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-113764",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "windows-server",
+        "name": "Windows Server",
+        "kind": "os",
+        "version": "10.0.17763.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[9] names windows-server via name; installed version inside lessThan 10.0.17763.9487",
+      "label": null
+    },
+    {
+      "id": "P054",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-114146",
+      "project": {
+        "criticality": "low",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "visual-studio",
+        "name": "Visual Studio",
+        "kind": "other",
+        "version": "18.11.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[13] names visual-studio via name; installed version inside lessThan 18.11.4",
+      "label": null
+    },
+    {
+      "id": "P055",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-114147",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "visual-studio",
+        "name": "Visual Studio",
+        "kind": "other",
+        "version": "18.11.9",
+        "packaging": "upstream"
+      },
+      "selection": "affected[14] names visual-studio via name; installed version inside lessThan 18.12.0",
+      "label": null
+    },
+    {
+      "id": "P056",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-114159",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "visual-studio",
+        "name": "Visual Studio",
+        "kind": "other",
+        "version": "18.11.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[4] names visual-studio via name; installed version inside lessThan 18.11.4",
+      "label": null
+    },
+    {
+      "id": "P057",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-114466",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "git",
+        "name": "Git",
+        "kind": "other",
+        "version": "2.50.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names git via name; installed version inside exact 2.50.1",
+      "label": null
+    },
+    {
+      "id": "P058",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-114951",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "mysql",
+        "name": "MySQL",
+        "kind": "database",
+        "version": "26.10",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names mysql via name; installed version inside exact 26.10",
+      "label": null
+    },
+    {
+      "id": "P059",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-115791",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "python",
+        "name": "Python",
+        "kind": "runtime",
+        "version": "3.15.9",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names python via name; installed version inside lessThan 3.16.0",
+      "label": null
+    },
+    {
+      "id": "P060",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-116333",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "postgresql",
+        "name": "PostgreSQL",
+        "kind": "database",
+        "version": "18",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names postgresql via name; installed version inside lessThan 18.7",
+      "label": null
+    },
+    {
+      "id": "P061",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-118278",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "windows",
+        "name": "Windows",
+        "kind": "os",
+        "version": "10.0.22631.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[4] names windows via name; installed version inside lessThan 10.0.22631.7652",
+      "label": null
+    },
+    {
+      "id": "P062",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-118716",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "office",
+        "name": "Microsoft Office",
+        "kind": "other",
+        "version": "16.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[5] names office via name; installed version inside lessThan 16.115.26110837",
+      "label": null
+    },
+    {
+      "id": "P063",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-119618",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "apache-httpd",
+        "name": "Apache HTTP Server",
+        "kind": "network",
+        "version": "2.4.55",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names apache-httpd via name; installed version inside lessThanOrEqual 2.4.70",
+      "label": null
+    },
+    {
+      "id": "P064",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-119848",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "windows",
+        "name": "Windows",
+        "kind": "os",
+        "version": "10.0.22631.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[4] names windows via name; installed version inside lessThan 10.0.22631.7711",
+      "label": null
+    },
+    {
+      "id": "P065",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-119871",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "windows",
+        "name": "Windows",
+        "kind": "os",
+        "version": "10.0.17763.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names windows via name; installed version inside lessThan 10.0.17763.9487",
+      "label": null
+    },
+    {
+      "id": "P066",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-121533",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "gitlab",
+        "name": "GitLab",
+        "kind": "other",
+        "version": "13.8",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names gitlab via cpe; installed version inside lessThan 19.3.9",
+      "label": null
+    },
+    {
+      "id": "P067",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-123395",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "office",
+        "name": "Microsoft Office",
+        "kind": "other",
+        "version": "1.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names office via name; installed version inside lessThan 16.115.26110837",
+      "label": null
+    },
+    {
+      "id": "P068",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-124210",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "sharepoint-server",
+        "name": "Microsoft SharePoint Server",
+        "kind": "other",
+        "version": "16.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names sharepoint-server via name; installed version inside lessThan 16.0.20326.20278",
+      "label": null
+    },
+    {
+      "id": "P069",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-125344",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "chrome",
+        "name": "Google Chrome",
+        "kind": "other",
+        "version": "157.0.8102.50",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names chrome via name; installed version inside lessThan 157.0.8103.50",
+      "label": null
+    },
+    {
+      "id": "P070",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-126177",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "fortimanager",
+        "name": "FortiManager",
+        "kind": "network",
+        "version": "8.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names fortimanager via cpe; installed version inside exact 8.0.0",
+      "label": null
+    },
+    {
+      "id": "P071",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-126211",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "fortimanager",
+        "name": "FortiManager",
+        "kind": "network",
+        "version": "8.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names fortimanager via cpe; installed version inside lessThanOrEqual 8.0.1",
+      "label": null
+    },
+    {
+      "id": "P072",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-126226",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "fortianalyzer",
+        "name": "FortiAnalyzer",
+        "kind": "network",
+        "version": "8.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names fortianalyzer via cpe; installed version inside exact 8.0.0",
+      "label": null
+    },
+    {
+      "id": "P073",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-126233",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "fortimanager",
+        "name": "FortiManager",
+        "kind": "network",
+        "version": "8.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names fortimanager via cpe; installed version inside lessThanOrEqual 8.0.1",
+      "label": null
+    },
+    {
+      "id": "P074",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-126386",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "n8n",
+        "name": "n8n",
+        "kind": "other",
+        "version": "1.123.88",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names n8n via name; installed version inside lessThan 1.123.89",
+      "label": null
+    },
+    {
+      "id": "P075",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-126389",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "n8n",
+        "name": "n8n",
+        "kind": "other",
+        "version": "1.123.88",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names n8n via name; installed version inside lessThan 1.123.89",
+      "label": null
+    },
+    {
+      "id": "P076",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-126526",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "office",
+        "name": "Microsoft Office",
+        "kind": "other",
+        "version": "16.0.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[4] names office via name; installed version inside lessThan 16.115.26110837",
+      "label": null
+    },
+    {
+      "id": "P077",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-127174",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:pypi/pretix@2026.7.4",
+        "name": "pretix",
+        "kind": "library",
+        "version": "2026.7.4",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:pypi/pretix via package; installed version inside lessThan 2026.7.5",
+      "label": null
+    },
+    {
+      "id": "P078",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-129320",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "shiro",
+        "name": "Apache Shiro",
+        "kind": "library",
+        "version": "3.0.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names shiro via name; installed version inside lessThan 3.0.2",
+      "label": null
+    },
+    {
+      "id": "P079",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-129321",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "gitlab",
+        "name": "GitLab",
+        "kind": "other",
+        "version": "17.8",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names gitlab via cpe; installed version inside lessThan 19.3.9",
+      "label": null
+    },
+    {
+      "id": "P080",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-131015",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "chrome",
+        "name": "Google Chrome",
+        "kind": "other",
+        "version": "158.0.8126.36",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names chrome via name; installed version inside lessThan 158.0.8127.36",
+      "label": null
+    },
+    {
+      "id": "P081",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-131017",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "chrome",
+        "name": "Google Chrome",
+        "kind": "other",
+        "version": "158.0.8126.36",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names chrome via name; installed version inside lessThan 158.0.8127.36",
+      "label": null
+    },
+    {
+      "id": "P082",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-131048",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "chrome",
+        "name": "Google Chrome",
+        "kind": "other",
+        "version": "158.0.8126.36",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names chrome via name; installed version inside lessThan 158.0.8127.36",
+      "label": null
+    },
+    {
+      "id": "P083",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-67391",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "sql-server",
+        "name": "Microsoft SQL Server",
+        "kind": "database",
+        "version": "17.0.4006.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[6] names sql-server via name; installed version inside lessThan 17.0.5045.3",
+      "label": null
+    },
+    {
+      "id": "P084",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-78162",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "camel",
+        "name": "Apache Camel",
+        "kind": "framework",
+        "version": "4.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names camel via name; installed version inside lessThan 4.18.5",
+      "label": null
+    },
+    {
+      "id": "P085",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-95908",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "windows-server",
+        "name": "Windows Server",
+        "kind": "os",
+        "version": "10.0.26100.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[6] names windows-server via name; installed version inside lessThan 10.0.26100.33822",
+      "label": null
+    },
+    {
+      "id": "P086",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-96019",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "windows-server",
+        "name": "Windows Server",
+        "kind": "os",
+        "version": "10.0.26100.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[15] names windows-server via name; installed version inside lessThan 10.0.26100.33822",
+      "label": null
+    },
+    {
+      "id": "P087",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-96176",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "windows",
+        "name": "Windows",
+        "kind": "os",
+        "version": "10.0.26200.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[3] names windows via name; installed version inside lessThan 10.0.26200.9974",
+      "label": null
+    },
+    {
+      "id": "P088",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-97042",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:golang/cmd/link@1.26.10",
+        "name": "cmd/link",
+        "kind": "library",
+        "version": "1.26.10",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[2] names pkg:golang/cmd/link via package; installed version inside lessThan 1.26.11",
+      "label": null
+    },
+    {
+      "id": "P089",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-99289",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "linux-kernel",
+        "name": "Linux kernel",
+        "kind": "os",
+        "version": "7.2",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names linux-kernel via name; installed version inside exact 7.2",
+      "label": null
+    },
+    {
+      "id": "P090",
+      "group": "exact",
+      "subgroup": "in_range",
+      "aboveRanges": false,
+      "record": "CVE-2026-99311",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "linux-kernel",
+        "name": "Linux kernel",
+        "kind": "os",
+        "version": "6.12",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names linux-kernel via name; installed version inside exact 6.12",
+      "label": null
+    },
+    {
+      "id": "P091",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-105437",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "git",
+        "name": "Git",
+        "kind": "other",
+        "version": "2.49.0",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names git via cpe; a distribution package of a version inside lessThan 2.49.1",
+      "label": null
+    },
+    {
+      "id": "P092",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-106023",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "apache-httpd",
+        "name": "Apache HTTP Server",
+        "kind": "network",
+        "version": "2.4.30",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names apache-httpd via name; a distribution package of a version inside lessThanOrEqual 2.4.70",
+      "label": null
+    },
+    {
+      "id": "P093",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-107493",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "openssl",
+        "name": "OpenSSL",
+        "kind": "library",
+        "version": "4.1.0",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names openssl via name; a distribution package of a version inside lessThan 4.1.1",
+      "label": null
+    },
+    {
+      "id": "P094",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-109619",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "php",
+        "name": "PHP",
+        "kind": "runtime",
+        "version": "8.2.34",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names php via name; a distribution package of a version inside lessThan 8.2.35",
+      "label": null
+    },
+    {
+      "id": "P095",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-114466",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "git",
+        "name": "Git",
+        "kind": "other",
+        "version": "2.50.1",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names git via name; a distribution package of a version inside exact 2.50.1",
+      "label": null
+    },
+    {
+      "id": "P096",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-114469",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "git",
+        "name": "Git",
+        "kind": "other",
+        "version": "2.50.1",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names git via name; a distribution package of a version inside exact 2.50.1",
+      "label": null
+    },
+    {
+      "id": "P097",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-114950",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "mysql",
+        "name": "MySQL",
+        "kind": "database",
+        "version": "26.10",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names mysql via name; a distribution package of a version inside exact 26.10",
+      "label": null
+    },
+    {
+      "id": "P098",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-114952",
+      "project": {
+        "criticality": "low",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "mysql",
+        "name": "MySQL",
+        "kind": "database",
+        "version": "26.10",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names mysql via name; a distribution package of a version inside exact 26.10",
+      "label": null
+    },
+    {
+      "id": "P099",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-115819",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "glibc",
+        "name": "GNU C Library",
+        "kind": "library",
+        "version": "2.2",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names glibc via name; a distribution package of a version inside lessThanOrEqual 2.44",
+      "label": null
+    },
+    {
+      "id": "P100",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-116319",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "postgresql",
+        "name": "PostgreSQL",
+        "kind": "database",
+        "version": "18",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names postgresql via name; a distribution package of a version inside lessThan 18.7",
+      "label": null
+    },
+    {
+      "id": "P101",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-119618",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "apache-httpd",
+        "name": "Apache HTTP Server",
+        "kind": "network",
+        "version": "2.4.55",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names apache-httpd via name; a distribution package of a version inside lessThanOrEqual 2.4.70",
+      "label": null
+    },
+    {
+      "id": "P102",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-120150",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "postgresql",
+        "name": "PostgreSQL",
+        "kind": "database",
+        "version": "18",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names postgresql via name; a distribution package of a version inside lessThan 18.7",
+      "label": null
+    },
+    {
+      "id": "P103",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-120154",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "postgresql",
+        "name": "PostgreSQL",
+        "kind": "database",
+        "version": "18",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names postgresql via name; a distribution package of a version inside lessThan 18.7",
+      "label": null
+    },
+    {
+      "id": "P104",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-123829",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "nodejs",
+        "name": "Node.js",
+        "kind": "runtime",
+        "version": "22.23.4",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names nodejs via name; a distribution package of a version inside lessThan 22.23.5",
+      "label": null
+    },
+    {
+      "id": "P105",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-123872",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "nodejs",
+        "name": "Node.js",
+        "kind": "runtime",
+        "version": "22.23.4",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names nodejs via name; a distribution package of a version inside lessThan 22.23.5",
+      "label": null
+    },
+    {
+      "id": "P106",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-124709",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "openssl",
+        "name": "OpenSSL",
+        "kind": "library",
+        "version": "4.1.0",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names openssl via name; a distribution package of a version inside lessThan 4.1.1",
+      "label": null
+    },
+    {
+      "id": "P107",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-127428",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "mysql",
+        "name": "MySQL",
+        "kind": "database",
+        "version": "26.10",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names mysql via name; a distribution package of a version inside exact 26.10",
+      "label": null
+    },
+    {
+      "id": "P108",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-1502",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "python",
+        "name": "Python",
+        "kind": "runtime",
+        "version": "3.10.20",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names python via name; a distribution package of a version inside lessThan 3.10.21",
+      "label": null
+    },
+    {
+      "id": "P109",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-88823",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "openssl",
+        "name": "OpenSSL",
+        "kind": "library",
+        "version": "4.1.0",
+        "packaging": "distribution"
+      },
+      "selection": "affected[0] names openssl via name; a distribution package of a version inside lessThan 4.1.1",
+      "label": null
+    },
+    {
+      "id": "P110",
+      "group": "unknown",
+      "subgroup": "distribution",
+      "aboveRanges": false,
+      "record": "CVE-2026-99301",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "linux-kernel",
+        "name": "Linux kernel",
+        "kind": "os",
+        "version": "6.9",
+        "packaging": "distribution"
+      },
+      "selection": "affected[1] names linux-kernel via name; a distribution package of a version inside exact 6.9",
+      "label": null
+    },
+    {
+      "id": "P111",
+      "group": "unknown",
+      "subgroup": "git_only",
+      "aboveRanges": false,
+      "record": "CVE-2026-100082",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "linux-kernel",
+        "name": "Linux kernel",
+        "kind": "os",
+        "version": "6.12.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names linux-kernel via name; Git commits only",
+      "label": null
+    },
+    {
+      "id": "P112",
+      "group": "unknown",
+      "subgroup": "git_only",
+      "aboveRanges": false,
+      "record": "CVE-2026-118515",
+      "project": {
+        "criticality": "low",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "symfony",
+        "name": "Symfony",
+        "kind": "framework",
+        "version": "1.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names symfony via name; Git commits only",
+      "label": null
+    },
+    {
+      "id": "P113",
+      "group": "unknown",
+      "subgroup": "git_only",
+      "aboveRanges": false,
+      "record": "CVE-2026-121619",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "symfony",
+        "name": "Symfony",
+        "kind": "framework",
+        "version": "1.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names symfony via name; Git commits only",
+      "label": null
+    },
+    {
+      "id": "P114",
+      "group": "unknown",
+      "subgroup": "git_only",
+      "aboveRanges": false,
+      "record": "CVE-2026-129510",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "log4net",
+        "name": "Apache log4net",
+        "kind": "library",
+        "version": "1.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names log4net via package; Git commits only",
+      "label": null
+    },
+    {
+      "id": "P115",
+      "group": "unknown",
+      "subgroup": "git_only",
+      "aboveRanges": false,
+      "record": "CVE-2026-129511",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "log4net",
+        "name": "Apache log4net",
+        "kind": "library",
+        "version": "1.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[2] names log4net via package; Git commits only",
+      "label": null
+    },
+    {
+      "id": "P116",
+      "group": "unknown",
+      "subgroup": "git_only",
+      "aboveRanges": false,
+      "record": "CVE-2026-129512",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "log4net",
+        "name": "Apache log4net",
+        "kind": "library",
+        "version": "1.0.0",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names log4net via package; Git commits only",
+      "label": null
+    },
+    {
+      "id": "P117",
+      "group": "unknown",
+      "subgroup": "git_only",
+      "aboveRanges": false,
+      "record": "CVE-2026-99302",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "linux-kernel",
+        "name": "Linux kernel",
+        "kind": "os",
+        "version": "6.12.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names linux-kernel via name; Git commits only",
+      "label": null
+    },
+    {
+      "id": "P118",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-0325",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "pan-os",
+        "name": "PAN-OS",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names pan-os via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P119",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-102556",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "rhel",
+        "name": "Red Hat Enterprise Linux",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[7] names rhel via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P120",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-106475",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "grafana",
+        "name": "Grafana",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names grafana via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P121",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-109476",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "dotnet",
+        "name": ".NET",
+        "kind": "runtime",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[7] names dotnet via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P122",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-111239",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.tomee:openejb-ssh",
+        "name": "org.apache.tomee:openejb-ssh",
+        "kind": "library",
+        "version": null,
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[1] names pkg:maven/org.apache.tomee:openejb-ssh via package; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P123",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-111334",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "netscaler-gateway",
+        "name": "NetScaler Gateway",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names netscaler-gateway via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P124",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-114146",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "dotnet",
+        "name": ".NET",
+        "kind": "runtime",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[9] names dotnet via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P125",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-114147",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "dotnet",
+        "name": ".NET",
+        "kind": "runtime",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[2] names dotnet via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P126",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-114406",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "openshift",
+        "name": "Red Hat OpenShift Container Platform",
+        "kind": "container",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[16] names openshift via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P127",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-114940",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "oracle-java-se",
+        "name": "Oracle Java SE",
+        "kind": "runtime",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names oracle-java-se via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P128",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-116934",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "sql-server",
+        "name": "Microsoft SQL Server",
+        "kind": "database",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[5] names sql-server via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P129",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-118713",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "office",
+        "name": "Microsoft Office",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[4] names office via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P130",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-118728",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "office",
+        "name": "Microsoft Office",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[3] names office via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P131",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-119078",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/commons-codec:commons-codec",
+        "name": "commons-codec:commons-codec",
+        "kind": "library",
+        "version": null,
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/commons-codec:commons-codec via package; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P132",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-120407",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "contact-form-7",
+        "name": "Contact Form 7",
+        "kind": "plugin",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names contact-form-7 via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P133",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-121530",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "fortios",
+        "name": "FortiOS",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names fortios via cpe; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P134",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-121678",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "windows",
+        "name": "Windows",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names windows via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P135",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-122170",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "windows-server",
+        "name": "Windows Server",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[15] names windows-server via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P136",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-122226",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "gitlab",
+        "name": "GitLab",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names gitlab via cpe; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P137",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-124227",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "office",
+        "name": "Microsoft Office",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names office via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P138",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-124861",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "firefox",
+        "name": "Firefox",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names firefox via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P139",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-124874",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "thunderbird",
+        "name": "Thunderbird",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names thunderbird via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P140",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-126133",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "thunderbird",
+        "name": "Thunderbird",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names thunderbird via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P141",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-126178",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "fortimanager",
+        "name": "FortiManager",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names fortimanager via cpe; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P142",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-126234",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "fortianalyzer",
+        "name": "FortiAnalyzer",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names fortianalyzer via cpe; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P143",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-126262",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "fortianalyzer",
+        "name": "FortiAnalyzer",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names fortianalyzer via cpe; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P144",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-126386",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "n8n",
+        "name": "n8n",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[2] names n8n via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P145",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-126865",
+      "project": {
+        "criticality": "low",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "chrome",
+        "name": "Google Chrome",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names chrome via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P146",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-127420",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "virtualbox",
+        "name": "Oracle VM VirtualBox",
+        "kind": "virtualization",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names virtualbox via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P147",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-128849",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "gitlab",
+        "name": "GitLab",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names gitlab via cpe; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P148",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-129239",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "directus",
+        "name": "Directus",
+        "kind": "cms",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names directus via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P149",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-129551",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "purl": "pkg:npm/%40tensei/rest",
+        "name": "%40tensei/rest",
+        "kind": "library",
+        "version": null,
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:npm/%40tensei/rest via package; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P150",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-130904",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "chrome",
+        "name": "Google Chrome",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names chrome via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P151",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-131012",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "chrome",
+        "name": "Google Chrome",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names chrome via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P152",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-49329",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "openshift",
+        "name": "Red Hat OpenShift Container Platform",
+        "kind": "container",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[6] names openshift via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P153",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-55655",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "openshift",
+        "name": "Red Hat OpenShift Container Platform",
+        "kind": "container",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[60] names openshift via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P154",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-83563",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "windows",
+        "name": "Windows",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names windows via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P155",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-84761",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "litespeed-cache",
+        "name": "LiteSpeed Cache",
+        "kind": "plugin",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names litespeed-cache via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P156",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-85197",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "rhel",
+        "name": "Red Hat Enterprise Linux",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[5] names rhel via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P157",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-92091",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "rhel",
+        "name": "Red Hat Enterprise Linux",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[15] names rhel via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P158",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-95909",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "windows",
+        "name": "Windows",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[2] names windows via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P159",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-96073",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "windows-server",
+        "name": "Windows Server",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[14] names windows-server via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P160",
+      "group": "unknown",
+      "subgroup": "no_version",
+      "aboveRanges": false,
+      "record": "CVE-2026-97002",
+      "project": {
+        "criticality": "low",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "windows-server",
+        "name": "Windows Server",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[11] names windows-server via name; no version in the profile",
+      "label": null
+    },
+    {
+      "id": "P161",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-102632",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "powershell",
+        "name": "PowerShell",
+        "kind": "runtime",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Devolutions / PowerShell Universal, which the catalogue does not know; contains «PowerShell» with powershell",
+      "label": null
+    },
+    {
+      "id": "P162",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-106472",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "prometheus",
+        "name": "Prometheus",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[2] is Grafana / Prometheus Datasource, which the catalogue does not know; contains «Prometheus» with prometheus",
+      "label": null
+    },
+    {
+      "id": "P163",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-107902",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "electron",
+        "name": "Electron",
+        "kind": "framework",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is FUJI ELECTRIC CO., LTD. / Hakko Electronics Co., Ltd. / TELLUS, which the catalogue does not know; contains «Electron» with electron",
+      "label": null
+    },
+    {
+      "id": "P164",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-108425",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "windows",
+        "name": "Windows",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[3] is Microsoft / Windows Server 2019 (Server Core installation), which the catalogue does not know; contains «Windows» with windows",
+      "label": null
+    },
+    {
+      "id": "P165",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-114371",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "adobe-experience-manager",
+        "name": "Adobe Experience Manager",
+        "kind": "cms",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Adobe / Adobe Experience Manager as a Cloud Service, which the catalogue does not know; contains «Adobe Experience Manager» with adobe-experience-manager",
+      "label": null
+    },
+    {
+      "id": "P166",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-118952",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "kafka",
+        "name": "Apache Kafka",
+        "kind": "messaging",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Red Hat / streams for Apache Kafka 2, which the catalogue does not know; contains «Apache Kafka» with kafka",
+      "label": null
+    },
+    {
+      "id": "P167",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-119171",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "woocommerce",
+        "name": "WooCommerce",
+        "kind": "plugin",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Unknown / Advanced Product Fields (Product Addons) for WooCommerce, which the catalogue does not know; contains «WooCommerce» with woocommerce",
+      "label": null
+    },
+    {
+      "id": "P168",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-119970",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "windows",
+        "name": "Windows",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[6] is Microsoft / Windows Server 2025 (Server Core installation), which the catalogue does not know; contains «Windows» with windows",
+      "label": null
+    },
+    {
+      "id": "P169",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-120013",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "python",
+        "name": "Python",
+        "kind": "runtime",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is SAP_SE / SAP Cloud SDK for Python, which the catalogue does not know; contains «Python» with python",
+      "label": null
+    },
+    {
+      "id": "P170",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-120547",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "contact-form-7",
+        "name": "Contact Form 7",
+        "kind": "plugin",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is saadiqbal / CF7 Apps – Addons for Contact Form 7 (Honeypot, Database, Redirection, Webhook, etc.), which the catalogue does not know; contains «Contact Form 7» with contact-form-7",
+      "label": null
+    },
+    {
+      "id": "P171",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-121841",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "firefox",
+        "name": "Firefox",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Mozilla / Firefox for iOS, which the catalogue does not know; contains «Firefox» with firefox",
+      "label": null
+    },
+    {
+      "id": "P172",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-121873",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "contact-form-7",
+        "name": "Contact Form 7",
+        "kind": "plugin",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Unknown / Redirection for Contact Form 7, which the catalogue does not know; contains «Contact Form 7» with contact-form-7",
+      "label": null
+    },
+    {
+      "id": "P173",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-123481",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is WP Extended / The Ultimate WordPress Toolkit – WP Extended, which the catalogue does not know; contains «WordPress» with wordpress",
+      "label": null
+    },
+    {
+      "id": "P174",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-123701",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "woocommerce",
+        "name": "WooCommerce",
+        "kind": "plugin",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Unknown / Security For WooCommerce, which the catalogue does not know; contains «WooCommerce» with woocommerce",
+      "label": null
+    },
+    {
+      "id": "P175",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-123806",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "python",
+        "name": "Python",
+        "kind": "runtime",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is theupdateframework / python-tuf, which the catalogue does not know; contains «Python» with python",
+      "label": null
+    },
+    {
+      "id": "P176",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-124697",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "jquery",
+        "name": "jQuery",
+        "kind": "library",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Progress Software / Kendo UI for jQuery, which the catalogue does not know; contains «jQuery» with jquery",
+      "label": null
+    },
+    {
+      "id": "P177",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-124755",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "advanced-custom-fields",
+        "name": "Advanced Custom Fields",
+        "kind": "plugin",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Justin Kruit / Advanced Custom Fields: Font Awesome Field, which the catalogue does not know; contains «Advanced Custom Fields» with advanced-custom-fields",
+      "label": null
+    },
+    {
+      "id": "P178",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-125855",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Elextensions / ELEX WordPress HelpDesk & Customer Ticketing System, which the catalogue does not know; contains «WordPress» with wordpress",
+      "label": null
+    },
+    {
+      "id": "P179",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-126823",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "mongodb",
+        "name": "MongoDB",
+        "kind": "database",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is MongoDB / Atlas SQL JDBC Driver, which the catalogue does not know; contains «MongoDB» with mongodb",
+      "label": null
+    },
+    {
+      "id": "P180",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-126838",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "mongodb",
+        "name": "MongoDB",
+        "kind": "database",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is MongoDB / Rust Driver, which the catalogue does not know; contains «MongoDB» with mongodb",
+      "label": null
+    },
+    {
+      "id": "P181",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-129077",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is WPKoi WordPress Themes / WPKoi Templates for Elementor, which the catalogue does not know; contains «WordPress» with wordpress",
+      "label": null
+    },
+    {
+      "id": "P182",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-129465",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "dotnet",
+        "name": ".NET",
+        "kind": "runtime",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is izhaorui / Zr.Admin.NET, which the catalogue does not know; contains «.NET» with dotnet",
+      "label": null
+    },
+    {
+      "id": "P183",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-130082",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "django",
+        "name": "Django",
+        "kind": "framework",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is django-tenants / django-tenants, which the catalogue does not know; contains «Django» with django",
+      "label": null
+    },
+    {
+      "id": "P184",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-130801",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "electron",
+        "name": "Electron",
+        "kind": "framework",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Hanshow Technology / Nebular Pro Electronic Shelf Labels, which the catalogue does not know; contains «Electron» with electron",
+      "label": null
+    },
+    {
+      "id": "P185",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-130869",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "ruby",
+        "name": "Ruby",
+        "kind": "runtime",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Ruby Central / cfp-app, which the catalogue does not know; contains «Ruby» with ruby",
+      "label": null
+    },
+    {
+      "id": "P186",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-18963",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "keycloak",
+        "name": "Keycloak",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[9] is Red Hat / Red Hat build of Keycloak 26.6.6, which the catalogue does not know; contains «Keycloak» with keycloak",
+      "label": null
+    },
+    {
+      "id": "P187",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-60039",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "helm",
+        "name": "Helm",
+        "kind": "container",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[3] is Helmholz / myREX24V2.virtual, which the catalogue does not know; contains «Helm» with helm",
+      "label": null
+    },
+    {
+      "id": "P188",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-60045",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "helm",
+        "name": "Helm",
+        "kind": "container",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[2] is Helmholz / myREX24V2, which the catalogue does not know; contains «Helm» with helm",
+      "label": null
+    },
+    {
+      "id": "P189",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-71298",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "kubernetes",
+        "name": "Kubernetes",
+        "kind": "container",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Red Hat / Multicluster Engine for Kubernetes, which the catalogue does not know; contains «Kubernetes» with kubernetes",
+      "label": null
+    },
+    {
+      "id": "P190",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-89059",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "camel",
+        "name": "Apache Camel",
+        "kind": "framework",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[14] is Red Hat / Red Hat build of Apache Camel 4 for Quarkus 3, which the catalogue does not know; contains «Apache Camel» with camel",
+      "label": null
+    },
+    {
+      "id": "P191",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-91075",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "woocommerce",
+        "name": "WooCommerce",
+        "kind": "plugin",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Unknown / Eupago Gateway For Woocommerce, which the catalogue does not know; contains «WooCommerce» with woocommerce",
+      "label": null
+    },
+    {
+      "id": "P192",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-9165",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "kubernetes",
+        "name": "Kubernetes",
+        "kind": "container",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[2] is Red Hat / Red Hat Advanced Cluster Security for Kubernetes for IBM Power, little endian 4.10, which the catalogue does not know; contains «Kubernetes» with kubernetes",
+      "label": null
+    },
+    {
+      "id": "P193",
+      "group": "similar_name",
+      "subgroup": "contains_name",
+      "aboveRanges": false,
+      "record": "CVE-2026-95884",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "windows",
+        "name": "Windows",
+        "kind": "os",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] is Microsoft / Windows Server 2016 (Server Core installation), which the catalogue does not know; contains «Windows» with windows",
+      "label": null
+    },
+    {
+      "id": "P194",
+      "group": "similar_name",
+      "subgroup": "platform_plugin",
+      "aboveRanges": false,
+      "record": "CVE-2026-104718",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": "6.8.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is the WordPress plugin or theme Elementor Website Builder; the profile has WordPress itself",
+      "label": null
+    },
+    {
+      "id": "P195",
+      "group": "similar_name",
+      "subgroup": "platform_plugin",
+      "aboveRanges": false,
+      "record": "CVE-2026-105150",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": "6.8.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is the WordPress plugin or theme Product Filter for WooCommerce by WBW; the profile has WordPress itself",
+      "label": null
+    },
+    {
+      "id": "P196",
+      "group": "similar_name",
+      "subgroup": "platform_plugin",
+      "aboveRanges": false,
+      "record": "CVE-2026-107776",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": "6.8.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is the WordPress plugin or theme Dokan; the profile has WordPress itself",
+      "label": null
+    },
+    {
+      "id": "P197",
+      "group": "similar_name",
+      "subgroup": "platform_plugin",
+      "aboveRanges": false,
+      "record": "CVE-2026-119040",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": "6.8.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is the WordPress plugin or theme Defender Security; the profile has WordPress itself",
+      "label": null
+    },
+    {
+      "id": "P198",
+      "group": "similar_name",
+      "subgroup": "platform_plugin",
+      "aboveRanges": false,
+      "record": "CVE-2026-119529",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": "6.8.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is the WordPress plugin or theme Gravity Forms; the profile has WordPress itself",
+      "label": null
+    },
+    {
+      "id": "P199",
+      "group": "similar_name",
+      "subgroup": "platform_plugin",
+      "aboveRanges": false,
+      "record": "CVE-2026-123695",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": "6.8.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is the WordPress plugin or theme Security For WooCommerce; the profile has WordPress itself",
+      "label": null
+    },
+    {
+      "id": "P200",
+      "group": "similar_name",
+      "subgroup": "platform_plugin",
+      "aboveRanges": false,
+      "record": "CVE-2026-123704",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": "6.8.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is the WordPress plugin or theme Security For WooCommerce; the profile has WordPress itself",
+      "label": null
+    },
+    {
+      "id": "P201",
+      "group": "similar_name",
+      "subgroup": "platform_plugin",
+      "aboveRanges": false,
+      "record": "CVE-2026-126639",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": "6.8.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] is the WordPress plugin or theme WP Ultimate CSV Importer Pro; the profile has WordPress itself",
+      "label": null
+    },
+    {
+      "id": "P202",
+      "group": "similar_name",
+      "subgroup": "platform_plugin",
+      "aboveRanges": false,
+      "record": "CVE-2026-16135",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": "6.8.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is the WordPress plugin or theme VibeBP; the profile has WordPress itself",
+      "label": null
+    },
+    {
+      "id": "P203",
+      "group": "similar_name",
+      "subgroup": "platform_plugin",
+      "aboveRanges": false,
+      "record": "CVE-2026-93427",
+      "project": {
+        "criticality": "low",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "wordpress",
+        "name": "WordPress",
+        "kind": "cms",
+        "version": "6.8.3",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is the WordPress plugin or theme ARMember Premium – Membership Plugin, Content Restriction, Member Levels, User Profile & User signup; the profile has WordPress itself",
+      "label": null
+    },
+    {
+      "id": "P204",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2025-34147",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "adobe-commerce",
+        "name": "Adobe Commerce",
+        "kind": "cms",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Shenzhen Aitemi E Commerce Co. Ltd. / M300 Wi-Fi Repeater, which the catalogue does not know; shares «commerce» with adobe-commerce",
+      "label": null
+    },
+    {
+      "id": "P205",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-0455",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "cisco-asa",
+        "name": "Cisco Adaptive Security Appliance Software",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is AMD / Versal™ AI Edge Series Gen 2 Adaptive SoCs, which the catalogue does not know; shares «adaptive» with cisco-asa",
+      "label": null
+    },
+    {
+      "id": "P206",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-109469",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "entra-id",
+        "name": "Microsoft Entra ID",
+        "kind": "service",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Microsoft / Entra Device Registration, which the catalogue does not know; shares «entra» with entra-id",
+      "label": null
+    },
+    {
+      "id": "P207",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-110789",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "golang-x-crypto",
+        "name": "golang.org/x/crypto",
+        "kind": "library",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] is @libp2p / crypto, which the catalogue does not know; shares «crypto» with golang-x-crypto",
+      "label": null
+    },
+    {
+      "id": "P208",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-111552",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "hyper-v",
+        "name": "Hyper-V",
+        "kind": "virtualization",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[2] is Hyper Teknoloji Ltd. Şti. / Hyper E-Commerce Infrastructure - Storefront application and management panel, which the catalogue does not know; shares «hyper» with hyper-v",
+      "label": null
+    },
+    {
+      "id": "P209",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-111560",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "ingress-nginx",
+        "name": "Ingress NGINX Controller",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] is Barracuda Networks / Barracuda Load Balancer Application Delivery Controller (ADC), which the catalogue does not know; shares «controller» with ingress-nginx",
+      "label": null
+    },
+    {
+      "id": "P210",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-112209",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "elementor",
+        "name": "Elementor Website Builder",
+        "kind": "plugin",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Novanet / Novanet's Website, which the catalogue does not know; shares «website» with elementor",
+      "label": null
+    },
+    {
+      "id": "P211",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-114162",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "cisco-ise",
+        "name": "Cisco Identity Services Engine",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Microsoft / Azure Privileged Identity Management (PIM), which the catalogue does not know; shares «identity» with cisco-ise",
+      "label": null
+    },
+    {
+      "id": "P212",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-114915",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "elasticsearch",
+        "name": "Elasticsearch",
+        "kind": "database",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Oracle Corporation / Oracle E-Business Suite Secure Enterprise Search, which the catalogue does not know; shares «search» with elasticsearch",
+      "label": null
+    },
+    {
+      "id": "P213",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-118418",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "entra-id",
+        "name": "Microsoft Entra ID",
+        "kind": "service",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Unknown / WP Directory Kit, which the catalogue does not know; shares «directory» with entra-id",
+      "label": null
+    },
+    {
+      "id": "P214",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-121686",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "zyxel-firewall",
+        "name": "Zyxel Firewall",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is FrodoBots / FrodoBots EarthRover Mini+ firmware, which the catalogue does not know; shares «firmware» with zyxel-firewall",
+      "label": null
+    },
+    {
+      "id": "P215",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-124035",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "openjdk",
+        "name": "OpenJDK",
+        "kind": "runtime",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Amazon / amazon-braket-schemas, which the catalogue does not know; shares «amazon» with openjdk",
+      "label": null
+    },
+    {
+      "id": "P216",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-124253",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "advanced-custom-fields",
+        "name": "Advanced Custom Fields",
+        "kind": "plugin",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is codepeople / Calculated Fields Form, which the catalogue does not know; shares «fields» with advanced-custom-fields",
+      "label": null
+    },
+    {
+      "id": "P217",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-124646",
+      "project": {
+        "criticality": "low",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "iis",
+        "name": "Internet Information Services",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is CDAC-Noida / e-Sushrut, Hospital Management Information System (HMIS), which the catalogue does not know; shares «information» with iis",
+      "label": null
+    },
+    {
+      "id": "P218",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-125124",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "docker-compose",
+        "name": "Docker Compose",
+        "kind": "container",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is tmatens / compose-lint, which the catalogue does not know; shares «compose» with docker-compose",
+      "label": null
+    },
+    {
+      "id": "P219",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-125322",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "postgresql",
+        "name": "PostgreSQL",
+        "kind": "database",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is pgEdge / pgedge-postgres-mcp, which the catalogue does not know; shares «postgres» with postgresql",
+      "label": null
+    },
+    {
+      "id": "P220",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-125374",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "laravel",
+        "name": "Laravel Framework",
+        "kind": "framework",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is krayin / laravel-crm, which the catalogue does not know; shares «laravel» with laravel",
+      "label": null
+    },
+    {
+      "id": "P221",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-126813",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "roundcube",
+        "name": "Roundcube Webmail",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Roundcube / Webmail, which the catalogue does not know; shares «roundcube, webmail» with roundcube",
+      "label": null
+    },
+    {
+      "id": "P222",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-128068",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "rails",
+        "name": "Ruby on Rails",
+        "kind": "framework",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is rails / rails-html-sanitizer, which the catalogue does not know; shares «rails» with rails",
+      "label": null
+    },
+    {
+      "id": "P223",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-128910",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "zyxel-firewall",
+        "name": "Zyxel Firewall",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] is DJI / AeroScope Mobile (TP703) 1300 communications board firmware, which the catalogue does not know; shares «firmware» with zyxel-firewall",
+      "label": null
+    },
+    {
+      "id": "P224",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-27182",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "teamviewer",
+        "name": "TeamViewer",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is saturnremote / Saturn Remote Mouse Server, which the catalogue does not know; shares «remote» with teamviewer",
+      "label": null
+    },
+    {
+      "id": "P225",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-68862",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "terraform",
+        "name": "HashiCorp Terraform",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Dell / Terraform Provider for Dell PowerFlex, which the catalogue does not know; shares «terraform» with terraform",
+      "label": null
+    },
+    {
+      "id": "P226",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-79614",
+      "project": {
+        "criticality": "high",
+        "exposure": "isolated"
+      },
+      "component": {
+        "productKey": "zyxel-firewall",
+        "name": "Zyxel Firewall",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Zyxel / DX3301-T0 firmware, which the catalogue does not know; shares «firmware, zyxel» with zyxel-firewall",
+      "label": null
+    },
+    {
+      "id": "P227",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-80322",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "cisco-ise",
+        "name": "Cisco Identity Services Engine",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Ping Identity / PingAuthorize, which the catalogue does not know; shares «identity» with cisco-ise",
+      "label": null
+    },
+    {
+      "id": "P228",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-83953",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "github-enterprise-server",
+        "name": "GitHub Enterprise Server",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Microsoft / GitHub Copilot Plugin for JetBrains IDEs, which the catalogue does not know; shares «github» with github-enterprise-server",
+      "label": null
+    },
+    {
+      "id": "P229",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-91674",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "cisco-ise",
+        "name": "Cisco Identity Services Engine",
+        "kind": "network",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Oracle Corporation / Oracle Identity Manager Connector, which the catalogue does not know; shares «identity» with cisco-ise",
+      "label": null
+    },
+    {
+      "id": "P230",
+      "group": "similar_name",
+      "subgroup": "shared_word",
+      "aboveRanges": false,
+      "record": "CVE-2026-91879",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "terraform",
+        "name": "HashiCorp Terraform",
+        "kind": "other",
+        "version": null,
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] is Dell / Terraform Provider for ObjectScale, which the catalogue does not know; shares «terraform» with terraform",
+      "label": null
+    }
+  ]
+}

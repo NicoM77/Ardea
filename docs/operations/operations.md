@@ -61,14 +61,14 @@ retries and assessments by outcome.
 
 ## Catalogue that learns
 
-Records name many products the curated catalogue does not know. Once a day (02:41 UTC), and when the instance
+Records name many products the curated catalogue does not know. Once a day (02:41 UTC), an hour after a source's first load, and when the instance
 administrator starts it on *Sources → Catalogue* or with `ardea catalog grow`, the catalogue collects these unknown
 product keys with the number of records naming them, maps what rules can map (a known CPE pair or package, the same
 name but for version, legal form or a leading vendor name; an unknown CPE pair or package becomes a new entry) and,
 with a provider, asks the model about the most frequent rest: keys from two records on, at once when one is in KEV,
 at most `ARDEA_AI__CATALOG_DAILY_CALLS` calls a day. Answers with high confidence that pass the checks take effect;
 everything else waits on the review list on *Sources → Catalogue*, where it is confirmed, changed or rejected. A
-product name that reads like an instruction never takes effect without a person. Learned entries only add: what the
+product name or record title that reads like an instruction never takes effect without a person. Learned entries only add: what the
 curated catalogue finds stays as it is, and a hit that came about through a learned entry says so on the finding and
 can be taken back with one click. The same page exports the learned entries as catalogue files for a contribution to
 the project and shows the measures. Without a provider only the rules map; the rest stays on the list of unknown

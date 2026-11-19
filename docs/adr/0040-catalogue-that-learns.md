@@ -26,7 +26,10 @@ looks like.
 2. **A learned key keeps its raw key.** `intel.entry_affected` gains `learned_from`: the raw key (`acme/widgetserver`) a
    learned entry resolved to its key (`widget-server`). The candidate search adds the raw key as a product key of the
    entry and the reverse search finds rows by it, so a free component that matched the raw key before still does; a
-   free component whose name the catalogue knows only through a learned entry keeps its raw key besides. The
+   free component whose name the catalogue knows only through a learned entry keeps its raw key besides. A component
+   recorded under a learned product (switched to it by a member, or found by a repository's package) keeps the raw
+   keys the product was learned from as keys of its own (`IProductCatalog.LearnedFromAsync`, also after a withdrawal),
+   so neither the minutes before the entries are computed again nor a withdrawal close one of its true findings. The
    fingerprints compare a row as before when it has no `learned_from`, so no existing entry looks changed.
 3. **Who does what.** The catalogue owns learning: the tables, the job `GrowCatalog`, the checks, the decisions, the
    export, the measures and the endpoints. It never reads the entries: Intel implements `IUnknownProductFeed` (the
@@ -42,7 +45,10 @@ looks like.
    `catalog.learning_event` records collections, calls, proposals and decisions, counts only.
 5. **Rules without a model** (step 2, also without any provider): a CPE pair or package an entry knows, or the same
    name but for trailing versions, the vendor's name in front, legal form and spelling: alias. An unknown CPE pair: a
-   new entry with name and vendor of the record and the numeric scheme. Beyond the plan, an unknown package: a new
+   new entry with name and vendor of the record and the numeric scheme; the name keeps the vendor where the record has
+   it (`Redis Insight`, key `redis-insight`) and gets it in front where the rest is a generic word (`Agent` of Grafana
+   Labs is `Grafana Agent`). A learned spelling of one word under a vendor finds its entry only with that vendor, so a
+   free component «Agent» without vendor gets no hit from it. Beyond the plan, an unknown package: a new
    entry of kind library with the ecosystem's scheme (npm → semver, PyPI → pep440, …); a package coordinate is as
    unambiguous as a CPE pair. Rule results take effect at once.
 6. **The model** (steps 3 to 5) follows ADR 037: a versioned prompt file `Learning/Prompts/learn-1.md`, a data block
@@ -57,9 +63,11 @@ looks like.
    becomes its alias under the record's vendor. Every decision is checked again against the catalogue of the moment
    it is written.
 7. **Adoption.** In effect at once: rule results, and the model's checked answers with `confidence` high. Everything
-   else waits on the review list. A source statement that reads like an instruction (markup, quotes or braces,
-   control characters, more than 120 characters, «ignore … previous», «instructions», «you are», the answer's field
-   names) is still mapped and asked about, but nothing of it takes effect without a person.
+   else waits on the review list. When any text the model reads looks like an instruction, nothing of the answer
+   takes effect without a person; the key is still mapped and asked about. For vendor and product: markup, quotes or
+   braces, control characters, more than 120 characters, «ignore … previous», «instructions», «you are», the answer's
+   field names. For the titles, CPE pairs and package, which are long and use quotes and brackets: control characters
+   and the same instruction patterns.
 8. **Provider.** The catalogue sends public data of the sources only, so no organisation's data policy applies. The
    instance setting `catalog.learning_provider` (environment `ARDEA_AI__CATALOG_PROVIDER`, which locks it) names the
    provider: unset means the first local provider, `none` switches the model off, and a provider that is not local is
@@ -67,11 +75,19 @@ looks like.
 9. **Limits.** `ARDEA_AI__CATALOG_DAILY_CALLS` (200) calls per UTC day, retries included, counted from the `asked`
    events; a key is worked on from two records on, at once when one is in KEV, the most frequent first; a run asks
    about at most ten keys and queues its continuation while calls are left. A key whose call failed on the provider is
-   asked again the next day. The job has one attempt and runs daily at 02:41 UTC, by `ardea catalog grow` and from
-   the administration; the job's own unit of work stays unused, so no transaction is open during a call.
+   asked again the next day. The mapping without a model works in batches of 250 keys, each in a unit of work of its
+   own; after 20 batches the run queues its continuation with the raw key to go on after, before it asks the model, so
+   the thousands of keys after a first load never form one transaction and a run that ends early keeps what it did.
+   The job has one attempt and runs daily at 02:41 UTC, an hour after a source's first load completes (Intel asks
+   through `ICatalogGrowth` in the sync's unit of work, so normalisation and merging had time to work through the
+   records), by `ardea catalog grow` and from the administration; the job's own unit of work stays unused, so no
+   transaction is open during a call.
 10. **Recomputation.** After a decision the catalogue tells `ICatalogChangeSubscriber`; Intel queues `CorrelateEntry`
-    for the entries concerned with a delay of six minutes, longer than the five minutes a process keeps the catalogue
-    in memory, so every process reads the new catalogue first. New or lost hits follow like any other entry change.
+    for the entries concerned at once, and a waiting recomputation of the same entry serves as well. Every unit of
+    work that looks something up in the catalogue first counts the decisions about learned entries (`adopted`,
+    `confirmed`, `withdrawn` in `catalog.learning_event`, one indexed count); a process's copy of the catalogue loaded
+    for another count is read again at once, however fresh. So no recomputation works with the catalogue from before
+    the decision, in any process. New or lost hits follow like any other entry change.
 11. **The note on the hit.** A strong hit whose matched keys all come from learned entries only (or that matched a
     component recorded under a learned product) carries `evidence.learned` with the key and the raw keys. The web
     interface shows «via learned catalogue entry» and, for the instance administrator, links the entry on the review
@@ -98,15 +114,19 @@ looks like.
   is overwritten by the next `migrate`; the mapping lives on the raw key instead.
 - **Keeping the raw key as the learned entry's key.** No row would change and no hit could be lost, but the entry
   would have an ugly key, and every other spelling of the same product would need its own entry.
-- **Recomputing at once.** Another process may still hold the old catalogue for up to five minutes and would compute
-  the entries unchanged; the delay is simpler than a cache version shared between processes.
+- **Recomputing after a delay longer than the cache's lifetime.** The first version did this, with a coalesce key of
+  its own. A recomputation of the same entry that was already waiting swallowed the delayed one and could run on a
+  process with the old catalogue; an adoption and a withdrawal a few minutes apart had the same effect. Counting the
+  decisions per unit of work costs one small query and leaves no window.
 - **A token quota.** The plan bounds the catalogue by calls; a call is short and its size varies little.
 
 ## Consequences
 
 - A learned entry can still make a hit appear that is wrong; it is visible as such, and the administrator withdraws
   it with one click. The withdrawal rate per week is one of the measures.
-- The first run after a 180-day first fill maps thousands of keys by rule, mostly unknown CPE pairs and packages, and
-  queues the recomputation of their entries.
+- The first run after a 180-day first fill maps thousands of keys by rule, mostly unknown CPE pairs and packages, in
+  batches and continuations, and queues the recomputation of their entries.
+- A component switched to a learned entry keeps the raw keys of the moment of the switch; raw keys mapped to the
+  entry later reach it with its next change.
 - The observation of the plan with a local model at 50 unknown keys is a manual step; the procedure is in
   `docs/operations/operations.md` («Catalogue that learns»). It was not run for this change.

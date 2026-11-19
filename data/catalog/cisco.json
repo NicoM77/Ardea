@@ -1,0 +1,68 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Cisco",
+  "products": [
+    {
+      "key": "cisco-asa",
+      "name": "Cisco Adaptive Security Appliance Software",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["cisco:adaptive_security_appliance_software"],
+      "aliases": [
+        { "vendor": "Cisco", "names": ["ASA", "Cisco ASA", "Cisco ASA Software", "Cisco Adaptive Security Appliance (ASA) Software"] }
+      ]
+    },
+    {
+      "key": "cisco-ftd",
+      "name": "Cisco Firepower Threat Defense Software",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["cisco:firepower_threat_defense"],
+      "aliases": [
+        { "vendor": "Cisco", "names": ["FTD", "Cisco FTD", "Cisco Firepower Threat Defense (FTD) Software", "Cisco Secure Firewall Threat Defense"] }
+      ]
+    },
+    {
+      "key": "cisco-ios-xe",
+      "name": "Cisco IOS XE Software",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["cisco:ios_xe"],
+      "aliases": [{ "vendor": "Cisco", "names": ["IOS XE", "Cisco IOS XE"] }]
+    },
+    {
+      "key": "cisco-ios",
+      "name": "Cisco IOS Software",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["cisco:ios"],
+      "aliases": [{ "vendor": "Cisco", "names": ["IOS", "Cisco IOS"] }]
+    },
+    {
+      "key": "cisco-secure-client",
+      "name": "Cisco Secure Client",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["cisco:secure_client", "cisco:anyconnect_secure_mobility_client"],
+      "aliases": [{ "vendor": "Cisco", "names": ["AnyConnect", "Cisco AnyConnect", "Cisco AnyConnect Secure Mobility Client"] }]
+    },
+    {
+      "key": "cisco-ise",
+      "name": "Cisco Identity Services Engine",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["cisco:identity_services_engine"],
+      "aliases": [{ "vendor": "Cisco", "names": ["ISE", "Cisco ISE", "Cisco Identity Services Engine Software"] }]
+    },
+    {
+      // Splunk belongs to Cisco since 2024.
+      "key": "splunk",
+      "name": "Splunk Enterprise",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["splunk:splunk"],
+      "aliases": [{ "vendor": "Splunk", "names": ["Splunk", "Splunk Enterprise"] }],
+      "images": ["splunk/splunk"]
+    }
+  ]
+}

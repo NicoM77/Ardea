@@ -21,6 +21,16 @@
       "versionScheme": "numeric",
       "cpe": ["f5:nginx_plus"],
       "related": ["nginx"]
+    },
+    {
+      "key": "big-ip",
+      "name": "BIG-IP",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["f5:big-ip_local_traffic_manager", "f5:big-ip_access_policy_manager"],
+      "aliases": [
+        { "vendor": "F5", "names": ["BIG-IP LTM", "BIG-IP APM", "BIG-IP Local Traffic Manager", "BIG-IP Access Policy Manager"] }
+      ]
     }
   ]
 }

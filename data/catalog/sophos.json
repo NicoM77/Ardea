@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Sophos",
+  "products": [
+    {
+      "key": "sophos-firewall",
+      "name": "Sophos Firewall",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["sophos:sfos"],
+      "aliases": [{ "vendor": "Sophos", "names": ["SFOS", "XG Firewall", "Sophos XG Firewall"] }]
+    }
+  ]
+}

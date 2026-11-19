@@ -32,7 +32,7 @@ internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext ten
 
     public NpgsqlConnection Connection { get; } = dataSource.CreateConnection();
 
-    public bool HasBegun => _transaction is not null;
+    public bool HasBegun { get; private set; }
 
     public async ValueTask<NpgsqlConnection> GetConnectionAsync(CancellationToken cancellationToken)
     {
@@ -73,6 +73,7 @@ internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext ten
         }
 
         _transaction = transaction;
+        HasBegun = true;
     }
 
     public Task CommitAsync(CancellationToken cancellationToken)
@@ -94,14 +95,31 @@ internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext ten
     {
         ObjectDisposedException.ThrowIf(_completed, this);
         _completed = true;
-        if (_transaction is not null)
-        {
-            await _transaction.CommitAsync(cancellationToken);
-            await _transaction.DisposeAsync();
-        }
 
-        // Nothing may run after the commit outside a transaction and without a tenant setting.
-        await Connection.CloseAsync();
+        // The transaction is let go of here and never touched again: closing the connection hands the
+        // physical connection back to the pool, and a later disposal of the transaction (or of this unit
+        // of work) would then act on a connection that already belongs to someone else.
+        var transaction = _transaction;
+        _transaction = null;
+        try
+        {
+            if (transaction is not null)
+            {
+                try
+                {
+                    await transaction.CommitAsync(cancellationToken);
+                }
+                finally
+                {
+                    await transaction.DisposeAsync();
+                }
+            }
+        }
+        finally
+        {
+            // Nothing may run after the commit outside a transaction and without a tenant setting.
+            await Connection.CloseAsync();
+        }
     }
 
     public async ValueTask DisposeAsync()

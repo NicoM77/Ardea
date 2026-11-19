@@ -85,6 +85,15 @@ internal sealed class JobTestHost : IAsyncDisposable
         return Convert.ToInt64(await command.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture);
     }
 
+    /// <summary>Counts as the owner role, which row-level security does not limit (ADR 029).</summary>
+    public async Task<long> CountAsOwnerAsync(string sql)
+    {
+        await using var connection = new NpgsqlConnection(Database.Options.OwnerConnectionString("tests"));
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand(sql, connection);
+        return Convert.ToInt64(await command.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     public async Task ExecuteAsync(string sql)
     {
         await using var command = DataSource.CreateCommand(sql);

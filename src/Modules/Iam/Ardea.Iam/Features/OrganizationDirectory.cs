@@ -52,8 +52,7 @@ internal static class OrganizationDirectory
     /// </summary>
     public static async Task<Guid?> OrganizationOfTokenAsync(NpgsqlDataSource dataSource, string token, string? normalizedEmail, CancellationToken cancellationToken)
     {
-        await using var command = dataSource.CreateCommand(
-            "SELECT organization_id FROM iam.invitation WHERE token_hash = $1 AND expires_at > now() AND ($2::text IS NULL OR normalized_email = $2)");
+        await using var command = dataSource.CreateCommand("SELECT iam.invitation_organization($1, $2)");
         command.Parameters.Add(new NpgsqlParameter { Value = HashToken(token) });
         command.Parameters.Add(new NpgsqlParameter { Value = (object?)normalizedEmail ?? DBNull.Value, NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Text });
         return await command.ExecuteScalarAsync(cancellationToken) as Guid?;

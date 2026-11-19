@@ -1,4 +1,5 @@
 using Ardea.Ai;
+using Ardea.Host.Features;
 using Ardea.Platform.Configuration;
 using Ardea.Platform.Hosting;
 using Ardea.Platform.Jobs;
@@ -28,6 +29,7 @@ internal static class WorkerRole
         builder.Services.AddHostedService(sp => ActivatorUtilities.CreateInstance<WorkerHeartbeat>(sp, AppVersion.Current));
         builder.Services.AddUnitOfWork();
         builder.Services.AddJobWorker();
+        builder.Services.AddInstanceSelfCheck();
         builder.Services.AddSourceAdapters();
         builder.Services.AddAiProviders(builder.Configuration);
         builder.Services.AddArdeaSecrets(MasterKey.FromBase64(builder.Configuration[HostConfiguration.MasterKeyKey]!));

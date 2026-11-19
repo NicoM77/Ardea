@@ -1621,6 +1621,29 @@
         }
       }
     },
+    "/api/v1/status": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "operationId": "getStatusWarnings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatusWarning"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orgs/{orgId}/projects": {
       "get": {
         "tags": [
@@ -4210,6 +4233,26 @@
         }
       }
     },
+    "/api/v1/instance/status": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "operationId": "getInstanceStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceStatusView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/instance/jobs/{jobId}/retry": {
       "post": {
         "tags": [
@@ -5579,6 +5622,33 @@
           }
         }
       },
+      "InstanceStatusView": {
+        "required": [
+          "warnings",
+          "metrics",
+          "at"
+        ],
+        "type": "object",
+        "properties": {
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusWarning"
+            }
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusMetric"
+            }
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "The first administration (task 0.13, master plan 11.4): registration, SMTP with a test mail,\nabandoned jobs with retry, the installed version. Instance administrator only."
+      },
       "InvitationPreview": {
         "required": [
           "organizationName",
@@ -6844,6 +6914,70 @@
           }
         }
       },
+      "StatusMetric": {
+        "required": [
+          "group",
+          "name",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One figure of the operation, e.g. jobs waiting of a kind; counts only, never contents (master plan 9.2)."
+      },
+      "StatusWarning": {
+        "required": [
+          "code",
+          "severity",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "since": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "subject": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "The system warns about itself when it no longer works reliably (master plan 12.7): a source not\nfetched for six hours, a stalled worker, failing deliveries. Users see the warning on the overview;\nthe instance administrator also sees the operating figures."
+      },
       "SuggestionEvidenceView": {
         "required": [
           "file",
@@ -7228,6 +7362,9 @@
       "name": "Sources"
     },
     {
+      "name": "Administration"
+    },
+    {
       "name": "Projects"
     },
     {
@@ -7235,9 +7372,6 @@
     },
     {
       "name": "Entries"
-    },
-    {
-      "name": "Administration"
     }
   ]
 }

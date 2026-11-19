@@ -1,6 +1,6 @@
 # ADR 044: Notices per week and their thresholds
 
-- Status: accepted
+- Status: accepted; thresholds confirmed by the owner on 19 November 2026
 - Date: 2026-11-19
 - Refines: ADR 033 (candidate search and version verdicts), ADR 036 (spike week as test data); master plan 17.2, 17.3
 - Master plan: 17.2, 17.3, 17.8, 17.9, 14 (phase 5a acceptance), task 5a.1

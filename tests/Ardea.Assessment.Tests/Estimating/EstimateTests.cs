@@ -25,8 +25,8 @@ public sealed class EstimateTests(PostgresServer server)
         await host.AddComponentAsync(acme, shop, c => (c.ProductKey, c.Kind, c.Version) = ("postgresql", "database", "17.11"));
         await host.AddComponentAsync(acme, shop, c => (c.ProductKey, c.Kind, c.Version) = ("nginx", "network", "1.27.1"));
         var billing = await host.AddProjectAsync(acme, "Billing");
-        var billingDb = await host.AddComponentAsync(acme, billing, c => (c.ProductKey, c.Kind, c.CustomName, c.ProtectionNote) =
-            ("postgresql", "database", "Billing DB of ACME Corp", "Same WAF as Payroll-Prod; ask jane.doe@acme-corp.ch at ACME Corp"));
+        var billingDb = await host.AddComponentAsync(acme, billing, c => (c.ProductKey, c.Kind, c.CustomName, c.ProtectionNote, c.Version, c.Packaging) =
+            ("postgresql", "database", "Billing DB of ACME Corp", "Same WAF as Payroll-Prod; ask jane.doe@acme-corp.ch at ACME Corp", "17.4", "distribution"));
         await host.ProfileChangedAsync(acme, shop);
         await host.ProfileChangedAsync(acme, billing);
         await host.RunJobsAsync();
@@ -41,7 +41,7 @@ public sealed class EstimateTests(PostgresServer server)
 
         // One call; its request names the two hit components under placeholders, no project and nothing else of the profile.
         var request = Assert.Single(model.Requests);
-        Assert.Equal(["C1 P1 17.11 in_range", "C2 P2 - unknown"], request.Data.GetProperty("components").EnumerateArray()
+        Assert.Equal(["C1 P1 17.11 in_range", "C2 P2 17.4 unknown"], request.Data.GetProperty("components").EnumerateArray()
             .Select(c => $"{c.GetProperty("ref").GetString()} {c.GetProperty("project").GetString()} {(c.TryGetProperty("version", out var v) ? v.GetString() : "-")} {c.GetProperty("version_check").GetString()}"));
         foreach (var secret in new[] { "Shop Backend", "shop-backend", "Billing", "nginx", "Payroll", "jane.doe", "acme", "Same WAF" })
         {
@@ -166,8 +166,8 @@ public sealed class EstimateTests(PostgresServer server)
         await using var host = await StartAsync(("local", true, model));
         var acme = AssessmentTestHost.NewOrganization();
         var project = await host.AddProjectAsync(acme, "Platform", criticality: "high", exposure: "internet");
-        await host.AddComponentAsync(acme, project, c => (c.CustomName, c.Kind, c.Purl) = ("left-pad", "library", "pkg:npm/left-pad"));
-        await host.AddComponentAsync(acme, project, c => (c.CustomName, c.Kind, c.Purl) = ("right-pad", "library", "pkg:npm/right-pad"));
+        await host.AddComponentAsync(acme, project, c => (c.CustomName, c.Kind, c.Purl, c.Version, c.Packaging) = ("left-pad", "library", "pkg:npm/left-pad", "1.0.0", "distribution"));
+        await host.AddComponentAsync(acme, project, c => (c.CustomName, c.Kind, c.Purl, c.Version, c.Packaging) = ("right-pad", "library", "pkg:npm/right-pad", "1.0.0", "distribution"));
         await host.ProfileChangedAsync(acme, project);
         await host.RunJobsAsync();
 
@@ -312,8 +312,8 @@ public sealed class EstimateTests(PostgresServer server)
             for (var n = 1; n <= 20; n++)
             {
                 var inRange = n <= 10;
-                await host.AddComponentAsync(organization, inRange ? portal : intranet, c => (c.CustomName, c.Kind, c.Version, c.Purl) =
-                    ($"pkg-{n:00}", "library", inRange ? "1.0.0" : null, inRange ? $"pkg:npm/pkg-{n:00}@1.0.0" : $"pkg:npm/pkg-{n:00}"));
+                await host.AddComponentAsync(organization, inRange ? portal : intranet, c => (c.CustomName, c.Kind, c.Version, c.Purl, c.Packaging) =
+                    ($"pkg-{n:00}", "library", "1.0.0", inRange ? $"pkg:npm/pkg-{n:00}@1.0.0" : $"pkg:npm/pkg-{n:00}", inRange ? "upstream" : "distribution"));
             }
 
             await host.ProfileChangedAsync(organization, portal);

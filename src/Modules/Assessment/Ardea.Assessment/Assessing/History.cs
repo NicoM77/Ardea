@@ -42,6 +42,27 @@ internal static class EventKinds
     /// <summary>A person corrected the verdict or the level of a finding with a reason (task 4.7); history only.</summary>
     public const string FindingVerdictCorrected = "finding.verdict_corrected";
 
+    /// <summary>
+    /// A notice was raised (ADR 047): the seam for the event <c>notice.raised</c> of task 5a.6. History only until then, as
+    /// are the other <c>notice.*</c> kinds.
+    /// </summary>
+    public const string NoticeRaised = "notice.raised";
+
+    /// <summary>A reverse search raised notices at once, when a stack entry was added or changed: one row instead of many.</summary>
+    public const string NoticeBackfilled = "notice.backfilled";
+
+    /// <summary>A person answered a notice: «affects us» or «doesn't affect us».</summary>
+    public const string NoticeAnswered = "notice.answered";
+
+    /// <summary>A person took an answer back; the notice is open again.</summary>
+    public const string NoticeReopened = "notice.reopened";
+
+    /// <summary>A notice answered «doesn't affect us» came back once, the entry being exploited now (E22).</summary>
+    public const string NoticeReappeared = "notice.reappeared";
+
+    /// <summary>An open notice nothing coarse names any more: the precise path took over, or its components left.</summary>
+    public const string NoticeWithdrawn = "notice.withdrawn";
+
     /// <summary>The events of master plan 8.2 the notifications hear about; the other kinds are history only.</summary>
     public static bool IsNotifiable(string kind) => kind.StartsWith("action.", StringComparison.Ordinal) || kind == BackfillCompleted;
 }
@@ -98,7 +119,7 @@ internal sealed class History(AssessDbContext db, TimeProvider time, IUnitOfWork
 {
     private readonly List<NotifiableEvent> _notifiable = [];
 
-    public AssessEvent Add(string kind, object data, Guid? remediation = null, Guid? finding = null, Guid? project = null, Guid? actor = null)
+    public AssessEvent Add(string kind, object data, Guid? remediation = null, Guid? finding = null, Guid? project = null, Guid? actor = null, Guid? notice = null)
     {
         var row = new AssessEvent
         {
@@ -107,6 +128,7 @@ internal sealed class History(AssessDbContext db, TimeProvider time, IUnitOfWork
             RemediationId = remediation,
             FindingId = finding,
             ProjectId = project,
+            NoticeId = notice,
             Actor = actor,
             At = time.GetUtcNow(),
             Data = JsonSerializer.SerializeToDocument(data, AlertAssessor.Json),

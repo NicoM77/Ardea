@@ -5453,6 +5453,341 @@
         }
       }
     },
+    "/api/v1/orgs/{orgId}/notices": {
+      "get": {
+        "tags": [
+          "Notices"
+        ],
+        "operationId": "listNotices",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "component",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListPageOfNoticeView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/notices/{noticeId}": {
+      "get": {
+        "tags": [
+          "Notices"
+        ],
+        "operationId": "getNotice",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "noticeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeView"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/notices/{noticeId}/answer": {
+      "post": {
+        "tags": [
+          "Notices"
+        ],
+        "operationId": "answerNotice",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "noticeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswerNoticeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/notices/{noticeId}/reopen": {
+      "post": {
+        "tags": [
+          "Notices"
+        ],
+        "operationId": "reopenNotice",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "noticeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReopenNoticeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orgs/{orgId}/events": {
       "get": {
         "tags": [
@@ -8378,6 +8713,40 @@
           }
         }
       },
+      "AnswerNoticeRequest": {
+        "required": [
+          "answer",
+          "expectedState"
+        ],
+        "type": "object",
+        "properties": {
+          "answer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expectedState": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "projectId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "version": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "AnswersView": {
         "required": [
           "origin",
@@ -10965,6 +11334,27 @@
           }
         }
       },
+      "ListPageOfNoticeView": {
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeView"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "LoginRequest": {
         "required": [
           "email",
@@ -11457,6 +11847,156 @@
           },
           "proposal": {
             "type": "boolean"
+          }
+        }
+      },
+      "NoticeComponentRef": {
+        "required": [
+          "id",
+          "name",
+          "version",
+          "versionPrecision",
+          "noticeThreshold",
+          "noisy",
+          "project",
+          "inStack",
+          "removed"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "versionPrecision": {
+            "type": "string"
+          },
+          "noticeThreshold": {
+            "type": "string"
+          },
+          "noisy": {
+            "type": "boolean"
+          },
+          "project": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ActionProjectRef"
+              }
+            ]
+          },
+          "inStack": {
+            "type": "boolean"
+          },
+          "removed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NoticeView": {
+        "required": [
+          "id",
+          "state",
+          "entry",
+          "cvssScore",
+          "exploitation",
+          "raisedAt",
+          "isBackfill",
+          "components",
+          "decidedBy",
+          "decidedAt",
+          "reminderNumber",
+          "reappearedAt",
+          "reappearedReason",
+          "changedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "state": {
+            "type": "string"
+          },
+          "entry": {
+            "$ref": "#/components/schemas/ActionEntryRef"
+          },
+          "cvssScore": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "exploitation": {
+            "type": "string"
+          },
+          "raisedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isBackfill": {
+            "type": "boolean"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeComponentRef"
+            }
+          },
+          "decidedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "decidedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "reminderNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "reappearedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "reappearedReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -12303,6 +12843,20 @@
             ]
           },
           "password": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ReopenNoticeRequest": {
+        "required": [
+          "expectedState"
+        ],
+        "type": "object",
+        "properties": {
+          "expectedState": {
             "type": [
               "null",
               "string"
@@ -13801,6 +14355,9 @@
     },
     {
       "name": "Actions"
+    },
+    {
+      "name": "Notices"
     },
     {
       "name": "Live"

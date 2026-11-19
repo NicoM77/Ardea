@@ -131,6 +131,19 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
         return id;
     }
 
+    /// <summary>The organisation's stack (master plan 17.2), the system project Assets creates with the organisation.</summary>
+    public async Task<Guid> AddStackAsync(Guid organization)
+    {
+        var id = Guid.CreateVersion7();
+        await InOrganizationAsync(organization, async services =>
+        {
+            var db = services.GetRequiredService<AssetsDbContext>();
+            db.Projects.Add(new Project { Id = id, Kind = Project.StackKind, Name = Project.StackName, CreatedAt = Clock.GetUtcNow(), ChangedAt = Clock.GetUtcNow() });
+            await db.SaveChangesAsync();
+        });
+        return id;
+    }
+
     /// <summary>Adds a component and its search keys as the profile endpoints do.</summary>
     public async Task<Guid> AddComponentAsync(Guid organization, Guid project, Action<Component> configure)
     {

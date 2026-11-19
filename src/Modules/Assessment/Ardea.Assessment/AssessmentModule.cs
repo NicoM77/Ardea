@@ -36,6 +36,9 @@ public sealed class AssessmentModule : IModule
         services.AddScoped<History>();
         services.AddScoped<Numbers>();
         services.AddScoped<Remediations>();
+        services.AddScoped<Notices>();
+        services.AddScoped<Features.NoticeCommands>();
+        services.AddScoped<Features.NoticeReader>();
         services.AddScoped<Features.ActionReader>();
         services.AddScoped<Features.ActionCommands>();
         services.AddScoped<Contracts.IActionFacts, Features.ActionFactsReader>();
@@ -71,6 +74,7 @@ public sealed class AssessmentModule : IModule
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         Features.ActionEndpoints.Map(endpoints);
+        Features.NoticeEndpoints.Map(endpoints);
         Features.LiveEndpoints.Map(endpoints);
         Features.ModelQualityEndpoints.Map(endpoints);
     }

@@ -49,7 +49,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
     /// <summary>Bob's objects that Alice tries to reach.</summary>
     private sealed record Foreign(
         Guid User, Guid Invitation, Guid Project, Guid Component, Guid Connection, Guid Link, Guid Suggestion, int Action, int Alert, Guid Finding,
-        Guid Rule, Guid Endpoint, Guid Address);
+        Guid Rule, Guid Endpoint, Guid Address, Guid Notice);
 
     /// <summary>A valid rule whose targets may name foreign recipients.</summary>
     private static object Rule(object target, Guid[]? projects = null) =>
@@ -115,6 +115,10 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["POST /api/v1/orgs/{orgId}/findings/{findingId}/review"] = _ => new { decision = "correct", expectedVerdict = "affected", expectedSource = "rules", verdict = "unlikely", reason = "Planted" },
         ["GET /api/v1/orgs/{orgId}/alerts"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/alerts/{number}"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/notices"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/notices/{noticeId}"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/notices/{noticeId}/answer"] = f => new { answer = "affects_us", expectedState = "open", projectId = f.Project, version = "6.7.2" },
+        ["POST /api/v1/orgs/{orgId}/notices/{noticeId}/reopen"] = _ => new { expectedState = "not_affected" },
         ["GET /api/v1/orgs/{orgId}/notification-channels"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/rules/"] = _ => null,
         ["POST /api/v1/orgs/{orgId}/rules/"] = f => Rule(new { channel = "email", recipientKind = "user", recipientRef = f.User.ToString(), mode = "immediate" }, [f.Project]),
@@ -145,6 +149,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         "number" when route.Contains("/actions/{number}", StringComparison.Ordinal) => foreign.Action.ToString(System.Globalization.CultureInfo.InvariantCulture),
         "number" when route.Contains("/alerts/{number}", StringComparison.Ordinal) => foreign.Alert.ToString(System.Globalization.CultureInfo.InvariantCulture),
         "findingId" => foreign.Finding.ToString(),
+        "noticeId" => foreign.Notice.ToString(),
         "userId" => foreign.User.ToString(),
         "projectId" => foreign.Project.ToString(),
         "id" when route.Contains("/components/{id}", StringComparison.Ordinal) => foreign.Component.ToString(),
@@ -243,6 +248,11 @@ public sealed class TenantIsolationTests(PostgresServer server)
             INSERT INTO assess.finding (organization_id, alert_id, entry_id, project_id, component_id, remediation_id, match_type, version_verdict, verdict, verdict_source, level, evidence, factors, status, status_changed_at, is_backfill, created_at, changed_at, exploitation, fix_available)
             VALUES ('{bobOrg}', '{bobsAlert}', '{bobsEntry}', '{bobsProject}', '{bobsComponent}', '{bobsAction}', 'product', 'in_range', 'affected', 'rules', 4, jsonb_build_object(), jsonb_build_object(), 'open', now(), false, now(), now(), 'none', false) RETURNING id
             """);
+        // A notice of Bob's for his WordPress (task 5a.3), as the assessment writes it.
+        var bobsNotice = await host.ScalarAsync<Guid>($"""
+            INSERT INTO assess.notice (organization_id, entry_id, entry_key, state, component_ids, raised_at, changed_at)
+            VALUES ('{bobOrg}', '{bobsEntry}', 'CVE-2026-0001', 'open', ARRAY['{bobsComponent}'::uuid], now(), now()) RETURNING id
+            """);
         // Bob's notification settings and recipients (task 5.1): his default rule, a webhook target, an external address, a notification.
         var bobsRule = await host.ScalarAsync<Guid>($"SELECT id FROM notify.rule WHERE organization_id = '{bobOrg}' AND preset = 'critical'");
         var bobsEndpoint = await host.ScalarAsync<Guid>($"""
@@ -256,7 +266,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
             INSERT INTO notify.notification (user_id, organization_id, event_id, kind, title, body, created_at)
             VALUES ('{bobId}', '{bobOrg}', gen_random_uuid(), 'action.raised', 'Bob''s', 'Bob''s', now()) RETURNING id
             """);
-        var foreign = new Foreign(bobId, bobsInvitation, bobsProject, bobsComponent, bobsConnection, bobsLink, bobsSuggestion, 2, 1, bobsFinding, bobsRule, bobsEndpoint, bobsAddress);
+        var foreign = new Foreign(bobId, bobsInvitation, bobsProject, bobsComponent, bobsConnection, bobsLink, bobsSuggestion, 2, 1, bobsFinding, bobsRule, bobsEndpoint, bobsAddress, bobsNotice);
 
         var endpoints = host.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText?.Contains("/orgs/{orgId", StringComparison.Ordinal) == true)
@@ -323,6 +333,16 @@ public sealed class TenantIsolationTests(PostgresServer server)
             await ExpectHiddenAsync(problems, $"POST rules with Bob's ids {JsonSerializer.Serialize(body)}", await alice.PostAsync($"/api/v1/orgs/{aliceOrg}/rules", body), notFoundOnly: false);
         }
 
+        // Alice answers her own notice «affects us» naming Bob's project: not found, and nothing lands in Bob's profile.
+        var alicesComponent = (await Json(await alice.PostAsync($"/api/v1/orgs/{aliceOrg}/projects/{aliceProject}/components", new { productKey = "wordpress" }), HttpStatusCode.Created))
+            .GetProperty("id").GetGuid();
+        var alicesNotice = await host.ScalarAsync<Guid>($"""
+            INSERT INTO assess.notice (organization_id, entry_id, entry_key, state, component_ids, raised_at, changed_at)
+            VALUES ('{aliceOrg}', '{bobsEntry}', 'CVE-2026-0001', 'open', ARRAY['{alicesComponent}'::uuid], now(), now()) RETURNING id
+            """);
+        await ExpectHiddenAsync(problems, "POST answer with Bob's project", await alice.PostAsync(
+            $"/api/v1/orgs/{aliceOrg}/notices/{alicesNotice}/answer", new { answer = "affects_us", expectedState = "open", projectId = bobsProject, version = "6.7.2" }), notFoundOnly: true);
+
         await alice.PostAsync($"/api/v1/orgs/{aliceOrg}/notifications/read", new { ids = new[] { bobsNotification } });
         Assert.Empty(problems);
 
@@ -340,6 +360,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         Assert.Equal("Bob's shop|internal|", await host.ScalarAsync<string>($"SELECT name || '|' || exposure || '|' || coalesce(archived_at::text, '') FROM assets.project WHERE id = '{bobsProject}'"));
         Assert.Equal("6.7.1|manual", await host.ScalarAsync<string>($"SELECT version || '|' || origin FROM assets.component WHERE id = '{bobsComponent}'"));
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.component WHERE organization_id = '{bobOrg}'"));
+        Assert.Equal("open|", await host.ScalarAsync<string>($"SELECT state || '|' || coalesce(decided_by::text, '') FROM assess.notice WHERE id = '{bobsNotice}'"));
         Assert.Equal("Bob's GitHub", await host.ScalarAsync<string>($"SELECT name FROM assets.repository_connection WHERE id = '{bobsConnection}'"));
         Assert.Equal("open", await host.ScalarAsync<string>($"SELECT state FROM assets.component_suggestion WHERE id = '{bobsSuggestion}'"));
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.repository_link WHERE organization_id = '{bobOrg}'"));

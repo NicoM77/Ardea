@@ -52,10 +52,12 @@ public sealed class ReferenceSetTests(PostgresServer server)
     /// The spike week (master plan 14, phase 3 acceptance): all 6 452 records of 11 to 17 November 2026 against
     /// the three example projects of the requirements, each with the versions installed before that week's
     /// security updates. One organisation with all three gives at most 8 open actions; with a local model the
-    /// assessment asks it at most 40 times (phase 4 acceptance: 8 actions times 5), answered by a recorded model.
+    /// assessment asks it at most 40 times (phase 4 acceptance: 8 actions times 5), answered by a recorded model. A second
+    /// organisation names the same technologies in its stack without versions (phase 5a acceptance, ADR 044, ADR 047): it
+    /// gets the notices ADR 044 counted on the full week for these entries and no reminder.
     /// </summary>
     [Fact(Timeout = 600_000)]
-    public async Task The_spike_week_gives_at_most_eight_open_actions_and_forty_model_calls_for_the_three_example_projects()
+    public async Task The_spike_week_gives_at_most_eight_open_actions_and_forty_model_calls_for_the_three_example_projects_and_their_stack_few_notices()
     {
         var watch = Stopwatch.StartNew();
         var model = new Estimating.RecordedModel(request => Estimating.Recorded.For("valid.json", request, "uncertain"));
@@ -74,22 +76,40 @@ public sealed class ReferenceSetTests(PostgresServer server)
             await host.ProfileChangedAsync(organization, project);
         }
 
+        var coarse = Guid.CreateVersion7();
+        var stack = await host.AddProjectAsync(coarse, "Stack", new ReferenceProject("normal", "internet"), Project.StackKind);
+        foreach (var entry in NoticeSpike.Stacks.Where(s => s.Name.StartsWith("Spike", StringComparison.Ordinal)).SelectMany(s => s.Entries))
+        {
+            foreach (var product in entry.Products)
+            {
+                await host.AddComponentAsync(coarse, stack, c => NoticeSpike.Describe(c, product, entry.Line));
+            }
+        }
+
+        await host.ProfileChangedAsync(coarse, stack);
+
         await host.RunJobsAsync();
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
         await host.StoreRecordsAsync(SpikeWeek.Records());
         await host.RunJobsAsync();
 
-        var actions = await host.RowsAsync("""
+        var actions = await host.RowsAsync($"""
             SELECT p.name, coalesce(c.product_key, c.custom_name), c.version, r.level, r.open_findings
             FROM assess.remediation r JOIN assets.component c ON c.id = r.component_id JOIN assets.project p ON p.id = r.project_id
-            WHERE r.status <> 'closed' ORDER BY r.level DESC, p.name, 2
+            WHERE r.status <> 'closed' AND r.organization_id = '{organization}' ORDER BY r.level DESC, p.name, 2
             """);
-        var summary = $"Spike week: {actions.Count} open actions, {model.Requests.Count} calls to the model, in {watch.Elapsed.TotalSeconds:F0} s{Environment.NewLine}{string.Join(Environment.NewLine, actions)}";
+        var notices = await host.RowsAsync($"SELECT entry_key, state, cardinality(component_ids) FROM assess.notice WHERE organization_id = '{coarse}' ORDER BY 1");
+        var summary = $"Spike week: {actions.Count} open actions, {model.Requests.Count} calls to the model, {notices.Count} notices for the stack, in {watch.Elapsed.TotalSeconds:F0} s"
+            + $"{Environment.NewLine}{string.Join(Environment.NewLine, actions)}{Environment.NewLine}{string.Join(Environment.NewLine, notices)}";
         await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "spike-week-report.txt"), summary, TestContext.Current.CancellationToken);
         TestContext.Current.SendDiagnosticMessage(summary);
         Assert.True(actions.Count <= 8, $"{actions.Count} open actions, at most 8:{Environment.NewLine}{string.Join(Environment.NewLine, actions)}");
         Assert.NotEmpty(actions);
         Assert.InRange(model.Requests.Count, 1, 40);
+        // As ADR 044 measured on the full week for these entries (1, 3 and 1), well below its bound of 25.
+        Assert.Equal(5, notices.Count);
+        Assert.All(notices, n => Assert.EndsWith("\topen\t1", n, StringComparison.Ordinal));
+        Assert.Equal(["0"], await host.RowsAsync($"SELECT count(*) FROM assess.remediation WHERE organization_id = '{coarse}'"));
     }
 
     [Fact]
@@ -214,7 +234,11 @@ internal sealed class ReferenceHost : IAsyncDisposable
         return project;
     }
 
-    public async Task<Guid> AddProjectAsync(Guid organization, string name, ReferenceProject attributes)
+    /// <param name="organization">The organisation.</param>
+    /// <param name="name">The project's name.</param>
+    /// <param name="attributes">Criticality and exposure.</param>
+    /// <param name="kind"><c>project</c>, or <c>organization_stack</c> for the organisation's stack (master plan 17.2).</param>
+    public async Task<Guid> AddProjectAsync(Guid organization, string name, ReferenceProject attributes, string kind = Project.ProjectKind)
     {
         var project = Guid.CreateVersion7();
         await InOrganizationAsync(organization, services =>
@@ -223,6 +247,7 @@ internal sealed class ReferenceHost : IAsyncDisposable
             services.GetRequiredService<AssetsDbContext>().Projects.Add(new Project
             {
                 Id = project,
+                Kind = kind,
                 Name = name,
                 Criticality = attributes.Criticality,
                 Exposure = attributes.Exposure,
@@ -393,13 +418,19 @@ internal sealed class ReferenceHost : IAsyncDisposable
         throw new InvalidOperationException("Jobs keep coming.");
     }
 
-    /// <summary>Every finding with its entry's CVE id.</summary>
+    /// <summary>
+    /// Every finding with its entry's CVE id. A hit on a component without an exact version is the notice's and stays at
+    /// level 1 (ADR 047); its level is the one the rules give it on the precise path, which the reference set calibrates.
+    /// </summary>
     public async Task<IReadOnlyList<FoundFinding>> FindingsAsync()
     {
         await using var connection = new NpgsqlConnection(_database.OwnerConnectionString("tests"));
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand(
-            "SELECT f.project_id, e.primary_key, f.level, f.match_type, f.version_verdict, f.version_reason FROM assess.finding f JOIN intel.security_entry e ON e.id = f.entry_id",
+            """
+            SELECT f.project_id, e.primary_key, coalesce((f.factors->>'preciseLevel')::int, f.level), f.match_type, f.version_verdict, f.version_reason
+            FROM assess.finding f JOIN intel.security_entry e ON e.id = f.entry_id
+            """,
             connection);
         var findings = new List<FoundFinding>();
         await using var reader = await command.ExecuteReaderAsync();

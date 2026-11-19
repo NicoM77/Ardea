@@ -195,6 +195,9 @@ internal sealed class AssessEvent : IOrganizationOwned
     /// <summary>The project, for <c>backfill.completed</c>.</summary>
     public Guid? ProjectId { get; set; }
 
+    /// <summary>The notice, for <c>notice.*</c> (ADR 047).</summary>
+    public Guid? NoticeId { get; set; }
+
     public DateTimeOffset At { get; set; }
 
     public required string Kind { get; set; }
@@ -206,17 +209,18 @@ internal sealed class AssessEvent : IOrganizationOwned
 }
 
 /// <summary>
-/// A notice (master plan 17.3, ADR 046): an entry that hits a coarse entry of the organisation, a technology without
-/// an exact version, asked once as «could affect you». One per organisation and entry. People answer it with
+/// A notice (master plan 17.3, ADR 046, ADR 047): an entry that hits a coarse entry of the organisation, a technology
+/// without an exact version, asked once as «could affect you». One per organisation and entry. People answer it with
 /// <c>affects_us</c>, which opens a reminder, or <c>not_affected</c>, after which it comes back only once, when the entry
-/// is exploited or added to KEV later (E22). Task 5a.3 writes notices; this table and the migration of open actions on
-/// components without a version come first (task 5a.2).
+/// is exploited or added to KEV later (E22). An open notice that nothing coarse names any more is <c>withdrawn</c>: its
+/// components got an exact version and the precise path took over, or they left the profile.
 /// </summary>
 internal sealed class Notice : IOrganizationOwned
 {
     public const string Open = "open";
     public const string AffectsUs = "affects_us";
     public const string NotAffected = "not_affected";
+    public const string Withdrawn = "withdrawn";
 
     public Guid Id { get; set; }
 
@@ -227,7 +231,7 @@ internal sealed class Notice : IOrganizationOwned
     /// <summary>The entry's primary key, e.g. <c>CVE-2026-115731</c>, kept for lists and search as on the alert.</summary>
     public required string EntryKey { get; set; }
 
-    /// <summary><c>open</c>, <c>affects_us</c> or <c>not_affected</c>.</summary>
+    /// <summary><c>open</c>, <c>affects_us</c>, <c>not_affected</c> or <c>withdrawn</c>.</summary>
     public required string State { get; set; }
 
     /// <summary>The coarse components whose products the entry hits: the reason «Your stack names PostgreSQL».</summary>
@@ -237,6 +241,12 @@ internal sealed class Notice : IOrganizationOwned
     public Guid? DecidedBy { get; set; }
 
     public DateTimeOffset? DecidedAt { get; set; }
+
+    /// <summary>
+    /// The entry's exploitation (<c>none</c>, <c>poc</c>, <c>active</c>) when it was answered: «doesn't affect us» comes back
+    /// only when the entry becomes actively exploited after the answer (E22).
+    /// </summary>
+    public string? DecidedExploitation { get; set; }
 
     /// <summary>The reminder «affects us» opened; <c>null</c> otherwise.</summary>
     public Guid? RemediationId { get; set; }
@@ -249,6 +259,15 @@ internal sealed class Notice : IOrganizationOwned
 
     /// <summary>Why it came back: <c>exploited</c> or <c>kev</c>.</summary>
     public string? ReappearedReason { get; set; }
+
+    /// <summary>The entry's CVSS base score as Intel chooses it, kept with every assessment for the order of the list (E23).</summary>
+    public double? CvssScore { get; set; }
+
+    /// <summary>The entry's exploitation: <c>none</c>, <c>poc</c> or <c>active</c>, kept like the score.</summary>
+    public string Exploitation { get; set; } = "none";
+
+    /// <summary>Raised by a reverse search, when a stack entry was added or changed: announced once for all (master plan 7.7).</summary>
+    public bool IsBackfill { get; set; }
 
     public DateTimeOffset RaisedAt { get; set; }
 

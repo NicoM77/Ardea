@@ -237,6 +237,10 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .HasColumnType("character varying(40)")
                         .HasColumnName("kind");
 
+                    b.Property<Guid?>("NoticeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("notice_id");
+
                     b.Property<Guid>("OrganizationId")
                         .IsConcurrencyToken()
                         .HasColumnType("uuid")
@@ -255,6 +259,9 @@ namespace Ardea.Assessment.Persistence.Migrations
 
                     b.HasIndex("FindingId")
                         .HasDatabaseName("ix_assess_event_finding");
+
+                    b.HasIndex("NoticeId", "At")
+                        .HasDatabaseName("ix_assess_event_notice");
 
                     b.HasIndex("OrganizationId", "At")
                         .HasDatabaseName("ix_assess_event_org_at");
@@ -581,6 +588,10 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .HasColumnType("uuid[]")
                         .HasColumnName("component_ids");
 
+                    b.Property<double?>("CvssScore")
+                        .HasColumnType("double precision")
+                        .HasColumnName("cvss_score");
+
                     b.Property<DateTimeOffset?>("DecidedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("decided_at");
@@ -588,6 +599,11 @@ namespace Ardea.Assessment.Persistence.Migrations
                     b.Property<Guid?>("DecidedBy")
                         .HasColumnType("uuid")
                         .HasColumnName("decided_by");
+
+                    b.Property<string>("DecidedExploitation")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("decided_exploitation");
 
                     b.Property<Guid>("EntryId")
                         .HasColumnType("uuid")
@@ -598,6 +614,18 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)")
                         .HasColumnName("entry_key");
+
+                    b.Property<string>("Exploitation")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("none")
+                        .HasColumnName("exploitation");
+
+                    b.Property<bool>("IsBackfill")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_backfill");
 
                     b.Property<Guid>("OrganizationId")
                         .IsConcurrencyToken()
@@ -642,11 +670,13 @@ namespace Ardea.Assessment.Persistence.Migrations
 
                     b.ToTable("notice", "assess", t =>
                         {
-                            t.HasCheckConstraint("ck_notice_decided", "state = 'open' OR (decided_by IS NOT NULL AND decided_at IS NOT NULL)");
+                            t.HasCheckConstraint("ck_notice_decided", "state IN ('open', 'withdrawn') OR (decided_by IS NOT NULL AND decided_at IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_notice_exploitation", "exploitation IN ('none', 'poc', 'active') AND (decided_exploitation IS NULL OR decided_exploitation IN ('none', 'poc', 'active'))");
 
                             t.HasCheckConstraint("ck_notice_reappeared", "reappeared_reason IS NULL OR reappeared_reason IN ('exploited', 'kev')");
 
-                            t.HasCheckConstraint("ck_notice_state", "state IN ('open', 'affects_us', 'not_affected')");
+                            t.HasCheckConstraint("ck_notice_state", "state IN ('open', 'affects_us', 'not_affected', 'withdrawn')");
                         });
                 });
 

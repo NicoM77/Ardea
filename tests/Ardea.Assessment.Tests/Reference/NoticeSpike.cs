@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using Ardea.Assessment.Matching;
+using Ardea.Assets.Persistence;
 using Ardea.Catalog.Contracts;
 using Ardea.Intel.Sources.Abstractions;
 using Ardea.TestSupport;
@@ -9,17 +11,18 @@ using Ardea.TestSupport;
 namespace Ardea.Assessment.Tests.Reference;
 
 /// <summary>
-/// The notice spike of task 5a.1 (master plan 17.9, ADR 044): how many notices a typical organisation stack gets in
-/// one week, per stack entry and threshold. Every record of the spike week (11 to 17 November 2026, newest state
-/// each) goes through the real pipeline (CVE Program parser, correlation, forward search, candidates, version check)
-/// against one organisation per stack, whose components carry no version. A notice is counted where the entry hits
-/// the product itself (match type product, CPE or the product's own package; master plan 17.2), after an optional
-/// version line narrowed it (17.3), once per organisation and entry.
+/// The notice spike of task 5a.1 (master plan 17.9, ADR 044), run on the real generation of task 5a.3 (ADR 047): how many
+/// notices a typical organisation stack gets in one week. Every record of the spike week (11 to 17 November 2026, newest
+/// state each) goes through the real pipeline (CVE Program parser, correlation, forward search, candidates, version check,
+/// notices) against one organisation per stack, whose stack entries carry no version or a line and the default threshold
+/// «only important». The notices are read from <c>assess.notice</c>; the other columns count the hits from the findings,
+/// to show what the thresholds of ADR 044 leave out.
 /// <para>
 /// Opt-in, never in CI (master plan 13.6): the full week is not in the repository. Unpack the CVE Program's delta
 /// archives of the week into one folder per day (<c>11</c> … <c>17</c>) and run
 /// <c>ARDEA_SPIKE_DIR=&lt;folder&gt; dotnet test --project tests/Ardea.Assessment.Tests --filter-class "*NoticeSpike"</c>.
-/// The report lands next to the test binaries as <c>notice-spike-report.md</c>.
+/// The report lands next to the test binaries as <c>notice-spike-report.md</c>. CI checks the rules on the week's subset in
+/// the repository (<see cref="ReferenceSetTests"/>) and on small cases (<see cref="NoticeTests"/>).
 /// </para>
 /// </summary>
 public sealed class NoticeSpike(PostgresServer server)
@@ -30,7 +33,9 @@ public sealed class NoticeSpike(PostgresServer server)
     /// <summary>Records published from this day on are new in the week; older ones changed in it (the 10th was a Patch Tuesday).</summary>
     private static readonly DateTimeOffset WeekStart = new(2026, 11, 11, 0, 0, 0, TimeSpan.Zero);
 
-    /// <summary>Thresholds of a stack entry; each lets an actively exploited entry pass.</summary>
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+
+    /// <summary>Thresholds for the what-if columns; each lets an actively exploited entry pass.</summary>
     internal enum Threshold
     {
         /// <summary>Every hit: «everything».</summary>
@@ -52,8 +57,8 @@ public sealed class NoticeSpike(PostgresServer server)
     /// <summary>A stack entry: one technology, as one or more catalogue products, optionally a version line.</summary>
     /// <param name="Label">How the organisation names it.</param>
     /// <param name="Products">Catalogue keys; a key starting with <c>name:</c> is a free entry «vendor/name» the catalogue lacks.</param>
-    /// <param name="Line">A version line such as <c>17</c> or <c>8.3</c>, or <c>null</c> for none.</param>
-    /// <param name="Default">The entry's «only important» as ADR 044 decides it.</param>
+    /// <param name="Line">A version line such as <c>17</c> or <c>8.3</c>, stored with the precision <c>line</c>; <c>null</c> for none.</param>
+    /// <param name="Default">The entry's «only important» as ADR 044 measured it, to compare with the real generation.</param>
     internal sealed record StackEntry(string Label, string[] Products, string? Line = null, Threshold Default = Threshold.Critical);
 
     internal sealed record Stack(string Name, StackEntry[] Entries);
@@ -149,24 +154,12 @@ public sealed class NoticeSpike(PostgresServer server)
         foreach (var stack in Stacks)
         {
             var organization = Guid.CreateVersion7();
-            var project = await host.AddProjectAsync(organization, stack.Name, new ReferenceProject("normal", "internet"));
+            var project = await host.AddProjectAsync(organization, stack.Name, new ReferenceProject("normal", "internet"), Project.StackKind);
             foreach (var entry in stack.Entries)
             {
                 foreach (var product in entry.Products)
                 {
-                    var id = await host.AddComponentAsync(organization, project, c =>
-                    {
-                        if (product.StartsWith("name:", StringComparison.Ordinal))
-                        {
-                            var name = product["name:".Length..];
-                            var slash = name.IndexOf('/', StringComparison.Ordinal);
-                            (c.CustomVendor, c.CustomName) = slash < 0 ? (null, name) : (name[..slash], name[(slash + 1)..]);
-                        }
-                        else
-                        {
-                            c.ProductKey = product;
-                        }
-                    });
+                    var id = await host.AddComponentAsync(organization, project, c => Describe(c, product, entry.Line));
                     components[id] = (stack, entry);
                 }
             }
@@ -187,18 +180,44 @@ public sealed class NoticeSpike(PostgresServer server)
             SELECT f.component_id, e.primary_key, e.published_at, e.cvss_score, e.exploitation, f.match_type, f.evidence::text
             FROM assess.finding f JOIN intel.security_entry e ON e.id = f.entry_id
             """)).Select(row => Hit.Parse(row, components)).ToList();
+        var notices = (await host.RowsAsync("""
+            SELECT n.entry_key, c.id, n.state, n.is_backfill, e.published_at
+            FROM assess.notice n CROSS JOIN LATERAL unnest(n.component_ids) AS c(id) JOIN intel.security_entry e ON e.id = n.entry_id
+            """)).Select(row => Raised.Parse(row, components)).ToList();
         var entries = await host.RowsAsync("SELECT state, count(*) FROM intel.security_entry GROUP BY state ORDER BY state");
 
-        var report = Report(records.Count, entries, hits, watch.Elapsed);
+        var report = Report(records.Count, entries, hits, notices, watch.Elapsed);
         var output = Path.Combine(AppContext.BaseDirectory, "notice-spike-report.md");
         await File.WriteAllTextAsync(output, report, TestContext.Current.CancellationToken);
         TestContext.Current.SendDiagnosticMessage($"Notice spike report: {output}");
         TestContext.Current.SendDiagnosticMessage(report);
 
+        // Only open notices, raised by the forward search one by one: nothing was answered, nothing came from a first fill.
+        Assert.All(notices, n => Assert.Equal(("open", false), (n.State, n.Backfill)));
         foreach (var stack in Stacks.Where(s => s.Entries.Length == 10))
         {
-            var notices = Notices(hits, stack, e => e.Default);
-            Assert.True(notices.Count <= MaxNoticesPerWeek, $"{stack.Name}: {notices.Count} notices, at most {MaxNoticesPerWeek} (ADR 044).{Environment.NewLine}{report}");
+            var count = Generated(notices, stack).Count;
+            Assert.True(count <= MaxNoticesPerWeek, $"{stack.Name}: {count} notices, at most {MaxNoticesPerWeek} (ADR 044).{Environment.NewLine}{report}");
+        }
+    }
+
+    /// <summary>A stack entry as the wizard records it: a catalogue product or a free name, with its line if one is given.</summary>
+    internal static void Describe(Component c, string product, string? line)
+    {
+        if (product.StartsWith("name:", StringComparison.Ordinal))
+        {
+            var name = product["name:".Length..];
+            var slash = name.IndexOf('/', StringComparison.Ordinal);
+            (c.CustomVendor, c.CustomName) = slash < 0 ? (null, name) : (name[..slash], name[(slash + 1)..]);
+        }
+        else
+        {
+            c.ProductKey = product;
+        }
+
+        if (line is not null)
+        {
+            (c.Version, c.VersionPrecision) = (line, "line");
         }
     }
 
@@ -222,27 +241,32 @@ public sealed class NoticeSpike(PostgresServer server)
         })];
     }
 
-    /// <summary>The entries that raise a notice in the stack: a hit on the product itself whose entry meets the threshold.</summary>
-    private static HashSet<string> Notices(IReadOnlyList<Hit> hits, Stack stack, Func<StackEntry, Threshold> threshold, bool newOnly = false) =>
+    /// <summary>The notices the generation wrote for a stack: distinct entries.</summary>
+    private static HashSet<string> Generated(IReadOnlyList<Raised> notices, Stack stack, StackEntry? entry = null, bool newOnly = false) =>
+        [.. notices.Where(n => n.Stack == stack && (entry is null || n.Entry == entry) && (!newOnly || n.IsNew)).Select(n => n.Cve)];
+
+    /// <summary>What ADR 044 counted from the hits: a hit on the product itself whose entry meets the threshold.</summary>
+    private static HashSet<string> Counted(IReadOnlyList<Hit> hits, Stack stack, Func<StackEntry, Threshold> threshold, bool newOnly = false) =>
         [.. hits.Where(h => h.Stack == stack && h.Counts && h.Meets(threshold(h.Entry)) && (!newOnly || h.IsNew)).Select(h => h.Cve)];
 
-    private static string Report(int records, IReadOnlyList<string> entries, IReadOnlyList<Hit> hits, TimeSpan elapsed)
+    private static string Report(int records, IReadOnlyList<string> entries, IReadOnlyList<Hit> hits, IReadOnlyList<Raised> notices, TimeSpan elapsed)
     {
         var text = new StringBuilder();
-        text.AppendLine(CultureInfo.InvariantCulture, $"# Notice spike, 11 to 17 November 2026");
+        text.AppendLine(CultureInfo.InvariantCulture, $"# Notice spike, 11 to 17 November 2026, real generation");
         text.AppendLine();
         text.AppendLine(CultureInfo.InvariantCulture, $"{records} records, entries by state: {string.Join(", ", entries.Select(e => e.Replace('\t', ' ')))}; {elapsed.TotalSeconds:F0} s.");
         text.AppendLine();
-        text.AppendLine("Counts are distinct entries (CVEs). Every threshold lets an actively exploited entry pass. *new*: published in the week; "
-            + "the others were published before and changed in it. *unrated*: no CVSS score. *weak*: hits a broad entry does not cover (plugins of a "
-            + "platform, related products, free names), not counted. *line*: hits the version line removed. *Default*: the entry's threshold per ADR 044.");
+        text.AppendLine("Counts are distinct entries (CVEs). *Notices*: rows of `assess.notice` naming the stack entry, as the assessment wrote them "
+            + "with the entry's threshold «only important» and the catalogue's noisy products. The other columns count hits from the findings: "
+            + "*new*: published in the week; *unrated*: no CVSS score; *weak*: hits a broad entry does not cover, never a notice; *line*: hits "
+            + "the version line removed; every threshold lets an actively exploited entry pass. *ADR 044*: the harness's count with its thresholds.");
         foreach (var stack in Stacks)
         {
             text.AppendLine();
             text.AppendLine(CultureInfo.InvariantCulture, $"## {stack.Name}");
             text.AppendLine();
-            text.AppendLine("| Entry | All | new | ≥ medium | ≥ high | critical | exploited | unrated | weak | line | Default | Notices |");
-            text.AppendLine("|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|---|--:|");
+            text.AppendLine("| Entry | All | new | ≥ medium | ≥ high | critical | exploited | unrated | weak | line | ADR 044 | **Notices** |");
+            text.AppendLine("|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|");
             foreach (var entry in stack.Entries)
             {
                 var own = hits.Where(h => h.Stack == stack && h.Entry == entry).ToList();
@@ -253,22 +277,37 @@ public sealed class NoticeSpike(PostgresServer server)
                     $"| {entry.Label} | {Count(counted)} | {Count(counted.Where(h => h.IsNew))} | {Passing(Threshold.Medium)} | {Passing(Threshold.High)} "
                     + $"| {Passing(Threshold.Critical)} | {Passing(Threshold.Exploited)} | {Count(counted.Where(h => h.Score is null))} "
                     + $"| {Count(own.Where(h => !h.Strong).ExceptBy(counted.Select(c => c.Cve), h => h.Cve))} | {Count(own.Where(h => h.Strong && !h.InLine))} "
-                    + $"| {entry.Default} | {Passing(entry.Default)} |");
+                    + $"| {Passing(entry.Default)} | **{Generated(notices, stack, entry).Count}** |");
             }
 
-            int Stacked(Threshold threshold) => Notices(hits, stack, _ => threshold).Count;
+            int Stacked(Threshold threshold) => Counted(hits, stack, _ => threshold).Count;
             text.AppendLine(CultureInfo.InvariantCulture,
-                $"| **Stack** | **{Stacked(Threshold.Everything)}** | {Notices(hits, stack, _ => Threshold.Everything, newOnly: true).Count} | {Stacked(Threshold.Medium)} "
-                + $"| **{Stacked(Threshold.High)}** | **{Stacked(Threshold.Critical)}** | {Stacked(Threshold.Exploited)} | | | | "
-                + $"| **{Notices(hits, stack, e => e.Default).Count}** ({Notices(hits, stack, e => e.Default, newOnly: true).Count} new) |");
+                $"| **Stack** | {Stacked(Threshold.Everything)} | {Counted(hits, stack, _ => Threshold.Everything, newOnly: true).Count} | {Stacked(Threshold.Medium)} "
+                + $"| {Stacked(Threshold.High)} | {Stacked(Threshold.Critical)} | {Stacked(Threshold.Exploited)} | | | "
+                + $"| {Counted(hits, stack, e => e.Default).Count} | **{Generated(notices, stack).Count}** ({Generated(notices, stack, newOnly: true).Count} new) |");
             text.AppendLine();
-            var raised = hits.Where(h => h.Stack == stack && h.Counts && h.Meets(h.Entry.Default))
-                .GroupBy(h => h.Cve).OrderBy(g => g.Key, StringComparer.Ordinal)
-                .Select(g => $"{g.Key} ({string.Join("/", g.Select(h => h.Entry.Label).Distinct(StringComparer.Ordinal))}, {g.First().Score?.ToString("F1", CultureInfo.InvariantCulture) ?? "unrated"}{(g.First().Exploited ? ", exploited" : string.Empty)}{(g.First().IsNew ? ", new" : string.Empty)})");
-            text.AppendLine(CultureInfo.InvariantCulture, $"Notices with the default thresholds: {string.Join("; ", raised)}");
+            var raised = notices.Where(n => n.Stack == stack).GroupBy(n => n.Cve).OrderBy(g => g.Key, StringComparer.Ordinal)
+                .Select(g =>
+                {
+                    var hit = hits.FirstOrDefault(h => h.Stack == stack && h.Cve == g.Key);
+                    return $"{g.Key} ({string.Join("/", g.Select(n => n.Entry.Label).Distinct(StringComparer.Ordinal))}, "
+                        + $"{hit?.Score?.ToString("F1", CultureInfo.InvariantCulture) ?? "unrated"}{(hit?.Exploited == true ? ", exploited" : string.Empty)}{(g.First().IsNew ? ", new" : string.Empty)})";
+                });
+            text.AppendLine(CultureInfo.InvariantCulture, $"Notices: {string.Join("; ", raised)}");
         }
 
         return text.ToString();
+    }
+
+    /// <summary>One component a notice names.</summary>
+    private sealed record Raised(Stack Stack, StackEntry Entry, string Cve, string State, bool Backfill, bool IsNew)
+    {
+        public static Raised Parse(string row, IReadOnlyDictionary<Guid, (Stack Stack, StackEntry Entry)> components)
+        {
+            var c = row.Split('\t');
+            var (stack, entry) = components[Guid.Parse(c[1])];
+            return new Raised(stack, entry, c[0], c[2], bool.Parse(c[3]), c[4].Length > 0 && DateTimeOffset.Parse(c[4], CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal) >= WeekStart);
+        }
     }
 
     /// <summary>One finding: an entry's hit on one component of a stack.</summary>
@@ -293,98 +332,12 @@ public sealed class NoticeSpike(PostgresServer server)
             var published = c[2].Length == 0 ? (DateTimeOffset?)null : DateTimeOffset.Parse(c[2], CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
             var strong = c[5] is "product" or "cpe" or "package";
             using var evidence = JsonDocument.Parse(c[6]);
+            var statements = evidence.RootElement.TryGetProperty("version", out var version) && version.TryGetProperty("statements", out var list)
+                ? list.Deserialize<List<VersionStatement>>(Json) ?? []
+                : [];
             return new Hit(
                 stack, entry, c[1], published >= WeekStart, c[3].Length == 0 ? null : double.Parse(c[3], CultureInfo.InvariantCulture), c[4] == "active",
-                strong, entry.Line is null || !strong || LineNarrowing.Keeps(evidence.RootElement, VersionLines.LeadingNumbers(entry.Line)));
+                strong, entry.Line is null || !strong || LineNarrowing.Keeps(statements, VersionLines.LeadingNumbers(entry.Line)));
         }
     }
-}
-
-public sealed class LineNarrowingTests
-{
-    [Theory]
-    [InlineData("""{"introduced":"17.0","fixed":"17.7","status":"affected"}""", "17", true)]
-    [InlineData("""{"introduced":"16","fixed":"16.11","status":"affected"}""", "17", false)]
-    [InlineData("""{"introduced":"0","fixed":"16.11","status":"affected"}""", "17", false)]
-    [InlineData("""{"introduced":"8.3.0","fixed":"8.3.27","status":"affected"}""", "8.3", true)]
-    [InlineData("""{"introduced":"8.3.0","fixed":"8.3.27","status":"affected"}""", "8.4", false)]
-    [InlineData("""{"introduced":"0","fixed":"17.0","status":"affected"}""", "17", false)]
-    [InlineData("""{"lastAffected":"16.4","status":"affected"}""", "17", false)]
-    [InlineData("""{"introduced":"18.0","status":"affected"}""", "17", false)]
-    [InlineData("""{"introduced":"15.0","status":"affected"}""", "17", true)]
-    [InlineData("""{"introduced":"0","fixed":"*","status":"affected"}""", "17", true)]
-    [InlineData("""{"exact":"17","status":"affected"}""", "17", true)]
-    [InlineData("""{"exact":"9.6","status":"affected"}""", "17", false)]
-    [InlineData("""{"exact":"0","status":"affected"}""", "17", null)]
-    public void A_range_touches_a_line_when_its_bounds_overlap_it(string range, string line, bool? touches)
-    {
-        using var json = JsonDocument.Parse(range);
-        Assert.Equal(touches, LineNarrowing.Touches(json.RootElement, VersionLines.LeadingNumbers(line)));
-    }
-
-    [Fact]
-    public void An_entry_stays_unless_every_affected_range_lies_outside_the_line()
-    {
-        static bool Keeps(string ranges)
-        {
-            using var json = JsonDocument.Parse($$$"""{"version":{"statements":[{"ranges":{{{ranges}}}}]}}""");
-            return LineNarrowing.Keeps(json.RootElement, [17]);
-        }
-
-        Assert.False(Keeps("""[{"introduced":"16","fixed":"16.11","status":"affected"},{"introduced":"15","fixed":"15.15","status":"affected"}]"""));
-        Assert.True(Keeps("""[{"introduced":"16","fixed":"16.11","status":"affected"},{"introduced":"17","fixed":"17.7","status":"affected"}]"""));
-        Assert.True(Keeps("""[{"introduced":"16","fixed":"16.11","status":"affected"},{"exact":"n/a","status":"affected"}]"""));
-        Assert.True(Keeps("""[{"introduced":"17.7","status":"unaffected"}]"""));
-        Assert.True(Keeps("[]"));
-    }
-}
-
-/// <summary>
-/// The narrowing by a version line (master plan 17.3) as this spike assumes it: an entry stays unless every affected
-/// range it states for the product lies outside the line. A range the line numbers cannot place, or an entry without
-/// ranges, stays: a line narrows only what the source rules out.
-/// </summary>
-internal static class LineNarrowing
-{
-    public static bool Keeps(JsonElement evidence, long[] line)
-    {
-        if (!evidence.TryGetProperty("version", out var version) || !version.TryGetProperty("statements", out var statements))
-        {
-            return true;
-        }
-
-        var ranges = statements.EnumerateArray()
-            .SelectMany(s => s.TryGetProperty("ranges", out var r) ? r.EnumerateArray() : Enumerable.Empty<JsonElement>())
-            .Where(r => Text(r, "status") == "affected")
-            .ToList();
-        return ranges.Count == 0 || ranges.Exists(r => Touches(r, line) != false);
-    }
-
-    /// <summary>Whether a range overlaps the line; <c>null</c> when its bounds do not say.</summary>
-    internal static bool? Touches(JsonElement range, long[] line)
-    {
-        var start = line;
-        long[] end = [.. line[..^1], line[^1] + 1];
-        if (Text(range, "exact") is { } exact)
-        {
-            return exact == "0" || VersionLines.LeadingNumbers(exact).Length == 0 ? null : VersionLines.InLine(exact, line);
-        }
-
-        var introduced = Text(range, "introduced");
-        var upper = Text(range, "fixed");
-        var last = Text(range, "lastAffected");
-        if (introduced is null && upper is null && last is null)
-        {
-            return null;
-        }
-
-        var lowerOk = VersionLines.CompareNumbers(VersionLines.LeadingNumbers(introduced), end) < 0;
-        var upperOk = upper is not null && VersionLines.LeadingNumbers(upper) is { Length: > 0 } fixedAt ? VersionLines.CompareNumbers(fixedAt, start) > 0
-            : last is not null && VersionLines.LeadingNumbers(last) is { Length: > 0 } lastAt ? VersionLines.CompareNumbers(lastAt, start) >= 0
-            : true;
-        return lowerOk && upperOk;
-    }
-
-    private static string? Text(JsonElement element, string name) =>
-        element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 }

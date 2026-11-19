@@ -1,5 +1,7 @@
 using System.Text.Json;
+using Ardea.Assessment.Contracts;
 using Ardea.Assessment.Persistence;
+using Ardea.Platform.Persistence;
 using Ardea.Platform.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,11 +38,19 @@ internal static class EventKinds
 
     /// <summary>A person corrected the verdict or the level of a finding with a reason (task 4.7); history only.</summary>
     public const string FindingVerdictCorrected = "finding.verdict_corrected";
+
+    /// <summary>The events of master plan 8.2 the notifications hear about; the other kinds are history only.</summary>
+    public static bool IsNotifiable(string kind) => kind.StartsWith("action.", StringComparison.Ordinal) || kind == BackfillCompleted;
 }
 
-/// <summary>Writes history rows in the unit of work; the row's id is the event's id (master plan 8.2).</summary>
-internal sealed class History(AssessDbContext db, TimeProvider time)
+/// <summary>
+/// Writes history rows in the unit of work; the row's id is the event's id (master plan 8.2). The events
+/// of 8.2 go to the subscribers right before the unit of work commits, so their follow-up jobs commit with them.
+/// </summary>
+internal sealed class History(AssessDbContext db, TimeProvider time, IUnitOfWork unitOfWork, IEnumerable<IActionEventSubscriber> subscribers)
 {
+    private readonly List<NotifiableEvent> _notifiable = [];
+
     public AssessEvent Add(string kind, object data, Guid? remediation = null, Guid? finding = null, Guid? project = null, Guid? actor = null)
     {
         var row = new AssessEvent
@@ -55,7 +65,28 @@ internal sealed class History(AssessDbContext db, TimeProvider time)
             Data = JsonSerializer.SerializeToDocument(data, AlertAssessor.Json),
         };
         db.Events.Add(row);
+        if (EventKinds.IsNotifiable(kind))
+        {
+            if (_notifiable.Count == 0)
+            {
+                unitOfWork.BeforeCommit(HandOnAsync);
+            }
+
+            _notifiable.Add(new NotifiableEvent(row.Id, row.Kind, row.At));
+        }
+
         return row;
+    }
+
+    private async Task HandOnAsync(CancellationToken cancellationToken)
+    {
+        // A row added but never saved does not exist; subscribers read events by id and skip unknown ones.
+        var events = _notifiable.ToList();
+        _notifiable.Clear();
+        foreach (var subscriber in subscribers)
+        {
+            await subscriber.OnActionEventsAsync(events, cancellationToken);
+        }
     }
 }
 

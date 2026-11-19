@@ -13,6 +13,7 @@ const settings: InstanceSettingsResponse = {
     from: view('ardea@example.org', true),
     security: view('starttls'),
   },
+  webhookInternalHosts: view(null),
 };
 
 describe('smtpPatch', () => {

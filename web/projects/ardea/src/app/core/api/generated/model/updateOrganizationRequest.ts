@@ -17,4 +17,8 @@ export interface UpdateOrganizationRequest {
   requireMfa: boolean | null;
   /** @nullable */
   aiPolicy: string | null;
+  /** @nullable */
+  emailContent?: string | null;
+  /** @nullable */
+  allowMuteCritical?: boolean | null;
 }

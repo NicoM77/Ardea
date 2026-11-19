@@ -22,6 +22,14 @@ public interface IUnitOfWork
 
     /// <summary>Commits everything written in this unit of work. Without a commit, disposal rolls back.</summary>
     Task CommitAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Runs <paramref name="action"/> inside the transaction right before it commits, after everything the
+    /// unit of work wrote. A module uses it to hand what it wrote on to its subscribers, which enqueue their
+    /// follow-up jobs in the same transaction (master plan 3.3). An action may register further actions; a
+    /// failing action fails the commit. Nothing runs when the unit of work is rolled back.
+    /// </summary>
+    void BeforeCommit(Func<CancellationToken, Task> action);
 }
 
 internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext tenant) : IUnitOfWork, IAsyncDisposable
@@ -29,6 +37,8 @@ internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext ten
     private NpgsqlTransaction? _transaction;
     private bool _completed;
     private bool _commitReserved;
+    private bool _failed;
+    private readonly Queue<Func<CancellationToken, Task>> _beforeCommit = new();
 
     public NpgsqlConnection Connection { get; } = dataSource.CreateConnection();
 
@@ -86,6 +96,12 @@ internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext ten
         return CommitCoreAsync(cancellationToken);
     }
 
+    public void BeforeCommit(Func<CancellationToken, Task> action)
+    {
+        ObjectDisposedException.ThrowIf(_completed, this);
+        _beforeCommit.Enqueue(action);
+    }
+
     /// <summary>The job system commits a job's unit of work itself; handlers may not.</summary>
     internal void ReserveCommitForOwner() => _commitReserved = true;
 
@@ -94,6 +110,26 @@ internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext ten
     private async Task CommitCoreAsync(CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_completed, this);
+        if (_failed)
+        {
+            throw new InvalidOperationException("An action before the commit failed; the unit of work can only be rolled back.");
+        }
+
+        while (_beforeCommit.TryDequeue(out var action))
+        {
+            try
+            {
+                await action(cancellationToken);
+            }
+            catch
+            {
+                // Its part of the work may be missing: what the rest wrote must not commit without it.
+                _failed = true;
+                _beforeCommit.Clear();
+                throw;
+            }
+        }
+
         _completed = true;
 
         // The transaction is let go of here and never touched again: closing the connection hands the

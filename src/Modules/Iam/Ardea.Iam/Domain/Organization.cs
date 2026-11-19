@@ -40,6 +40,12 @@ internal sealed record OrganizationSettings
 
     /// <summary>Where the setup wizard stands (master plan 11.6, 10.2); empty until it is first saved.</summary>
     public SetupState? Setup { get; init; }
+
+    /// <summary>How much notification e-mails say (master plan 8.5): <c>full</c> (the default) or <c>minimal</c>.</summary>
+    public string? EmailContent { get; init; }
+
+    /// <summary>Members may mute a channel for level 5 too (master plan 8.3); off by default.</summary>
+    public bool AllowMuteCritical { get; init; }
 }
 
 /// <summary>The setup wizard's progress: the steps saved so far, the project it created and when it finished.</summary>

@@ -107,7 +107,8 @@ internal static class RequestProtection
     public static RequestDelegate Csrf(RequestDelegate next, string publicOrigin) => async context =>
     {
         if (!context.Request.Path.StartsWithSegments("/api") || HttpMethods.IsGet(context.Request.Method)
-            || HttpMethods.IsHead(context.Request.Method) || HttpMethods.IsOptions(context.Request.Method))
+            || HttpMethods.IsHead(context.Request.Method) || HttpMethods.IsOptions(context.Request.Method)
+            || context.GetEndpoint()?.Metadata.GetMetadata<TokenAuthenticated>() is not null)
         {
             await next(context);
             return;

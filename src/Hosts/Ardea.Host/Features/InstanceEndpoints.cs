@@ -89,6 +89,12 @@ internal static class InstanceEndpoints
             errors["smtpSecurity"] = ["Choose starttls, tls or none."];
         }
 
+        if (request.WebhookInternalHosts is { Length: > 0 } released
+            && InstanceSettingDefinitions.Hosts(released).Any(h => Uri.CheckHostName(h) == UriHostNameType.Unknown))
+        {
+            errors["webhookInternalHosts"] = ["Enter host names or addresses, separated by commas."];
+        }
+
         if (request.SmtpFrom is { Length: > 0 } from && !System.Net.Mail.MailAddress.TryCreate(from, out _))
         {
             errors["smtpFrom"] = ["Enter a valid sender address."];
@@ -116,6 +122,7 @@ internal static class InstanceEndpoints
         Change(SmtpSettings.Password, request.SmtpPassword);
         Change(SmtpSettings.From, request.SmtpFrom);
         Change(SmtpSettings.Security, request.SmtpSecurity);
+        Change(InstanceSettingDefinitions.WebhookInternalHosts, request.WebhookInternalHosts is { } hosts ? string.Join(",", InstanceSettingDefinitions.Hosts(hosts)) : null);
 
         var userId = Guid.Parse(http.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
         foreach (var (definition, value) in changes)
@@ -227,7 +234,8 @@ internal static class InstanceEndpoints
                 await View(SmtpSettings.User),
                 await View(SmtpSettings.Password),
                 await View(SmtpSettings.From),
-                await View(SmtpSettings.Security)));
+                await View(SmtpSettings.Security)),
+            await View(InstanceSettingDefinitions.WebhookInternalHosts));
     }
 }
 
@@ -242,7 +250,10 @@ internal sealed record SettingView(string? Value, bool IsSet, bool Locked);
 
 internal sealed record SmtpSettingsView(SettingView Host, SettingView Port, SettingView User, SettingView Password, SettingView From, SettingView Security);
 
-internal sealed record InstanceSettingsResponse(SettingView Registration, SmtpSettingsView Smtp);
+/// <param name="Registration">invite, open or closed.</param>
+/// <param name="Smtp">The mail server.</param>
+/// <param name="WebhookInternalHosts">Hosts webhooks may reach in the private network, comma-separated (master plan 9.5).</param>
+internal sealed record InstanceSettingsResponse(SettingView Registration, SmtpSettingsView Smtp, SettingView WebhookInternalHosts);
 
 /// <summary>Absent fields stay unchanged; an empty string removes a stored value.</summary>
 internal sealed record UpdateInstanceSettingsRequest(
@@ -252,7 +263,8 @@ internal sealed record UpdateInstanceSettingsRequest(
     string? SmtpUser,
     string? SmtpPassword,
     string? SmtpFrom,
-    [property: Description("starttls, tls or none")] string? SmtpSecurity);
+    [property: Description("starttls, tls or none")] string? SmtpSecurity,
+    [property: Description("Hosts webhooks may reach in the private network, comma-separated")] string? WebhookInternalHosts = null);
 
 internal sealed record TestEmailRequest(string? To);
 

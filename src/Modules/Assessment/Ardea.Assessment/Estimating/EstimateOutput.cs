@@ -91,15 +91,18 @@ internal sealed record StoredEstimate(
     public static StoredEstimate? Read(JsonDocument output) =>
         output.RootElement.TryGetProperty("verdicts", out _) ? output.RootElement.Deserialize<StoredEstimate>(Json) : null;
 
-    /// <summary>The verdicts per component id as the rule engine takes them.</summary>
-    public static IReadOnlyDictionary<Guid, string> VerdictsOf(JsonDocument output) =>
-        Read(output)?.Verdicts.ToDictionary(v => v.ComponentId, v => Name(v.Verdict)) ?? new Dictionary<Guid, string>();
+    /// <summary>The verdicts per component id as the rule engine takes them, with the component's context when asked.</summary>
+    public static IReadOnlyDictionary<Guid, StoredVerdict> VerdictsOf(JsonDocument output) =>
+        Read(output)?.Verdicts.ToDictionary(v => v.ComponentId) ?? new Dictionary<Guid, StoredVerdict>();
 
     public static string Name<T>(T value)
         where T : struct, Enum => JsonSerializer.Serialize(value, Json).Trim('"');
 }
 
-internal sealed record StoredVerdict(Guid ComponentId, ModelVerdict Verdict);
+/// <param name="ComponentId">The component.</param>
+/// <param name="Verdict">The model's verdict on it.</param>
+/// <param name="Context">The component's <see cref="EstimateInput.Context"/> when the model was asked; the verdict counts only while it matches.</param>
+internal sealed record StoredVerdict(Guid ComponentId, ModelVerdict Verdict, string Context);
 
 internal sealed record StoredReasoning(string Sentence, IReadOnlyList<int> Sources, IReadOnlyList<Guid> Components);
 

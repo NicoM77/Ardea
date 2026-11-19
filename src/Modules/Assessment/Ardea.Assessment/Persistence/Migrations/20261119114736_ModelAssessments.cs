@@ -36,6 +36,7 @@ namespace Ardea.Assessment.Persistence.Migrations
                     prompt_version = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     language = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     output = table.Column<JsonDocument>(type: "jsonb", nullable: false),
+                    attempts = table.Column<int>(type: "integer", nullable: false),
                     tokens_in = table.Column<int>(type: "integer", nullable: false),
                     tokens_out = table.Column<int>(type: "integer", nullable: false),
                     duration_ms = table.Column<int>(type: "integer", nullable: false),
@@ -46,7 +47,7 @@ namespace Ardea.Assessment.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_assessment", x => x.id);
-                    table.CheckConstraint("ck_assessment_counts", "tokens_in >= 0 AND tokens_out >= 0 AND duration_ms >= 0");
+                    table.CheckConstraint("ck_assessment_counts", "attempts BETWEEN 1 AND 2 AND tokens_in >= 0 AND tokens_out >= 0 AND duration_ms >= 0");
                     table.CheckConstraint("ck_assessment_engine", "engine IN ('rules', 'rules+model')");
                     table.ForeignKey(
                         name: "fk_assessment_alert_alert_id",
@@ -86,13 +87,13 @@ namespace Ardea.Assessment.Persistence.Migrations
                 CREATE TRIGGER assessment_immutable BEFORE UPDATE ON assess.assessment
                     FOR EACH ROW EXECUTE FUNCTION assess.assessment_immutable();
 
-                -- System operation "token quota of the instance" (master plan 7.8, 9.2, ADR 037): the tokens all
-                -- organisations used since a point in time. Returns a sum only.
-                CREATE FUNCTION assess.model_tokens_since(since timestamptz)
-                    RETURNS bigint
+                -- System operation "token quota of the instance" (master plan 7.8, 9.2, ADR 037): whether all
+                -- organisations together used up a quota since a point in time. Returns a flag only.
+                CREATE FUNCTION assess.model_tokens_exhausted(since timestamptz, quota bigint)
+                    RETURNS boolean
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
                     AS $$
-                        SELECT coalesce(sum(a.tokens_in + a.tokens_out), 0)::bigint FROM assess.assessment a WHERE a.created_at >= since
+                        SELECT coalesce(sum(a.tokens_in + a.tokens_out), 0) >= quota FROM assess.assessment a WHERE a.created_at >= since
                     $$;
                 """);
         }
@@ -101,7 +102,7 @@ namespace Ardea.Assessment.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("""
-                DROP FUNCTION assess.model_tokens_since(timestamptz);
+                DROP FUNCTION assess.model_tokens_exhausted(timestamptz, bigint);
                 DROP TRIGGER assessment_immutable ON assess.assessment;
                 DROP FUNCTION assess.assessment_immutable();
                 """);

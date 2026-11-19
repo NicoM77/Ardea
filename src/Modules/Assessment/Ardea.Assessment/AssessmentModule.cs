@@ -53,7 +53,8 @@ public sealed class AssessmentModule : IModule
         services.AddJob<Estimating.EstimateAlert, Estimating.EstimateAlertHandler>(new JobKindOptions
         {
             MaxConcurrency = limits.Parallelism,
-            MaxAttempts = 3,
+            // One attempt: a second run of the job would ask the model again (ADR 037).
+            MaxAttempts = 1,
             Timeout = (limits.CallTimeout * Estimating.Estimator.Attempts) + TimeSpan.FromMinutes(2),
         });
     }

@@ -278,6 +278,10 @@ internal sealed class AlertAssessment : IOrganizationOwned
     /// </summary>
     public required JsonDocument Output { get; set; }
 
+    /// <summary>Calls made: one, or two after a refused answer or a failed provider. The actions' quota counts them.</summary>
+    public int Attempts { get; set; }
+
+    /// <summary>Tokens sent; a call without a usage report is charged its estimate (ADR 037).</summary>
     public int TokensIn { get; set; }
 
     public int TokensOut { get; set; }

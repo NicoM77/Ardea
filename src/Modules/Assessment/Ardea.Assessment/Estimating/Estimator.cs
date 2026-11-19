@@ -13,23 +13,31 @@ internal sealed record EstimateResult(StoredEstimate? Estimate, string? Failure,
 /// Asks the language model for one alert (master plan 7.5, 7.8; tasks 4.2, 4.6). Two attempts at most: an answer that
 /// fails the check is asked again once; a provider that does not answer gives way to the next allowed one, local ones
 /// first. Only the providers the organisation's data policy allows are ever called, also when all of them fail.
-/// The model has no tools; the time limit holds per call. Metrics count calls, tokens, duration, errors and retries;
-/// logs never carry prompt or answer texts.
+/// The model has no tools; the time limit holds per call. A call without a usage report (a failure, a timeout, a
+/// provider that reports none) is charged its estimated cost: the prompt's length in characters / 4 plus the most
+/// output tokens it may produce. Metrics count calls, tokens, duration, errors and retries; logs never carry prompt or
+/// answer texts.
 /// </summary>
 internal sealed partial class Estimator(IAiProviders providers, AiLimits limits, ILogger<Estimator> logger)
 {
     public const int Attempts = 2;
     public const int MaxOutputTokens = 2000;
 
-    public async Task<EstimateResult> EstimateAsync(EstimateInput input, IReadOnlyList<AiProviderInfo> allowed, CancellationToken cancellationToken)
+    /// <param name="input">The alert's input.</param>
+    /// <param name="allowed">The providers the organisation's policy allows, in order.</param>
+    /// <param name="budget">Calls left in the quota of the alert's actions; at most <see cref="Attempts"/> are made.</param>
+    /// <param name="cancellationToken">Cancels the job.</param>
+    public async Task<EstimateResult> EstimateAsync(EstimateInput input, IReadOnlyList<AiProviderInfo> allowed, int budget, CancellationToken cancellationToken)
     {
         var messages = EstimatePrompt.Messages(input);
+        var maxAttempts = Math.Clamp(budget, 0, Attempts);
+        var estimatedIn = messages.Sum(m => m.Text.Length) / 4;
         var options = new ChatOptions { Temperature = 0, MaxOutputTokens = MaxOutputTokens, Tools = null };
         var watch = Stopwatch.StartNew();
         int tokensIn = 0, tokensOut = 0, attempts = 0, index = 0;
         string? failure = null;
         AiProviderInfo? provider = null;
-        while (attempts < Attempts && index < allowed.Count)
+        while (attempts < maxAttempts && index < allowed.Count)
         {
             provider = allowed[index];
             if (providers.Client(provider.Name) is not { } client)
@@ -50,7 +58,9 @@ internal sealed partial class Estimator(IAiProviders providers, AiLimits limits,
             try
             {
                 var response = await client.GetResponseAsync<EstimateAnswer>(messages, StoredEstimate.Json, options, useJsonSchemaResponseFormat: true, timeout.Token);
-                var used = ((int)(response.Usage?.InputTokenCount ?? 0), (int)(response.Usage?.OutputTokenCount ?? 0));
+                var used = response.Usage is { InputTokenCount: { } reportedIn, OutputTokenCount: { } reportedOut }
+                    ? ((int)reportedIn, (int)reportedOut)
+                    : (estimatedIn, MaxOutputTokens);
                 tokensIn += used.Item1;
                 tokensOut += used.Item2;
                 EstimateMetrics.Tokens(provider.Name, used.Item1, used.Item2);
@@ -67,6 +77,8 @@ internal sealed partial class Estimator(IAiProviders providers, AiLimits limits,
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
                 failure = "timeout";
+                (tokensIn, tokensOut) = (tokensIn + estimatedIn, tokensOut + MaxOutputTokens);
+                EstimateMetrics.Tokens(provider.Name, estimatedIn, MaxOutputTokens);
                 EstimateMetrics.Call(provider.Name, failure, call.Elapsed);
                 LogProviderFailed(provider.Name, failure, attempts);
                 index = Math.Min(index + 1, allowed.Count - 1);
@@ -74,6 +86,8 @@ internal sealed partial class Estimator(IAiProviders providers, AiLimits limits,
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 failure = "provider_error";
+                (tokensIn, tokensOut) = (tokensIn + estimatedIn, tokensOut + MaxOutputTokens);
+                EstimateMetrics.Tokens(provider.Name, estimatedIn, MaxOutputTokens);
                 EstimateMetrics.Call(provider.Name, failure, call.Elapsed);
                 LogProviderFailed(provider.Name, ex.GetType().Name, attempts);
                 index = Math.Min(index + 1, allowed.Count - 1);

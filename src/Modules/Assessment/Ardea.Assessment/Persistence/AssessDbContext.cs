@@ -128,7 +128,7 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             assessment.ToTable("assessment", t =>
             {
                 t.HasCheckConstraint("ck_assessment_engine", "engine IN ('rules', 'rules+model')");
-                t.HasCheckConstraint("ck_assessment_counts", "tokens_in >= 0 AND tokens_out >= 0 AND duration_ms >= 0");
+                t.HasCheckConstraint("ck_assessment_counts", "attempts BETWEEN 1 AND 2 AND tokens_in >= 0 AND tokens_out >= 0 AND duration_ms >= 0");
             });
             assessment.HasKey(a => a.Id);
             assessment.Property(a => a.Id).HasDefaultValueSql("uuidv7()");

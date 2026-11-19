@@ -25,7 +25,8 @@ public sealed class EstimateTests(PostgresServer server)
         await host.AddComponentAsync(acme, shop, c => (c.ProductKey, c.Kind, c.Version) = ("postgresql", "database", "17.11"));
         await host.AddComponentAsync(acme, shop, c => (c.ProductKey, c.Kind, c.Version) = ("nginx", "network", "1.27.1"));
         var billing = await host.AddProjectAsync(acme, "Billing");
-        await host.AddComponentAsync(acme, billing, c => (c.ProductKey, c.Kind, c.ProtectionNote) = ("postgresql", "database", "Only Billing jobs connect"));
+        var billingDb = await host.AddComponentAsync(acme, billing, c => (c.ProductKey, c.Kind, c.CustomName, c.ProtectionNote) =
+            ("postgresql", "database", "Billing DB of ACME Corp", "Same WAF as Payroll-Prod; ask jane.doe@acme-corp.ch at ACME Corp"));
         await host.ProfileChangedAsync(acme, shop);
         await host.ProfileChangedAsync(acme, billing);
         await host.RunJobsAsync();
@@ -42,15 +43,16 @@ public sealed class EstimateTests(PostgresServer server)
         var request = Assert.Single(model.Requests);
         Assert.Equal(["C1 P1 17.11 in_range", "C2 P2 - unknown"], request.Data.GetProperty("components").EnumerateArray()
             .Select(c => $"{c.GetProperty("ref").GetString()} {c.GetProperty("project").GetString()} {(c.TryGetProperty("version", out var v) ? v.GetString() : "-")} {c.GetProperty("version_check").GetString()}"));
-        Assert.DoesNotContain("Shop Backend", request.Text, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("Billing", request.Text, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("nginx", request.Text, StringComparison.OrdinalIgnoreCase);
+        foreach (var secret in new[] { "Shop Backend", "shop-backend", "Billing", "nginx", "Payroll", "jane.doe", "acme", "Same WAF" })
+        {
+            Assert.DoesNotContain(secret, request.Text, StringComparison.OrdinalIgnoreCase);
+        }
 
         // Stored once, immutably, with what it rests on.
         Assert.Equal(
-            "rules+model|1|1|de|local|local-model|1800|400|-|2",
+            "rules+model|1|1|de|local|local-model|1|1800|400|-|2",
             Assert.Single(await host.RowsAsync("""
-                SELECT engine || '|' || entry_revision || '|' || prompt_version || '|' || language || '|' || provider || '|' || model || '|' || tokens_in || '|' || tokens_out
+                SELECT engine || '|' || entry_revision || '|' || prompt_version || '|' || language || '|' || provider || '|' || model || '|' || attempts || '|' || tokens_in || '|' || tokens_out
                        || '|' || coalesce(requested_by::text, '-') || '|' || cardinality(remediation_ids) FROM assess.assessment
                 """)));
         Assert.Equal(64, (await host.ScalarAsync<string>("SELECT input_fingerprint FROM assess.assessment")).Length);
@@ -70,10 +72,73 @@ public sealed class EstimateTests(PostgresServer server)
         Assert.Equal(("not_affected", true, "Billing"), (verdict.Verdict, verdict.Proposal, verdict.Project.Name));
         Assert.Equal(1, answers.Model.Sources[0].Number);
 
+        // The verdicts reached the findings through a reassessment of its own, after the row was stored.
+        Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'assess.assess-alert'"));
+
         // The same input asks nothing new.
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
         Assert.Single(model.Requests);
+
+        // A verdict made for another profile state no longer counts: the rules alone apply until the model looks again.
+        await host.ChangeComponentAsync(acme, billingDb, c => c.Exposure = "internet");
+        await host.ProfileChangedAsync(acme, billing);
+        await host.RunJobsAsync();
+        Assert.Equal("uncertain\trules\t4", Assert.Single(await host.RowsAsync($"SELECT verdict, verdict_source, level FROM assess.finding WHERE component_id = '{billingDb}'")));
+    }
+
+    /// <summary>
+    /// A person's request has its own place in the queue and its own cap (task 4.3): a waiting job of the system
+    /// does not swallow it, failed calls are charged, and a repeated run of the job never asks the model again.
+    /// </summary>
+    [Fact]
+    public async Task A_persons_request_runs_beside_the_systems_within_a_daily_cap_and_a_job_never_asks_twice()
+    {
+        var down = RecordedModel.Unreachable();
+        await using var host = await StartAsync(
+            [("local", true, down)], new Dictionary<string, string?> { [AiLimits.DailyRequestsPerOrganizationKey] = "1" });
+        var acme = AssessmentTestHost.NewOrganization();
+        var project = await host.AddProjectAsync(acme, "Platform", criticality: "high", exposure: "internet");
+        await host.AddComponentAsync(acme, project, c => (c.ProductKey, c.Kind, c.Version) = ("postgresql", "database", "17.11"));
+        await host.ProfileChangedAsync(acme, project);
+        await host.RunJobsAsync();
+        var entry = await host.AddEntryAsync(new TestEntry("CVE-2026-7601", new TestAffected { ProductKey = "postgresql", Introduced = "17", Fixed = "17.12" }) { Score = 9.1 });
+
+        // The system asks; the model is down: two calls, charged at their estimate, and the rules stand.
+        await host.EntryChangedAsync(entry);
+        await host.RunJobsAsync();
+        Assert.Equal(2, down.Requests.Count);
+
+        // A system job and a person's request for the same alert wait side by side, the person's first.
+        var queued = new List<bool>();
+        await host.InOrganizationAsync(acme, async services =>
+        {
+            var jobs = services.GetRequiredService<IJobQueue>();
+            queued.Add(await jobs.EnqueueAsync(new EstimateAlert(entry), EstimateAlert.Options(acme, entry, 4, person: false)));
+            queued.Add(await jobs.EnqueueAsync(new EstimateAlert(entry, Guid.CreateVersion7()), EstimateAlert.Options(acme, entry, 4, person: true)));
+        });
+        Assert.Equal([true, true], queued);
+        Assert.Equal(["0", "2"], await host.RowsAsync("SELECT priority FROM platform.job WHERE kind = 'assess.estimate-alert' AND state = 'pending' ORDER BY priority"));
+
+        // The system does not try the same input again after two failures; the person may.
+        await host.RunJobsAsync();
+        Assert.Equal(4, down.Requests.Count);
+        Assert.Equal(
+            ["person\t2\t4000", "system\t2\t4000"],
+            await host.RowsAsync("""
+                SELECT CASE WHEN requested_by IS NULL THEN 'system' ELSE 'person' END, attempts, tokens_out FROM assess.assessment ORDER BY 1
+                """));
+        Assert.True(await host.ScalarAsync<int>("SELECT min(tokens_in) FROM assess.assessment") > 0);
+
+        // The organisation's people used today's one request: the next waits until tomorrow.
+        await RequestAsync(host, acme, entry);
+        await host.RunJobsAsync();
+        Assert.Equal(4, down.Requests.Count);
+
+        // A job that runs a second time (the worker died after the call) asks nothing.
+        await host.InOrganizationAsync(acme, services => services.GetRequiredService<EstimateAlertHandler>()
+            .HandleAsync(new EstimateAlert(entry), new JobContext(Guid.CreateVersion7(), EstimateAlert.Kind, 2, acme), CancellationToken.None));
+        Assert.Equal(4, down.Requests.Count);
     }
 
     [Fact]

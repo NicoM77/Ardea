@@ -146,19 +146,20 @@ internal sealed class AlertAssessor(
 
     /// <summary>
     /// The verdicts per component of the alert's current assessment by the model, when it was made for this
-    /// revision of the entry (master plan 7.1 property 2: the stored verdict is an input of the rules).
+    /// revision of the entry (master plan 7.1 property 2: the stored verdict is an input of the rules). Each verdict
+    /// carries the component's context when asked; <see cref="Evaluate"/> uses it only while that still holds.
     /// </summary>
-    private async Task<IReadOnlyDictionary<Guid, string>> ModelVerdictsAsync(Alert alert, EntryFacts entry, CancellationToken cancellationToken)
+    private async Task<IReadOnlyDictionary<Guid, Estimating.StoredVerdict>> ModelVerdictsAsync(Alert alert, EntryFacts entry, CancellationToken cancellationToken)
     {
         if (alert.CurrentAssessmentId is not { } id)
         {
-            return new Dictionary<Guid, string>();
+            return new Dictionary<Guid, Estimating.StoredVerdict>();
         }
 
         var current = await db.Assessments.AsNoTracking()
             .Where(a => a.Id == id && a.Engine == AlertAssessment.ModelEngine && a.EntryRevision == entry.Revision)
             .Select(a => a.Output).SingleOrDefaultAsync(cancellationToken);
-        return current is null ? new Dictionary<Guid, string>() : Estimating.StoredEstimate.VerdictsOf(current);
+        return current is null ? new Dictionary<Guid, Estimating.StoredVerdict>() : Estimating.StoredEstimate.VerdictsOf(current);
     }
 
     /// <summary>
@@ -224,7 +225,7 @@ internal sealed class AlertAssessor(
     }
 
     /// <summary>Match, version check and rule set for one candidate (master plan 7.2, 7.3, 7.6).</summary>
-    private Outcome Evaluate(EntryFacts entry, Candidate candidate, Finding? known, string? modelVerdict)
+    private Outcome Evaluate(EntryFacts entry, Candidate candidate, Finding? known, Estimating.StoredVerdict? modelVerdict)
     {
         var evidence = new Dictionary<string, object?>
         {
@@ -241,8 +242,12 @@ internal sealed class AlertAssessor(
         var human = known is { VerdictSource: "human" } ? known.Verdict : null;
 
         // The model's verdict is a factor only where the version check could not decide (master plan 7.5, 7.6;
-        // task 4.5); a person's verdict comes first.
-        var model = version?.Verdict == VersionVerdicts.Unknown && human is null ? modelVerdict : null;
+        // task 4.5); a person's verdict comes first. A verdict made for another version, exposure, criticality or
+        // protection of the component no longer counts: the rules alone apply until the model is asked again.
+        var model = version?.Verdict == VersionVerdicts.Unknown && human is null
+            && modelVerdict is { } stored && stored.Context == Estimating.EstimateInput.Context(component, version.Verdict)
+            ? Estimating.StoredEstimate.Name(stored.Verdict)
+            : null;
         var input = new RuleInput
         {
             StrongMatch = candidate.IsStrong,

@@ -48,9 +48,14 @@ internal sealed record EstimateInput
     [JsonIgnore]
     public IReadOnlyDictionary<string, Guid> ComponentIds { get; init; } = new Dictionary<string, Guid>();
 
+    /// <summary>Placeholder → <see cref="Context"/> of the component when asked; stored with the verdict, never sent.</summary>
+    [JsonIgnore]
+    public IReadOnlyDictionary<string, string> ComponentContexts { get; init; } = new Dictionary<string, string>();
+
     /// <summary>
     /// The input's hash (master plan 4.9 «Profilstand einer Einschätzung»): entry and revision, the hit components with
-    /// version and context, rule set and prompt version. The same fingerprint asks the model nothing new.
+    /// version and context, and the prompt version; not the rule set's version, which does not change what the model is
+    /// asked (ADR 037). The same fingerprint asks the model nothing new.
     /// </summary>
     [JsonIgnore]
     public string Fingerprint { get; init; } = string.Empty;
@@ -63,57 +68,36 @@ internal sealed record EstimateInput
         [.. findings.Where(f => f.Status is "open" or "in_review" && f.MatchType is "package" or "cpe" or "product")
             .OrderByDescending(f => f.Level).ThenBy(f => f.ComponentId)];
 
+    /// <summary>
+    /// Builds the input. Of a component only fixed values leave the system: the keys it shares with the entry (which
+    /// the public record names itself), its kind, version, version check, packaging, exposure, criticality, protection
+    /// (<c>none</c> or <c>effective</c>) and scope. No free text of the profile goes out: neither the component's own
+    /// name nor its package coordinate with a possibly private scope, nor the protection note, nor any project or
+    /// organisation name.
+    /// </summary>
     public static EstimateInput Build(
         EntryFacts entry, EntryText? text, IReadOnlyList<Finding> hits, IReadOnlyDictionary<Guid, ProfileComponent> components,
-        string sourceName, string language, int rulesetVersion)
+        string sourceName, string language)
     {
         var projects = new Dictionary<Guid, string>();
-        var names = new List<(string Name, string Placeholder)>();
         foreach (var finding in hits)
         {
-            if (!projects.ContainsKey(finding.ProjectId))
-            {
-                var placeholder = "P" + (projects.Count + 1).ToString(CultureInfo.InvariantCulture);
-                projects[finding.ProjectId] = placeholder;
-                if (components.GetValueOrDefault(finding.ComponentId)?.ProjectName is { Length: > 0 } name)
-                {
-                    names.Add((name, placeholder));
-                }
-            }
-        }
-
-        // Longest names first, so «Shop» does not eat into «Shop Backend».
-        names.Sort((a, b) => b.Name.Length.CompareTo(a.Name.Length));
-        string? Scrub(string? value)
-        {
-            if (value is null)
-            {
-                return null;
-            }
-
-            foreach (var (name, placeholder) in names)
-            {
-                value = value.Replace(name, placeholder, StringComparison.OrdinalIgnoreCase);
-            }
-
-            return value;
+            projects.TryAdd(finding.ProjectId, "P" + (projects.Count + 1).ToString(CultureInfo.InvariantCulture));
         }
 
         var refs = new Dictionary<string, Guid>(StringComparer.Ordinal);
+        var contexts = new Dictionary<string, string>(StringComparer.Ordinal);
         var inputComponents = new List<InputComponent>();
-        var fingerprint = new StringBuilder()
-            .Append(CultureInfo.InvariantCulture, $"{entry.Id}|{entry.Revision}|{rulesetVersion}|{EstimatePrompt.Version}");
         foreach (var finding in hits)
         {
             var reference = "C" + (inputComponents.Count + 1).ToString(CultureInfo.InvariantCulture);
             refs[reference] = finding.ComponentId;
             var component = components.GetValueOrDefault(finding.ComponentId);
+            contexts[reference] = Context(component, finding.VersionVerdict);
             inputComponents.Add(new InputComponent(
                 reference,
                 projects[finding.ProjectId],
-                Scrub(component?.Name) ?? "unknown",
-                component?.ProductKey,
-                Scrub(component?.Purl),
+                SharedKeys(finding, component),
                 component?.Kind,
                 component?.Version,
                 finding.VersionVerdict ?? "unknown",
@@ -121,16 +105,15 @@ internal sealed record EstimateInput
                 component?.Packaging,
                 component?.Exposure ?? "internal",
                 component?.Criticality ?? "normal",
-                component?.Protection ?? "none",
-                Cut(Scrub(component?.ProtectionNote), RemedyLength),
+                component?.Protection == "effective" ? "effective" : "none",
                 component?.DependencyScope == "development" ? "development" : null));
         }
 
+        // The rule set's version is not part of it: a new rule set does not change what the model is asked (ADR 037).
+        var fingerprint = new StringBuilder().Append(CultureInfo.InvariantCulture, $"{entry.Id}|{entry.Revision}|{EstimatePrompt.Version}");
         foreach (var finding in hits.OrderBy(f => f.ComponentId))
         {
-            var c = components.GetValueOrDefault(finding.ComponentId);
-            fingerprint.Append(CultureInfo.InvariantCulture,
-                $"|{finding.ComponentId}:{c?.Version}:{finding.VersionVerdict}:{c?.Exposure}:{c?.Criticality}:{c?.Protection}:{c?.ProtectionNote}:{c?.DependencyScope}");
+            fingerprint.Append(CultureInfo.InvariantCulture, $"|{finding.ComponentId}:{Context(components.GetValueOrDefault(finding.ComponentId), finding.VersionVerdict)}");
         }
 
         var sources = new List<InputSource> { new(1, sourceName, null, ["record"]) };
@@ -161,9 +144,30 @@ internal sealed record EstimateInput
             Sources = sources,
             Language = language,
             ComponentIds = refs,
+            ComponentContexts = contexts,
             Fingerprint = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(fingerprint.ToString()))),
         };
     }
+
+    /// <summary>
+    /// What the model knew of one component, as a short hash: version, version check, packaging, exposure,
+    /// criticality, protection and scope. A verdict of the model counts only while it still matches (task 4.5).
+    /// </summary>
+    public static string Context(ProfileComponent? component, string? versionVerdict) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join('|',
+            component?.Version, versionVerdict, component?.Packaging, component?.Exposure, component?.Criticality,
+            component?.Protection == "effective" ? "effective" : "none", component?.DependencyScope == "development" ? "development" : null))))[..16];
+
+    /// <summary>
+    /// The keys the component shares with the entry, e.g. <c>product postgresql</c> or <c>purl pkg:npm/lodash</c>: the
+    /// public record names them, so they reveal nothing of the profile. Without a recorded match, the catalogue key.
+    /// </summary>
+    private static IReadOnlyList<string> SharedKeys(Finding finding, ProfileComponent? component) =>
+        finding.Evidence.RootElement.ValueKind == JsonValueKind.Object
+        && finding.Evidence.RootElement.TryGetProperty("match", out var match) && match.ValueKind == JsonValueKind.Object
+        && match.TryGetProperty("keys", out var keys) && keys.ValueKind == JsonValueKind.Array
+            ? [.. keys.EnumerateArray().Where(k => k.ValueKind == JsonValueKind.String).Select(k => k.GetString()!).Distinct(StringComparer.Ordinal)]
+            : component?.ProductKey is { } key ? ["product " + key] : [];
 
     private static string? Cut(string? value, int length) => value is null || value.Length <= length ? value : value[..length] + "…";
 }
@@ -186,12 +190,14 @@ internal sealed record InputExploitation(string State, string? Source, string? S
 
 internal sealed record InputAffected(string? Vendor, string? Product, string? Package, string? Introduced, string? Fixed, string? LastAffected, string? Exact, string Status);
 
+/// <summary>
+/// One hit component as the model sees it: fixed values only, no free text of the profile. <c>Keys</c> are the keys
+/// the component shares with the entry, e.g. <c>product postgresql</c>.
+/// </summary>
 internal sealed record InputComponent(
     string Ref,
     string Project,
-    string Name,
-    string? Product,
-    string? Package,
+    IReadOnlyList<string> Keys,
     string? Kind,
     string? Version,
     string VersionCheck,
@@ -200,7 +206,6 @@ internal sealed record InputComponent(
     string Exposure,
     string Criticality,
     string Protection,
-    string? ProtectionNote,
     string? Scope);
 
 /// <param name="N">The number the model refers to.</param>

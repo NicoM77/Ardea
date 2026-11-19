@@ -28,6 +28,7 @@ internal static class HostConfiguration
             .PositiveInt(Ardea.Platform.Ai.AiLimits.CallTimeoutKey)
             .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyTokensKey)
             .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyTokensPerOrganizationKey)
+            .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyRequestsPerOrganizationKey)
             .Add(AiErrors(configuration));
 
     /// <summary>A provider that is configured wrongly stops the start instead of failing on its first call (master plan 7.8).</summary>

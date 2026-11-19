@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your notifications · Ardea (mockup, sample data)</title>
+<link rel="icon" href="../brand/ardea-favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="notifications.css">
+</head>
+<body data-page="settings">
+<main class="sheet" id="main">
+  <div class="content">
+
+    <nav class="crumb-row" aria-label="Breadcrumb"><a href="#">Settings</a><svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg><span>Your notifications</span></nav>
+    <header class="title-row">
+      <div>
+        <h1>Your notifications</h1>
+        <p class="title-sub">In Example Digital AG. Only you see these settings.</p>
+      </div>
+    </header>
+
+    <div class="samples">This device:
+      <div class="sample-switch" role="group" aria-label="Sample state of this device">
+        <button type="button" aria-pressed="true" data-state="off">Push off</button>
+        <button type="button" aria-pressed="false" data-state="on">Push on</button>
+        <button type="button" aria-pressed="false" data-state="blocked">Blocked</button>
+        <button type="button" aria-pressed="false" data-state="ios">iPhone, not installed</button>
+        <button type="button" aria-pressed="false" data-state="unsupported">No push</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="span-7 stack-gap">
+        <section class="card rise" aria-labelledby="h-channels">
+          <header><h2 id="h-channels">Channels</h2></header>
+          <div class="rows channel-rows">
+            <div>
+              <span class="row-icon"><svg class="icon" aria-hidden="true"><use href="#i-rules"/></svg></span>
+              <span class="row-main"><b>In-app</b><small>The bell at the top and the list of notifications</small></span>
+              <button class="switch" type="button" role="switch" aria-checked="true" aria-label="In-app"></button>
+            </div>
+            <div>
+              <span class="row-icon"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg></span>
+              <span class="row-main"><b>E-mail</b><small>nina.meier@example.org</small></span>
+              <button class="switch" type="button" role="switch" aria-checked="true" aria-label="E-mail"></button>
+            </div>
+            <div>
+              <span class="row-icon"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg></span>
+              <span class="row-main"><b>Push</b><small>On 2 devices</small></span>
+              <button class="switch" type="button" role="switch" aria-checked="false" aria-label="Push"></button>
+            </div>
+          </div>
+          <div class="notice" style="margin-top: 16px"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><div><b>Critical gets through.</b>A channel you turn off stays quiet, except for Critical: Example Digital AG does not allow muting it.</div></div>
+        </section>
+
+        <section class="card rise" aria-labelledby="h-language">
+          <header><h2 id="h-language">Language of messages</h2></header>
+          <label class="field"><span>E-mails and push messages</span>
+            <select class="select" style="max-width: 320px"><option>Like the organization (Deutsch)</option><option>English</option><option>Deutsch</option><option>Français</option><option>Italiano</option></select>
+          </label>
+        </section>
+      </div>
+
+      <div class="span-5 stack-gap device-first">
+        <section class="card rise" aria-labelledby="h-device">
+          <header><h2 id="h-device">Push on this device</h2><span class="meta">Chrome on macOS</span></header>
+
+          <div class="device-state" data-sample="off">
+            <p class="lead-line"><svg class="sym" aria-hidden="true"><use href="#i-s-open"/></svg>Off on this device</p>
+            <p>Get Critical actions on this device even when Ardea is closed. Your browser asks for permission once.</p>
+            <div class="btns"><button class="btn primary" type="button">Turn on push</button></div>
+          </div>
+
+          <div class="device-state" data-sample="on" hidden>
+            <p class="lead-line is-on"><svg class="sym" aria-hidden="true"><use href="#i-s-done"/></svg>On for this device</p>
+            <p>Messages carry priority, number and title. A click opens the action. The content is end-to-end encrypted.</p>
+            <div class="btns"><button class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-send"/></svg>Send a test</button><button class="btn ghost" type="button">Turn off</button></div>
+          </div>
+
+          <div class="device-state" data-sample="blocked" hidden>
+            <p class="lead-line"><svg class="sym" aria-hidden="true"><use href="#i-s-not-affected"/></svg>Blocked in the browser</p>
+            <p>Notifications for this site are blocked. Allow them in the browser’s site settings, then come back here.</p>
+          </div>
+
+          <div class="device-state" data-sample="ios" hidden>
+            <p class="lead-line"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>Add Ardea to your Home Screen first</p>
+            <p>On iPhone and iPad, push works only for apps on the Home Screen (iOS 16.4 or later).</p>
+            <ol class="install">
+              <li><span class="pict"><svg class="icon" aria-hidden="true"><use href="#i-share"/></svg></span><span><b>Tap Share</b><small>In Safari’s toolbar</small></span></li>
+              <li><span class="pict"><svg class="icon" aria-hidden="true"><use href="#i-add-square"/></svg></span><span><b>Choose “Add to Home Screen”</b><small>Scroll down if you don’t see it</small></span></li>
+              <li><span class="pict app"><img src="../brand/ardea-mark.svg" alt=""></span><span><b>Open Ardea from the Home Screen</b><small>Sign in, come back here and turn on push</small></span></li>
+            </ol>
+          </div>
+
+          <div class="device-state" data-sample="unsupported" hidden>
+            <p class="lead-line"><svg class="sym" aria-hidden="true"><use href="#i-p-none"/></svg>This browser cannot receive push</p>
+            <p>Use a current version of Chrome, Edge, Firefox or Safari, or rely on e-mail.</p>
+          </div>
+        </section>
+
+        <section class="card rise" aria-labelledby="h-devices">
+          <header><h2 id="h-devices">Devices with push</h2><span class="meta">For all your organizations</span></header>
+          <div class="rows">
+            <div>
+              <span class="row-icon"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg></span>
+              <span class="row-main"><b>Safari on iPhone</b><small>Added 12 Nov · last message today, 08:14</small></span>
+              <button class="btn ghost" type="button" aria-label="Remove Safari on iPhone">Remove</button>
+            </div>
+            <div>
+              <span class="row-icon"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg></span>
+              <span class="row-main"><b>Firefox on Windows</b><small>Added 2 Oct · 2 failed deliveries</small></span>
+              <button class="btn ghost" type="button" aria-label="Remove Firefox on Windows">Remove</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <p class="footnote">Sample data. Reached from Settings and from the link in every e-mail. The channel switches mute a channel for you in this organization; push devices belong to you and receive the notifications of every organization you are in, each organization’s mute applies. The device card shows one of five states; on iPhone it first explains the Home Screen, and only a tap asks for permission. <a class="link" href="notifications.html">Inbox</a> · <a class="link" href="notification-rules.html">Notification rules</a></p>
+  </div>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+  /* Mockup behaviour only: sample states and switches */
+  document.addEventListener('click', function (e) {
+    var pick = e.target.closest('[data-state]');
+    if (pick) {
+      pick.parentNode.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === pick)); });
+      document.querySelectorAll('.device-state').forEach(function (s) { s.hidden = s.getAttribute('data-sample') !== pick.getAttribute('data-state'); });
+    }
+    var sw = e.target.closest('.switch');
+    if (sw) sw.setAttribute('aria-checked', String(sw.getAttribute('aria-checked') !== 'true'));
+  });
+</script>
+</body>
+</html>

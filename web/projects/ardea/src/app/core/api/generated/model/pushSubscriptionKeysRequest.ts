@@ -6,6 +6,9 @@
  * OpenAPI spec version: v1
  */
 
-export type PreviewAddressLinkParams = {
-  token?: string;
-};
+export interface PushSubscriptionKeysRequest {
+  /** @nullable */
+  p256dh: string | null;
+  /** @nullable */
+  auth: string | null;
+}

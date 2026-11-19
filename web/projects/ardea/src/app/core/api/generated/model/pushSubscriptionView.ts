@@ -6,6 +6,12 @@
  * OpenAPI spec version: v1
  */
 
-export type UnsubscribeExternalAddressParams = {
-  token?: string;
-};
+export interface PushSubscriptionView {
+  id: string;
+  label: string;
+  createdAt: string;
+  /** @nullable */
+  lastSuccessAt: string | null;
+  /** @pattern ^-?(?:0|[1-9]\d*)$ */
+  failedCount: number | string;
+}

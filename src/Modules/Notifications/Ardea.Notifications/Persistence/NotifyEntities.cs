@@ -41,7 +41,7 @@ internal sealed class RuleTarget : IOrganizationOwned
 
     public Guid RuleId { get; set; }
 
-    /// <summary><c>in_app</c>, <c>email</c>, <c>webhook</c>; <c>push</c> with task 5.5.</summary>
+    /// <summary><c>in_app</c>, <c>email</c>, <c>webhook</c> or <c>push</c>.</summary>
     public required string Channel { get; set; }
 
     /// <summary><c>role</c>, <c>user</c>, <c>address</c> or <c>endpoint</c>.</summary>
@@ -306,4 +306,44 @@ internal sealed class PendingEvent : IOrganizationOwned
 
     /// <summary>Given up after <c>EvaluateEvents.MaxEventAttempts</c>; stays for the instance status and the operator.</summary>
     public DateTimeOffset? FailedAt { get; set; }
+}
+
+/// <summary>
+/// A device's Web Push subscription (master plan 4.7, 8.5): user data without an organisation. The member
+/// writes their own; the worker reads, counts and removes those of a named recipient who is a member of the
+/// job's organisation.
+/// </summary>
+internal sealed class PushSubscription
+{
+    public Guid Id { get; set; }
+
+    public Guid UserId { get; set; }
+
+    /// <summary>The push service's address for this device: a capability, never logged.</summary>
+    public required string Endpoint { get; set; }
+
+    /// <summary>Lower-case hex SHA-256 of the endpoint, unique per user.</summary>
+    public required string EndpointHash { get; set; }
+
+    /// <summary>The browser's P-256 key, base64url.</summary>
+    public required string P256dh { get; set; }
+
+    /// <summary>The browser's 16-byte authentication secret, base64url.</summary>
+    public required string Auth { get; set; }
+
+    /// <summary>The browser's User-Agent when it subscribed.</summary>
+    public string? UserAgent { get; set; }
+
+    /// <summary>«Chrome on macOS», derived from the User-Agent.</summary>
+    public required string Label { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset? LastSuccessAt { get; set; }
+
+    /// <summary>Failed attempts since the last success.</summary>
+    public int FailedCount { get; set; }
+
+    /// <summary>Refusals of the instance's key (401, 403) in a row; the third removes the subscription.</summary>
+    public int RejectedCount { get; set; }
 }

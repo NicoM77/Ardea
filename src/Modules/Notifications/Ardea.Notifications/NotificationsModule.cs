@@ -25,6 +25,9 @@ public sealed class NotificationsModule : IModule
 {
     public string Name => NotifyDbContext.Schema;
 
+    /// <summary>What is wrong with the Web Push variables (<c>ARDEA_VAPID__*</c>); checked when API and worker start.</summary>
+    public static IReadOnlyList<string> ConfigurationErrors(IConfiguration configuration) => PushConfiguration.Errors(configuration);
+
     public IModuleDatabase? Database { get; } =
         new ModuleDatabase<NotifyDbContext>(NotifyDbContext.Schema, options => new NotifyDbContext(options, new TenantContext()));
 
@@ -42,6 +45,14 @@ public sealed class NotificationsModule : IModule
         services.AddScoped<WebhookChannel>();
         services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<EmailChannel>());
         services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<WebhookChannel>());
+        services.AddSingleton<VapidKeyStore>();
+        services.AddSingleton<PushOptions>();
+        services.AddScoped<WebPushChannel>();
+        services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<WebPushChannel>());
+        // Push endpoints are capabilities of the browser makers' push services: never logged, never internal (ADR 041).
+        services.AddHttpClient(WebPushChannel.ClientName, client => client.Timeout = TimeSpan.FromSeconds(10))
+            .ConfigurePrimaryHttpMessageHandler(OutboundAddresses.CreateHandler)
+            .RemoveAllLoggers();
         // No request logging: chat services (Slack, Teams, Discord) carry the webhook's secret in its path.
         services.AddHttpClient(WebhookChannel.ClientName, client => client.Timeout = TimeSpan.FromSeconds(10))
             .ConfigurePrimaryHttpMessageHandler(OutboundAddresses.CreateHandler)
@@ -65,5 +76,6 @@ public sealed class NotificationsModule : IModule
         AddressEndpoints.Map(endpoints);
         DeliveryEndpoints.Map(endpoints);
         InboxEndpoints.Map(endpoints);
+        PushEndpoints.Map(endpoints);
     }
 }

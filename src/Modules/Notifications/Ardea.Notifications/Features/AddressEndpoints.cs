@@ -63,9 +63,15 @@ internal static class AddressEndpoints
         addresses.MapDelete("/{id:guid}", DeleteAsync).WithName("deleteExternalAddress").NoContent().Problems(403, 404, 409);
 
         var links = api.MapGroup("/notify/addresses").WithTags("Notifications");
-        links.MapGet("/preview", PreviewAsync).WithName("previewAddressLink").AllowAnonymous().Produces<AddressSubscriptionView>().Problems(404);
+        // The token travels in the body: a query string ends up in the logs of every proxy on the way. Only the RFC 8058
+        // one-click address in the mail header carries it in the query, because mail clients post a fixed form there.
+        links.MapPost("/preview", PreviewAsync).WithName("previewAddressLink").AuthenticatedByToken().Produces<AddressSubscriptionView>().Problems(404);
         links.MapPost("/confirm", ConfirmAsync).WithName("confirmExternalAddress").AuthenticatedByToken().NoContent().Problems(404);
-        links.MapPost("/unsubscribe", UnsubscribeAsync).WithName("unsubscribeExternalAddress").AuthenticatedByToken().NoContent().Problems(404);
+        links.MapPost("/unsubscribe", (AddressLinkRequest request, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken) =>
+                UnsubscribeAsync(request.Token, services, secrets, cancellationToken))
+            .WithName("unsubscribeExternalAddress").AuthenticatedByToken().NoContent().Problems(404);
+        // RFC 8058: the mail client posts a fixed form to the address in the List-Unsubscribe header, so the token is in its query.
+        links.MapPost("/unsubscribe/one-click", UnsubscribeAsync).WithName("unsubscribeExternalAddressOneClick").AuthenticatedByToken().NoContent().Problems(404);
         links.MapPost("/resubscribe", ResubscribeAsync).WithName("resubscribeExternalAddress").AuthenticatedByToken().NoContent().Problems(404);
     }
 
@@ -212,9 +218,9 @@ internal static class AddressEndpoints
     }
 
     /// <summary>Shows the organisation and the address behind a confirmation or unsubscribe link.</summary>
-    private static async Task<IResult> PreviewAsync(string? token, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken)
+    private static async Task<IResult> PreviewAsync(AddressLinkRequest request, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken)
     {
-        if (Resolve(token, secrets) is not { } link)
+        if (Resolve(request.Token, secrets) is not { } link)
         {
             return NotFound();
         }
@@ -229,9 +235,9 @@ internal static class AddressEndpoints
         }, commit: false, cancellationToken);
     }
 
-    private static async Task<IResult> ConfirmAsync(string? token, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken)
+    private static async Task<IResult> ConfirmAsync(AddressLinkRequest request, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken)
     {
-        if (Resolve(token, secrets) is not { Confirmation: true } link)
+        if (Resolve(request.Token, secrets) is not { Confirmation: true } link)
         {
             return NotFound();
         }
@@ -278,9 +284,9 @@ internal static class AddressEndpoints
     /// <summary>
     /// The recipient takes back their unsubscribe with the same signed link: only they can, the organisation cannot.
     /// </summary>
-    private static async Task<IResult> ResubscribeAsync(string? token, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken)
+    private static async Task<IResult> ResubscribeAsync(AddressLinkRequest request, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken)
     {
-        if (Resolve(token, secrets) is not { Confirmation: false } link)
+        if (Resolve(request.Token, secrets) is not { Confirmation: false } link)
         {
             return NotFound();
         }
@@ -404,7 +410,8 @@ internal sealed class SendAddressConfirmationHandler(IUnitOfWorkFactory units, I
         }
 
         var texts = MessageTexts.For(profile.Locale);
-        var link = new Uri(Evaluator.PublicUrl(configuration), $"notifications/confirm?token={Uri.EscapeDataString(token)}");
+        // In the fragment: the browser never sends it, so the page's request carries no token into any log.
+        var link = new Uri(Evaluator.PublicUrl(configuration), $"notifications/confirm#token={Uri.EscapeDataString(token)}");
         await email.SendAsync(EmailTemplate.Render(
             address,
             texts.Format("confirm.subject", profile.Name),

@@ -34,6 +34,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["iam.session"] = "user",
         ["notify.notification"] = "user",
         ["notify.user_preference"] = "user",
+        ["notify.push_subscription"] = "user",
         ["assess.assessment"] = "organization",
         ["assess.assessment_feedback"] = "organization",
     };

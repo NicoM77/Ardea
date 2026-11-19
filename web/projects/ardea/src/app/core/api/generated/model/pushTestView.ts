@@ -6,6 +6,9 @@
  * OpenAPI spec version: v1
  */
 
-export type ResubscribeExternalAddressParams = {
-  token?: string;
-};
+export interface PushTestView {
+  ok: boolean;
+  /** @nullable */
+  status: string | null;
+  removed: boolean;
+}

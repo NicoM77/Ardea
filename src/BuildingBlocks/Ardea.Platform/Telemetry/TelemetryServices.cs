@@ -37,7 +37,9 @@ public static class TelemetryServices
             .WithTracing(tracing => tracing
                 .AddSource($"{SourcePrefix}*")
                 .AddAspNetCoreInstrumentation(o => o.Filter = context => !context.Request.Path.StartsWithSegments("/health"))
-                .AddHttpClientInstrumentation()
+                // Push endpoints and chat webhooks carry their secret in the address (ADR 041): no span for them.
+                .AddHttpClientInstrumentation(o => o.FilterHttpRequestMessage = request =>
+                    !(request.Options.TryGetValue(Http.OutboundAddresses.Untraced, out var untraced) && untraced))
                 .AddNpgsql()
                 .AddOtlpExporter())
             .WithMetrics(metrics => metrics

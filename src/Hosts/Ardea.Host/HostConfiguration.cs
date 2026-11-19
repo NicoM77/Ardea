@@ -30,7 +30,8 @@ internal static class HostConfiguration
             .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyTokensPerOrganizationKey)
             .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyRequestsPerOrganizationKey)
             .PositiveInt("AI:CATALOG_DAILY_CALLS")
-            .Add(AiErrors(configuration));
+            .Add(AiErrors(configuration))
+            .Add(Ardea.Notifications.NotificationsModule.ConfigurationErrors(configuration));
 
     /// <summary>A provider that is configured wrongly stops the start instead of failing on its first call (master plan 7.8).</summary>
     private static IReadOnlyList<string> AiErrors(IConfiguration configuration)
@@ -69,6 +70,9 @@ internal static class HostConfiguration
     public static void AddJsonLogging(ILoggingBuilder logging)
     {
         logging.ClearProviders();
+        // «Request starting» and «Request finished» name the query string, and links carry tokens there (the RFC 8058
+        // one-click address of an e-mail). The request lines are left out for every endpoint; traces keep the timings.
+        logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
         logging.AddJsonConsole(o =>
         {
             o.UseUtcTimestamp = true;

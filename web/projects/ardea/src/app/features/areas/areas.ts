@@ -80,8 +80,6 @@ export const AREAS: readonly Area[] = [
     path: 'notification-rules',
     label: 'nav.rules',
     icon: LucideBell.icon,
-    emptyHeading: 'areas.rules.emptyHeading',
-    emptyText: 'areas.rules.emptyText',
     group: 'main',
   },
   {

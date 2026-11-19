@@ -69,6 +69,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/invitations/invitation-page').then((m) => m.InvitationPage),
       },
+      // The links in e-mails to external addresses (master plan 8.3, task 5.8): without a session.
+      ...(['confirm', 'unsubscribe', 'resubscribe'] as const).map((mode) => ({
+        path: `notifications/${mode}`,
+        title: 'notify.link.title',
+        data: { mode },
+        loadComponent: () =>
+          import('./features/notifications/address-link-page').then((m) => m.AddressLinkPage),
+      })),
       {
         path: 'unavailable',
         title: 'unavailable.title',
@@ -194,6 +202,50 @@ export const routes: Routes = [
             title: 'nav.settings',
             loadComponent: () =>
               import('./features/settings/settings-page').then((m) => m.SettingsPage),
+          },
+          {
+            path: 'settings/notifications',
+            title: 'notify.settings.title',
+            loadComponent: () =>
+              import('./features/notifications/notification-settings-page').then(
+                (m) => m.NotificationSettingsPage,
+              ),
+          },
+          {
+            path: 'notifications',
+            title: 'notify.inbox.title',
+            loadComponent: () =>
+              import('./features/notifications/inbox-page').then((m) => m.InboxPage),
+          },
+          {
+            path: 'notification-rules',
+            title: 'nav.rules',
+            loadComponent: () =>
+              import('./features/notifications/rules-page').then((m) => m.RulesPage),
+          },
+          {
+            path: 'notification-rules/recipients',
+            title: 'notify.tabs.recipients',
+            loadComponent: () =>
+              import('./features/notifications/recipients-page').then((m) => m.RecipientsPage),
+          },
+          {
+            path: 'notification-rules/log',
+            title: 'notify.tabs.log',
+            loadComponent: () =>
+              import('./features/notifications/delivery-log-page').then((m) => m.DeliveryLogPage),
+          },
+          {
+            path: 'notification-rules/new',
+            title: 'notify.editor.titleNew',
+            loadComponent: () =>
+              import('./features/notifications/rule-editor-page').then((m) => m.RuleEditorPage),
+          },
+          {
+            path: 'notification-rules/:ruleId',
+            title: 'notify.editor.titleEdit',
+            loadComponent: () =>
+              import('./features/notifications/rule-editor-page').then((m) => m.RuleEditorPage),
           },
           {
             path: 'team',

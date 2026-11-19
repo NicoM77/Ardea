@@ -1,10 +1,18 @@
 import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
-import { Component, input, output } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, effect, inject, input, output } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { LucideKeyRound, LucideLogOut, LucideMenu, LucideSearch } from '@lucide/angular';
+import {
+  LucideBell,
+  LucideKeyRound,
+  LucideLogOut,
+  LucideMenu,
+  LucideSearch,
+} from '@lucide/angular';
 import { UiAvatar, UiButton, UiKbd } from 'ui';
+import type { SessionOrganization } from '../../core/api/client';
 import type { Me } from '../../core/session/session';
+import { UnreadCount } from '../../features/notifications/unread-count';
 
 /**
  * The top bar on the ground (48px): the search, which opens with `/` or Ctrl K, and the account
@@ -17,7 +25,9 @@ import type { Me } from '../../core/session/session';
     CdkMenuItem,
     CdkMenuTrigger,
     RouterLink,
+    RouterLinkActive,
     TranslocoPipe,
+    LucideBell,
     LucideKeyRound,
     LucideLogOut,
     LucideMenu,
@@ -57,6 +67,23 @@ import type { Me } from '../../core/session/session';
         <ui-kbd>{{ 'search.ctrlK' | transloco }}</ui-kbd>
       </span>
     </button>
+
+    @if (organization(); as org) {
+      <a
+        class="bell"
+        [routerLink]="'/o/' + org.slug + '/notifications'"
+        routerLinkActive="is-current"
+        ariaCurrentWhenActive="page"
+        [attr.aria-label]="'shell.bell' | transloco: { count: unread.count() }"
+      >
+        <svg lucideBell aria-hidden="true"></svg>
+        @if (unread.count() > 0) {
+          <span class="count" aria-hidden="true">{{
+            unread.count() > 99 ? '99+' : unread.count()
+          }}</span>
+        }
+      </a>
+    }
 
     @if (user(); as me) {
       <button
@@ -150,6 +177,43 @@ import type { Me } from '../../core/session/session';
       display: inline-flex;
       gap: var(--space-xs);
     }
+    .bell {
+      position: absolute;
+      right: calc(var(--space-lg) + 40px);
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-control);
+      color: var(--muted);
+    }
+    .bell svg {
+      width: 18px;
+      height: 18px;
+    }
+    .bell.is-current {
+      background: var(--active);
+      color: var(--text);
+    }
+    .bell:focus-visible {
+      outline: var(--focus-ring);
+      outline-offset: var(--focus-offset);
+    }
+    .count {
+      position: absolute;
+      top: 1px;
+      right: -2px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: var(--radius-pill);
+      background: var(--primary);
+      color: var(--primary-ink);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 16px;
+      text-align: center;
+    }
     .account {
       position: absolute;
       right: var(--space-lg);
@@ -187,6 +251,12 @@ import type { Me } from '../../core/session/session';
       .keys {
         display: none;
       }
+      .bell {
+        position: relative;
+        right: auto;
+        width: 40px;
+        height: 40px;
+      }
       .account {
         position: static;
         width: 40px;
@@ -197,6 +267,14 @@ import type { Me } from '../../core/session/session';
 })
 export class Topbar {
   readonly user = input<Me | null>(null);
+  /** The organization in view; its unread notifications show on the bell. */
+  readonly organization = input<SessionOrganization | null>(null);
+  protected readonly unread = inject(UnreadCount);
+
+  constructor() {
+    effect(() => this.unread.watch(this.organization()?.id));
+  }
+
   readonly menuOpen = input(false);
   readonly openMenu = output();
   /** `true` when opened with the pointer: the dialog then scales in. */

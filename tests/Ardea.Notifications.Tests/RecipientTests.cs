@@ -22,7 +22,7 @@ public sealed class RecipientTests(PostgresServer server)
         var rules = (await NotifyTestHost.JsonAsync(await owner.GetAsync($"/api/v1/orgs/{organization}/rules"))).EnumerateArray().ToList();
         Assert.Equal(["critical|5", "high|4", "weekly|2"], rules.Select(r => $"{r.GetProperty("preset").GetString()}|{r.GetProperty("minLevel").GetInt32()}"));
         Assert.Equal(
-            ["in_app role admin immediate", "email role admin immediate"],
+            ["in_app role admin immediate", "email role admin immediate", "push role admin immediate"],
             rules[0].GetProperty("targets").EnumerateArray().Select(Describe));
         Assert.Equal(
             ["in_app role viewer immediate", "email role viewer digest 0 8 * * 1-5"],
@@ -51,7 +51,8 @@ public sealed class RecipientTests(PostgresServer server)
         Assert.Empty(await host.RunJobsAsync());
         var confirmation = Assert.Single(host.Mail!.Sent);
         Assert.Equal("oncall@partner.example", confirmation.To);
-        var token = QueryHelpers.ParseQuery(Link(confirmation, "/notifications/confirm").Query)["token"].ToString();
+        // The link carries the token in its fragment, which the browser never sends: no request log sees it.
+        var token = QueryHelpers.ParseQuery(Link(confirmation, "/notifications/confirm").Fragment.TrimStart('#'))["token"].ToString();
 
         var first = await s.ActionAsync(2, level: 4);
         await s.EventAsync("action.raised", first);
@@ -60,10 +61,10 @@ public sealed class RecipientTests(PostgresServer server)
 
         // No session, no CSRF token: the link is the proof.
         using var stranger = host.Client();
-        var preview = await NotifyTestHost.JsonAsync(await stranger.GetAsync($"/api/v1/notify/addresses/preview?token={Uri.EscapeDataString(token)}"));
+        var preview = await NotifyTestHost.JsonAsync(await stranger.PostAsync("/api/v1/notify/addresses/preview", new { token }, csrf: false));
         Assert.Equal("Acme", preview.GetProperty("organizationName").GetString());
-        Assert.Equal(HttpStatusCode.NoContent, (await stranger.PostAsync($"/api/v1/notify/addresses/confirm?token={Uri.EscapeDataString(token)}", csrf: false)).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await stranger.PostAsync($"/api/v1/notify/addresses/confirm?token={Uri.EscapeDataString(token)}", csrf: false)).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await stranger.PostAsync("/api/v1/notify/addresses/confirm", new { token }, csrf: false)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await stranger.PostAsync("/api/v1/notify/addresses/confirm", new { token }, csrf: false)).StatusCode);
 
         var second = await s.ActionAsync(3, level: 5);
         await s.EventAsync("action.raised", second);
@@ -73,7 +74,7 @@ public sealed class RecipientTests(PostgresServer server)
         Assert.Equal("oncall@partner.example", message.To);
         Assert.Equal("List-Unsubscribe=One-Click", message.Headers!["List-Unsubscribe-Post"]);
         var oneClick = new Uri(message.Headers["List-Unsubscribe"].Trim('<', '>'));
-        Assert.Contains("unsubscribe?token=", message.Text, StringComparison.Ordinal);
+        Assert.Contains("https://ardea.test/notifications/unsubscribe#token=", message.Text, StringComparison.Ordinal);
 
         // A mail client posts the one-click unsubscribe from its own servers (RFC 8058): a form body, no cookie, no CSRF token.
         using var mailClient = host.RawClient();
@@ -86,12 +87,14 @@ public sealed class RecipientTests(PostgresServer server)
         Assert.Equal("unsubscribed", (await NotifyTestHost.JsonAsync(await s.Owner.GetAsync($"{s.Path}/external-addresses")))[0].GetProperty("state").GetString());
 
         // A forged or foreign token finds nothing.
-        Assert.Equal(HttpStatusCode.NotFound, (await stranger.PostAsync("/api/v1/notify/addresses/unsubscribe?token=forged", csrf: false)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await stranger.PostAsync("/api/v1/notify/addresses/unsubscribe/one-click?token=forged", csrf: false)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await stranger.PostAsync("/api/v1/notify/addresses/unsubscribe", new { token = "forged" }, csrf: false)).StatusCode);
 
         // The organisation cannot ask again, nor remove the address to add it anew; only the recipient can take it back.
         Assert.Equal("address_unsubscribed", await CodeAsync(await s.Owner.PostAsync($"{s.Path}/external-addresses/{address}/resend")));
         Assert.Equal("address_unsubscribed", await CodeAsync(await s.Owner.SendAsync(HttpMethod.Delete, $"{s.Path}/external-addresses/{address}")));
-        Assert.Equal(HttpStatusCode.NoContent, (await stranger.PostAsync(oneClick.PathAndQuery.Replace("/unsubscribe?", "/resubscribe?", StringComparison.Ordinal), csrf: false)).StatusCode);
+        var signed = QueryHelpers.ParseQuery(oneClick.Query)["token"].ToString();
+        Assert.Equal(HttpStatusCode.NoContent, (await stranger.PostAsync("/api/v1/notify/addresses/resubscribe", new { token = signed }, csrf: false)).StatusCode);
         Assert.Equal("confirmed", (await NotifyTestHost.JsonAsync(await s.Owner.GetAsync($"{s.Path}/external-addresses")))[0].GetProperty("state").GetString());
     }
 

@@ -1,6 +1,7 @@
 import { Component, computed } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { UiPageHeader } from 'ui';
+import { RouterLink } from '@angular/router';
+import { UiButton, UiCard, UiPageHeader } from 'ui';
 import { injectOrganization } from '../organizations/current-organization';
 import { canManage } from '../organizations/org-format';
 import { MfaSettingCard } from '../team/mfa-setting-card';
@@ -17,7 +18,10 @@ import { GeneralCard } from './general-card';
 @Component({
   selector: 'ardea-settings-page',
   imports: [
+    RouterLink,
     TranslocoPipe,
+    UiButton,
+    UiCard,
     UiPageHeader,
     AccessesCard,
     AiPolicyCard,
@@ -33,6 +37,12 @@ import { GeneralCard } from './general-card';
       />
       <div class="grid">
         <ardea-general-card class="span-7" [organization]="org" />
+        <ui-card class="span-5" [heading]="'notify.settings.title' | transloco">
+          <p class="hint">{{ 'settings.notifications.text' | transloco }}</p>
+          <a uiButton class="go" [routerLink]="'/o/' + org.slug + '/settings/notifications'">
+            {{ 'settings.notifications.open' | transloco }}
+          </a>
+        </ui-card>
         @if (manage()) {
           <ardea-mfa-setting-card class="span-5" [organization]="org" [here]="here()" />
           <ardea-ai-policy-card class="span-12" [organization]="org" />
@@ -53,6 +63,14 @@ import { GeneralCard } from './general-card';
       grid-template-columns: repeat(12, minmax(0, 1fr));
       gap: var(--gap);
       align-items: start;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: var(--fs-sub);
+      line-height: var(--lh-sub);
+    }
+    .go {
+      margin-top: var(--space-md);
     }
     .span-12 {
       grid-column: span 12;

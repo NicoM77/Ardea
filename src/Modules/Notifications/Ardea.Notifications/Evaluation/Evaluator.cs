@@ -144,7 +144,7 @@ internal sealed class Evaluator(
         var digestRecipients = new HashSet<(string Key, string Channel)>();
         foreach (var target in rules.SelectMany(r => r.Targets))
         {
-            if (!NotifyEvents.AllowedOn(item.Event, target.Channel) || !Usable(target.Channel, context))
+            if (!NotifyEvents.AllowedOn(item.Event, target.Channel) || !Usable(target, context))
             {
                 continue;
             }
@@ -436,9 +436,11 @@ internal sealed class Evaluator(
         OccurredAt = item.At,
     };
 
-    private static bool Usable(string channel, Context context) => channel switch
+    private static bool Usable(RuleTarget target, Context context) => target.Channel switch
     {
         Channels.InApp or Channels.Webhook => true,
+        // Push reaches the members with a subscribed device, at once; the directory leaves out the others.
+        Channels.Push => target.Mode == "immediate",
         // Without SMTP the channel is off (master plan 8.5); the rules page says so.
         Channels.Email => context.EmailAvailable,
         _ => false,

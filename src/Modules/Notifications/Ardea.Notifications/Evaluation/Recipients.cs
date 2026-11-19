@@ -28,14 +28,17 @@ internal sealed class RecipientDirectory
     private readonly Dictionary<Guid, ExternalAddress> _addresses;
     private readonly Dictionary<Guid, WebhookEndpoint> _endpoints;
     private readonly Dictionary<Guid, UserPreference> _preferences;
+    private readonly HashSet<Guid> _withPush;
 
     private RecipientDirectory(
-        IReadOnlyList<OrganizationMember> members, IReadOnlyList<ExternalAddress> addresses, IReadOnlyList<WebhookEndpoint> endpoints, IReadOnlyList<UserPreference> preferences)
+        IReadOnlyList<OrganizationMember> members, IReadOnlyList<ExternalAddress> addresses, IReadOnlyList<WebhookEndpoint> endpoints, IReadOnlyList<UserPreference> preferences,
+        IReadOnlyList<Guid> withPush)
     {
         _members = members.ToDictionary(m => m.UserId);
         _addresses = addresses.ToDictionary(a => a.Id);
         _endpoints = endpoints.ToDictionary(e => e.Id);
         _preferences = preferences.ToDictionary(p => p.UserId);
+        _withPush = [.. withPush];
     }
 
     public IEnumerable<OrganizationMember> Members => _members.Values;
@@ -44,10 +47,21 @@ internal sealed class RecipientDirectory
         await members.ListAsync(cancellationToken),
         await db.Addresses.AsNoTracking().Where(a => a.ConfirmedAt != null && a.UnsubscribedAt == null).ToListAsync(cancellationToken),
         await db.Endpoints.AsNoTracking().Where(e => e.Enabled).ToListAsync(cancellationToken),
-        await db.Preferences.AsNoTracking().ToListAsync(cancellationToken));
+        await db.Preferences.AsNoTracking().ToListAsync(cancellationToken),
+        // Through the worker's policy: only members of the job's organisation (ADR 041).
+        await db.PushSubscriptions.AsNoTracking().Select(s => s.UserId).Distinct().ToListAsync(cancellationToken));
 
-    /// <summary>Who a target names now. A role means that role and the ones above it; a member who left is nobody.</summary>
-    public IEnumerable<Recipient> Resolve(RuleTarget target)
+    /// <summary>
+    /// Who a target names now. A role means that role and the ones above it; a member who left is nobody. On
+    /// push, only members with at least one subscribed device: the others are not reached, not failed.
+    /// </summary>
+    public IEnumerable<Recipient> Resolve(RuleTarget target) =>
+        target.Channel == Channels.Push ? Named(target).Where(r => HasPush(r.Id)) : Named(target);
+
+    /// <summary>Whether the member subscribed at least one device to Web Push.</summary>
+    public bool HasPush(Guid userId) => _withPush.Contains(userId);
+
+    private IEnumerable<Recipient> Named(RuleTarget target)
     {
         switch (target.RecipientKind)
         {

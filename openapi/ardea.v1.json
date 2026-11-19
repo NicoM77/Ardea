@@ -1621,6 +1621,26 @@
         }
       }
     },
+    "/api/v1/push/public-key": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "getPushPublicKey",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushPublicKeyView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/status": {
       "get": {
         "tags": [
@@ -6475,20 +6495,21 @@
       }
     },
     "/api/v1/notify/addresses/preview": {
-      "get": {
+      "post": {
         "tags": [
           "Notifications"
         ],
         "operationId": "previewAddressLink",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "schema": {
-              "type": "string"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressLinkRequest"
+              }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -6519,15 +6540,16 @@
           "Notifications"
         ],
         "operationId": "confirmExternalAddress",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "schema": {
-              "type": "string"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressLinkRequest"
+              }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": "No Content"
@@ -6551,6 +6573,39 @@
           "Notifications"
         ],
         "operationId": "unsubscribeExternalAddress",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notify/addresses/unsubscribe/one-click": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "unsubscribeExternalAddressOneClick",
         "parameters": [
           {
             "name": "token",
@@ -6583,15 +6638,16 @@
           "Notifications"
         ],
         "operationId": "resubscribeExternalAddress",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "schema": {
-              "type": "string"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressLinkRequest"
+              }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": "No Content"
@@ -7015,6 +7071,172 @@
               "application/problem\u002Bjson": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/push-subscriptions": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "listPushSubscriptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PushSubscriptionView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "createPushSubscription",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSubscriptionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushSubscriptionView"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushSubscriptionView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "deletePushSubscriptionByEndpoint",
+        "parameters": [
+          {
+            "name": "endpoint",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/me/push-subscriptions/{id}": {
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "deletePushSubscription",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/push-subscriptions/{id}/test": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "testPushSubscription",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushTestView"
                 }
               }
             }
@@ -7668,6 +7890,20 @@
         "type": "object",
         "properties": {
           "text": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AddressLinkRequest": {
+        "required": [
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
             "type": [
               "null",
               "string"
@@ -11857,6 +12093,133 @@
           }
         }
       },
+      "PushPublicKeyView": {
+        "required": [
+          "publicKey"
+        ],
+        "type": "object",
+        "properties": {
+          "publicKey": {
+            "type": "string"
+          }
+        }
+      },
+      "PushSubscriptionKeysRequest": {
+        "required": [
+          "p256dh",
+          "auth"
+        ],
+        "type": "object",
+        "properties": {
+          "p256dh": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "auth": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PushSubscriptionRequest": {
+        "required": [
+          "endpoint",
+          "keys",
+          "expirationTime"
+        ],
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "keys": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PushSubscriptionKeysRequest"
+              }
+            ]
+          },
+          "expirationTime": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "PushSubscriptionView": {
+        "required": [
+          "id",
+          "label",
+          "createdAt",
+          "lastSuccessAt",
+          "failedCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastSuccessAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "failedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "PushTestView": {
+        "required": [
+          "ok",
+          "status",
+          "removed"
+        ],
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "removed": {
+            "type": "boolean"
+          }
+        }
+      },
       "QuarantinedRecord": {
         "required": [
           "externalId",
@@ -13432,6 +13795,9 @@
       "name": "Sources"
     },
     {
+      "name": "Notifications"
+    },
+    {
       "name": "Administration"
     },
     {
@@ -13448,9 +13814,6 @@
     },
     {
       "name": "Live"
-    },
-    {
-      "name": "Notifications"
     }
   ]
 }

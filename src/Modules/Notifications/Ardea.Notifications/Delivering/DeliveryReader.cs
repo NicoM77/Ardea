@@ -95,6 +95,17 @@ internal sealed class DeliveryReader(
         var message = new Outgoing { Content = content, Recipient = recipient, Channel = delivery.Channel };
         switch (recipient.Kind)
         {
+            case RecipientKinds.User when delivery.Channel == Channels.Push:
+                // Through the worker's policy: the subscriptions of this member of the job's organisation (ADR 041).
+                var devices = await db.PushSubscriptions.AsNoTracking().Where(p => p.UserId == recipient.Id).OrderBy(p => p.CreatedAt)
+                    .Select(p => new PushDevice(p.Id, p.Endpoint, p.P256dh, p.Auth)).ToListAsync(cancellationToken);
+                if (devices.Count == 0)
+                {
+                    return new DeliveryStart(null, "The member has no device subscribed to push any more.");
+                }
+
+                message = message with { PushDevices = devices };
+                break;
             case RecipientKinds.User:
                 message = message with { Unsubscribe = new Uri(publicUrl, $"o/{profile.Slug}/settings/notifications") };
                 break;
@@ -102,8 +113,8 @@ internal sealed class DeliveryReader(
                 var token = Uri.EscapeDataString(UnsubscribeToken(secrets, organization, recipient.Id));
                 message = message with
                 {
-                    Unsubscribe = new Uri(publicUrl, $"notifications/unsubscribe?token={token}"),
-                    OneClick = new Uri(publicUrl, $"api/v1/notify/addresses/unsubscribe?token={token}"),
+                    Unsubscribe = new Uri(publicUrl, $"notifications/unsubscribe#token={token}"),
+                    OneClick = new Uri(publicUrl, $"api/v1/notify/addresses/unsubscribe/one-click?token={token}"),
                 };
                 break;
             case RecipientKinds.Endpoint:

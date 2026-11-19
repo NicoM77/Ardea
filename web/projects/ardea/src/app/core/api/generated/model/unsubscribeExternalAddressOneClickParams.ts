@@ -6,6 +6,6 @@
  * OpenAPI spec version: v1
  */
 
-export type ConfirmExternalAddressParams = {
+export type UnsubscribeExternalAddressOneClickParams = {
   token?: string;
 };

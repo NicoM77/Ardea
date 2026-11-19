@@ -47,6 +47,16 @@
     repo: '<path d="M5.5 18.5v-13a2 2 0 0 1 2-2h11v14h-11a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h11"/>',
     route: '<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h7.5a3 3 0 0 0 0-6h-7a3 3 0 0 1 0-6H16"/>',
     file: '<path d="M13.5 3.5h-6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-10l-5-5Z"/><path d="M13.5 3.5v5h5"/>',
+    /* Channels and the notification pages (task 5.8) */
+    mail: '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/>',
+    phone: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/>',
+    webhook: '<circle cx="12" cy="6.5" r="2.5"/><circle cx="6" cy="17" r="2.5"/><circle cx="18" cy="17" r="2.5"/><path d="M10.8 8.7 7.3 14.8M13.2 8.7l3.5 6.1M8.5 17h7"/>',
+    inbox: '<path d="M3.5 13.5h5l1.5 2.5h4l1.5-2.5h5"/><path d="M5.8 5.5h12.4l2.3 8v5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-5l2.3-8Z"/>',
+    share: '<path d="M12 3.5v11M8 7.5l4-4 4 4"/><path d="M8.5 10.5h-2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-2"/>',
+    'add-square': '<rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/>',
+    trash: '<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 12.5h9l1-12.5"/>',
+    send: '<path d="M20.5 3.5 10 14M20.5 3.5l-6.5 17-4-6.5-6.5-4 17-6.5Z"/>',
+    more: '<circle cx="5.5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18.5" cy="12" r="1.2"/>',
     megaphone: '<path d="M4.5 10v4l10 4.5v-13L4.5 10Z"/><path d="M7.5 15.4v2.4a1.7 1.7 0 0 0 3.4 0v-.9M18 9.5a3.5 3.5 0 0 1 0 5"/>',
     /* Priority symbols: shape, colour and word, never colour alone */
     'p-critical': '<path d="M7.4 1.5h9.2l5.9 5.9v9.2l-5.9 5.9H7.4l-5.9-5.9V7.4l5.9-5.9Z" fill="currentColor"/><rect x="10.9" y="6.6" width="2.2" height="7.6" rx="1.1" ' + WHITE + '/><circle cx="12" cy="17" r="1.3" ' + WHITE + '/>',
@@ -218,7 +228,7 @@
     { id: 'vulnerabilities', label: 'Vulnerabilities', href: 'alert.html', icon: 'vulnerabilities' },
     { id: 'projects', label: 'Projects', href: 'project.html', icon: 'projects' },
     { id: 'sources', label: 'Sources', href: 'sources.html', icon: 'sources' },
-    { id: 'rules', label: 'Notification rules', icon: 'rules' }
+    { id: 'rules', label: 'Notification rules', href: 'notification-rules.html', icon: 'rules' }
   ];
   var NAV_FOOT = [
     { id: 'team', label: 'Team', icon: 'team' },
@@ -257,6 +267,7 @@
         '<button class="btn ghost icon-only menu-toggle" type="button" aria-label="Open menu" aria-controls="sidebar">' + A.icon('menu') + '</button>' +
         '<img class="brand-mark" src="../brand/ardea-mark.svg" alt="Ardea" width="24" height="24">' +
         '<button class="search-trigger" type="button" data-palette>' + A.icon('search') + '<span>Search actions, CVEs, pages</span><kbd>/</kbd></button>' +
+        '<a class="bell" href="notifications.html" aria-label="Notifications, ' + D.UNREAD + ' unread"' + (document.body.getAttribute('data-page') === 'inbox' ? ' aria-current="page"' : '') + '>' + A.icon('rules') + (D.UNREAD ? '<span class="bell-count" aria-hidden="true">' + D.UNREAD + '</span>' : '') + '</a>' +
         '<button class="account" type="button" data-soon="The account menu" aria-label="Account: ' + ME.name + '"><span class="who who--' + ME.hue + '" aria-hidden="true">' + ME.initials + '</span></button>' +
       '</header>';
     body.insertAdjacentHTML('afterbegin', '<a class="skip-link" href="#main">Skip to content</a>' + sprite() + sidebar + topbar);

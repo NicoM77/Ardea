@@ -75,7 +75,8 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
                 ('01900000-0000-7000-8000-000000000063', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000041', '01900000-0000-7000-8000-000000000031', '01900000-0000-7000-8000-000000000010', '01900000-0000-7000-8000-000000000022', '01900000-0000-7000-8000-000000000052', 'name', 'unknown', 'uncertain', 'rules', 4, '{}', '{"rulesetVersion": 1, "level": 4}', 'open', now(), false, now(), now(), 'none', false),
                 ('01900000-0000-7000-8000-000000000064', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000043', '01900000-0000-7000-8000-000000000033', '01900000-0000-7000-8000-000000000010', '01900000-0000-7000-8000-000000000023', '01900000-0000-7000-8000-000000000054', 'product', 'in_range', 'affected', 'rules', 4, '{}', '{"rulesetVersion": 1, "level": 4}', 'in_review', now(), false, now(), now(), 'none', false);
             INSERT INTO notify.rule (organization_id, name, enabled, project_ids, min_level, events, created_at, changed_at) VALUES
-                ('01900000-0000-7000-8000-000000000001', 'Team', true, '{}', 2, ARRAY['action.assigned', 'action.note_added'], now(), now());
+                ('01900000-0000-7000-8000-000000000001', 'Team', true, '{}', 2, ARRAY['action.assigned', 'action.note_added'], now(), now()),
+                ('01900000-0000-7000-8000-000000000001', 'Assignments only', true, '{}', 2, ARRAY['action.assigned'], now(), now());
             """, ct);
 
         var outcome = await migrator.MigrateAsync(owner, ct);
@@ -115,6 +116,8 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
         Assert.True(await ScalarAsync<bool>(owner, "SELECT due_at_manual AND assigned_to IS NOT NULL FROM assess.remediation WHERE number = 7", ct));
 
         // Rules no longer name the assignment.
+        // A rule that named only the assignment would match nothing and could not be saved again: it is gone (ADR 046).
+        Assert.Equal(0L, await ScalarAsync<long>(owner, "SELECT count(*) FROM notify.rule WHERE name = 'Assignments only'", ct));
         Assert.Equal("{action.note_added}", await ScalarAsync<string>(owner, "SELECT events::text FROM notify.rule WHERE name = 'Team'", ct));
     }
 

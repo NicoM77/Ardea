@@ -15,6 +15,9 @@ namespace Ardea.Notifications.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("""
+                -- A rule that named nothing else would match nothing and could not be saved again: it goes, with its
+                -- targets (their deliveries keep their history, their waiting digest items go with them).
+                DELETE FROM notify.rule WHERE events <@ ARRAY['action.assigned']::text[] AND cardinality(events) > 0;
                 UPDATE notify.rule SET events = array_remove(events, 'action.assigned') WHERE 'action.assigned' = ANY (events);
                 DELETE FROM notify.notification WHERE kind = 'action.assigned';
                 """);

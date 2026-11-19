@@ -38,10 +38,10 @@ internal static partial class VersionPrecisions
     /// <summary>A stated precision must fit the version: <c>none</c> exactly when there is none.</summary>
     public static bool Fits(string precision, string? version) => (precision == None) == string.IsNullOrWhiteSpace(version);
 
-    [GeneratedRegex(@"^\d+(\.\d+)?$")]
+    [GeneratedRegex(@"^\d+(\.\d+)?\z")]
     private static partial Regex RepositoryLine();
 
-    [GeneratedRegex(@"^(\d+|\d+(\.\d+)*\.[xX*])$")]
+    [GeneratedRegex(@"^(\d+|\d+(\.\d+)*\.[xX*])\z")]
     private static partial Regex ManualLine();
 }
 

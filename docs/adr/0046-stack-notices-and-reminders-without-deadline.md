@@ -47,12 +47,14 @@ notice table holds, what happens to open actions on components without a version
    tenant isolation test covers it through its schema. No endpoint yet: 5a.5 shapes the read side with the page, and the
    migration is tested against the database.
 6. **Reminders are open or done.** The action's status is `open` or `closed` (17.5's «done»; the stored value keeps its
-   name, decision 9) and a finding's `open` or an outcome; «in review» is gone. The migration sets every action and
+   name, decision 11) and a finding's `open` or an outcome; «in review» is gone. The migration sets every action and
    finding in review to `open`. `PATCH /actions/{number}` (assignment and deadline) is removed; `ActionSummary` loses
    `assignedTo`, `dueAt` and `overdue`, the overview `overdue`; the list filters `status=in_review` no more (`active`
    stays as a synonym of `open`); the most urgent actions sort by level, then by how long they have stood at it. The
    event `action.assigned` is no longer written or announced; rules no longer name it (notify migration
-   `WithoutAssignment`), and its in-app notifications leave the inbox. The rule set file drops `deadlineHours`; its
+   `WithoutAssignment`), a rule that named nothing else is deleted with its targets (it would match nothing and its
+   empty event list could not be saved again; disabling it would leave the same unsaveable rule listed), and its in-app
+   notifications leave the inbox. The rule set file drops `deadlineHours`; its
    levels do not change, so its version stays 1. The web pages lose the owner, the deadline, the runway, the countdown,
    «Take into review», «Give back», the owners card and the time to close (17.5 drops «Dauer bis Abschluss» too).
 7. **Retired columns stay one version (4.11).** `assess.remediation.assigned_to`, `due_at` and `due_at_manual` are no
@@ -71,9 +73,15 @@ notice table holds, what happens to open actions on components without a version
    actions and actions on components with a line or an exact version stay unchanged. Until 5a.3 routes coarse
    components to notices, a reassessment leaves a moved finding closed while its component has no version; with a
    version entered it takes the precise path again.
-10. **Naming churn stays low.** Code, tables and API keep «action» (`assess.remediation`, `/actions`,
+10. **Cross-schema migrations and their order.** Two migrations read another module's schema in SQL: `StackAndPrecision`
+    (Assets) inserts from `iam.organization`, `NoticesAndOpenOrDone` (Assess) reads `assets.component.version_precision`.
+    Both depend on the fixed module order of `migrate` (`src/Hosts/Ardea.Host/Modules.cs`, master plan 4.11: platform,
+    iam, catalog, assets, intel, assess, notify). A test database that holds a schema without the other one skips the
+    step (`to_regclass`); when `assets.component` exists without `version_precision`, the Assess migration raises an
+    error instead of skipping E25 silently. Changing the module order must keep Iam before Assets before Assess.
+11. **Naming churn stays low.** Code, tables and API keep «action» (`assess.remediation`, `/actions`,
     `ActionSummary`) and the status value `closed`; the UI wording «Reminder» and the Notices page come with 5a.5.
-11. **Phase 5a acceptance, «no endpoint knows assignment or deadline».** A test walks the committed OpenAPI document
+12. **Phase 5a acceptance, «no endpoint knows assignment or deadline».** A test walks the committed OpenAPI document
     (which another test keeps equal to the code) and fails on any schema property, parameter, enumeration value, path or
     schema name that names an assignment, a due date, a deadline, «overdue», «remaining» or «in review» («assigner», who
     scored a CVSS vector, is not one).

@@ -191,6 +191,24 @@ public sealed class RecipientTests(PostgresServer server)
         Assert.Empty(Notifications(host));
     }
 
+    [Fact]
+    public async Task Events_of_assignment_and_review_written_before_the_upgrade_announce_nothing_and_read_cleanly()
+    {
+        await using var host = await NotifyTestHost.StartAsync(server);
+        var s = await Scenario.StartAsync(host);
+        await s.RuleAsync("Team work", 2, ["action.status_changed", "action.note_added"], Scenario.Target("in_app"));
+        var action = await s.ActionAsync(2, level: 3);
+
+        // Waiting in the queue across the upgrade (ADR 046): an assignment, taking into review, closing from review.
+        await s.EventAsync("action.assigned", action, $$"""{"from": null, "to": "{{Guid.CreateVersion7()}}"}""");
+        await s.EventAsync("action.status_changed", action, """{"from": "open", "to": "in_review"}""");
+        await s.EventAsync("action.status_changed", action, """{"from": "in_review", "to": "risk_accepted"}""");
+        await s.EvaluateAsync();
+
+        Assert.Equal(["Status: risk accepted."], await host.RowsAsync("SELECT body FROM notify.notification ORDER BY created_at"));
+        Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.notification WHERE kind = 'action.assigned' OR body ILIKE '%review%' OR body ILIKE '%assign%' OR title ILIKE '%status.%'"));
+    }
+
     /// <summary>The notification e-mails, without the account e-mails of registration.</summary>
     private static List<EmailMessage> Notifications(NotifyTestHost host) => [.. host.Mail!.Sent.Where(m => m.Subject.StartsWith('['))];
 

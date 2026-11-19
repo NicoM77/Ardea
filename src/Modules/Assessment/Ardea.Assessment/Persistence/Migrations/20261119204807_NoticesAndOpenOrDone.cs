@@ -107,6 +107,12 @@ namespace Ardea.Assessment.Persistence.Migrations
                         RETURN;
                     END IF;
 
+                    -- Cross-schema read (ADR 046): Assets must have migrated first (Modules.cs order, master plan 4.11).
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                                   WHERE table_schema = 'assets' AND table_name = 'component' AND column_name = 'version_precision') THEN
+                        RAISE EXCEPTION 'assets.component.version_precision is missing: migrate Assets (StackAndPrecision) before Assess (NoticesAndOpenOrDone)';
+                    END IF;
+
                     CREATE TEMPORARY TABLE moved_action AS
                         SELECT r.id, r.organization_id, r.opened_at
                         FROM assess.remediation r JOIN assets.component c ON c.id = r.component_id

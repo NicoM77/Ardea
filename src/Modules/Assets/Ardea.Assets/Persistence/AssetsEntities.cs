@@ -87,3 +87,26 @@ internal sealed class Component : IOrganizationOwned
 
     public DateTimeOffset ChangedAt { get; set; }
 }
+
+/// <summary>
+/// The search index of the candidate search (master plan 4.5, 7.2): every key under which a component
+/// can be hit by an entry, with the strength of such a hit. Written with the component.
+/// </summary>
+internal sealed class ComponentKey : IOrganizationOwned
+{
+    public Guid Id { get; set; }
+
+    public Guid OrganizationId { get; set; }
+
+    public Guid ProjectId { get; set; }
+
+    public Guid ComponentId { get; set; }
+
+    /// <summary><c>cpe</c> (<c>vendor:product</c>), <c>product</c> (catalogue or raw key) or <c>purl</c> (<c>pkg:type/name</c>).</summary>
+    public required string KeyType { get; set; }
+
+    public required string KeyValue { get; set; }
+
+    /// <summary><c>strong</c> or <c>weak</c> (master plan 7.2).</summary>
+    public required string Strength { get; set; }
+}

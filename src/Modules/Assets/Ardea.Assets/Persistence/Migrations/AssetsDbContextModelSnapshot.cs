@@ -174,6 +174,63 @@ namespace Ardea.Assets.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Ardea.Assets.Persistence.ComponentKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<Guid>("ComponentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("component_id");
+
+                    b.Property<string>("KeyType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("key_type");
+
+                    b.Property<string>("KeyValue")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("key_value");
+
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<string>("Strength")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("strength");
+
+                    b.HasKey("Id")
+                        .HasName("pk_component_key");
+
+                    b.HasIndex("KeyType", "KeyValue")
+                        .HasDatabaseName("ix_component_key_value");
+
+                    b.HasIndex("ComponentId", "KeyType", "KeyValue")
+                        .IsUnique()
+                        .HasDatabaseName("ux_component_key");
+
+                    b.ToTable("component_key", "assets", t =>
+                        {
+                            t.HasCheckConstraint("ck_component_key_strength", "strength IN ('strong', 'weak')");
+
+                            t.HasCheckConstraint("ck_component_key_type", "key_type IN ('cpe', 'product', 'purl')");
+                        });
+                });
+
             modelBuilder.Entity("Ardea.Assets.Persistence.Project", b =>
                 {
                     b.Property<Guid>("Id")
@@ -250,6 +307,16 @@ namespace Ardea.Assets.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_component_project_project_id");
+                });
+
+            modelBuilder.Entity("Ardea.Assets.Persistence.ComponentKey", b =>
+                {
+                    b.HasOne("Ardea.Assets.Persistence.Component", null)
+                        .WithMany()
+                        .HasForeignKey("ComponentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_component_key_component_component_id");
                 });
 #pragma warning restore 612, 618
         }

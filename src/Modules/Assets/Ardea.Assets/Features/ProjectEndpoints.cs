@@ -220,6 +220,7 @@ internal static class ProjectEndpoints
         values.ApplyTo(component);
         db.Components.Add(component);
         await db.SaveChangesAsync(cancellationToken);
+        await ComponentKeys.RefreshAsync(db, catalog, [component], cancellationToken);
         await ProfileChangedAsync(audit, jobs, projectId, "component.added", component.Id, values, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         return Results.Created($"projects/{projectId}/components/{component.Id}", await ViewAsync(component, catalog, cancellationToken));
@@ -282,6 +283,7 @@ internal static class ProjectEndpoints
             component.ParentComponentId = request.ParentId ?? component.ParentComponentId;
             component.ChangedAt = time.GetUtcNow();
             await db.SaveChangesAsync(cancellationToken);
+            await ComponentKeys.RefreshAsync(db, catalog, [component], cancellationToken);
             await ProfileChangedAsync(audit, jobs, projectId, "component.changed", id, values, cancellationToken);
             await unitOfWork.CommitAsync(cancellationToken);
         }
@@ -360,6 +362,7 @@ internal static class ProjectEndpoints
         db.Components.AddRange(result.Created);
         db.Components.RemoveRange(result.Removed);
         await db.SaveChangesAsync(cancellationToken);
+        await ComponentKeys.RefreshAsync(db, catalog, [.. result.Created, .. result.Updated], cancellationToken);
         if (result.Created.Count + result.Updated.Count + result.Removed.Count > 0)
         {
             await ProfileChangedAsync(audit, jobs, projectId, "profile.replaced", projectId, new

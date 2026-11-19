@@ -74,6 +74,8 @@ Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 
 ## 4. Offene Punkte für den Eigentümer (gesammelt)
 
+- **GitHub Actions gesperrt (seit 19.11.2026, 23:35 UTC):** Run 44638908047 (Merge #92) startete keinen Job: «recent account payments have failed or your spending limit needs to be increased». Nur der Eigentümer kann das unter Billing & plans lösen. Bis dahin ist die **lokale Prüfung des kombinierten Stands** (ganze Backend-Suite, Web, Playwright) das einzige Tor; #92 ist nur lokal geprüft (1 600 Backend-Tests, Playwright 38/38). Keine Reruns auslösen.
+
 Die meisten stehen in `docs/acceptance/phase-*.md`; hier alle an einem Ort:
 
 - Phase 2: zeitgemessener Wizard-Durchgang mit einer Testperson; Ardeas eigenes (privates) Repository mit

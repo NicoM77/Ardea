@@ -91,6 +91,9 @@ internal sealed class EntryAffectedRow
 
     public string? ProductKey { get; set; }
 
+    /// <summary>The raw key when <see cref="ProductKey"/> comes from a learned catalogue entry (master plan 6.9); it keeps finding what it found before.</summary>
+    public string? LearnedFrom { get; set; }
+
     public string? CpeVendor { get; set; }
 
     public string? CpeProduct { get; set; }

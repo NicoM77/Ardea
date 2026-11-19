@@ -190,6 +190,9 @@ public interface IProductCatalog
     /// <summary>Whether some product in effect names <paramref name="platformKey"/> as its platform, i.e. the platform has plugins.</summary>
     Task<bool> HasPluginsAsync(string platformKey, CancellationToken cancellationToken);
 
+    /// <summary>The plugins and packages the catalogue lists for a platform (<c>platform_key</c>), e.g. WordPress plugins.</summary>
+    Task<IReadOnlyList<CatalogProduct>> PluginsOfAsync(string platformKey, CancellationToken cancellationToken);
+
     /// <summary>
     /// Products for what someone types into the input help, best match first: spaces, punctuation, case,
     /// trailing version numbers and small typos do not matter (<c>Postgre SQL</c>, <c>.net 8</c>, <c>kubernets</c>).

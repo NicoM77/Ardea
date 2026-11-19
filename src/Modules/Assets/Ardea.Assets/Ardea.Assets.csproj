@@ -8,6 +8,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Ardea.Iam.Tests" />
     <InternalsVisibleTo Include="Ardea.Assets.Tests" />
+    <InternalsVisibleTo Include="Ardea.Assessment.Tests" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../../BuildingBlocks/Ardea.Platform/Ardea.Platform.csproj" />

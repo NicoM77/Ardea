@@ -4960,6 +4960,50 @@
         }
       }
     },
+    "/api/v1/orgs/{orgId}/events": {
+      "get": {
+        "tags": [
+          "Live"
+        ],
+        "operationId": "streamOrganizationEvents",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/instance": {
       "get": {
         "tags": [
@@ -9397,6 +9441,9 @@
     },
     {
       "name": "Actions"
+    },
+    {
+      "name": "Live"
     }
   ]
 }

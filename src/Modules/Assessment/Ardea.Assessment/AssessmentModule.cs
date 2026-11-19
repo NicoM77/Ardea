@@ -3,6 +3,7 @@ using Ardea.Assessment.Persistence;
 using Ardea.Assets.Contracts;
 using Ardea.Intel.Contracts;
 using Ardea.Platform.Jobs;
+using Ardea.Platform.Live;
 using Ardea.Platform.Modules;
 using Ardea.Platform.Persistence;
 using Ardea.Platform.Tenancy;
@@ -41,5 +42,14 @@ public sealed class AssessmentModule : IModule
         services.AddJob<MatchProject, MatchProjectHandler>(new JobKindOptions { MaxConcurrency = 2, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(10) });
     }
 
-    public void MapEndpoints(IEndpointRouteBuilder endpoints) => Features.ActionEndpoints.Map(endpoints);
+    /// <summary>The live stream needs the listener for signals, in the API role only.</summary>
+    public void AddApiServices(IServiceCollection services, IConfiguration configuration) => services.AddOrganizationSignals();
+
+    public IReadOnlyList<MaintenanceCommand> Commands { get; } = [Features.AssessCommands.Recompute];
+
+    public void MapEndpoints(IEndpointRouteBuilder endpoints)
+    {
+        Features.ActionEndpoints.Map(endpoints);
+        Features.LiveEndpoints.Map(endpoints);
+    }
 }

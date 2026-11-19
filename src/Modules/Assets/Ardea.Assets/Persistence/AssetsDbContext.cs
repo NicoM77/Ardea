@@ -16,6 +16,8 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
 
     public DbSet<ComponentKey> ComponentKeys => Set<ComponentKey>();
 
+    public DbSet<RepositoryConnection> RepositoryConnections => Set<RepositoryConnection>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -91,6 +93,21 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
             // The forward search asks by key across projects: entry → components (master plan 7.2).
             key.HasIndex(k => new { k.KeyType, k.KeyValue }).HasDatabaseName("ix_component_key_value");
             key.HasOne<Component>().WithMany().HasForeignKey(k => k.ComponentId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RepositoryConnection>(connection =>
+        {
+            connection.ToTable("repository_connection", t =>
+                t.HasCheckConstraint("ck_repository_connection_kind", "token_kind IN ('none', 'fine_grained', 'classic', 'other')"));
+            connection.HasKey(c => c.Id);
+            connection.Property(c => c.Id).HasDefaultValueSql("uuidv7()");
+            connection.Property(c => c.Name).HasMaxLength(100);
+            connection.Property(c => c.HostId).HasMaxLength(50);
+            connection.Property(c => c.TokenHint).HasMaxLength(4);
+            connection.Property(c => c.TokenKind).HasMaxLength(20);
+            connection.Property(c => c.Login).HasMaxLength(100);
+            connection.Property(c => c.LastError).HasMaxLength(500);
+            connection.HasIndex(c => c.OrganizationId).HasDatabaseName("ix_repository_connection_org");
         });
 
         ApplyTenantFilters(modelBuilder);

@@ -293,6 +293,92 @@ namespace Ardea.Assets.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Ardea.Assets.Persistence.RepositoryConnection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("HostId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("host_id");
+
+                    b.Property<DateTimeOffset?>("LastCheckedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_checked_at");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTimeOffset?>("LastOkAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_ok_at");
+
+                    b.Property<string>("Login")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("login");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("TokenEnc")
+                        .HasColumnType("text")
+                        .HasColumnName("token_enc");
+
+                    b.Property<DateTimeOffset?>("TokenExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("token_expires_at");
+
+                    b.Property<string>("TokenHint")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("token_hint");
+
+                    b.Property<string>("TokenKind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("token_kind");
+
+                    b.PrimitiveCollection<string[]>("TokenScopes")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("token_scopes");
+
+                    b.HasKey("Id")
+                        .HasName("pk_repository_connection");
+
+                    b.HasIndex("OrganizationId")
+                        .HasDatabaseName("ix_repository_connection_org");
+
+                    b.ToTable("repository_connection", "assets", t =>
+                        {
+                            t.HasCheckConstraint("ck_repository_connection_kind", "token_kind IN ('none', 'fine_grained', 'classic', 'other')");
+                        });
+                });
+
             modelBuilder.Entity("Ardea.Assets.Persistence.Component", b =>
                 {
                     b.HasOne("Ardea.Assets.Persistence.Component", null)

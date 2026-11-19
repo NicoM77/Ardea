@@ -80,14 +80,14 @@ Am Desktop liegt die Navigation in einer Seitenleiste mit Organisationswechsel, 
 
 ## 11.6 Setup-Wizard
 
-Noch nicht als Mockup gebaut; der Aufbau steht fest.
+Mockup: [`docs/design/mockups/setup-wizard.html`](../design/mockups/setup-wizard.html) (Schritte 3 bis 5), Projektseite [`project.html`](../design/mockups/project.html).
 
 | Schritt | Inhalt | Regel |
 |---|---|---|
 | 1 Organisation | Name, Sprache, Zeitzone | Vorgaben aus dem Browser |
-| 2 Erstes Projekt | Name, getragener Geschäftsprozess, Kritikalität, Erreichbarkeit | je drei Wahlmöglichkeiten mit einem Satz Erklärung |
+| 2 Erstes Projekt | Name und getragener Geschäftsprozess | Erreichbarkeit und Kritikalität folgen in Schritt 4, während das Repository eingelesen wird |
 | 3 Repository | Optional, empfohlen. Zugang wählen oder anlegen (öffentlich ohne Token, oder feingranulares Token mit Anleitung und vorbelegten Rechten), ein oder mehrere Repositories aus der Liste des Zugangs wählen, Zweig und bei Monorepos Unterordner. Das Einlesen startet sofort im Hintergrund (Kapitel 16.2). | Überspringbar; wer kein Repository hat oder es nicht verbinden will, erfasst alles im nächsten Schritt von Hand. Fehlt der Dependency Graph, sagt der Wizard, wie man ihn einschaltet, und fährt mit dem fort, was die eigenen Leser finden. |
-| 4 Betrieb | Fragen, die das Repository nicht beantwortet und die der Wizard bis zum Ende des Einlesens stellt: Wo läuft das Projekt (eigener Server, Container-Plattform, verwalteter Dienst), welches Betriebssystem hat der Host, was steht davor | je eine Frage mit wenigen Wahlmöglichkeiten; «weiss nicht» ist gültig |
+| 4 Betrieb | Fragen, die das Repository nicht beantwortet und die der Wizard bis zum Ende des Einlesens stellt: Erreichbarkeit und Kritikalität des Projekts (je drei Wahlmöglichkeiten mit einem Satz Erklärung), wo läuft das Projekt (eigener Server, Container-Plattform, verwalteter Dienst), welches Betriebssystem hat der Host, was steht davor | je eine Frage mit wenigen Wahlmöglichkeiten; «weiss nicht» ist gültig |
 | 5 Technologien | Drei Gruppen (Kapitel 16.7): **aus dem Repository** als Zusammenfassung je Ökosystem; **Vorschläge** mit Beleg zum Bestätigen, Ändern oder Ablehnen; **ergänzen**: gezielte Fragen aus dem Gefundenen, darunter die Suche im Katalog, gruppiert nach Betriebssystem, Laufzeit und Framework, CMS und Shop, Datenbank und Messaging, Cloud und Hosting, Container und Virtualisierung, Netzwerk und Sicherheit, weitere Software und Abhängigkeiten, externe Dienste | Version ist erwünscht, aber nicht Pflicht; «Version unbekannt» ist eine gültige Angabe. Bei Paketen fragt der Wizard, ob sie aus einer Distribution stammen. Externe Dienste haben keine Version. Freie Einträge sind möglich und als ungeprüft gekennzeichnet. Je Technologie lässt sich eine Schutzmassnahme mit Begründung angeben. Ohne Repository ist nur die Gruppe «ergänzen» sichtbar. |
 | 6 Abdeckung | Zeigt, was sich prüfen lässt und was nicht: fehlende Versionen, Plattformen ohne Plugins, Pakete ohne Lockdatei, noch nicht prüfbare Ökosysteme | Hinweise, keine Sperren |
 | 7 Benachrichtigung | Die drei Vorgaberegeln, Push auf diesem Gerät, Team einladen | alles überspringbar |

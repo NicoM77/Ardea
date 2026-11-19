@@ -1,12 +1,11 @@
 import { computed, inject, Injectable, Injector, Resource } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { filter, firstValueFrom } from 'rxjs';
-import {
-  getSessionResource,
-  getSetupStatusResource,
-  type SessionOrganization,
-  type SessionUser,
-} from '../api/client';
+import type { SessionOrganization, SessionUser } from '../api/client';
+// The two reads every page needs come straight from their files: the barrel would pull every
+// generated service into the first bundle, because injectable classes are never tree-shaken.
+import { getSessionResource } from '../api/generated/endpoints/authentication/authentication.service';
+import { getSetupStatusResource } from '../api/generated/endpoints/setup/setup.service';
 import { signInStateOf, SignInState } from './access';
 
 /** The signed-in person as the pages use it: the user with their memberships. */

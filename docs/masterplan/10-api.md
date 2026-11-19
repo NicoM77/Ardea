@@ -47,7 +47,7 @@ Die API ist der einzige Zugang zu den Daten: Die Web-App, die spätere Mobile-Ap
 | `POST …/repositories/{linkId}/sync` · `POST …/{linkId}/confirm-shrink` | Jetzt einlesen; einen zurückgehaltenen, deutlich kleineren Stand bestätigen |
 | `GET …/projects/{projectId}/suggestions` · `PATCH …/suggestions/{id}` | Vorschläge aus dem Repository ansehen, bestätigen (mit korrigierter Version) oder ablehnen |
 | `GET /catalog/products?q=` | Suche im Technologie-Katalog für die Eingabehilfe |
-| `GET /orgs/{orgId}/setup` · `POST …/setup/complete` | Zustand des Setup-Wizards |
+| `GET, PATCH /orgs/{orgId}/setup` · `POST …/setup/complete` | Zustand des Setup-Wizards: gespeicherte Schritte, erstes Projekt, Abschluss |
 | `GET /orgs/{orgId}/profile/coverage` | Hinweise auf Lücken im Profil: nicht prüfbare Plattform-Treffer, fehlende Versionen, Pakete nur aus Manifesten ohne Lockdatei, noch nicht prüfbare Ökosysteme, offene Vorschläge, Repositories mit Zustand `partial` oder `failing` |
 
 ### Einträge und Quellen (`Intel`)

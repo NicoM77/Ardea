@@ -144,7 +144,8 @@ export class CreateOrganizationPage {
               }),
             );
             await this.session.refresh();
-            await this.router.navigate(['/o', created.slug, 'team']);
+            // A new organization goes on to the setup wizard: its first project.
+            await this.router.navigate(['/o', created.slug, 'setup']);
             return undefined;
           } catch (error) {
             if (problemOf(error)?.code === 'slug_taken') {

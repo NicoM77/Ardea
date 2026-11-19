@@ -58,6 +58,10 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["GET /api/v1/orgs/{orgId}/invitations"] = _ => null,
         ["POST /api/v1/orgs/{orgId}/invitations"] = _ => new { email = "intruder@example.org", role = "admin" },
         ["DELETE /api/v1/orgs/{orgId}/invitations/{id}"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/setup"] = _ => null,
+        ["PATCH /api/v1/orgs/{orgId}/setup"] = f => new { stepDone = "project", firstProjectId = f.Project },
+        ["POST /api/v1/orgs/{orgId}/setup/complete"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/audit"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/projects"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/profile/coverage"] = _ => null,
         ["POST /api/v1/orgs/{orgId}/projects"] = _ => new { name = "Planted" },
@@ -226,6 +230,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         // Bob's data is untouched.
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM iam.invitation WHERE organization_id = '{bobOrg}'"));
         Assert.Equal("Bob Corp", await host.ScalarAsync<string>($"SELECT name FROM iam.organization WHERE id = '{bobOrg}'"));
+        Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM iam.organization WHERE id = '{bobOrg}' AND settings->'setup' IS NOT NULL AND settings->'setup' <> 'null'::jsonb"));
         Assert.Equal("owner", await host.ScalarAsync<string>($"SELECT role FROM iam.membership WHERE organization_id = '{bobOrg}'"));
         Assert.Equal("Bob's shop|internal|", await host.ScalarAsync<string>($"SELECT name || '|' || exposure || '|' || coalesce(archived_at::text, '') FROM assets.project WHERE id = '{bobsProject}'"));
         Assert.Equal("6.7.1|manual", await host.ScalarAsync<string>($"SELECT version || '|' || origin FROM assets.component WHERE id = '{bobsComponent}'"));

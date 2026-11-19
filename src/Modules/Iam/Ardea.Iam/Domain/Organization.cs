@@ -31,6 +31,19 @@ internal sealed record OrganizationSettings
 {
     /// <summary>Members must use two-factor authentication to work in the organisation (master plan 9.3).</summary>
     public bool RequireMfa { get; init; }
+
+    /// <summary>Where the setup wizard stands (master plan 11.6, 10.2); empty until it is first saved.</summary>
+    public SetupState? Setup { get; init; }
+}
+
+/// <summary>The setup wizard's progress: the steps saved so far, the project it created and when it finished.</summary>
+internal sealed record SetupState
+{
+    public IReadOnlyList<string> StepsDone { get; init; } = [];
+
+    public Guid? FirstProjectId { get; init; }
+
+    public DateTimeOffset? CompletedAt { get; init; }
 }
 
 /// <summary>A user's membership with one role in one organisation.</summary>

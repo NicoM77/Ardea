@@ -138,6 +138,42 @@ export const routes: Routes = [
           { path: 'vulnerabilities', redirectTo: '/entries' },
           { path: 'sources', redirectTo: '/sources' },
           {
+            path: 'setup',
+            title: 'wizard.title',
+            data: { mode: 'organization' },
+            loadComponent: () => import('./features/setup/setup-wizard').then((m) => m.SetupWizard),
+          },
+          {
+            path: 'projects',
+            title: 'nav.projects',
+            loadComponent: () =>
+              import('./features/projects/projects-page').then((m) => m.ProjectsPage),
+          },
+          {
+            path: 'projects/new',
+            title: 'wizard.titleNew',
+            data: { mode: 'new' },
+            loadComponent: () => import('./features/setup/setup-wizard').then((m) => m.SetupWizard),
+          },
+          {
+            path: 'projects/:projectId',
+            title: 'projects.title',
+            loadComponent: () =>
+              import('./features/projects/project-page').then((m) => m.ProjectPage),
+          },
+          {
+            path: 'projects/:projectId/setup',
+            title: 'wizard.titleProject',
+            data: { mode: 'project' },
+            loadComponent: () => import('./features/setup/setup-wizard').then((m) => m.SetupWizard),
+          },
+          {
+            path: 'settings',
+            title: 'nav.settings',
+            loadComponent: () =>
+              import('./features/settings/settings-page').then((m) => m.SettingsPage),
+          },
+          {
             path: 'team',
             title: 'nav.team',
             loadComponent: () => import('./features/team/team-page').then((m) => m.TeamPage),

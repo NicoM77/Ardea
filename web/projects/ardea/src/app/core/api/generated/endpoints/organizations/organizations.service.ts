@@ -34,15 +34,19 @@ import type {
 
 import type {
   AcceptInvitationResponse,
+  AuditPage,
   CreateInvitationRequest,
   CreateOrganizationRequest,
   InvitationPreview,
   InvitationView,
+  ListAuditEventsParams,
   MemberView,
   OrganizationSummary,
   OrganizationView,
+  SetupView,
   UpdateMemberRequest,
-  UpdateOrganizationRequest
+  UpdateOrganizationRequest,
+  UpdateSetupRequest
 } from '../../model';
 
 import type {
@@ -125,6 +129,79 @@ export function applyOrvalRequestExtension(
   }
   return options.request ? options.request(next) : next;
 }
+
+type AngularHttpParamValue = string | number | boolean | Array<string | number | boolean>;
+type AngularHttpParamValueWithNullable = AngularHttpParamValue | null;
+
+function filterParams(
+  params: object,
+  requiredNullableKeys?: ReadonlySet<string>,
+  preserveRequiredNullables?: false,
+  passthroughKeys?: undefined,
+): Record<string, AngularHttpParamValue>;
+function filterParams(
+  params: object,
+  requiredNullableKeys: ReadonlySet<string> | undefined,
+  preserveRequiredNullables: true,
+  passthroughKeys?: undefined,
+): Record<string, AngularHttpParamValueWithNullable>;
+function filterParams(
+  params: object,
+  requiredNullableKeys: ReadonlySet<string> | undefined,
+  preserveRequiredNullables: boolean | undefined,
+  passthroughKeys: ReadonlySet<string>,
+): Record<string, unknown>;
+function filterParams(
+  params: object,
+  requiredNullableKeys: ReadonlySet<string> = new Set(),
+  preserveRequiredNullables = false,
+  passthroughKeys: ReadonlySet<string> = new Set(),
+): Record<string, unknown> {
+  const filteredParams: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(params as Record<string, unknown>)) {
+    if (passthroughKeys.has(key)) {
+      if (value !== undefined) {
+        filteredParams[key] = value;
+      }
+      continue;
+    }
+    if (Array.isArray(value)) {
+      const filtered = value
+        .filter(
+          (item) =>
+            item != null &&
+            (typeof item === 'string' ||
+              typeof item === 'number' ||
+              typeof item === 'boolean' ||
+              (item instanceof Date && !Number.isNaN(item.getTime()))),
+        )
+        .map((item) =>
+          item instanceof Date ? item.toISOString() : item,
+        ) as Array<string | number | boolean>;
+      if (filtered.length) {
+        filteredParams[key] = filtered;
+      }
+    } else if (value === null && requiredNullableKeys.has(key)) {
+      // With a paramsSerializer (preserveRequiredNullables) the literal null
+      // is passed through for it to consume; without one, emit an empty
+      // string so the required key still reaches the wire as `?key=`
+      // instead of being silently dropped. See #3712.
+      filteredParams[key] = preserveRequiredNullables ? null : '';
+    } else if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      // useDates produces Date query params; serialize to ISO so they reach
+      // the wire instead of being dropped by the primitive check below. See #3856.
+      filteredParams[key] = value.toISOString();
+    } else if (
+      value != null &&
+      (typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean')
+    ) {
+      filteredParams[key] = value;
+    }
+  }
+  return filteredParams;
+}
 /**
  * @remarks httpResource is available in Angular 19.2 and later.
  */
@@ -180,6 +257,41 @@ export function previewInvitationResource(token: Signal<string | undefined>,
 export function previewInvitationResource(token: Signal<string | undefined>,
   options?: OrvalHttpResourceOptions<InvitationPreview, unknown>): HttpResourceRef<InvitationPreview | undefined> {
   return httpResource<InvitationPreview>(() => (token() === undefined ? undefined : applyOrvalRequestExtension(`/api/v1/invitations/${token()}`, options)), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function getWizardStateResource(orgId: Signal<string | undefined>,
+  options: OrvalHttpResourceOptions<SetupView, unknown> & { defaultValue: NoInfer<SetupView> }): HttpResourceRef<SetupView>;
+export function getWizardStateResource(orgId: Signal<string | undefined>,
+  options?: OrvalHttpResourceOptions<SetupView, unknown>): HttpResourceRef<SetupView | undefined>;
+export function getWizardStateResource(orgId: Signal<string | undefined>,
+  options?: OrvalHttpResourceOptions<SetupView, unknown>): HttpResourceRef<SetupView | undefined> {
+  return httpResource<SetupView>(() => (orgId() === undefined ? undefined : applyOrvalRequestExtension(`/api/v1/orgs/${orgId()}/setup`, options)), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function listAuditEventsResource(orgId: Signal<string | undefined>,
+    params: Signal<ListAuditEventsParams | undefined> | undefined,
+  options: OrvalHttpResourceOptions<AuditPage, unknown> & { defaultValue: NoInfer<AuditPage> }): HttpResourceRef<AuditPage>;
+export function listAuditEventsResource(orgId: Signal<string | undefined>,
+    params?: Signal<ListAuditEventsParams | undefined>,
+  options?: OrvalHttpResourceOptions<AuditPage, unknown>): HttpResourceRef<AuditPage | undefined>;
+export function listAuditEventsResource(orgId: Signal<string | undefined>,
+    params?: Signal<ListAuditEventsParams | undefined>,
+  options?: OrvalHttpResourceOptions<AuditPage, unknown>): HttpResourceRef<AuditPage | undefined> {
+  return httpResource<AuditPage>(() => {
+    if (orgId() === undefined) return undefined;
+    if (params && params() === undefined) return undefined;
+    const request = ({
+      url: `/api/v1/orgs/${orgId()}/audit`,
+      params: filterParams(params?.() ?? {}, new Set<string>([]))
+    });
+    return applyOrvalRequestExtension(request, options);
+  }, options);
 }
 
 
@@ -450,6 +562,72 @@ export class OrganizationsService {
     );
   }
 
+ updateWizardState<TData = SetupView>(orgId: string,
+    updateSetupRequest: UpdateSetupRequest, options?: HttpClientBodyOptions): Observable<TData>;
+  updateWizardState<TData = SetupView>(
+    orgId: string,
+    updateSetupRequest: UpdateSetupRequest, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.patch<TData>(
+      `/api/v1/orgs/${orgId}/setup`,
+      updateSetupRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.patch<TData>(
+      `/api/v1/orgs/${orgId}/setup`,
+      updateSetupRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.patch<TData>(
+      `/api/v1/orgs/${orgId}/setup`,
+      updateSetupRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
+ completeWizard<TData = SetupView>(orgId: string, options?: HttpClientBodyOptions): Observable<TData>;
+  completeWizard<TData = SetupView>(
+    orgId: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/orgs/${orgId}/setup/complete`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/orgs/${orgId}/setup/complete`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/orgs/${orgId}/setup/complete`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
 };
 
 export type ListOrganizationsResourceResult = NonNullable<OrganizationSummary[]>
@@ -457,6 +635,12 @@ export type GetOrganizationResourceResult = NonNullable<OrganizationView>
 export type ListMembersResourceResult = NonNullable<MemberView[]>
 export type ListInvitationsResourceResult = NonNullable<InvitationView[]>
 export type PreviewInvitationResourceResult = NonNullable<InvitationPreview>
+export type GetWizardStateResourceResult = NonNullable<SetupView>
+export type ListAuditEventsResourceResult = NonNullable<AuditPage>
+
+
+
+
 
 
 
@@ -476,6 +660,8 @@ export type RemoveMemberClientResult = NonNullable<void>
 export type CreateInvitationClientResult = NonNullable<InvitationView>
 export type RevokeInvitationClientResult = NonNullable<void>
 export type AcceptInvitationClientResult = NonNullable<AcceptInvitationResponse>
+export type UpdateWizardStateClientResult = NonNullable<SetupView>
+export type CompleteWizardClientResult = NonNullable<SetupView>
 
 /**
  * Utility type for httpResource results with status tracking.

@@ -193,6 +193,29 @@ public sealed class VersionCheckTests
         Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.NoComparableRange), Check("6.12.1", VersionStatus.Unaffected, commits, fixedCommit));
     }
 
+    [Theory]
+    // VulnCheck: {"version": "0", "status": "affected"} for products whose versions it does not know (83 statements in the spike week).
+    [InlineData("0", VersionStatus.Unknown, VersionVerdict.Unknown, VersionCheckReason.NoComparableRange)]
+    [InlineData("0", VersionStatus.Unaffected, VersionVerdict.Unknown, VersionCheckReason.NoComparableRange)]
+    [InlineData("0", VersionStatus.Affected, VersionVerdict.InRange, VersionCheckReason.DefaultAffected)]
+    [InlineData("n/a", VersionStatus.Unaffected, VersionVerdict.Unknown, VersionCheckReason.NoComparableRange)]
+    [InlineData("unspecified", VersionStatus.Unknown, VersionVerdict.Unknown, VersionCheckReason.NoComparableRange)]
+    public void An_exact_version_that_names_no_version_is_never_out_of_range(string exact, VersionStatus defaultStatus, VersionVerdict verdict, VersionCheckReason reason)
+    {
+        var range = VersionRanges.Normalize(VersionRange.ExactVersion(exact));
+
+        Assert.True(range.NamesNoVersion);
+        Assert.Equal(new VersionCheck(verdict, reason), Check("1.2", defaultStatus, range));
+    }
+
+    [Fact]
+    public void A_range_that_names_no_version_leaves_the_other_ranges_of_the_statement_to_decide()
+    {
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges), Check("2.4.52", VersionStatus.Unknown, VersionRange.ExactVersion("0"), Affected24));
+        Assert.Equal(new VersionCheck(VersionVerdict.InRange, VersionCheckReason.InAffectedRange), Check("2.4.50", VersionStatus.Unknown, VersionRange.ExactVersion("0"), Affected24));
+        Assert.False(VersionRange.ExactVersion("0.1").NamesNoVersion);
+    }
+
     [Fact]
     public void An_affected_default_still_holds_next_to_commit_ranges_only()
     {

@@ -172,7 +172,7 @@ internal static class VersionMatch
         candidates.Add(schemes.Find(VersionSchemeNames.Numeric));
         var usable = candidates.OfType<IVersionScheme>().ToList();
         var installed = component.Version?.Trim();
-        var bounds = rows.Select(Range).Where(r => !r.IsCommitRange)
+        var bounds = rows.Select(Range).Where(r => !r.IsCommitRange && !r.NamesNoVersion)
             .SelectMany(r => new[] { r.Introduced, r.Fixed, r.LastAffected, r.Exact })
             .OfType<string>()
             .ToList();

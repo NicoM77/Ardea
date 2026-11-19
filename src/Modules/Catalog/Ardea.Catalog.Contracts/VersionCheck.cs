@@ -73,8 +73,8 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
 {
     /// <summary>
     /// Checks an installed version against the ranges of one affected product (master plan 6.6). The
-    /// rows of the table apply in order. Ranges of Git commits (<see cref="VersionRange.IsCommitRange"/>) are
-    /// skipped. When nothing else is left, an unaffected or missing default cannot be applied, because the version
+    /// rows of the table apply in order. Ranges of Git commits (<see cref="VersionRange.IsCommitRange"/>) and ranges
+    /// that name no version (<see cref="VersionRange.NamesNoVersion"/>, VulnCheck's exact <c>0</c>) are skipped. When nothing else is left, an unaffected or missing default cannot be applied, because the version
     /// may lie inside one of the skipped ranges, and the record names no comparable range; an affected default
     /// still holds unless a skipped range is unaffected.
     /// </summary>
@@ -109,7 +109,7 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
         }
 
         var positions = ranges
-            .Where(r => !r.IsCommitRange)
+            .Where(r => !r.IsCommitRange && !r.NamesNoVersion)
             .Select(r => (Range: r, Position: Locate(scheme, version, r)))
             .ToList();
         if (positions.Count == 0 && ranges.Count > 0)

@@ -42,6 +42,14 @@ public sealed record VersionRange
         string.Equals(Scheme, VersionSchemeNames.Git, StringComparison.OrdinalIgnoreCase)
         && (Bounds.Any(VersionRanges.IsCommitHash) || Bounds.All(VersionRanges.IsOpenLowerBound));
 
+    /// <summary>
+    /// Whether the range names no version at all: an exact «version» that is an open bound alone, <c>0</c>, <c>*</c>,
+    /// <c>n/a</c>, <c>unspecified</c>. VulnCheck writes <c>{"version": "0", "status": "affected"}</c> for products whose
+    /// versions it does not know. Read as a version, <c>0</c> put every real version above the range and «out of
+    /// range»; such a statement says nothing comparable (master plan 6.6: not evaluable is unknown, never «not affected»).
+    /// </summary>
+    public bool NamesNoVersion => Exact is not null && Introduced is null && Fixed is null && LastAffected is null && VersionRanges.IsOpenLowerBound(Exact);
+
     private IEnumerable<string?> Bounds => [Introduced, Fixed, LastAffected, Exact];
 
     /// <summary>Whether the record names a lower bound: an exact version, or a non-open <see cref="Introduced"/>.</summary>

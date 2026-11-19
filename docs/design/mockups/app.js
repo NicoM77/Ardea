@@ -43,6 +43,10 @@
     replay: '<path d="M4.5 12a7.5 7.5 0 1 0 2.4-5.5"/><path d="M4.5 4.5v4h4"/>',
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
     close: '<path d="m6 6 12 12M18 6 6 18"/>',
+    branch: '<circle cx="7" cy="5.5" r="2"/><circle cx="7" cy="18.5" r="2"/><circle cx="17" cy="7.5" r="2"/><path d="M7 7.5v9M17 9.5c0 4.2-4.5 4.2-9.2 7.4"/>',
+    repo: '<path d="M5.5 18.5v-13a2 2 0 0 1 2-2h11v14h-11a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h11"/>',
+    route: '<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h7.5a3 3 0 0 0 0-6h-7a3 3 0 0 1 0-6H16"/>',
+    file: '<path d="M13.5 3.5h-6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-10l-5-5Z"/><path d="M13.5 3.5v5h5"/>',
     megaphone: '<path d="M4.5 10v4l10 4.5v-13L4.5 10Z"/><path d="M7.5 15.4v2.4a1.7 1.7 0 0 0 3.4 0v-.9M18 9.5a3.5 3.5 0 0 1 0 5"/>',
     /* Priority symbols: shape, colour and word, never colour alone */
     'p-critical': '<path d="M7.4 1.5h9.2l5.9 5.9v9.2l-5.9 5.9H7.4l-5.9-5.9V7.4l5.9-5.9Z" fill="currentColor"/><rect x="10.9" y="6.6" width="2.2" height="7.6" rx="1.1" ' + WHITE + '/><circle cx="12" cy="17" r="1.3" ' + WHITE + '/>',
@@ -212,13 +216,14 @@
     { id: 'overview', label: 'Overview', href: 'overview.html', icon: 'overview' },
     { id: 'actions', label: 'Actions', href: 'actions.html', icon: 'actions', count: D.ACTIONS.length },
     { id: 'vulnerabilities', label: 'Vulnerabilities', icon: 'vulnerabilities' },
-    { id: 'projects', label: 'Projects', icon: 'projects' },
+    { id: 'projects', label: 'Projects', href: 'project.html', icon: 'projects' },
     { id: 'sources', label: 'Sources', href: 'sources.html', icon: 'sources' },
     { id: 'rules', label: 'Notification rules', icon: 'rules' }
   ];
   var NAV_FOOT = [
     { id: 'team', label: 'Team', icon: 'team' },
     { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'setup', label: 'Setup wizard', href: 'setup-wizard.html', icon: 'route' },
     { id: 'design-system', label: 'Design system', href: 'design-system.html', icon: 'design' }
   ];
 
@@ -289,6 +294,9 @@
     var items = [
       { group: 'Pages', label: 'Overview', href: 'overview.html', icon: 'overview' },
       { group: 'Pages', label: 'Actions', href: 'actions.html', icon: 'actions' },
+      { group: 'Pages', label: 'Customer Portal (project)', href: 'project.html', icon: 'projects' },
+      { group: 'Pages', label: 'Sources', href: 'sources.html', icon: 'sources' },
+      { group: 'Pages', label: 'Setup wizard', href: 'setup-wizard.html', icon: 'route' },
       { group: 'Pages', label: 'Design system', href: 'design-system.html', icon: 'design' }
     ];
     D.ACTIONS.forEach(function (a) {

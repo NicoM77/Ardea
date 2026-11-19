@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Setup wizard · Ardea (mockup, sample data)</title>
+<link rel="icon" href="../brand/ardea-favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="profile.css">
+</head>
+<body data-page="setup">
+<main class="sheet" id="main">
+  <div class="content">
+
+    <a class="crumb" href="project.html"><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Customer Portal</a>
+    <header class="title-row">
+      <div>
+        <h1>Set up Customer Portal</h1>
+        <p class="title-sub">Saved after every step. Leave whenever you like and continue later.</p>
+      </div>
+    </header>
+
+    <!-- Steps 1, 2 and 6 to 8 are not drawn in this mockup; they keep their place so the whole way is visible. -->
+    <nav aria-label="Setup steps">
+      <ol class="stepper">
+        <li><span class="step-item is-done" data-soon="Step 1, Organization,"><span>Step 1</span><b>Organization</b></span></li>
+        <li><span class="step-item is-done" data-soon="Step 2, Project,"><span>Step 2</span><b>Project</b></span></li>
+        <li><a href="#repository" data-step-link="repository"><span>Step 3</span><b>Repository</b></a></li>
+        <li><a href="#operations" data-step-link="operations"><span>Step 4</span><b>Operations</b></a></li>
+        <li><a href="#technologies" data-step-link="technologies"><span>Step 5</span><b>Technologies</b></a></li>
+        <li><span class="step-item" data-soon="Step 6, Coverage,"><span>Step 6</span><b>Coverage</b></span></li>
+        <li><span class="step-item" data-soon="Step 7, Notifications,"><span>Step 7</span><b>Notifications</b></span></li>
+        <li><span class="step-item" data-soon="Step 8, First overview,"><span>Step 8</span><b>First overview</b></span></li>
+      </ol>
+    </nav>
+    <p class="stepper-phone" aria-hidden="true">Step <b data-phone-step>3</b> of 8 · <b data-phone-name>Repository</b></p>
+
+    <div class="grid">
+      <div class="span-8 stack">
+
+        <!-- ===================== Step 3: Repository ===================== -->
+        <section data-step="repository" class="stack" aria-labelledby="h-repository">
+          <h2 class="sr-only" id="h-repository">Step 3: Repository</h2>
+
+          <section class="card rise" aria-labelledby="h-access">
+            <header><h2 id="h-access">Where Ardea reads from</h2><span class="meta">Optional, recommended</span></header>
+            <p class="hint" style="margin-bottom:16px">Connect the GitHub repository of Customer Portal and Ardea keeps its packages up to date by itself. It reads files; it never builds, installs or runs anything.</p>
+            <div class="access" role="radiogroup" aria-label="Access to GitHub">
+              <label class="choice"><input type="radio" name="access" value="org" checked><b>Example Digital on GitHub</b><small>Fine-grained token ···a91F, reads as ardea-reader · expires 12 Feb 2027</small></label>
+              <label class="choice"><input type="radio" name="access" value="public"><b>Public repositories, no token</b><small>GitHub allows this instance 60 requests an hour without a token: enough to try one repository, not for several.</small></label>
+              <label class="choice"><input type="radio" name="access" value="new"><b>Add an access</b><small>A fine-grained token for your GitHub organization. Owners and admins add it once; everyone else picks it here.</small></label>
+            </div>
+
+            <div class="stack-16" data-new-access hidden style="margin-top:16px">
+              <ol class="token-steps">
+                <li>On GitHub, open <b>Settings → Developer settings → Fine-grained tokens</b> and generate a new token.</li>
+                <li>Resource owner: <b>your organization</b>. Repository access: <b>Only select repositories</b>.</li>
+                <li>Repository permissions: <b>Contents: Read-only</b>. Nothing else.</li>
+                <li>Expiration: <b>90 days</b> or what your policy allows. Ardea reminds you 14 days before.</li>
+              </ol>
+              <div class="btn-row"><a class="link" href="#" data-soon="Opening GitHub">Open GitHub’s token page</a><svg class="icon muted" aria-hidden="true"><use href="#i-external"/></svg></div>
+              <div class="grid" style="--gap:16px">
+                <label class="field span-5"><span>Name</span><input class="input" type="text" value="Example Digital on GitHub"></label>
+                <label class="field span-7"><span>Token</span><input class="input mono" type="password" autocomplete="off" placeholder="github_pat_…"></label>
+              </div>
+              <p class="hint">Stored encrypted. After saving, Ardea shows only its last four characters and its expiry date.</p>
+              <div><button class="btn" type="button" data-soon="Checking a token">Check and save</button></div>
+            </div>
+          </section>
+
+          <section class="card rise" aria-labelledby="h-repos">
+            <header><h2 id="h-repos">Repositories</h2><span class="meta" data-picked>2 selected</span></header>
+            <label class="search"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span class="sr-only">Search repositories of Example Digital</span><input class="input" type="search" placeholder="Search repositories of Example Digital" data-repo-search></label>
+            <div class="repo-list" data-repo-list>
+              <label data-repo="customer-portal"><input type="checkbox" checked><span><b>example-digital/customer-portal</b><small>Private · main · pushed 2 hours ago</small></span><span class="sub">Recommended</span></label>
+              <label data-repo="portal-infrastructure"><input type="checkbox" checked><span><b>example-digital/portal-infrastructure</b><small>Private · main · pushed yesterday</small></span><span></span></label>
+              <label data-repo="design-tokens"><input type="checkbox"><span><b>example-digital/design-tokens</b><small>Private · main · pushed 3 weeks ago</small></span><span></span></label>
+              <label data-repo="status-page"><input type="checkbox"><span><b>example-digital/status-page</b><small>Public · gh-pages · pushed 2 months ago</small></span><span></span></label>
+            </div>
+            <p class="sub" data-repo-none hidden style="padding:16px 0">No repository of this access matches. The token may not include it: on GitHub, add the repository to the token’s repository access.</p>
+
+            <div class="stack-12" style="margin-top:16px">
+              <div class="repo-pick" data-pick="customer-portal">
+                <p>customer-portal</p>
+                <label class="field"><span>Branch</span><select class="select"><option>main (default)</option><option>release/2026.11</option><option>develop</option></select></label>
+                <label class="field"><span>Subfolder <span class="muted" style="font-weight:400">optional</span></span><input class="input mono" type="text" placeholder="Whole repository"></label>
+                <p class="hint">For a monorepo: only files below this folder count, for example <span class="mono">apps/portal</span>.</p>
+              </div>
+              <div class="repo-pick" data-pick="portal-infrastructure">
+                <p>portal-infrastructure</p>
+                <label class="field"><span>Branch</span><select class="select"><option>main (default)</option></select></label>
+                <label class="field"><span>Subfolder <span class="muted" style="font-weight:400">optional</span></span><input class="input mono" type="text" placeholder="Whole repository"></label>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ===================== Step 4: Operations ===================== -->
+        <section data-step="operations" class="stack" aria-labelledby="h-operations" hidden>
+          <h2 class="sr-only" id="h-operations">Step 4: Operations</h2>
+          <section class="card rise" aria-labelledby="h-reach">
+            <header><h2 id="h-reach">How Customer Portal is reached</h2></header>
+            <fieldset class="question">
+              <legend>Who can reach it?<small>Decides how much an attack over the network weighs.</small></legend>
+              <div class="choices">
+                <label class="choice"><input type="radio" name="exposure" checked><b>The internet</b><small>Anyone can open it, with or without an account.</small></label>
+                <label class="choice"><input type="radio" name="exposure"><b>Internal</b><small>Only from the company network or over VPN.</small></label>
+                <label class="choice"><input type="radio" name="exposure"><b>Isolated</b><small>Nothing outside its own network segment reaches it.</small></label>
+              </div>
+            </fieldset>
+            <fieldset class="question">
+              <legend>How critical is it?<small>Customer Portal carries online self-service: orders, invoices, support.</small></legend>
+              <div class="choices">
+                <label class="choice"><input type="radio" name="criticality" checked><b>High</b><small>An outage or leak stops a core process or exposes customer data.</small></label>
+                <label class="choice"><input type="radio" name="criticality"><b>Normal</b><small>Important, but work goes on for a while without it.</small></label>
+                <label class="choice"><input type="radio" name="criticality"><b>Low</b><small>A tool or test system; its loss is an inconvenience.</small></label>
+              </div>
+            </fieldset>
+          </section>
+
+          <section class="card rise" aria-labelledby="h-hosting">
+            <header><h2 id="h-hosting">Where it runs</h2><span class="meta">“Don’t know” is a valid answer</span></header>
+            <fieldset class="question">
+              <legend>What does it run on?</legend>
+              <div class="choices">
+                <label class="choice"><input type="radio" name="host" value="server"><b>Own server or VM</b><small>You patch the operating system yourself.</small></label>
+                <label class="choice"><input type="radio" name="host" value="containers" checked><b>Container platform</b><small>Kubernetes, OpenShift, Docker hosts.</small></label>
+                <label class="choice"><input type="radio" name="host" value="managed"><b>Managed service</b><small>Azure App Service, AWS Elastic Beanstalk, Heroku.</small></label>
+              </div>
+              <label class="choice dontknow"><input type="radio" name="host" value="unknown"><b>Don’t know</b></label>
+            </fieldset>
+            <fieldset class="question" data-show-host="containers">
+              <legend>Which container platform?</legend>
+              <label class="field" style="max-width:360px"><span class="sr-only">Container platform</span>
+                <select class="select"><option>Azure Kubernetes Service</option><option>Amazon EKS</option><option>Google Kubernetes Engine</option><option>OpenShift</option><option>Kubernetes, run by us</option><option>Docker on our own hosts</option><option>Don’t know</option></select>
+              </label>
+              <p class="hint">A managed platform patches its nodes; the operating system inside the images comes from the base image, which the repository shows.</p>
+            </fieldset>
+            <fieldset class="question" data-show-host="server" hidden>
+              <legend>Which operating system does the server run?</legend>
+              <div class="grid" style="--gap:12px">
+                <label class="field span-7"><span>Operating system</span><select class="select"><option>Ubuntu</option><option>Debian</option><option>Red Hat Enterprise Linux</option><option>Windows Server</option><option>Don’t know</option></select></label>
+                <label class="field span-5"><span>Version</span><input class="input" type="text" placeholder="24.04"></label>
+              </div>
+            </fieldset>
+            <fieldset class="question">
+              <legend>What sits in front of it?<small>Choose all that apply.</small></legend>
+              <div class="choices">
+                <label class="choice"><input type="checkbox" name="front"><b>Reverse proxy or load balancer</b><small>nginx, HAProxy, Traefik, an ingress.</small></label>
+                <label class="choice"><input type="checkbox" name="front" checked><b>CDN or web application firewall</b><small>Cloudflare, Azure Front Door, Akamai.</small></label>
+                <label class="choice"><input type="checkbox" name="front"><b>Nothing</b><small>It answers the internet directly.</small></label>
+              </div>
+              <label class="field" style="max-width:360px"><span>Which one?</span><select class="select"><option>Cloudflare</option><option>Azure Front Door</option><option>Akamai</option><option>Other</option></select></label>
+            </fieldset>
+          </section>
+        </section>
+
+        <!-- ===================== Step 5: Technologies ===================== -->
+        <section data-step="technologies" class="stack" aria-labelledby="h-technologies" hidden>
+          <h2 class="sr-only" id="h-technologies">Step 5: Technologies</h2>
+
+          <!-- Group 1: from the repository -->
+          <section class="card rise" aria-labelledby="h-from-repo" aria-busy="false" data-group-repo>
+            <div class="group-head">
+              <h2 id="h-from-repo"><span class="n" aria-hidden="true">1</span>From the repositories</h2>
+              <span class="sub" data-when="done">1,244 packages · nothing to confirm</span>
+            </div>
+
+            <div data-when="reading" class="stack-12">
+              <p class="running" role="status"><span data-heron></span>Still reading customer-portal: GitHub is building the dependency graph export.</p>
+              <p class="hint">Suggestions and the questions below are already open. Packages appear here when reading is done; nothing moves while you work further down.</p>
+            </div>
+
+            <div data-when="done">
+              <p class="hint" style="margin-bottom:12px">Packages come in as they are, without questions: the repository decides which ones exist and in which version.</p>
+              <div data-eco-list></div>
+
+              <h3 style="margin:20px 0 4px">What Ardea can’t check yet, and why</h3>
+              <ul class="hints">
+                <li><span class="n">14</span><div><b>GitHub Actions</b><p>Read and kept, but no source in this version reports vulnerabilities for actions. They become checkable when one does, without connecting again.</p></div></li>
+                <li><span class="n">6</span><div><b>NuGet packages without a version</b><p><span class="mono">tools/Migrator</span> has no <span class="mono">packages.lock.json</span>, so only version ranges are known. Set <span class="mono">RestorePackagesWithLockFile</span> and commit the lock file.</p></div></li>
+                <li><span class="n">1</span><div><b>portal-infrastructure was read partly</b><p>Its dependency graph is not enabled, so GitHub gives no export. Ardea read lockfiles and platform files itself. To read everything: on GitHub, <b>Settings → Advanced Security → Dependency graph → Enable</b>, then read again.</p></div></li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- Group 2: suggestions -->
+          <section class="card rise" aria-labelledby="h-suggest">
+            <div class="group-head">
+              <h2 id="h-suggest"><span class="n" aria-hidden="true">2</span>Suggestions to confirm</h2>
+              <span class="sub" role="status" data-suggest-count></span>
+            </div>
+            <p class="hint" style="margin-bottom:16px">Platforms Ardea derived from files. Each becomes part of the profile only once you confirm it.</p>
+            <div data-suggest-wait class="sub" hidden>Suggestions appear here while files are read.</div>
+            <button class="btn" type="button" data-suggest-ready hidden>Show 4 suggestions</button>
+            <div data-suggest-list></div>
+          </section>
+
+          <!-- Group 3: what the repository doesn't show -->
+          <section class="card rise" aria-labelledby="h-add">
+            <div class="group-head">
+              <h2 id="h-add"><span class="n" aria-hidden="true">3</span>What the repositories don’t show</h2>
+              <span class="sub">Not asked again: platform and Cloudflare, from Operations</span>
+            </div>
+
+            <div class="stack-16">
+              <fieldset class="question">
+                <legend>portal-infrastructure starts SQL Server 2022 in <span class="mono">compose.yaml</span>. What runs in production?<small>Compose files often describe development only.</small></legend>
+                <div class="choices">
+                  <label class="choice"><input type="radio" name="db"><b>The same</b><small>SQL Server 2022 on our own hosts.</small></label>
+                  <label class="choice"><input type="radio" name="db" checked><b>A managed service</b><small>The provider runs and patches it.</small></label>
+                  <label class="choice"><input type="radio" name="db"><b>Something else</b><small>Choose it in the search below.</small></label>
+                </div>
+                <label class="field" style="max-width:360px"><span>Which service?</span><select class="select"><option>Azure SQL Database</option><option>Azure SQL Managed Instance</option><option>Amazon RDS for SQL Server</option></select></label>
+                <label class="choice dontknow"><input type="radio" name="db"><b>Don’t know</b></label>
+              </fieldset>
+
+              <fieldset class="question">
+                <legend>Umbraco CMS 16.3.2 comes from customer-portal. Did someone install packages in its back office?<small>Plugins installed there are in no repository.</small></legend>
+                <div class="choices">
+                  <label class="choice"><input type="radio" name="plugins"><b>No</b><small>Every package is in the repository.</small></label>
+                  <label class="choice"><input type="radio" name="plugins" checked><b>Yes</b><small>Add them below; the search shows Umbraco packages first.</small></label>
+                  <label class="choice"><input type="radio" name="plugins"><b>Don’t know</b><small>Ask whoever runs the back office later.</small></label>
+                </div>
+              </fieldset>
+
+              <div class="question">
+                <h3>Add a technology</h3>
+                <div class="categories" role="group" aria-label="Narrow the catalogue">
+                  <button class="chip" type="button" aria-pressed="false">Operating system</button>
+                  <button class="chip" type="button" aria-pressed="false">Runtime and framework</button>
+                  <button class="chip" type="button" aria-pressed="true">CMS and shop</button>
+                  <button class="chip" type="button" aria-pressed="false">Database and messaging</button>
+                  <button class="chip" type="button" aria-pressed="false">Cloud and hosting</button>
+                  <button class="chip" type="button" aria-pressed="false">Container and virtualization</button>
+                  <button class="chip" type="button" aria-pressed="false">Network and security</button>
+                  <button class="chip" type="button" aria-pressed="false">Other software</button>
+                  <button class="chip" type="button" aria-pressed="false">External services</button>
+                </div>
+                <label class="search"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span class="sr-only">Search the catalogue</span><input class="input" type="search" value="usync" data-catalog-search></label>
+                <div class="results" data-results>
+                  <div><span><b>uSync</b><small>Umbraco package · Jumoo</small></span><button class="btn small" type="button" data-add="usync">Add</button></div>
+                  <div><span><b>uSync.Complete</b><small>Umbraco package · Jumoo</small></span><button class="btn small" type="button" data-soon="Adding uSync.Complete">Add</button></div>
+                  <div><span><b>Not in the catalogue?</b><small>Add “usync” as a free entry. Ardea marks it unchecked: no source can match it.</small></span><button class="btn small ghost" type="button" data-soon="A free entry">Add as free entry</button></div>
+                </div>
+                <div class="change-form" data-add-form hidden>
+                  <label class="field"><span>Version of uSync</span><input class="input" type="text" value="16.0.4"></label>
+                  <label class="check"><input type="checkbox"> Version unknown</label>
+                  <label class="field"><span>Protection <span class="muted" style="font-weight:400">optional</span></span><select class="select"><option>None</option><option>Effective, with a reason</option></select></label>
+                  <button class="btn" type="button" data-add-save>Add uSync</button>
+                </div>
+              </div>
+
+              <div>
+                <h3 style="margin-bottom:4px">Added by hand</h3>
+                <div class="added" data-added>
+                  <div><span><b>Azure Kubernetes Service</b><small>Cloud and hosting · a service, no version · from Operations</small></span><button class="btn small ghost" type="button" data-soon="Editing">Edit</button></div>
+                  <div><span><b>Cloudflare</b><small>External service · no version · from Operations</small></span><button class="btn small ghost" type="button" data-soon="Editing">Edit</button></div>
+                  <div data-merge><span><b>Angular 22</b><small>You added it while reading ran. customer-portal has <span class="mono">@angular/core</span> 22.2.1: merge, and it follows the repository’s version.</small></span><span class="btn-row"><button class="btn small" type="button" data-merge-yes>Merge</button><button class="btn small ghost" type="button" data-merge-no>Keep separate</button></span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <div class="wizard-actions">
+          <div class="btn-row"><button class="btn ghost" type="button" data-back><svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>Back</button></div>
+          <div class="btn-row">
+            <button class="btn ghost" type="button" data-skip>Skip this step</button>
+            <button class="btn primary" type="button" data-next>Connect and continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side column -->
+      <div class="span-4 stack">
+        <section class="card rise" aria-labelledby="h-reads" data-side="repository">
+          <header><h2 id="h-reads">What Ardea reads</h2></header>
+          <ul class="progress">
+            <li><svg class="icon" aria-hidden="true" style="color:var(--muted)"><use href="#i-file"/></svg><span>Packages from GitHub’s dependency graph and from lock files<small>npm, NuGet, PyPI, Maven, Go, Packagist and more</small></span></li>
+            <li><svg class="icon" aria-hidden="true" style="color:var(--muted)"><use href="#i-file"/></svg><span>Platform files, as suggestions to confirm<small>Dockerfile, compose files, global.json, .nvmrc, go.mod</small></span></li>
+            <li><svg class="icon" aria-hidden="true" style="color:var(--muted)"><use href="#i-check"/></svg><span>Nothing is built, installed or run<small>Ardea keeps the commit, file paths and results; no source code.</small></span></li>
+          </ul>
+          <p class="hint" style="margin-top:16px">Then it reads again every hour and on “Read now”. Merging a Dependabot update closes the matching action at the next read.</p>
+        </section>
+
+        <section class="card rise" aria-labelledby="h-reading" data-side="operations technologies" hidden>
+          <header><h2 id="h-reading">Reading</h2><span class="meta" data-reading-meta>started just now</span></header>
+          <div class="stack-16">
+            <div>
+              <div class="link-name"><svg class="icon" aria-hidden="true"><use href="#i-repo"/></svg><span>customer-portal</span></div>
+              <ul class="progress" style="margin-top:10px" data-progress="customer-portal"></ul>
+            </div>
+            <div style="padding-top:16px;border-top:1px solid var(--rule)">
+              <div class="link-name"><svg class="icon" aria-hidden="true"><use href="#i-repo"/></svg><span>portal-infrastructure</span></div>
+              <ul class="progress" style="margin-top:10px" data-progress="portal-infrastructure"></ul>
+            </div>
+            <p class="sub" role="status" data-reading-status></p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <p class="footnote">Sample data. Steps 3 to 5 of the setup wizard (master plan 11.6, 16.7); the same steps open from a project page to add a repository later. Reading starts when you continue from step 3 and runs while you answer step 4. <button class="link" type="button" data-replay style="border:0;background:none;padding:0;cursor:pointer">Replay the reading</button> · <a class="link" href="project.html">The project page afterwards</a></p>
+  </div>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = window.A;
+  var HERON = '<svg class="heron" viewBox="-1.5 6.25 56 56" aria-hidden="true"><g stroke-width="4.6"><path class="back" pathLength="100" d="M6 25 L27 16.5 C29 11.5 36 10.5 39 14.5 C42 18.5 40 23.5 36.5 27.5 C33 31.5 33 36 37 40 C42 45 46 50 46 58"/><path class="front" pathLength="100" d="M6 25 L28 22 C29.5 26 27.5 29.5 26 32.5 C24 37 24.5 42 28.5 46 C31.5 49 32 53 32 58"/><path class="crest" pathLength="100" d="M39 14.5 L47 12"/></g></svg>';
+  var heron = function () { A.$$('[data-heron]').forEach(function (el) { el.innerHTML = HERON; }); };
+
+  /* ---------- Steps ---------- */
+  var STEPS = ['repository', 'operations', 'technologies'];
+  var NAMES = { repository: 'Repository', operations: 'Operations', technologies: 'Technologies' };
+  var NEXT = { repository: 'Connect and continue', operations: 'Continue', technologies: 'Continue to coverage' };
+  var current = null;
+
+  function show(step, focus) {
+    if (STEPS.indexOf(step) < 0) step = 'repository';
+    current = step;
+    A.$$('[data-step]').forEach(function (s) { s.hidden = s.getAttribute('data-step') !== step; });
+    A.$$('[data-side]').forEach(function (s) { s.hidden = s.getAttribute('data-side').split(' ').indexOf(step) < 0; });
+    var index = STEPS.indexOf(step);
+    A.$$('[data-step-link]').forEach(function (a) {
+      var i = STEPS.indexOf(a.getAttribute('data-step-link'));
+      a.classList.toggle('is-done', i < index);
+      if (i === index) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current');
+    });
+    A.$('[data-phone-step]').textContent = index + 3;
+    A.$('[data-phone-name]').textContent = NAMES[step];
+    A.$('[data-next]').textContent = NEXT[step];
+    A.$('[data-skip]').textContent = step === 'repository' ? 'Skip: no repository' : 'Skip this step';
+    A.$('[data-back]').disabled = false;
+    document.title = 'Setup wizard: ' + NAMES[step] + ' · Ardea (mockup, sample data)';
+    if (step !== 'repository') startReading();
+    if (focus) { var h = A.$('[data-step="' + step + '"] h2'); h.setAttribute('tabindex', '-1'); h.focus(); }
+  }
+  function go(step) {
+    if (location.hash !== '#' + step) history.pushState(null, '', '#' + step);
+    A.transition(function () { show(step, true); });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('popstate', function () { show(location.hash.slice(1), false); });
+  A.$('[data-next]').addEventListener('click', function () {
+    var i = STEPS.indexOf(current);
+    if (i < STEPS.length - 1) go(STEPS[i + 1]); else A.toast('Step 6, Coverage, is not part of this mockup yet', { plain: true });
+  });
+  A.$('[data-skip]').addEventListener('click', function () {
+    var i = STEPS.indexOf(current);
+    if (i < STEPS.length - 1) go(STEPS[i + 1]); else A.toast('Step 6, Coverage, is not part of this mockup yet', { plain: true });
+  });
+  A.$('[data-back]').addEventListener('click', function () {
+    var i = STEPS.indexOf(current);
+    if (i > 0) go(STEPS[i - 1]); else A.toast('Step 2, Project, is not part of this mockup yet', { plain: true });
+  });
+  A.$$('[data-step-link]').forEach(function (a) {
+    a.addEventListener('click', function (e) { e.preventDefault(); go(a.getAttribute('data-step-link')); });
+  });
+
+  /* ---------- Step 3: access and repositories ---------- */
+  A.$$('input[name="access"]').forEach(function (r) {
+    r.addEventListener('change', function () { A.$('[data-new-access]').hidden = A.$('input[name="access"]:checked').value !== 'new'; });
+  });
+  function picks() {
+    var n = 0;
+    A.$$('[data-repo]').forEach(function (label) {
+      var on = A.$('input', label).checked, pick = A.$('[data-pick="' + label.getAttribute('data-repo') + '"]');
+      if (on) n++;
+      if (pick) pick.hidden = !on;
+    });
+    A.$('[data-picked]').textContent = n === 1 ? '1 selected' : n + ' selected';
+  }
+  A.$$('[data-repo] input').forEach(function (c) { c.addEventListener('change', picks); });
+  A.$('[data-repo-search]').addEventListener('input', function (e) {
+    var q = e.target.value.trim().toLowerCase(), shown = 0;
+    A.$$('[data-repo]').forEach(function (label) {
+      var hit = !q || label.getAttribute('data-repo').indexOf(q) !== -1;
+      label.hidden = !hit; if (hit) shown++;
+    });
+    A.$('[data-repo-none]').hidden = shown > 0;
+  });
+  picks();
+
+  /* ---------- Step 4: hosting follow-up questions ---------- */
+  A.$$('input[name="host"]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      var v = A.$('input[name="host"]:checked').value;
+      A.$$('[data-show-host]').forEach(function (q) { q.hidden = q.getAttribute('data-show-host') !== v; });
+    });
+  });
+
+  /* ---------- Reading: runs in the background while steps 4 and 5 are answered ---------- */
+  var DONE = '<svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>';
+  var WAIT = '<span class="dot" aria-hidden="true"></span>';
+  var TIMELINE = {
+    'customer-portal': [
+      ['Branch head', 'main at 4f2a9c1'],
+      ['File tree', '41 known files among 2,318'],
+      ['Dependency graph export', '1,198 packages', 'GitHub builds it in the background; Ardea asks again every few seconds.'],
+      ['Lock files and platform files', 'package-lock.json, 3 packages.lock.json, Dockerfile, web/Dockerfile']
+    ],
+    'portal-infrastructure': [
+      ['Branch head', 'main at 91c0d4e'],
+      ['File tree', '12 known files'],
+      ['Dependency graph export', 'Not enabled for this repository: read partly', ''],
+      ['Lock files and platform files', 'package-lock.json, compose.yaml']
+    ]
+  };
+  var stage = -1, timer = null, revealed = false;
+  function renderProgress() {
+    Object.keys(TIMELINE).forEach(function (repo) {
+      var list = A.$('[data-progress="' + repo + '"]');
+      list.innerHTML = TIMELINE[repo].map(function (row, i) {
+        var done = i < stage || stage >= 4, now = i === stage && stage < 4;
+        var partial = repo === 'portal-infrastructure' && i === 2 && done;
+        return '<li class="' + (done || now ? '' : 'is-waiting') + '">' +
+          (done ? (partial ? '<svg class="sym" aria-hidden="true" style="color:var(--muted);width:16px;height:16px;margin-top:2px"><use href="#i-s-review"/></svg>' : DONE) : now ? HERON : WAIT) +
+          '<span>' + row[0] + (done ? '<small>' + row[1] + '</small>' : now && row[2] ? '<small>' + row[2] + '</small>' : '') + '</span></li>';
+      }).join('');
+    });
+    var finished = stage >= 4;
+    A.$('[data-reading-status]').textContent = finished
+      ? 'Done: 1,244 packages and 4 suggestions. portal-infrastructure was read partly.'
+      : 'Reading. Keep answering; nothing here waits for it.';
+    A.$('[data-reading-meta]').textContent = finished ? 'done' : 'started just now';
+    A.$('[data-group-repo]').setAttribute('aria-busy', String(!finished));
+    A.$$('[data-when="reading"]').forEach(function (el) { el.hidden = finished; });
+    A.$$('[data-when="done"]').forEach(function (el) { el.hidden = !finished; });
+    heron();
+    suggestionsState(finished);
+  }
+  function startReading(force) {
+    if (stage >= 0 && !force) return;
+    clearInterval(timer);
+    stage = A.reduced ? 4 : 0;
+    revealed = false;
+    A.$('[data-suggest-list]').innerHTML = '';
+    renderProgress();
+    if (stage >= 4) { revealSuggestions(false); return; }
+    timer = setInterval(function () {
+      stage++;
+      renderProgress();
+      if (stage >= 4) clearInterval(timer);
+    }, 2600);
+  }
+  A.$('[data-replay]').addEventListener('click', function () {
+    startReading(true);
+    if (current === 'repository') go('operations');
+  });
+
+  /* ---------- Group 1: per ecosystem, opened on demand ---------- */
+  var ECO = [
+    { id: 'npm', name: 'npm', total: '1,088', note: '43 direct · 623 only for development · from 2 repositories',
+      rows: [
+        ['@angular/core', '22.2.1', 'Direct', 'Runtime', 'customer-portal'],
+        ['@angular/router', '22.2.1', 'Direct', 'Runtime', 'customer-portal'],
+        ['@jsverse/transloco', '8.1.0', 'Direct', 'Runtime', 'customer-portal'],
+        ['rxjs', '7.8.2', 'Direct', 'Runtime', 'customer-portal'],
+        ['tslib', '2.8.1', 'Transitive, via @angular/core', 'Runtime', 'customer-portal'],
+        ['@angular/build', '22.2.0', 'Direct', 'Development', 'customer-portal'],
+        ['esbuild', '0.25.9', 'Transitive, via @angular/build', 'Development', 'customer-portal'],
+        ['vite', '7.1.5', 'Transitive, via @angular/build', 'Development', 'customer-portal'],
+        ['zx', '8.8.1', 'Direct', 'Development', 'portal-infrastructure']
+      ] },
+    { id: 'nuget', name: 'NuGet', total: '142', note: '31 direct · 6 without version',
+      rows: [
+        ['Umbraco.Cms', '16.3.2', 'Direct', 'Runtime', 'customer-portal'],
+        ['Microsoft.EntityFrameworkCore.SqlServer', '10.0.0', 'Direct', 'Runtime', 'customer-portal'],
+        ['Azure.Identity', '1.17.0', 'Direct', 'Runtime', 'customer-portal'],
+        ['Microsoft.Data.SqlClient', '6.1.1', 'Transitive, via Microsoft.EntityFrameworkCore.SqlServer', 'Runtime', 'customer-portal'],
+        ['Serilog.AspNetCore', '9.0.0', 'Direct', 'Runtime', 'customer-portal'],
+        ['DbUp.SqlServer', null, 'Direct', 'Unknown', 'customer-portal · tools/Migrator']
+      ] },
+    { id: 'actions', name: 'GitHub Actions', total: '14', note: 'Not checkable yet',
+      rows: [
+        ['actions/checkout', 'v5', 'Direct', 'Unknown', 'customer-portal'],
+        ['actions/setup-node', 'v5', 'Direct', 'Unknown', 'customer-portal'],
+        ['docker/build-push-action', 'v6', 'Direct', 'Unknown', 'customer-portal']
+      ] }
+  ];
+  function ecoRows(eco, q) {
+    q = (q || '').toLowerCase();
+    var rows = eco.rows.filter(function (r) { return !q || r[0].toLowerCase().indexOf(q) !== -1; });
+    if (!rows.length) return '<tr><td colspan="4" class="sub">No package of this sample matches “' + A.esc(q) + '”.</td></tr>';
+    return rows.map(function (r) {
+      return '<tr><td><b>' + A.esc(r[0]) + '</b><small>' + A.esc(r[4]) + '</small></td>' +
+        '<td class="end">' + (r[1] ? '<span class="mono">' + r[1] + '</span>' : '<span class="unknown">Version unknown</span>') + '</td>' +
+        '<td class="wrap">' + A.esc(r[2]) + '</td>' +
+        '<td class="wrap">' + (r[3] === 'Development' ? '<span class="tag dev">Development</span>' : r[3] === 'Unknown' ? '<span class="muted">Unknown</span>' : 'Runtime') + '</td></tr>';
+    }).join('');
+  }
+  A.$('[data-eco-list]').innerHTML = ECO.map(function (eco) {
+    return '<details class="eco" data-eco="' + eco.id + '"><summary>' + A.icon('chevron-right') +
+      '<span><b>' + eco.name + '</b><small>' + eco.note + '</small></span>' +
+      '<span class="eco-figure"><strong>' + eco.total + '</strong>packages</span></summary>' +
+      '<div class="eco-body"><div class="eco-tools"><label class="search"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span class="sr-only">Search ' + eco.name + ' packages</span><input class="input" type="search" placeholder="Search ' + eco.total + ' ' + eco.name + ' packages"></label></div>' +
+      '<table class="ptable" aria-label="' + eco.name + ' packages"><thead><tr><th scope="col">Package</th><th scope="col" class="end">Version</th><th scope="col">Relation</th><th scope="col">Used for</th></tr></thead><tbody>' + ecoRows(eco) + '</tbody></table>' +
+      '<p class="ptable-foot">Showing ' + eco.rows.length + ' of ' + eco.total + '. Search to find one; the project page lists them all.</p></div></details>';
+  }).join('');
+  A.$$('[data-eco]').forEach(function (d) {
+    var eco = ECO.filter(function (e) { return e.id === d.getAttribute('data-eco'); })[0];
+    A.$('input', d).addEventListener('input', function (e) { A.$('tbody', d).innerHTML = ecoRows(eco, e.target.value.trim()); });
+  });
+  A.$('[data-eco="npm"]').open = true;
+
+  /* ---------- Group 2: suggestions with evidence ---------- */
+  var SUGGESTIONS = [
+    { id: 'aspnet', name: 'ASP.NET Core', version: '10.0', kind: 'Runtime and framework', repo: 'customer-portal', file: 'Dockerfile', line: 14,
+      code: 'FROM mcr.microsoft.com/dotnet/aspnet:10.0',
+      note: '10.0 is a version line: the running patch depends on the last pull of the image. Enter the exact version if you know it; otherwise checks treat the patch as unknown.' },
+    { id: 'nginx', name: 'nginx', version: '1.29', kind: 'Network and security', repo: 'customer-portal', file: 'web/Dockerfile', line: 9,
+      code: 'FROM nginx:1.29-alpine', note: 'Serves the web front end.' },
+    { id: 'node', name: 'Node.js', version: '24', kind: 'Runtime and framework', repo: 'customer-portal', file: '.nvmrc', line: 1,
+      code: '24', note: 'Often only used to build. Dismiss it if Node.js does not run in production.' },
+    { id: 'mssql', name: 'Microsoft SQL Server', version: '2022', kind: 'Database and messaging', repo: 'portal-infrastructure', file: 'compose.yaml', line: 23,
+      code: 'image: mcr.microsoft.com/mssql/server:2022-latest', note: 'Compose files often describe development: see the question in group 3.' }
+  ];
+  var decided = {};
+  function suggestionHtml(s) {
+    var d = decided[s.id];
+    if (d) {
+      return '<div class="suggest is-done" data-suggestion="' + s.id + '"><span class="suggest-head"><b>' + s.name + ' ' + (d.version || '') + '</b>' +
+        '<small>' + (d.state === 'confirmed' ? 'Confirmed, from ' + s.file : 'Dismissed. Not suggested again while ' + s.file + ' keeps this line.') + '</small></span>' +
+        '<button class="btn small ghost" type="button" data-undo="' + s.id + '">Undo</button></div>';
+    }
+    return '<div class="suggest" data-suggestion="' + s.id + '">' +
+      '<span class="suggest-head"><b>' + s.name + ' ' + s.version + '</b><small>' + s.kind + '</small></span>' +
+      '<span class="btn-row"><button class="btn small" type="button" data-act="confirm">Confirm</button><button class="btn small ghost" type="button" data-act="change" aria-expanded="false">Change</button><button class="btn small ghost" type="button" data-act="dismiss">Dismiss</button></span>' +
+      '<div class="evidence"><span>' + A.icon('file') + s.repo + ' · ' + s.file + ', line ' + s.line + '</span><code>' + A.esc(s.code) + '</code></div>' +
+      '<p class="suggest-note">' + s.note + '</p>' +
+      '<div class="change-form" hidden><label class="field"><span>Version</span><input class="input" type="text" value="' + s.version + '"></label>' +
+      '<label class="check"><input type="checkbox"> Version unknown</label>' +
+      '<label class="field"><span>Packaged as</span><select class="select"><option>From the vendor</option><option>From a distribution (apt, dnf, apk)</option><option>Don’t know</option></select></label>' +
+      '<button class="btn small" type="button" data-act="save">Save and confirm</button></div></div>';
+  }
+  function renderSuggestions() {
+    A.$('[data-suggest-list]').innerHTML = SUGGESTIONS.map(suggestionHtml).join('');
+    var open = SUGGESTIONS.filter(function (s) { return !decided[s.id]; }).length;
+    A.$('[data-suggest-count]').textContent = revealed ? (open ? open + ' open' : 'All decided') : '';
+  }
+  function revealSuggestions(animate) {
+    revealed = true;
+    A.$('[data-suggest-ready]').hidden = true;
+    A.$('[data-suggest-wait]').hidden = true;
+    renderSuggestions();
+    if (animate) A.$$('[data-suggestion]').forEach(function (el, i) { el.classList.add('arrived'); el.style.animationDelay = i * 45 + 'ms'; });
+  }
+  function suggestionsState(finished) {
+    if (revealed) return;
+    /* Nothing moves under the pointer: the ready line takes the place of the waiting line, one row for one row */
+    A.$('[data-suggest-wait]').hidden = finished;
+    A.$('[data-suggest-ready]').hidden = !finished;
+  }
+  A.$('[data-suggest-ready]').addEventListener('click', function () {
+    revealSuggestions(true);
+    var first = A.$('[data-suggestion] .btn'); if (first) first.focus();
+  });
+  A.$('[data-suggest-list]').addEventListener('click', function (e) {
+    var undo = e.target.closest('[data-undo]');
+    if (undo) { delete decided[undo.getAttribute('data-undo')]; renderSuggestions(); return; }
+    var btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    var row = btn.closest('[data-suggestion]'), id = row.getAttribute('data-suggestion');
+    var s = SUGGESTIONS.filter(function (x) { return x.id === id; })[0];
+    var act = btn.getAttribute('data-act');
+    if (act === 'change') {
+      var form = A.$('.change-form', row); form.hidden = !form.hidden;
+      btn.setAttribute('aria-expanded', String(!form.hidden));
+      if (!form.hidden) A.$('input', form).focus();
+      return;
+    }
+    if (act === 'save') {
+      var unknown = A.$('.change-form input[type=checkbox]', row).checked;
+      decided[id] = { state: 'confirmed', version: unknown ? '(version unknown)' : A.$('.change-form input', row).value };
+    } else {
+      decided[id] = { state: act === 'confirm' ? 'confirmed' : 'dismissed', version: s.version };
+    }
+    renderSuggestions();
+    var next = A.$('[data-suggestion]:not(.is-done) .btn') || A.$('[data-undo="' + id + '"]');
+    if (next) next.focus();
+  });
+
+  /* ---------- Group 3: catalogue and merge ---------- */
+  A.$$('.categories .chip').forEach(function (chip) {
+    chip.addEventListener('click', function () { chip.setAttribute('aria-pressed', String(chip.getAttribute('aria-pressed') !== 'true')); });
+  });
+  A.$('[data-add="usync"]').addEventListener('click', function () { var f = A.$('[data-add-form]'); f.hidden = false; A.$('input', f).focus(); });
+  A.$('[data-add-save]').addEventListener('click', function () {
+    A.$('[data-add-form]').hidden = true;
+    A.$('[data-added]').insertAdjacentHTML('beforeend', '<div class="arrived"><span><b>uSync 16.0.4</b><small>Umbraco package · plugin of Umbraco CMS</small></span><button class="btn small ghost" type="button" data-soon="Editing">Edit</button></div>');
+    A.toast('uSync 16.0.4 added');
+  });
+  A.$('[data-merge-yes]').addEventListener('click', function () {
+    var row = A.$('[data-merge]');
+    row.innerHTML = '<span><b>Angular 22.2.1</b><small>Merged with @angular/core from customer-portal; follows the repository from now on.</small></span>';
+    A.toast('Angular merged with @angular/core 22.2.1', { undo: function () { location.reload(); } });
+  });
+  A.$('[data-merge-no]').addEventListener('click', function () {
+    var row = A.$('[data-merge]');
+    row.innerHTML = '<span><b>Angular 22</b><small>Kept separate, entered by hand. Not offered again.</small></span><button class="btn small ghost" type="button" data-soon="Editing">Edit</button>';
+  });
+
+  heron();
+  if (/[?&]static\b/.test(location.search)) { stage = 4; renderProgress(); revealSuggestions(false); }
+  show(location.hash.slice(1), false);
+  if (location.hash === '#technologies' && stage < 4 && !/[?&]reading\b/.test(location.search)) {
+    clearInterval(timer); stage = 4; renderProgress();
+  }
+})();
+</script>
+</body>
+</html>

@@ -134,6 +134,8 @@ Für die Menge der Massnahmen ist es nicht unerheblich. Phase 2 beobachtet sie a
 
 ## 16.10 Was noch zu prüfen ist
 
+> **Geklärt am 19.11.2026** durch den Versuch 2.9, siehe [ADR 032](../adr/0032-github-sbom-export.md): Rechte «Contents: read», öffentliche Repositories auch ohne Token, SPDX 2.3, Entwicklungsabhängigkeiten nicht gekennzeichnet, Pfad nur mit Lockdatei, abgeschalteter Graph antwortet 404, NuGet mit zentraler Paketverwaltung nicht aufgelöst, Download über `dgpproduction.blob.core.windows.net`.
+
 Die Punkte stehen auch in Kapitel 2.8 und werden in Phase 2 mit dem Versuch 2.9 geklärt, bevor der Rest gebaut wird:
 
 - Rechte, die ein feingranulares Token und eine GitHub App für den asynchronen SBOM-Export brauchen; ob er für öffentliche Repositories ohne Token antwortet; die SPDX-Version.

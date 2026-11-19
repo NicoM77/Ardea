@@ -66,7 +66,11 @@ internal static class InstanceWarningRules
             {
                 row = new InstanceWarningRow
                 {
-                    Code = key.Code, Subject = key.Item2, Severity = warning.Severity, Message = warning.Message, FirstSeenAt = now,
+                    Code = key.Code,
+                    Subject = key.Item2,
+                    Severity = warning.Severity,
+                    Message = warning.Message,
+                    FirstSeenAt = now,
                 };
                 added.Add(row);
             }

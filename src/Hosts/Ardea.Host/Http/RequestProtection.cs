@@ -50,8 +50,31 @@ internal static class RequestProtection
         });
     }
 
-    /// <summary>Header set of master plan 9.6. HSTS is the proxy's job.</summary>
+    /// <summary>
+    /// The largest request body the API takes: no endpoint accepts a file, and the largest JSON (a project's
+    /// component list) stays far below it. Kestrel enforces it on the wire; <see cref="LimitBody"/> answers a
+    /// declared length above it with a problem before anything reads the body.
+    /// </summary>
+    public const long MaxRequestBodyBytes = 1024 * 1024;
+
+    /// <summary>
+    /// Header set of master plan 9.6 on every response. It is set when the response starts, so error pages of the
+    /// exception handler (which clears the headers first), status code pages, rejections of the rate limiter,
+    /// static files and the single-page fallback carry it too. HSTS is the proxy's job.
+    /// </summary>
     public static Task SecurityHeaders(HttpContext context, RequestDelegate next)
+    {
+        context.Response.OnStarting(
+            static state =>
+            {
+                ApplySecurityHeaders((HttpContext)state);
+                return Task.CompletedTask;
+            },
+            context);
+        return next(context);
+    }
+
+    private static void ApplySecurityHeaders(HttpContext context)
     {
         var headers = context.Response.Headers;
         headers.XContentTypeOptions = "nosniff";
@@ -66,6 +89,16 @@ internal static class RequestProtection
         {
             // API answers hold personal data and secrets (MFA keys, recovery codes): never cache them.
             headers.CacheControl = "no-store";
+        }
+    }
+
+    /// <summary>A request that declares a body above <see cref="MaxRequestBodyBytes"/> is refused before it is read.</summary>
+    public static Task LimitBody(HttpContext context, RequestDelegate next)
+    {
+        if (context.Request.ContentLength > MaxRequestBodyBytes)
+        {
+            return ApiProblems.Problem("request_too_large", StatusCodes.Status413PayloadTooLarge, "The request is too large.")
+                .ExecuteAsync(context);
         }
 
         return next(context);

@@ -148,7 +148,7 @@ A hardened, reviewed and documented instance.
 
 | No. | Task | Status |
 |---|---|---|
-| 6.1 | Security pass along the threat table in 9.7; headers, rate limiting, tests against internal targets and injected content | ⬜ |
+| 6.1 | Security pass along the threat table in 9.7; headers, rate limiting, tests against internal targets and injected content | ✅ [threat review](docs/security/threat-review.md) |
 | 6.2 | Independent security review by someone outside development: sign-in, tenant isolation, outbound connections | ⬜ |
 | 6.3 | Manual accessibility pass of the core flows with keyboard and screen reader | ⬜ |
 | 6.4 | Indexes checked against query plans; memory and response times observed on the project's own instance | ⬜ |

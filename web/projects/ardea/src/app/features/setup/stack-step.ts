@@ -39,11 +39,12 @@ import { StackThresholds } from '../stack/stack-thresholds';
                 <ui-notice tone="error">{{ problem | transloco }}</ui-notice>
               }
               <ardea-stack-entries />
-              @if (count() > 0 && count() < typical.min) {
-                <p class="hint" role="status">
+              <!-- Always in the page so the sentence is heard when it appears; empty otherwise. -->
+              <p class="hint typical" role="status">
+                @if (count() > 0 && count() < typical.min) {
                   {{ 'wizard.stack.typical' | transloco: typical }}
-                </p>
-              }
+                }
+              </p>
             </div>
           </ui-card>
 
@@ -96,6 +97,9 @@ import { StackThresholds } from '../stack/stack-thresholds';
     .hint {
       color: var(--muted);
       max-width: 72ch;
+    }
+    .typical:empty {
+      margin-top: calc(-1 * var(--space-lg));
     }
     .actions {
       display: flex;

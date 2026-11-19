@@ -59,4 +59,12 @@ describe('stack format', () => {
     expect(searchHint('microsoft azure sql')).toBe('stack.add.azureHint');
     expect(searchHint('nginx')).toBeNull();
   });
+
+  it('names the companion while someone looks for IIS, Exchange or a distribution, unless the stack has it', () => {
+    expect(searchHint('iis')).toBe('stack.add.iisHint');
+    expect(searchHint('Exchange')).toBe('stack.add.exchangeHint');
+    expect(searchHint('ubuntu')).toBe('stack.add.distributionHint');
+    expect(searchHint('iis', new Set(['windows-server']))).toBeNull();
+    expect(searchHint('debian', new Set(['linux-kernel']))).toBeNull();
+  });
 });

@@ -54,18 +54,20 @@ import { StackStore } from './stack-store';
                   [value]="entry.version ?? ''"
                   [placeholder]="'stack.precision.anyPlaceholder' | transloco"
                   [disabled]="!store.canEdit()"
+                  [readOnly]="store.isPending(entry.id)"
+                  [attr.aria-busy]="store.isPending(entry.id)"
                   [attr.aria-label]="'stack.version.label' | transloco: { name: entry.name }"
                   [attr.aria-describedby]="'stack-k-' + entry.id"
                   (input)="typed.set({ id: entry.id, value: $any($event.target).value })"
-                  (change)="saveVersion(entry, $any($event.target).value)"
-                  (keydown.enter)="$any($event.target).blur()"
+                  (change)="saveVersion(entry, $any($event.target))"
+                  (keydown.enter)="saveVersion(entry, $any($event.target))"
                 />
                 @if (entry.version) {
                   <select
                     uiInput
-                    [disabled]="!store.canEdit()"
+                    [disabled]="!store.canEdit() || store.isPending(entry.id)"
                     [attr.aria-label]="'stack.precision.label' | transloco: { name: entry.name }"
-                    (change)="savePrecision(entry, $any($event.target).value)"
+                    (change)="savePrecision(entry, $any($event.target))"
                   >
                     <option value="line" [selected]="entry.versionPrecision === 'line'">
                       {{ 'stack.precision.line' | transloco }}
@@ -284,15 +286,34 @@ export class StackEntries {
     return PRECISION_HINTS[precision] ?? PRECISION_HINTS.none;
   }
 
-  protected async saveVersion(entry: ComponentView, value: string): Promise<void> {
-    const version = value.trim();
+  /**
+   * Saves the version typed (on Enter or when the field is left). While a save of the row runs,
+   * the field is read-only; when a save fails, the field shows the stored version again.
+   */
+  protected async saveVersion(entry: ComponentView, input: HTMLInputElement): Promise<void> {
+    if (this.store.isPending(entry.id)) return;
+    const version = input.value.trim();
     this.typed.set(null);
-    await this.store.setVersion(entry, version, precisionOf(version));
+    if (!(await this.store.setVersion(entry, version, precisionOf(version)))) {
+      input.value = this.stored(entry)?.version ?? '';
+    }
   }
 
-  protected async savePrecision(entry: ComponentView, value: string): Promise<void> {
+  /** Line or exact; the select waits while its row is saved and keeps the focus afterwards. */
+  protected async savePrecision(entry: ComponentView, select: HTMLSelectElement): Promise<void> {
     if (!entry.version) return;
-    await this.store.setVersion(entry, entry.version, value as Precision);
+    const saved = await this.store.setVersion(entry, entry.version, select.value as Precision);
+    if (!saved) select.value = this.stored(entry)?.versionPrecision ?? entry.versionPrecision;
+    afterNextRender(
+      () => {
+        if (select.isConnected && document.activeElement === document.body) select.focus();
+      },
+      { injector: this.injector },
+    );
+  }
+
+  private stored(entry: ComponentView): ComponentView | undefined {
+    return this.store.entries().find((e) => e.id === entry.id) ?? entry;
   }
 
   /** After a removal the focus moves to the next row's Remove, or to the search after the last. */

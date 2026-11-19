@@ -101,7 +101,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
           </li>
         }
         @for (s of steps(); track s; let i = $index) {
-          <li [class.is-done]="i < index()">
+          <li [class.is-done]="i < index() || done().includes(s)">
             @if (i <= furthest() && s !== current()) {
               <a class="item" [routerLink]="[]" [queryParams]="{ step: s }">
                 <span>{{ 'wizard.stepNumber' | transloco: { n: i + offset() } }}</span><b>{{
@@ -142,7 +142,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
               <ardea-project-step
                 [orgId]="org"
                 [project]="project()"
-                [optional]="mode() === 'organization'"
+                [optional]="canSkip()"
                 [skipping]="saving()"
                 (saved)="projectSaved($event)"
                 (back)="go('stack')"
@@ -421,8 +421,12 @@ export class SetupWizard {
     }
   });
   protected readonly offset = computed(() => (this.mode() === 'organization' ? 2 : 1));
-  private readonly done = computed(() =>
+  protected readonly done = computed(() =>
     this.state.hasValue() ? (this.state.value()?.stepsDone ?? []) : [],
+  );
+  /** In the first run, projects can be skipped once the stack step is done (task 5a.4). */
+  protected readonly canSkip = computed(
+    () => this.mode() === 'organization' && this.done().includes('stack'),
   );
   /** A step that needs a project waits until there is one. */
   private readonly open = (step: WizardStep): boolean =>
@@ -515,13 +519,18 @@ export class SetupWizard {
     this.go('operations');
   }
 
-  /** The stack's entries are saved as they change; the step only records that it is done. */
+  /**
+   * The stack's entries are saved as they change; the step only records that it is done and goes
+   * on to the first step not done yet. An organization that had started the wizard before the
+   * stack step existed continues where it stopped.
+   */
   protected async stackDone(): Promise<void> {
     this.saving.set(true);
     this.problem.set(null);
     try {
-      await this.record({ stepDone: 'stack', firstProjectId: null });
-      this.go('project');
+      const done = await this.record({ stepDone: 'stack', firstProjectId: null });
+      const next = this.steps().find((s) => s !== 'stack' && !done.includes(s)) ?? 'project';
+      this.go(this.open(next) ? next : 'project');
     } catch (error) {
       this.problem.set(
         problemMessageKey(error, { codes: WIZARD_PROBLEMS, fallback: 'wizard.errors.save' }),
@@ -535,6 +544,11 @@ export class SetupWizard {
   protected async skipProjects(): Promise<void> {
     const org = this.orgId();
     if (!org || this.saving()) return;
+    // The stack is what makes the start enough: without it, back to the stack step.
+    if (!this.canSkip()) {
+      this.go('stack');
+      return;
+    }
     this.saving.set(true);
     this.problem.set(null);
     try {
@@ -618,10 +632,15 @@ export class SetupWizard {
     );
   }
 
-  private async record(change: { stepDone: string; firstProjectId: string | null }): Promise<void> {
-    if (this.mode() !== 'organization') return;
-    await firstValueFrom(this.organizations.updateWizardState(this.orgId()!, change));
+  /** Saves a step of the first run; the steps done as the server now has them. */
+  private async record(change: {
+    stepDone: string;
+    firstProjectId: string | null;
+  }): Promise<readonly string[]> {
+    if (this.mode() !== 'organization') return [];
+    const view = await firstValueFrom(this.organizations.updateWizardState(this.orgId()!, change));
     this.state.reload();
+    return view.stepsDone;
   }
 
   private async save(work: (org: string, projectId: string) => Promise<void>): Promise<void> {

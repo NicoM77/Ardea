@@ -115,13 +115,15 @@ const derived = (version: string | null) =>
 export interface StackState {
   /** Every write to the stack project, in order, with its body. */
   writes: { method: string; path: string; body: unknown }[];
+  /** While set, every write to the stack project fails as a conflict, and changes nothing. */
+  failWrites: boolean;
 }
 
 export async function stackApi(
   page: Page,
   options: { wizard?: boolean } = {},
 ): Promise<StackState> {
-  const state: StackState = { writes: [] };
+  const state: StackState = { writes: [], failWrites: false };
   let entries = options.wizard
     ? []
     : [
@@ -190,6 +192,8 @@ export async function stackApi(
       setup.completedAt ??= new Date().toISOString();
       return route.fulfill({ json: setup });
     }
+    if (state.failWrites && path.startsWith(components) && request.method() !== 'GET')
+      return route.fulfill({ status: 409, json: { status: 409, code: 'write_refused' } });
     if (path === components && request.method() === 'POST') {
       const body = request.postDataJSON() as {
         productKey: string;

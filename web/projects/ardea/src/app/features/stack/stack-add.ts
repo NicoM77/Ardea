@@ -1,4 +1,5 @@
 import {
+  afterRenderEffect,
   Component,
   computed,
   DestroyRef,
@@ -82,8 +83,9 @@ let nextAdd = 0;
         </div>
       }
     </div>
-    @if (open()) {
-      <div class="notes" role="status">
+    <!-- Always in the page, so screen readers hear each new sentence; only its text changes. -->
+    <div class="notes" role="status">
+      @if (open()) {
         @if (results.isLoading() && !options().length) {
           <ui-loader [label]="'stack.add.searching' | transloco" />
         } @else if (results.error()) {
@@ -94,8 +96,8 @@ let nextAdd = 0;
         @if (note(); as note) {
           <p>{{ note | transloco }}</p>
         }
-      </div>
-    }
+      }
+    </div>
   `,
   styles: `
     :host {
@@ -184,7 +186,7 @@ export class StackAdd {
       .filter((p) => !taken.has(p.key) && !['library', 'plugin', 'service'].includes(p.kind))
       .slice(0, 8);
   });
-  protected readonly note = computed(() => searchHint(this.query()));
+  protected readonly note = computed(() => searchHint(this.query(), this.store.keys()));
   protected readonly open = computed(() => this.expanded() && !!this.query());
   protected readonly listed = computed(() => this.open() && this.options().length > 0);
   protected readonly activeId = computed(() =>
@@ -195,6 +197,12 @@ export class StackAdd {
 
   constructor() {
     inject(DestroyRef).onDestroy(() => clearTimeout(this.timer));
+    // The active option stays in sight while the arrow keys move through a long list.
+    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    afterRenderEffect(() => {
+      const id = this.activeId();
+      if (id) host.querySelector(`#${id}`)?.scrollIntoView({ block: 'nearest' });
+    });
   }
 
   focus(): void {
@@ -225,7 +233,15 @@ export class StackAdd {
           this.active.update((i) => (i + (event.key === 'ArrowDown' ? 1 : count - 1)) % count);
         return;
       case 'Enter': {
-        const product = this.open() ? this.options()[this.active()] : undefined;
+        // Typed faster than the search: ask now, and pick nothing from the previous words' results.
+        if (this.text().trim() !== this.query()) {
+          event.preventDefault();
+          clearTimeout(this.timer);
+          this.query.set(this.text().trim());
+          return;
+        }
+        const product =
+          this.open() && !this.results.isLoading() ? this.options()[this.active()] : undefined;
         if (product) {
           event.preventDefault();
           void this.pick(product);

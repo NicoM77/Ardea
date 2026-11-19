@@ -269,4 +269,54 @@ describe('SetupWizard', () => {
     await settle(fixture);
     expect(navigate).toHaveBeenCalledWith(['/o', 'heron', 'overview']);
   });
+
+  it('offers no skip before the stack step is done', async () => {
+    const { fixture, http, element } = await render('project');
+    http
+      .expectOne(`/api/v1/orgs/${ORG}/setup`)
+      .flush({ stepsDone: [], firstProjectId: null, completedAt: null });
+    await settle(fixture);
+    expect(element.querySelectorAll('ardea-project-step .forward button').length).toBe(1);
+  });
+
+  it('sends an organization that started before the stack step on to the first step not done', async () => {
+    const { fixture, navigate, http, element } = await render(null);
+    http.expectOne(`/api/v1/orgs/${ORG}/setup`).flush({
+      stepsDone: ['project', 'repository', 'operations'],
+      firstProjectId: PROJECT,
+      completedAt: null,
+    });
+    await settle(fixture);
+    http
+      .expectOne(`/api/v1/orgs/${ORG}/projects/${PROJECT}`)
+      .flush({ project, components: [manual] });
+    http.expectOne(`/api/v1/orgs/${ORG}/projects/${PROJECT}/repositories`).flush([]);
+    http
+      .expectOne((r) => r.url === `/api/v1/orgs/${ORG}/projects/${PROJECT}/suggestions`)
+      .flush([]);
+    await settle(fixture);
+    // The stack comes first; the stepper still shows the project's steps as done.
+    expect(element.querySelector('ardea-stack-step')).not.toBeNull();
+    expect(element.querySelectorAll('.stepper li.is-done').length).toBe(4);
+    http
+      .expectOne(`/api/v1/orgs/${ORG}/stack`)
+      .flush({ projectId: 'stack', components: [stackEntry] });
+    http.expectOne(`/api/v1/orgs/${ORG}/stack/suggestions`).flush([]);
+    await settle(fixture);
+
+    element.querySelector<HTMLButtonElement>('ardea-stack-step .actions button')!.click();
+    await settle(fixture);
+    http
+      .expectOne((r) => r.method === 'PATCH')
+      .flush({
+        stepsDone: ['stack', 'project', 'repository', 'operations'],
+        firstProjectId: PROJECT,
+        completedAt: null,
+      });
+    await settle(fixture);
+    expect(navigate).toHaveBeenCalledWith([], {
+      queryParams: { step: 'technologies' },
+      queryParamsHandling: 'merge',
+    });
+  });
 });

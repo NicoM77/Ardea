@@ -102,8 +102,21 @@ export function suggestionReason(s: StackSuggestionView): {
 
 /**
  * What the catalogue says about a name someone looks for (ADR 044, consequences): Microsoft Azure
- * is not one product, Microsoft names each service on its own.
+ * is not one product, Microsoft names each service on its own; IIS and Exchange are named in
+ * Windows Server records; a distribution covers itself, not the Linux kernel it ships. A companion
+ * already in the stack needs no hint. The suggestions say the same once the entry is added.
  */
-export function searchHint(query: string): string | null {
-  return /\bazure/i.test(query.trim()) ? 'stack.add.azureHint' : null;
+export function searchHint(query: string, taken: ReadonlySet<string> = new Set()): string | null {
+  const q = query.trim();
+  if (/\bazure/i.test(q)) return 'stack.add.azureHint';
+  if (!taken.has('windows-server')) {
+    if (/\biis\b|internet information/i.test(q)) return 'stack.add.iisHint';
+    if (/\bexchange/i.test(q)) return 'stack.add.exchangeHint';
+  }
+  if (
+    !taken.has('linux-kernel') &&
+    /\b(ubuntu|debian|red hat|rhel|suse|sles|rocky|alma|alpine|oracle linux)/i.test(q)
+  )
+    return 'stack.add.distributionHint';
+  return null;
 }

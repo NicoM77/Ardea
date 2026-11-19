@@ -671,6 +671,65 @@ test('stack page: suggestions with their reasons, a removal taken back, a versio
   expect(problems).toEqual([]);
 });
 
+test('stack page: a save that fails says so, and the row shows what is stored', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  const stack = await stackApi(page);
+  await page.goto(`${ORG}/stack`);
+  const rows = page.getByRole('list', { name: 'Stack entries' }).getByRole('listitem');
+  await expect(rows).toHaveCount(2);
+
+  stack.failWrites = true;
+  const ubuntu = rows.filter({ hasText: 'Ubuntu' });
+  const version = ubuntu.getByRole('textbox', { name: 'Version of Ubuntu' });
+  await version.fill('24.04');
+  await version.press('Enter');
+  await expect(page.getByText('The change could not be saved. Try again.')).toBeVisible();
+  await expect(version).toHaveValue('');
+  await expect(ubuntu).toContainText('Any version');
+
+  const postgres = rows.filter({ hasText: 'PostgreSQL' });
+  const exactness = postgres.getByRole('combobox', { name: /How exact/ });
+  await exactness.focus();
+  await exactness.selectOption('exact');
+  await expect(exactness).toHaveValue('line');
+  await expect(exactness).toBeFocused();
+
+  // Once writes go through again, the same change is saved.
+  stack.failWrites = false;
+  await version.fill('24.04');
+  await version.press('Enter');
+  await expect(page.getByText('The change could not be saved. Try again.')).toHaveCount(0);
+  await expect(ubuntu.getByRole('combobox', { name: /How exact/ })).toHaveValue('exact');
+  expect(problems.filter((p) => !p.includes('status of 409'))).toEqual([]);
+});
+
+test('wizard: Undo still takes an addition back after Continue left the stack step', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page, { calm: true });
+  const stack = await stackApi(page, { wizard: true });
+  await page.goto(`${ORG}/setup`);
+  const suggested = page.getByRole('region', { name: 'Suggested' });
+  await suggested.getByRole('button', { name: 'Add PostgreSQL to the stack' }).click();
+  await suggested.getByRole('button', { name: 'Add nginx to the stack' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Added nginx.' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page).toHaveURL(/\/setup\?step=project$/);
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect.poll(() => stack.writes.map((w) => w.method)).toEqual(['POST', 'POST', 'DELETE']);
+
+  await page.getByRole('button', { name: 'Back' }).click();
+  const rows = page.getByRole('list', { name: 'Stack entries' }).getByRole('listitem');
+  await expect(rows).toHaveCount(1);
+  await expect(rows).toContainText('PostgreSQL');
+  expect(problems).toEqual([]);
+});
+
 test.describe('the stack at 390 × 844', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 

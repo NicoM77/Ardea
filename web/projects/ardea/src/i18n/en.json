@@ -1020,7 +1020,10 @@
       "searching": "Searching the catalogue",
       "failed": "The catalogue could not be searched. Try again.",
       "none": "Nothing in the catalogue matches “{query}”.",
-      "azureHint": "Microsoft Azure is not one product in the catalogue: Microsoft names each Azure service on its own. Add what runs there, such as Windows Server or SQL Server."
+      "azureHint": "Microsoft Azure is not one product in the catalogue: Microsoft names each Azure service on its own. Add what runs there, such as Windows Server or SQL Server.",
+      "iisHint": "IIS is updated with Windows Server, and its vulnerabilities are published under Windows Server: add Windows Server too.",
+      "exchangeHint": "Exchange vulnerabilities often name Windows Server: add Windows Server too.",
+      "distributionHint": "A distribution covers itself, not the Linux kernel it ships: add the Linux kernel too."
     },
     "suggest": {
       "title": "Suggested",
@@ -1055,7 +1058,9 @@
       "load": "The stack could not be loaded. Reload the page to try again.",
       "save": "The change could not be saved. Try again.",
       "invalid": "This version is not valid. Use at most 100 characters.",
-      "gone": "The entry has changed meanwhile. The stack shows it as it is now."
+      "gone": "The entry has changed meanwhile. The stack shows it as it is now.",
+      "undo": "The change could not be taken back. Open the stack to check it.",
+      "undoFree": "{name} is not in the catalogue and cannot be added back here."
     }
   },
   "wizard": {

@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="phase3.css">
 </head>
 <body data-page="overview">
 <main class="sheet" id="main">
@@ -17,8 +18,12 @@
     <header class="title-row">
       <div>
         <h1>Overview</h1>
-        <p class="title-sub" id="finding"></p>
+        <p class="title-sub" id="finding" role="status"></p>
       </div>
+      <nav class="sample-switch" aria-label="Sample day">
+        <a href="overview.html" id="sample-busy">Busy day</a>
+        <a href="overview.html?state=calm" id="sample-calm">Quiet day</a>
+      </nav>
     </header>
 
     <div class="grid">
@@ -85,12 +90,30 @@
         <div class="rows" id="projects"></div>
       </section>
       <section class="card span-5 rise" aria-labelledby="h-latest">
-        <header><h2 id="h-latest">Latest</h2></header>
+        <header><h2 id="h-latest">Since yesterday</h2><span class="meta" id="since"></span></header>
         <div class="rows" id="feed"></div>
       </section>
     </div>
 
-    <p class="footnote">Mockup with sample data. The CVE identifiers and the first two figures of the week (records published, records naming a profiled technology; 11–17 Nov 2026) are real. The organization, people, projects, installed versions, dates, closed actions and the national warning are invented. Every action opens the same example.</p>
+    <div class="grid">
+      <section class="card span-7 rise" aria-labelledby="h-warnings">
+        <header>
+          <h2 id="h-warnings">Warnings without an identifier</h2>
+          <span class="meta">National centres, 7 days</span>
+        </header>
+        <p class="kpi-note" style="margin-top:-8px">Campaigns and advisories with no CVE yet. They name no product of yours, so they raise no action.</p>
+        <div class="rows" id="warnings"></div>
+      </section>
+      <section class="card span-5 rise" aria-labelledby="h-sources">
+        <header>
+          <h2 id="h-sources">Sources</h2>
+          <a class="card-link" href="sources.html">All sources<svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+        </header>
+        <div class="rows" id="sources"></div>
+      </section>
+    </div>
+
+    <p class="footnote">Switch between a busy and a quiet day at the top right (sample data only; the app has no such switch). On a quiet day the same cards stay in place and say that nothing is urgent, so the page never changes shape. Mockup with sample data. The CVE identifiers and the first two figures of the week (records published, records naming a profiled technology; 11–17 Nov 2026) are real. The organization, people, projects, installed versions, dates, closed actions and the national warning are invented. Every action opens the same example.</p>
   </div>
 </main>
 <script src="data.js"></script>
@@ -106,9 +129,13 @@
   var critical = D.ACTIONS.filter(function (a) { return a.priority === 'critical'; });
   var dueToday = D.count(critical, function (a) { return a.due.toDateString() === D.NOW.toDateString(); });
   var unowned = D.count(critical, function (a) { return !a.assignee; });
+  var urgent = D.count(D.ACTIONS, function (a) { return a.priority === 'critical' || a.priority === 'high'; });
   byId('finding').innerHTML = critical.length
     ? '<strong>' + critical.length + ' critical ' + (critical.length === 1 ? 'action is' : 'actions are') + ' open.</strong> ' + dueToday + ' due today, ' + unowned + ' without an owner.'
-    : 'No critical actions are open.';
+    : urgent
+      ? '<strong>No critical action is open.</strong> ' + urgent + ' high, the next due ' + F.when(D.ACTIONS[0].due).toLowerCase() + '.'
+      : '<strong>Nothing urgent.</strong> No critical or high action is open; the next deadline is in ' + F.left(D.ACTIONS[0].due).d + ' days.';
+  byId(D.CALM ? 'sample-calm' : 'sample-busy').setAttribute('aria-current', 'page');
 
   C.runway(byId('runway'), D.ACTIONS);
 
@@ -163,16 +190,36 @@
   }).join('');
   A.$$('#projects .blocks i').forEach(function (b, k) { A.grow(b, 200 + k * 60, 500); });
 
-  /* Latest changes */
-  byId('feed').innerHTML = D.FEED.map(function (f) {
+  /* Since yesterday: what changed in the last 24 hours, newest first */
+  var since = new Date(D.NOW.getTime() - D.DAY);
+  var recent = D.FEED.filter(function (f) { return new Date(f.at) >= since; });
+  byId('since').textContent = recent.length + (recent.length === 1 ? ' change' : ' changes');
+  byId('feed').innerHTML = recent.map(function (f) {
     var a = f.action && D.action(f.action), when = '<span class="row-end">' + F.when(f.at) + '</span>';
-    if (f.kind === 'warning') return '<button type="button" data-soon="The warning" style="border:0;background:none;text-align:left;cursor:pointer;width:calc(100% + 16px)">' +
-      '<span class="row-icon">' + A.icon('megaphone') + '</span><span class="row-main"><b>' + A.esc(f.title) + '</b><small>' + A.esc(f.source) + ' warning, no project linked</small></span>' + when + '</button>';
+    if (f.kind === 'warning') return '<a href="#h-warnings"><span class="row-icon">' + A.icon('megaphone') + '</span><span class="row-main"><b>' + A.esc(f.title) + '</b><small>' + A.esc(f.source) + ' warning, no project linked</small></span>' + when + '</a>';
+    if (f.kind === 'closed') return '<a href="actions.html"><span class="row-icon status--remediated">' + A.sym('s-done') + '</span><span class="row-main"><b>Closed: ' + A.esc(f.title) + '</b><small>' +
+      D.STATUSES[f.status].label + ' by ' + A.esc(D.PEOPLE[f.by].name) + ' · ' + A.esc(D.project(f.project).name) + '</small></span>' + when + '</a>';
     var title = f.kind === 'raised' ? 'Raised to ' + D.PRIORITIES[f.to].label + ': ' + a.component : 'New: ' + a.title;
     var sub = f.kind === 'raised' ? f.why : D.PRIORITIES[a.priority].label + ' · ' + D.project(a.project).name;
     var mark = f.kind === 'raised' ? A.icon('arrow-up') : A.sym(D.PRIORITIES[a.priority].sym);
     return '<a href="' + a.href + '"><span class="row-icon c-' + (f.to || a.priority) + '">' + mark + '</span>' +
       '<span class="row-main"><b>' + A.esc(title) + '</b><small>' + A.esc(sub) + '</small></span>' + when + '</a>';
+  }).join('') || '<p class="muted" style="padding:8px 0">Nothing changed since yesterday.</p>';
+
+  /* Warnings without an identifier */
+  byId('warnings').innerHTML = D.WARNINGS.map(function (w) {
+    return '<button type="button" class="row-btn" data-soon="The warning page"><span class="row-icon">' + A.icon('megaphone') + '</span>' +
+      '<span class="row-main"><b>' + A.esc(w.title) + '</b><small>' + A.esc(w.source) + ' · ' + A.esc(w.text) + '</small></span>' +
+      '<span class="row-end">' + F.when(w.at) + '</span></button>';
+  }).join('');
+
+  /* Sources: a symbol and a word; only Healthy takes a colour */
+  var HEALTH = { healthy: ['Healthy', 's-done', 'is-ok'], degraded: ['Degraded', 's-review', ''], failing: ['Failing', 's-not-affected', ''] };
+  byId('sources').innerHTML = D.SOURCE_LIST.map(function (src) {
+    var h = HEALTH[src.health];
+    return '<a href="sources.html"><span class="row-icon health ' + h[2] + '">' + A.sym(h[1]) + '</span>' +
+      '<span class="row-main"><b>' + A.esc(src.name) + '</b><small>' + h[0] + (src.note ? ' · ' + A.esc(src.note) : '') + '</small></span>' +
+      '<span class="row-end">' + F.when(src.synced) + '</span></a>';
   }).join('');
 })();
 </script>

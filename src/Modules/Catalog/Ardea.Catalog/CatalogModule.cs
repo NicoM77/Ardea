@@ -32,7 +32,5 @@ public sealed class CatalogModule : IModule
         services.AddSingleton<IVersionSchemes>(VersionSchemeRegistry.Instance);
     }
 
-    public void MapEndpoints(IEndpointRouteBuilder endpoints)
-    {
-    }
+    public void MapEndpoints(IEndpointRouteBuilder endpoints) => Features.CatalogEndpoints.Map(endpoints);
 }

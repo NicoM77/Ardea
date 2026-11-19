@@ -34,6 +34,18 @@ public sealed class GitHubRepositoryHostTests
     };
 
     [Fact]
+    public void A_failed_token_check_tells_the_members_the_kind_of_failure_and_not_the_network_details()
+    {
+        var refused = new HttpRequestException(HttpRequestError.ConnectionError, "Connection refused (10.0.0.5:443)");
+        var blocked = new HttpRequestException("ghe.internal resolves to no address Ardea may connect to.");
+        var redirect = new HttpRequestException("GitHub answered with a redirect, which Ardea does not follow for API calls.");
+
+        Assert.Equal("GitHub could not be reached (ConnectionError).", GitHubApi.Describe(refused));
+        Assert.Equal("The GitHub server resolves to an address Ardea may not connect to.", GitHubApi.Describe(blocked));
+        Assert.Equal(redirect.Message, GitHubApi.Describe(redirect));
+    }
+
+    [Fact]
     public async Task Branch_head_returns_the_commit_and_the_etag()
     {
         _github.On($"{Api}/commits/HEAD", _ => Text(HttpStatusCode.OK, Sha, "application/vnd.github.sha", etag: $"\"{Sha}\""));

@@ -99,7 +99,7 @@ internal sealed partial class DeliverHandler(
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
             // A channel answers with a result; should one throw all the same, the delivery must not stay in «sending».
-            result = new SendResult(SendOutcome.Transient, $"{ex.GetType().Name}: {ex.Message}");
+            result = new SendResult(SendOutcome.Transient, $"{ex.GetType().Name}: the channel failed.");
         }
 
         var timedOut = cancellationToken.IsCancellationRequested;

@@ -142,7 +142,7 @@ internal sealed partial class SyncSourceHandler(
             }
 
             await CommitAsync(sourceId, job.SourceKey, runId, buffer, newCursor: null, run, cancellationToken);
-            await FinishAsync(sourceId, runId, run, interval, sync.NextSyncHint, error: null, cancellationToken);
+            await FinishAsync(sourceId, runId, run, interval, sync.NextSyncHint, error: null, publicReason: null, cancellationToken);
             if (mode == SyncMode.Backfill)
             {
                 // In the job's unit of work: the run exists exactly when the load is recorded as done.
@@ -157,7 +157,7 @@ internal sealed partial class SyncSourceHandler(
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
             LogFailed(ex, job.SourceKey);
-            await FinishAsync(sourceId, runId, run, interval, sync?.NextSyncHint, $"{ex.GetType().Name}: {ex.Message}", cancellationToken);
+            await FinishAsync(sourceId, runId, run, interval, sync?.NextSyncHint, $"{ex.GetType().Name}: {ex.Message}", PublicReason(ex), cancellationToken);
         }
         finally
         {
@@ -273,13 +273,13 @@ internal sealed partial class SyncSourceHandler(
                 await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
             }
 
-            await FinishAsync(sourceId, runId, run, interval, sync.NextSyncHint, error: null, cancellationToken);
+            await FinishAsync(sourceId, runId, run, interval, sync.NextSyncHint, error: null, publicReason: null, cancellationToken);
             LogSucceeded(job.SourceKey, run.Fetched, run.Changed);
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
             LogFailed(ex, job.SourceKey);
-            await FinishAsync(sourceId, runId, run, interval, sync?.NextSyncHint, $"{ex.GetType().Name}: {ex.Message}", cancellationToken);
+            await FinishAsync(sourceId, runId, run, interval, sync?.NextSyncHint, $"{ex.GetType().Name}: {ex.Message}", PublicReason(ex), cancellationToken);
         }
         finally
         {
@@ -383,8 +383,23 @@ internal sealed partial class SyncSourceHandler(
         buffer.Clear();
     }
 
+    /// <summary>
+    /// Why a source is unhealthy, in words every signed-in user may read (the source list is not an administration
+    /// page): the kind of failure, never the exception's text, which can carry database, path or address details.
+    /// The run log of the administration keeps the full text.
+    /// </summary>
+    internal static string PublicReason(Exception exception) => exception switch
+    {
+        HttpRequestException { StatusCode: { } status } => $"The source answered HTTP {(int)status}.",
+        HttpRequestException => "The source could not be reached.",
+        TimeoutException or OperationCanceledException => "The source did not answer in time.",
+        System.Text.Json.JsonException or System.Xml.XmlException or InvalidDataException or FormatException => "The source's answer could not be read.",
+        _ => "The sync failed; the instance administrator finds the details in the run log.",
+    };
+
     /// <summary>Outcome and next due time, in the job's own unit of work.</summary>
-    private async Task FinishAsync(Guid sourceId, Guid runId, RunCounters run, TimeSpan interval, TimeSpan? hint, string? error, CancellationToken cancellationToken)
+    private async Task FinishAsync(
+        Guid sourceId, Guid runId, RunCounters run, TimeSpan interval, TimeSpan? hint, string? error, string? publicReason, CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
         var source = await db.Sources.SingleAsync(s => s.Id == sourceId, cancellationToken);
@@ -408,7 +423,7 @@ internal sealed partial class SyncSourceHandler(
         {
             source.ConsecutiveFailures++;
             source.Health = source.ConsecutiveFailures >= 3 ? SourceHealth.Failing : SourceHealth.Degraded;
-            source.HealthReason = runRow.Error;
+            source.HealthReason = publicReason ?? "The sync failed; the instance administrator finds the details in the run log.";
             source.NextSyncAt = now + Backoff(interval, source.ConsecutiveFailures, hint);
         }
 

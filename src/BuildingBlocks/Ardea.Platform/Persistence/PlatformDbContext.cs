@@ -40,8 +40,9 @@ internal sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> opti
             job.Property(j => j.LeaseOwner).HasMaxLength(200);
             job.Property(j => j.TraceParent).HasMaxLength(100);
             job.Property(j => j.CreatedAt).HasDefaultValueSql("now()");
-            // Fetch: pending jobs that are due, by priority and due time.
-            job.HasIndex(j => new { j.Priority, j.RunAt })
+            // Fetch: pending jobs of one kind that are due, by priority and due time. The kind leads, so a
+            // claim for a rare kind does not walk a backlog of another (100 000 correlations on first start).
+            job.HasIndex(j => new { j.Kind, j.Priority, j.RunAt })
                 .HasFilter("state = 'pending'")
                 .HasDatabaseName("ix_job_due");
             // At most one waiting job per coalesce key; running or finished jobs do not block a new one.

@@ -44,6 +44,18 @@ public sealed class VersionMatchTests
         Assert.Equal(("in_range", "semver"), (result.Verdict, Assert.Single(result.Statements).Scheme));
     }
 
+    [Fact]
+    public void A_fix_named_in_the_entrys_text_keeps_a_version_above_the_ranges_unknown()
+    {
+        AffectedFacts[] affected = [Row(lastAffected: "9.0.0", scheme: "semver")];
+
+        var withText = VersionMatch.Check(Component("9.0.1", null), MatchTypes.Product, affected, Schemes, ["9.1.0"]);
+        var without = VersionMatch.Check(Component("9.0.1", null), MatchTypes.Product, affected, Schemes);
+
+        Assert.Equal(("unknown", "fix_named_in_text_above_installed"), (withText.Verdict, withText.Reason));
+        Assert.Equal(("out_of_range", "default_unaffected"), (without.Verdict, without.Reason));
+    }
+
     private static AffectedFacts Row(
         string? introduced = null, string? @fixed = null, string? lastAffected = null, string? exact = null,
         string status = "affected", string? scheme = null, string defaultStatus = "unaffected") => new()

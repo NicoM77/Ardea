@@ -74,6 +74,9 @@ internal sealed record EntryProjection
 
     public IReadOnlyList<string> Workarounds { get; init; } = [];
 
+    /// <summary>The versions the description and solutions name as fixes (<see cref="FixVersionText"/>).</summary>
+    public IReadOnlyList<string> FixVersionsInText { get; init; } = [];
+
     /// <summary>From the signals (task 1.8): <c>high</c>, <c>low</c> or none.</summary>
     public string? EpssClass { get; init; }
 
@@ -86,7 +89,8 @@ internal sealed record EntryProjection
         Exploitation,
         FixAvailable.ToString(),
         AuthorityWarning.ToString(),
-        epssClass ?? string.Empty);
+        epssClass ?? string.Empty,
+        string.Join('\n', FixVersionsInText));
 
     /// <summary>Hash over what tells people what to do: a new workaround updates the answer without reassessment.</summary>
     public string RemediationFingerprint() => Hash(
@@ -236,6 +240,7 @@ internal static class Projection
             AllMetrics = [.. metrics.Select(m => m.Metric)],
             Solutions = solutions,
             Workarounds = workarounds,
+            FixVersionsInText = FixVersionText.Extract(solutions.Prepend(description)),
         };
     }
 

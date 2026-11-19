@@ -47,7 +47,14 @@ internal static class VersionMatch
 {
     private static readonly HashSet<string> GenericSchemes = new(StringComparer.OrdinalIgnoreCase) { "custom", "other", "string", "numeric" };
 
-    public static VersionResult Check(ProfileComponent component, string matchType, IReadOnlyList<AffectedFacts> affected, IVersionSchemes schemes)
+    /// <summary>Checks the installed version of a component against an entry's statements about the product.</summary>
+    /// <param name="component">The component that was hit.</param>
+    /// <param name="matchType">How it was hit (<see cref="MatchTypes"/>); a package hit compares in its ecosystem's scheme.</param>
+    /// <param name="affected">The entry's statements that caused the hit.</param>
+    /// <param name="schemes">The version schemes of the instance.</param>
+    /// <param name="fixesInText">The versions the entry's text names as fixes (<see cref="EntryFacts.FixVersionsInText"/>).</param>
+    public static VersionResult Check(
+        ProfileComponent component, string matchType, IReadOnlyList<AffectedFacts> affected, IVersionSchemes schemes, IReadOnlyCollection<string>? fixesInText = null)
     {
         var statements = new List<VersionStatement>();
         var fixedVersions = new List<(string Text, ParsedVersion? Parsed)>();
@@ -59,7 +66,7 @@ internal static class VersionMatch
             var ranges = rows.Select(Range).ToList();
             var scheme = SchemeFor(component, matchType, rows, schemes);
             var defaultStatus = Status(group.Key.DefaultStatus);
-            var check = VersionCheck.Evaluate(scheme, component.Version, ranges, defaultStatus);
+            var check = VersionCheck.Evaluate(scheme, component.Version, ranges, defaultStatus, fixesInText);
             statements.Add(new VersionStatement(
                 group.Key.SourceId, scheme?.Name, Verdict(check.Verdict), Snake(check.Reason.ToString()), group.Key.DefaultStatus,
                 [.. rows.Select(r => new RangeView(r.Introduced, r.Fixed, r.LastAffected, r.Exact, r.Status))]));

@@ -50,6 +50,12 @@ public enum VersionCheckReason
     /// <summary>The record names no range that can be compared (none at all, or only git commits).</summary>
     NoComparableRange,
 
+    /// <summary>
+    /// Rows 4 and 5 would say «out of range» because the version lies above every affected range, but the
+    /// entry's text names a later fix and no fix of the version's own line at or below it (master plan 6.6).
+    /// </summary>
+    FixNamedInTextAboveInstalled,
+
     /// <summary>No version scheme compares these versions (Debian, date-based, …).</summary>
     NoScheme,
 }
@@ -67,7 +73,15 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
     /// <param name="installed">The version in the profile.</param>
     /// <param name="ranges">The product's ranges from one record.</param>
     /// <param name="defaultStatus">The record's status for every version it does not name; <see cref="VersionStatus.Unknown"/> when it names none.</param>
-    public static VersionCheck Evaluate(IVersionScheme? scheme, string? installed, IReadOnlyCollection<VersionRange> ranges, VersionStatus defaultStatus)
+    /// <param name="fixesInText">
+    /// Versions the entry's text names as fixes. When the version lies above every affected range and rows 4 or 5
+    /// would say «out of range», a later fix named in the text makes it «unknown» instead
+    /// (<see cref="VersionCheckReason.FixNamedInTextAboveInstalled"/>): a conflict between structured data and
+    /// prose never yields «not affected». A fix at or below the version in the version's own line, in the ranges
+    /// or the text, means that line is fixed; then the structured statement stands.
+    /// </param>
+    public static VersionCheck Evaluate(
+        IVersionScheme? scheme, string? installed, IReadOnlyCollection<VersionRange> ranges, VersionStatus defaultStatus, IReadOnlyCollection<string>? fixesInText = null)
     {
         ArgumentNullException.ThrowIfNull(ranges);
         if (string.IsNullOrWhiteSpace(installed))
@@ -122,24 +136,30 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
             return Unknown(VersionCheckReason.RangeNotReadable);
         }
 
+        var affected = positions.Where(p => p.Range.Status == VersionStatus.Affected).ToList();
+        var aboveAll = affected.Count > 0 && affected.TrueForAll(p => p.Position == Position.Above);
+        var proseNamesLaterFix = aboveAll && FixNamedInTextAbove(scheme, version, installed.Trim(), positions.Select(p => p.Range), fixesInText);
         switch (defaultStatus)
         {
             case VersionStatus.Affected:
                 return new(VersionVerdict.InRange, VersionCheckReason.DefaultAffected);
             case VersionStatus.Unaffected:
-                return new(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected);
+                return proseNamesLaterFix
+                    ? Unknown(VersionCheckReason.FixNamedInTextAboveInstalled)
+                    : new(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected);
         }
 
-        var affected = positions.Where(p => p.Range.Status == VersionStatus.Affected).ToList();
         if (affected.Count == 0)
         {
             return Unknown(positions.Count == 0 ? VersionCheckReason.NoComparableRange : VersionCheckReason.NotInAnyRange);
         }
 
-        // Row 5, the deliberate interpretation: above every fix or upper bound.
-        if (affected.TrueForAll(p => p.Position == Position.Above))
+        // Row 5, the deliberate interpretation: above every fix or upper bound, unless the text names a later fix.
+        if (aboveAll)
         {
-            return new(VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges);
+            return proseNamesLaterFix
+                ? Unknown(VersionCheckReason.FixNamedInTextAboveInstalled)
+                : new(VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges);
         }
 
         // Below a range counts only when the record names that lower bound itself.
@@ -152,6 +172,75 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
     }
 
     private static VersionCheck Unknown(VersionCheckReason reason) => new(VersionVerdict.Unknown, reason);
+
+    /// <summary>
+    /// Whether the text names a fix above the installed version while nothing names a fix of the installed
+    /// version's own line at or below it. The line is the version without its last part (6.3 for 6.3.4): a
+    /// record listing «6.4.0, 6.3.3 or 5.19.12» as fixes has fixed 6.3.4 with 6.3.3, whatever 6.4.0 says.
+    /// </summary>
+    private static bool FixNamedInTextAbove(
+        IVersionScheme scheme, ParsedVersion version, string installed, IEnumerable<VersionRange> ranges, IReadOnlyCollection<string>? fixesInText)
+    {
+        if (fixesInText is not { Count: > 0 })
+        {
+            return false;
+        }
+
+        var named = fixesInText
+            .Select(text => (Text: text, Parsed: scheme.TryParse(text, out var parsed) ? parsed : null))
+            .Where(f => f.Parsed is not null)
+            .ToList();
+        if (!named.Exists(f => f.Parsed! > version))
+        {
+            return false;
+        }
+
+        var structured = ranges.SelectMany(r => r.Status switch
+        {
+            VersionStatus.Affected => new[] { r.Fixed },
+            VersionStatus.Unaffected => [r.Introduced, r.Exact],
+            _ => [],
+        }).OfType<string>();
+        var line = Line(installed);
+        return line.Length > 0 && !structured.Concat(named.Select(f => f.Text)).Any(fix =>
+            scheme.TryParse(fix, out var parsed) && parsed <= version && SameLine(fix, line));
+    }
+
+    /// <summary>The leading numbers of a version without the last one: 6.3 for 6.3.4, 26 for 26.</summary>
+    private static long[] Line(string version)
+    {
+        var numbers = LeadingNumbers(version);
+        return numbers.Length > 1 ? numbers[..^1] : numbers;
+    }
+
+    /// <summary>Whether a version belongs to a line; missing parts count as 0 (1.20 is in line 1.20, not in 1.19).</summary>
+    private static bool SameLine(string version, long[] line)
+    {
+        var numbers = LeadingNumbers(version);
+        return line.Select((n, i) => (i < numbers.Length ? numbers[i] : 0) == n).All(same => same);
+    }
+
+    /// <summary>The dot-separated numbers a version starts with: 11.0.0 for 11.0.0-M2, none for «latest».</summary>
+    private static long[] LeadingNumbers(string version)
+    {
+        var numbers = new List<long>();
+        foreach (var part in version.Trim().TrimStart('v', 'V').Split('.'))
+        {
+            var digits = new string([.. part.TakeWhile(char.IsAsciiDigit)]);
+            if (digits.Length is 0 or > 18)
+            {
+                break;
+            }
+
+            numbers.Add(long.Parse(digits, System.Globalization.CultureInfo.InvariantCulture));
+            if (digits.Length < part.Length)
+            {
+                break;
+            }
+        }
+
+        return [.. numbers];
+    }
 
     private static Position Locate(IVersionScheme scheme, ParsedVersion version, VersionRange range)
     {

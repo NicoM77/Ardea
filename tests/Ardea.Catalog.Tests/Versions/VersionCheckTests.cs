@@ -13,6 +13,9 @@ public sealed class VersionCheckTests
     private static VersionCheck Check(string? installed, VersionStatus defaultStatus, params VersionRange[] ranges) =>
         VersionCheck.Evaluate(Numeric, installed, ranges, defaultStatus);
 
+    private static VersionCheck Check(string? installed, VersionStatus defaultStatus, string[] fixesInText, params VersionRange[] ranges) =>
+        VersionCheck.Evaluate(Numeric, installed, ranges, defaultStatus, fixesInText);
+
     [Fact]
     public void Row_1_inside_an_affected_range_is_in_range()
     {
@@ -214,6 +217,59 @@ public sealed class VersionCheckTests
     {
         Assert.Equal(commits, new VersionRange { Introduced = introduced, Fixed = fixedVersion, Scheme = "git" }.IsCommitRange);
         Assert.False(new VersionRange { Introduced = introduced, Fixed = fixedVersion, Scheme = "semver" }.IsCommitRange);
+    }
+
+    [Fact]
+    public void Fix_named_in_text_above_the_version_keeps_row_4_unknown()
+    {
+        // Apache DataSketches (CVE-2026-122096): «through 9.0.0», default unaffected; «upgrade to version 9.1.0, which fixes the issue».
+        var through = new VersionRange { LastAffected = "9.0.0" };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.FixNamedInTextAboveInstalled), Check("9.0.1", VersionStatus.Unaffected, ["9.1.0"], through));
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected), Check("9.1.0", VersionStatus.Unaffected, ["9.1.0"], through));
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected), Check("9.0.1", VersionStatus.Unaffected, [], through));
+    }
+
+    [Fact]
+    public void Fix_named_in_text_above_the_version_keeps_row_5_unknown()
+    {
+        // Apache TomEE (CVE-2026-111245): openejb 4.0.0-beta-1 through 4.7.5, no fix in that line; «upgrade to 10.3.0 or 11.0.0-M2».
+        var old = new VersionRange { Introduced = "4.0.0", LastAffected = "4.7.5" };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.FixNamedInTextAboveInstalled), Check("4.7.6", VersionStatus.Unknown, ["10.3.0", "11.0.0"], old));
+    }
+
+    [Fact]
+    public void A_fix_of_the_versions_own_line_at_or_below_it_lets_the_ranges_stand()
+    {
+        // ActiveMQ (CVE-2026-108500): 6.3.0 before 6.3.3 and 5.19.0 before 5.19.12; «upgrade to 6.4.0, 6.3.3 or 5.19.12».
+        VersionRange[] ranges = [new() { Introduced = "6.3.0", Fixed = "6.3.3" }, new() { Introduced = "5.19.0", Fixed = "5.19.12" }];
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected), Check("6.3.4", VersionStatus.Unaffected, ["6.4.0", "6.3.3", "5.19.12"], ranges));
+
+        // n8n (CVE-2026-126388): «before 2.46.1» in the text, but the ranges fix the 2.45 line with 2.45.5 (an unaffected version).
+        VersionRange[] backport = [new() { Fixed = "2.45.5" }, VersionRange.ExactVersion("2.45.5", VersionStatus.Unaffected)];
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected), Check("2.45.6", VersionStatus.Unaffected, ["2.46.1"], backport));
+
+        // The same text fix in another line (1.20 is not the line 1.19) does not count as the version's own.
+        Assert.Equal(VersionVerdict.Unknown, Check("1.19.1", VersionStatus.Unaffected, ["1.20"], new VersionRange { LastAffected = "1.19.0" }).Verdict);
+    }
+
+    [Fact]
+    public void Text_does_not_change_a_version_between_ranges_or_inside_an_unaffected_range()
+    {
+        // Between two lines the later line's fix is above the version, but the version is not above every range.
+        VersionRange[] lines = [new() { Introduced = "1.0", Fixed = "1.5.3" }, new() { Introduced = "2.0", Fixed = "2.1.4" }];
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.OutsideNamedBounds), Check("1.6", VersionStatus.Unknown, ["1.5.3", "2.1.4"], lines));
+
+        // An explicit unaffected statement is more specific than any prose.
+        var backport = new VersionRange { Introduced = "5.10.200", Fixed = "5.11", Status = VersionStatus.Unaffected };
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.InUnaffectedRange), Check("5.10.201", VersionStatus.Affected, ["6.0"], backport));
+    }
+
+    [Fact]
+    public void Text_versions_the_scheme_cannot_read_are_ignored()
+    {
+        Assert.Equal(VersionVerdict.OutOfRange, Check("2.4.52", VersionStatus.Unaffected, ["build 4711"], Affected24).Verdict);
     }
 
     [Fact]

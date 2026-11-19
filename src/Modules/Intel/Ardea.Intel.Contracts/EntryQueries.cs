@@ -82,6 +82,13 @@ public sealed record EntryFacts
     public required bool AuthorityWarning { get; init; }
 
     public required IReadOnlyList<AffectedFacts> Affected { get; init; }
+
+    /// <summary>
+    /// The versions the description or solutions name as fixes («upgrade to 9.1.0», «prior to 2.4.5»), read at
+    /// correlation. The version check uses them only so that prose naming a later fix keeps a version above
+    /// the structured ranges «unknown» instead of «out of range» (master plan 6.6, ADR 033).
+    /// </summary>
+    public IReadOnlyList<string> FixVersionsInText { get; init; } = [];
 }
 
 /// <summary>One version statement about an affected product from one source (<c>intel.entry_affected</c>).</summary>

@@ -10163,7 +10163,8 @@
         "required": [
           "warnings",
           "metrics",
-          "at"
+          "at",
+          "notified"
         ],
         "type": "object",
         "properties": {
@@ -10171,17 +10172,27 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StatusWarning"
-            }
+            },
+            "description": "The warnings of this moment."
           },
           "metrics": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StatusMetric"
-            }
+            },
+            "description": "The operating figures."
           },
           "at": {
             "type": "string",
+            "description": "When the status was computed.",
             "format": "date-time"
+          },
+          "notified": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WarningNotified"
+            },
+            "description": "The active warnings the instance administrators were mailed about, with the time of the last mail (ADR 043)."
           }
         },
         "description": "The first administration (task 0.13, master plan 11.4): registration, SMTP with a test mail,\nabandoned jobs with retry, the installed version. Instance administrator only."
@@ -13618,6 +13629,30 @@
             "$ref": "#/components/schemas/AnswersView"
           }
         }
+      },
+      "WarningNotified": {
+        "required": [
+          "code",
+          "subject",
+          "at"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "subject": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "When the administrators were last mailed about an active warning; shown in the administration."
       },
       "WebhookEndpointRequest": {
         "required": [

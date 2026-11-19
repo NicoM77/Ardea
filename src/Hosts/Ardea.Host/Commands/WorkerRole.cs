@@ -1,4 +1,5 @@
 using Ardea.Ai;
+using Ardea.Host.Features;
 using Ardea.Platform.Configuration;
 using Ardea.Platform.Hosting;
 using Ardea.Platform.Jobs;
@@ -23,21 +24,7 @@ internal static class WorkerRole
         }
 
         HostConfiguration.AddJsonLogging(builder.Logging);
-        builder.Services.AddArdeaPlatform(builder.Configuration, "worker");
-        builder.Services.AddSingleton(WorkerIdentity.FromConfiguration(builder.Configuration));
-        builder.Services.AddHostedService(sp => ActivatorUtilities.CreateInstance<WorkerHeartbeat>(sp, AppVersion.Current));
-        builder.Services.AddUnitOfWork();
-        builder.Services.AddJobWorker();
-        builder.Services.AddSourceAdapters();
-        builder.Services.AddAiProviders(builder.Configuration);
-        builder.Services.AddArdeaSecrets(MasterKey.FromBase64(builder.Configuration[HostConfiguration.MasterKeyKey]!));
-        builder.Services.AddArdeaTelemetry(builder.Logging, builder.Configuration, "worker", AppVersion.Current);
-        foreach (var module in Modules.All)
-        {
-            module.AddServices(builder.Services, builder.Configuration);
-            module.AddWorkerServices(builder.Services, builder.Configuration);
-        }
-
+        AddServices(builder);
         using var host = builder.Build();
         var behind = await SchemaGate.FindBehindAsync(
             host.Services.GetRequiredService<NpgsqlDataSource>(), host.Services.GetRequiredService<DatabaseOptions>(), CancellationToken.None);
@@ -49,5 +36,25 @@ internal static class WorkerRole
 
         await host.RunAsync();
         return 0;
+    }
+
+    /// <summary>Everything the worker runs; on its own so that a test can see what is registered.</summary>
+    internal static void AddServices(HostApplicationBuilder builder)
+    {
+        builder.Services.AddArdeaPlatform(builder.Configuration, "worker");
+        builder.Services.AddSingleton(WorkerIdentity.FromConfiguration(builder.Configuration));
+        builder.Services.AddHostedService(sp => ActivatorUtilities.CreateInstance<WorkerHeartbeat>(sp, AppVersion.Current));
+        builder.Services.AddUnitOfWork();
+        builder.Services.AddJobWorker();
+        builder.Services.AddInstanceSelfCheck();
+        builder.Services.AddSourceAdapters();
+        builder.Services.AddAiProviders(builder.Configuration);
+        builder.Services.AddArdeaSecrets(MasterKey.FromBase64(builder.Configuration[HostConfiguration.MasterKeyKey]!));
+        builder.Services.AddArdeaTelemetry(builder.Logging, builder.Configuration, "worker", AppVersion.Current);
+        foreach (var module in Modules.All)
+        {
+            module.AddServices(builder.Services, builder.Configuration);
+            module.AddWorkerServices(builder.Services, builder.Configuration);
+        }
     }
 }

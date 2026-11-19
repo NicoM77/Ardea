@@ -138,6 +138,7 @@
       "title": "Operation",
       "asOf": "As of {time}",
       "healthy": "Nothing to report: sources, worker and deliveries work.",
+      "notified": "Administrators mailed {time}",
       "loading": "Loading the operating figures",
       "loadFailed": "The operating figures could not be loaded."
     },

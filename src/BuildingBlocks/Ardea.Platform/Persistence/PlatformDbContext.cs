@@ -20,6 +20,8 @@ internal sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> opti
 
     public DbSet<WorkerHeartbeatRow> WorkerHeartbeats => Set<WorkerHeartbeatRow>();
 
+    public DbSet<InstanceWarningRow> InstanceWarnings => Set<InstanceWarningRow>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -103,6 +105,16 @@ internal sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> opti
             beat.HasKey(b => b.WorkerId);
             beat.Property(b => b.WorkerId).HasMaxLength(200);
             beat.Property(b => b.Version).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<InstanceWarningRow>(warning =>
+        {
+            warning.ToTable("instance_warning");
+            warning.HasKey(w => new { w.Code, w.Subject });
+            warning.Property(w => w.Code).HasMaxLength(100);
+            warning.Property(w => w.Subject).HasMaxLength(200);
+            warning.Property(w => w.Severity).HasMaxLength(20);
+            warning.Property(w => w.Message).HasMaxLength(1000);
         });
     }
 }

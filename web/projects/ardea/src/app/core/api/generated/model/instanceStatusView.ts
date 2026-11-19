@@ -7,13 +7,19 @@
  */
 import type { StatusMetric } from './statusMetric';
 import type { StatusWarning } from './statusWarning';
+import type { WarningNotified } from './warningNotified';
 
 /**
  * The first administration (task 0.13, master plan 11.4): registration, SMTP with a test mail,
  * abandoned jobs with retry, the installed version. Instance administrator only.
  */
 export interface InstanceStatusView {
+  /** The warnings of this moment. */
   warnings: StatusWarning[];
+  /** The operating figures. */
   metrics: StatusMetric[];
+  /** When the status was computed. */
   at: string;
+  /** The active warnings the instance administrators were mailed about, with the time of the last mail (ADR 043). */
+  notified: WarningNotified[];
 }

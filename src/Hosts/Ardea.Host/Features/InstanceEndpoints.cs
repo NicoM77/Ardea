@@ -14,16 +14,23 @@ namespace Ardea.Host.Features;
 /// The first administration (task 0.13, master plan 11.4): registration, SMTP with a test mail,
 /// abandoned jobs with retry, the installed version. Instance administrator only.
 /// </summary>
-internal sealed record InstanceStatusView(IReadOnlyList<Platform.Status.StatusWarning> Warnings, IReadOnlyList<Platform.Status.StatusMetric> Metrics, DateTimeOffset At);
+/// <param name="Warnings">The warnings of this moment.</param>
+/// <param name="Metrics">The operating figures.</param>
+/// <param name="At">When the status was computed.</param>
+/// <param name="Notified">The active warnings the instance administrators were mailed about, with the time of the last mail (ADR 043).</param>
+internal sealed record InstanceStatusView(
+    IReadOnlyList<Platform.Status.StatusWarning> Warnings, IReadOnlyList<Platform.Status.StatusMetric> Metrics, DateTimeOffset At,
+    IReadOnlyList<Platform.Status.WarningNotified> Notified);
 
 internal static class InstanceEndpoints
 {
     /// <summary>The system's warnings about itself and the operating figures (master plan 12.7; task 6.6).</summary>
     private static async Task<InstanceStatusView> StatusAsync(
-        IEnumerable<Platform.Status.IInstanceStatusContributor> contributors, TimeProvider time, CancellationToken cancellationToken)
+        IEnumerable<Platform.Status.IInstanceStatusContributor> contributors, Platform.Status.InstanceWarningLedger ledger, TimeProvider time,
+        CancellationToken cancellationToken)
     {
         var status = await CollectAsync(contributors, cancellationToken);
-        return new InstanceStatusView(status.Warnings, status.Metrics, time.GetUtcNow());
+        return new InstanceStatusView(status.Warnings, status.Metrics, time.GetUtcNow(), await ledger.NotifiedAsync(cancellationToken));
     }
 
     /// <summary>Only the warnings, without figures: whether the data shown is current.</summary>

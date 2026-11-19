@@ -156,3 +156,35 @@ internal sealed class WorkerHeartbeatRow
 
     public string? Version { get; set; }
 }
+
+/// <summary>
+/// A warning of the instance about itself (master plan 12.7) as the instance administrators were told about it:
+/// when it was first and last seen, when it cleared, and when a mail about it went out (ADR 043). Instance data,
+/// no organisation; the key is the warning's code and subject (empty when the warning has none).
+/// </summary>
+internal sealed class InstanceWarningRow
+{
+    public required string Code { get; set; }
+
+    public required string Subject { get; set; }
+
+    public required string Severity { get; set; }
+
+    public required string Message { get; set; }
+
+    public DateTimeOffset FirstSeenAt { get; set; }
+
+    public DateTimeOffset LastSeenAt { get; set; }
+
+    /// <summary>The first round that no longer saw it; null while it is active.</summary>
+    public DateTimeOffset? ClearedAt { get; set; }
+
+    /// <summary>When the mail about the new warning was claimed; null while nobody was told.</summary>
+    public DateTimeOffset? NotifiedAt { get; set; }
+
+    /// <summary>When the last reminder was claimed.</summary>
+    public DateTimeOffset? RemindedAt { get; set; }
+
+    /// <summary>When the «resolved» mail was claimed; the next round removes the row.</summary>
+    public DateTimeOffset? ResolvedAt { get; set; }
+}

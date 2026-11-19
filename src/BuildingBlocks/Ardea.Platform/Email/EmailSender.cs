@@ -22,7 +22,12 @@ public static class SmtpSettings
     public static IReadOnlyList<SettingDefinition> All { get; } = [Host, Port, User, Password, From, Security];
 }
 
-public sealed record EmailMessage(string To, string Subject, string Text, string Html);
+/// <param name="To">The recipient's address.</param>
+/// <param name="Subject">The subject line.</param>
+/// <param name="Text">The plain-text part.</param>
+/// <param name="Html">The HTML part.</param>
+/// <param name="Headers">Further headers, e.g. <c>List-Unsubscribe</c> (master plan 8.5).</param>
+public sealed record EmailMessage(string To, string Subject, string Text, string Html, IReadOnlyDictionary<string, string>? Headers = null);
 
 /// <summary>
 /// Simple e-mail for confirmation, password reset and invitations (task 0.9). Without SMTP the
@@ -68,6 +73,10 @@ internal sealed class SmtpEmailSender(IUnitOfWorkFactory units) : IEmailSender
         mime.To.Add(MailboxAddress.Parse(message.To));
         mime.Subject = message.Subject;
         mime.Body = new BodyBuilder { TextBody = message.Text, HtmlBody = message.Html }.ToMessageBody();
+        foreach (var (name, value) in message.Headers ?? new Dictionary<string, string>())
+        {
+            mime.Headers.Add(name, value);
+        }
 
         using var client = new SmtpClient { Timeout = 30_000 };
         await client.ConnectAsync(host, port, security, cancellationToken);

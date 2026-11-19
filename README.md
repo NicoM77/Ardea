@@ -4,10 +4,12 @@ Ardea is Latin for heron: a bird that stands still for a long time and strikes o
 
 A self-hosted, open-source early-warning system for security vulnerabilities: it collects advisories and CVE records from trusted sources, merges them into one entry per vulnerability, and tells each organization which ones affect its projects, how urgent they are, and what to do.
 
-## Status: phase 0 (foundation)
+## Status: phase 3 (findings and remediations)
 
-The master plan is approved and implementation has started. Progress follows the phases in
-chapter 14 of the plan (see the roadmap below); nothing is usable yet.
+The master plan is approved and implementation is under way. The tasks of phases 0 to 2 are done: an instance fetches and
+consolidates vulnerabilities from five sources and keeps organisations, projects and their technology profile,
+also read from GitHub repositories. Findings and remediations (phase 3) are in progress; there is no release
+yet. Progress follows chapter 14 of the plan (see the roadmap below).
 
 ## Roadmap
 
@@ -60,6 +62,8 @@ Consolidated entries from five sources, including OSV for packages, with merging
 | 1.12 | OSV adapter for npm, NuGet, Packagist, PyPI, Maven and Go: `modified_id.csv`, initial load from the ecosystem archive; terms checked first | 1.3, 1.5 | ✅ [ADR 031](docs/adr/0031-osv-source.md) |
 | 1.13 | Merging entries via a shared identifier that appears later, with redirect and review list for two CVE IDs | 1.6, 1.12 | ✅ |
 
+Acceptance: [observed and tested](docs/acceptance/phase-1.md), first load in 51 minutes on 2 vCPU and 4 GB.
+
 ### Phase 2 · Organisations, projects and profile (7–9 weeks)
 
 Organisations with projects and technology profile; profile from GitHub repositories; setup wizard.
@@ -80,6 +84,8 @@ Organisations with projects and technology profile; profile from GitHub reposito
 | 2.12 | Detection rules for Dockerfile, Compose, `global.json`, project files, `engines` and `.nvmrc`, `composer.json`, `go.mod`; image names in the catalogue; suggestions with evidence | 2.4, 2.11 | ✅ |
 | 2.13 | `IndexRepository` job with due time and system operation; reconcile per 16.5 holding back much smaller states; `repository.unavailable`; audit with commit as origin | 2.5, 2.11, 2.12 | ✅ |
 
+Acceptance: [observed and tested](docs/acceptance/phase-2.md); open: the timed wizard run with a test person and reading Ardea's own repository with a token.
+
 ### Phase 3 · Findings, actions and their UI (6–8 weeks)
 
 Findings, actions and alerts with level and reasoning; overview, list, detail.
@@ -87,8 +93,8 @@ Findings, actions and alerts with level and reasoning; overview, list, detail.
 | No. | Task | Depends on | Status |
 |---|---|---|---|
 | 3.1 | Mockups: calm overview, action with several findings, version with AI assessment; owner reviews afterwards | | ✅ |
-| 3.2 | Candidate search forward and backward, including OSV package coordinates; match strength; weak matches as level 1 | 1.7, 1.12, 2.5 | ⬜ |
-| 3.3 | Version check with three outcomes including the records' default status; distro packages as unknown | 3.2, 1.1 | ⬜ |
+| 3.2 | Candidate search forward and backward, including OSV package coordinates; match strength; weak matches as level 1 | 1.7, 1.12, 2.5 | ✅ |
+| 3.3 | Version check with three outcomes including the records' default status; distro packages as unknown | 3.2, 1.1 | ✅ |
 | 3.4 | Rule set version 1 as a file; factors, upper and lower bounds, deadlines | 3.3 | ⬜ |
 | 3.5 | Findings, actions, alerts, history; events from 8.2 as history lines; closing by raising the version in the profile; initial load without single events | 3.4 | ⬜ |
 | 3.6 | Answers from templates without a language model | 3.5 | ⬜ |
@@ -205,6 +211,8 @@ master plan and in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 | Ecosystem research with sources, 18 Nov 2026 | [`docs/research/`](docs/research/) |
 | Throwaway data spike | [`prototypes/`](prototypes/README.md) |
 | Contribution rules | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| Running an instance: installation, configuration, operation, update, adding a source | [`docs/operations/`](docs/operations/README.md) |
+| Reporting a security issue | [`SECURITY.md`](SECURITY.md) |
 
 ## Planned stack
 

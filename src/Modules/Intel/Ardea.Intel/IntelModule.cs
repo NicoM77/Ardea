@@ -25,6 +25,7 @@ public sealed class IntelModule : IModule
         services.AddSingleton<SourceRegistry>();
         services.AddSingleton<HostRateLimits>();
         services.AddSingleton<SourceHttpFactory>();
+        services.AddScoped<Contracts.IEntryQueries, Features.EntryQueries>();
 
         services.AddHttpClient(SourceHttp.ClientName)
             .ConfigurePrimaryHttpMessageHandler(PrimaryHandler)

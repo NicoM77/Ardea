@@ -14,5 +14,6 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Ardea.Intel.Tests" />
+    <InternalsVisibleTo Include="Ardea.Assessment.Tests" />
   </ItemGroup>
 </Project>

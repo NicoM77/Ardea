@@ -557,6 +557,10 @@ namespace Ardea.Notifications.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("p256dh");
 
+                    b.Property<int>("RejectedCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("rejected_count");
+
                     b.Property<string>("UserAgent")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")

@@ -343,4 +343,7 @@ internal sealed class PushSubscription
 
     /// <summary>Failed attempts since the last success.</summary>
     public int FailedCount { get; set; }
+
+    /// <summary>Refusals of the instance's key (401, 403) in a row; the third removes the subscription.</summary>
+    public int RejectedCount { get; set; }
 }

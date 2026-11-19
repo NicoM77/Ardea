@@ -39,13 +39,19 @@ internal enum PushDeviceOutcome
 /// <param name="Status">The HTTP status, or <c>blocked</c>, <c>unreachable</c>, <c>timeout</c>, <c>error</c>.</param>
 internal sealed record PushDeviceResult(Guid Id, PushDeviceOutcome Outcome, string Status);
 
+/// <summary>How long all devices of one push message may take together; shorter in tests.</summary>
+internal sealed class PushOptions
+{
+    public TimeSpan Budget { get; init; } = WebPushChannel.Budget;
+}
+
 /// <summary>
 /// Web Push (master plan 8.5, ADR 041): one encrypted message per subscribed device of the member, signed with
 /// the instance's VAPID key. The content is end-to-end encrypted (RFC 8291); <c>Urgency: high</c> only for level 5;
 /// expired subscriptions are removed. Push endpoints are third-party addresses: the connection goes through the
 /// outbound guard, never to an internal address, and requests are not logged because an endpoint is a capability.
 /// </summary>
-internal sealed partial class WebPushChannel(IHttpClientFactory http, VapidKeyStore vapid, TimeProvider time, ILogger<WebPushChannel> logger) : INotificationChannel
+internal sealed partial class WebPushChannel(IHttpClientFactory http, VapidKeyStore vapid, PushOptions options, TimeProvider time, ILogger<WebPushChannel> logger) : INotificationChannel
 {
     public const string ClientName = "notify.push";
 
@@ -54,6 +60,12 @@ internal sealed partial class WebPushChannel(IHttpClientFactory http, VapidKeySt
 
     /// <summary>A subscription the push service refused our key for this many times in a row is removed.</summary>
     public const int RejectionsBeforeRemoval = 3;
+
+    /// <summary>
+    /// All devices of a message together get this long, well inside the delivery job's minute (ADR 041); a device
+    /// that has not answered by then counts as unavailable, and the others' answers are kept.
+    /// </summary>
+    public static readonly TimeSpan Budget = TimeSpan.FromSeconds(30);
 
     private const string BlockedTarget = "resolves to no address Ardea may connect to";
 
@@ -68,12 +80,11 @@ internal sealed partial class WebPushChannel(IHttpClientFactory http, VapidKeySt
 
         var payload = Encoding.UTF8.GetBytes(MessageRenderer.Push(message.Content));
         var urgency = message.Content.Level == 5 ? "high" : "normal";
-        var devices = new List<PushDeviceResult>();
-        foreach (var device in message.PushDevices)
-        {
-            devices.Add(await SendAsync(device, payload, urgency, Topic(message.Content.DeliveryId), cancellationToken));
-        }
-
+        var topic = Topic(message.Content.DeliveryId);
+        // In parallel, within one budget: twenty devices must not add up to more than the job may take.
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        budget.CancelAfter(options.Budget);
+        var devices = await Task.WhenAll(message.PushDevices.Select(device => SendAsync(device, payload, urgency, topic, budget.Token)));
         return Summarize(devices);
     }
 
@@ -102,6 +113,7 @@ internal sealed partial class WebPushChannel(IHttpClientFactory http, VapidKeySt
             request.Headers.TryAddWithoutValidation("Authorization", Vapid.Authorization(keys, endpoint, time.GetUtcNow()));
             // Never into the private network, whatever the endpoint's host resolves to (master plan 9.5).
             request.Options.Set(OutboundAddresses.AllowInternal, false);
+            request.Options.Set(OutboundAddresses.Untraced, true);
 
             using var client = http.CreateClient(ClientName);
             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -125,11 +137,13 @@ internal sealed partial class WebPushChannel(IHttpClientFactory http, VapidKeySt
         {
             return new PushDeviceResult(device.Id, PushDeviceOutcome.Unavailable, "unreachable");
         }
-        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException)
         {
+            // The client's timeout, the budget or the job's end: an outcome like any other, so that the answers of the
+            // other devices are still written.
             return new PushDeviceResult(device.Id, PushDeviceOutcome.Unavailable, "timeout");
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex)
         {
             LogFailed(device.Id, ex.GetType().Name);
             return new PushDeviceResult(device.Id, PushDeviceOutcome.Unavailable, "error");
@@ -169,18 +183,25 @@ internal sealed partial class WebPushChannel(IHttpClientFactory http, VapidKeySt
             switch (device.Outcome)
             {
                 case PushDeviceOutcome.Sent:
-                    await row.ExecuteUpdateAsync(s => s.SetProperty(x => x.LastSuccessAt, now).SetProperty(x => x.FailedCount, 0), cancellationToken);
+                    await row.ExecuteUpdateAsync(
+                        s => s.SetProperty(x => x.LastSuccessAt, now).SetProperty(x => x.FailedCount, 0).SetProperty(x => x.RejectedCount, 0), cancellationToken);
                     break;
                 case PushDeviceOutcome.Gone:
-                case PushDeviceOutcome.Rejected when await row.AnyAsync(s => s.FailedCount >= RejectionsBeforeRemoval - 1, cancellationToken):
+                case PushDeviceOutcome.Rejected when await row.AnyAsync(s => s.RejectedCount >= RejectionsBeforeRemoval - 1, cancellationToken):
                     if (await row.ExecuteDeleteAsync(cancellationToken) > 0)
                     {
                         LogRemoved(device.Id, device.Status);
                     }
 
                     break;
+                case PushDeviceOutcome.Rejected:
+                    await row.ExecuteUpdateAsync(
+                        s => s.SetProperty(x => x.FailedCount, x => x.FailedCount + 1).SetProperty(x => x.RejectedCount, x => x.RejectedCount + 1), cancellationToken);
+                    break;
                 default:
-                    await row.ExecuteUpdateAsync(s => s.SetProperty(x => x.FailedCount, x => x.FailedCount + 1), cancellationToken);
+                    // Any other failure breaks a run of refusals: only refusals in a row remove a device.
+                    await row.ExecuteUpdateAsync(
+                        s => s.SetProperty(x => x.FailedCount, x => x.FailedCount + 1).SetProperty(x => x.RejectedCount, 0), cancellationToken);
                     break;
             }
         }

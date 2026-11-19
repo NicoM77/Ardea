@@ -26,7 +26,8 @@ namespace Ardea.Notifications.Persistence.Migrations
                     label = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     last_success_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    failed_count = table.Column<int>(type: "integer", nullable: false)
+                    failed_count = table.Column<int>(type: "integer", nullable: false),
+                    rejected_count = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -61,11 +62,13 @@ namespace Ardea.Notifications.Persistence.Migrations
                         AND user_id IN (SELECT m.user_id FROM iam.membership m WHERE m.organization_id = platform.current_organization_id()));
 
                 -- Default rule 1 of master plan 8.3 reaches owners and admins by push too (ADR 038 decision 11), also in
-                -- organisations created before the channel existed. A member without a device is not reached by it.
+                -- organisations created before the channel existed, but only where nobody changed the rule since it was
+                -- written (changed_at = created_at): a rule someone shaped stays as they left it. A member without a
+                -- device is not reached by it.
                 INSERT INTO notify.rule_target (organization_id, rule_id, channel, recipient_kind, recipient_ref, mode, digest_cron, send_empty, created_at)
                 SELECT r.organization_id, r.id, 'push', 'role', 'admin', 'immediate', NULL, false, now()
                 FROM notify.rule r
-                WHERE r.preset = 'critical'
+                WHERE r.preset = 'critical' AND r.changed_at = r.created_at
                     AND NOT EXISTS (SELECT 1 FROM notify.rule_target t WHERE t.rule_id = r.id AND t.channel = 'push');
                 """);
         }

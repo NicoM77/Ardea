@@ -104,32 +104,27 @@ internal static class PushEndpoints
         var hash = WebPushChannel.Hash(endpoint);
         var userAgent = http.Request.Headers.UserAgent.ToString();
         var now = time.GetUtcNow();
-        var subscription = await db.PushSubscriptions.SingleOrDefaultAsync(s => s.UserId == user && s.EndpointHash == hash, cancellationToken);
-        var created = subscription is null;
-        if (subscription is null)
+        if (!await db.PushSubscriptions.AnyAsync(s => s.UserId == user && s.EndpointHash == hash, cancellationToken))
         {
-            subscription = new PushSubscription
-            {
-                Id = Guid.CreateVersion7(),
-                UserId = user,
-                Endpoint = endpoint,
-                EndpointHash = hash,
-                P256dh = string.Empty,
-                Auth = string.Empty,
-                Label = string.Empty,
-                CreatedAt = now,
-            };
-            db.PushSubscriptions.Add(subscription);
-            var others = await db.PushSubscriptions.Where(s => s.UserId == user).OrderByDescending(s => s.CreatedAt).Skip(DevicesPerUser - 1).ToListAsync(cancellationToken);
-            db.PushSubscriptions.RemoveRange(others);
+            // At most twenty devices: the oldest makes room for a new one.
+            var oldest = await db.PushSubscriptions.Where(s => s.UserId == user).OrderByDescending(s => s.CreatedAt)
+                .Skip(DevicesPerUser - 1).Select(s => s.Id).ToListAsync(cancellationToken);
+            await db.PushSubscriptions.Where(s => oldest.Contains(s.Id)).ExecuteDeleteAsync(cancellationToken);
         }
 
-        subscription.P256dh = request.Keys!.P256dh!.Trim();
-        subscription.Auth = request.Keys.Auth!.Trim();
-        subscription.UserAgent = userAgent.Length > 500 ? userAgent[..500] : userAgent;
-        subscription.Label = DeviceLabel(userAgent);
-        subscription.FailedCount = 0;
-        await db.SaveChangesAsync(cancellationToken);
+        // One statement, so that the same device subscribing twice at once ends with one row, not a conflict.
+        var p256dh = request.Keys!.P256dh!.Trim();
+        var auth = request.Keys.Auth!.Trim();
+        var agent = userAgent.Length > 500 ? userAgent[..500] : userAgent;
+        var label = DeviceLabel(userAgent);
+        var created = (await db.Database.SqlQuery<bool>($"""
+            INSERT INTO notify.push_subscription (id, user_id, endpoint, endpoint_hash, p256dh, auth, user_agent, label, created_at, failed_count, rejected_count)
+            VALUES ({Guid.CreateVersion7()}, {user}, {endpoint}, {hash}, {p256dh}, {auth}, {agent}, {label}, {now}, 0, 0)
+            ON CONFLICT (user_id, endpoint_hash) DO UPDATE SET p256dh = excluded.p256dh, auth = excluded.auth, user_agent = excluded.user_agent,
+                label = excluded.label, failed_count = 0, rejected_count = 0
+            RETURNING (xmax = 0) AS "Value"
+            """).ToListAsync(cancellationToken))[0];
+        var subscription = await db.PushSubscriptions.AsNoTracking().SingleAsync(s => s.UserId == user && s.EndpointHash == hash, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         var view = new PushSubscriptionView(subscription.Id, subscription.Label, subscription.CreatedAt, subscription.LastSuccessAt, subscription.FailedCount);
         return created ? Results.Created($"/api/v1/me/push-subscriptions/{subscription.Id}", view) : Results.Ok(view);

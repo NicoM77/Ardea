@@ -31,14 +31,15 @@ internal sealed class DeliveryRetryException(string message) : Exception(message
 
 /// <summary>
 /// Three steps (master plan 9.2): read and mark in a short unit of work, call the channel without a
-/// transaction, write the outcome in the job's own unit of work. A transient failure is written in a unit
-/// of work of its own, because the job's is rolled back when it throws for the retry.
+/// transaction, write the outcome afterwards. The outcome goes into the job's own unit of work when the job
+/// ends here; when it is retried, or ran out of time during the call, into a unit of work of its own, because
+/// the job's is rolled back when it throws. Nothing touches the database between the first step and the call.
 /// </summary>
 internal sealed partial class DeliverHandler(
     IUnitOfWorkFactory units,
     IEnumerable<INotificationChannel> channels,
     NotifyDbContext db,
-    IOrganizationMembers members,
+    IServiceProvider services,
     TimeProvider time,
     ILogger<DeliverHandler> logger) : IJobHandler<Deliver>
 {
@@ -56,10 +57,10 @@ internal sealed partial class DeliverHandler(
             return;
         }
 
-        var delivery = await db.Deliveries.SingleAsync(d => d.Id == job.DeliveryId, cancellationToken);
         if (start.Message is not { } message)
         {
-            Settle(delivery, "suppressed", start.Suppress);
+            var suppressed = await db.Deliveries.SingleAsync(d => d.Id == job.DeliveryId, cancellationToken);
+            Settle(suppressed, "suppressed", start.Suppress);
             await db.SaveChangesAsync(cancellationToken);
             return;
         }
@@ -67,6 +68,7 @@ internal sealed partial class DeliverHandler(
         if (message.Channel == Channels.InApp)
         {
             // A digest in the app is a row like any other notification; nothing leaves the instance.
+            var delivery = await db.Deliveries.SingleAsync(d => d.Id == job.DeliveryId, cancellationToken);
             var text = MessageRenderer.InAppDigest(message.Content);
             db.Notifications.Add(new Notification
             {
@@ -87,6 +89,7 @@ internal sealed partial class DeliverHandler(
             return;
         }
 
+        // The call to the outside: no transaction is open while it waits (master plan 9.2, ADR 041).
         var channel = channels.Single(c => c.Name == message.Channel);
         SendResult result;
         try
@@ -99,11 +102,43 @@ internal sealed partial class DeliverHandler(
             result = new SendResult(SendOutcome.Transient, $"{ex.GetType().Name}: {ex.Message}");
         }
 
-        delivery.Attempts = context.Attempt;
-        await RecordEndpointAsync(message, result, cancellationToken);
-        if (result.Devices is { } devices && result.Outcome != SendOutcome.Transient)
+        var timedOut = cancellationToken.IsCancellationRequested;
+        var retry = result.Outcome == SendOutcome.Transient && context.Attempt < Deliver.MaxAttempts;
+        if (timedOut || retry)
         {
-            await PushChannel.RecordAsync(db, devices, cancellationToken);
+            // The job's unit of work ends without a commit; what the call found must stay all the same: which devices
+            // took the message, which subscriptions are gone, and that a retry is due.
+            await using var scope = units.CreateScope();
+            var store = scope.ServiceProvider.GetRequiredService<NotifyDbContext>();
+            await WriteAsync(store, scope.ServiceProvider, job.DeliveryId, context.Attempt, message, result, CancellationToken.None);
+            await store.SaveChangesAsync(CancellationToken.None);
+            await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+            cancellationToken.ThrowIfCancellationRequested();
+            LogRetry(job.DeliveryId, message.Channel, context.Attempt);
+            throw new DeliveryRetryException(result.Error ?? "The channel failed for now.");
+        }
+
+        await WriteAsync(db, services, job.DeliveryId, context.Attempt, message, result, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>Writes what the call found into the delivery, the endpoint and the push subscriptions.</summary>
+    private async Task WriteAsync(
+        NotifyDbContext store, IServiceProvider scope, Guid deliveryId, int attempt, Outgoing message, SendResult result, CancellationToken cancellationToken)
+    {
+        var delivery = await store.Deliveries.SingleAsync(d => d.Id == deliveryId, cancellationToken);
+        delivery.Attempts = attempt;
+        if (message.Recipient.Kind == RecipientKinds.Endpoint && result.Status is { } status)
+        {
+            var endpoint = await store.Endpoints.SingleOrDefaultAsync(e => e.Id == message.Recipient.Id, cancellationToken);
+            endpoint?.LastStatus = status;
+            endpoint?.LastStatusAt = time.GetUtcNow();
+        }
+
+        if (result.Devices is { } devices)
+        {
+            // Also before a retry: a subscription that is gone goes now, a device that took the message counts it.
+            await PushChannel.RecordAsync(store, devices, cancellationToken);
         }
 
         switch (result.Outcome)
@@ -115,19 +150,15 @@ internal sealed partial class DeliverHandler(
             case SendOutcome.Suppressed:
                 Settle(delivery, "suppressed", result.Error);
                 break;
-            case SendOutcome.Permanent:
-                await GiveUpAsync(delivery, result.Error, cancellationToken);
+            case SendOutcome.Transient when attempt < Deliver.MaxAttempts:
+                Settle(delivery, "failed", result.Error ?? "Failed for now.");
                 break;
-            case SendOutcome.Transient when context.Attempt >= Deliver.MaxAttempts:
-                await GiveUpAsync(delivery, result.Error, cancellationToken);
+            default:
+                Settle(delivery, "dead", result.Error);
+                LogGaveUp(delivery.Id, delivery.Channel);
+                await WarnOwnersAsync(store, scope.GetRequiredService<IOrganizationMembers>(), delivery, cancellationToken);
                 break;
-            case SendOutcome.Transient:
-                await RecordRetryAsync(job.DeliveryId, context.Attempt, result, message, cancellationToken);
-                LogRetry(job.DeliveryId, message.Channel, context.Attempt);
-                throw new DeliveryRetryException(result.Error ?? "The channel failed for now.");
         }
-
-        await db.SaveChangesAsync(cancellationToken);
     }
 
     private static void Settle(Delivery delivery, string state, string? error)
@@ -136,27 +167,20 @@ internal sealed partial class DeliverHandler(
         delivery.LastError = error is null ? null : Truncate(error);
     }
 
-    private async Task GiveUpAsync(Delivery delivery, string? error, CancellationToken cancellationToken)
-    {
-        Settle(delivery, "dead", error);
-        LogGaveUp(delivery.Id, delivery.Channel);
-        await WarnOwnersAsync(delivery, cancellationToken);
-    }
-
     /// <summary>
     /// Level 5 that reached a recipient on none of their channels: the owners get an in-app warning (master plan 8.6).
     /// </summary>
-    private async Task WarnOwnersAsync(Delivery delivery, CancellationToken cancellationToken)
+    private async Task WarnOwnersAsync(NotifyDbContext store, IOrganizationMembers members, Delivery delivery, CancellationToken cancellationToken)
     {
-        var critical = await db.DeliveryEvents.AsNoTracking().Where(e => e.DeliveryId == delivery.Id && e.Level == 5).Select(e => e.EventId).ToListAsync(cancellationToken);
+        var critical = await store.DeliveryEvents.AsNoTracking().Where(e => e.DeliveryId == delivery.Id && e.Level == 5).Select(e => e.EventId).ToListAsync(cancellationToken);
         if (critical.Count == 0)
         {
             return;
         }
 
-        var reachedElsewhere = await db.DeliveryEvents.AsNoTracking()
+        var reachedElsewhere = await store.DeliveryEvents.AsNoTracking()
             .Where(e => e.RecipientKey == delivery.RecipientKey && e.Channel != delivery.Channel && critical.Contains(e.EventId))
-            .Join(db.Deliveries.AsNoTracking().Where(d => d.State != "dead" && d.State != "suppressed"), e => e.DeliveryId, d => d.Id, (e, d) => d.Id)
+            .Join(store.Deliveries.AsNoTracking().Where(d => d.State != "dead" && d.State != "suppressed"), e => e.DeliveryId, d => d.Id, (e, d) => d.Id)
             .AnyAsync(cancellationToken);
         if (reachedElsewhere)
         {
@@ -167,7 +191,7 @@ internal sealed partial class DeliverHandler(
         var now = time.GetUtcNow();
         foreach (var owner in (await members.ListAsync(cancellationToken)).Where(m => m.Role == "owner"))
         {
-            db.Notifications.Add(new Notification
+            store.Notifications.Add(new Notification
             {
                 Id = Guid.CreateVersion7(),
                 UserId = owner.UserId,
@@ -178,41 +202,6 @@ internal sealed partial class DeliverHandler(
                 Body = $"{delivery.Channel}: {delivery.LastError}",
                 CreatedAt = now,
             });
-        }
-    }
-
-    private async Task RecordRetryAsync(Guid deliveryId, int attempt, SendResult result, Outgoing message, CancellationToken cancellationToken)
-    {
-        await using var scope = units.CreateScope();
-        var store = scope.ServiceProvider.GetRequiredService<NotifyDbContext>();
-        var delivery = await store.Deliveries.SingleAsync(d => d.Id == deliveryId, cancellationToken);
-        delivery.State = "failed";
-        delivery.Attempts = attempt;
-        delivery.LastError = Truncate(result.Error ?? "Failed for now.");
-        if (message.Recipient.Kind == RecipientKinds.Endpoint && result.Status is { } status)
-        {
-            var endpoint = await store.Endpoints.SingleOrDefaultAsync(e => e.Id == message.Recipient.Id, cancellationToken);
-            endpoint?.LastStatus = status;
-            endpoint?.LastStatusAt = time.GetUtcNow();
-        }
-
-        if (result.Devices is { } devices)
-        {
-            // An expired device goes now, even though the delivery is tried again for the others.
-            await PushChannel.RecordAsync(store, devices, cancellationToken);
-        }
-
-        await store.SaveChangesAsync(cancellationToken);
-        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
-    }
-
-    private async Task RecordEndpointAsync(Outgoing message, SendResult result, CancellationToken cancellationToken)
-    {
-        if (message.Recipient.Kind == RecipientKinds.Endpoint && result.Status is { } status && result.Outcome != SendOutcome.Transient)
-        {
-            var endpoint = await db.Endpoints.SingleOrDefaultAsync(e => e.Id == message.Recipient.Id, cancellationToken);
-            endpoint?.LastStatus = status;
-            endpoint?.LastStatusAt = time.GetUtcNow();
         }
     }
 

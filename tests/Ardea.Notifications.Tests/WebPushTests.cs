@@ -5,12 +5,15 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Ardea.Notifications.Delivering;
+using Ardea.Platform.Persistence;
+using Ardea.Platform.Tenancy;
 using Ardea.TestSupport;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -148,6 +151,136 @@ public sealed class WebPushTests(PostgresServer server)
     }
 
     [Fact]
+    public async Task Devices_are_reached_together_within_a_budget_and_a_gone_one_is_removed_although_the_message_is_retried()
+    {
+        await using var service = await FakePushService.StartAsync();
+        await using var host = await NotifyTestHost.StartAsync(server, services: s =>
+        {
+            s.AddHttpClient(WebPushChannel.ClientName).ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false, UseProxy = false });
+            s.AddSingleton(new PushOptions { Budget = TimeSpan.FromSeconds(2) });
+        });
+        var s = await Scenario.StartAsync(host);
+        var owner = await s.OwnerIdAsync();
+        foreach (var name in new[] { "slow-1", "slow-2", "slow-3", "gone" })
+        {
+            await Device.Create().InsertAsync(host, owner, $"http://127.0.0.1:{service.Port}/push/{name}");
+        }
+
+        await s.RuleAsync("Phones", 2, ["action.raised"], Scenario.Target("push"));
+        await s.EventAsync("action.raised", await s.ActionAsync(2, level: 5), """{"level":5}""");
+        await s.EvaluateAsync();
+        host.Time.Advance(TimeSpan.FromMinutes(3));
+        var started = System.Diagnostics.Stopwatch.StartNew();
+        var errors = await host.RunJobsAsync();
+
+        // Three devices that never answer cost the budget once, not three times; the job retries for them.
+        Assert.InRange(started.Elapsed, TimeSpan.Zero, TimeSpan.FromSeconds(15));
+        Assert.Single(errors);
+        Assert.Equal(4, service.Requests.Count);
+        Assert.Equal("failed", await host.ScalarAsync<string>("SELECT state FROM notify.delivery WHERE channel = 'push'"));
+        // What the call found is kept all the same: the gone device is removed, the silent ones count a failure.
+        Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.push_subscription WHERE endpoint LIKE '%/gone'"));
+        Assert.Equal(3L, await s.CountAsync("SELECT count(*) FROM notify.push_subscription WHERE failed_count = 1"));
+    }
+
+    [Fact]
+    public async Task Three_refusals_of_the_key_in_a_row_remove_a_device_and_other_failures_break_the_run()
+    {
+        await using var host = await NotifyTestHost.StartAsync(server);
+        var s = await Scenario.StartAsync(host);
+        await Device.Create().InsertAsync(host, await s.OwnerIdAsync(), "https://fcm.googleapis.com/fcm/send/refused");
+        var id = await host.ScalarAsync<Guid>("SELECT id FROM notify.push_subscription");
+
+        async Task RecordAsync(PushDeviceOutcome outcome, string status)
+        {
+            await using var scope = host.Services.CreateAsyncScope();
+            scope.ServiceProvider.GetRequiredService<TenantContext>().SetOrganization(s.Organization);
+            await scope.ServiceProvider.GetRequiredService<WebPushChannel>()
+                .RecordAsync(scope.ServiceProvider.GetRequiredService<Persistence.NotifyDbContext>(), [new PushDeviceResult(id, outcome, status)], CancellationToken.None);
+            await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+        }
+
+        await RecordAsync(PushDeviceOutcome.Rejected, "403");
+        await RecordAsync(PushDeviceOutcome.Unavailable, "503");
+        await RecordAsync(PushDeviceOutcome.Rejected, "403");
+        await RecordAsync(PushDeviceOutcome.Rejected, "401");
+        Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.push_subscription"));
+        await RecordAsync(PushDeviceOutcome.Rejected, "403");
+        Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.push_subscription"));
+    }
+
+    [Fact]
+    public void A_message_in_Cyrillic_or_Chinese_fits_the_four_kilobytes_of_a_push_message()
+    {
+        var title = string.Concat(Enumerable.Repeat("Критическая уязвимость 严重漏洞 ", 20));
+        var body = string.Concat(Enumerable.Repeat("Обновите до версии 2025.12.1 并重启服务器。", 80));
+        var json = Messages.MessageRenderer.PushPayload("ru", Guid.CreateVersion7(), title, body, new Uri("https://ardea.test/o/acme/actions/143"), 5, "acme");
+
+        Assert.InRange(Encoding.UTF8.GetByteCount(json), 1, WebPushEncryption.MaxPlaintext);
+        Assert.Contains("Критическая", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("\\u", json, StringComparison.Ordinal);
+        var notification = JsonDocument.Parse(json).RootElement.GetProperty("notification");
+        Assert.EndsWith("…", notification.GetProperty("body").GetString(), StringComparison.Ordinal);
+        Assert.Equal("https://ardea.test/o/acme/actions/143", notification.GetProperty("navigate").GetString());
+    }
+
+    [Fact]
+    public async Task The_same_device_subscribing_twice_at_once_ends_with_one_subscription()
+    {
+        await using var host = await NotifyTestHost.StartAsync(server);
+        var s = await Scenario.StartAsync(host);
+        var keys = Device.Create().Keys;
+        var body = new { endpoint = "https://fcm.googleapis.com/fcm/send/twice", keys = new { p256dh = keys.P256dh, auth = keys.Auth } };
+
+        var answers = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => s.Owner.PostAsync("/api/v1/me/push-subscriptions", body)));
+
+        Assert.All(answers, a => Assert.True(a.StatusCode is HttpStatusCode.Created or HttpStatusCode.OK, a.StatusCode.ToString()));
+        Assert.Single(answers, a => a.StatusCode == HttpStatusCode.Created);
+        Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.push_subscription"));
+    }
+
+    [Fact]
+    public async Task A_device_is_seen_only_by_its_user_and_by_jobs_of_an_organisation_the_user_belongs_to()
+    {
+        await using var host = await NotifyTestHost.StartAsync(server);
+        var a = await Scenario.StartAsync(host);
+        using var member = await host.RegisterAsync("member@example.org", "Member");
+        await host.AddMemberAsync(a.Organization, "member@example.org", "member");
+        using var other = await host.RegisterAsync("other@example.org", "Other");
+        var b = await NotifyTestHost.OrganizationAsync(other, "Beta");
+        var keys = Device.Create().Keys;
+        await NotifyTestHost.JsonAsync(
+            await member.PostAsync("/api/v1/me/push-subscriptions", new { endpoint = "https://fcm.googleapis.com/fcm/send/member", keys = new { p256dh = keys.P256dh, auth = keys.Auth } }),
+            HttpStatusCode.Created);
+        var otherId = await host.ScalarAsync<Guid>("SELECT id FROM iam.\"user\" WHERE normalized_email = 'OTHER@EXAMPLE.ORG'");
+
+        async Task<(int Seen, int Deleted)> AsAsync(Guid organization, Guid? user)
+        {
+            await using var scope = host.Services.CreateAsyncScope();
+            var tenant = scope.ServiceProvider.GetRequiredService<TenantContext>();
+            tenant.SetOrganization(organization);
+            if (user is { } u)
+            {
+                tenant.SetUser(u);
+            }
+
+            var db = scope.ServiceProvider.GetRequiredService<Persistence.NotifyDbContext>();
+            var seen = await db.PushSubscriptions.CountAsync();
+            var deleted = await db.PushSubscriptions.ExecuteDeleteAsync();
+            // Rolled back: the probe changes nothing.
+            return (seen, deleted);
+        }
+
+        // A job of organisation Beta, which the member is not in, sees and removes nothing; neither does a user of Beta.
+        Assert.Equal((0, 0), await AsAsync(b, null));
+        Assert.Equal((0, 0), await AsAsync(b, otherId));
+        Assert.Empty((await NotifyTestHost.JsonAsync(await other.GetAsync("/api/v1/me/push-subscriptions"))).EnumerateArray());
+        // A job of the member's organisation sees the device.
+        Assert.Equal(1, (await AsAsync(a.Organization, null)).Seen);
+        Assert.Equal(1L, await a.CountAsync("SELECT count(*) FROM notify.push_subscription"));
+    }
+
+    [Fact]
     public void Encryption_matches_the_example_of_RFC_8291()
     {
         // RFC 8291, Appendix A.
@@ -196,8 +329,8 @@ public sealed class WebPushTests(PostgresServer server)
         public static Device Create() => new(ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256), RandomNumberGenerator.GetBytes(16));
 
         public Task InsertAsync(NotifyTestHost host, Guid user, string endpoint) => host.ExecuteAsync($"""
-            INSERT INTO notify.push_subscription (user_id, endpoint, endpoint_hash, p256dh, auth, label, created_at, failed_count)
-            VALUES ('{user}', '{endpoint}', '{WebPushChannel.Hash(endpoint)}', '{Keys.P256dh}', '{Keys.Auth}', 'Test browser', now(), 0)
+            INSERT INTO notify.push_subscription (user_id, endpoint, endpoint_hash, p256dh, auth, label, created_at, failed_count, rejected_count)
+            VALUES ('{user}', '{endpoint}', '{WebPushChannel.Hash(endpoint)}', '{Keys.P256dh}', '{Keys.Auth}', 'Test browser', now(), 0, 0)
             """);
 
         /// <summary>RFC 8291 and RFC 8188 from the receiving side, written out here rather than taken from the channel.</summary>
@@ -259,7 +392,14 @@ public sealed class WebPushTests(PostgresServer server)
                 await request.Body.CopyToAsync(body);
                 var headers = request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString(), StringComparer.OrdinalIgnoreCase);
                 self!.Requests.Enqueue(new Received(request.Path, headers, body.ToArray()));
-                return Results.StatusCode(self.Answers.TryDequeue(out var status) ? status : 201);
+                if (request.Path.Value!.Contains("/slow", StringComparison.Ordinal))
+                {
+                    // A push service that never answers, until the sender gives up.
+                    await Task.Delay(Timeout.Infinite, request.HttpContext.RequestAborted).ContinueWith(_ => { }, TaskScheduler.Default);
+                    return Results.StatusCode(504);
+                }
+
+                return Results.StatusCode(request.Path.Value!.EndsWith("/gone", StringComparison.Ordinal) ? 410 : self.Answers.TryDequeue(out var status) ? status : 201);
             });
             await app.StartAsync();
             self = new FakePushService(app, new Uri(app.Urls.First()).Port);

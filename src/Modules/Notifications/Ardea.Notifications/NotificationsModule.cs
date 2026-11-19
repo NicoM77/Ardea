@@ -46,6 +46,7 @@ public sealed class NotificationsModule : IModule
         services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<EmailChannel>());
         services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<WebhookChannel>());
         services.AddSingleton<VapidKeyStore>();
+        services.AddSingleton<PushOptions>();
         services.AddScoped<WebPushChannel>();
         services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<WebPushChannel>());
         // Push endpoints are capabilities of the browser makers' push services: never logged, never internal (ADR 041).

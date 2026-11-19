@@ -105,23 +105,75 @@ internal static class MessageRenderer
             string.Join("; ", subjects.Take(3).Select(g => texts.Title(g.OrderBy(i => i.At).Last()))), content.Link(inbox), content.Level, content.Organization.Slug);
     }
 
-    /// <summary>The JSON of a push message; also what the test message of a device is sent as.</summary>
-    public static string PushPayload(string locale, Guid id, string title, string body, Uri navigate, int? level, string? organization) =>
-        JsonSerializer.Serialize(
-            new Dictionary<string, object?>
-            {
-                ["web_push"] = 8030,
-                ["notification"] = new Dictionary<string, object?>
+    /// <summary>
+    /// Push JSON keeps non-ASCII letters as they are (an escaped form would triple a Cyrillic or Chinese title); the
+    /// payload is plain data for the browser, not HTML.
+    /// </summary>
+    private static readonly JsonSerializerOptions PushJson = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = false,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
+    /// <summary>
+    /// The JSON of a push message; also what the test message of a device is sent as. It fits the push services'
+    /// 4 KB (<see cref="Delivering.WebPushEncryption.MaxPlaintext"/>): title and body are cut by their UTF-8 length.
+    /// </summary>
+    public static string PushPayload(string locale, Guid id, string title, string body, Uri navigate, int? level, string? organization)
+    {
+        title = TruncateUtf8(title, 400);
+        body = TruncateUtf8(body, 1200);
+        while (true)
+        {
+            var json = JsonSerializer.Serialize(
+                new Dictionary<string, object?>
                 {
-                    ["title"] = Truncate(title, 200),
-                    ["body"] = Truncate(body, 600),
-                    ["navigate"] = navigate.AbsoluteUri,
-                    ["lang"] = locale,
-                    ["tag"] = id.ToString(),
+                    ["web_push"] = 8030,
+                    ["notification"] = new Dictionary<string, object?>
+                    {
+                        ["title"] = title,
+                        ["body"] = body,
+                        ["navigate"] = navigate.AbsoluteUri,
+                        ["lang"] = locale,
+                        ["tag"] = id.ToString(),
+                    },
+                    ["ardea"] = new Dictionary<string, object?> { ["delivery"] = id, ["level"] = level, ["organization"] = organization },
                 },
-                ["ardea"] = new Dictionary<string, object?> { ["delivery"] = id, ["level"] = level, ["organization"] = organization },
-            },
-            Json);
+                PushJson);
+            var over = Encoding.UTF8.GetByteCount(json) - Delivering.WebPushEncryption.MaxPlaintext;
+            if (over <= 0 || body.Length == 0)
+            {
+                return json;
+            }
+
+            body = TruncateUtf8(body, Math.Max(0, Encoding.UTF8.GetByteCount(body) - over - 8));
+        }
+    }
+
+    /// <summary>At most <paramref name="bytes"/> of UTF-8, cut between characters and ended with «…».</summary>
+    internal static string TruncateUtf8(string value, int bytes)
+    {
+        if (Encoding.UTF8.GetByteCount(value) <= bytes)
+        {
+            return value;
+        }
+
+        var budget = bytes - 3;
+        var used = 0;
+        var end = 0;
+        foreach (var rune in value.EnumerateRunes())
+        {
+            if (used + rune.Utf8SequenceLength > budget)
+            {
+                break;
+            }
+
+            used += rune.Utf8SequenceLength;
+            end += rune.Utf16SequenceLength;
+        }
+
+        return end == 0 ? string.Empty : value[..end] + "…";
+    }
 
     /// <summary>The webhook's body, schema <c>ardea.notification.v1</c> (master plan 8.5).</summary>
     public static string Webhook(MessageContent content)

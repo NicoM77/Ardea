@@ -6144,6 +6144,38 @@
         }
       }
     },
+    "/api/v1/notify/addresses/resubscribe": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "resubscribeExternalAddress",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orgs/{orgId}/deliveries": {
       "get": {
         "tags": [

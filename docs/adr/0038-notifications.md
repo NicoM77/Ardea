@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-11-19
-- Refines: ADR 014 (notification state), ADR 023 (one transaction per unit of work), ADR 029 (system functions), ADR 035 (events as history rows)
+- Refines: ADR 006 (job table as outbox), ADR 014 (notification state), ADR 023 (one transaction per unit of work), ADR 029 (system functions), ADR 035 (events as history rows)
 - Master plan: 4.7, 8, 9.2, 9.5, 10.2, tasks 5.1 to 5.4, 5.6, 5.7
 
 ## Context
@@ -22,9 +22,28 @@ digest schedule works.
    `notify.pending_event` and queues `notify.evaluate` for the organisation (one waiting job per organisation).
    An event and the job that evaluates it commit together or not at all (master plan 3.3). Events are read back
    by id through `IActionFacts`, a read contract of Assessment; Notifications never reads `assess` tables.
-2. **One evaluation per organisation at a time, in order.** `notify.evaluate` takes an advisory lock per
-   organisation and the pending events ordered by time, 200 at a time. Raise, lower, raise again for the same
-   action is therefore evaluated in the order it happened.
+   **A coalesced enqueue holds the waiting job until its cause commits (Platform, refines ADR 006).** Coalescing
+   onto a waiting job used to take no lock: a worker could claim and run that job before the enqueuing transaction
+   committed, miss what it wrote, and leave an event waiting until the next one. `IJobQueue` now takes a share lock
+   (`FOR SHARE`) on the waiting row; the claim's `FOR UPDATE SKIP LOCKED` passes over it until the cause commits.
+   Share locks do not conflict with each other, so causes coalescing onto the same job never wait for one another
+   and cannot deadlock; only the claim waits, which is what it should. If the waiting job is claimed between the
+   insert attempt and the lock, the enqueue inserts a new job. A lock can be held while a cause does other work
+   (e.g. a fetch stretch); the job then simply starts after that commit. As a safety net, the instance's minute
+   schedule (`notify.find-due-digests`) queues the evaluation of organisations whose events have waited longer
+   than two minutes (`notify.organizations_with_waiting_events`).
+   **A failing hand-off fails the commit for good:** when an action registered with `BeforeCommit` throws, the
+   unit of work refuses every later commit and can only roll back.
+2. **One evaluation per organisation at a time, in order; failures isolated per event.** `notify.evaluate` takes
+   an advisory lock per organisation and the pending events ordered by time, 200 at a time. Raise, lower, raise
+   again for the same action is therefore evaluated in the order it happened. Each event runs under a savepoint:
+   one that throws is rolled back alone, counted (`attempts`, `last_error`) and tried again when the sweep finds it;
+   after five failures it is set aside (`failed_at`), shown in the instance status (`notify_events_failed`,
+   `notify.failed_event_count()`), and the organisation's other events go on. Its order relative to later events
+   of the same action is lost; failures are expected to be rare and visible.
+   **Rules and the state compare the level the event reports** (`level` of `action.raised`, `to` of a level
+   change), not the level the action has reached since: «raised at 4, then raised to 5», evaluated late, are still
+   two events at 4 and 5.
 3. **The state of 8.4 is written when a message is decided, not when it went out.** Otherwise a second event
    during the two-minute bundling would send the same again. A falling level lowers `last_level` of every
    recipient of the action at once (`ExecuteUpdate`), whether or not they hear the all-clear. Assignments, team
@@ -42,7 +61,13 @@ digest schedule works.
    and reads its events after. An event therefore joins a message before it is read or starts a new one; the
    additional state `sending` exists for this. In-app notifications are written at once, one per event.
 6. **Delivery in three steps (master plan 9.2).** `notify.deliver` marks and reads in a unit of work of its
-   own, calls the channel without a transaction, and writes the outcome in the job's unit of work. A transient
+   own, calls the channel without a transaction, and writes the outcome in the job's unit of work. Every exception
+   of a channel is an outcome (transient unless known to be final), so a message never stays in `sending` and the
+   owners' level 5 fallback comes. Once the SMTP server accepted the message with its answer to DATA, a failure
+   while saying goodbye still counts as sent. **Delivery is at least once:** if the job dies after the call and
+   before writing the outcome, the retry sends again. Receivers drop a second copy by the stable delivery id
+   (`Ardea-Delivery` header and `id` of a webhook, `X-Ardea-Delivery` header of an e-mail) or by the event ids in
+   the payload. Webhook requests are not logged (`RemoveAllLoggers`): chat services carry the secret in the path. A transient
    failure is written as `failed` in a separate unit of work and then thrown, so the job system retries with
    its back-off; 12 attempts reach about 3.5 hours. Permanent failures (recipient refused, 4xx except 408 and
    429, blocked target) end as `dead`. If a level 5 message is given up and the recipient was reached on no
@@ -63,7 +88,12 @@ digest schedule works.
    id is the entry's id.
 9. **External addresses.** An admin adds an address; the job `notify.send-address-confirmation` makes a token
    (`c.{organisation}.{address}.{32 random bytes}`), stores its SHA-256 and mails the link; it expires after 7
-   days. Every message to an external address carries a signed unsubscribe token (Data Protection, purpose
+   days. Anyone can found an organisation under any name, so confirmation mails are limited against spam and
+   phishing: at most 50 external addresses per organisation, 3 confirmation mails per address and organisation
+   with 15 minutes between them, 20 per organisation in 24 hours, and 3 organisations asking the same address in
+   24 hours over the instance (`notify.address_confirmations_since`). An address that unsubscribed gets no
+   confirmation mail again and cannot be deleted and added anew; only the recipient takes the unsubscribe back,
+   with the same signed link (`POST /notify/addresses/resubscribe`). Every message to an external address carries a signed unsubscribe token (Data Protection, purpose
    `notify.unsubscribe`, no expiry) in the body and as RFC 8058 one-click. Confirm and unsubscribe are anonymous
    `POST`s that the CSRF check lets through because their token, not a cookie, authenticates them
    (`TokenAuthenticated`); the token names the organisation, which becomes the tenant of the unit of work.
@@ -82,12 +112,22 @@ digest schedule works.
     organisation's settings, next to `emailContent`, full or minimal). Messages are worded in English or German;
     French and Italian fall back to English.
 
+13. **Outbound guard (Platform).** The guarded handler uses no proxy, so the check sees the target and not a
+    proxy. IPv6 forms that embed an IPv4 address (IPv4-mapped, IPv4-compatible, NAT64 `64:ff9b::/96`, 6to4
+    `2002::/16`) are checked as that IPv4 address. An instance that can reach the internet only through a proxy
+    cannot use webhooks or GitHub until the guard learns to check through one.
+14. **Time zone.** When an organisation's time zone changes, `IOrganizationTimeZoneSubscriber` (Iam.Contracts)
+    moves the next digest of every target to the time its schedule names in the new zone.
+
 ## System functions (ADR 029)
 
 | Function | Flow (master plan 9.2) |
 |---|---|
 | `notify.organizations_with_warning_rules()` | warning without identifier: the organisations with an enabled rule for warnings over all projects; ids only |
 | `notify.due_digest_targets(now)` | digests: the due digest targets, or those without a schedule yet; organisation and target ids only |
+| `notify.organizations_with_waiting_events(before)` | safety net: organisations with events waiting since before a point in time and not set aside; ids only |
+| `notify.failed_event_count()` | instance status: events set aside after repeated failures; a count only |
+| `notify.address_confirmations_since(address, since)` | limit on confirmation mails: organisations that asked this address since a point in time; a count only |
 
 ## Policies
 

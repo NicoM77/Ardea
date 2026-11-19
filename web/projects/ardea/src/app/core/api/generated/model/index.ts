@@ -128,6 +128,7 @@ export * from './replaceComponentsRequest';
 export * from './replaceComponentsResponse';
 export * from './repositoryView';
 export * from './resetPasswordRequest';
+export * from './resubscribeExternalAddressParams';
 export * from './reviewEntryRef';
 export * from './reviewItemView';
 export * from './searchCatalogParams';

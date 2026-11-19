@@ -80,6 +80,9 @@ Every query bypasses the EF filter, so only the database separates tenants.
   | `assess.model_tokens_exhausted(since, quota)` | token quota of the instance: whether all organisations together used the quota since a point in time, a flag only (ADR 037) |
   | `notify.organizations_with_warning_rules()` | warning without identifier: the organisations with an enabled rule for warnings (ADR 038) |
   | `notify.due_digest_targets(now)` | digests: the digest targets that are due, organisation and target ids only (ADR 038) |
+  | `notify.organizations_with_waiting_events(before)` | safety net of the notifications: the organisations with events waiting since before a point in time (ADR 038) |
+  | `notify.failed_event_count()` | instance status: notification events set aside after repeated failures, a count only (ADR 038) |
+  | `notify.address_confirmations_since(address, since)` | limit on confirmation mails: how many organisations asked an address since a point in time, a count only (ADR 038) |
 
 - `TenantIsolationTests` checks that every table has exactly one kind and the matching policy, and calls
   every organisation endpoint with foreign organisations and foreign object ids.

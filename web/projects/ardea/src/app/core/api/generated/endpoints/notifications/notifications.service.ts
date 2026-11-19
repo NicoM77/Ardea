@@ -48,6 +48,7 @@ import type {
   NotificationRuleRequest,
   NotificationRuleView,
   PreviewAddressLinkParams,
+  ResubscribeExternalAddressParams,
   UnreadCountView,
   UnsubscribeExternalAddressParams,
   WebhookEndpointRequest,
@@ -801,6 +802,40 @@ export class NotificationsService {
     );
   }
 
+ resubscribeExternalAddress<TData = void>(params?: ResubscribeExternalAddressParams, options?: HttpClientBodyOptions): Observable<TData>;
+  resubscribeExternalAddress<TData = void>(
+    params?: ResubscribeExternalAddressParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/notify/addresses/resubscribe`,
+      undefined,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/notify/addresses/resubscribe`,
+      undefined,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/notify/addresses/resubscribe`,
+      undefined,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
+    );
+  }
+
  markNotificationsRead<TData = UnreadCountView>(orgId: string,
     markNotificationsReadRequest: MarkNotificationsReadRequest, options?: HttpClientBodyOptions): Observable<TData>;
   markNotificationsRead<TData = UnreadCountView>(
@@ -905,6 +940,7 @@ export type GetNotificationPreferencesResourceResult = NonNullable<NotificationP
 
 
 
+
 export type CreateNotificationRuleClientResult = NonNullable<NotificationRuleView>
 export type ReplaceNotificationRuleClientResult = NonNullable<NotificationRuleView>
 export type DeleteNotificationRuleClientResult = NonNullable<void>
@@ -917,6 +953,7 @@ export type ResendAddressConfirmationClientResult = NonNullable<ExternalAddressV
 export type DeleteExternalAddressClientResult = NonNullable<void>
 export type ConfirmExternalAddressClientResult = NonNullable<void>
 export type UnsubscribeExternalAddressClientResult = NonNullable<void>
+export type ResubscribeExternalAddressClientResult = NonNullable<void>
 export type MarkNotificationsReadClientResult = NonNullable<UnreadCountView>
 export type SetNotificationPreferencesClientResult = NonNullable<NotificationPreferencesView>
 

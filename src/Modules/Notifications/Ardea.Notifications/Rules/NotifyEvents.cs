@@ -41,10 +41,10 @@ internal static class Channels
     public const string Email = "email";
     public const string Webhook = "webhook";
 
-    /// <summary>Task 5.5; rules cannot use it yet.</summary>
+    /// <summary>Web Push to the members' devices (task 5.5, ADR 040); immediate only.</summary>
     public const string Push = "push";
 
-    public static readonly IReadOnlyList<string> Usable = [InApp, Email, Webhook];
+    public static readonly IReadOnlyList<string> Usable = [InApp, Email, Webhook, Push];
 }
 
 internal static class RecipientKinds
@@ -59,7 +59,7 @@ internal static class RecipientKinds
     /// <summary>Which channels a kind of recipient can be reached on.</summary>
     public static bool Reaches(string kind, string channel) => kind switch
     {
-        Role or User => channel is Channels.InApp or Channels.Email,
+        Role or User => channel is Channels.InApp or Channels.Email or Channels.Push,
         Address => channel == Channels.Email,
         Endpoint => channel == Channels.Webhook,
         _ => false,

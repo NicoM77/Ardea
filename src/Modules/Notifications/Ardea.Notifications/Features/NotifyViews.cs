@@ -17,7 +17,7 @@ internal sealed record NotificationRuleView(
     IReadOnlyList<NotificationTargetView> Targets, IReadOnlyList<string> Warnings, DateTimeOffset CreatedAt, DateTimeOffset ChangedAt);
 
 /// <param name="Id">The target.</param>
-/// <param name="Channel"><c>in_app</c>, <c>email</c> or <c>webhook</c>.</param>
+/// <param name="Channel"><c>in_app</c>, <c>email</c>, <c>webhook</c> or <c>push</c> (immediate only).</param>
 /// <param name="RecipientKind"><c>role</c> (that role and the ones above), <c>user</c>, <c>address</c> or <c>endpoint</c>.</param>
 /// <param name="RecipientRef">The role, user id, external address id or endpoint id.</param>
 /// <param name="RecipientLabel">The member's name, the address or the endpoint's name; empty when it no longer exists.</param>
@@ -37,7 +37,7 @@ internal sealed record NotificationTargetRequest(string? Channel, string? Recipi
 /// <summary>A channel and whether it can be used now (master plan 8.5: without SMTP, e-mail is off).</summary>
 /// <param name="Channel"><c>in_app</c>, <c>email</c>, <c>webhook</c> or <c>push</c>.</param>
 /// <param name="Available">Whether rules can reach anyone through it.</param>
-/// <param name="Reason"><c>smtp_not_configured</c>, <c>not_implemented</c>; empty when available.</param>
+/// <param name="Reason"><c>smtp_not_configured</c>; empty when available.</param>
 internal sealed record NotificationChannelView(string Channel, bool Available, string? Reason);
 
 /// <summary>A webhook target. The address is shown by its host only; the secret only once, right after creating or rotating it.</summary>

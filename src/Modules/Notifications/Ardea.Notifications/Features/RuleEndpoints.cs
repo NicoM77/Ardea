@@ -42,7 +42,8 @@ internal static class RuleEndpoints
             new(Channels.InApp, true, null),
             new(Channels.Email, smtp, smtp ? null : "smtp_not_configured"),
             new(Channels.Webhook, true, null),
-            new(Channels.Push, false, "not_implemented"),
+            // Members turn it on per device; a member without a subscription is simply not reached by push.
+            new(Channels.Push, true, null),
         ];
     }
 
@@ -232,7 +233,12 @@ internal static class RuleEndpoints
     {
         if (target.Channel is not { } channel || !Channels.Usable.Contains(channel))
         {
-            return target.Channel == Channels.Push ? "Web Push is not available yet." : $"Choose a channel: {string.Join(", ", Channels.Usable)}.";
+            return $"Choose a channel: {string.Join(", ", Channels.Usable)}.";
+        }
+
+        if (channel == Channels.Push && target.Mode == "digest")
+        {
+            return "Push messages go out at once; choose immediate.";
         }
 
         if (target.RecipientKind is not { } kind || !RecipientKinds.All.Contains(kind) || !RecipientKinds.Reaches(kind, channel))

@@ -35,6 +35,7 @@ import type {
 import type {
   AddressSubscriptionView,
   ConfirmExternalAddressParams,
+  DeletePushSubscriptionByEndpointParams,
   DeliveryListView,
   ExternalAddressRequest,
   ExternalAddressView,
@@ -48,6 +49,10 @@ import type {
   NotificationRuleRequest,
   NotificationRuleView,
   PreviewAddressLinkParams,
+  PushPublicKeyView,
+  PushSubscriptionRequest,
+  PushSubscriptionView,
+  PushTestView,
   ResubscribeExternalAddressParams,
   UnreadCountView,
   UnsubscribeExternalAddressParams,
@@ -212,6 +217,15 @@ function filterParams(
 /**
  * @remarks httpResource is available in Angular 19.2 and later.
  */
+export function getPushPublicKeyResource(options: OrvalHttpResourceOptions<PushPublicKeyView, unknown> & { defaultValue: NoInfer<PushPublicKeyView> }): HttpResourceRef<PushPublicKeyView>;
+export function getPushPublicKeyResource(options?: OrvalHttpResourceOptions<PushPublicKeyView, unknown>): HttpResourceRef<PushPublicKeyView | undefined>;
+export function getPushPublicKeyResource(options?: OrvalHttpResourceOptions<PushPublicKeyView, unknown>): HttpResourceRef<PushPublicKeyView | undefined> {
+  return httpResource<PushPublicKeyView>(() => applyOrvalRequestExtension(`/api/v1/push/public-key`, options), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
 export function listNotificationChannelsResource(orgId: Signal<string | undefined>,
   options: OrvalHttpResourceOptions<NotificationChannelView[], unknown> & { defaultValue: NoInfer<NotificationChannelView[]> }): HttpResourceRef<NotificationChannelView[]>;
 export function listNotificationChannelsResource(orgId: Signal<string | undefined>,
@@ -359,6 +373,15 @@ export function getNotificationPreferencesResource(orgId: Signal<string | undefi
 export function getNotificationPreferencesResource(orgId: Signal<string | undefined>,
   options?: OrvalHttpResourceOptions<NotificationPreferencesView, unknown>): HttpResourceRef<NotificationPreferencesView | undefined> {
   return httpResource<NotificationPreferencesView>(() => (orgId() === undefined ? undefined : applyOrvalRequestExtension(`/api/v1/orgs/${orgId()}/notification-preferences`, options)), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function listPushSubscriptionsResource(options: OrvalHttpResourceOptions<PushSubscriptionView[], unknown> & { defaultValue: NoInfer<PushSubscriptionView[]> }): HttpResourceRef<PushSubscriptionView[]>;
+export function listPushSubscriptionsResource(options?: OrvalHttpResourceOptions<PushSubscriptionView[], unknown>): HttpResourceRef<PushSubscriptionView[] | undefined>;
+export function listPushSubscriptionsResource(options?: OrvalHttpResourceOptions<PushSubscriptionView[], unknown>): HttpResourceRef<PushSubscriptionView[] | undefined> {
+  return httpResource<PushSubscriptionView[]>(() => applyOrvalRequestExtension(`/api/v1/me/push-subscriptions`, options), options);
 }
 
 
@@ -904,8 +927,133 @@ export class NotificationsService {
     );
   }
 
+ createPushSubscription<TData = PushSubscriptionView>(pushSubscriptionRequest: PushSubscriptionRequest, options?: HttpClientBodyOptions): Observable<TData>;
+  createPushSubscription<TData = PushSubscriptionView>(
+    pushSubscriptionRequest: PushSubscriptionRequest, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/me/push-subscriptions`,
+      pushSubscriptionRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/me/push-subscriptions`,
+      pushSubscriptionRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/me/push-subscriptions`,
+      pushSubscriptionRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
+ deletePushSubscriptionByEndpoint<TData = void>(params?: DeletePushSubscriptionByEndpointParams, options?: HttpClientBodyOptions): Observable<TData>;
+  deletePushSubscriptionByEndpoint<TData = void>(
+    params?: DeletePushSubscriptionByEndpointParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
+
+    if (options?.observe === 'events') {
+      return this.http.delete<TData>(
+      `/api/v1/me/push-subscriptions`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+        params: filteredParams,}
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.delete<TData>(
+      `/api/v1/me/push-subscriptions`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+        params: filteredParams,}
+    );
+    }
+
+    return this.http.delete<TData>(
+      `/api/v1/me/push-subscriptions`,{
+    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+        params: filteredParams,}
+    );
+  }
+
+ deletePushSubscription<TData = void>(id: string, options?: HttpClientBodyOptions): Observable<TData>;
+  deletePushSubscription<TData = void>(
+    id: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.delete<TData>(
+      `/api/v1/me/push-subscriptions/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.delete<TData>(
+      `/api/v1/me/push-subscriptions/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.delete<TData>(
+      `/api/v1/me/push-subscriptions/${id}`,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
+ testPushSubscription<TData = PushTestView>(id: string, options?: HttpClientBodyOptions): Observable<TData>;
+  testPushSubscription<TData = PushTestView>(
+    id: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/me/push-subscriptions/${id}/test`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/me/push-subscriptions/${id}/test`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/me/push-subscriptions/${id}/test`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
 };
 
+export type GetPushPublicKeyResourceResult = NonNullable<PushPublicKeyView>
 export type ListNotificationChannelsResourceResult = NonNullable<NotificationChannelView[]>
 export type ListNotificationRulesResourceResult = NonNullable<NotificationRuleView[]>
 export type GetNotificationRuleResourceResult = NonNullable<NotificationRuleView>
@@ -916,6 +1064,13 @@ export type ListDeliveriesResourceResult = NonNullable<DeliveryListView>
 export type ListInAppNotificationsResourceResult = NonNullable<InAppNotificationListView>
 export type CountUnreadNotificationsResourceResult = NonNullable<UnreadCountView>
 export type GetNotificationPreferencesResourceResult = NonNullable<NotificationPreferencesView>
+export type ListPushSubscriptionsResourceResult = NonNullable<PushSubscriptionView[]>
+
+
+
+
+
+
 
 
 
@@ -956,6 +1111,10 @@ export type UnsubscribeExternalAddressClientResult = NonNullable<void>
 export type ResubscribeExternalAddressClientResult = NonNullable<void>
 export type MarkNotificationsReadClientResult = NonNullable<UnreadCountView>
 export type SetNotificationPreferencesClientResult = NonNullable<NotificationPreferencesView>
+export type CreatePushSubscriptionClientResult = NonNullable<PushSubscriptionView>
+export type DeletePushSubscriptionByEndpointClientResult = NonNullable<void>
+export type DeletePushSubscriptionClientResult = NonNullable<void>
+export type TestPushSubscriptionClientResult = NonNullable<PushTestView>
 
 /**
  * Utility type for httpResource results with status tracking.

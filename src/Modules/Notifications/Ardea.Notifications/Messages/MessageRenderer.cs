@@ -81,6 +81,48 @@ internal static class MessageRenderer
         return new EmailMessage(to, subject, text.ToString(), body, headers);
     }
 
+    /// <summary>
+    /// A push message (master plan 8.5, 11.9): priority, number and title, and the page a click opens. In the form of
+    /// Declarative Web Push (<c>web_push: 8030</c>), which Safari shows by itself and the service worker reads the same
+    /// way. Several actions in one message name the count and open the inbox.
+    /// </summary>
+    public static string Push(MessageContent content)
+    {
+        var texts = MessageTexts.For(content.Locale);
+        var subjects = content.Items.GroupBy(SubjectKey).OrderByDescending(g => g.Max(i => i.Level ?? 0)).ToList();
+        var inbox = $"/o/{content.Organization.Slug}/notifications";
+        if (subjects.Count == 1)
+        {
+            var last = subjects[0].OrderBy(i => i.At).Last();
+            return PushPayload(
+                texts.Locale, content.DeliveryId, texts.Title(last), texts.Headline(last, content.RecipientUserId), content.Link(content.PathOf(last) ?? inbox),
+                content.Level, content.Organization.Slug);
+        }
+
+        var level = content.Level ?? 0;
+        return PushPayload(
+            texts.Locale, content.DeliveryId, texts.Format("title.several", level, texts.LevelName(level), subjects.Count, content.Organization.Name),
+            string.Join("; ", subjects.Take(3).Select(g => texts.Title(g.OrderBy(i => i.At).Last()))), content.Link(inbox), content.Level, content.Organization.Slug);
+    }
+
+    /// <summary>The JSON of a push message; also what the test message of a device is sent as.</summary>
+    public static string PushPayload(string locale, Guid id, string title, string body, Uri navigate, int? level, string? organization) =>
+        JsonSerializer.Serialize(
+            new Dictionary<string, object?>
+            {
+                ["web_push"] = 8030,
+                ["notification"] = new Dictionary<string, object?>
+                {
+                    ["title"] = Truncate(title, 200),
+                    ["body"] = Truncate(body, 600),
+                    ["navigate"] = navigate.AbsoluteUri,
+                    ["lang"] = locale,
+                    ["tag"] = id.ToString(),
+                },
+                ["ardea"] = new Dictionary<string, object?> { ["delivery"] = id, ["level"] = level, ["organization"] = organization },
+            },
+            Json);
+
     /// <summary>The webhook's body, schema <c>ardea.notification.v1</c> (master plan 8.5).</summary>
     public static string Webhook(MessageContent content)
     {

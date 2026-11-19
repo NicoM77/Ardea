@@ -30,7 +30,8 @@ internal enum SendOutcome
 /// <param name="Outcome">What happened.</param>
 /// <param name="Error">Why it did not work, without secrets.</param>
 /// <param name="Status">For webhooks: the HTTP status or the kind of failure, shown at the endpoint.</param>
-internal sealed record SendResult(SendOutcome Outcome, string? Error = null, string? Status = null);
+/// <param name="Devices">For push: what each device's push service answered, written to its subscription.</param>
+internal sealed record SendResult(SendOutcome Outcome, string? Error = null, string? Status = null, IReadOnlyList<PushDeviceResult>? Devices = null);
 
 /// <summary>A message ready to go out: content and where it goes; read before the call, sent without a transaction.</summary>
 internal sealed record Outgoing
@@ -53,11 +54,14 @@ internal sealed record Outgoing
 
     /// <summary>The instance administrator released the webhook's host for private addresses (master plan 9.5).</summary>
     public bool AllowInternal { get; init; }
+
+    /// <summary>For push: the member's subscribed devices, read in the first step.</summary>
+    public IReadOnlyList<PushDevice> PushDevices { get; init; } = [];
 }
 
 /// <summary>
 /// One way to reach a recipient (master plan 3.6, 8.5): one class per channel. In-app notifications are
-/// written in the evaluation's own transaction and need no class; Web Push (task 5.5) comes as one more.
+/// written in the evaluation's own transaction and need no class.
 /// </summary>
 internal interface INotificationChannel
 {

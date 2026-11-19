@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore.Design;
 namespace Ardea.Notifications.Persistence;
 
 /// <summary>
-/// Schema <c>notify</c> (master plan 4.7): organisation data, and two user tables that also carry the
-/// organisation (<c>notification</c>, <c>user_preference</c>).
+/// Schema <c>notify</c> (master plan 4.7): organisation data, two user tables that also carry the
+/// organisation (<c>notification</c>, <c>user_preference</c>), and the devices' push subscriptions, which do not.
 /// </summary>
 internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options, ITenantContext tenant) : ModuleDbContext(options, tenant)
 {
@@ -34,6 +34,8 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
     public DbSet<UserPreference> Preferences => Set<UserPreference>();
 
     public DbSet<PendingEvent> PendingEvents => Set<PendingEvent>();
+
+    public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -178,6 +180,21 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             pending.Property(p => p.Kind).HasMaxLength(40);
             pending.Property(p => p.LastError).HasMaxLength(2000);
             pending.HasIndex(p => new { p.OrganizationId, p.At }).HasDatabaseName("ix_pending_event_org");
+        });
+
+        modelBuilder.Entity<PushSubscription>(subscription =>
+        {
+            subscription.ToTable("push_subscription");
+            subscription.HasKey(s => s.Id);
+            subscription.Property(s => s.Id).HasDefaultValueSql("uuidv7()");
+            subscription.Property(s => s.Endpoint).HasMaxLength(2048);
+            subscription.Property(s => s.EndpointHash).HasMaxLength(64);
+            subscription.Property(s => s.P256dh).HasMaxLength(100);
+            subscription.Property(s => s.Auth).HasMaxLength(50);
+            subscription.Property(s => s.UserAgent).HasMaxLength(500);
+            subscription.Property(s => s.Label).HasMaxLength(100);
+            // One row per user and device; the address is long, so the index holds its hash (master plan 4.7).
+            subscription.HasIndex(s => new { s.UserId, s.EndpointHash }).IsUnique().HasDatabaseName("ux_push_subscription");
         });
 
         ApplyTenantFilters(modelBuilder);

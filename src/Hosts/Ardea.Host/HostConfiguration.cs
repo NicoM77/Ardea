@@ -29,7 +29,8 @@ internal static class HostConfiguration
             .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyTokensKey)
             .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyTokensPerOrganizationKey)
             .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyRequestsPerOrganizationKey)
-            .Add(AiErrors(configuration));
+            .Add(AiErrors(configuration))
+            .Add(Ardea.Notifications.NotificationsModule.ConfigurationErrors(configuration));
 
     /// <summary>A provider that is configured wrongly stops the start instead of failing on its first call (master plan 7.8).</summary>
     private static IReadOnlyList<string> AiErrors(IConfiguration configuration)

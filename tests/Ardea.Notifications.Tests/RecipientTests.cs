@@ -22,7 +22,7 @@ public sealed class RecipientTests(PostgresServer server)
         var rules = (await NotifyTestHost.JsonAsync(await owner.GetAsync($"/api/v1/orgs/{organization}/rules"))).EnumerateArray().ToList();
         Assert.Equal(["critical|5", "high|4", "weekly|2"], rules.Select(r => $"{r.GetProperty("preset").GetString()}|{r.GetProperty("minLevel").GetInt32()}"));
         Assert.Equal(
-            ["in_app role admin immediate", "email role admin immediate"],
+            ["in_app role admin immediate", "email role admin immediate", "push role admin immediate"],
             rules[0].GetProperty("targets").EnumerateArray().Select(Describe));
         Assert.Equal(
             ["in_app role viewer immediate", "email role viewer digest 0 8 * * 1-5"],

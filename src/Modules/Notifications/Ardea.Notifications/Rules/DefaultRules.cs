@@ -6,9 +6,8 @@ namespace Ardea.Notifications.Rules;
 
 /// <summary>
 /// The three rules every new organisation starts with (master plan 8.3). They overlap on purpose; the
-/// state per recipient and channel keeps them from sending the same twice (8.4). Push joins rule 1 with
-/// task 5.5. The migration <c>DefaultRulesForExistingOrganizations</c> writes the same for organisations
-/// created before.
+/// state per recipient and channel keeps them from sending the same twice (8.4). The migrations
+/// <c>InitialNotify</c> and <c>WebPush</c> (the push target of rule 1) write the same for organisations created before.
 /// </summary>
 internal sealed class DefaultRules(NotifyDbContext db, IOrganizationProfiles organizations, TimeProvider time) : IOrganizationCreatedSubscriber
 {
@@ -78,7 +77,8 @@ internal sealed class DefaultRules(NotifyDbContext db, IOrganizationProfiles org
         [
             Rule("critical", "Critical at once", 5, ActionEvents,
                 Target(Channels.InApp, "admin", "immediate"),
-                Target(Channels.Email, "admin", "immediate")),
+                Target(Channels.Email, "admin", "immediate"),
+                Target(Channels.Push, "admin", "immediate")),
             Rule("high", "High", 4, ActionEvents,
                 Target(Channels.InApp, "viewer", "immediate"),
                 Target(Channels.Email, "viewer", "digest", Weekdays)),

@@ -101,6 +101,11 @@ internal sealed partial class DeliverHandler(
 
         delivery.Attempts = context.Attempt;
         await RecordEndpointAsync(message, result, cancellationToken);
+        if (result.Devices is { } devices && result.Outcome != SendOutcome.Transient)
+        {
+            await PushChannel.RecordAsync(db, devices, cancellationToken);
+        }
+
         switch (result.Outcome)
         {
             case SendOutcome.Sent:
@@ -191,6 +196,12 @@ internal sealed partial class DeliverHandler(
             endpoint?.LastStatusAt = time.GetUtcNow();
         }
 
+        if (result.Devices is { } devices)
+        {
+            // An expired device goes now, even though the delivery is tried again for the others.
+            await PushChannel.RecordAsync(store, devices, cancellationToken);
+        }
+
         await store.SaveChangesAsync(cancellationToken);
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
     }
@@ -204,6 +215,8 @@ internal sealed partial class DeliverHandler(
             endpoint?.LastStatusAt = time.GetUtcNow();
         }
     }
+
+    private WebPushChannel PushChannel => channels.OfType<WebPushChannel>().Single();
 
     private static string Truncate(string error) => error.Length <= 2000 ? error : error[..2000];
 

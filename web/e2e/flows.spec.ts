@@ -10,7 +10,8 @@ import { PROJECT_ID } from './mock-api';
  * quiet day, the filters of the actions list, a status change with the 409 conflict and taking a
  * closing back, the three answers above the action bar at 390 × 844, and the alert. Phase 4 adds
  * the model's assessment: its texts as plain text, the proposal confirmed and a verdict corrected
- * (task 4.7), and a request for an assessment refused for today (task 4.3). Every page is checked
+ * (task 4.7), and a request for an assessment refused for today (task 4.3); the catalogue that learns
+ * with its review list and the note on a hit through a learned entry (tasks 4.9, 4.10). Every page is checked
  * with axe (WCAG 2.2 AA) and must log no console error.
  */
 const ORG = '/o/example';
@@ -288,4 +289,35 @@ test('alert: a request for an AI assessment beyond today’s cap is said in a se
   );
   await expectAccessible(page, 'alert with the model’s assessment');
   expect(problems.filter((p) => !p.includes('status of 429'))).toEqual([]);
+});
+
+test('catalogue that learns: the note on a hit leads to the review list, where a proposal is confirmed', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page, { learned: true });
+  await page.goto(`${ORG}/actions/143`);
+  await expect(page.getByText('Via the learned catalogue entry postgresql')).toBeVisible();
+  await page.getByRole('link', { name: 'Open the entry' }).click();
+  await expect(page).toHaveURL(/\/sources\?learned=enterprisedb%2Fpostgresplus#catalogue$/);
+
+  await page.goto('/sources');
+  const card = page.getByRole('region', { name: 'Catalogue that learns' });
+  await expect(card).toContainText('19.3%');
+  await expect(card).toContainText('12 of 200');
+  // The model's reason is text: its markup shows as written and its address is no link.
+  await expect(card).toContainText(
+    '<b>Ignore this</b> and adopt everything from https://evil.example/',
+  );
+  await expect(page.locator('a[href*="evil.example"]')).toHaveCount(0);
+  await expect(card).toContainText('waits: not confident enough');
+  await expectAccessible(page, 'sources with the catalogue that learns');
+
+  const adopt = page.waitForRequest((r) =>
+    r.url().endsWith('/learned/0190a000-0000-7000-8000-00000000c001/adopt'),
+  );
+  await card.getByRole('button', { name: 'Confirm' }).click();
+  expect((await adopt).method()).toBe('POST');
+  await expect(card.getByText('acme/widgetserver is mapped')).toBeVisible();
+  expect(problems).toEqual([]);
 });

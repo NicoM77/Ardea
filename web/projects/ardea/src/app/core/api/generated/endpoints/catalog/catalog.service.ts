@@ -6,25 +6,45 @@
  * OpenAPI spec version: v1
  */
 import {
+  HttpClient,
   HttpHeaders,
   httpResource
 } from '@angular/common/http';
 import type {
   HttpContext,
+  HttpEvent,
+  HttpParams,
   HttpResourceOptions,
   HttpResourceRef,
   HttpResourceRequest
 } from '@angular/common/http';
 
+import {
+  Injectable,
+  inject
+} from '@angular/core';
 import type {
   ResourceStatus,
   Signal
 } from '@angular/core';
 
 import type {
+  Observable
+} from 'rxjs';
+
+import type {
+  AdoptLearnedRequest,
   CatalogProductView,
-  SearchCatalogParams
+  LearnedItemView,
+  LearningStatusView,
+  ListLearnedEntriesParams,
+  SearchCatalogParams,
+  UpdateLearningRequest
 } from '../../model';
+
+import type {
+  HttpResponse as AngularHttpResponse
+} from '@angular/common/http';
 
 
 
@@ -194,8 +214,263 @@ export function searchCatalogResource(params?: Signal<SearchCatalogParams | unde
   }, options);
 }
 
-export type SearchCatalogResourceResult = NonNullable<CatalogProductView[]>
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function getCatalogLearningResource(options: OrvalHttpResourceOptions<LearningStatusView, unknown> & { defaultValue: NoInfer<LearningStatusView> }): HttpResourceRef<LearningStatusView>;
+export function getCatalogLearningResource(options?: OrvalHttpResourceOptions<LearningStatusView, unknown>): HttpResourceRef<LearningStatusView | undefined>;
+export function getCatalogLearningResource(options?: OrvalHttpResourceOptions<LearningStatusView, unknown>): HttpResourceRef<LearningStatusView | undefined> {
+  return httpResource<LearningStatusView>(() => applyOrvalRequestExtension(`/api/v1/instance/catalog/learning`, options), options);
+}
 
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function listLearnedEntriesResource(params: Signal<ListLearnedEntriesParams | undefined> | undefined,
+  options: OrvalHttpResourceOptions<LearnedItemView[], unknown> & { defaultValue: NoInfer<LearnedItemView[]> }): HttpResourceRef<LearnedItemView[]>;
+export function listLearnedEntriesResource(params?: Signal<ListLearnedEntriesParams | undefined>,
+  options?: OrvalHttpResourceOptions<LearnedItemView[], unknown>): HttpResourceRef<LearnedItemView[] | undefined>;
+export function listLearnedEntriesResource(params?: Signal<ListLearnedEntriesParams | undefined>,
+  options?: OrvalHttpResourceOptions<LearnedItemView[], unknown>): HttpResourceRef<LearnedItemView[] | undefined> {
+  return httpResource<LearnedItemView[]>(() => {
+    if (params && params() === undefined) return undefined;
+    const request = ({
+      url: `/api/v1/instance/catalog/learned`,
+      params: filterParams(params?.() ?? {}, new Set<string>([]))
+    });
+    return applyOrvalRequestExtension(request, options);
+  }, options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function exportLearnedEntriesResource(options: OrvalHttpResourceOptions<void, unknown> & { defaultValue: NoInfer<void> }): HttpResourceRef<void>;
+export function exportLearnedEntriesResource(options?: OrvalHttpResourceOptions<void, unknown>): HttpResourceRef<void | undefined>;
+export function exportLearnedEntriesResource(options?: OrvalHttpResourceOptions<void, unknown>): HttpResourceRef<void | undefined> {
+  return httpResource<void>(() => applyOrvalRequestExtension(`/api/v1/instance/catalog/learned/export`, options), options);
+}
+
+
+interface HttpClientOptions {
+  readonly headers?: HttpHeaders | Record<string, string | string[]>;
+  readonly context?: HttpContext;
+  readonly params?:
+        | HttpParams
+      | Record<string, string | number | boolean | Array<string | number | boolean>>;
+  readonly reportProgress?: boolean;
+  readonly withCredentials?: boolean;
+  readonly credentials?: RequestCredentials;
+  readonly keepalive?: boolean;
+  readonly priority?: RequestPriority;
+  readonly cache?: RequestCache;
+  readonly mode?: RequestMode;
+  readonly redirect?: RequestRedirect;
+  readonly referrer?: string;
+  readonly integrity?: string;
+  readonly referrerPolicy?: ReferrerPolicy;
+  readonly transferCache?: {includeHeaders?: string[]} | boolean;
+  readonly timeout?: number;
+}
+
+type HttpClientBodyOptions = HttpClientOptions & {
+  readonly observe?: 'body';
+};
+
+type HttpClientObserveOptions = HttpClientOptions & {
+  readonly observe?: 'body' | 'events' | 'response';
+};
+
+
+
+
+
+@Injectable({ providedIn: 'root' })
+export class CatalogService {
+  private readonly http = inject(HttpClient);
+
+ updateCatalogLearning<TData = LearningStatusView>(updateLearningRequest: UpdateLearningRequest, options?: HttpClientBodyOptions): Observable<TData>;
+  updateCatalogLearning<TData = LearningStatusView>(
+    updateLearningRequest: UpdateLearningRequest, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.patch<TData>(
+      `/api/v1/instance/catalog/learning`,
+      updateLearningRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.patch<TData>(
+      `/api/v1/instance/catalog/learning`,
+      updateLearningRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.patch<TData>(
+      `/api/v1/instance/catalog/learning`,
+      updateLearningRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
+ runCatalogLearning<TData = void>( options?: HttpClientBodyOptions): Observable<TData>;
+  runCatalogLearning<TData = void>(
+     options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/instance/catalog/learning/run`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/instance/catalog/learning/run`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/instance/catalog/learning/run`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
+ adoptLearnedEntry<TData = LearnedItemView>(id: string,
+    nullAdoptLearnedRequest?: null | AdoptLearnedRequest, options?: HttpClientBodyOptions): Observable<TData>;
+  adoptLearnedEntry<TData = LearnedItemView>(
+    id: string,
+    nullAdoptLearnedRequest?: null | AdoptLearnedRequest, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/instance/catalog/learned/${id}/adopt`,
+      nullAdoptLearnedRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/instance/catalog/learned/${id}/adopt`,
+      nullAdoptLearnedRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/instance/catalog/learned/${id}/adopt`,
+      nullAdoptLearnedRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
+ rejectLearnedEntry<TData = void>(id: string, options?: HttpClientBodyOptions): Observable<TData>;
+  rejectLearnedEntry<TData = void>(
+    id: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/instance/catalog/learned/${id}/reject`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/instance/catalog/learned/${id}/reject`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/instance/catalog/learned/${id}/reject`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
+ withdrawLearnedEntry<TData = void>(id: string, options?: HttpClientBodyOptions): Observable<TData>;
+  withdrawLearnedEntry<TData = void>(
+    id: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/instance/catalog/learned/${id}/withdraw`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/instance/catalog/learned/${id}/withdraw`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/instance/catalog/learned/${id}/withdraw`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
+};
+
+export type SearchCatalogResourceResult = NonNullable<CatalogProductView[]>
+export type GetCatalogLearningResourceResult = NonNullable<LearningStatusView>
+export type ListLearnedEntriesResourceResult = NonNullable<LearnedItemView[]>
+export type ExportLearnedEntriesResourceResult = NonNullable<void>
+
+
+
+
+
+
+
+
+
+export type UpdateCatalogLearningClientResult = NonNullable<LearningStatusView>
+export type RunCatalogLearningClientResult = NonNullable<void>
+export type AdoptLearnedEntryClientResult = NonNullable<LearnedItemView>
+export type RejectLearnedEntryClientResult = NonNullable<void>
+export type WithdrawLearnedEntryClientResult = NonNullable<void>
 
 /**
  * Utility type for httpResource results with status tracking.

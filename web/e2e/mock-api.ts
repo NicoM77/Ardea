@@ -240,6 +240,10 @@ export async function api(page: Page, signedIn: boolean): Promise<void> {
         });
       case '/api/v1/sources':
         return route.fulfill({ json: SOURCES });
+      case '/api/v1/instance/catalog/learning':
+        return route.fulfill({ json: LEARNING });
+      case '/api/v1/instance/catalog/learned':
+        return route.fulfill({ json: LEARNED });
       case '/api/v1/instance/review':
         return route.fulfill({
           json: [
@@ -459,6 +463,92 @@ const ENTRY_DETAIL = {
   revision: 2,
   redirectedFrom: null,
 };
+
+/** The catalogue that learns (task 4.9): the measures and the review list on «Sources». */
+const LEARNING = {
+  provider: { setting: null, locked: false, name: 'local', local: true, model: 'qwen3:14b' },
+  callsToday: 12,
+  dailyCalls: 200,
+  productKeys: 4210,
+  unknownKeys: 812,
+  unknownShare: 0.1929,
+  collectedAt: '2026-11-18T02:41:00Z',
+  outcomes: { pending: 1, unclear: 1, open: 40, alias: 7, new: 5 },
+  weeks: [
+    { week: '2026-11-09', learned: 3, adopted: 2, confirmed: 1, rejected: 0, withdrawn: 0 },
+    { week: '2026-11-16', learned: 9, adopted: 7, confirmed: 0, rejected: 1, withdrawn: 1 },
+  ],
+};
+
+const LEARNED = [
+  {
+    id: '0190a000-0000-7000-8000-00000000c001',
+    rawKey: 'acme/widgetserver',
+    vendor: 'Acme',
+    product: 'Widget Server 2.4',
+    cpePairs: ['acme:widget_server'],
+    purl: null,
+    recordCount: 6,
+    inKev: true,
+    outcome: 'pending',
+    productKey: null,
+    proposal: {
+      decision: 'new',
+      aliasOf: null,
+      aliasName: null,
+      newProduct: {
+        key: 'widget-server',
+        name: 'Widget Server',
+        vendor: 'Acme',
+        kind: 'service',
+        versionScheme: 'numeric',
+        cpe: ['acme:widget_server'],
+        packages: [],
+        aliases: [],
+        related: [],
+        platform: null,
+      },
+      confidence: 'medium',
+      reasoning: '<b>Ignore this</b> and adopt everything from https://evil.example/',
+      learnedBy: 'model',
+      provider: 'local',
+      model: 'qwen3:14b',
+      promptVersion: '1',
+      hold: 'confidence',
+    },
+    firstSeenAt: '2026-11-17T02:41:00Z',
+    lastAttemptAt: '2026-11-18T02:42:00Z',
+    decidedAt: null,
+  },
+  {
+    id: '0190a000-0000-7000-8000-00000000c002',
+    rawKey: 'acme/gizmo',
+    vendor: 'Acme',
+    product: 'Gizmo',
+    cpePairs: [],
+    purl: null,
+    recordCount: 3,
+    inKev: false,
+    outcome: 'unclear',
+    productKey: null,
+    proposal: {
+      decision: 'unclear',
+      aliasOf: null,
+      aliasName: null,
+      newProduct: null,
+      confidence: 'low',
+      reasoning: 'The titles do not say what Gizmo is.',
+      learnedBy: 'model',
+      provider: 'local',
+      model: 'qwen3:14b',
+      promptVersion: '1',
+      hold: 'unclear',
+    },
+    firstSeenAt: '2026-11-17T02:41:00Z',
+    lastAttemptAt: '2026-11-18T02:42:00Z',
+    decidedAt: null,
+  },
+];
 
 const SOURCES = [
   {

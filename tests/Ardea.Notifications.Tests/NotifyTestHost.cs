@@ -111,6 +111,9 @@ internal sealed class NotifyTestHost : IAsyncDisposable
         }, collection =>
         {
             collection.AddSingleton<TimeProvider>(time);
+            // The self-check's timer would run rounds whenever the test moves the clock and mail the owner, who is the
+            // instance administrator, about the stalled worker of the test (ADR 043). Its own tests are in Ardea.Host.Tests.
+            collection.Remove(collection.Single(d => d.ImplementationType == typeof(Host.Features.InstanceSelfCheckService)));
             // Here, after the host replaced the providers with its JSON console.
             collection.AddSingleton<ILoggerProvider>(logs);
             if (mail is not null)

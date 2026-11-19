@@ -79,6 +79,25 @@ public sealed class ModuleBoundaryTests
         Assert.True(violations.Count == 0, $"Building blocks must not reference: {string.Join(", ", violations)}");
     }
 
+    /// <summary>
+    /// The addresses of the instance administrators are for the self-check in the host only (ADR 043): no module
+    /// other than Iam, which provides it, may use <see cref="Iam.Contracts.IInstanceAdministrators"/>.
+    /// </summary>
+    [Fact]
+    public void Only_the_host_reads_the_instance_administrators()
+    {
+        var others = Assemblies.Modules.Where(m => m.Key != "Iam").Select(m => m.Value).ToArray();
+        var architecture = new ArchUnitNET.Loader.ArchLoader()
+            .LoadAssemblies([.. others, typeof(Iam.Contracts.IInstanceAdministrators).Assembly])
+            .Build();
+
+        var rule = ArchUnitNET.Fluent.ArchRuleDefinition.Types().That().ResideInAssembly(others[0], others[1..])
+            .Should().NotDependOnAny(typeof(Iam.Contracts.IInstanceAdministrators), typeof(Iam.Contracts.InstanceAdministrator))
+            .Because("only the self-check in the host mails the instance administrators");
+
+        ArchUnitNET.xUnitV3.ArchRuleExtensions.Check(rule, architecture);
+    }
+
     [Fact]
     public void Provider_sdk_knows_nothing_but_the_shared_kernel()
     {

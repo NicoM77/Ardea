@@ -70,7 +70,50 @@ internal static class ApiDocument
         System.Text.RegularExpressions.Regex.Matches(route, @"\{(?<name>orgId)(:[^}]*)?\}", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromMilliseconds(100))
             .Select(m => m.Groups["name"].Value);
 
-    /// <summary>Stable formatting for the committed file.</summary>
-    public static string Normalize(string json) =>
-        JsonNode.Parse(json)!.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }).ReplaceLineEndings("\n") + "\n";
+    /// <summary>
+    /// Stable formatting for the committed file. Descriptions come from XML doc comments, whose line breaks are
+    /// those of the source file as checked out (CRLF on Windows): every string value gets <c>\n</c> only, so the
+    /// document is the same on every machine.
+    /// </summary>
+    public static string Normalize(string json)
+    {
+        var node = JsonNode.Parse(json)!;
+        NormalizeStrings(node);
+        return node.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }).ReplaceLineEndings("\n") + "\n";
+    }
+
+    private static void NormalizeStrings(JsonNode? node)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                foreach (var (key, child) in obj.ToList())
+                {
+                    if (child is JsonValue value && value.TryGetValue<string>(out var text) && text.Contains('\r', StringComparison.Ordinal))
+                    {
+                        obj[key] = text.ReplaceLineEndings("\n");
+                    }
+                    else
+                    {
+                        NormalizeStrings(child);
+                    }
+                }
+
+                break;
+            case JsonArray array:
+                for (var i = 0; i < array.Count; i++)
+                {
+                    if (array[i] is JsonValue value && value.TryGetValue<string>(out var text) && text.Contains('\r', StringComparison.Ordinal))
+                    {
+                        array[i] = text.ReplaceLineEndings("\n");
+                    }
+                    else
+                    {
+                        NormalizeStrings(array[i]);
+                    }
+                }
+
+                break;
+        }
+    }
 }

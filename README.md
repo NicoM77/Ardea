@@ -168,11 +168,11 @@ A hardened, reviewed and documented instance.
 | 6.3 | Manual accessibility pass of the core flows with keyboard and screen reader | ⬜ |
 | 6.4 | Indexes checked against query plans; memory and response times observed on the project's own instance | ⬜ |
 | 6.5 | Fast integration test: restore a small pre-release dump, migrate to 1.0, restore again | ✅ |
-| 6.6 | Maintenance commands: recover access, load full dataset, export and delete an organisation; self-warnings; operations metrics | ⬜ |
+| 6.6 | Maintenance commands: recover access, load full dataset, export and delete an organisation; self-warnings; operations metrics | ✅ |
 | 6.7 | Documentation: install, configure, operate, update, «Add a source»; `SECURITY.md` | ⬜ |
 | 6.8 | SBOM and licence file in the build; the project's own instance, fed from its own repository | ⬜ |
 
-Rows stay ⬜ where a part is open: **6.4** the indexes are checked (plan tests for every list and search query of phases 3 to 5, three new indexes), memory and response times on the project's own instance are not observed yet; **6.6** commands, figures in the administration and the warnings exist, a notification to the instance administrator about a warning is not sent yet; **6.7** the guides are complete, `SECURITY.md` belongs to task 6.1; **6.8** SBOM and licence file are in the build and the image ([ADR 042](docs/adr/0042-sbom-and-third-party-notices.md)), the project's own instance needs the owner's infrastructure.
+Rows stay ⬜ where a part is open: **6.4** the indexes are checked (plan tests for every list and search query of phases 3 to 5, three new indexes), memory and response times on the project's own instance are not observed yet; **6.7** the guides are complete, `SECURITY.md` belongs to task 6.1; **6.8** SBOM and licence file are in the build and the image ([ADR 042](docs/adr/0042-sbom-and-third-party-notices.md)), the project's own instance needs the owner's infrastructure.
 
 ### Phase 7 · Clean-up and release 1.0 (4–5 weeks)
 

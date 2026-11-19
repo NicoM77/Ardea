@@ -185,6 +185,7 @@ export * from './updateProjectRequest';
 export * from './updateSetupRequest';
 export * from './updateSourceRequest';
 export * from './urgentActionView';
+export * from './warningNotified';
 export * from './webhookEndpointRequest';
 export * from './webhookEndpointView';
 export * from './webhookTestView';

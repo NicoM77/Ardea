@@ -52,6 +52,16 @@ public sealed class OpenApiContractTests
         await app.StopAsync(TestContext.Current.CancellationToken);
     }
 
+    [Fact]
+    public void Descriptions_have_the_same_line_breaks_on_every_machine()
+    {
+        var normalized = ApiDocument.Normalize("""{"a":{"description":"one\r\ntwo"},"b":["x\r\ny"]}""");
+
+        Assert.DoesNotContain("\\r", normalized, StringComparison.Ordinal);
+        Assert.Contains("one\\ntwo", normalized, StringComparison.Ordinal);
+        Assert.Contains("x\\ny", normalized, StringComparison.Ordinal);
+    }
+
     private static string RepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

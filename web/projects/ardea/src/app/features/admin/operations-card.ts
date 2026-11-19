@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { UiButton, UiCard, UiLoader, UiNotice } from 'ui';
-import type { InstanceStatusView } from '../../core/api/client';
-import { groupMetrics } from './operations';
+import type { InstanceStatusView, StatusWarning } from '../../core/api/client';
+import { groupMetrics, notifiedAt } from './operations';
 
 /**
  * The system's warnings about itself and the operating figures of the instance (master plan 12.7; task
@@ -20,7 +20,14 @@ import { groupMetrics } from './operations';
         </span>
         <div class="warnings" role="status">
           @for (warning of view.warnings; track warning.code + (warning.subject ?? '')) {
-            <ui-notice tone="error">{{ warning.message }}</ui-notice>
+            <ui-notice tone="error">
+              {{ warning.message }}
+              @if (mailed(view, warning); as at) {
+                <span class="mailed">
+                  {{ 'admin.operations.notified' | transloco: { time: when(at) } }}
+                </span>
+              }
+            </ui-notice>
           } @empty {
             <ui-notice tone="success">{{ 'admin.operations.healthy' | transloco }}</ui-notice>
           }
@@ -67,6 +74,11 @@ import { groupMetrics } from './operations';
       gap: var(--space-sm);
       margin-bottom: var(--space-lg);
     }
+    .mailed {
+      display: block;
+      color: var(--muted);
+      font-size: var(--fs-small);
+    }
     .groups {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -109,6 +121,11 @@ export class OperationsCard {
   readonly reload = output<void>();
 
   protected readonly groups = computed(() => groupMetrics(this.status()?.metrics ?? []));
+
+  /** When the instance administrators were last mailed about the warning (ADR 043). */
+  protected mailed(view: InstanceStatusView, warning: StatusWarning): string | null {
+    return notifiedAt(view.notified, warning);
+  }
 
   protected figure(value: number): string {
     return new Intl.NumberFormat(this.transloco.getActiveLang()).format(value);

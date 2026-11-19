@@ -1,4 +1,5 @@
 using Ardea.Ai;
+using Ardea.Host.Features;
 using Ardea.Host.Http;
 using Ardea.Platform.Audit;
 using Ardea.Platform.Configuration;
@@ -70,6 +71,7 @@ internal static partial class ApiRole
         builder.Services.AddArdeaTelemetry(builder.Logging, builder.Configuration, "api", AppVersion.Current);
         builder.Services.AddProblemDetails();
         builder.Services.AddOpenApi(ApiDocument.Name, ApiDocument.Configure);
+        builder.Services.AddInstanceSelfCheck();
         RequestProtection.ConfigureForwardedHeaders(builder.Services, builder.Configuration);
         foreach (var module in Modules.All)
         {

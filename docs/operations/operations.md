@@ -164,9 +164,21 @@ Figures are counts and times, never contents.
 
 Figures: per source the lag, the failure streak and the quarantine; jobs waiting (with the oldest wait), running and
 failed of the last day by kind; workers alive; deliveries by state; repository links by state; per language model
-provider the calls, tokens and twice-refused answers of the last day. A notification to the instance administrator
-about these warnings is not sent yet: check the overview, or scrape the figures with OpenTelemetry
-(`OTEL_EXPORTER_OTLP_ENDPOINT`).
+provider the calls, tokens and twice-refused answers of the last day. The figures can also be scraped with
+OpenTelemetry (`OTEL_EXPORTER_OTLP_ENDPOINT`).
+
+**Mail to the instance administrators** ([ADR 043](../adr/0043-instance-warnings-to-administrators.md)). Every five
+minutes the instance checks itself, in the `api` and in the `worker` container (one of them at a time; the API
+also reports a worker that has stopped). Every instance administrator with a confirmed e-mail address gets one
+short mail per round with what is new, a reminder once a day while a warning lasts, and one mail when it is over
+(after it stayed clear for a round, so a warning that comes and goes does not flood the inbox). The mail holds the
+warning's message and a link to the administration, nothing else. The card *Operation* shows when the
+administrators were last mailed about a warning. Without SMTP nothing is mailed and nothing fails: the warnings
+stay on the overview and in the administration, and each container says so once in its log (event 1502; event
+1503 when no instance administrator has a confirmed address). A mail that reached no administrator is tried again
+by the next round; one that failed only for some (event 1505 names the account) is not repeated for the others,
+and those it failed for hear of a lasting warning with the daily reminder. Across hosts, keep the clocks of the
+`api` and `worker` hosts synchronised: the worker's heartbeat is compared with the clock of the process that checks.
 
 **Image contents.** The image carries `/app/LICENSE` (Ardea's licence) and `/app/THIRD-PARTY-NOTICES.md` (the
 licence of every NuGet and npm package it ships). The bill of materials is produced by `build/sbom.sh` (CycloneDX

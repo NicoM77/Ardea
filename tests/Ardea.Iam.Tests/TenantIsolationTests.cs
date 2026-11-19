@@ -23,6 +23,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["platform.setting"] = "global",
         ["platform.data_protection_key"] = "global",
         ["platform.worker_heartbeat"] = "global",
+        ["platform.instance_warning"] = "global",
         ["platform.audit_event"] = "organization",
         ["iam.organization"] = "organization",
         ["iam.membership"] = "organization",

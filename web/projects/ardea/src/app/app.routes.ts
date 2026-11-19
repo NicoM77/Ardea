@@ -180,6 +180,11 @@ export const routes: Routes = [
               import('./features/projects/projects-page').then((m) => m.ProjectsPage),
           },
           {
+            path: 'stack',
+            title: 'nav.stack',
+            loadComponent: () => import('./features/stack/stack-page').then((m) => m.StackPage),
+          },
+          {
             path: 'projects/new',
             title: 'wizard.titleNew',
             data: { mode: 'new' },

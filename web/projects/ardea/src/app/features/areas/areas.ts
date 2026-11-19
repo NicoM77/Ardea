@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import {
   LucideBell,
   LucideFolder,
+  LucideLayers,
   LucideLayoutGrid,
   LucideListChecks,
   LucideRadioTower,
@@ -17,6 +18,7 @@ export type AreaId =
   | 'actions'
   | 'vulnerabilities'
   | 'projects'
+  | 'stack'
   | 'sources'
   | 'rules'
   | 'team'
@@ -64,6 +66,14 @@ export const AREAS: readonly Area[] = [
     path: 'projects',
     label: 'nav.projects',
     icon: LucideFolder.icon,
+    group: 'main',
+  },
+  {
+    // The organization's stack (master plan 17.2, task 5a.4): what it runs without projects.
+    id: 'stack',
+    path: 'stack',
+    label: 'nav.stack',
+    icon: LucideLayers.icon,
     group: 'main',
   },
   {

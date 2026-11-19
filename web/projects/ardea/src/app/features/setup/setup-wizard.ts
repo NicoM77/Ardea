@@ -1,17 +1,20 @@
 import {
+  afterRenderEffect,
   Component,
   computed,
   effect,
+  ElementRef,
   inject,
   input,
   linkedSignal,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiLoader, UiNotice, UiPageHeader } from 'ui';
+import { UiButton, UiLoader, UiNotice, UiPageHeader, UiToaster } from 'ui';
 import {
   getProfileCoverageResource,
   getProjectResource,
@@ -27,6 +30,7 @@ import { injectOrganization } from '../organizations/current-organization';
 import { draftFromView, toInput, type DraftComponent } from '../projects/component-format';
 import { OperationsStep, type OperationsAnswer } from './operations-step';
 import { ProjectStep } from './project-step';
+import { StackStep } from './stack-step';
 import { TechnologiesStep } from './technologies-step';
 import { RepositoryStep } from './repository-step';
 import { LinksCard } from '../projects/links-card';
@@ -39,9 +43,14 @@ import { WIZARD_PROBLEMS } from './wizard-problems';
 /** `organization`: the first project of a new organization; `new`: another project; `project`: an existing one. */
 export type WizardMode = 'organization' | 'new' | 'project';
 
-export type WizardStep = 'project' | 'repository' | 'operations' | 'technologies' | 'coverage';
+export type WizardStep =
+  'stack' | 'project' | 'repository' | 'operations' | 'technologies' | 'coverage';
+
+/** Steps that work on a project; before one exists only the stack and the project step are open. */
+const WITHOUT_PROJECT: readonly WizardStep[] = ['stack', 'project'];
 
 const STEP_LABELS: Record<WizardStep, string> = {
+  stack: 'wizard.steps.stack',
   project: 'wizard.steps.project',
   repository: 'wizard.steps.repository',
   operations: 'wizard.steps.operations',
@@ -51,8 +60,9 @@ const STEP_LABELS: Record<WizardStep, string> = {
 
 /**
  * The setup wizard (master plan 11.6): saved after every step, continued at any time, nothing
- * asked twice. The first run sets up an organization's first project and records its progress
- * (`/orgs/{orgId}/setup`); later runs add a project or work on an existing one.
+ * asked twice. The first run asks for the organization's stack, then optionally its first project
+ * (task 5a.4: «the stack is enough to start»), and records its progress (`/orgs/{orgId}/setup`);
+ * later runs add a project or work on an existing one.
  */
 @Component({
   selector: 'ardea-setup-wizard',
@@ -64,6 +74,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
     UiPageHeader,
     OperationsStep,
     ProjectStep,
+    StackStep,
     TechnologiesStep,
     RepositoryStep,
     CoverageCard,
@@ -109,10 +120,21 @@ const STEP_LABELS: Record<WizardStep, string> = {
       </ol>
     </nav>
 
-    <div class="body" [class.with-side]="showSide()">
+    <div class="body" [class.with-side]="showSide()" [class.wide]="current() === 'stack'">
       @if (orgId(); as org) {
         @if (ready()) {
+          <h2 #stepTitle class="sr-only" tabindex="-1">
+            {{ 'wizard.stepNumber' | transloco: { n: index() + offset() } }}:
+            {{ stepLabels[current()] | transloco }}
+          </h2>
           @switch (current()) {
+            @case ('stack') {
+              <ardea-stack-step
+                [saving]="saving()"
+                [problem]="problem()"
+                (continued)="stackDone()"
+              />
+            }
             @case ('project') {
               @if (problem()) {
                 <ui-notice class="gap" tone="error">{{ problem() | transloco }}</ui-notice>
@@ -120,7 +142,11 @@ const STEP_LABELS: Record<WizardStep, string> = {
               <ardea-project-step
                 [orgId]="org"
                 [project]="project()"
+                [optional]="mode() === 'organization'"
+                [skipping]="saving()"
                 (saved)="projectSaved($event)"
+                (back)="go('stack')"
+                (skipped)="skipProjects()"
               />
             }
             @case ('repository') {
@@ -262,6 +288,9 @@ const STEP_LABELS: Record<WizardStep, string> = {
     .body {
       max-width: 820px;
     }
+    .body.wide {
+      max-width: none;
+    }
     .body.with-side {
       display: grid;
       grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
@@ -313,7 +342,10 @@ export class SetupWizard {
   private readonly projects = inject(ProjectsService);
   private readonly organizations = inject(OrganizationsService);
   private readonly router = inject(Router);
+  private readonly toaster = inject(UiToaster);
+  private readonly transloco = inject(TranslocoService);
   protected readonly current$ = injectOrganization();
+  private readonly stepTitle = viewChild<ElementRef<HTMLElement>>('stepTitle');
 
   protected readonly stepLabels = STEP_LABELS;
   protected readonly orgId = computed(() => this.current$.organization()?.id);
@@ -378,32 +410,42 @@ export class SetupWizard {
       .map(draftFromView),
   );
 
-  protected readonly steps = computed<WizardStep[]>(() =>
-    this.mode() === 'project'
-      ? ['repository', 'operations', 'technologies', 'coverage']
-      : ['project', 'repository', 'operations', 'technologies', 'coverage'],
-  );
+  protected readonly steps = computed<WizardStep[]>(() => {
+    switch (this.mode()) {
+      case 'organization':
+        return ['stack', 'project', 'repository', 'operations', 'technologies', 'coverage'];
+      case 'new':
+        return ['project', 'repository', 'operations', 'technologies', 'coverage'];
+      default:
+        return ['repository', 'operations', 'technologies', 'coverage'];
+    }
+  });
   protected readonly offset = computed(() => (this.mode() === 'organization' ? 2 : 1));
+  private readonly done = computed(() =>
+    this.state.hasValue() ? (this.state.value()?.stepsDone ?? []) : [],
+  );
+  /** A step that needs a project waits until there is one. */
+  private readonly open = (step: WizardStep): boolean =>
+    WITHOUT_PROJECT.includes(step) || !!this.currentProjectId();
   protected readonly current = computed<WizardStep>(() => {
     const steps = this.steps();
     const asked = this.step() as WizardStep | null;
-    if (asked && steps.includes(asked) && (asked === 'project' || this.currentProjectId()))
-      return asked;
-    if (!this.currentProjectId()) return steps[0];
-    const done = this.state.hasValue() ? (this.state.value()?.stepsDone ?? []) : [];
-    return steps.find((s) => !done.includes(s)) ?? steps[steps.length - 1];
+    if (asked && steps.includes(asked) && this.open(asked)) return asked;
+    const next = steps.find((s) => !this.done().includes(s)) ?? steps[steps.length - 1];
+    return this.open(next) ? next : (steps.find((s) => s === 'project') ?? steps[0]);
   });
   protected readonly index = computed(() => this.steps().indexOf(this.current()));
   /** Steps up to the furthest one reached can be revisited from the stepper. */
   protected readonly furthest = computed(() => {
-    if (!this.currentProjectId()) return 0;
-    const done = this.state.hasValue() ? (this.state.value()?.stepsDone ?? []) : [];
-    const reached = this.steps().map((s, i) => (done.includes(s) ? i + 1 : 0));
-    return Math.max(
+    const steps = this.steps();
+    const reached = steps.map((s, i) => (this.done().includes(s) ? i + 1 : 0));
+    const furthest = Math.max(
       this.index(),
       ...reached,
-      this.mode() === 'organization' ? 0 : this.steps().length - 1,
+      this.mode() === 'organization' ? 0 : steps.length - 1,
     );
+    // Without a project, nothing after the project step can be opened.
+    return this.currentProjectId() ? furthest : Math.min(furthest, steps.indexOf('project'));
   });
   protected readonly previous = computed(() => this.steps()[Math.max(0, this.index() - 1)]);
 
@@ -434,6 +476,16 @@ export class SetupWizard {
   });
 
   constructor() {
+    // A new step moves the focus to its title, so keyboard and screen reader users start there
+    // instead of on the button that is gone. The first step keeps the page's own start.
+    let shown: WizardStep | null = null;
+    afterRenderEffect(() => {
+      const title = this.stepTitle()?.nativeElement;
+      if (!title) return;
+      const step = this.current();
+      if (shown !== null && shown !== step) title.focus();
+      shown = step;
+    });
     // While a repository is read, look again every few seconds; when one finishes, its packages
     // and suggestions are there to show.
     pollWhile(
@@ -461,6 +513,41 @@ export class SetupWizard {
     }
     this.links.reload();
     this.go('operations');
+  }
+
+  /** The stack's entries are saved as they change; the step only records that it is done. */
+  protected async stackDone(): Promise<void> {
+    this.saving.set(true);
+    this.problem.set(null);
+    try {
+      await this.record({ stepDone: 'stack', firstProjectId: null });
+      this.go('project');
+    } catch (error) {
+      this.problem.set(
+        problemMessageKey(error, { codes: WIZARD_PROBLEMS, fallback: 'wizard.errors.save' }),
+      );
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  /** «Skip — the stack is enough to start»: the setup is complete without a project (task 5a.4). */
+  protected async skipProjects(): Promise<void> {
+    const org = this.orgId();
+    if (!org || this.saving()) return;
+    this.saving.set(true);
+    this.problem.set(null);
+    try {
+      await firstValueFrom(this.organizations.completeWizard(org));
+      this.toaster.show({ text: this.transloco.translate('wizard.finishedWithStack') });
+      await this.router.navigate(['/o', this.current$.slug(), 'overview']);
+    } catch (error) {
+      this.problem.set(
+        problemMessageKey(error, { codes: WIZARD_PROBLEMS, fallback: 'wizard.errors.save' }),
+      );
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   protected go(step: WizardStep): void {

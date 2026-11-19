@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Ardea.Iam.Contracts;
+using Ardea.Platform.Ai;
 using Ardea.Platform.Audit;
 using Ardea.Platform.Email;
 using Ardea.Platform.Http;
@@ -49,6 +50,8 @@ internal static class InstanceEndpoints
         instance.MapGet("/settings", GetSettingsAsync).WithName("getInstanceSettings");
         instance.MapPatch("/settings", UpdateSettingsAsync).WithName("updateInstanceSettings").Produces<InstanceSettingsResponse>().Problems(400, 409);
         instance.MapPost("/smtp/test", TestSmtpAsync).WithName("sendTestEmail").NoContent().Problems(400, 409, 502);
+        instance.MapGet("/ai/providers", (IAiProviders providers) => providers.All).WithName("listAiProviders");
+        instance.MapPost("/ai/providers/{name}/test", TestAiProviderAsync).WithName("testAiProvider").Produces<AiConnectionResult>().Problems(404);
         instance.MapGet("/jobs", ListJobsAsync).WithName("listAbandonedJobs");
         instance.MapGet("/status", StatusAsync).WithName("getInstanceStatus").Produces<InstanceStatusView>();
 
@@ -135,6 +138,25 @@ internal static class InstanceEndpoints
 
         var result = await ReadAsync(settings, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
+        return Results.Ok(result);
+    }
+
+    /// <summary>
+    /// Asks the provider for a one-word answer (master plan 14, task 4.1). The request opens no transaction while
+    /// it waits for the provider; the audit entry is written in its own short one. The result names the kind of
+    /// failure, never the key or the request.
+    /// </summary>
+    private static async Task<IResult> TestAiProviderAsync(string name, IAiProviders providers, IUnitOfWorkFactory units, CancellationToken cancellationToken)
+    {
+        if (await providers.TestAsync(name, cancellationToken) is not { } result)
+        {
+            return ApiProblems.Problem("ai_provider_not_found", StatusCodes.Status404NotFound, "No such AI provider is configured.");
+        }
+
+        await using var scope = units.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IAuditLog>().RecordAsync(
+            new AuditEntry("instance.ai_provider_tested", "ai_provider", name, new { result.Ok, result.DurationMs }) { InstanceEvent = true }, cancellationToken);
+        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
         return Results.Ok(result);
     }
 

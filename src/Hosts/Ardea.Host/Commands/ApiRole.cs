@@ -1,3 +1,4 @@
+using Ardea.Ai;
 using Ardea.Host.Http;
 using Ardea.Platform.Audit;
 using Ardea.Platform.Configuration;
@@ -60,6 +61,7 @@ internal static partial class ApiRole
         builder.Services.AddUnitOfWork();
         builder.Services.AddJobQueue();
         builder.Services.AddSourceAdapters();
+        builder.Services.AddAiProviders(builder.Configuration);
         builder.Services.AddArdeaSecrets(MasterKey.FromBase64(builder.Configuration[HostConfiguration.MasterKeyKey]!));
         builder.Services.AddArdeaTelemetry(builder.Logging, builder.Configuration, "api", AppVersion.Current);
         builder.Services.AddProblemDetails();

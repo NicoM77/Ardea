@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../BuildingBlocks/Ardea.Platform/Ardea.Platform.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/Ardea.Ai/Ardea.Ai.csproj" />
     <ProjectReference Include="../../Modules/Iam/Ardea.Iam/Ardea.Iam.csproj" />
     <ProjectReference Include="../../Modules/Catalog/Ardea.Catalog/Ardea.Catalog.csproj" />
     <ProjectReference Include="../../Modules/Intel/Ardea.Intel/Ardea.Intel.csproj" />

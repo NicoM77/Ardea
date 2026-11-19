@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/" />
   <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Ardea.Ai/Ardea.Ai.csproj" />
     <Project Path="src/BuildingBlocks/Ardea.Platform/Ardea.Platform.csproj" />
     <Project Path="src/BuildingBlocks/Ardea.SharedKernel/Ardea.SharedKernel.csproj" />
   </Folder>

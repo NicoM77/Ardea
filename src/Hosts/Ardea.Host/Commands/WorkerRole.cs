@@ -1,3 +1,4 @@
+using Ardea.Ai;
 using Ardea.Platform.Configuration;
 using Ardea.Platform.Hosting;
 using Ardea.Platform.Jobs;
@@ -28,6 +29,7 @@ internal static class WorkerRole
         builder.Services.AddUnitOfWork();
         builder.Services.AddJobWorker();
         builder.Services.AddSourceAdapters();
+        builder.Services.AddAiProviders(builder.Configuration);
         builder.Services.AddArdeaSecrets(MasterKey.FromBase64(builder.Configuration[HostConfiguration.MasterKeyKey]!));
         builder.Services.AddArdeaTelemetry(builder.Logging, builder.Configuration, "worker", AppVersion.Current);
         foreach (var module in Modules.All)

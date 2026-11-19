@@ -154,24 +154,9 @@ public static class VersionRanges
     public static VersionRange FromCve(string? version, string? lessThan, string? lessThanOrEqual, VersionStatus status, string? versionType = null)
     {
         var range = new VersionRange { Status = status, Scheme = string.IsNullOrWhiteSpace(versionType) ? null : versionType.Trim() };
-        var splitAllowed = !string.Equals(range.Scheme, VersionSchemeNames.Rpm, StringComparison.OrdinalIgnoreCase);
-
-        if (lessThan is not null || lessThanOrEqual is not null)
-        {
-            range = range with { Introduced = Lower(version, splitAllowed) };
-            if (lessThan is not null)
-            {
-                return IsOpenUpperBound(lessThan) ? range
-                    : TryExpandWildcard(lessThan, out var below, out _) ? range with { Fixed = below }
-                    : range with { Fixed = lessThan.Trim() };
-            }
-
-            return IsOpenUpperBound(lessThanOrEqual) ? range
-                : TryExpandWildcard(lessThanOrEqual, out _, out var after) ? range with { Fixed = after }
-                : range with { LastAffected = lessThanOrEqual!.Trim() };
-        }
-
-        return FromSingleField(version, status, range.Scheme);
+        return lessThan is not null || lessThanOrEqual is not null
+            ? Normalize(range with { Introduced = version, Fixed = lessThan, LastAffected = lessThan is null ? lessThanOrEqual : null })
+            : FromSingleField(version, status, range.Scheme);
     }
 
     /// <summary>
@@ -181,8 +166,9 @@ public static class VersionRanges
     /// <item>an exact version that is itself a range (<c>8.4.0-8.4.13</c>, <c>8.2.*</c>, <c>&lt; 2.1</c>) becomes that range;
     /// an open word alone (<c>*</c>, <c>unspecified</c>, <c>n/a</c>) stays as written, because most publishers mean «not stated» by it, not «every version»;</item>
     /// <item>an open lower bound (<c>0</c>, <c>*</c>, <c>unspecified</c>) becomes none, a placeholder lower bound its lowest version;</item>
-    /// <item>an upper bound with a placeholder (<c>lessThan 6.12.*</c>, <c>lessThanOrEqual 6.12.*</c>) ends before or after
-    /// that line; any other upper bound with a wildcard (<c>*</c>, <c>log4j-core*</c>) names no end;</item>
+    /// <item><c>lessThanOrEqual 6.12.*</c> ends after the 6.12 line; <c>lessThan 6.12.*</c> also does when the lower bound
+    /// lies in that line, and otherwise ends where the doubt cannot make a version «out of range» (see
+    /// <c>PlaceholderEnd</c>); any other upper bound with a wildcard (<c>*</c>, <c>log4j-core*</c>) names no end;</item>
     /// <item>a lower bound equal to the fix is no lower bound: Google's CNA writes «before 157.0.8103.50» as
     /// <c>{"version": "157.0.8103.50", "lessThan": "157.0.8103.50"}</c>, which read literally contains no version at all.
     /// Not so when the bound starts a release line (<c>18.12.0</c>, last part <c>0</c>): Microsoft writes the entry
@@ -206,7 +192,9 @@ public static class VersionRanges
         string? fixedVersion = null, lastAffected = null;
         if (UpperText(range.Fixed) is { } lessThan)
         {
-            fixedVersion = TryExpandWildcard(lessThan, out var below, out _) ? below : lessThan;
+            fixedVersion = TryExpandWildcard(lessThan, out var lineStart, out var lineEnd)
+                ? PlaceholderEnd(introduced, lessThan, lineStart, lineEnd, range.Status)
+                : lessThan;
         }
 
         if (UpperText(range.LastAffected) is { } upTo)
@@ -221,8 +209,9 @@ public static class VersionRanges
             }
         }
 
-        if (introduced is not null && fixedVersion is not null && string.Equals(introduced, fixedVersion, StringComparison.Ordinal)
-            && !introduced.EndsWith(".0", StringComparison.Ordinal))
+        // Only bounds as written: «5.10» to before «5.10.*» is no empty range once the placeholder is expanded.
+        if (introduced is not null && fixedVersion is not null && string.Equals(range.Introduced?.Trim(), range.Fixed?.Trim(), StringComparison.Ordinal)
+            && !TryExpandWildcard(range.Fixed, out _, out _) && !introduced.EndsWith(".0", StringComparison.Ordinal))
         {
             introduced = null;
         }
@@ -329,6 +318,37 @@ public static class VersionRanges
         }
 
         return splitAllowed && TrySplitRange(text, out var from, out _) ? from : text;
+    }
+
+    /// <summary>
+    /// Where a range «to before <c>6.12.*</c>» ends. Publishers mean two things by it: «before the 6.12 line» and
+    /// «up to the end of the 6.12 line». A lower bound in the line (<c>6.12.0</c> to before <c>6.12.*</c>,
+    /// <c>2.0</c> to before <c>2.x</c>) leaves only the second reading, as the first would be empty. Below the line
+    /// or without a lower bound both readings are possible; the wider one is taken for an affected range and
+    /// the narrower one for an unaffected range, so the doubt never makes a version «out of range». A lower
+    /// bound without leading numbers cannot be placed: the bound stays as written and the range unreadable.
+    /// </summary>
+    private static string PlaceholderEnd(string? introduced, string written, string lineStart, string lineEnd, VersionStatus status)
+    {
+        var narrow = status == VersionStatus.Unaffected;
+        if (introduced is null)
+        {
+            return narrow ? lineStart : lineEnd;
+        }
+
+        var lower = VersionLines.LeadingNumbers(introduced);
+        if (lower.Length == 0)
+        {
+            return written;
+        }
+
+        var start = VersionLines.LeadingNumbers(lineStart);
+        if (VersionLines.InLine(introduced, start))
+        {
+            return lineEnd;
+        }
+
+        return VersionLines.CompareNumbers(lower, start) < 0 && !narrow ? lineEnd : lineStart;
     }
 
     /// <summary>An upper bound as text, or <c>null</c> when it names no end: missing, an open word, or a wildcard that is no placeholder version.</summary>

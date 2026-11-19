@@ -17,6 +17,41 @@ public sealed class VersionRangesTests
         Assert.Equal((lower, upper), (from, to));
     }
 
+    [Theory]
+    // A lower bound in the placeholder's line leaves only «to the end of that line»; read as «before the line» it would be empty.
+    [InlineData("6.12.0", "6.12.*", VersionStatus.Affected, "6.12.0", "6.13")]
+    [InlineData("5.10", "5.10.*", VersionStatus.Affected, "5.10", "5.11")]
+    [InlineData("2.0", "2.x", VersionStatus.Affected, "2.0", "3")]
+    [InlineData("6.12.*", "6.12.*", VersionStatus.Affected, "6.12", "6.13")]
+    [InlineData("6.12.116", "6.12.*", VersionStatus.Unaffected, "6.12.116", "6.13")]
+    // Below the line or without a lower bound: the wider reading when affected, the narrower when unaffected.
+    [InlineData("4.0", "6.12.*", VersionStatus.Affected, "4.0", "6.13")]
+    [InlineData("4.0", "6.12.*", VersionStatus.Unaffected, "4.0", "6.12")]
+    [InlineData("0", "6.12.*", VersionStatus.Affected, null, "6.13")]
+    [InlineData("0", "6.12.*", VersionStatus.Unaffected, null, "6.12")]
+    // A lower bound above the line gives an inverted range; one without numbers cannot be placed and stays unreadable.
+    [InlineData("6.13.0", "6.12.*", VersionStatus.Affected, "6.13.0", "6.12")]
+    [InlineData("NOT_YET_AVAILABLE", "6.12.*", VersionStatus.Affected, "NOT_YET_AVAILABLE", "6.12.*")]
+    public void Less_than_a_placeholder_ends_where_the_lower_bound_allows(string introduced, string lessThan, VersionStatus status, string? expectedIntroduced, string expectedFixed)
+    {
+        var range = VersionRanges.Normalize(new VersionRange { Introduced = introduced, Fixed = lessThan, Status = status });
+
+        Assert.Equal((expectedIntroduced, expectedFixed), (range.Introduced, range.Fixed));
+        Assert.Equal(range, VersionRanges.Normalize(range));
+    }
+
+    [Theory]
+    [InlineData("6.12.0", "6.12.*", "6.12.3", VersionVerdict.InRange)]
+    [InlineData("5.10", "5.10.*", "5.10.200", VersionVerdict.InRange)]
+    [InlineData("2.0", "2.x", "2.5", VersionVerdict.InRange)]
+    [InlineData("NOT_YET_AVAILABLE", "6.12.*", "6.12.3", VersionVerdict.Unknown)]
+    public void Less_than_a_placeholder_is_never_a_wrong_out_of_range(string introduced, string lessThan, string installed, VersionVerdict verdict)
+    {
+        var range = VersionRanges.Normalize(new VersionRange { Introduced = introduced, Fixed = lessThan });
+
+        Assert.Equal(verdict, VersionCheck.Evaluate(VersionSchemeRegistry.Instance.Find("numeric"), installed, [range], VersionStatus.Unknown).Verdict);
+    }
+
     [Fact]
     public void A_placeholder_with_an_oversized_part_is_no_placeholder_and_does_not_throw()
     {

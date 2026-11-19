@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "OnTheGoSystems",
+  "products": [
+    {
+      "key": "wpml",
+      "name": "WPML Multilingual CMS",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "aliases": [
+        { "names": ["WPML Multilingual CMS"] },
+        { "vendor": "OnTheGoSystems", "names": ["WPML"] },
+        { "vendor": "WPML", "names": ["WPML"] }
+      ],
+      "platform": "wordpress"
+    }
+  ]
+}

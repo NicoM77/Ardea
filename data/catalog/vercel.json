@@ -1,0 +1,29 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Vercel",
+  "products": [
+    {
+      "key": "nextjs",
+      "name": "Next.js",
+      "kind": "framework",
+      "versionScheme": "semver",
+      "cpe": ["vercel:next.js"],
+      "packages": ["pkg:npm/next"],
+      "aliases": [{ "vendor": "Vercel", "names": ["Next", "NextJS"] }],
+      "related": ["react", "nodejs"]
+    },
+    {
+      // NuxtLabs joined Vercel in 2025.
+      "key": "nuxt",
+      "name": "Nuxt",
+      "kind": "framework",
+      "versionScheme": "semver",
+      "packages": ["pkg:npm/nuxt"],
+      "aliases": [
+        { "vendor": "Nuxt", "names": ["Nuxt", "Nuxt.js"] },
+        { "vendor": "NuxtLabs", "names": ["Nuxt"] }
+      ],
+      "related": ["vue", "nodejs"]
+    }
+  ]
+}

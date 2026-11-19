@@ -45,6 +45,46 @@
       "versionScheme": "numeric",
       "cpe": ["vmware:tools"],
       "related": ["esxi"]
+    },
+    {
+      // Spring went from Pivotal to VMware and with VMware to Broadcom.
+      "key": "spring-framework",
+      "name": "Spring Framework",
+      "kind": "framework",
+      "versionScheme": "maven",
+      "cpe": ["vmware:spring_framework", "pivotal_software:spring_framework"],
+      "packages": ["pkg:maven/org.springframework/spring-core", "pkg:maven/org.springframework/spring-beans", "pkg:maven/org.springframework/spring-context", "pkg:maven/org.springframework/spring-web", "pkg:maven/org.springframework/spring-webmvc", "pkg:maven/org.springframework/spring-webflux", "pkg:maven/org.springframework/spring-expression"],
+      "aliases": [
+        { "vendor": "Spring", "names": ["Spring", "Spring Framework"] },
+        { "vendor": "VMware", "names": ["Spring", "Spring Framework"] }
+      ],
+      "related": ["openjdk"]
+    },
+    {
+      "key": "spring-boot",
+      "name": "Spring Boot",
+      "kind": "framework",
+      "versionScheme": "maven",
+      "cpe": ["vmware:spring_boot"],
+      "packages": ["pkg:maven/org.springframework.boot/spring-boot", "pkg:maven/org.springframework.boot/spring-boot-autoconfigure", "pkg:maven/org.springframework.boot/spring-boot-actuator", "pkg:maven/org.springframework.boot/spring-boot-actuator-autoconfigure"],
+      "aliases": [
+        { "vendor": "Spring", "names": ["Spring Boot"] },
+        { "vendor": "VMware", "names": ["Spring Boot"] }
+      ],
+      "related": ["spring-framework", "openjdk"]
+    },
+    {
+      "key": "spring-security",
+      "name": "Spring Security",
+      "kind": "framework",
+      "versionScheme": "maven",
+      "cpe": ["vmware:spring_security"],
+      "packages": ["pkg:maven/org.springframework.security/spring-security-core", "pkg:maven/org.springframework.security/spring-security-web", "pkg:maven/org.springframework.security/spring-security-config"],
+      "aliases": [
+        { "vendor": "Spring", "names": ["Spring Security"] },
+        { "vendor": "VMware", "names": ["Spring Security"] }
+      ],
+      "related": ["spring-framework"]
     }
   ]
 }

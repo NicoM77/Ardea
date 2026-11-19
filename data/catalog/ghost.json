@@ -1,0 +1,17 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Ghost Foundation",
+  "products": [
+    {
+      "key": "ghost",
+      "name": "Ghost",
+      "kind": "cms",
+      "versionScheme": "semver",
+      "cpe": ["ghost:ghost"],
+      "packages": ["pkg:npm/ghost"],
+      "aliases": [{ "vendor": "Ghost", "names": ["Ghost CMS"] }],
+      "related": ["nodejs"],
+      "images": ["ghost"]
+    }
+  ]
+}

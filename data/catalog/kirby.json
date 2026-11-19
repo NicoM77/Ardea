@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Kirby",
+  "products": [
+    {
+      "key": "kirby",
+      "name": "Kirby",
+      "kind": "cms",
+      "versionScheme": "packagist",
+      "cpe": ["getkirby:kirby"],
+      "packages": ["pkg:composer/getkirby/cms"],
+      "aliases": [{ "vendor": "getkirby", "names": ["Kirby", "Kirby CMS"] }],
+      "related": ["php"]
+    }
+  ]
+}

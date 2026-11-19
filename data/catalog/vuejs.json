@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Vue.js",
+  "products": [
+    {
+      "key": "vue",
+      "name": "Vue.js",
+      "kind": "framework",
+      "versionScheme": "semver",
+      "packages": ["pkg:npm/vue"],
+      "aliases": [
+        { "vendor": "Vue.js", "names": ["Vue", "VueJS"] },
+        { "vendor": "vuejs", "names": ["Vue"] }
+      ],
+      "related": ["nodejs"]
+    }
+  ]
+}

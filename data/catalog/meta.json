@@ -1,0 +1,19 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Meta",
+  "products": [
+    {
+      "key": "react",
+      "name": "React",
+      "kind": "framework",
+      "versionScheme": "semver",
+      "cpe": ["facebook:react"],
+      "packages": ["pkg:npm/react", "pkg:npm/react-dom", "pkg:npm/react-server-dom-webpack"],
+      "aliases": [
+        { "vendor": "Meta", "names": ["React.js", "ReactJS", "react-dom"] },
+        { "vendor": "Facebook", "names": ["React", "React.js"] }
+      ],
+      "related": ["nodejs"]
+    }
+  ]
+}

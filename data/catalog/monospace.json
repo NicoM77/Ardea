@@ -1,0 +1,17 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Monospace",
+  "products": [
+    {
+      "key": "directus",
+      "name": "Directus",
+      "kind": "cms",
+      "versionScheme": "semver",
+      "cpe": ["monospace:directus"],
+      "packages": ["pkg:npm/directus"],
+      "aliases": [{ "vendor": "Directus", "names": ["Directus"] }],
+      "related": ["nodejs"],
+      "images": ["directus/directus"]
+    }
+  ]
+}

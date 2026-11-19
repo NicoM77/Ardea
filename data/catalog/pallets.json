@@ -1,0 +1,35 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Pallets",
+  "products": [
+    {
+      "key": "flask",
+      "name": "Flask",
+      "kind": "framework",
+      "versionScheme": "pep440",
+      "cpe": ["palletsprojects:flask"],
+      "packages": ["pkg:pypi/flask"],
+      "aliases": [{ "vendor": "Pallets", "names": ["Flask"] }],
+      "related": ["python"]
+    },
+    {
+      "key": "jinja",
+      "name": "Jinja",
+      "kind": "library",
+      "versionScheme": "pep440",
+      "cpe": ["palletsprojects:jinja"],
+      "packages": ["pkg:pypi/jinja2"],
+      "aliases": [{ "vendor": "Pallets", "names": ["Jinja2"] }],
+      "related": ["python"]
+    },
+    {
+      "key": "werkzeug",
+      "name": "Werkzeug",
+      "kind": "library",
+      "versionScheme": "pep440",
+      "cpe": ["palletsprojects:werkzeug"],
+      "packages": ["pkg:pypi/werkzeug"],
+      "related": ["python"]
+    }
+  ]
+}

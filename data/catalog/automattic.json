@@ -11,6 +11,33 @@
       // Wordfence records name the plugin's author as vendor.
       "aliases": [{ "vendor": "WooCommerce", "names": ["WooCommerce"] }],
       "platform": "wordpress"
+    },
+    {
+      "key": "akismet",
+      "name": "Akismet Anti-spam",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "cpe": ["automattic:akismet"],
+      "aliases": [{ "vendor": "Automattic", "names": ["Akismet", "Akismet *"] }],
+      "platform": "wordpress"
+    },
+    {
+      "key": "jetpack",
+      "name": "Jetpack",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "cpe": ["automattic:jetpack"],
+      "aliases": [{ "vendor": "Automattic", "names": ["Jetpack *"] }],
+      "platform": "wordpress"
+    },
+    {
+      "key": "wp-super-cache",
+      "name": "WP Super Cache",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "cpe": ["automattic:wp_super_cache"],
+      "aliases": [{ "names": ["WP Super Cache"] }],
+      "platform": "wordpress"
     }
   ]
 }

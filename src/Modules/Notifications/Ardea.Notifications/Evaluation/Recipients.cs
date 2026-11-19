@@ -48,7 +48,7 @@ internal sealed class RecipientDirectory
         await db.Addresses.AsNoTracking().Where(a => a.ConfirmedAt != null && a.UnsubscribedAt == null).ToListAsync(cancellationToken),
         await db.Endpoints.AsNoTracking().Where(e => e.Enabled).ToListAsync(cancellationToken),
         await db.Preferences.AsNoTracking().ToListAsync(cancellationToken),
-        // Through the worker's policy: only members of the job's organisation (ADR 040).
+        // Through the worker's policy: only members of the job's organisation (ADR 041).
         await db.PushSubscriptions.AsNoTracking().Select(s => s.UserId).Distinct().ToListAsync(cancellationToken));
 
     /// <summary>

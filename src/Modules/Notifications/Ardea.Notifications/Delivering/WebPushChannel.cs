@@ -40,7 +40,7 @@ internal enum PushDeviceOutcome
 internal sealed record PushDeviceResult(Guid Id, PushDeviceOutcome Outcome, string Status);
 
 /// <summary>
-/// Web Push (master plan 8.5, ADR 040): one encrypted message per subscribed device of the member, signed with
+/// Web Push (master plan 8.5, ADR 041): one encrypted message per subscribed device of the member, signed with
 /// the instance's VAPID key. The content is end-to-end encrypted (RFC 8291); <c>Urgency: high</c> only for level 5;
 /// expired subscriptions are removed. Push endpoints are third-party addresses: the connection goes through the
 /// outbound guard, never to an internal address, and requests are not logged because an endpoint is a capability.

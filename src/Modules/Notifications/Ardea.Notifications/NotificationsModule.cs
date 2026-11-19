@@ -48,7 +48,7 @@ public sealed class NotificationsModule : IModule
         services.AddSingleton<VapidKeyStore>();
         services.AddScoped<WebPushChannel>();
         services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<WebPushChannel>());
-        // Push endpoints are capabilities of the browser makers' push services: never logged, never internal (ADR 040).
+        // Push endpoints are capabilities of the browser makers' push services: never logged, never internal (ADR 041).
         services.AddHttpClient(WebPushChannel.ClientName, client => client.Timeout = TimeSpan.FromSeconds(10))
             .ConfigurePrimaryHttpMessageHandler(OutboundAddresses.CreateHandler)
             .RemoveAllLoggers();

@@ -776,7 +776,7 @@ export class RuleEditorPage {
       list.map((t, i) => {
         if (i !== index) return t;
         const next = { ...t, ...change };
-        // Push goes out at once only (ADR 040).
+        // Push goes out at once only (ADR 041).
         if (next.channel === 'push') next.mode = 'immediate';
         return next;
       }),

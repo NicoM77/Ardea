@@ -96,7 +96,7 @@ internal sealed class DeliveryReader(
         switch (recipient.Kind)
         {
             case RecipientKinds.User when delivery.Channel == Channels.Push:
-                // Through the worker's policy: the subscriptions of this member of the job's organisation (ADR 040).
+                // Through the worker's policy: the subscriptions of this member of the job's organisation (ADR 041).
                 var devices = await db.PushSubscriptions.AsNoTracking().Where(p => p.UserId == recipient.Id).OrderBy(p => p.CreatedAt)
                     .Select(p => new PushDevice(p.Id, p.Endpoint, p.P256dh, p.Auth)).ToListAsync(cancellationToken);
                 if (devices.Count == 0)

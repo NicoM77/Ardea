@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 namespace Ardea.Notifications.Tests;
 
 /// <summary>
-/// Web Push (master plan 8.5, 8.8, 9.5; task 5.5, ADR 040): the message is encrypted for the device (RFC 8291) and
+/// Web Push (master plan 8.5, 8.8, 9.5; task 5.5, ADR 041): the message is encrypted for the device (RFC 8291) and
 /// signed with the instance's VAPID key (RFC 8292), level 5 goes out with high urgency, a subscription the push
 /// service no longer knows disappears after the first failed attempt, subscriptions are accepted only for the
 /// browser makers' push services, and nobody reaches another user's devices.

@@ -41,7 +41,7 @@ internal static class Channels
     public const string Email = "email";
     public const string Webhook = "webhook";
 
-    /// <summary>Web Push to the members' devices (task 5.5, ADR 040); immediate only.</summary>
+    /// <summary>Web Push to the members' devices (task 5.5, ADR 041); immediate only.</summary>
     public const string Push = "push";
 
     public static readonly IReadOnlyList<string> Usable = [InApp, Email, Webhook, Push];

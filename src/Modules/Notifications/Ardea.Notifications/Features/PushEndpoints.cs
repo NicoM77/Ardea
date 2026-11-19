@@ -41,7 +41,7 @@ internal sealed record PushSubscriptionKeysRequest(string? P256dh, string? Auth)
 internal sealed record PushTestView(bool Ok, string? Status, bool Removed);
 
 /// <summary>
-/// Web Push subscriptions of the signed-in user (master plan 8.5, 10.2; task 5.5, ADR 040). A device belongs to
+/// Web Push subscriptions of the signed-in user (master plan 8.5, 10.2; task 5.5, ADR 041). A device belongs to
 /// the user, not to an organisation: it receives the push messages of every organisation they are a member of,
 /// each with its own mute. Only endpoints at the browser makers' push services are accepted (master plan 9.5).
 /// </summary>

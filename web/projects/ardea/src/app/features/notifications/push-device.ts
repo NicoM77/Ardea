@@ -27,7 +27,7 @@ export function isAppleMobile(userAgent: string, maxTouchPoints: number): boolea
 }
 
 /**
- * Web Push on this device (task 5.5, ADR 040): registers the service worker, asks for permission on a tap,
+ * Web Push on this device (task 5.5, ADR 041): registers the service worker, asks for permission on a tap,
  * subscribes with the instance's key and hands the subscription to the API; turning it off removes both.
  */
 @Injectable({ providedIn: 'root' })

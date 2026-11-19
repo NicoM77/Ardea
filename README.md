@@ -133,7 +133,7 @@ Notifications over four channels.
 | 5.2 | Notification state, uniqueness per recipient, channel and event, bundling, digest queue | 5.1 | ✅ [ADR 038](docs/adr/0038-notifications.md) |
 | 5.3 | In-app channel with live delivery | 5.2, 3.11 | ✅ [ADR 038](docs/adr/0038-notifications.md) |
 | 5.4 | E-mail channel with templates for immediate and digest messages | 5.2, 0.9 | ✅ [ADR 038](docs/adr/0038-notifications.md) |
-| 5.5 | Web Push channel: key pair, subscriptions, service worker, manifest, iOS install guide | 5.2 | ✅ [ADR 040](docs/adr/0040-web-push.md) |
+| 5.5 | Web Push channel: key pair, subscriptions, service worker, manifest, iOS install guide | 5.2 | ✅ [ADR 041](docs/adr/0041-web-push.md) |
 | 5.6 | Webhook channel with signature and protection against internal targets | 5.2 | ✅ [ADR 038](docs/adr/0038-notifications.md) |
 | 5.7 | Default rules; scheduled digests; personal mute | 5.2, 5.4 | ✅ [ADR 038](docs/adr/0038-notifications.md) |
 | 5.8 | Mockup and pages for rules, targets, delivery log, personal settings; owner reviews afterwards | 5.1 | ✅ [mockups](docs/design/mockups/notification-rules.html) |

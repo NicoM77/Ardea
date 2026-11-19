@@ -41,7 +41,7 @@ namespace Ardea.Notifications.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.Sql("""
-                -- User data without an organisation (master plan 4.1, 9.2; ADR 040). The user reads and writes their own
+                -- User data without an organisation (master plan 4.1, 9.2; ADR 041). The user reads and writes their own
                 -- devices. The worker, in a unit of work of an organisation without a user, reads, counts and removes the
                 -- devices of a named recipient who is a member of that organisation, and nothing else.
                 ALTER TABLE notify.push_subscription ENABLE ROW LEVEL SECURITY;

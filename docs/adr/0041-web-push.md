@@ -1,4 +1,4 @@
-# ADR 040: Web Push
+# ADR 041: Web Push
 
 - Status: accepted
 - Date: 2026-11-19

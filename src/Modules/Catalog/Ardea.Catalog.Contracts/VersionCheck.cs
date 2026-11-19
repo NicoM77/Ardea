@@ -59,7 +59,9 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
 {
     /// <summary>
     /// Checks an installed version against the ranges of one affected product (master plan 6.6). The
-    /// rows of the table apply in order; ranges of type <c>git</c> are skipped.
+    /// rows of the table apply in order. Ranges of Git commits (<see cref="VersionRange.IsCommitRange"/>) are
+    /// skipped; when nothing else is left, the default status cannot be applied either, because the version may
+    /// lie inside one of the commit ranges, and the record names no comparable range.
     /// </summary>
     /// <param name="scheme">The scheme to compare with; <c>null</c> gives <see cref="VersionCheckReason.NoScheme"/>.</param>
     /// <param name="installed">The version in the profile.</param>
@@ -84,9 +86,13 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
         }
 
         var positions = ranges
-            .Where(r => !string.Equals(r.Scheme, VersionSchemeNames.Git, StringComparison.OrdinalIgnoreCase))
+            .Where(r => !r.IsCommitRange)
             .Select(r => (Range: r, Position: Locate(scheme, version, r)))
             .ToList();
+        if (positions.Count == 0 && ranges.Count > 0)
+        {
+            return Unknown(VersionCheckReason.NoComparableRange);
+        }
 
         // Row 1 first: a readable affected range that contains the version decides whatever else the record says.
         if (positions.Exists(p => p.Position == Position.Inside && p.Range.Status == VersionStatus.Affected))

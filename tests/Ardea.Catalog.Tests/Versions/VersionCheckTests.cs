@@ -165,6 +165,43 @@ public sealed class VersionCheckTests
     }
 
     [Fact]
+    public void Default_status_is_not_applied_when_the_record_names_only_git_commits()
+    {
+        // Linux kernel records: one entry with commit ranges and default «unaffected». Any version may lie inside a
+        // commit range, so «in no range, default unaffected» cannot be concluded; the version entry decides instead.
+        var commits = new VersionRange { Introduced = "db6fbc106786f26d95889c50c18b1f28aa543a17", Fixed = "253cff0526781e28b1b0f9fdacd74ecdc23d3ab7", Scheme = VersionSchemeNames.Git };
+        var fixedCommit = new VersionRange { Exact = "8df4bcdb0a4232192b2445256c39b787d58ef14d", Scheme = VersionSchemeNames.Git };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.NoComparableRange), Check("6.12.1", VersionStatus.Unaffected, commits, fixedCommit));
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.NoComparableRange), Check("6.12.1", VersionStatus.Affected, commits));
+    }
+
+    [Fact]
+    public void Version_numbers_tagged_git_are_compared_as_versions()
+    {
+        // Symfony (CVE-2026-118515): {"version": "0", "lessThan": "5.4.56", "versionType": "git"}, stored without the open lower bound.
+        var tagged = new VersionRange { Fixed = "5.4.56", Scheme = VersionSchemeNames.Git };
+        var line = new VersionRange { Introduced = "6.0.0", Fixed = "6.4.50", Scheme = VersionSchemeNames.Git };
+
+        Assert.False(tagged.IsCommitRange);
+        Assert.Equal(new VersionCheck(VersionVerdict.InRange, VersionCheckReason.InAffectedRange), Check("1.0.0", VersionStatus.Unaffected, tagged, line));
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected), Check("6.4.50", VersionStatus.Unaffected, tagged, line));
+    }
+
+    [Theory]
+    [InlineData("1da177e4c3f4", null, true)]
+    [InlineData("0", "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2", true)]
+    [InlineData(null, null, true)]
+    [InlineData("0", null, true)]
+    [InlineData("6.0.0", "6.4.50", false)]
+    [InlineData(null, "5.4.56", false)]
+    public void A_git_range_is_a_commit_range_when_a_bound_is_a_hash_or_none_is_named(string? introduced, string? fixedVersion, bool commits)
+    {
+        Assert.Equal(commits, new VersionRange { Introduced = introduced, Fixed = fixedVersion, Scheme = "git" }.IsCommitRange);
+        Assert.False(new VersionRange { Introduced = introduced, Fixed = fixedVersion, Scheme = "semver" }.IsCommitRange);
+    }
+
+    [Fact]
     public void Without_a_scheme_the_verdict_is_unknown()
     {
         Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.NoScheme), VersionCheck.Evaluate(null, "1.0", [Affected24], VersionStatus.Unaffected));

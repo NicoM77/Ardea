@@ -33,6 +33,17 @@ public sealed record VersionRange
     /// <summary>The version type the record names for this range, if any; <c>git</c> ranges are never evaluated.</summary>
     public string? Scheme { get; init; }
 
+    /// <summary>
+    /// Whether this range states Git commits, which cannot be compared without the repository (master plan 6.6):
+    /// version type <c>git</c> and a bound that is a commit hash, or no bound at all. Publishers also tag plain
+    /// version numbers as <c>git</c> (Symfony: <c>0</c> to before <c>5.4.56</c>); such a range is compared as versions.
+    /// </summary>
+    public bool IsCommitRange =>
+        string.Equals(Scheme, VersionSchemeNames.Git, StringComparison.OrdinalIgnoreCase)
+        && (Bounds.Any(VersionRanges.IsCommitHash) || Bounds.All(VersionRanges.IsOpenLowerBound));
+
+    private IEnumerable<string?> Bounds => [Introduced, Fixed, LastAffected, Exact];
+
     /// <summary>Whether the record names a lower bound: an exact version, or a non-open <see cref="Introduced"/>.</summary>
     public bool HasExplicitLowerBound => Exact is not null || Introduced is not null;
 
@@ -51,6 +62,13 @@ public static class VersionRanges
     {
         "", "*", "-", "x", "n/a", "na", "unspecified", "unknown", "all", "any",
     };
+
+    /// <summary>Whether the text is a Git commit hash: 7 to 40 hexadecimal digits.</summary>
+    public static bool IsCommitHash(string? text)
+    {
+        var trimmed = text?.Trim();
+        return trimmed is { Length: >= 7 and <= 40 } && trimmed.All(char.IsAsciiHexDigit);
+    }
 
     /// <summary>Whether a lower bound means «from the beginning»: missing, <c>0</c>, <c>*</c>, <c>unspecified</c>, ….</summary>
     public static bool IsOpenLowerBound(string? text) => text is null || OpenWords.Contains(text.Trim()) || text.Trim() == "0";

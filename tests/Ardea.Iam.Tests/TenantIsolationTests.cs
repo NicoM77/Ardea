@@ -32,17 +32,26 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["iam.user_login"] = "user",
         ["iam.user_token"] = "user",
         ["iam.session"] = "user",
+        ["notify.notification"] = "user",
+        ["notify.user_preference"] = "user",
     };
 
     /// <summary>Schemas whose every table is global: intelligence and catalogue are the same for all (master plan 4.1).</summary>
     private static readonly string[] GlobalSchemas = ["intel", "catalog"];
 
     /// <summary>Schemas whose every table is organisation data (master plan 4.1).</summary>
-    private static readonly string[] OrganizationSchemas = ["assets", "assess"];
+    private static readonly string[] OrganizationSchemas = ["assets", "assess", "notify"];
 
     /// <summary>Bob's objects that Alice tries to reach.</summary>
     private sealed record Foreign(
-        Guid User, Guid Invitation, Guid Project, Guid Component, Guid Connection, Guid Link, Guid Suggestion, int Action, int Alert, Guid Finding);
+        Guid User, Guid Invitation, Guid Project, Guid Component, Guid Connection, Guid Link, Guid Suggestion, int Action, int Alert, Guid Finding,
+        Guid Rule, Guid Endpoint, Guid Address);
+
+    /// <summary>A valid rule whose targets may name foreign recipients.</summary>
+    private static object Rule(object target, Guid[]? projects = null) =>
+        new { name = "Planted", minLevel = 2, events = new[] { "action.raised" }, projectIds = projects ?? [], targets = new[] { target } };
+
+    private static object RoleTarget => new { channel = "in_app", recipientKind = "role", recipientRef = "owner", mode = "immediate" };
 
     /// <summary>
     /// Every organisation endpoint with a request body that passes validation, so a foreign id is what
@@ -101,6 +110,27 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["PATCH /api/v1/orgs/{orgId}/findings/{findingId}"] = _ => new { status = "risk_accepted", expectedStatus = "open" },
         ["GET /api/v1/orgs/{orgId}/alerts"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/alerts/{number}"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/notification-channels"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/rules/"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/rules/"] = f => Rule(new { channel = "email", recipientKind = "user", recipientRef = f.User.ToString(), mode = "immediate" }, [f.Project]),
+        ["GET /api/v1/orgs/{orgId}/rules/{ruleId}"] = _ => null,
+        ["PUT /api/v1/orgs/{orgId}/rules/{ruleId}"] = _ => Rule(RoleTarget),
+        ["DELETE /api/v1/orgs/{orgId}/rules/{ruleId}"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/endpoints/"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/endpoints/"] = _ => new { name = "Planted", url = "https://hooks.example.org/ardea" },
+        ["PUT /api/v1/orgs/{orgId}/endpoints/{id}"] = _ => new { name = "Taken over" },
+        ["DELETE /api/v1/orgs/{orgId}/endpoints/{id}"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/endpoints/{id}/test"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/external-addresses/"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/external-addresses/"] = _ => new { address = "planted@example.org" },
+        ["POST /api/v1/orgs/{orgId}/external-addresses/{id}/resend"] = _ => null,
+        ["DELETE /api/v1/orgs/{orgId}/external-addresses/{id}"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/deliveries"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/notifications"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/notifications/unread-count"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/notifications/read"] = _ => new { all = true },
+        ["GET /api/v1/orgs/{orgId}/notification-preferences"] = _ => null,
+        ["PUT /api/v1/orgs/{orgId}/notification-preferences"] = _ => new { mutedChannels = new[] { "email" } },
     };
 
     /// <summary>Bob's object a route parameter names: <c>{id}</c> is the object of the path segment before it.</summary>
@@ -116,6 +146,9 @@ public sealed class TenantIsolationTests(PostgresServer server)
         "id" when route.Contains("/repository-connections/{id}", StringComparison.Ordinal) => foreign.Connection.ToString(),
         "id" when route.Contains("/suggestions/{id}", StringComparison.Ordinal) => foreign.Suggestion.ToString(),
         "linkId" => foreign.Link.ToString(),
+        "ruleId" => foreign.Rule.ToString(),
+        "id" when route.Contains("/endpoints/{id}", StringComparison.Ordinal) => foreign.Endpoint.ToString(),
+        "id" when route.Contains("/external-addresses/{id}", StringComparison.Ordinal) => foreign.Address.ToString(),
         _ => null,
     };
 
@@ -204,7 +237,20 @@ public sealed class TenantIsolationTests(PostgresServer server)
             INSERT INTO assess.finding (organization_id, alert_id, entry_id, project_id, component_id, remediation_id, match_type, version_verdict, verdict, verdict_source, level, evidence, factors, status, status_changed_at, is_backfill, created_at, changed_at, exploitation, fix_available)
             VALUES ('{bobOrg}', '{bobsAlert}', '{bobsEntry}', '{bobsProject}', '{bobsComponent}', '{bobsAction}', 'product', 'in_range', 'affected', 'rules', 4, jsonb_build_object(), jsonb_build_object(), 'open', now(), false, now(), now(), 'none', false) RETURNING id
             """);
-        var foreign = new Foreign(bobId, bobsInvitation, bobsProject, bobsComponent, bobsConnection, bobsLink, bobsSuggestion, 2, 1, bobsFinding);
+        // Bob's notification settings and recipients (task 5.1): his default rule, a webhook target, an external address, a notification.
+        var bobsRule = await host.ScalarAsync<Guid>($"SELECT id FROM notify.rule WHERE organization_id = '{bobOrg}' AND preset = 'critical'");
+        var bobsEndpoint = await host.ScalarAsync<Guid>($"""
+            INSERT INTO notify.endpoint (organization_id, name, url_enc, secret_enc, enabled, created_at) VALUES ('{bobOrg}', 'Bob''s SIEM', 'x', 'x', true, now()) RETURNING id
+            """);
+        var bobsAddress = await host.ScalarAsync<Guid>($"""
+            INSERT INTO notify.external_address (organization_id, address, normalized_address, confirmed_at, created_at)
+            VALUES ('{bobOrg}', 'partner@example.org', 'PARTNER@EXAMPLE.ORG', now(), now()) RETURNING id
+            """);
+        var bobsNotification = await host.ScalarAsync<Guid>($"""
+            INSERT INTO notify.notification (user_id, organization_id, event_id, kind, title, body, created_at)
+            VALUES ('{bobId}', '{bobOrg}', gen_random_uuid(), 'action.raised', 'Bob''s', 'Bob''s', now()) RETURNING id
+            """);
+        var foreign = new Foreign(bobId, bobsInvitation, bobsProject, bobsComponent, bobsConnection, bobsLink, bobsSuggestion, 2, 1, bobsFinding, bobsRule, bobsEndpoint, bobsAddress);
 
         var endpoints = host.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText?.Contains("/orgs/{orgId", StringComparison.Ordinal) == true)
@@ -258,9 +304,29 @@ public sealed class TenantIsolationTests(PostgresServer server)
             }
         }
 
+        // Foreign ids in the body of Alice's own requests: a rule naming Bob's project or Bob's recipients is invalid,
+        // and marking Bob's notification read changes nothing.
+        foreach (var body in new[]
+        {
+            Rule(RoleTarget, [foreign.Project]),
+            Rule(new { channel = "email", recipientKind = "user", recipientRef = foreign.User.ToString(), mode = "immediate" }),
+            Rule(new { channel = "webhook", recipientKind = "endpoint", recipientRef = foreign.Endpoint.ToString(), mode = "immediate" }),
+            Rule(new { channel = "email", recipientKind = "address", recipientRef = foreign.Address.ToString(), mode = "immediate" }),
+        })
+        {
+            await ExpectHiddenAsync(problems, $"POST rules with Bob's ids {JsonSerializer.Serialize(body)}", await alice.PostAsync($"/api/v1/orgs/{aliceOrg}/rules", body), notFoundOnly: false);
+        }
+
+        await alice.PostAsync($"/api/v1/orgs/{aliceOrg}/notifications/read", new { ids = new[] { bobsNotification } });
         Assert.Empty(problems);
 
         // Bob's data is untouched.
+        Assert.Equal(3L, await host.ScalarAsync<long>($"SELECT count(*) FROM notify.rule WHERE organization_id = '{bobOrg}'"));
+        Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM notify.rule WHERE name = 'Planted'"));
+        Assert.Equal("Bob's SIEM", await host.ScalarAsync<string>($"SELECT name FROM notify.endpoint WHERE id = '{bobsEndpoint}'"));
+        Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM notify.external_address WHERE id = '{bobsAddress}' AND unsubscribed_at IS NULL"));
+        Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM notify.notification WHERE id = '{bobsNotification}' AND read_at IS NULL"));
+        Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM notify.user_preference WHERE organization_id = '{bobOrg}'"));
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM iam.invitation WHERE organization_id = '{bobOrg}'"));
         Assert.Equal("Bob Corp", await host.ScalarAsync<string>($"SELECT name FROM iam.organization WHERE id = '{bobOrg}'"));
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM iam.organization WHERE id = '{bobOrg}' AND settings->'setup' IS NOT NULL AND settings->'setup' <> 'null'::jsonb"));
@@ -295,7 +361,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
 
         // Plain SQL as the application role, with no tenant set: the third layer hides everything.
         await using var dataSource = NpgsqlDataSource.Create(host.Database.AppConnectionString("tests"));
-        foreach (var table in new[] { "iam.organization", "iam.membership", "iam.invitation", "platform.audit_event", "iam.\"user\"", "iam.session", "iam.user_token" })
+        foreach (var table in new[] { "iam.organization", "iam.membership", "iam.invitation", "platform.audit_event", "iam.\"user\"", "iam.session", "iam.user_token", "notify.rule", "notify.rule_target" })
         {
             await using var command = dataSource.CreateCommand($"SELECT count(*) FROM {table}");
             Assert.Equal(0L, (long)(await command.ExecuteScalarAsync())!);

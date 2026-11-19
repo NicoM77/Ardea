@@ -25,6 +25,7 @@ internal static class DemoJobRunner
         "assess.assess-alert",
         "notify.evaluate",
         "notify.distribute-warning",
+        "notify.receive-warning",
     ];
 
     private const int MaxRounds = 200;

@@ -8,7 +8,7 @@ namespace Ardea.Host.Commands;
 
 /// <summary>
 /// <c>ardea seed-demo</c> (task 7.6): fills an empty instance with the sample data of the mockups so that a visitor can
-/// look around: an organisation with three people and three projects, a few dozen real CVE records of the spike week,
+/// look around: an organisation with three people and three projects, sixteen real CVE records of the spike week,
 /// and everything the pipeline makes of them (entries, findings, actions, history, notifications). The records go
 /// through the real jobs; nothing is fetched and no GitHub token is needed. A database that holds data is refused
 /// before anything is written. The owner's sign-in is printed once.
@@ -97,7 +97,7 @@ internal static class SeedDemoCommand
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             await error.WriteLineAsync($"seed-demo failed: {ex.Message}");
-            await error.WriteLineAsync("The instance is partly filled. Drop its database or run `ardea org delete example-digital --confirm example-digital` and start again.");
+            await error.WriteLineAsync("The instance is partly filled and a second run refuses it. Start over with an empty database (with Compose: `docker compose down -v`).");
             return 1;
         }
 
@@ -133,16 +133,17 @@ internal static class SeedDemoCommand
 
     private static async Task WriteSummaryAsync(NpgsqlConnection owner, DemoSeedContext context, TimeSpan elapsed, TextWriter output, CancellationToken cancellationToken)
     {
-        async Task<long> CountAsync(string table)
+        async Task<long> CountAsync(string query)
         {
-            await using var command = new NpgsqlCommand($"SELECT count(*) FROM {table}", owner);
+            await using var command = new NpgsqlCommand($"SELECT count(*) FROM {query}", owner);
             return (long)(await command.ExecuteScalarAsync(cancellationToken))!;
         }
 
         output.WriteLine();
         output.WriteLine($"Demo instance ready in {elapsed.TotalSeconds:F0} s: {await CountAsync("iam.organization")} organisation, {await CountAsync("assets.project")} projects, "
-            + $"{await CountAsync("intel.security_entry")} entries, {await CountAsync("assess.finding")} findings, {await CountAsync("assess.remediation")} actions, "
-            + $"{await CountAsync("notify.delivery")} notifications.");
+            + $"{await CountAsync("intel.security_entry")} entries, {await CountAsync("assess.finding WHERE level >= 2")} relevant findings, "
+            + $"{await CountAsync("assess.remediation WHERE status <> 'closed'")} open and {await CountAsync("assess.remediation WHERE status = 'closed'")} done actions, "
+            + $"{await CountAsync("notify.notification")} notifications in the app.");
         if (context.Credentials is { } credentials)
         {
             output.WriteLine();

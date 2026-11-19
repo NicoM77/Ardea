@@ -68,18 +68,22 @@ internal sealed class CatalogCache(TimeProvider time)
 {
     public static readonly TimeSpan Lifetime = TimeSpan.FromMinutes(5);
 
-    private (CatalogLayers Layers, DateTimeOffset LoadedAt)? _current;
+    private (CatalogLayers Layers, DateTimeOffset LoadedAt, long Generation)? _current;
 
-    public async ValueTask<CatalogLayers> GetAsync(Func<CancellationToken, Task<CatalogLayers>> load, CancellationToken cancellationToken)
+    /// <summary>
+    /// The layers loaded for <paramref name="generation"/>: a copy loaded for another generation of decisions about
+    /// learned entries is read again at once, whatever its age (ADR 040).
+    /// </summary>
+    public async ValueTask<CatalogLayers> GetAsync(long generation, Func<CancellationToken, Task<CatalogLayers>> load, CancellationToken cancellationToken)
     {
         var current = _current;
-        if (current is { } c && time.GetUtcNow() - c.LoadedAt < Lifetime)
+        if (current is { } c && c.Generation == generation && time.GetUtcNow() - c.LoadedAt < Lifetime)
         {
             return c.Layers;
         }
 
         var layers = await load(cancellationToken);
-        _current = (layers, time.GetUtcNow());
+        _current = (layers, time.GetUtcNow(), generation);
         return layers;
     }
 
@@ -90,6 +94,8 @@ internal sealed class CatalogCache(TimeProvider time)
 /// <summary>Lookups in <c>catalog.product</c> inside the caller's unit of work (master plan 4.5, 6.5, 6.9).</summary>
 internal sealed class ProductCatalog(CatalogDbContext context, CatalogCache cache) : IProductCatalog
 {
+    private long? _generation;
+
     public async Task<CatalogProduct?> FindByKeyAsync(string key, CancellationToken cancellationToken) =>
         (await LayersAsync(cancellationToken)).FindByKey(key);
 
@@ -111,6 +117,15 @@ internal sealed class ProductCatalog(CatalogDbContext context, CatalogCache cach
     public async Task<ResolvedProduct?> ResolveAsync(string? vendor, string product, CpePair? cpe, PackageCoordinate? package, CancellationToken cancellationToken) =>
         (await LayersAsync(cancellationToken)).Resolve(vendor, product, cpe, package);
 
+    public async Task<IReadOnlyList<string>> LearnedFromAsync(string key, CancellationToken cancellationToken) =>
+        await context.UnknownProducts.AsNoTracking()
+            .Where(u => u.ProductKey == key
+                && (u.Outcome == UnknownProductRow.New || u.Outcome == UnknownProductRow.Withdrawn
+                    || (u.Outcome == UnknownProductRow.Alias && context.Products.Any(p => p.Key == key && p.Origin == ProductRow.Learned))))
+            .OrderBy(u => u.RawKey)
+            .Select(u => u.RawKey)
+            .ToListAsync(cancellationToken);
+
     public async Task<bool> HasPluginsAsync(string platformKey, CancellationToken cancellationToken) =>
         (await LayersAsync(cancellationToken)).All.Products.Any(p => string.Equals(p.PlatformKey, platformKey, StringComparison.Ordinal));
 
@@ -120,8 +135,17 @@ internal sealed class ProductCatalog(CatalogDbContext context, CatalogCache cach
     public async Task<IReadOnlyList<CatalogProduct>> SearchAsync(string text, int limit, CancellationToken cancellationToken) =>
         (await LayersAsync(cancellationToken)).All.Search(text, limit);
 
-    /// <summary>The catalogue in effect, from the cache.</summary>
-    public ValueTask<CatalogLayers> LayersAsync(CancellationToken cancellationToken) => cache.GetAsync(LoadAsync, cancellationToken);
+    /// <summary>
+    /// The catalogue in effect, from the cache. Once per unit of work the number of decisions about learned entries is
+    /// read: a decision made in any process since the cache was loaded makes this unit of work read the catalogue anew,
+    /// so a recomputation after a decision never works with the catalogue from before it (ADR 040).
+    /// </summary>
+    public async ValueTask<CatalogLayers> LayersAsync(CancellationToken cancellationToken)
+    {
+        _generation ??= await context.LearningEvents
+            .LongCountAsync(e => e.Kind == LearningEventRow.Adopted || e.Kind == LearningEventRow.Confirmed || e.Kind == LearningEventRow.Withdrawn, cancellationToken);
+        return await cache.GetAsync(_generation.Value, LoadAsync, cancellationToken);
+    }
 
     /// <summary>The catalogue in effect as this unit of work sees it, past the cache: what a decision is checked against.</summary>
     public Task<CatalogLayers> ReadLayersAsync(CancellationToken cancellationToken) => LoadAsync(cancellationToken);

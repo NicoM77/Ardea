@@ -50,12 +50,32 @@ internal static class ComponentKeys
             }
         }
 
+        // A learned entry keeps the raw keys it was learned from (master plan 6.9, ADR 040): whatever becomes of the entry,
+        // the component keeps finding what the sources call it, so a withdrawal or the moment before the entries are
+        // computed again never closes a true finding.
+        async Task AddLearnedFromAsync(string key)
+        {
+            foreach (var raw in await catalog.LearnedFromAsync(key, cancellationToken))
+            {
+                Add("product", raw, raw.Contains('/', StringComparison.Ordinal) ? "strong" : "weak");
+            }
+        }
+
+        async Task AddProductAsync(CatalogProduct product)
+        {
+            AddProduct(product);
+            if (product.Origin == ProductOrigin.Learned)
+            {
+                await AddLearnedFromAsync(product.Key);
+            }
+        }
+
         if (component.Purl is not null && PackageCoordinate.TryParsePurl(component.Purl, out var coordinate, out _))
         {
             Add("purl", coordinate.ToString(), "strong");
             if (component.ProductKey is null && await catalog.FindByPackageAsync(coordinate.Type, coordinate.Name, cancellationToken) is { } byPackage)
             {
-                AddProduct(byPackage);
+                await AddProductAsync(byPackage);
             }
         }
 
@@ -63,19 +83,20 @@ internal static class ComponentKeys
         {
             if (await catalog.FindByKeyAsync(component.ProductKey, cancellationToken) is { } product)
             {
-                AddProduct(product);
+                await AddProductAsync(product);
             }
             else
             {
-                // A learned entry that is no longer in effect: its key still finds raw mentions.
+                // A learned entry that is no longer in effect: its key, and the raw keys it was learned from.
                 Add("product", component.ProductKey, "strong");
+                await AddLearnedFromAsync(component.ProductKey);
             }
         }
         else if (component.CustomName is not null)
         {
             if (await catalog.FindByNameAsync(component.CustomVendor, component.CustomName, cancellationToken) is { } match)
             {
-                AddProduct(match.Product);
+                await AddProductAsync(match.Product);
 
                 // Known only through a learned entry: the raw key stays, so taking the entry back loses no hit (master plan 6.9).
                 if ((match.Learned || match.Product.Origin == ProductOrigin.Learned) && ProductKey.TryCreate(component.CustomVendor, component.CustomName, out var learnedRaw))

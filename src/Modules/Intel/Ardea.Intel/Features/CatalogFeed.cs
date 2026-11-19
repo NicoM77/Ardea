@@ -59,8 +59,9 @@ internal sealed class UnknownProductFeed(IntelDbContext db, IProductCatalog cata
 }
 
 /// <summary>
-/// Learned catalogue entries took effect or were withdrawn: the entries that name what they map are merged again, with a
-/// pause so that every process reads the new catalogue (master plan 6.9 step 6). New hits follow like any other change.
+/// Learned catalogue entries took effect or were withdrawn: the entries that name what they map are merged again (master
+/// plan 6.9 step 6). Any recomputation of the entry serves, also one already waiting: every unit of work reads the
+/// catalogue anew once a decision was made (ADR 040). New hits follow like any other change.
 /// </summary>
 internal sealed class LearnedEntriesSubscriber(IntelDbContext db, IJobQueue jobs) : ICatalogChangeSubscriber
 {
@@ -99,7 +100,7 @@ internal sealed class LearnedEntriesSubscriber(IntelDbContext db, IJobQueue jobs
             .Select(e => "SRC:" + e.PrimaryKey).ToListAsync(cancellationToken);
         foreach (var key in aliases.Concat(warnings).Distinct(StringComparer.Ordinal))
         {
-            await jobs.EnqueueAsync(new CorrelateEntry(key), CorrelateEntry.Options(key) with { Delay = change.Delay }, cancellationToken);
+            await jobs.EnqueueAsync(new CorrelateEntry(key), CorrelateEntry.Options(key), cancellationToken);
         }
     }
 }

@@ -14,8 +14,6 @@ namespace Ardea.Catalog.Learning;
 /// </summary>
 internal sealed class LearnedEntries(CatalogDbContext db, ProductCatalog catalog, IEnumerable<ICatalogChangeSubscriber> subscribers, TimeProvider time)
 {
-    /// <summary>A process reloads the catalogue at the latest after <see cref="CatalogCache.Lifetime"/>; the recomputation waits for it.</summary>
-    public static readonly TimeSpan RecomputeDelay = CatalogCache.Lifetime + TimeSpan.FromMinutes(1);
 
     /// <summary>Every key of <c>catalog.product</c>, also of withdrawn learned entries: a key is never given twice.</summary>
     public async Task<HashSet<string>> KeysAsync(CancellationToken cancellationToken) =>
@@ -184,7 +182,7 @@ internal sealed class LearnedEntries(CatalogDbContext db, ProductCatalog catalog
 
     private async Task NotifyAsync(IReadOnlyList<string> rawKeys, IReadOnlyList<string> productKeys, IReadOnlyList<string> cpe, IReadOnlyList<string> packages, CancellationToken cancellationToken)
     {
-        var change = new LearnedEntriesChanged(rawKeys, productKeys, cpe, packages, RecomputeDelay);
+        var change = new LearnedEntriesChanged(rawKeys, productKeys, cpe, packages);
         foreach (var subscriber in subscribers)
         {
             await subscriber.OnLearnedEntriesChangedAsync(change, cancellationToken);

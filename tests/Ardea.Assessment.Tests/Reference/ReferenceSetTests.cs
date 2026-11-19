@@ -256,8 +256,19 @@ internal sealed class ReferenceHost : IAsyncDisposable
         return id;
     }
 
-    /// <summary>The catalogue is read anew, as the administration has the process do after a decision about a learned entry.</summary>
-    public void InvalidateCatalog() => _services.GetRequiredService<Catalog.Products.CatalogCache>().Invalidate();
+    /// <summary>Changes a component and its keys as the profile endpoints do, and queues the project's reverse search.</summary>
+    public async Task ChangeComponentAsync(Guid organization, Guid project, Guid component, Action<Component> change)
+    {
+        await InOrganizationAsync(organization, async services =>
+        {
+            var db = services.GetRequiredService<AssetsDbContext>();
+            var row = await db.Components.SingleAsync(c => c.Id == component);
+            change(row);
+            await db.SaveChangesAsync();
+            await ComponentKeys.RefreshAsync(db, services.GetRequiredService<IProductCatalog>(), [row], CancellationToken.None);
+        });
+        await ProfileChangedAsync(organization, project);
+    }
 
     /// <summary>Work in a unit of work of its own, without organisation, as a system job or the administration does it.</summary>
     public async Task InSystemAsync(Func<IServiceProvider, Task> work)
@@ -332,7 +343,7 @@ internal sealed class ReferenceHost : IAsyncDisposable
     /// Runs every waiting job, whatever its kind, the way the worker runs it: its own scope, its tenant,
     /// one committed unit of work; until none is left.
     /// </summary>
-    public async Task RunJobsAsync()
+    public async Task RunJobsAsync(string? except = null)
     {
         var registry = _services.GetRequiredService<JobRegistry>();
         for (var round = 0; round < 50; round++)
@@ -342,8 +353,9 @@ internal sealed class ReferenceHost : IAsyncDisposable
             {
                 await connection.OpenAsync();
                 await using var claim = new NpgsqlCommand(
-                    "UPDATE platform.job SET state = 'succeeded', finished_at = now() WHERE state = 'pending' RETURNING id, kind, payload::text, org_id",
+                    "UPDATE platform.job SET state = 'succeeded', finished_at = now() WHERE state = 'pending' AND kind <> $1 RETURNING id, kind, payload::text, org_id",
                     connection);
+                claim.Parameters.Add(new NpgsqlParameter { Value = except ?? string.Empty });
                 await using var reader = await claim.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {

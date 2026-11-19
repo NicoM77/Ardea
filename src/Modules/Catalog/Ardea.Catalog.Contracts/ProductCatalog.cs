@@ -206,6 +206,13 @@ public interface IProductCatalog
     /// </summary>
     Task<ResolvedProduct?> ResolveAsync(string? vendor, string product, CpePair? cpe, PackageCoordinate? package, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// The raw keys a learned entry was learned from or that were mapped to it (master plan 6.9), also after it was
+    /// withdrawn; empty for a key nothing was learned for. A component recorded under a learned entry keeps finding what
+    /// these raw keys find, whatever becomes of the entry.
+    /// </summary>
+    Task<IReadOnlyList<string>> LearnedFromAsync(string key, CancellationToken cancellationToken);
+
     /// <summary>Whether some product in effect names <paramref name="platformKey"/> as its platform, i.e. the platform has plugins.</summary>
     Task<bool> HasPluginsAsync(string platformKey, CancellationToken cancellationToken);
 

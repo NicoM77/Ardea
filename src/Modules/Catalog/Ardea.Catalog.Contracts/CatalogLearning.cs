@@ -36,18 +36,25 @@ public interface IUnknownProductFeed
 /// Learned entries took effect or were withdrawn (master plan 6.9 steps 5 and 6). The entries whose affected products
 /// may resolve differently now are computed again: those that name one of <paramref name="RawKeys"/> (as their key or
 /// as the raw key a learned entry resolved), carry one of <paramref name="ProductKeys"/>, or name one of the CPE pairs
-/// or packages.
+/// or packages. Every unit of work reads the catalogue as it is after the decision (ADR 040), so the recomputation runs
+/// at once and may join a recomputation of the same entry that is already waiting.
 /// </summary>
 /// <param name="RawKeys">The raw keys whose resolution changed.</param>
 /// <param name="ProductKeys">Keys of learned entries that were withdrawn.</param>
 /// <param name="CpePairs">CPE pairs of learned entries, as <c>vendor:product</c>.</param>
 /// <param name="Packages">Package URLs without version of learned entries.</param>
-/// <param name="Delay">How long to wait before the recomputation, so that every process reads the new catalogue.</param>
 public sealed record LearnedEntriesChanged(
-    IReadOnlyList<string> RawKeys, IReadOnlyList<string> ProductKeys, IReadOnlyList<string> CpePairs, IReadOnlyList<string> Packages, TimeSpan Delay);
+    IReadOnlyList<string> RawKeys, IReadOnlyList<string> ProductKeys, IReadOnlyList<string> CpePairs, IReadOnlyList<string> Packages);
 
 /// <summary>Hears about learned entries; Intel recomputes the entries concerned (master plan 6.9 step 6).</summary>
 public interface ICatalogChangeSubscriber
 {
     Task OnLearnedEntriesChangedAsync(LearnedEntriesChanged change, CancellationToken cancellationToken);
+}
+
+/// <summary>Asks the catalogue to learn (master plan 6.9 «nach der Erstbefüllung»); Intel does after a source's first load.</summary>
+public interface ICatalogGrowth
+{
+    /// <summary>Queues a run of the catalogue's learning after <paramref name="delay"/>; a waiting run is not doubled.</summary>
+    Task RequestAsync(TimeSpan delay, CancellationToken cancellationToken);
 }

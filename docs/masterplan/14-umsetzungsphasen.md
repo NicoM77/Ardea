@@ -233,6 +233,7 @@ Keine neuen Funktionen für Benutzer. Hinzu kommen nur der Demo-Befehl, die Werk
 | 7.11 | Abnahme aller Phasen: Die Kriterien der Phasen 0 bis 5 und aus Kapitel 1.6 auf einer frischen Installation aus den Release-Images für `amd64` und `arm64` durchgehen; Update vom letzten Stand `0.x` auf 1.0; die zwei Handdurchgänge aus Kapitel 13.6; Ergebnis als `docs/acceptance/release-1.0.md` | 7.3, 7.10 |
 | 7.12 | Masterplan löschen (E20): Was nach 1.0 noch gilt, vorher auf Englisch in die Dokumentation übernehmen: Architektur und Modulgrenzen, Datenmodell in Kürze, Regelwerk und Stufen, Sicherheitsmodell, Richtlinien aus Kapitel 13 in `CONTRIBUTING.md`, Ausbaustufen nach 1.0 als Roadmap; dann `docs/masterplan/` löschen und alle Verweise darauf in ADR, Abnahmen, README, `CONTRIBUTING.md` und Code anpassen | 7.9, 7.11 |
 | 7.13 | CI wieder auf Pull Requests: Die vorübergehende Einschränkung vom 19.11.2026 zurücknehmen (wegen des aufgebrauchten Kontingents an GitHub-Actions-Minuten läuft die Pipeline seither nur auf dem Hauptzweig und Pull Requests werden lokal geprüft). Der Workflow läuft wieder bei jedem Pull Request, mit Abbruch überholter Läufe und ohne Lauf bei reinen Änderungen an der Dokumentation; Vergleich der Oberfläche und `arm64`-Image wieder automatisch auf dem Hauptzweig; der Hinweis in `ci.yml` entfällt | |
+| 7.14 | Branches aufräumen: alle Branches löschen, die in den Hauptzweig zusammengeführt sind, auf GitHub und lokal; die übrigen einzeln prüfen (geschlossener Pull Request ohne Zusammenführen, verwaiste Arbeitsstände) und löschen oder als offenen Pull Request weiterführen, mit der Entscheidung je Branch als Liste; in den Einstellungen des Repositories «Automatically delete head branches» einschalten, damit zusammengeführte Branches künftig von selbst verschwinden | 7.1 |
 
 Abnahme:
 
@@ -245,6 +246,7 @@ Abnahme:
 - Die Website wird bei einem Release ohne Handarbeit neu veröffentlicht; Linkprüfung und Zugänglichkeitsprüfung finden nichts.
 - Alle Kriterien aus Kapitel 1.6 und der Phasen 0 bis 5 sind auf der frischen Installation für beide Architekturen nachgewiesen; `docs/acceptance/release-1.0.md` hat keinen offenen Punkt.
 - Build und Lint laufen ohne Warnung; das Prüfskript findet keinen Kommentar ausserhalb der Ausnahmen aus 7.5; das OpenAPI-Dokument ist unverändert.
+- Auf GitHub gibt es ausser dem Hauptzweig nur Branches offener Pull Requests; ein zusammengeführter Pull Request löscht seinen Branch selbst (7.14).
 - Nach 7.12 verweist keine Datei mehr auf `docs/masterplan/`, und jede Datei im Repository ist Teil des Produkts, seines Builds, seiner Tests, seiner Dokumentation oder der Website.
 
 ## Nach 1.0

@@ -29,7 +29,7 @@ import re
 import sys
 from collections import defaultdict
 
-TARGET = {"exact_in_range": 44, "exact_above_hint": 26, "exact_above_plain": 20, "unknown": 70, "similar_name": 70}
+TARGET = {"exact_in_range": 44, "exact_above_hint": 26, "exact_above_plain": 20, "unknown": 70, "similar_name": 70, "above_fix_text": 30}
 MAX_PER_PRODUCT = {"exact": 4, "unknown": 3, "similar_name": 3}
 # Products a Linux distribution typically ships and patches itself (master plan 6.6: backports).
 DISTRIBUTED = {
@@ -58,6 +58,10 @@ COLLECTIONS = {
     "rubygems.org": "gem", "crates.io": "cargo",
 }
 VERSION = re.compile(r"^v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?$")
+# A fix named in the prose: «fixed in 2.5», «upgrade to version 2.5», «before 2.5».
+FIX_TEXT = re.compile(
+    r"(?:fixed in|fixes? (?:it|this|the issue)? ?in|upgrade to|update to|patched in|resolved in|before|prior to|earlier than)"
+    r"\s+(?:version\s+)?v?(\d+\.\d+(?:\.\d+){0,2})", re.IGNORECASE)
 TEXT_VERSION = re.compile(r"(?<![\w.])v?(\d+\.\d+(?:\.\d+){0,2})(?![\w.])")
 
 
@@ -387,6 +391,28 @@ def main(spike, root):
             seen_names.add(named)
             counts["similar_name"] += 1
 
+    # Added after the first labelling (2026-11-19): above every range, but the prose names a later fix. Few such
+    # records exist, and the first selection found too few of them for master plan 7.9 (half of the pairs above
+    # every range affected). They are selected last, so the pairs above keep being selected as before.
+    for cve, i, key, purl, how in sorted(hits, key=lambda h: rank("fixtext", h[0], str(h[1]))):
+        if counts["above_fix_text"] >= TARGET["above_fix_text"]:
+            break
+        affected = records[cve]["containers"]["cna"]["affected"][i]
+        found = ranges(affected)
+        if not found or only_git(affected) or cve in used["exact"]:
+            continue
+        top = max(b for _, b, _, _ in found)
+        installed = bump(top)
+        text = description(records[cve]) + " " + " ".join(s.get("value", "") for s in records[cve]["containers"]["cna"].get("solutions", []))
+        named = [v for v in (parse(m) for m in FIX_TEXT.findall(text)) if v and v > installed]
+        if not named:
+            continue
+        product = key or purl
+        if take("exact", "above_fix_text", cve, f"{product}:fixtext", component_for(key, purl, fmt(installed)),
+                f"affected[{i}] names {product} via {how or 'package'}; installed version above every range (highest bound {fmt(top)}); the text names a fix {fmt(min(named))} above it",
+                above=True):
+            counts["above_fix_text"] += 1
+
     print(dict(counts), file=sys.stderr)
     write(root, records, pairs)
 
@@ -402,15 +428,23 @@ def write(root, records, pairs):
                 previous[(p["record"], json.dumps(p["component"], sort_keys=True))] = p
     order = {"exact": 0, "unknown": 1, "similar_name": 2}
     pairs.sort(key=lambda p: (order[p["group"]], p["subgroup"], p["record"]))
-    for n, p in enumerate(pairs, 1):
-        p["id"] = f"P{n:03d}"
+    # Ids stay with their pair once given; labels and reports refer to them. New pairs get the next ids.
+    taken = [int(p["id"][1:]) for p in previous.values()]
+    next_id = max(taken, default=0) + 1
+    for p in pairs:
+        old = previous.get((p["record"], json.dumps(p["component"], sort_keys=True)))
+        if old:
+            p["id"] = old["id"]
+        else:
+            p["id"] = f"P{next_id:03d}"
+            next_id += 1
         profile = rank("profile", p["record"], p["component"].get("productKey") or p["component"].get("purl"))
         p["project"] = {
             "criticality": ["normal", "normal", "high", "low"][int(profile[:2], 16) % 4],
             "exposure": ["internal", "internet", "internal", "isolated"][int(profile[2:4], 16) % 4],
         }
-        old = previous.get((p["record"], json.dumps(p["component"], sort_keys=True)))
         p["label"] = old["label"] if old else None
+    pairs.sort(key=lambda p: p["id"])
     keys = ["id", "group", "subgroup", "aboveRanges", "record", "project", "component", "selection", "label"]
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"format": "ardea-reference-set", "version": 1, "pairs": [{k: p[k] for k in keys} for p in pairs]}, f, indent=2, ensure_ascii=False)

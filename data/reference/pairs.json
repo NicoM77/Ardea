@@ -6001,6 +6001,421 @@
         "by": "model: claude-opus",
         "reviewed": false
       }
+    },
+    {
+      "id": "P231",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-111240",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.openejb:openejb-core@4.7.6",
+        "name": "org.apache.openejb:openejb-core",
+        "kind": "library",
+        "version": "4.7.6",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-core via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
+      "label": null
+    },
+    {
+      "id": "P232",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-111241",
+      "project": {
+        "criticality": "high",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.openejb:openejb-core@4.7.6",
+        "name": "org.apache.openejb:openejb-core",
+        "kind": "library",
+        "version": "4.7.6",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-core via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
+      "label": null
+    },
+    {
+      "id": "P233",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-111257",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.openejb:tomee-catalina@1.7.6",
+        "name": "org.apache.openejb:tomee-catalina",
+        "kind": "library",
+        "version": "1.7.6",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.openejb:tomee-catalina via package; installed version above every range (highest bound 1.7.5); the text names a fix 10.3.0 above it",
+      "label": null
+    },
+    {
+      "id": "P234",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-111263",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.openejb:tomee-webservices@4.0.1",
+        "name": "org.apache.openejb:tomee-webservices",
+        "kind": "library",
+        "version": "4.0.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.openejb:tomee-webservices via package; installed version above every range (highest bound 4.0.0); the text names a fix 10.3.0 above it",
+      "label": null
+    },
+    {
+      "id": "P235",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-111264",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.openejb:tomee-webservices@4.0.1",
+        "name": "org.apache.openejb:tomee-webservices",
+        "kind": "library",
+        "version": "4.0.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.openejb:tomee-webservices via package; installed version above every range (highest bound 4.0.0); the text names a fix 10.3.0 above it",
+      "label": null
+    },
+    {
+      "id": "P236",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-111792",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.xmlgraphics:batik-bridge@1.19.1",
+        "name": "org.apache.xmlgraphics:batik-bridge",
+        "kind": "library",
+        "version": "1.19.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-bridge via package; installed version above every range (highest bound 1.19.0); the text names a fix 1.20 above it",
+      "label": null
+    },
+    {
+      "id": "P237",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-126382",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "n8n",
+        "name": "n8n",
+        "kind": "other",
+        "version": "2.38.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names n8n via name; installed version above every range (highest bound 2.38.0); the text names a fix 3.0.1 above it",
+      "label": null
+    },
+    {
+      "id": "P238",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-126383",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "n8n",
+        "name": "n8n",
+        "kind": "other",
+        "version": "1.123.90",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names n8n via name; installed version above every range (highest bound 1.123.89); the text names a fix 2.45.5 above it",
+      "label": null
+    },
+    {
+      "id": "P239",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-126384",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "n8n",
+        "name": "n8n",
+        "kind": "other",
+        "version": "2.45.6",
+        "packaging": "upstream"
+      },
+      "selection": "affected[2] names n8n via name; installed version above every range (highest bound 2.45.5); the text names a fix 2.46.1 above it",
+      "label": null
+    },
+    {
+      "id": "P240",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-126385",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "productKey": "n8n",
+        "name": "n8n",
+        "kind": "other",
+        "version": "2.45.6",
+        "packaging": "upstream"
+      },
+      "selection": "affected[1] names n8n via name; installed version above every range (highest bound 2.45.5); the text names a fix 2.46.1 above it",
+      "label": null
+    },
+    {
+      "id": "P241",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-126627",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.xmlgraphics:fop-core@2.11.1",
+        "name": "org.apache.xmlgraphics:fop-core",
+        "kind": "library",
+        "version": "2.11.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:fop-core via package; installed version above every range (highest bound 2.11.0); the text names a fix 2.12 above it",
+      "label": null
+    },
+    {
+      "id": "P242",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-49236",
+      "project": {
+        "criticality": "normal",
+        "exposure": "isolated"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.xmlgraphics:batik-bridge@1.19.1",
+        "name": "org.apache.xmlgraphics:batik-bridge",
+        "kind": "library",
+        "version": "1.19.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-bridge via package; installed version above every range (highest bound 1.19.0); the text names a fix 1.20 above it",
+      "label": null
+    },
+    {
+      "id": "P243",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-71395",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.xmlgraphics:fop-core@2.11.1",
+        "name": "org.apache.xmlgraphics:fop-core",
+        "kind": "library",
+        "version": "2.11.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:fop-core via package; installed version above every range (highest bound 2.11.0); the text names a fix 2.12 above it",
+      "label": null
+    },
+    {
+      "id": "P244",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-86468",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "productKey": "airflow",
+        "name": "Apache Airflow",
+        "kind": "other",
+        "version": "3.0.1",
+        "packaging": "upstream"
+      },
+      "selection": "affected[0] names airflow via package; installed version above every range (highest bound 3.0.0); the text names a fix 3.4.0 above it",
+      "label": null
+    },
+    {
+      "id": "P245",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-86811",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.openejb:openejb-core@4.7.6",
+        "name": "org.apache.openejb:openejb-core",
+        "kind": "library",
+        "version": "4.7.6",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-core via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
+      "label": null
+    },
+    {
+      "id": "P246",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-87756",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internet"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.openejb:openejb-core@4.7.6",
+        "name": "org.apache.openejb:openejb-core",
+        "kind": "library",
+        "version": "4.7.6",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-core via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
+      "label": null
+    },
+    {
+      "id": "P247",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-87758",
+      "project": {
+        "criticality": "low",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.openejb:openejb-client@4.7.6",
+        "name": "org.apache.openejb:openejb-client",
+        "kind": "library",
+        "version": "4.7.6",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-client via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
+      "label": null
+    },
+    {
+      "id": "P248",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-89326",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.xmlgraphics:batik-bridge@1.19.1",
+        "name": "org.apache.xmlgraphics:batik-bridge",
+        "kind": "library",
+        "version": "1.19.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-bridge via package; installed version above every range (highest bound 1.19.0); the text names a fix 1.20 above it",
+      "label": null
+    },
+    {
+      "id": "P249",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-90993",
+      "project": {
+        "criticality": "high",
+        "exposure": "internet"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.xmlgraphics:batik-dom@1.19.1",
+        "name": "org.apache.xmlgraphics:batik-dom",
+        "kind": "library",
+        "version": "1.19.1",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-dom via package; installed version above every range (highest bound 1.19.0); the text names a fix 1.20 above it",
+      "label": null
+    },
+    {
+      "id": "P250",
+      "group": "exact",
+      "subgroup": "above_fix_text",
+      "aboveRanges": true,
+      "record": "CVE-2026-97867",
+      "project": {
+        "criticality": "normal",
+        "exposure": "internal"
+      },
+      "component": {
+        "purl": "pkg:maven/org.apache.openejb:openejb-ejbd@4.7.6",
+        "name": "org.apache.openejb:openejb-ejbd",
+        "kind": "library",
+        "version": "4.7.6",
+        "packaging": "upstream",
+        "dependencyScope": "runtime"
+      },
+      "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-ejbd via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
+      "label": null
     }
   ]
 }

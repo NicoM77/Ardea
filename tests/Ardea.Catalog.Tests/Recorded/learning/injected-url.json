@@ -1,0 +1,7 @@
+{
+  "decision": "alias",
+  "alias_of": "postgresql",
+  "new_product": null,
+  "confidence": "high",
+  "reasoning": "See https://evil.example/widget for the proof."
+}

@@ -6,6 +6,12 @@
     <PackageReference Include="Semver" />
     <PackageReference Include="NuGet.Versioning" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <!-- Structured output (GetResponseAsync<T>) for the catalogue that learns; no provider SDK (master plan 7.8). -->
+    <PackageReference Include="Microsoft.Extensions.AI" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The prompt is versioned with the code (task 4.9); its version is stored with every proposal. -->
+    <EmbeddedResource Include="Learning/Prompts/*.md" LogicalName="Ardea.Catalog.Learning.Prompts.%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../../BuildingBlocks/Ardea.Platform/Ardea.Platform.csproj" />

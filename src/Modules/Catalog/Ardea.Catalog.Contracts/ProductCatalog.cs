@@ -155,12 +155,24 @@ public sealed record CatalogProduct
 }
 
 /// <summary>How a product was found by name.</summary>
-public sealed record ProductMatch(CatalogProduct Product, string? VersionLine = null, string? Platform = null);
+/// <param name="Product">The product.</param>
+/// <param name="VersionLine">The version line the name pattern captured, e.g. <c>10.0</c>.</param>
+/// <param name="Platform">The platform the name pattern captured, e.g. <c>linux</c>.</param>
+/// <param name="Learned">The spelling is known only through a learned entry (master plan 6.9): a learned product, or a
+/// raw key the instance has mapped to a catalogue key. The curated catalogue alone would not have found it.</param>
+public sealed record ProductMatch(CatalogProduct Product, string? VersionLine = null, string? Platform = null, bool Learned = false);
+
+/// <summary>The key of an affected product (master plan 6.5) and whether a learned entry gave it (6.9).</summary>
+/// <param name="Key">The catalogue key, or the raw key when the catalogue does not know the product.</param>
+/// <param name="LearnedFrom">The raw key when <see cref="Key"/> comes from a learned entry; <c>null</c> when the curated
+/// catalogue gave it or the product is unknown. The raw key keeps finding what it found before the entry was learned.</param>
+public sealed record ResolvedProduct(ProductKey Key, string? LearnedFrom);
 
 /// <summary>
 /// The technology catalogue (master plan 4.5, 6.5): global data every role may read. Only entries in
 /// effect take part: every curated entry, learned entries only while active (master plan 6.9).
-/// When a curated and a learned entry would both match, the curated one wins.
+/// When a curated and a learned entry would both match, the curated one wins: every lookup asks the curated entries
+/// first and the learned ones only when those know nothing.
 /// </summary>
 public interface IProductCatalog
 {
@@ -186,6 +198,13 @@ public interface IProductCatalog
     /// <c>null</c> when nothing matches and the name has no letter or digit.
     /// </summary>
     Task<ProductKey?> ResolveKeyAsync(string? vendor, string product, CpePair? cpe, PackageCoordinate? package, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// As <see cref="ResolveKeyAsync"/>, and says whether a learned entry gave the key. The curated catalogue is asked
+    /// first, by package, CPE pair and name; learned entries only when it knows nothing (master plan 6.9): a learned
+    /// entry never changes a key the curated catalogue gives.
+    /// </summary>
+    Task<ResolvedProduct?> ResolveAsync(string? vendor, string product, CpePair? cpe, PackageCoordinate? package, CancellationToken cancellationToken);
 
     /// <summary>Whether some product in effect names <paramref name="platformKey"/> as its platform, i.e. the platform has plugins.</summary>
     Task<bool> HasPluginsAsync(string platformKey, CancellationToken cancellationToken);

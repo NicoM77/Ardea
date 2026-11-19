@@ -1,0 +1,17 @@
+{
+  "decision": "new",
+  "alias_of": null,
+  "new_product": {
+    "name": "Widget Server",
+    "vendor": "Acme",
+    "kind": "plugin",
+    "version_scheme": "numeric",
+    "cpe": [],
+    "related": [
+      "linux-kernel"
+    ],
+    "platform": "linux-kernel"
+  },
+  "confidence": "high",
+  "reasoning": "A plugin of the Linux kernel, as the name says."
+}

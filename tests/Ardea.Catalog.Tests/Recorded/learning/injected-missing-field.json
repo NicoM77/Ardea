@@ -1,0 +1,6 @@
+{
+  "decision": "alias",
+  "alias_of": "postgresql",
+  "confidence": "high",
+  "reasoning": "No new_product field."
+}

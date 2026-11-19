@@ -1,0 +1,15 @@
+{
+  "decision": "new",
+  "alias_of": null,
+  "new_product": {
+    "name": "*",
+    "vendor": "Acme",
+    "kind": "other",
+    "version_scheme": "numeric",
+    "cpe": [],
+    "related": [],
+    "platform": null
+  },
+  "confidence": "high",
+  "reasoning": "A name that matches every product."
+}

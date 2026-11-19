@@ -127,6 +127,30 @@ internal sealed class CatalogIndex
         return match;
     }
 
+    /// <summary>
+    /// Whether some entry already has this spelling, under any vendor: as name, alias, CPE product or through a name
+    /// pattern. A learned entry may not take a spelling that is taken (master plan 6.9 step 4).
+    /// </summary>
+    public bool NameTaken(string name)
+    {
+        var nameKey = ProductKey.NormalizeProduct(name);
+        if (nameKey is null)
+        {
+            return true;
+        }
+
+        if (_byName.ContainsKey(nameKey) || _byKey.ContainsKey(nameKey))
+        {
+            return true;
+        }
+
+        var light = Light(name);
+        return _patterns.Exists(p => p.Pattern.IsMatch(light));
+    }
+
+    /// <summary>The raw keys the instance has mapped to a catalogue key.</summary>
+    public IReadOnlyDictionary<string, string> LearnedAliases => _learnedAliases;
+
     /// <summary>Products for what someone types, best first (<see cref="CatalogSearch"/>).</summary>
     public IReadOnlyList<CatalogProduct> Search(string text, int limit) => _search.Search(text, limit);
 

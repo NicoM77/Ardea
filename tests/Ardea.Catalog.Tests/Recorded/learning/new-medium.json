@@ -1,0 +1,17 @@
+{
+  "decision": "new",
+  "alias_of": null,
+  "new_product": {
+    "name": "Widget Server",
+    "vendor": "Acme",
+    "kind": "service",
+    "version_scheme": "numeric",
+    "cpe": [
+      "acme:widget_server"
+    ],
+    "related": [],
+    "platform": null
+  },
+  "confidence": "medium",
+  "reasoning": "Probably a product of its own; the titles say little."
+}

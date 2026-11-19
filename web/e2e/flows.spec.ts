@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { expectAccessible } from './axe';
 import { watchConsole } from './console';
 import { flowsApi } from './flows-api';
+import { notifyApi } from './notify-api';
 import { PROJECT_ID } from './mock-api';
 
 /**
@@ -288,4 +289,189 @@ test('alert: a request for an AI assessment beyond today’s cap is said in a se
   );
   await expectAccessible(page, 'alert with the model’s assessment');
   expect(problems.filter((p) => !p.includes('status of 429'))).toEqual([]);
+});
+
+/*
+ * Phase 5 (tasks 5.5, 5.8): the notification pages against `notifyApi` (e2e/notify-api.ts). A rule is
+ * created, a webhook added and tested, an external address confirmed through its link without signing in,
+ * a notification read from the bell, and push turned on and off on this device in Chromium. The browser's
+ * push service is replaced by a stand-in in the page: Chromium in a test has no connection to one.
+ */
+test('notification rules: the matrix of rules and channels, and a new rule', async ({ page }) => {
+  const problems = watchConsole(page);
+  const api = await notifyApi(page);
+  await page.goto(`${ORG}/notification-rules`);
+
+  const matrix = page.getByRole('table', { name: 'Who hears what' });
+  await expect(matrix.getByRole('row')).toHaveCount(4);
+  const critical = matrix.getByRole('row', { name: /Critical at once/ });
+  await expect(critical.getByRole('cell').nth(2)).toContainText(/At once\s*Owners and admins/);
+  await expectAccessible(page, 'notification rules');
+
+  await page.getByRole('link', { name: 'New rule' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'New rule' })).toBeVisible();
+  await page.getByLabel('Name', { exact: true }).fill('Webshop to the agency');
+  await page.getByRole('button', { name: 'Medium' }).click();
+  await page.getByRole('checkbox', { name: /Fix available/ }).check();
+  await page.getByLabel('Channel', { exact: true }).selectOption('push');
+  await page.getByRole('button', { name: 'Add recipient' }).click();
+  await page.getByLabel('Recipient', { exact: true }).nth(1).selectOption('role:viewer');
+  await page.getByLabel('Channel', { exact: true }).nth(1).selectOption('email');
+  await page.getByRole('combobox', { name: 'When', exact: true }).nth(1).selectOption('digest');
+  await expect(
+    page.getByText('Medium actions and above in all projects reach Owners and admins by push'),
+  ).toBeVisible();
+  await expectAccessible(page, 'rule editor');
+
+  await page.getByRole('button', { name: 'Save rule' }).click();
+  await expect(page.locator('ui-toast')).toContainText('Rule Webshop to the agency saved');
+  const saved = api.requests.find((r) => r.method === 'POST' && r.path.includes('/rules'))!;
+  expect(saved.body).toMatchObject({
+    name: 'Webshop to the agency',
+    minLevel: 3,
+    projectIds: [],
+    targets: [
+      { channel: 'push', recipientKind: 'role', recipientRef: 'admin', mode: 'immediate' },
+      {
+        channel: 'email',
+        recipientKind: 'role',
+        recipientRef: 'viewer',
+        mode: 'digest',
+        digestCron: '0 8 * * 1-5',
+      },
+    ],
+  });
+  expect((saved.body as { events: string[] }).events).toContain('action.fix_available');
+  await expect(matrix.getByRole('row')).toHaveCount(5);
+  expect(problems).toEqual([]);
+});
+
+test('recipients: a webhook is added, its secret shown once, and a test message goes out', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await notifyApi(page);
+  await page.goto(`${ORG}/notification-rules/recipients`);
+
+  await page.getByLabel('Name').fill('SIEM');
+  await page.locator('#hook-url').fill('https://siem.example.org/hooks/ardea');
+  await page.getByRole('button', { name: 'Add webhook' }).click();
+  await expect(page.getByText('whsec_sample-secret-shown-once')).toBeVisible();
+  const hooks = page.getByRole('list', { name: 'Webhooks' });
+  await expect(hooks).toContainText('siem.example.org');
+
+  await hooks.getByRole('button', { name: 'Send test' }).click();
+  await expect(page.getByText('SIEM answered 200. The test message arrived.')).toBeVisible();
+  await expect(hooks).toContainText('200');
+  await expectAccessible(page, 'recipients');
+  expect(problems).toEqual([]);
+});
+
+test('an external address is confirmed through the link in its e-mail, without signing in', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  const api = await notifyApi(page, { signedIn: false });
+  await page.goto('/notifications/confirm?token=link-token');
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Confirm your address' })).toBeVisible();
+  await expect(
+    page.getByText('Example Org wants to send security alerts to support@agency.example.'),
+  ).toBeVisible();
+  // Opening the link changed nothing; the button does.
+  expect(api.requests.filter((r) => r.path.includes('/confirm'))).toEqual([]);
+  await expectAccessible(page, 'confirm link');
+
+  await page.getByRole('button', { name: 'Confirm address' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Address confirmed' })).toBeVisible();
+  expect(api.requests.map((r) => r.path)).toContain(
+    '/api/v1/notify/addresses/confirm?token=link-token',
+  );
+  expect(problems).toEqual([]);
+});
+
+test('the bell counts unread notifications; reading one in the inbox opens its action', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  const api = await notifyApi(page, { base: false });
+  await page.goto(`${ORG}/overview`);
+
+  const bell = page.getByRole('link', { name: 'Notifications, 2 unread' });
+  await expect(bell).toBeVisible();
+  await bell.click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Notifications' })).toBeVisible();
+  await expect(page.getByText('2 unread in Example Org')).toBeVisible();
+  await expectAccessible(page, 'inbox');
+
+  await page.getByRole('link', { name: /\[5 Critical\] #143 Puppet Enterprise/ }).click();
+  await expect(page).toHaveURL(/\/o\/example\/actions\/143$/);
+  await expect(page.getByRole('link', { name: 'Notifications, 1 unread' })).toBeVisible();
+  const read = api.requests.find((r) => r.path.endsWith('/notifications/read'))!;
+  expect((read.body as { ids: string[] }).ids).toHaveLength(1);
+  expect(problems).toEqual([]);
+});
+
+test('push is turned on and off on this device in Chromium', async ({ page }) => {
+  const problems = watchConsole(page);
+  // The browser's push service is not reachable in a test: subscribing stays in the page.
+  await page.addInitScript(() => {
+    // Headless Chromium answers «denied» whatever the context grants.
+    Object.defineProperty(Notification, 'permission', { get: () => 'granted' });
+    Notification.requestPermission = async () => 'granted';
+    let current: PushSubscription | null = null;
+    const endpoint = 'https://fcm.googleapis.com/fcm/send/test-device';
+    const keys = {
+      p256dh:
+        'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcxaOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4',
+      auth: 'BTBZMqHH6r4Tts7J_aSIgg',
+    };
+    PushManager.prototype.getSubscription = async () => current;
+    PushManager.prototype.subscribe = async (options?: PushSubscriptionOptionsInit) => {
+      const key = options?.applicationServerKey as Uint8Array;
+      current = {
+        endpoint,
+        expirationTime: null,
+        options: { applicationServerKey: key.buffer, userVisibleOnly: true },
+        toJSON: () => ({ endpoint, keys }),
+        unsubscribe: async () => {
+          current = null;
+          return true;
+        },
+      } as unknown as PushSubscription;
+      return current;
+    };
+  });
+  const api = await notifyApi(page);
+  await page.goto(`${ORG}/settings/notifications`);
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Your notifications' })).toBeVisible();
+  await expectAccessible(page, 'notification settings');
+  await page.getByRole('button', { name: 'Turn on push' }).click();
+  await expect(page.getByText('On for this device')).toBeVisible();
+  const subscribed = api.requests.find(
+    (r) => r.method === 'POST' && r.path.includes('/me/push-subscriptions'),
+  )!;
+  expect(subscribed.body).toMatchObject({
+    endpoint: 'https://fcm.googleapis.com/fcm/send/test-device',
+    keys: { auth: 'BTBZMqHH6r4Tts7J_aSIgg' },
+  });
+  await expect(page.getByText('Chrome on Linux')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Turn off on this device' }).click();
+  await expect(page.getByText('Off on this device')).toBeVisible();
+  // This device turns push off by its endpoint.
+  expect(api.requests.map((r) => `${r.method} ${r.path}`)).toContain(
+    'DELETE /api/v1/me/push-subscriptions?endpoint=https://fcm.googleapis.com/fcm/send/test-device',
+  );
+  await expect(page.getByText('No device receives push yet.')).toBeVisible();
+
+  // Muting a channel is the member's own setting.
+  await page.getByRole('switch', { name: 'E-mail' }).click();
+  await expect(page.getByRole('switch', { name: 'E-mail' })).toHaveAttribute(
+    'aria-checked',
+    'false',
+  );
+  expect(problems).toEqual([]);
 });

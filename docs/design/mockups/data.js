@@ -193,7 +193,78 @@
   function sum(list, f) { return list.reduce(function (acc, x) { return acc + f(x); }, 0); }
   function byId(list, id) { return list.filter(function (x) { return x.id === id; })[0]; }
 
-  ACTIONS.forEach(function (a) { a.created = date(a.created); a.due = date(a.due); a.total = sum(a.score, Number); a.href = a.id === 'postgres' ? 'remediation.html' : 'action.html'; });
+  /* ---------- Master plan 17: the organisation's stack, notices and reminders (task 5a.5) ---------- */
+
+  /* The stack: ten entries from the examples in 17.8. hits = the spike week's entries that name the product itself
+     after the line (ADR 044, 11–17 Nov 2026); notices = how many of them met the entry's threshold. lineDepth is
+     how many parts a version line of the product has («17» for PostgreSQL, «7.6» for FortiOS); a longer version is
+     exact and leaves the stack for the precise path (17.1). noisy: the catalogue marks the product (ADR 044, 3). */
+  var STACK = [
+    { id: 'winserver', name: 'Windows Server', group: 'Operating system', version: '', lineDepth: 1, threshold: 'important', hits: 696, notices: 12 },
+    { id: 'dotnet', name: '.NET / ASP.NET Core', group: 'Runtime and framework', version: '', lineDepth: 2, threshold: 'important', hits: 22, notices: 1 },
+    { id: 'nodejs', name: 'Node.js', group: 'Runtime and framework', version: '22', lineDepth: 1, threshold: 'important', hits: 10, notices: 0, lineDropped: 5 },
+    { id: 'angular', name: 'Angular', group: 'Runtime and framework', version: '', lineDepth: 1, threshold: 'important', hits: 0, notices: 0 },
+    { id: 'umbraco', name: 'Umbraco', group: 'CMS and shop', version: '', lineDepth: 1, threshold: 'important', hits: 1, notices: 0 },
+    { id: 'typo3', name: 'TYPO3', group: 'CMS and shop', version: '', lineDepth: 1, threshold: 'important', hits: 10, notices: 1 },
+    { id: 'sqlserver', name: 'Microsoft SQL Server', group: 'Database and messaging', version: '', lineDepth: 1, threshold: 'important', hits: 52, notices: 1 },
+    { id: 'postgresql', name: 'PostgreSQL', group: 'Database and messaging', version: '17', lineDepth: 1, threshold: 'important', hits: 47, notices: 0, lineDropped: 5 },
+    { id: 'fortigate', name: 'Fortinet FortiGate', group: 'Network and security', version: '', lineDepth: 2, threshold: 'important', hits: 11, notices: 3 },
+    { id: 'chrome', name: 'Google Chrome', group: 'Other software', version: '', lineDepth: 1, threshold: 'important', hits: 292, notices: 1, noisy: true }
+  ];
+
+  /* Notices of the week, one per entry. The identifiers are records of the spike week for these products (from the
+     reference set); score, exploitation, titles and the three answers are sample data. state: new, affects, not.
+     back: answered «Doesn't affect us» before and raised once more because the entry is now exploited (E22). */
+  var NOTICES = [
+    { id: 'n-typo3', entry: 'typo3', cve: 'CVE-2026-125160', title: 'TYPO3: code execution through the backend',
+      cvss: 9.4, exploited: 'CISA KEV since 17 Nov', raised: '2026-11-17T21:50', state: 'new',
+      back: { at: '2026-11-13T10:05', by: 'marc' },
+      what: 'An editor account can run code on the web server.', affect: 'Affected: TYPO3 14.0.0 to 14.3.11.', todo: 'Update TYPO3 14 to 14.3.12.' },
+    { id: 'n-chrome', entry: 'chrome', cve: 'CVE-2026-131017', title: 'Google Chrome: memory corruption from a crafted page',
+      cvss: 8.8, exploited: 'CISA KEV since 17 Nov', raised: '2026-11-17T23:10', state: 'new',
+      what: 'A crafted web page can run code in the browser.', affect: 'Affected: Chrome before 158.0.8127.36.', todo: 'Update Chrome to 158.0.8127.36. Managed installs update by themselves.' },
+    { id: 'n-win-1', entry: 'winserver', cve: 'CVE-2026-112810', title: 'Windows Server: code execution over the network',
+      cvss: 9.8, raised: '2026-11-17T18:40', state: 'new',
+      what: 'An attacker on the network can run code without signing in.', affect: 'Affected: Windows Server 2025 before build 26100.33822.', todo: 'Install the November cumulative update.' },
+    { id: 'n-forti', entry: 'fortigate', cve: 'CVE-2026-121530', title: 'FortiOS: code execution without signing in',
+      cvss: 9.6, raised: '2026-11-17T15:30', state: 'new',
+      what: 'An attacker can run code on the firewall over the network.', affect: 'Affected: FortiOS 7.6.0 to 7.6.6.', todo: 'Update FortiOS 7.6 to 7.6.7 or later.' },
+    { id: 'n-sql', entry: 'sqlserver', cve: 'CVE-2026-116934', title: 'SQL Server: a database user can take over the service',
+      cvss: 9.1, raised: '2026-11-16T10:12', state: 'new',
+      what: 'A signed-in database user can run code as the SQL Server service.', affect: 'Affected: SQL Server 2017 to 2025 before the November update of each.', todo: 'Install the November security update for your build.' },
+    { id: 'n-dotnet', entry: 'dotnet', cve: 'CVE-2026-109475', title: '.NET: denial of service through crafted requests',
+      cvss: 9.0, raised: '2026-11-15T09:40', state: 'new',
+      what: 'Crafted requests can stop an ASP.NET Core application.', affect: 'Affected: .NET 8.0 before 8.0.34, on Linux and macOS.', todo: 'Update .NET 8 to 8.0.34.' },
+    { id: 'n-win-2', entry: 'winserver', cve: 'CVE-2026-95908', title: 'Windows Server: elevation to system rights',
+      cvss: 9.0, raised: '2026-11-17T18:40', state: 'new',
+      what: 'A local user can gain system rights.', affect: 'Affected: Windows Server 2025 before build 26100.33822.', todo: 'Install the November cumulative update.' }
+  ];
+  /* Answered earlier in the week; the Patch Tuesday brought twelve Windows Server notices (ADR 044). */
+  for (var w = 0; w < 10; w++) NOTICES.push({ id: 'n-win-a' + w, entry: 'winserver', state: 'affects', reminder: 'r-winserver', at: new Date(new Date('2026-11-11T09:30').getTime() + w * 7 * 60e3), by: 'marc' });
+  NOTICES.push({ id: 'n-forti-a', entry: 'fortigate', state: 'affects', reminder: 'r-fortios', at: '2026-11-12T10:15', by: 'nina' });
+  NOTICES.push({ id: 'n-forti-b', entry: 'fortigate', state: 'not', at: '2026-11-13T16:40', by: 'lea' });
+
+  /* Reminders that started as a notice answered «Affects us», without a project: they belong to the stack. */
+  var STACK_REMINDERS = [
+    { id: 'r-winserver', title: 'Update Windows Server', component: 'Windows Server', installed: null, project: 'stack', priority: 'high', findings: 10, created: '2026-11-11T09:30', status: 'open', fromNotice: true },
+    { id: 'r-fortios', title: 'Update FortiOS', component: 'Fortinet FortiGate', installed: null, project: 'stack', priority: 'high', findings: 1, created: '2026-11-12T10:15', status: 'open', fromNotice: true }
+  ];
+
+  /* A quiet day: every notice of the week is answered, and the stack reminders are done. */
+  if (CALM) {
+    NOTICES = NOTICES.filter(function (n) { return n.state !== 'new'; });
+    STACK_REMINDERS = [];
+  }
+
+  /* Open reminders remind by priority (17.5, E26); below Medium only in the digest. */
+  var CADENCE = {
+    critical: { label: 'Daily', every: 1 },
+    high: { label: 'Weekly', every: 7 },
+    medium: { label: 'Monthly', every: 30 },
+    low: { label: 'In the digest', every: 0 }
+  };
+
+  ACTIONS.forEach(function (a) { a.created = date(a.created); a.due = date(a.due); a.total = sum(a.score, Number); a.href = 'reminder.html'; });
   CLOSED.forEach(function (a) { a.created = date(a.created); a.closed = date(a.closed); a.days = (a.closed - a.created) / DAY; });
   ACTIONS.sort(function (a, b) { return a.due - b.due; });
 
@@ -224,6 +295,31 @@
     return s.length ? (s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2) : null;
   }
   var remediated = CLOSED.filter(function (a) { return a.status === 'remediated'; });
+
+  /* ---------- Reminders (17.5): the open actions without owner and deadline, plus those from notices ---------- */
+  var STACK_PROJECT = { id: 'stack', name: 'Stack', stack: STACK.map(function (e) { return e.name; }), note: 'The organisation’s stack' };
+  NOTICES.forEach(function (n) { if (n.raised) n.raised = date(n.raised); if (n.at) n.at = date(n.at); if (n.back) n.back.at = date(n.back.at); });
+  STACK_REMINDERS.forEach(function (r) { r.created = date(r.created); r.href = 'reminder.html'; });
+  var REMINDERS = ACTIONS.map(function (a) {
+    return { id: a.id, title: a.title, component: a.component, installed: a.installed, target: a.target, project: a.project, priority: a.priority,
+      cve: a.cve, findings: a.findings, exploited: a.exploited, noFix: a.noFix, created: a.created, status: 'open', href: a.href,
+      /* Puppet became Critical when CISA listed it; it reminds daily since then */
+      since: a.id === 'puppet' ? date(VULN.updated) : a.created };
+  }).concat(STACK_REMINDERS.map(function (r) { r.since = r.created; return r; }));
+  REMINDERS.sort(function (a, b) { return PRIORITIES[a.priority].rank - PRIORITIES[b.priority].rank || a.created - b.created; });
+
+  /* When a reminder reminded and will remind next: at 08:00, every n days after the level was reached */
+  function schedule(r) {
+    var every = CADENCE[r.priority].every, sent = [], next = null;
+    if (!every) return { sent: sent, next: null };
+    var t = new Date(r.since); t.setHours(8, 0, 0, 0);
+    for (var k = 1; k < 400; k++) {
+      var at = new Date(t); at.setDate(t.getDate() + k * every);
+      if (at <= NOW) sent.push(at); else { next = at; break; }
+    }
+    return { sent: sent, next: next };
+  }
+  var newNotices = NOTICES.filter(function (n) { return n.state === 'new'; });
 
   /* ---------- formats ---------- */
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -257,6 +353,9 @@
   console.assert(CALM || byId(ACTIONS, 'puppet').total === sum(VULN.factors, function (f) { return f.points; }), 'Puppet score equals its factors');
   console.assert(sum(PROJECTS, function (p) { return count(ACTIONS, function (a) { return a.project === p.id; }); }) === ACTIONS.length, 'every action belongs to a project');
   console.assert(trend(31).slice(-1)[0].open === ACTIONS.length, 'the trend ends at the open count');
+  console.assert(CALM || NOTICES.length === sum(STACK, function (e) { return e.notices; }), 'the week’s notices match the stack counts of ADR 044');
+  console.assert(NOTICES.every(function (n) { return byId(STACK, n.entry); }), 'every notice names a stack entry');
+  console.assert(CALM || sum(STACK_REMINDERS, function (r) { return r.findings; }) === count(NOTICES, function (n) { return n.state === 'affects'; }), 'every «Affects us» is an entry of a reminder');
   console.assert(ACTIONS.every(function (a) {
     var t = a.total, p = t >= 8 ? 'critical' : t >= 5 ? 'high' : t === 4 ? 'medium' : 'low';
     return p === a.priority;
@@ -269,9 +368,12 @@
     CALM: CALM, WARNINGS: WARNINGS, SOURCE_LIST: SOURCE_LIST,
     ACTIONS: ACTIONS, CLOSED: CLOSED, FEED: FEED, SOURCES: SOURCES, FUNNEL: FUNNEL, VULN: VULN, ACTIVITY: ACTIVITY,
     byPriority: byPriority, trend: trend, remediated: remediated,
+    STACK: STACK, NOTICES: NOTICES, NEW_NOTICES: newNotices.length, REMINDERS: REMINDERS, CADENCE: CADENCE, schedule: schedule,
+    entry: function (id) { return byId(STACK, id); },
+    reminder: function (id) { return byId(REMINDERS, id); },
     medianFixDays: median(remediated.map(function (a) { return a.days; })),
     action: function (id) { return byId(ACTIONS, id); },
-    project: function (id) { return byId(PROJECTS, id); },
+    project: function (id) { return id === 'stack' ? STACK_PROJECT : byId(PROJECTS, id); },
     count: count, sum: sum,
     fmt: { day: day, clock: clock, dayTime: dayTime, when: when, int: int, left: left, duration: duration }
   };

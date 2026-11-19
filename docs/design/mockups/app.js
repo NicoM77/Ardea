@@ -57,6 +57,9 @@
     trash: '<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 12.5h9l1-12.5"/>',
     send: '<path d="M20.5 3.5 10 14M20.5 3.5l-6.5 17-4-6.5-6.5-4 17-6.5Z"/>',
     more: '<circle cx="5.5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18.5" cy="12" r="1.2"/>',
+    /* Master plan 17: the stack and the notice inbox (task 5a.5) */
+    layers: '<path d="m12 3.5 8.5 4.3-8.5 4.3-8.5-4.3L12 3.5Z"/><path d="m3.5 12 8.5 4.3 8.5-4.3M3.5 16.2l8.5 4.3 8.5-4.3"/>',
+    'notice-in': '<path d="M3.5 13.5h5l1.5 2.5h4l1.5-2.5h5"/><path d="M5.8 5.5h12.4l2.3 8v5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-5l2.3-8Z"/><path d="M12 7v4.5M10 9.7l2 2 2-2"/>',
     megaphone: '<path d="M4.5 10v4l10 4.5v-13L4.5 10Z"/><path d="M7.5 15.4v2.4a1.7 1.7 0 0 0 3.4 0v-.9M18 9.5a3.5 3.5 0 0 1 0 5"/>',
     /* Priority symbols: shape, colour and word, never colour alone */
     'p-critical': '<path d="M7.4 1.5h9.2l5.9 5.9v9.2l-5.9 5.9H7.4l-5.9-5.9V7.4l5.9-5.9Z" fill="currentColor"/><rect x="10.9" y="6.6" width="2.2" height="7.6" rx="1.1" ' + WHITE + '/><circle cx="12" cy="17" r="1.3" ' + WHITE + '/>',
@@ -222,11 +225,15 @@
 
   /* ---------- Shell ---------- */
   var ME = D.PEOPLE[D.ME];
+  /* Master plan 17.7: Notices is a queue of its own; the reminder replaces the action (E24), so Actions left the
+     navigation. actions.html and action.html stay as the earlier mockups and are reachable from the search. */
   var NAV = [
     { id: 'overview', label: 'Overview', href: 'overview.html', icon: 'overview' },
-    { id: 'actions', label: 'Actions', href: 'actions.html', icon: 'actions', count: D.ACTIONS.length },
+    { id: 'notices', label: 'Notices', href: 'notices.html', icon: 'notice-in', count: D.NEW_NOTICES, unit: 'new' },
+    { id: 'reminders', label: 'Reminders', href: 'reminders.html', icon: 'actions', count: D.REMINDERS.length },
     { id: 'vulnerabilities', label: 'Vulnerabilities', href: 'alert.html', icon: 'vulnerabilities' },
     { id: 'projects', label: 'Projects', href: 'project.html', icon: 'projects' },
+    { id: 'stack', label: 'Stack', href: 'stack.html', icon: 'layers' },
     { id: 'sources', label: 'Sources', href: 'sources.html', icon: 'sources' },
     { id: 'rules', label: 'Notification rules', href: 'notification-rules.html', icon: 'rules' }
   ];
@@ -240,7 +247,7 @@
   function navLinks(items, current) {
     return items.map(function (item) {
       var inner = A.icon(item.icon) + '<span>' + item.label + '</span>' +
-        (item.count ? '<span class="nav-count">' + item.count + '<span class="sr-only"> open</span></span>' : '');
+        (item.count ? '<span class="nav-count" data-nav-count="' + item.id + '">' + item.count + '<span class="sr-only"> ' + (item.unit || 'open') + '</span></span>' : '');
       if (!item.href) return '<button type="button" data-soon="' + item.label + '">' + inner + '</button>';
       return '<a href="' + item.href + '"' + (item.id === current ? ' aria-current="page"' : '') + '>' + inner + '</a>';
     }).join('');
@@ -266,7 +273,7 @@
       '<header class="topbar">' +
         '<button class="btn ghost icon-only menu-toggle" type="button" aria-label="Open menu" aria-controls="sidebar">' + A.icon('menu') + '</button>' +
         '<img class="brand-mark" src="../brand/ardea-mark.svg" alt="Ardea" width="24" height="24">' +
-        '<button class="search-trigger" type="button" data-palette>' + A.icon('search') + '<span>Search actions, CVEs, pages</span><kbd>/</kbd></button>' +
+        '<button class="search-trigger" type="button" data-palette>' + A.icon('search') + '<span>Search reminders, CVEs, pages</span><kbd>/</kbd></button>' +
         '<a class="bell" href="notifications.html" aria-label="Notifications, ' + D.UNREAD + ' unread"' + (document.body.getAttribute('data-page') === 'inbox' ? ' aria-current="page"' : '') + '>' + A.icon('rules') + (D.UNREAD ? '<span class="bell-count" aria-hidden="true">' + D.UNREAD + '</span>' : '') + '</a>' +
         '<button class="account" type="button" data-soon="The account menu" aria-label="Account: ' + ME.name + '"><span class="who who--' + ME.hue + '" aria-hidden="true">' + ME.initials + '</span></button>' +
       '</header>';
@@ -304,7 +311,11 @@
   function paletteItems() {
     var items = [
       { group: 'Pages', label: 'Overview', href: 'overview.html', icon: 'overview' },
-      { group: 'Pages', label: 'Actions', href: 'actions.html', icon: 'actions' },
+      { group: 'Pages', label: 'Notices', href: 'notices.html', icon: 'notice-in' },
+      { group: 'Pages', label: 'Notices on a quiet day', href: 'notices.html?state=calm', icon: 'notice-in' },
+      { group: 'Pages', label: 'Reminders', href: 'reminders.html', icon: 'actions' },
+      { group: 'Pages', label: 'Reminder: Update Puppet Enterprise', href: 'reminder.html', icon: 'actions' },
+      { group: 'Pages', label: 'Stack', href: 'stack.html', icon: 'layers' },
       { group: 'Pages', label: 'Customer Portal (project)', href: 'project.html', icon: 'projects' },
       { group: 'Pages', label: 'Sources', href: 'sources.html', icon: 'sources' },
       { group: 'Pages', label: 'Setup wizard', href: 'setup-wizard.html', icon: 'route' },
@@ -313,10 +324,13 @@
       { group: 'Pages', label: 'Update PostgreSQL to 17.12, with AI assessment', href: 'remediation.html?ai', icon: 'actions' },
       { group: 'Pages', label: 'Update vite (transitive, development only)', href: 'remediation.html?example=vite', icon: 'actions' },
       { group: 'Pages', label: 'Alert #142 · CVE-2026-116325', href: 'alert.html', icon: 'vulnerabilities' },
-      { group: 'Pages', label: 'Design system', href: 'design-system.html', icon: 'design' }
+      { group: 'Pages', label: 'Design system', href: 'design-system.html', icon: 'design' },
+      /* The earlier mockups with owner and deadline, kept for the record (master plan 17.5) */
+      { group: 'Before master plan 17', label: 'Actions, with owners and deadlines', href: 'actions.html', icon: 'actions' },
+      { group: 'Before master plan 17', label: 'Action: Update Puppet Enterprise', href: 'action.html', icon: 'actions' }
     ];
     D.ACTIONS.forEach(function (a) {
-      items.push({ group: 'Open actions', label: a.title, href: a.href, sym: D.PRIORITIES[a.priority].sym, priority: a.priority,
+      items.push({ group: 'Open reminders', label: a.title, href: a.href, sym: D.PRIORITIES[a.priority].sym, priority: a.priority,
         note: D.project(a.project).name, search: a.title + ' ' + a.cve + ' ' + a.component + ' ' + D.project(a.project).name });
     });
     items.push({ group: 'Vulnerabilities', label: D.VULN.id + ' · ' + D.VULN.title, href: 'vulnerability.html', sym: 'p-critical', priority: 'critical', search: D.VULN.id + ' ' + D.VULN.title });
@@ -332,7 +346,7 @@
     back.className = 'palette-back' + (byPointer && !A.reduced ? ' by-pointer' : '');
     back.innerHTML = '<div class="palette" role="dialog" aria-modal="true" aria-label="Search">' +
       '<label class="palette-input">' + A.icon('search') + '<span class="sr-only">Search</span>' +
-      '<input type="text" placeholder="Search actions, CVEs, pages" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="palette-list"><kbd>Esc</kbd></label>' +
+      '<input type="text" placeholder="Search reminders, CVEs, pages" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="palette-list"><kbd>Esc</kbd></label>' +
       '<div class="palette-list" id="palette-list" role="listbox"></div></div>';
     document.body.appendChild(back);
     palette = back;

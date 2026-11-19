@@ -2248,6 +2248,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       },
@@ -2279,6 +2289,67 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orgs/{orgId}/stack": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "operationId": "getStack",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StackView"
+                }
+              }
+            }
           },
           "403": {
             "description": "Forbidden",
@@ -4618,95 +4689,6 @@
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/problem\u002Bjson": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Actions"
-        ],
-        "operationId": "updateAction",
-        "parameters": [
-          {
-            "name": "orgId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "number",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateActionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ActionDetailView"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem\u002Bjson": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/problem\u002Bjson": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem\u002Bjson": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
             "content": {
               "application/problem\u002Bjson": {
                 "schema": {
@@ -7771,9 +7753,6 @@
           "openFindings",
           "exploitation",
           "fixAvailable",
-          "assignedTo",
-          "dueAt",
-          "overdue",
           "openedAt",
           "levelRaisedAt",
           "closedAt",
@@ -7829,23 +7808,6 @@
             "type": "string"
           },
           "fixAvailable": {
-            "type": "boolean"
-          },
-          "assignedTo": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "dueAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date-time"
-          },
-          "overdue": {
             "type": "boolean"
           },
           "openedAt": {
@@ -8749,6 +8711,18 @@
               "null",
               "string"
             ]
+          },
+          "versionPrecision": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "noticeThreshold": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8771,7 +8745,9 @@
           "origin",
           "purl",
           "dependencyScope",
-          "dependencyRelation"
+          "dependencyRelation",
+          "versionPrecision",
+          "noticeThreshold"
         ],
         "type": "object",
         "properties": {
@@ -8863,6 +8839,12 @@
               "null",
               "string"
             ]
+          },
+          "versionPrecision": {
+            "type": "string"
+          },
+          "noticeThreshold": {
+            "type": "string"
           },
           "catalogMatch": {
             "oneOf": [
@@ -11873,7 +11855,6 @@
       "OverviewView": {
         "required": [
           "openByLevel",
-          "overdue",
           "urgent",
           "projects",
           "last24Hours"
@@ -11885,14 +11866,6 @@
             "items": {
               "$ref": "#/components/schemas/LevelCountView"
             }
-          },
-          "overdue": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
           },
           "urgent": {
             "type": "array",
@@ -13060,6 +13033,25 @@
           }
         }
       },
+      "StackView": {
+        "required": [
+          "projectId",
+          "components"
+        ],
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComponentView"
+            }
+          }
+        }
+      },
       "StatusMetric": {
         "required": [
           "group",
@@ -13296,43 +13288,6 @@
             "type": [
               "null",
               "string"
-            ]
-          }
-        }
-      },
-      "UpdateActionRequest": {
-        "required": [
-          "assignedTo",
-          "unassign",
-          "dueAt",
-          "resetDueAt"
-        ],
-        "type": "object",
-        "properties": {
-          "assignedTo": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "unassign": {
-            "type": [
-              "null",
-              "boolean"
-            ]
-          },
-          "dueAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date-time"
-          },
-          "resetDueAt": {
-            "type": [
-              "null",
-              "boolean"
             ]
           }
         }

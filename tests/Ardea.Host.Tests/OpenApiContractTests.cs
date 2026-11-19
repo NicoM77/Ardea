@@ -52,6 +52,64 @@ public sealed class OpenApiContractTests
         await app.StopAsync(TestContext.Current.CancellationToken);
     }
 
+    /// <summary>
+    /// Phase 5a acceptance (master plan 14, 17.5; ADR 046): no endpoint knows assignment, deadline or «in review». The
+    /// committed document equals the code (the test above), so its schemas, parameters and enumerations speak for every
+    /// endpoint. «assigner» (who scored a CVSS vector) is not an assignment.
+    /// </summary>
+    [Fact]
+    public async Task No_endpoint_knows_assignment_deadline_or_review_state()
+    {
+        var path = Path.Combine(RepositoryRoot(), "openapi", "ardea.v1.json");
+        using var document = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(path, TestContext.Current.CancellationToken));
+        var retired = new System.Text.RegularExpressions.Regex(
+            @"(un)?assign(?!er)|^due$|dueat|due_at|deadline|overdue|in_?review|remaining",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+        var found = new List<string>();
+
+        void Walk(System.Text.Json.JsonElement element, string at)
+        {
+            switch (element.ValueKind)
+            {
+                case System.Text.Json.JsonValueKind.Object:
+                    foreach (var property in element.EnumerateObject())
+                    {
+                        var here = $"{at}/{property.Name}";
+                        if (property.Name == "properties" && property.Value.ValueKind == System.Text.Json.JsonValueKind.Object)
+                        {
+                            found.AddRange(property.Value.EnumerateObject().Where(p => retired.IsMatch(p.Name)).Select(p => $"{here}/{p.Name}"));
+                        }
+                        else if (property.Name == "enum" && property.Value.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            found.AddRange(property.Value.EnumerateArray()
+                                .Where(v => v.ValueKind == System.Text.Json.JsonValueKind.String && retired.IsMatch(v.GetString()!)).Select(v => $"{here}: {v.GetString()}"));
+                        }
+                        else if (property.Name == "name" && at.Contains("/parameters", StringComparison.Ordinal) && retired.IsMatch(property.Value.GetString() ?? string.Empty))
+                        {
+                            found.Add($"{here}: {property.Value.GetString()}");
+                        }
+
+                        Walk(property.Value, here);
+                    }
+
+                    break;
+                case System.Text.Json.JsonValueKind.Array:
+                    var i = 0;
+                    foreach (var item in element.EnumerateArray())
+                    {
+                        Walk(item, $"{at}[{i++}]");
+                    }
+
+                    break;
+            }
+        }
+
+        Walk(document.RootElement, string.Empty);
+        found.AddRange(document.RootElement.GetProperty("paths").EnumerateObject().Select(p => p.Name).Where(p => retired.IsMatch(p)));
+        found.AddRange(document.RootElement.GetProperty("components").GetProperty("schemas").EnumerateObject().Select(s => s.Name).Where(s => retired.IsMatch(s)));
+        Assert.Empty(found);
+    }
+
     [Fact]
     public void Descriptions_have_the_same_line_breaks_on_every_machine()
     {

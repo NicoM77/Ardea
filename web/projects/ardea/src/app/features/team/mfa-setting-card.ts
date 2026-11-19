@@ -145,6 +145,7 @@ export class MfaSettingCard {
           locale: null,
           timeZone: null,
           requireMfa: this.required(),
+          aiPolicy: null,
         }),
       );
       // The session carries the requirement for the switcher, the guard and this card.

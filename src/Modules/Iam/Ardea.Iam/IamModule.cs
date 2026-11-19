@@ -57,6 +57,7 @@ public sealed class IamModule : IModule
         services.AddJob<SendAlreadyRegisteredNotice, AccountEmailHandlers>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });
         services.AddJob<SendInvitationEmail, InvitationEmailHandler>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });
         services.AddScoped<IOrganizationMembership, MembershipCheck>();
+        services.AddScoped<Contracts.IOrganizationProfiles, Features.OrganizationProfiles>();
         if (int.TryParse(configuration["PASSWORD_HASH_ITERATIONS"], CultureInfo.InvariantCulture, out var iterations) && iterations > 0)
         {
             services.Configure<PasswordHasherOptions>(o => o.IterationCount = iterations);

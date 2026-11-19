@@ -163,6 +163,7 @@ export class GeneralCard {
                 locale: m.locale,
                 timeZone: m.timeZone,
                 requireMfa: null,
+                aiPolicy: null,
               }),
             );
             this.saved.set(true);

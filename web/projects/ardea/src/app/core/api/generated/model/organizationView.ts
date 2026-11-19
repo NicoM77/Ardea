@@ -13,6 +13,7 @@ export interface OrganizationView {
   locale: string;
   timeZone: string;
   requireMfa: boolean;
+  aiPolicy: string;
   role: string;
   createdAt: string;
 }

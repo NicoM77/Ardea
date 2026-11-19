@@ -98,6 +98,18 @@ public sealed class AiProviderTests
         Assert.All(providers.All, p => Assert.Equal("llm", p.Host));
     }
 
+    [Fact]
+    public void The_data_policy_decides_which_providers_an_organisation_may_use_local_ones_first()
+    {
+        AiProviderInfo[] providers = [new("claude", "anthropic", "m", false, null), new("ollama", "ollama", "m", true, "ollama"), new("vllm", "openai", "m", true, "llm")];
+        Assert.Empty(AiDataPolicies.Allowed("none", providers));
+        Assert.Equal(["ollama", "vllm"], AiDataPolicies.Allowed("local_only", providers).Select(p => p.Name));
+        Assert.Equal(["ollama", "vllm"], AiDataPolicies.Allowed(null, providers).Select(p => p.Name));
+        Assert.Equal(["ollama", "vllm", "claude"], AiDataPolicies.Allowed("cloud_allowed", providers).Select(p => p.Name));
+        Assert.Empty(AiDataPolicies.Allowed("local_only", [providers[0]]));
+        Assert.Empty(AiDataPolicies.Allowed("unknown", providers));
+    }
+
     private static IConfiguration Configuration(Dictionary<string, string?> values) => new ConfigurationBuilder().AddInMemoryCollection(values).Build();
 
     private sealed class FakeChat(Func<IEnumerable<ChatMessage>, CancellationToken, Task<ChatResponse>> answer) : IChatClient

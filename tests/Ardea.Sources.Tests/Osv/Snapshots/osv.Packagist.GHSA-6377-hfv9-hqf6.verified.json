@@ -1,0 +1,118 @@
+{
+  "kind": "vulnerability",
+  "title": "Twig has unguarded calls to \u0060__toString()\u0060 when nesting an object into an array",
+  "description": "### Description\n\nIn a sandbox, an attacker can call \u0060__toString()\u0060 on an object even if the \u0060__toString()\u0060 method is not allowed by the security policy when the object is part of an array or an argument list (arguments to a function or a filter for instance).\n\n### Resolution\n\nThe sandbox mode now checks the \u0060__toString()\u0060 method call on all objects.\n\nThe patch for this issue is available [here](https://github.com/twigphp/Twig/commit/cafc608ece310e62a35a76f17e25c04ab9ed05cc) for the 3.11.x branch, and [here](https://github.com/twigphp/Twig/commit/d4a302681bca9f7c6ce2835470d53609cdf3e23e) for the 3.x branch.\n\n### Credits\n\nWe would like to thank Jamie Schouten for reporting the issue and Fabien Potencier for providing the fix.",
+  "language": "en",
+  "publishedAt": "2024-11-06T19:52:31+00:00",
+  "modifiedAt": "2025-05-29T21:34:35.218736+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-6377-hfv9-hqf6"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2024-51754"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Twig has unguarded calls to \u0060__toString()\u0060 when nesting an object into an array",
+      "description": "### Description\n\nIn a sandbox, an attacker can call \u0060__toString()\u0060 on an object even if the \u0060__toString()\u0060 method is not allowed by the security policy when the object is part of an array or an argument list (arguments to a function or a filter for instance).\n\n### Resolution\n\nThe sandbox mode now checks the \u0060__toString()\u0060 method call on all objects.\n\nThe patch for this issue is available [here](https://github.com/twigphp/Twig/commit/cafc608ece310e62a35a76f17e25c04ab9ed05cc) for the 3.11.x branch, and [here](https://github.com/twigphp/Twig/commit/d4a302681bca9f7c6ce2835470d53609cdf3e23e) for the 3.x branch.\n\n### Credits\n\nWe would like to thank Jamie Schouten for reporting the issue and Fabien Potencier for providing the fix.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:U/C:L/I:N/A:N",
+          "assigner": "GitHub"
+        },
+        {
+          "system": "CVSS",
+          "version": "4.0",
+          "vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:H/UI:N/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "twig/twig",
+          "cpes": [],
+          "purl": "pkg:composer/twig/twig",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "3.11.2",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00223.11.2\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "twig/twig",
+          "cpes": [],
+          "purl": "pkg:composer/twig/twig",
+          "platforms": [],
+          "versionScheme": "packagist",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "3.12",
+              "fixed": "3.14.1",
+              "scheme": "packagist",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00223.12\u0022},{\u0022fixed\u0022:\u00223.14.1\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/twigphp/Twig/security/advisories/GHSA-6377-hfv9-hqf6",
+          "tags": []
+        },
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-51754",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/twigphp/Twig/commit/2bb8c2460a2c519c498df9b643d5277117155a73",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/FriendsOfPHP/security-advisories/blob/master/twig/twig/CVE-2024-51754.yaml",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/twigphp/Twig",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://lists.debian.org/debian-lts-announce/2025/05/msg00039.html",
+          "tags": []
+        },
+        {
+          "url": "https://symfony.com/blog/unguarded-calls-to-__tostring-when-nesting-an-object-into-an-array",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-668"
+      ],
+      "publishedAt": "2024-11-06T19:52:31+00:00",
+      "modifiedAt": "2025-05-29T21:34:35.218736+00:00"
+    }
+  ],
+  "references": []
+}

@@ -1,0 +1,106 @@
+{
+  "kind": "vulnerability",
+  "title": "Denial of service in net/http and golang.org/x/net/http2",
+  "description": "HTTP/2 server connections can hang forever waiting for a clean shutdown that was preempted by a fatal error. This condition can be exploited by a malicious client to cause a denial of service.",
+  "language": "en",
+  "publishedAt": "2022-09-12T20:23:06+00:00",
+  "modifiedAt": "2026-02-04T02:41:02.475503+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "OSV",
+          "value": "GO-2022-0969"
+        },
+        {
+          "scheme": "OSV",
+          "value": "BIT-golang-2022-27664"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2022-27664"
+        },
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-69cg-p879-7622"
+        }
+      ],
+      "related": [
+        {
+          "scheme": "OSV",
+          "value": "CGA-7ff8-rp83-p2c7"
+        }
+      ],
+      "state": "published",
+      "title": "Denial of service in net/http and golang.org/x/net/http2",
+      "description": "HTTP/2 server connections can hang forever waiting for a clean shutdown that was preempted by a fatal error. This condition can be exploited by a malicious client to cause a denial of service.",
+      "metrics": [],
+      "affected": [
+        {
+          "product": "stdlib",
+          "cpes": [],
+          "purl": "pkg:golang/stdlib",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "1.18.6",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00221.18.6\u0022},{\u0022introduced\u0022:\u00221.19.0-0\u0022},{\u0022fixed\u0022:\u00221.19.1\u0022}]}"
+            },
+            {
+              "status": "affected",
+              "introduced": "1.19.0-0",
+              "fixed": "1.19.1",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00221.18.6\u0022},{\u0022introduced\u0022:\u00221.19.0-0\u0022},{\u0022fixed\u0022:\u00221.19.1\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "golang.org/x/net",
+          "cpes": [],
+          "purl": "pkg:golang/golang.org/x/net",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "0.0.0-20220906165146-f3363e06e74c",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00220.0.0-20220906165146-f3363e06e74c\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://groups.google.com/g/golang-announce/c/x49AQzIVX-s",
+          "tags": []
+        },
+        {
+          "url": "https://go.dev/issue/54658",
+          "tags": [
+            "issue-tracking"
+          ]
+        },
+        {
+          "url": "https://go.dev/cl/428735",
+          "tags": [
+            "patch"
+          ]
+        }
+      ],
+      "weaknesses": [],
+      "publishedAt": "2022-09-12T20:23:06+00:00",
+      "modifiedAt": "2026-02-04T02:41:02.475503+00:00"
+    }
+  ],
+  "references": []
+}

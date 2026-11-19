@@ -1,0 +1,148 @@
+{
+  "kind": "vulnerability",
+  "title": "Deeply nested json in jackson-databind",
+  "description": "jackson-databind is a data-binding package for the Jackson Data Processor. jackson-databind allows a Java stack overflow exception and denial of service via a large depth of nested objects.",
+  "language": "en",
+  "publishedAt": "2022-03-12T00:00:36+00:00",
+  "modifiedAt": "2026-09-10T03:49:13.0500283+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-57j2-w4cx-62h2"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2020-36518"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Deeply nested json in jackson-databind",
+      "description": "jackson-databind is a data-binding package for the Jackson Data Processor. jackson-databind allows a Java stack overflow exception and denial of service via a large depth of nested objects.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "com.fasterxml.jackson.core:jackson-databind",
+          "cpes": [],
+          "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-databind",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "2.13.0",
+              "fixed": "2.13.2.1",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00222.13.0\u0022},{\u0022fixed\u0022:\u00222.13.2.1\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "com.fasterxml.jackson.core:jackson-databind",
+          "cpes": [],
+          "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-databind",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "2.12.6.1",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00222.12.6.1\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2020-36518",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/FasterXML/jackson-databind/issues/2816",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/FasterXML/jackson-databind/commit/0a8157c6ca478b1bc7be4ba7dccdb3863275f0de",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/FasterXML/jackson-databind/commit/3cc52f82ecf943e06c1d7c3b078e405fb3923d2b",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/FasterXML/jackson-databind/commit/8238ab41d0350fb915797c89d46777b4496b74fd",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/FasterXML/jackson-databind/commit/b3587924ee5d8695942f364d0d404d48d0ea6126",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/FasterXML/jackson-databind/commit/fcfc4998ec23f0b1f7f8a9521c2b317b6c25892b",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/FasterXML/jackson-databind",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://github.com/FasterXML/jackson/wiki/Jackson-Release-2.12",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/FasterXML/jackson/wiki/Jackson-Release-2.13",
+          "tags": []
+        },
+        {
+          "url": "https://lists.debian.org/debian-lts-announce/2022/05/msg00001.html",
+          "tags": []
+        },
+        {
+          "url": "https://lists.debian.org/debian-lts-announce/2022/11/msg00035.html",
+          "tags": []
+        },
+        {
+          "url": "https://security.netapp.com/advisory/ntap-20220506-0004",
+          "tags": []
+        },
+        {
+          "url": "https://www.debian.org/security/2022/dsa-5283",
+          "tags": []
+        },
+        {
+          "url": "https://www.oracle.com/security-alerts/cpuapr2022.html",
+          "tags": []
+        },
+        {
+          "url": "https://www.oracle.com/security-alerts/cpujul2022.html",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-787"
+      ],
+      "publishedAt": "2022-03-12T00:00:36+00:00",
+      "modifiedAt": "2026-09-10T03:49:13.0500283+00:00"
+    }
+  ],
+  "references": []
+}

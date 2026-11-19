@@ -1,0 +1,193 @@
+{
+  "kind": "vulnerability",
+  "title": "Apache Tomcat Session Fixation vulnerability",
+  "description": "Session Fixation vulnerability in Apache Tomcat via rewrite valve.\n\nThis issue affects Apache Tomcat: from 11.0.0-M1 through 11.0.7, from 10.1.0-M1 through 10.1.41, from 9.0.0.M1 through 9.0.105.\nOlder, EOL versions may also be affected.\n\nUsers are recommended to upgrade to version 11.0.8, 10.1.42 or 9.0.106, which fix the issue.",
+  "language": "en",
+  "publishedAt": "2025-08-13T15:30:34+00:00",
+  "modifiedAt": "2026-07-01T16:30:08.497253+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-23hv-mwm6-g8jf"
+        },
+        {
+          "scheme": "OSV",
+          "value": "BIT-tomcat-2025-55668"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2025-55668"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Apache Tomcat Session Fixation vulnerability",
+      "description": "Session Fixation vulnerability in Apache Tomcat via rewrite valve.\n\nThis issue affects Apache Tomcat: from 11.0.0-M1 through 11.0.7, from 10.1.0-M1 through 10.1.41, from 9.0.0.M1 through 9.0.105.\nOlder, EOL versions may also be affected.\n\nUsers are recommended to upgrade to version 11.0.8, 10.1.42 or 9.0.106, which fix the issue.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "org.apache.tomcat:tomcat-catalina",
+          "cpes": [],
+          "purl": "pkg:maven/org.apache.tomcat/tomcat-catalina",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "11.0.0-M1",
+              "fixed": "11.0.8",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u002211.0.0-M1\u0022},{\u0022fixed\u0022:\u002211.0.8\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.apache.tomcat:tomcat-catalina",
+          "cpes": [],
+          "purl": "pkg:maven/org.apache.tomcat/tomcat-catalina",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "10.1.0-M1",
+              "fixed": "10.1.42",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u002210.1.0-M1\u0022},{\u0022fixed\u0022:\u002210.1.42\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.apache.tomcat:tomcat-catalina",
+          "cpes": [],
+          "purl": "pkg:maven/org.apache.tomcat/tomcat-catalina",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "9.0.0.M1",
+              "fixed": "9.0.106",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00229.0.0.M1\u0022},{\u0022fixed\u0022:\u00229.0.106\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.apache.tomcat.embed:tomcat-embed-core",
+          "cpes": [],
+          "purl": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "11.0.0-M1",
+              "fixed": "11.0.8",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u002211.0.0-M1\u0022},{\u0022fixed\u0022:\u002211.0.8\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.apache.tomcat.embed:tomcat-embed-core",
+          "cpes": [],
+          "purl": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "10.1.0-M1",
+              "fixed": "10.1.42",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u002210.1.0-M1\u0022},{\u0022fixed\u0022:\u002210.1.42\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.apache.tomcat.embed:tomcat-embed-core",
+          "cpes": [],
+          "purl": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "9.0.0.M1",
+              "fixed": "9.0.106",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00229.0.0.M1\u0022},{\u0022fixed\u0022:\u00229.0.106\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-55668",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/apache/tomcat/commit/8621e4c6ba2c916a41eb34cb0f781171ead33fb6",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/apache/tomcat/commit/90306d971bb8b8393336d893644124fb2ca11d21",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/apache/tomcat/commit/9c3673ba04009377cb0c81ccb6cf5078aec1aa95",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/apache/tomcat",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://lists.apache.org/thread/v6bknr96rl7l1qxkl1c03v0qdvbbqs47",
+          "tags": []
+        },
+        {
+          "url": "https://tomcat.apache.org/security-10.html",
+          "tags": []
+        },
+        {
+          "url": "https://tomcat.apache.org/security-11.html",
+          "tags": []
+        },
+        {
+          "url": "https://tomcat.apache.org/security-9.html",
+          "tags": []
+        },
+        {
+          "url": "http://www.openwall.com/lists/oss-security/2025/08/13/3",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-384"
+      ],
+      "publishedAt": "2025-08-13T15:30:34+00:00",
+      "modifiedAt": "2026-07-01T16:30:08.497253+00:00"
+    }
+  ],
+  "references": []
+}

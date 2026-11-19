@@ -1,0 +1,281 @@
+{
+  "kind": "vulnerability",
+  "title": "Remote Code Execution in Spring Framework",
+  "description": "Spring Framework prior to versions 5.2.20 and 5.3.18 contains a remote code execution vulnerability known as \u0060Spring4Shell\u0060. \n\n## Impact\n\nA Spring MVC or Spring WebFlux application running on JDK 9\u002B may be vulnerable to remote code execution (RCE) via data binding. The specific exploit requires the application to run on Tomcat as a WAR deployment. If the application is deployed as a Spring Boot executable jar, i.e. the default, it is not vulnerable to the exploit. However, the nature of the vulnerability is more general, and there may be other ways to exploit it.\n\nThese are the prerequisites for the exploit:\n- JDK 9 or higher\n- Apache Tomcat as the Servlet container\n- Packaged as WAR\n- \u0060spring-webmvc\u0060 or \u0060spring-webflux\u0060 dependency\n\n## Patches\n\n- Spring Framework [5.3.18](https://github.com/spring-projects/spring-framework/releases/tag/v5.3.18) and [5.2.20](https://github.com/spring-projects/spring-framework/releases/tag/v5.2.20.RELEASE)\n- Spring Boot [2.6.6](https://github.com/spring-projects/spring-boot/releases/tag/v2.6.6) and [2.5.12](https://github.com/spring-projects/spring-boot/releases/tag/v2.5.12)\n\n## Workarounds\n\nFor those who are unable to upgrade, leaked reports recommend setting \u0060disallowedFields\u0060 on \u0060WebDataBinder\u0060 through an \u0060@ControllerAdvice\u0060. This works generally, but as a centrally applied workaround fix, may leave some loopholes, in particular if a controller sets \u0060disallowedFields\u0060 locally through its own \u0060@InitBinder\u0060 method, which overrides the global setting.\n\nTo apply the workaround in a more fail-safe way, applications could extend \u0060RequestMappingHandlerAdapter\u0060 to update the \u0060WebDataBinder\u0060 at the end after all other initialization. In order to do that, a Spring Boot application can declare a \u0060WebMvcRegistrations\u0060 bean (Spring MVC) or a \u0060WebFluxRegistrations\u0060 bean (Spring WebFlux).",
+  "language": "en",
+  "publishedAt": "2022-03-31T18:30:50+00:00",
+  "modifiedAt": "2025-10-22T19:34:48.935927+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-36p3-wjmg-h94x"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2022-22965"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Remote Code Execution in Spring Framework",
+      "description": "Spring Framework prior to versions 5.2.20 and 5.3.18 contains a remote code execution vulnerability known as \u0060Spring4Shell\u0060. \n\n## Impact\n\nA Spring MVC or Spring WebFlux application running on JDK 9\u002B may be vulnerable to remote code execution (RCE) via data binding. The specific exploit requires the application to run on Tomcat as a WAR deployment. If the application is deployed as a Spring Boot executable jar, i.e. the default, it is not vulnerable to the exploit. However, the nature of the vulnerability is more general, and there may be other ways to exploit it.\n\nThese are the prerequisites for the exploit:\n- JDK 9 or higher\n- Apache Tomcat as the Servlet container\n- Packaged as WAR\n- \u0060spring-webmvc\u0060 or \u0060spring-webflux\u0060 dependency\n\n## Patches\n\n- Spring Framework [5.3.18](https://github.com/spring-projects/spring-framework/releases/tag/v5.3.18) and [5.2.20](https://github.com/spring-projects/spring-framework/releases/tag/v5.2.20.RELEASE)\n- Spring Boot [2.6.6](https://github.com/spring-projects/spring-boot/releases/tag/v2.6.6) and [2.5.12](https://github.com/spring-projects/spring-boot/releases/tag/v2.5.12)\n\n## Workarounds\n\nFor those who are unable to upgrade, leaked reports recommend setting \u0060disallowedFields\u0060 on \u0060WebDataBinder\u0060 through an \u0060@ControllerAdvice\u0060. This works generally, but as a centrally applied workaround fix, may leave some loopholes, in particular if a controller sets \u0060disallowedFields\u0060 locally through its own \u0060@InitBinder\u0060 method, which overrides the global setting.\n\nTo apply the workaround in a more fail-safe way, applications could extend \u0060RequestMappingHandlerAdapter\u0060 to update the \u0060WebDataBinder\u0060 at the end after all other initialization. In order to do that, a Spring Boot application can declare a \u0060WebMvcRegistrations\u0060 bean (Spring MVC) or a \u0060WebFluxRegistrations\u0060 bean (Spring WebFlux).",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H/E:H",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "org.springframework:spring-beans",
+          "cpes": [],
+          "purl": "pkg:maven/org.springframework/spring-beans",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "5.2.20.RELEASE",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00225.2.20.RELEASE\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.springframework:spring-beans",
+          "cpes": [],
+          "purl": "pkg:maven/org.springframework/spring-beans",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "5.3.0",
+              "fixed": "5.3.18",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00225.3.0\u0022},{\u0022fixed\u0022:\u00225.3.18\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.springframework:spring-webmvc",
+          "cpes": [],
+          "purl": "pkg:maven/org.springframework/spring-webmvc",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "5.2.20.RELEASE",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00225.2.20.RELEASE\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.springframework:spring-webmvc",
+          "cpes": [],
+          "purl": "pkg:maven/org.springframework/spring-webmvc",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "5.3.0",
+              "fixed": "5.3.18",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00225.3.0\u0022},{\u0022fixed\u0022:\u00225.3.18\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.springframework.boot:spring-boot-starter-web",
+          "cpes": [],
+          "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-web",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "2.5.12",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00222.5.12\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.springframework.boot:spring-boot-starter-web",
+          "cpes": [],
+          "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-web",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "2.6.0",
+              "fixed": "2.6.6",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00222.6.0\u0022},{\u0022fixed\u0022:\u00222.6.6\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.springframework:spring-webflux",
+          "cpes": [],
+          "purl": "pkg:maven/org.springframework/spring-webflux",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "5.2.20.RELEASE",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00225.2.20.RELEASE\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.springframework:spring-webflux",
+          "cpes": [],
+          "purl": "pkg:maven/org.springframework/spring-webflux",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "5.3.0",
+              "fixed": "5.3.18",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00225.3.0\u0022},{\u0022fixed\u0022:\u00225.3.18\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.springframework.boot:spring-boot-starter-webflux",
+          "cpes": [],
+          "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-webflux",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "2.5.12",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00222.5.12\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "org.springframework.boot:spring-boot-starter-webflux",
+          "cpes": [],
+          "purl": "pkg:maven/org.springframework.boot/spring-boot-starter-webflux",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "2.6.0",
+              "fixed": "2.6.6",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00222.6.0\u0022},{\u0022fixed\u0022:\u00222.6.6\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2022-22965",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/spring-projects/spring-framework/commit/002546b3e4b8d791ea6acccb81eb3168f51abb15",
+          "tags": []
+        },
+        {
+          "url": "https://cert-portal.siemens.com/productcert/pdf/ssa-254054.pdf",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/spring-projects/spring-boot/releases/tag/v2.5.12",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/spring-projects/spring-boot/releases/tag/v2.6.6",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/spring-projects/spring-framework",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://github.com/spring-projects/spring-framework/releases/tag/v5.2.20.RELEASE",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/spring-projects/spring-framework/releases/tag/v5.3.18",
+          "tags": []
+        },
+        {
+          "url": "https://psirt.global.sonicwall.com/vuln-detail/SNWLID-2022-0005",
+          "tags": []
+        },
+        {
+          "url": "https://spring.io/blog/2022/03/31/spring-framework-rce-early-announcement",
+          "tags": []
+        },
+        {
+          "url": "https://tanzu.vmware.com/security/cve-2022-22965",
+          "tags": []
+        },
+        {
+          "url": "https://tools.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-java-spring-rce-Zx9GUc67",
+          "tags": []
+        },
+        {
+          "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2022-22965",
+          "tags": []
+        },
+        {
+          "url": "https://www.kb.cert.org/vuls/id/970766",
+          "tags": []
+        },
+        {
+          "url": "https://www.oracle.com/security-alerts/cpuapr2022.html",
+          "tags": []
+        },
+        {
+          "url": "https://www.oracle.com/security-alerts/cpujul2022.html",
+          "tags": []
+        },
+        {
+          "url": "http://packetstormsecurity.com/files/166713/Spring4Shell-Code-Execution.html",
+          "tags": []
+        },
+        {
+          "url": "http://packetstormsecurity.com/files/167011/Spring4Shell-Spring-Framework-Class-Property-Remote-Code-Execution.html",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-74",
+        "CWE-94"
+      ],
+      "publishedAt": "2022-03-31T18:30:50+00:00",
+      "modifiedAt": "2025-10-22T19:34:48.935927+00:00"
+    }
+  ],
+  "references": []
+}

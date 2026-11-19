@@ -57,7 +57,7 @@ Consolidated entries from five sources, including OSV for packages, with merging
 | 1.9 | NCSC adapter with two readers: Cyber Security Hub API and BACS website warnings; `degraded` on suspicious fetches | 1.6 | ✅ |
 | 1.10 | Entries API; «Entries» and «Sources» pages with quarantine list and per-source metrics; sources page mockup | 1.7, 0.11 | ⬜ |
 | 1.11 | Commands to re-normalise and recompute; completeness check against the change log | 1.7 | ✅ |
-| 1.12 | OSV adapter for npm, NuGet, Packagist, PyPI, Maven and Go: `modified_id.csv`, initial load from the ecosystem archive; terms checked first | 1.3, 1.5 | ⬜ |
+| 1.12 | OSV adapter for npm, NuGet, Packagist, PyPI, Maven and Go: `modified_id.csv`, initial load from the ecosystem archive; terms checked first | 1.3, 1.5 | ✅ [ADR 031](docs/adr/0031-osv-source.md) |
 | 1.13 | Merging entries via a shared identifier that appears later, with redirect and review list for two CVE IDs | 1.6, 1.12 | ⬜ |
 
 ### Phase 2 · Organisations, projects and profile (7–9 weeks)

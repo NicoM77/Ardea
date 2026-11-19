@@ -1,0 +1,135 @@
+{
+  "kind": "vulnerability",
+  "title": "ZITADEL Vulnerable to Account Takeover Due to Improper Instance Validation in V2 Login",
+  "description": "### Summary\n\nA potential vulnerability exists in ZITADEL\u0027s password reset mechanism in login V2. ZITADEL utilizes the Forwarded or X-Forwarded-Host header from incoming requests to construct the URL for the password reset confirmation link. This link, containing a secret code, is then emailed to the user.\n\n### Impact\n\nIf an attacker can manipulate these headers (e.g., via host header injection), they could cause ZITADEL to generate a password reset link pointing to a malicious domain controlled by the attacker. If the user clicks this manipulated link in the email, the secret reset code embedded in the URL can be captured by the attacker. This captured code could then be used to reset the user\u0027s password and gain unauthorized access to their account.\n\nIt\u0027s important to note that this specific attack vector is mitigated for accounts that have Multi-Factor Authentication (MFA) or Passwordless authentication enabled.\n\n### Affected Versions\n\nSystems using the login UI (v2) and running one of the following versions are affected:\n- **v4.x**: \u00604.0.0-rc.1\u0060 through \u00604.7.0\u0060\n\n### Patches\n\nThe vulnerability has been addressed in the latest release. The patch resolves the issue by correctly validating the X-Forwarded-Host and Forwarded headers against the instance custom and trusted domains.\n\nBefore you upgrade, ensure that:\n- the \u0060ZITADEL_API_URL\u0060 is set and is pointing to your instance, resp. system in multi-instance deployments.\n- the HTTP \u0060host\u0060 (or a \u0060x-forwarded-host\u0060) is passed in your reverse proxy to the login UI.\n- a \u0060x-zitadel-instance-host\u0060 (or \u0060x-zitadel-forward-host\u0060) is set in your reverse for multi-instance deployments. If you\u0027re running a single instance solution, you don\u0027t need to take any actions.\n\nPatched versions:\n- 4.x: Upgrade to \u003E=[4.7.1](https://github.com/zitadel/zitadel/releases/tag/v4.7.1)\n\n### Workarounds\n\nThe recommended solution is to update ZITADEL to a patched version.\n\nA ZITADEL fronting proxy can be configured to delete all forwarded header values or set it to the requested host before sending requests to ZITADEL self-hosted environments.\n\n### Questions\n\nIf you have any questions or comments about this advisory, please email us at [security@zitadel.com](mailto:security@zitadel.com)\n\n### Credits\n\nThanks to Amit Laish \u2013 GE Vernova for finding and reporting the vulnerability.",
+  "language": "en",
+  "publishedAt": "2025-12-08T22:19:38+00:00",
+  "modifiedAt": "2026-03-09T16:11:05.035091+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-pfrf-9r5f-73f5"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2026-29067"
+        },
+        {
+          "scheme": "OSV",
+          "value": "GO-2025-4212"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "ZITADEL Vulnerable to Account Takeover Due to Improper Instance Validation in V2 Login",
+      "description": "### Summary\n\nA potential vulnerability exists in ZITADEL\u0027s password reset mechanism in login V2. ZITADEL utilizes the Forwarded or X-Forwarded-Host header from incoming requests to construct the URL for the password reset confirmation link. This link, containing a secret code, is then emailed to the user.\n\n### Impact\n\nIf an attacker can manipulate these headers (e.g., via host header injection), they could cause ZITADEL to generate a password reset link pointing to a malicious domain controlled by the attacker. If the user clicks this manipulated link in the email, the secret reset code embedded in the URL can be captured by the attacker. This captured code could then be used to reset the user\u0027s password and gain unauthorized access to their account.\n\nIt\u0027s important to note that this specific attack vector is mitigated for accounts that have Multi-Factor Authentication (MFA) or Passwordless authentication enabled.\n\n### Affected Versions\n\nSystems using the login UI (v2) and running one of the following versions are affected:\n- **v4.x**: \u00604.0.0-rc.1\u0060 through \u00604.7.0\u0060\n\n### Patches\n\nThe vulnerability has been addressed in the latest release. The patch resolves the issue by correctly validating the X-Forwarded-Host and Forwarded headers against the instance custom and trusted domains.\n\nBefore you upgrade, ensure that:\n- the \u0060ZITADEL_API_URL\u0060 is set and is pointing to your instance, resp. system in multi-instance deployments.\n- the HTTP \u0060host\u0060 (or a \u0060x-forwarded-host\u0060) is passed in your reverse proxy to the login UI.\n- a \u0060x-zitadel-instance-host\u0060 (or \u0060x-zitadel-forward-host\u0060) is set in your reverse for multi-instance deployments. If you\u0027re running a single instance solution, you don\u0027t need to take any actions.\n\nPatched versions:\n- 4.x: Upgrade to \u003E=[4.7.1](https://github.com/zitadel/zitadel/releases/tag/v4.7.1)\n\n### Workarounds\n\nThe recommended solution is to update ZITADEL to a patched version.\n\nA ZITADEL fronting proxy can be configured to delete all forwarded header values or set it to the requested host before sending requests to ZITADEL self-hosted environments.\n\n### Questions\n\nIf you have any questions or comments about this advisory, please email us at [security@zitadel.com](mailto:security@zitadel.com)\n\n### Credits\n\nThanks to Amit Laish \u2013 GE Vernova for finding and reporting the vulnerability.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "github.com/zitadel/zitadel",
+          "cpes": [],
+          "purl": "pkg:golang/github.com/zitadel/zitadel",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "1.80.0-v2.20.0.20251208091519-4c879b47334e",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00221.80.0-v2.20.0.20251208091519-4c879b47334e\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "github.com/zitadel/zitadel",
+          "cpes": [],
+          "purl": "pkg:golang/github.com/zitadel/zitadel",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "1.83.4",
+              "lastAffected": "1.87.5",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00221.83.4\u0022},{\u0022last_affected\u0022:\u00221.87.5\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "github.com/zitadel/zitadel",
+          "cpes": [],
+          "purl": "pkg:golang/github.com/zitadel/zitadel",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "4.0.0-rc.1",
+              "fixed": "4.7.1",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00224.0.0-rc.1\u0022},{\u0022fixed\u0022:\u00224.7.1\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "github.com/zitadel/zitadel/v2",
+          "cpes": [],
+          "purl": "pkg:golang/github.com/zitadel/zitadel/v2",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "1.80.0-v2.20.0.20251208091519-4c879b47334e",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00221.80.0-v2.20.0.20251208091519-4c879b47334e\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/zitadel/zitadel/security/advisories/GHSA-pfrf-9r5f-73f5",
+          "tags": []
+        },
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-29067",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/zitadel/zitadel/commit/4c879b47334e01d4fcab921ac1b44eda39acdb96",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/zitadel/zitadel",
+          "tags": [
+            "package"
+          ]
+        }
+      ],
+      "weaknesses": [
+        "CWE-601"
+      ],
+      "publishedAt": "2025-12-08T22:19:38+00:00",
+      "modifiedAt": "2026-03-09T16:11:05.035091+00:00"
+    }
+  ],
+  "references": []
+}

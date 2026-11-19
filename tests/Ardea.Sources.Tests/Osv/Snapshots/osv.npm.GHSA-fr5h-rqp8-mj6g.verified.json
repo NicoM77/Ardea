@@ -1,0 +1,89 @@
+{
+  "kind": "vulnerability",
+  "title": "Next.js Server-Side Request Forgery in Server Actions",
+  "description": "### Impact\nA Server-Side Request Forgery (SSRF) vulnerability was identified in Next.js Server Actions by security researchers at Assetnote. If the \u0060Host\u0060 header is modified, and the below conditions are also met, an attacker may be able to make requests that appear to be originating from the Next.js application server itself.\n\n#### Prerequisites\n* Next.js (\u0060\u003C14.1.1\u0060) is running in a self-hosted* manner.\n* The Next.js application makes use of Server Actions.\n* The Server Action performs a redirect to a relative path which starts with a \u0060/\u0060.\n\n\\* Many hosting providers (including Vercel) route requests based on the Host header, so we do not believe that this vulnerability affects any Next.js applications where routing is done in this manner.\n\n### Patches\nThis vulnerability was patched in [#62561](https://github.com/vercel/next.js/pull/62561) and fixed in Next.js \u006014.1.1\u0060.\n \n### Workarounds\nThere are no official workarounds for this vulnerability. We recommend upgrading to Next.js \u006014.1.1\u0060.\n\n### Credit\nVercel and the Next.js team thank Assetnote for responsibly disclosing this issue to us, and for working with us to verify the fix. Thanks to:\n\nAdam Kues - Assetnote\nShubham Shah - Assetnote",
+  "language": "en",
+  "publishedAt": "2024-05-09T21:18:57+00:00",
+  "modifiedAt": "2026-09-10T03:50:00.353665+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-fr5h-rqp8-mj6g"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2024-34351"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Next.js Server-Side Request Forgery in Server Actions",
+      "description": "### Impact\nA Server-Side Request Forgery (SSRF) vulnerability was identified in Next.js Server Actions by security researchers at Assetnote. If the \u0060Host\u0060 header is modified, and the below conditions are also met, an attacker may be able to make requests that appear to be originating from the Next.js application server itself.\n\n#### Prerequisites\n* Next.js (\u0060\u003C14.1.1\u0060) is running in a self-hosted* manner.\n* The Next.js application makes use of Server Actions.\n* The Server Action performs a redirect to a relative path which starts with a \u0060/\u0060.\n\n\\* Many hosting providers (including Vercel) route requests based on the Host header, so we do not believe that this vulnerability affects any Next.js applications where routing is done in this manner.\n\n### Patches\nThis vulnerability was patched in [#62561](https://github.com/vercel/next.js/pull/62561) and fixed in Next.js \u006014.1.1\u0060.\n \n### Workarounds\nThere are no official workarounds for this vulnerability. We recommend upgrading to Next.js \u006014.1.1\u0060.\n\n### Credit\nVercel and the Next.js team thank Assetnote for responsibly disclosing this issue to us, and for working with us to verify the fix. Thanks to:\n\nAdam Kues - Assetnote\nShubham Shah - Assetnote",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "next",
+          "cpes": [],
+          "purl": "pkg:npm/next",
+          "platforms": [],
+          "versionScheme": "semver",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "13.4.0",
+              "fixed": "14.1.1",
+              "scheme": "semver",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u002213.4.0\u0022},{\u0022fixed\u0022:\u002214.1.1\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/vercel/next.js/security/advisories/GHSA-fr5h-rqp8-mj6g",
+          "tags": []
+        },
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-34351",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://github.com/vercel/next.js/pull/62561",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/vercel/next.js/commit/8f7a6ca7d21a97bc9f7a1bbe10427b5ad74b9085",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/vercel/next.js",
+          "tags": [
+            "package"
+          ]
+        }
+      ],
+      "weaknesses": [
+        "CWE-918"
+      ],
+      "publishedAt": "2024-05-09T21:18:57+00:00",
+      "modifiedAt": "2026-09-10T03:50:00.353665+00:00"
+    }
+  ],
+  "references": []
+}

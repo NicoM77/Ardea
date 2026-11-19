@@ -1,0 +1,76 @@
+{
+  "kind": "vulnerability",
+  "title": "Improper handling of filenames in Content-Disposition HTTP header in github.com/gin-gonic/gin",
+  "description": "The filename parameter of the Context.FileAttachment function is not properly sanitized. A maliciously crafted filename can cause the Content-Disposition header to be sent with an unexpected filename value or otherwise modify the Content-Disposition header. For example, a filename of \u0022setup.bat\u0026quot;;x=.txt\u0022 will be sent as a file named \u0022setup.bat\u0022.\n\nIf the FileAttachment function is called with names provided by an untrusted source, this may permit an attacker to cause a file to be served with a name different than provided. Maliciously crafted attachment file name can modify the Content-Disposition header.",
+  "language": "en",
+  "publishedAt": "2023-05-11T18:59:56+00:00",
+  "modifiedAt": "2024-05-20T16:03:47+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "OSV",
+          "value": "GO-2023-1737"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2023-29401"
+        },
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-2c4m-59x9-fr2g"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Improper handling of filenames in Content-Disposition HTTP header in github.com/gin-gonic/gin",
+      "description": "The filename parameter of the Context.FileAttachment function is not properly sanitized. A maliciously crafted filename can cause the Content-Disposition header to be sent with an unexpected filename value or otherwise modify the Content-Disposition header. For example, a filename of \u0022setup.bat\u0026quot;;x=.txt\u0022 will be sent as a file named \u0022setup.bat\u0022.\n\nIf the FileAttachment function is called with names provided by an untrusted source, this may permit an attacker to cause a file to be served with a name different than provided. Maliciously crafted attachment file name can modify the Content-Disposition header.",
+      "metrics": [],
+      "affected": [
+        {
+          "product": "github.com/gin-gonic/gin",
+          "cpes": [],
+          "purl": "pkg:golang/github.com/gin-gonic/gin",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "1.3.1-0.20190301021747-ccb9e902956d",
+              "fixed": "1.9.1",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00221.3.1-0.20190301021747-ccb9e902956d\u0022},{\u0022fixed\u0022:\u00221.9.1\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/gin-gonic/gin/issues/3555",
+          "tags": [
+            "issue-tracking"
+          ]
+        },
+        {
+          "url": "https://github.com/gin-gonic/gin/pull/3556",
+          "tags": [
+            "patch"
+          ]
+        },
+        {
+          "url": "https://github.com/gin-gonic/gin/releases/tag/v1.9.1",
+          "tags": []
+        }
+      ],
+      "weaknesses": [],
+      "publishedAt": "2023-05-11T18:59:56+00:00",
+      "modifiedAt": "2024-05-20T16:03:47+00:00"
+    }
+  ],
+  "references": []
+}

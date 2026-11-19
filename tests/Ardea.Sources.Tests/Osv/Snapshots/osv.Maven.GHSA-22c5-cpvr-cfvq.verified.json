@@ -1,0 +1,116 @@
+{
+  "kind": "vulnerability",
+  "title": "Withdrawn Advisory: undertow: information leakage via HTTP/2 request header reuse",
+  "description": "# Withdrawn Advisory\nThis advisory has been withdrawn because it was determined to not be a valid vulnerability. This link is maintained to preserve external references. For more information, see https://nvd.nist.gov/vuln/detail/CVE-2024-4109.\n\n# Original Description\nA flaw was found in Undertow. An HTTP request header value from a previous stream may be incorrectly reused for a request associated with a subsequent stream on the same HTTP/2 connection. This issue can potentially lead to information leakage between requests.",
+  "language": "en",
+  "publishedAt": "2024-12-12T09:31:36+00:00",
+  "modifiedAt": "2026-09-10T03:50:56.1124719+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-22c5-cpvr-cfvq"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2024-4109"
+        }
+      ],
+      "related": [],
+      "state": "rejected",
+      "title": "Withdrawn Advisory: undertow: information leakage via HTTP/2 request header reuse",
+      "description": "# Withdrawn Advisory\nThis advisory has been withdrawn because it was determined to not be a valid vulnerability. This link is maintained to preserve external references. For more information, see https://nvd.nist.gov/vuln/detail/CVE-2024-4109.\n\n# Original Description\nA flaw was found in Undertow. An HTTP request header value from a previous stream may be incorrectly reused for a request associated with a subsequent stream on the same HTTP/2 connection. This issue can potentially lead to information leakage between requests.",
+      "metrics": [
+        {
+          "system": "CVSS",
+          "version": "3.1",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+          "assigner": "GitHub"
+        }
+      ],
+      "affected": [
+        {
+          "product": "io.undertow:undertow-core",
+          "cpes": [],
+          "purl": "pkg:maven/io.undertow/undertow-core",
+          "platforms": [],
+          "versionScheme": "maven",
+          "versions": [
+            {
+              "status": "affected",
+              "lastAffected": "2.3.18.Final",
+              "scheme": "maven",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022last_affected\u0022:\u00222.3.18.Final\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": false,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-4109",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://access.redhat.com/errata/RHSA-2024:10927",
+          "tags": []
+        },
+        {
+          "url": "https://access.redhat.com/errata/RHSA-2024:10928",
+          "tags": []
+        },
+        {
+          "url": "https://access.redhat.com/errata/RHSA-2024:10929",
+          "tags": []
+        },
+        {
+          "url": "https://access.redhat.com/errata/RHSA-2024:10933",
+          "tags": []
+        },
+        {
+          "url": "https://access.redhat.com/errata/RHSA-2024:11559",
+          "tags": []
+        },
+        {
+          "url": "https://access.redhat.com/errata/RHSA-2024:11560",
+          "tags": []
+        },
+        {
+          "url": "https://access.redhat.com/errata/RHSA-2024:11570",
+          "tags": []
+        },
+        {
+          "url": "https://access.redhat.com/security/cve/CVE-2024-4109",
+          "tags": []
+        },
+        {
+          "url": "https://bugzilla.redhat.com/show_bug.cgi?id=2272325",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/undertow-io/undertow",
+          "tags": [
+            "package"
+          ]
+        },
+        {
+          "url": "https://github.com/undertow-io/undertow/blob/6ae61c6af88d2a8341922ccd0de98926e8349543/core/src/main/java/io/undertow/protocols/http2/HpackDecoder.java#L250-L259",
+          "tags": []
+        }
+      ],
+      "weaknesses": [
+        "CWE-200"
+      ],
+      "publishedAt": "2024-12-12T09:31:36+00:00",
+      "modifiedAt": "2026-09-10T03:50:56.1124719+00:00"
+    }
+  ],
+  "references": []
+}

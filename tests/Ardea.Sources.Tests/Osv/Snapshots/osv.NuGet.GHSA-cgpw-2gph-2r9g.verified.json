@@ -1,0 +1,126 @@
+{
+  "kind": "vulnerability",
+  "title": "Moderate severity vulnerability that affects Microsoft.AspNetCore.All, Microsoft.AspNetCore.App, and Microsoft.AspNetCore.Server.Kestrel.Core",
+  "description": "Microsoft is aware of a denial of service vulnerability in ASP.NET Core when a malformed request is terminated. An attacker who successfully exploited this vulnerability could cause a denial of service attack.\n\nThe update addresses the vulnerability by correcting how ASP.NET Core handles such requests.",
+  "language": "en",
+  "publishedAt": "2018-10-16T19:59:59+00:00",
+  "modifiedAt": "2024-12-02T05:46:46.43209+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-cgpw-2gph-2r9g"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Moderate severity vulnerability that affects Microsoft.AspNetCore.All, Microsoft.AspNetCore.App, and Microsoft.AspNetCore.Server.Kestrel.Core",
+      "description": "Microsoft is aware of a denial of service vulnerability in ASP.NET Core when a malformed request is terminated. An attacker who successfully exploited this vulnerability could cause a denial of service attack.\n\nThe update addresses the vulnerability by correcting how ASP.NET Core handles such requests.",
+      "metrics": [],
+      "affected": [
+        {
+          "product": "Microsoft.AspNetCore.Server.Kestrel.Core",
+          "cpes": [],
+          "purl": "pkg:nuget/Microsoft.AspNetCore.Server.Kestrel.Core",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "2.0.0",
+              "fixed": "2.0.4",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00222.0.0\u0022},{\u0022fixed\u0022:\u00222.0.4\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "Microsoft.AspNetCore.All",
+          "cpes": [],
+          "purl": "pkg:nuget/Microsoft.AspNetCore.All",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "2.0.0",
+              "fixed": "2.0.9",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00222.0.0\u0022},{\u0022fixed\u0022:\u00222.0.9\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "Microsoft.AspNetCore.App",
+          "cpes": [],
+          "purl": "pkg:nuget/Microsoft.AspNetCore.App",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "2.1.0",
+              "fixed": "2.1.2",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00222.1.0\u0022},{\u0022fixed\u0022:\u00222.1.2\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "Microsoft.AspNetCore.Server.Kestrel.Core",
+          "cpes": [],
+          "purl": "pkg:nuget/Microsoft.AspNetCore.Server.Kestrel.Core",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "2.1.0",
+              "fixed": "2.1.2",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00222.1.0\u0022},{\u0022fixed\u0022:\u00222.1.2\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "Microsoft.AspNetCore.All",
+          "cpes": [],
+          "purl": "pkg:nuget/Microsoft.AspNetCore.All",
+          "platforms": [],
+          "versionScheme": "nuget",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "2.1.0",
+              "fixed": "2.1.2",
+              "scheme": "nuget",
+              "raw": "{\u0022type\u0022:\u0022ECOSYSTEM\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00222.1.0\u0022},{\u0022fixed\u0022:\u00222.1.2\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/aspnet/Announcements/issues/311",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/advisories/GHSA-cgpw-2gph-2r9g",
+          "tags": [
+            "advisory"
+          ]
+        }
+      ],
+      "weaknesses": [],
+      "publishedAt": "2018-10-16T19:59:59+00:00",
+      "modifiedAt": "2024-12-02T05:46:46.43209+00:00"
+    }
+  ],
+  "references": []
+}

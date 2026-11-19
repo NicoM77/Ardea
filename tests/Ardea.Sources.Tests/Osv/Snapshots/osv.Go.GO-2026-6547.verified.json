@@ -1,0 +1,154 @@
+{
+  "kind": "vulnerability",
+  "title": "Mattermost has an Incorrect Authorization issue in github.com/mattermost/mattermost-server",
+  "description": "Mattermost has an Incorrect Authorization issue in github.com/mattermost/mattermost-server",
+  "language": "en",
+  "publishedAt": "2026-10-01T20:23:38+00:00",
+  "modifiedAt": "2026-10-01T20:45:12.2275527+00:00",
+  "claims": [
+    {
+      "aliases": [
+        {
+          "scheme": "OSV",
+          "value": "GO-2026-6547"
+        },
+        {
+          "scheme": "CVE",
+          "value": "CVE-2026-8823"
+        },
+        {
+          "scheme": "GHSA",
+          "value": "GHSA-xmfh-3ccg-c9fx"
+        }
+      ],
+      "related": [],
+      "state": "published",
+      "title": "Mattermost has an Incorrect Authorization issue in github.com/mattermost/mattermost-server",
+      "description": "Mattermost has an Incorrect Authorization issue in github.com/mattermost/mattermost-server",
+      "metrics": [],
+      "affected": [
+        {
+          "product": "github.com/mattermost/mattermost-server",
+          "cpes": [],
+          "purl": "pkg:golang/github.com/mattermost/mattermost-server",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "introduced": "10.11.0\u002Bincompatible",
+              "fixed": "10.11.18\u002Bincompatible",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u002210.11.0\u002Bincompatible\u0022},{\u0022fixed\u0022:\u002210.11.18\u002Bincompatible\u0022},{\u0022introduced\u0022:\u002211.7.0\u002Bincompatible\u0022},{\u0022fixed\u0022:\u002211.7.1\u002Bincompatible\u0022}]}"
+            },
+            {
+              "status": "affected",
+              "introduced": "11.7.0\u002Bincompatible",
+              "fixed": "11.7.1\u002Bincompatible",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u002210.11.0\u002Bincompatible\u0022},{\u0022fixed\u0022:\u002210.11.18\u002Bincompatible\u0022},{\u0022introduced\u0022:\u002211.7.0\u002Bincompatible\u0022},{\u0022fixed\u0022:\u002211.7.1\u002Bincompatible\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "github.com/mattermost/mattermost-server/v5",
+          "cpes": [],
+          "purl": "pkg:golang/github.com/mattermost/mattermost-server/v5",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "github.com/mattermost/mattermost-server/v6",
+          "cpes": [],
+          "purl": "pkg:golang/github.com/mattermost/mattermost-server/v6",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022}]}"
+            }
+          ]
+        },
+        {
+          "product": "github.com/mattermost/mattermost/server/v8",
+          "cpes": [],
+          "purl": "pkg:golang/github.com/mattermost/mattermost/server/v8",
+          "platforms": [],
+          "versionScheme": "go",
+          "versions": [
+            {
+              "status": "affected",
+              "fixed": "8.0.0-20260518160100-9bd77d3fc4d2",
+              "scheme": "go",
+              "raw": "{\u0022type\u0022:\u0022SEMVER\u0022,\u0022events\u0022:[{\u0022introduced\u0022:\u00220\u0022},{\u0022fixed\u0022:\u00228.0.0-20260518160100-9bd77d3fc4d2\u0022}]}"
+            }
+          ]
+        }
+      ],
+      "remediation": {
+        "fixAvailable": true,
+        "solutions": [],
+        "workarounds": []
+      },
+      "references": [
+        {
+          "url": "https://github.com/advisories/GHSA-xmfh-3ccg-c9fx",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-8823",
+          "tags": [
+            "advisory"
+          ]
+        },
+        {
+          "url": "https://docs.mattermost.com/security-guide/security-updates",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/mattermost/mattermost/commit/7972fc53f5c0b0175879a9737308a87b42db1f0b",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/mattermost/mattermost/commit/9bd77d3fc4d2af3f7f0259a205174e76a1a276e1",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/mattermost/mattermost/commit/c9bf3609fb9a3e5c2de94c50742c9b91fd723e3d",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/mattermost/mattermost/commit/d9a55e394cd5bc15edb49e9606bec8fec03ac4c6",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/mattermost/mattermost/pull/36487",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/mattermost/mattermost/releases/tag/v10.11.18",
+          "tags": []
+        },
+        {
+          "url": "https://github.com/mattermost/mattermost/releases/tag/v11.7.1",
+          "tags": []
+        }
+      ],
+      "weaknesses": [],
+      "publishedAt": "2026-10-01T20:23:38+00:00",
+      "modifiedAt": "2026-10-01T20:45:12.2275527+00:00"
+    }
+  ],
+  "references": []
+}

@@ -115,8 +115,10 @@ internal static class VersionMatch
 
     /// <summary>
     /// The scheme to compare in: a package's ecosystem; otherwise the record's own version type when it
-    /// names a specific one, then the component's, then the numeric fallback, whichever reads the
-    /// installed version first.
+    /// names a specific one, then the component's, then the numeric fallback: the first that reads the
+    /// installed version and every bound of the statement, else the first that reads the installed version.
+    /// A record often names its type on some entries only: Mattermost tags «0 to 6.3.2» semver and leaves
+    /// the unaffected «6.3.1.0» untyped, which semver cannot read; the numeric fallback reads both.
     /// </summary>
     private static IVersionScheme? SchemeFor(ProfileComponent component, string matchType, IReadOnlyList<AffectedFacts> rows, IVersionSchemes schemes)
     {
@@ -135,7 +137,14 @@ internal static class VersionMatch
         candidates.Add(component.VersionScheme is null ? null : schemes.Find(component.VersionScheme));
         candidates.Add(schemes.Find(VersionSchemeNames.Numeric));
         var usable = candidates.OfType<IVersionScheme>().ToList();
-        return usable.Find(s => component.Version is not null && s.IsVersion(component.Version.Trim())) ?? usable.FirstOrDefault();
+        var installed = component.Version?.Trim();
+        var bounds = rows.Select(Range).Where(r => !r.IsCommitRange)
+            .SelectMany(r => new[] { r.Introduced, r.Fixed, r.LastAffected, r.Exact })
+            .OfType<string>()
+            .ToList();
+        return usable.Find(s => installed is not null && s.IsVersion(installed) && bounds.TrueForAll(b => s.IsVersion(b)))
+            ?? usable.Find(s => installed is not null && s.IsVersion(installed))
+            ?? usable.FirstOrDefault();
     }
 
     private static VersionRange Range(AffectedFacts row) => new()

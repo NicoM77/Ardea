@@ -28,5 +28,6 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Ardea.Host.Tests" />
     <InternalsVisibleTo Include="Ardea.Iam.Tests" />
+    <InternalsVisibleTo Include="Ardea.Notifications.Tests" />
   </ItemGroup>
 </Project>

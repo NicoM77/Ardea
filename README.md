@@ -60,6 +60,8 @@ Consolidated entries from five sources, including OSV for packages, with merging
 | 1.12 | OSV adapter for npm, NuGet, Packagist, PyPI, Maven and Go: `modified_id.csv`, initial load from the ecosystem archive; terms checked first | 1.3, 1.5 | ✅ [ADR 031](docs/adr/0031-osv-source.md) |
 | 1.13 | Merging entries via a shared identifier that appears later, with redirect and review list for two CVE IDs | 1.6, 1.12 | ✅ |
 
+Acceptance: [observed and tested](docs/acceptance/phase-1.md), first load in 51 minutes on 2 vCPU and 4 GB.
+
 ### Phase 2 · Organisations, projects and profile (7–9 weeks)
 
 Organisations with projects and technology profile; profile from GitHub repositories; setup wizard.

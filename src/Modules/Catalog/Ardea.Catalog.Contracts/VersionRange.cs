@@ -156,6 +156,51 @@ public static class VersionRanges
     }
 
     /// <summary>
+    /// Resolves the known peculiarities (master plan 6.6) in a range a source reader has already split into
+    /// its fields, as <c>intel.entry_affected</c> stores it:
+    /// <list type="bullet">
+    /// <item>an exact version that is itself a range (<c>8.4.0-8.4.13</c>, <c>8.2.*</c>, <c>&lt; 2.1</c>) becomes that range;
+    /// an open word alone (<c>*</c>, <c>unspecified</c>, <c>n/a</c>) stays as written, because most publishers mean «not stated» by it, not «every version»;</item>
+    /// <item>an open lower bound (<c>0</c>, <c>*</c>, <c>unspecified</c>) becomes none, a placeholder lower bound its lowest version;</item>
+    /// <item>an upper bound with a placeholder (<c>lessThan 6.12.*</c>, <c>lessThanOrEqual 6.12.*</c>) ends before or after
+    /// that line; any other upper bound with a wildcard (<c>*</c>, <c>log4j-core*</c>) names no end.</item>
+    /// </list>
+    /// Applying it twice gives the same range.
+    /// </summary>
+    public static VersionRange Normalize(VersionRange range)
+    {
+        ArgumentNullException.ThrowIfNull(range);
+        var splitAllowed = !string.Equals(range.Scheme, VersionSchemeNames.Rpm, StringComparison.OrdinalIgnoreCase);
+        if (range.Exact is { } exact)
+        {
+            return range.Introduced is null && range.Fixed is null && range.LastAffected is null && !OpenWords.Contains(exact.Trim())
+                ? FromSingleField(exact, range.Status, range.Scheme)
+                : range;
+        }
+
+        var introduced = Lower(range.Introduced, splitAllowed);
+        string? fixedVersion = null, lastAffected = null;
+        if (UpperText(range.Fixed) is { } lessThan)
+        {
+            fixedVersion = TryExpandWildcard(lessThan, out var below, out _) ? below : lessThan;
+        }
+
+        if (UpperText(range.LastAffected) is { } upTo)
+        {
+            if (TryExpandWildcard(upTo, out _, out var after))
+            {
+                fixedVersion ??= after;
+            }
+            else
+            {
+                lastAffected = upTo;
+            }
+        }
+
+        return range with { Introduced = introduced, Fixed = fixedVersion, LastAffected = lastAffected };
+    }
+
+    /// <summary>
     /// A single version field that may itself be a range: <c>8.2.*</c>, <c>8.4.0-8.4.13</c>,
     /// <c>&lt; 2.1</c>, <c>&lt;= 2.1</c>, <c>&gt;= 2.1</c>; anything else is an exact version.
     /// <c>*</c> or <c>unspecified</c> alone stands for all versions.
@@ -254,6 +299,18 @@ public static class VersionRanges
         }
 
         return splitAllowed && TrySplitRange(text, out var from, out _) ? from : text;
+    }
+
+    /// <summary>An upper bound as text, or <c>null</c> when it names no end: missing, an open word, or a wildcard that is no placeholder version.</summary>
+    private static string? UpperText(string? text)
+    {
+        if (IsOpenUpperBound(text))
+        {
+            return null;
+        }
+
+        var trimmed = text!.Trim();
+        return trimmed.Contains('*', StringComparison.Ordinal) && !TryExpandWildcard(trimmed, out _, out _) ? null : trimmed;
     }
 
     private static bool TryOperator(string text, out string op, out string operand)

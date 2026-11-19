@@ -50,7 +50,7 @@ public sealed class CveRecordReaderTests
     }
 
     [Fact]
-    public void Status_changes_inside_a_range_split_it_and_a_wildcard_bound_means_none()
+    public void Status_changes_inside_a_range_split_it_and_a_wildcard_bound_is_kept_as_written()
     {
         var ranges = Read("CVE-2021-44228.json").Affected.SelectMany(a => a.Versions).ToList();
 
@@ -61,9 +61,18 @@ public sealed class CveRecordReaderTests
                 ("2.4", "2.12.2", AffectedStatus.Affected),
                 ("2.12.2", "2.13.0", AffectedStatus.Unaffected),
                 ("2.13.0", "2.15.0", AffectedStatus.Affected),
-                ("2.15.0", null, AffectedStatus.Unaffected),
+                // The correlation reads «log4j-core*» as no end (VersionRanges.Normalize); the reader keeps what the record says.
+                ("2.15.0", "log4j-core*", AffectedStatus.Unaffected),
             ],
             ranges.Select(r => (r.Introduced!, r.Fixed, r.Status)).ToList());
+    }
+
+    [Fact]
+    public void Placeholder_upper_bound_of_a_kernel_stable_line_is_kept_for_the_correlation()
+    {
+        var versions = Read("CVE-2024-26581.json").Affected.SelectMany(a => a.Versions).ToList();
+
+        Assert.Contains(versions, v => v.Status == AffectedStatus.Unaffected && v.LastAffected is { } last && last.EndsWith(".*", StringComparison.Ordinal));
     }
 
     [Fact]

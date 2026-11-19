@@ -49,3 +49,30 @@ Every query bypasses the EF filter, so only the database separates tenants.
 - The cross-organisation access test (task 2.2) still runs against the API; RLS does not replace it.
 - `current_setting` is evaluated per row; with an index on `organization_id` the cost is negligible at the
   planned sizes. This is to be watched in the query plans of task 6.4.
+
+## Implementation (task 2.2)
+
+- Policies use `platform.current_organization_id()` and `platform.current_user_id()`, which read the
+  transaction-local settings. Organisation tables (`iam.organization`, `iam.membership`, `iam.invitation`,
+  `platform.audit_event`) are filtered by organisation. User tables (`iam.user`, `iam.user_claim`,
+  `iam.user_login`, `iam.user_token`, `iam.session`) are filtered by user.
+- The user rules of master plan 9.2 are part of the policies. A user sees their own memberships and those
+  organisations before choosing one. Members of the current organisation see each other's account row,
+  but nobody can write another account.
+- Instance audit events (no organisation) can be written from any unit of work; only the owner role
+  reads them.
+- Flows that start without a user (sign-in, two-factor step, registration, setup, password reset,
+  e-mail confirmation, account e-mail jobs, the `reset-password` command) first find their account and
+  make it the user of their unit of work before it begins. The audit actor of these flows is that account.
+- The system functions so far (`SECURITY DEFINER`, owned by the migrator, `search_path` pinned). Each
+  returns identifiers, a flag or a count:
+
+  | Function | Flow (master plan 9.2) |
+  |---|---|
+  | `iam.user_id_by_email(email)` | sign-in: the account of an address |
+  | `iam.validate_session(session, user, stamp, idle)` | sign-in: the session check in front of every request |
+  | `iam.any_user()` | instance figure: whether setup is still open |
+  | `iam.invitation_organization(token_hash, email)` | accept an invitation: the organisation of a token |
+
+- `TenantIsolationTests` checks that every table has exactly one kind and the matching policy, and calls
+  every organisation endpoint with foreign organisations and foreign object ids.

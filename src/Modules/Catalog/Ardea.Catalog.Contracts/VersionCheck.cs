@@ -14,6 +14,14 @@ public enum VersionCheckReason
     /// <summary>Row 1: inside a range with status affected.</summary>
     InAffectedRange,
 
+    /// <summary>
+    /// Below an affected range whose lower bound equals its fix, read as «before the fix»: Google writes «Chrome
+    /// prior to 157.0.8103.50» as <c>157.0.8103.50</c> to before <c>157.0.8103.50</c>. Microsoft writes a line that
+    /// ships with the fix the same way («Visual Studio 2026 version 18.12», <c>18.12.0</c> to before <c>18.12.0</c>);
+    /// a statement of the same entry about the installed version's own line therefore overrules this reading.
+    /// </summary>
+    BeforeEmptyRange,
+
     /// <summary>Row 2: inside a range with status unaffected.</summary>
     InUnaffectedRange,
 
@@ -134,6 +142,12 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
         if (positions.Exists(p => p.Position == Position.Unreadable))
         {
             return Unknown(VersionCheckReason.RangeNotReadable);
+        }
+
+        // An empty range never serves as an explicit lower bound: below it, it is read as «before its fix».
+        if (positions.Exists(p => p.Position == Position.BeforeEmpty && p.Range.Status == VersionStatus.Affected))
+        {
+            return new(VersionVerdict.InRange, VersionCheckReason.BeforeEmptyRange);
         }
 
         var affected = positions.Where(p => p.Range.Status == VersionStatus.Affected).ToList();
@@ -270,6 +284,12 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
             return Position.Unreadable;
         }
 
+        // Lower bound and fix are the same version (compared as versions: «v2.0.1» and «2.0.1» are the same).
+        if (introduced is not null && fixedVersion is not null && lastAffected is null && introduced.CompareTo(fixedVersion) == 0)
+        {
+            return version < fixedVersion ? Position.BeforeEmpty : Position.Above;
+        }
+
         var belowLower = introduced is not null && version < introduced;
         return (belowLower, aboveUpper) switch
         {
@@ -286,6 +306,9 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
         Inside,
         Above,
         BelowNamedBound,
+
+        /// <summary>Below a range whose lower bound equals its fix.</summary>
+        BeforeEmpty,
         Unreadable,
     }
 }

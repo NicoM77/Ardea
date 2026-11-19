@@ -168,14 +168,10 @@ public static class VersionRanges
     /// <item>an open lower bound (<c>0</c>, <c>*</c>, <c>unspecified</c>) becomes none, a placeholder lower bound its lowest version;</item>
     /// <item><c>lessThanOrEqual 6.12.*</c> ends after the 6.12 line; <c>lessThan 6.12.*</c> also does when the lower bound
     /// lies in that line, and otherwise ends where the doubt cannot make a version «out of range» (see
-    /// <c>PlaceholderEnd</c>); any other upper bound with a wildcard (<c>*</c>, <c>log4j-core*</c>) names no end;</item>
-    /// <item>a lower bound equal to the fix is no lower bound: Google's CNA writes «before 157.0.8103.50» as
-    /// <c>{"version": "157.0.8103.50", "lessThan": "157.0.8103.50"}</c>, which read literally contains no version at all.
-    /// Not so when the bound starts a release line (<c>18.12.0</c>, last part <c>0</c>): Microsoft writes the entry
-    /// «Visual Studio 2026 version 18.12» as <c>18.12.0</c> to before <c>18.12.0</c>, a line that ships with the fix;
-    /// read as «before 18.12.0» it would claim every older line, so it stays as written and contains nothing.</item>
+    /// <c>PlaceholderEnd</c>); any other upper bound with a wildcard (<c>*</c>, <c>log4j-core*</c>) names no end.</item>
     /// </list>
-    /// Applying it twice gives the same range.
+    /// A range whose lower bound equals its fix stays as written; the version check reads it
+    /// (<see cref="VersionCheckReason.BeforeEmptyRange"/>). Applying it twice gives the same range.
     /// </summary>
     public static VersionRange Normalize(VersionRange range)
     {
@@ -207,13 +203,6 @@ public static class VersionRanges
             {
                 lastAffected = upTo;
             }
-        }
-
-        // Only bounds as written: «5.10» to before «5.10.*» is no empty range once the placeholder is expanded.
-        if (introduced is not null && fixedVersion is not null && string.Equals(range.Introduced?.Trim(), range.Fixed?.Trim(), StringComparison.Ordinal)
-            && !TryExpandWildcard(range.Fixed, out _, out _) && !introduced.EndsWith(".0", StringComparison.Ordinal))
-        {
-            introduced = null;
         }
 
         return range with { Introduced = introduced, Fixed = fixedVersion, LastAffected = lastAffected };

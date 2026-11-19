@@ -272,6 +272,30 @@ public sealed class VersionCheckTests
         Assert.Equal(VersionVerdict.OutOfRange, Check("2.4.52", VersionStatus.Unaffected, ["build 4711"], Affected24).Verdict);
     }
 
+    [Theory]
+    // Google writes «Chrome prior to 157.0.8103.50» as an empty range: below it, it reads as «before the fix».
+    [InlineData("157.0.8103.50", "157.0.8103.50", "157.0.8102.50", VersionVerdict.InRange, VersionCheckReason.BeforeEmptyRange)]
+    [InlineData("157.0.8103.50", "157.0.8103.50", "157.0.8103.50", VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges)]
+    // An empty range never serves as an explicit lower bound, also when it starts a line or differs only in writing.
+    [InlineData("2.0.0", "2.0.0", "1.9.0", VersionVerdict.InRange, VersionCheckReason.BeforeEmptyRange)]
+    [InlineData("v2.0.1", "2.0.1", "1.9", VersionVerdict.InRange, VersionCheckReason.BeforeEmptyRange)]
+    [InlineData("18.12.0", "18.12.0", "18.11.9", VersionVerdict.InRange, VersionCheckReason.BeforeEmptyRange)]
+    public void An_empty_range_reads_as_before_its_fix(string introduced, string fixedVersion, string installed, VersionVerdict verdict, VersionCheckReason reason)
+    {
+        var empty = new VersionRange { Introduced = introduced, Fixed = fixedVersion };
+
+        Assert.Equal(new VersionCheck(verdict, reason), Check(installed, VersionStatus.Unknown, empty));
+    }
+
+    [Fact]
+    public void An_explicit_unaffected_range_wins_over_the_reading_of_an_empty_range()
+    {
+        var empty = new VersionRange { Introduced = "2.0.0", Fixed = "2.0.0" };
+        var unaffected = new VersionRange { Introduced = "1.9.0", Fixed = "2.0.0", Status = VersionStatus.Unaffected };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.InUnaffectedRange), Check("1.9.5", VersionStatus.Unknown, empty, unaffected));
+    }
+
     [Fact]
     public void Without_a_scheme_the_verdict_is_unknown()
     {

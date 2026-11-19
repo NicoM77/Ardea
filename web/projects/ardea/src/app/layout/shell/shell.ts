@@ -11,6 +11,7 @@ import { filter, firstValueFrom, map } from 'rxjs';
 import { AuthenticationService } from '../../core/api/client';
 import { Session } from '../../core/session/session';
 import { ADMINISTRATION, AREAS, areaUrl, isInstanceWide } from '../../features/areas/areas';
+import { PushDevice } from '../../features/notifications/push-device';
 import { SearchDialog, SearchDialogData } from '../search/search-dialog';
 import { opensSearch, SearchItem } from '../search/search';
 import { Sidebar } from './sidebar';
@@ -173,6 +174,7 @@ const SLUG = /^\/o\/([^/?#]+)/;
 export class Shell {
   protected readonly session = inject(Session);
   private readonly auth = inject(AuthenticationService);
+  private readonly push = inject(PushDevice);
   private readonly router = inject(Router);
   private readonly dialog = inject(Dialog);
   private readonly transloco = inject(TranslocoService);
@@ -246,6 +248,8 @@ export class Shell {
 
   protected async signOut(): Promise<void> {
     try {
+      // While the session still exists: this browser no longer receives the person's push messages.
+      await this.push.forget();
       await firstValueFrom(this.auth.logout());
     } finally {
       await this.session.refresh();

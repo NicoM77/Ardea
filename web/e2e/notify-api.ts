@@ -292,7 +292,7 @@ export async function notifyApi(
       return route.fulfill({ json: state.devices });
     }
     if (path === '/api/v1/notify/addresses/preview') {
-      return url.searchParams.get('token') === 'link-token'
+      return body?.['token'] === 'link-token'
         ? route.fulfill({
             json: {
               organizationName: 'Example Org',

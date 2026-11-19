@@ -1,8 +1,10 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, resource, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiLoader, UiNotice } from 'ui';
 import { firstValueFrom, type Observable } from 'rxjs';
-import { NotificationsService, previewAddressLinkResource } from '../../core/api/client';
+import { NotificationsService } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { Session } from '../../core/session/session';
 
@@ -23,7 +25,7 @@ type View = 'ask' | 'confirmed' | 'unsubscribed' | 'resubscribed' | 'invalid';
   template: `
     <h1>{{ heading() | transloco }}</h1>
     <div class="auth-form" [attr.aria-busy]="preview.isLoading() || busy()">
-      @if (!token()) {
+      @if (!linkToken()) {
         <ui-notice [heading]="'notify.link.invalid.heading' | transloco">{{
           'notify.link.invalid.text' | transloco
         }}</ui-notice>
@@ -112,15 +114,25 @@ type View = 'ask' | 'confirmed' | 'unsubscribed' | 'resubscribed' | 'invalid';
 export class AddressLinkPage {
   /** From the route's data. */
   readonly mode = input.required<LinkMode>();
-  /** From the query string. */
+  /** From the query string, where links written before the fragment carried it. */
   readonly token = input<string | null>(null);
 
   private readonly api = inject(NotificationsService);
   private readonly session = inject(Session);
 
-  protected readonly preview = previewAddressLinkResource(
-    computed(() => (this.token() ? { token: this.token()! } : undefined)),
+  /**
+   * The link carries its token in the fragment, which the browser never sends: it stays out of every request
+   * line and log on the way (ADR 041). The API gets it in a request body.
+   */
+  private readonly fragment = toSignal(inject(ActivatedRoute).fragment, { initialValue: null });
+  protected readonly linkToken = computed(
+    () => new URLSearchParams(this.fragment() ?? '').get('token') ?? this.token(),
   );
+
+  protected readonly preview = resource({
+    params: () => (this.linkToken() ? { token: this.linkToken()! } : undefined),
+    loader: ({ params }) => firstValueFrom(this.api.previewAddressLink(params)),
+  });
   protected readonly busy = signal(false);
   protected readonly problem = signal<string | null>(null);
 
@@ -179,7 +191,7 @@ export class AddressLinkPage {
   );
 
   protected async act(mode: LinkMode): Promise<void> {
-    const token = this.token();
+    const token = this.linkToken();
     if (!token) return;
     this.busy.set(true);
     this.problem.set(null);

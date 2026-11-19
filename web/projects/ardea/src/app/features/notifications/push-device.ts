@@ -58,8 +58,43 @@ export class PushDevice {
     if (w.Notification.permission === 'denied') return this.set('blocked');
     const registration = await w.navigator.serviceWorker.getRegistration('/');
     const subscription = await registration?.pushManager.getSubscription();
-    this.endpoint.set(subscription?.endpoint ?? null);
-    return this.set(subscription && w.Notification.permission === 'granted' ? 'on' : 'off');
+    if (!subscription || w.Notification.permission !== 'granted') {
+      this.endpoint.set(null);
+      return this.set('off');
+    }
+    // The browser's subscription alone does not say the server knows it (another person signed out here, or the
+    // device was removed): hand it over again, which changes nothing when it is known.
+    try {
+      await this.register(subscription);
+      return this.set('on');
+    } catch {
+      this.endpoint.set(null);
+      return this.set('off');
+    }
+  }
+
+  /**
+   * Signing out: this browser stops receiving the person's push messages. The server forgets the device while the
+   * session still exists, then the browser drops its subscription. Best effort, and never longer than a moment.
+   */
+  async forget(): Promise<void> {
+    const w = this.window;
+    if (!w?.navigator.serviceWorker || !('PushManager' in w)) return;
+    const work = (async () => {
+      const registration = await w.navigator.serviceWorker.getRegistration('/');
+      const subscription = await registration?.pushManager.getSubscription();
+      if (!subscription) return;
+      await firstValueFrom(
+        this.api.deletePushSubscriptionByEndpoint({ endpoint: subscription.endpoint }),
+      ).catch(() => undefined);
+      await subscription.unsubscribe().catch(() => false);
+    })();
+    await Promise.race([
+      work.catch(() => undefined),
+      new Promise((done) => setTimeout(done, 3000)),
+    ]);
+    this.endpoint.set(null);
+    this.current.set('off');
   }
 
   /** Turns push on: called from a tap, because browsers ask for permission only then. */
@@ -86,15 +121,7 @@ export class PushDevice {
       userVisibleOnly: true,
       applicationServerKey: key,
     });
-    const json = subscription.toJSON();
-    await firstValueFrom(
-      this.api.createPushSubscription({
-        endpoint: subscription.endpoint,
-        keys: { p256dh: json.keys?.['p256dh'] ?? null, auth: json.keys?.['auth'] ?? null },
-        expirationTime: subscription.expirationTime,
-      }),
-    );
-    this.endpoint.set(subscription.endpoint);
+    await this.register(subscription);
     return this.set('on');
   }
 
@@ -110,6 +137,19 @@ export class PushDevice {
     }
     this.endpoint.set(null);
     return this.set('off');
+  }
+
+  /** Hands the browser's subscription to the API; the same device again only refreshes its keys. */
+  private async register(subscription: PushSubscription): Promise<void> {
+    const json = subscription.toJSON();
+    await firstValueFrom(
+      this.api.createPushSubscription({
+        endpoint: subscription.endpoint,
+        keys: { p256dh: json.keys?.['p256dh'] ?? null, auth: json.keys?.['auth'] ?? null },
+        expirationTime: subscription.expirationTime,
+      }),
+    );
+    this.endpoint.set(subscription.endpoint);
   }
 
   private set(state: PushState): PushState {

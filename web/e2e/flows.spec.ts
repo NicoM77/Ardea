@@ -372,7 +372,8 @@ test('an external address is confirmed through the link in its e-mail, without s
 }) => {
   const problems = watchConsole(page);
   const api = await notifyApi(page, { signedIn: false });
-  await page.goto('/notifications/confirm?token=link-token');
+  // The token is in the fragment: the page's own request carries none.
+  await page.goto('/notifications/confirm#token=link-token');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Confirm your address' })).toBeVisible();
   await expect(
@@ -384,9 +385,9 @@ test('an external address is confirmed through the link in its e-mail, without s
 
   await page.getByRole('button', { name: 'Confirm address' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Address confirmed' })).toBeVisible();
-  expect(api.requests.map((r) => r.path)).toContain(
-    '/api/v1/notify/addresses/confirm?token=link-token',
-  );
+  const confirmed = api.requests.find((r) => r.path === '/api/v1/notify/addresses/confirm')!;
+  expect(confirmed.body).toEqual({ token: 'link-token' });
+  expect(api.requests.every((r) => !r.path.includes('link-token'))).toBe(true);
   expect(problems).toEqual([]);
 });
 
@@ -472,6 +473,21 @@ test('push is turned on and off on this device in Chromium', async ({ page }) =>
   await expect(page.getByRole('switch', { name: 'E-mail' })).toHaveAttribute(
     'aria-checked',
     'false',
+  );
+
+  // Signing out takes this browser's subscription away first, while the session still exists.
+  await page.getByRole('button', { name: 'Turn on push' }).click();
+  await expect(page.getByText('On for this device')).toBeVisible();
+  await page.getByRole('button', { name: /^Account:/ }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  await expect
+    .poll(() => api.requests.map((r) => `${r.method} ${r.path.split('?')[0]}`))
+    .toEqual(
+      expect.arrayContaining(['DELETE /api/v1/me/push-subscriptions', 'POST /api/v1/auth/logout']),
+    );
+  const order = api.requests.map((r) => r.path);
+  expect(order.lastIndexOf('/api/v1/auth/logout')).toBeGreaterThan(
+    order.findLastIndex((path) => path.startsWith('/api/v1/me/push-subscriptions?endpoint=')),
   );
   expect(problems).toEqual([]);
 });

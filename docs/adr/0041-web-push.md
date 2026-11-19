@@ -27,11 +27,16 @@ devices.
    invalidates every subscription; the push services answer 401 or 403 and the subscriptions go (decision 6).
 2. **Subscriptions belong to the user.** `notify.push_subscription` (user id, endpoint, its SHA-256 for the unique
    index per user, `p256dh`, `auth`, user agent and a label such as «Chrome on macOS», `failed_count`,
-   `last_success_at`), at most 20 per user, the oldest dropped. A device receives the push messages of every
+   `last_success_at`, `rejected_count`), at most 20 per user, the oldest dropped. A subscription is written with one
+   `INSERT … ON CONFLICT DO UPDATE`, so the same device subscribing twice at once ends with one row. A device receives the push messages of every
    organisation its user belongs to; each organisation's mute in `user_preference` applies. Policies: `own` (the user
    reads and writes their rows) and, for a unit of work of an organisation without a user, `deliver_read`,
    `deliver_update` and `deliver_delete` on the rows of members of that organisation. A browser that subscribes for
-   a second user on the same device gets a second row; both users are reached there.
+   a second user on the same device gets a second row. Signing out removes this browser's row through
+   `DELETE /me/push-subscriptions?endpoint=` while the session still exists and then drops the browser's
+   subscription (best effort, at most three seconds), so the next person on the device does not get the last one's
+   messages. The settings page hands the browser's subscription to the API again whenever it opens (idempotent) and
+   says «on» only when that worked: a subscription the server forgot no longer shows as on.
 3. **Endpoints.** `GET /push/public-key`; `GET, POST /me/push-subscriptions` (POST takes the browser's
    `PushSubscription.toJSON()`; 201 for a new device, 200 for one already known); `DELETE /me/push-subscriptions?endpoint=`
    (this device turns push off; idempotent); `DELETE /me/push-subscriptions/{id}`; `POST /me/push-subscriptions/{id}/test`
@@ -40,10 +45,19 @@ devices.
    `*.notify.windows.com`, or a host in `ARDEA_PUSH_SERVICE_HOSTS` (a self-hosted push service). No DNS lookup at
    subscription time; the outbound guard decides when sending.
 4. **Sending.** `WebPushChannel` is one more `INotificationChannel`. The three steps of ADR 038 stay: the first step
-   reads the member's devices through the worker policy, the requests go out without a transaction, the outcome is
-   written in the job's unit of work (or, before a retry, in the unit of work that records the failure). Every request
-   goes through `OutboundAddresses.CreateHandler` with internal addresses never allowed, follows no redirect and is not
-   logged, because an endpoint is a capability. Headers: `Content-Encoding: aes128gcm`, `TTL: 86400`, `Urgency: high`
+   reads the member's devices through the worker policy in a short unit of work of its own; nothing reads or writes the
+   database between it and the call, so no transaction is open while the requests wait (this also holds for e-mail
+   and webhooks, whose handler read the delivery row before the call until now). The devices are sent to in
+   parallel within one budget of 30 seconds, well inside the delivery job's minute; a device that has not answered by
+   then, or a cancellation of the job, is an outcome («timeout», passing), never an exception, so the answers of the
+   others are kept. The outcome is written in the job's unit of work when the job ends there; before a retry, and when
+   the job ran out of time during the call, in a unit of work of its own (without the job's cancellation), because
+   the job's is rolled back: devices that took the message are counted, subscriptions that are gone are removed, and
+   the retry is recorded. Every request
+   goes through `OutboundAddresses.CreateHandler` with internal addresses never allowed, follows no redirect, is not
+   logged, and carries `OutboundAddresses.Untraced`, which keeps the HTTP client instrumentation from recording a span
+   with its URL; an endpoint is a capability. Webhook requests carry it too (chat services put their secret in the
+   path). Headers: `Content-Encoding: aes128gcm`, `TTL: 86400`, `Urgency: high`
    for level 5 else `normal`, `Topic` from the delivery id (a retry replaces a message the service still holds),
    `Authorization: vapid t=<ES256 JWT>, k=<public key>` with `aud` the endpoint's origin, `exp` 12 hours ahead and
    `sub` the subject. Bundling (two minutes), the hourly limit and the level 5 fallback of ADR 038 apply as to e-mail.
@@ -51,15 +65,20 @@ devices.
    `{"web_push":8030,"notification":{"title","body","navigate","lang","tag"},"ardea":{"delivery","level","organization"}}`.
    One action: its in-app title and headline, `navigate` the action's page. Several: «[5 Critical] 3 updates in Acme»,
    the three highest titles, `navigate` the inbox `/o/{slug}/notifications`. The service worker shows the same
-   notification and opens `navigate` on a click.
+   notification and opens `navigate` on a click. Push services take at most 4 096 bytes: the JSON keeps non-ASCII
+   letters unescaped (`UnsafeRelaxedJsonEscaping`; the payload is data, not HTML), title and body are cut by their
+   UTF-8 length, and the body is shortened further until the message fits, so a Cyrillic or Chinese text never
+   makes the encryption refuse it.
 6. **Outcome per device, then per delivery.** 2xx: sent, `failed_count` 0, `last_success_at` now. 404 and 410, and a
-   target the guard refuses: the subscription is removed at once. 401 and 403 (the device subscribed with another key)
-   count, and remove it on the third in a row. 408, 429, 5xx and network errors are passing; other 4xx are final for
+   target the guard refuses: the subscription is removed at once, also when the delivery is retried for other
+   devices. 401 and 403 (the device subscribed with another key) count in `rejected_count` and remove it on the third
+   in a row; any other outcome ends the run. 408, 429, 5xx and network errors are passing; other 4xx are final for
    this message. The delivery is `sent` if any device accepted it, retried if none did and any failure was passing,
    and `dead` otherwise. A member without a device is not a push recipient at all: the evaluation leaves them out, so
    no delivery and no log row is written.
 7. **Default rule 1** («Critical at once») gets the push target for owners and admins, for new organisations in
-   `DefaultRules` and for existing ones in the migration `WebPush`. Push targets are immediate only; a rule refuses a
+   `DefaultRules` and for existing ones in the migration `WebPush`, but only where rule 1 is as it was written
+   (`changed_at = created_at`): a rule someone changed keeps the targets they chose. Push targets are immediate only; a rule refuses a
    push digest.
 8. **Encryption in our code.** RFC 8291 and RFC 8292 are implemented with `System.Security.Cryptography`
    (`ECDiffieHellman`, `HKDF`, `AesGcm`, `ECDsa`), about 150 lines, with a test against the example of RFC 8291
@@ -68,6 +87,14 @@ devices.
    *Lib.Net.Http.WebPush* 3.3.1 (MIT, last release March 2025, newest target net6.0) is the work of one maintainer and
    comes with its own abstractions for keys and HTTP that would have to be wrapped again to sit behind the outbound
    guard. The primitives are in the framework; a package would add a dependency for the smallest part of the work.
+
+9. **Tokens stay out of logs.** The links in mails to external addresses carry their token in the fragment
+   (`/notifications/confirm#token=…`, `/notifications/unsubscribe#token=…`), which the browser never sends; the pages
+   post it in a JSON body to `POST /notify/addresses/preview`, `…/confirm`, `…/unsubscribe` and `…/resubscribe`. Only
+   the RFC 8058 one-click address in the mail header, `POST /notify/addresses/unsubscribe/one-click?token=…`, has it in
+   the query, because mail clients post a fixed form there. For every role and endpoint, the request lines of
+   `Microsoft.AspNetCore.Hosting.Diagnostics` («Request starting …», which names the query string) are not logged;
+   traces keep the timings, and their query values are redacted by the instrumentation.
 
 ## Alternatives
 

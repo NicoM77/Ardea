@@ -143,6 +143,8 @@ public sealed class IamModule : IModule
         AuthEndpoints.Map(endpoints);
         AccountEndpoints.Map(endpoints);
         OrganizationEndpoints.Map(endpoints);
+        SetupEndpoints.Map(endpoints);
+        AuditEndpoints.Map(endpoints);
     }
 
     /// <summary>Real instances have an HTTPS public address; only development runs on plain HTTP.</summary>

@@ -6,27 +6,41 @@ using Ardea.Assessment.Rules;
 using Ardea.Assets.Contracts;
 using Ardea.Catalog.Contracts;
 using Ardea.Intel.Contracts;
+using Ardea.Platform.Jobs;
 using Ardea.Platform.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assessment.Assessing;
 
-/// <summary>What the assessment looks at: every project of the organisation, or one project (the reverse search).</summary>
-internal sealed record AssessmentScope(ProjectProfile? Project)
+/// <summary>
+/// What the assessment looks at: every project of the organisation, or one project (the reverse search).
+/// <see cref="Backfill"/> names the components whose new findings belong to a first fill (master plan 7.7).
+/// </summary>
+internal sealed record AssessmentScope(ProjectProfile? Project, IReadOnlySet<Guid> Backfill)
 {
-    public static readonly AssessmentScope Organization = new((ProjectProfile?)null);
+    public static readonly AssessmentScope Organization = new(null, new HashSet<Guid>());
 
-    public static AssessmentScope ForProject(ProjectProfile project) => new(project);
+    public static AssessmentScope ForProject(ProjectProfile project, IReadOnlySet<Guid>? backfill = null) => new(project, backfill ?? new HashSet<Guid>());
 }
 
 /// <summary>
 /// Computes the findings of one entry in the current organisation (master plan 3.3 <c>AssessAlert</c>,
-/// 7.2, 7.3): candidates through the component keys, version check per strong candidate, findings
-/// written only where something changed. The same input changes nothing. Runs in the tenant context
-/// of the job or request; a transaction-level advisory lock serialises work on the same alert.
+/// 7.2, 7.3, 7.6): candidates through the component keys, version check per strong candidate, the level
+/// from the rule set, findings written only where something changed. The same input changes nothing.
+/// Runs in the tenant context of the job or request; a transaction-level advisory lock serialises work
+/// on the same alert. The caller brings the actions in step afterwards (<see cref="Remediations"/>).
 /// </summary>
 internal sealed class AlertAssessor(
-    AssessDbContext db, IProfileQueries profiles, IProductCatalog catalog, IVersionSchemes schemes, RuleSet rules, ITenantContext tenant, TimeProvider time)
+    AssessDbContext db,
+    IProfileQueries profiles,
+    IProductCatalog catalog,
+    IVersionSchemes schemes,
+    RuleSet rules,
+    Numbers numbers,
+    History history,
+    IJobQueue jobs,
+    ITenantContext tenant,
+    TimeProvider time)
 {
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
@@ -34,7 +48,8 @@ internal sealed class AlertAssessor(
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower) },
     };
 
-    public async Task AssessAsync(EntryFacts entry, AssessmentScope scope, CancellationToken cancellationToken)
+    /// <returns>The components whose findings changed.</returns>
+    public async Task<IReadOnlyCollection<Guid>> AssessAsync(EntryFacts entry, AssessmentScope scope, CancellationToken cancellationToken)
     {
         var organization = tenant.RequiredOrganizationId;
         await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"assess.alert:" + organization + ":" + entry.Id}, 0))", cancellationToken);
@@ -57,15 +72,20 @@ internal sealed class AlertAssessor(
         }
 
         var candidates = keys?.Match(components.Where(c => !c.ProjectArchived), catalogKeys) ?? [];
+        if (scope.Project is null)
+        {
+            candidates = await WithoutFirstFillAsync(candidates, existing, cancellationToken);
+        }
+
         if (alert is null && candidates.Count == 0)
         {
-            return;
+            return [];
         }
 
         var now = time.GetUtcNow();
         if (alert is null)
         {
-            alert = new Alert { Id = Guid.CreateVersion7(), EntryId = entry.Id, Level = 1, AssessedEntryRevision = entry.Revision, CreatedAt = now, ChangedAt = now };
+            alert = new Alert { Id = Guid.CreateVersion7(), EntryId = entry.Id, EntryKey = entry.Key, Level = 1, AssessedEntryRevision = entry.Revision, CreatedAt = now, ChangedAt = now };
             db.Alerts.Add(alert);
         }
 
@@ -81,7 +101,7 @@ internal sealed class AlertAssessor(
             }
             else
             {
-                db.Findings.Add(Create(alert, entry, candidate, outcome, now));
+                db.Findings.Add(Create(alert, entry, candidate, outcome, scope.Backfill.Contains(candidate.Component.Id), now));
             }
         }
 
@@ -95,16 +115,32 @@ internal sealed class AlertAssessor(
             Close(finding, reason, Document(new RuleResult { RulesetVersion = rules.Version, Level = 1, Exclusion = reason }), now);
         }
 
+        var touched = db.ChangeTracker.Entries<Finding>()
+            .Where(e => e.State is EntityState.Added or EntityState.Modified)
+            .Select(e => e.Entity.ComponentId)
+            .ToHashSet();
         await db.SaveChangesAsync(cancellationToken);
 
-        var level = await db.Findings.Where(f => f.AlertId == alert.Id).MaxAsync(f => (int?)f.Level, cancellationToken) ?? 1;
-        if (alert.Level != level || alert.AssessedEntryRevision != entry.Revision)
+        var findings = await db.Findings.Where(f => f.AlertId == alert.Id).Select(f => new { f.Level, f.Status }).ToListAsync(cancellationToken);
+        var level = findings.Count == 0 ? 1 : findings.Max(f => f.Level);
+        if (alert.Level != level || alert.AssessedEntryRevision != entry.Revision || alert.EntryKey != entry.Key)
         {
             alert.Level = level;
             alert.AssessedEntryRevision = entry.Revision;
+            alert.EntryKey = entry.Key;
             alert.ChangedAt = now;
-            await db.SaveChangesAsync(cancellationToken);
         }
+
+        // The alert gets its number once one of its findings reaches level 2 (master plan 4.6).
+        if (alert.Number is null && findings.Exists(f => f.Status is "open" or "in_review"))
+        {
+            alert.Number = await numbers.NextAsync(cancellationToken);
+            alert.FirstRaisedAt = now;
+            alert.ChangedAt = now;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return touched;
     }
 
     /// <summary>
@@ -128,6 +164,47 @@ internal sealed class AlertAssessor(
         return await profiles.FindComponentsAsync(ids, cancellationToken);
     }
 
+    /// <summary>
+    /// A project's first look, and a newly connected repository's, belong to its first fill (master plan
+    /// 7.7): the forward search leaves such components to the reverse search, which marks their findings
+    /// and sends a single <c>backfill.completed</c>. It queues that search, should none be waiting.
+    /// </summary>
+    private async Task<IReadOnlyList<Candidate>> WithoutFirstFillAsync(IReadOnlyList<Candidate> candidates, IReadOnlyList<Finding> existing, CancellationToken cancellationToken)
+    {
+        var known = existing.Select(f => f.ComponentId).ToHashSet();
+        var projects = candidates.Where(c => !known.Contains(c.Component.Id)).Select(c => c.Component.ProjectId).Distinct().ToArray();
+        if (projects.Length == 0)
+        {
+            return candidates;
+        }
+
+        var seen = await db.MatchScopes.AsNoTracking().Where(s => projects.Contains(s.ProjectId)).Select(s => new { s.ProjectId, s.RepositoryLinkId }).ToListAsync(cancellationToken);
+        var kept = new List<Candidate>(candidates.Count);
+        var unseen = new SortedSet<Guid>();
+        foreach (var candidate in candidates)
+        {
+            var c = candidate.Component;
+            var firstFill = !known.Contains(c.Id)
+                && (!seen.Exists(s => s.ProjectId == c.ProjectId && s.RepositoryLinkId == null)
+                    || (c.RepositoryLinkId is { } link && !seen.Exists(s => s.ProjectId == c.ProjectId && s.RepositoryLinkId == link)));
+            if (firstFill)
+            {
+                unseen.Add(c.ProjectId);
+            }
+            else
+            {
+                kept.Add(candidate);
+            }
+        }
+
+        foreach (var project in unseen)
+        {
+            await jobs.EnqueueAsync(new MatchProject(project), MatchProject.Options(tenant.RequiredOrganizationId, project), cancellationToken);
+        }
+
+        return kept;
+    }
+
     /// <summary>Match, version check and rule set for one candidate (master plan 7.2, 7.3, 7.6).</summary>
     private Outcome Evaluate(EntryFacts entry, Candidate candidate, Finding? known)
     {
@@ -144,7 +221,7 @@ internal sealed class AlertAssessor(
 
         var component = candidate.Component;
         var human = known is { VerdictSource: "human" } ? known.Verdict : null;
-        var result = RuleEngine.Evaluate(rules, new RuleInput
+        var input = new RuleInput
         {
             StrongMatch = candidate.IsStrong,
             VersionVerdict = version?.Verdict,
@@ -163,7 +240,11 @@ internal sealed class AlertAssessor(
             Exposure = component.Exposure,
             Protection = component.Protection,
             DevelopmentOnly = component.DependencyScope == "development",
-        });
+        };
+        var result = RuleEngine.Evaluate(rules, input);
+
+        // What the rules say without a person's «not affected»: whether a reassessment reopens it (master plan 6.7).
+        var withoutPerson = input.HumanExcluded ? RuleEngine.Evaluate(rules, input with { HumanExcluded = false }) : result;
 
         // The verdict without a model (master plan 4.9).
         var verdict = version?.Verdict switch
@@ -174,10 +255,11 @@ internal sealed class AlertAssessor(
         };
         return new Outcome(
             candidate.MatchType, version?.Verdict, version?.Reason, version?.Verdict == VersionVerdicts.InRange ? version.FixedVersion : null,
-            verdict, result.Level, result.Exclusion, Document(evidence), Document(result));
+            verdict, result.Level, result.Exclusion, Document(evidence), Document(result),
+            entry.Exploitation, entry.FixAvailable, withoutPerson.Level, Document(withoutPerson));
     }
 
-    private static Finding Create(Alert alert, EntryFacts entry, Candidate candidate, Outcome outcome, DateTimeOffset now) => new()
+    private static Finding Create(Alert alert, EntryFacts entry, Candidate candidate, Outcome outcome, bool backfill, DateTimeOffset now) => new()
     {
         Id = Guid.CreateVersion7(),
         AlertId = alert.Id,
@@ -192,23 +274,36 @@ internal sealed class AlertAssessor(
         Level = outcome.Level,
         Evidence = outcome.Evidence,
         Factors = outcome.Factors,
+        Exploitation = outcome.Exploitation,
+        FixAvailable = outcome.FixAvailable,
         Status = outcome.Level >= 2 ? "open" : "not_affected",
         StatusReason = outcome.Level >= 2 ? null : outcome.ExclusionReason,
         StatusChangedAt = now,
+        IsBackfill = backfill,
         CreatedAt = now,
         ChangedAt = now,
     };
 
     /// <summary>Writes a new result into an existing finding, only where it differs.</summary>
-    private static void Apply(Finding finding, Outcome outcome, DateTimeOffset now)
+    private void Apply(Finding finding, Outcome outcome, DateTimeOffset now)
     {
         var installedBefore = finding.Evidence.RootElement.TryGetProperty("installed", out var before) ? before.GetString() : null;
         var installedNow = outcome.Evidence.RootElement.TryGetProperty("installed", out var after) ? after.GetString() : null;
+        var personClosed = finding.StatusChangedBy is not null && finding.Status is "remediated" or "risk_accepted" or "not_affected";
+
+        // A finding a person closed opens again only when its level rises or the version check says «in range» again (master plan 6.7).
+        string? reopen = !personClosed ? null
+            : outcome.ReopenLevel > (finding.ClosedLevel ?? finding.Level) && outcome.ReopenLevel >= 2 ? "level_raised"
+            : outcome.VersionVerdict == VersionVerdicts.InRange && finding.ClosedVersionVerdict != VersionVerdicts.InRange && outcome.ReopenLevel >= 2 ? "in_range_again"
+            : null;
+        var (level, factors) = reopen is null ? (outcome.Level, outcome.Factors) : (outcome.ReopenLevel, outcome.ReopenFactors);
+
         var changed = finding.MatchType != outcome.MatchType || finding.VersionVerdict != outcome.VersionVerdict
             || finding.VersionReason != outcome.VersionReason || finding.FixedVersion != outcome.FixedVersion
-            || (finding.VerdictSource == "rules" && finding.Verdict != outcome.Verdict) || finding.Level != outcome.Level
+            || (finding.VerdictSource == "rules" && finding.Verdict != outcome.Verdict) || finding.Level != level
+            || finding.Exploitation != outcome.Exploitation || finding.FixAvailable != outcome.FixAvailable
             || !JsonElement.DeepEquals(finding.Evidence.RootElement, outcome.Evidence.RootElement)
-            || !JsonElement.DeepEquals(finding.Factors.RootElement, outcome.Factors.RootElement);
+            || !JsonElement.DeepEquals(finding.Factors.RootElement, factors.RootElement);
         if (changed)
         {
             finding.MatchType = outcome.MatchType;
@@ -216,15 +311,22 @@ internal sealed class AlertAssessor(
             finding.VersionReason = outcome.VersionReason;
             finding.FixedVersion = outcome.FixedVersion;
             finding.Verdict = finding.VerdictSource == "rules" ? outcome.Verdict : finding.Verdict;
-            finding.Level = outcome.Level;
+            finding.Level = level;
             finding.Evidence = outcome.Evidence;
-            finding.Factors = outcome.Factors;
+            finding.Factors = factors;
+            finding.Exploitation = outcome.Exploitation;
+            finding.FixAvailable = outcome.FixAvailable;
             finding.ChangedAt = now;
         }
 
-        // A status a person set stays; the system's own follows the result (master plan 4.9, 6.7).
-        if (finding.StatusChangedBy is not null)
+        if (personClosed)
         {
+            if (reopen is not null)
+            {
+                SetStatus(finding, "open", null, now);
+                history.Add(EventKinds.FindingReopened, new { reason = reopen, finding.Level }, finding.RemediationId, finding.Id);
+            }
+
             return;
         }
 
@@ -235,10 +337,15 @@ internal sealed class AlertAssessor(
             : open && outcome.ExclusionReason == "out_of_range" && installedBefore != installedNow ? ("remediated", "fixed_by_update")
             : finding.Status == "remediated" && finding.StatusReason == "fixed_by_update" && outcome.ExclusionReason == "out_of_range" ? ("remediated", "fixed_by_update")
             : ("not_affected", outcome.ExclusionReason);
+        if (!open && status == "open" && finding.RemediationId is not null)
+        {
+            history.Add(EventKinds.FindingReopened, new { reason = "reassessed", finding.Level }, finding.RemediationId, finding.Id);
+        }
+
         SetStatus(finding, status, reason, now);
     }
 
-    private static void Close(Finding finding, string reason, JsonDocument factors, DateTimeOffset now)
+    private void Close(Finding finding, string reason, JsonDocument factors, DateTimeOffset now)
     {
         if (finding.Level != 1 || !JsonElement.DeepEquals(finding.Factors.RootElement, factors.RootElement))
         {
@@ -247,21 +354,28 @@ internal sealed class AlertAssessor(
             finding.ChangedAt = now;
         }
 
-        if (finding.StatusChangedBy is null)
+        if (finding.StatusChangedBy is null || finding.Status is "open" or "in_review")
         {
             SetStatus(finding, reason is "component_removed" or "project_archived" ? "remediated" : "not_affected", reason, now);
         }
     }
 
-    private static void SetStatus(Finding finding, string status, string? reason, DateTimeOffset now)
+    /// <summary>Sets a status of the system; closing an open finding is part of its action's history.</summary>
+    private void SetStatus(Finding finding, string status, string? reason, DateTimeOffset now)
     {
         if (finding.Status == status && finding.StatusReason == reason)
         {
             return;
         }
 
+        if (finding.Status is "open" or "in_review" && status is not ("open" or "in_review") && finding.RemediationId is not null)
+        {
+            history.Add(EventKinds.FindingClosed, new { reason = reason ?? status, status }, finding.RemediationId, finding.Id);
+        }
+
         finding.Status = status;
         finding.StatusReason = reason;
+        finding.StatusChangedBy = null;
         finding.StatusChangedAt = now;
         finding.ChangedAt = now;
     }
@@ -271,5 +385,5 @@ internal sealed class AlertAssessor(
     /// <summary>The result for one finding.</summary>
     private sealed record Outcome(
         string MatchType, string? VersionVerdict, string? VersionReason, string? FixedVersion, string Verdict, int Level, string? ExclusionReason,
-        JsonDocument Evidence, JsonDocument Factors);
+        JsonDocument Evidence, JsonDocument Factors, string Exploitation, bool FixAvailable, int ReopenLevel, JsonDocument ReopenFactors);
 }

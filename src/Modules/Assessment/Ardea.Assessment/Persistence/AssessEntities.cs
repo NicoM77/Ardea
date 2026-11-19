@@ -12,6 +12,14 @@ internal sealed class Alert : IOrganizationOwned
 
     public Guid EntryId { get; set; }
 
+    /// <summary>The entry's primary key, e.g. <c>CVE-2026-115731</c>, kept for lists and search.</summary>
+    public required string EntryKey { get; set; }
+
+    /// <summary>From the organisation's counter, once one of its findings reaches level 2 (master plan 4.6).</summary>
+    public int? Number { get; set; }
+
+    public DateTimeOffset? FirstRaisedAt { get; set; }
+
     /// <summary>The maximum over its findings; 1 while none of them is relevant.</summary>
     public int Level { get; set; }
 
@@ -41,6 +49,21 @@ internal sealed class Finding : IOrganizationOwned
     public Guid ProjectId { get; set; }
 
     public Guid ComponentId { get; set; }
+
+    /// <summary>The action the finding belongs to; <c>null</c> at level 1 (master plan 4.6, 7.4).</summary>
+    public Guid? RemediationId { get; set; }
+
+    /// <summary>The entry's exploitation when last assessed: <c>none</c>, <c>poc</c>, <c>active</c>.</summary>
+    public string Exploitation { get; set; } = "none";
+
+    /// <summary>The entry names a fix (master plan 6.3).</summary>
+    public bool FixAvailable { get; set; }
+
+    /// <summary>The level when a person closed the finding; a reassessment reopens it only above (master plan 6.7).</summary>
+    public int? ClosedLevel { get; set; }
+
+    /// <summary>The version verdict when a person closed the finding; «in range» again reopens it (master plan 6.7).</summary>
+    public string? ClosedVersionVerdict { get; set; }
 
     /// <summary>
     /// How the entry hit the component (master plan 7.2): strong <c>package</c>, <c>cpe</c>, <c>product</c>;
@@ -95,4 +118,112 @@ internal sealed class Finding : IOrganizationOwned
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset ChangedAt { get; set; }
+}
+
+/// <summary>
+/// The action: all open findings of one component in one project (master plan 4.6, 7.4). At most one per
+/// component is not closed; a later finding after closing opens a new one.
+/// </summary>
+internal sealed class Remediation : IOrganizationOwned
+{
+    public Guid Id { get; set; }
+
+    public Guid OrganizationId { get; set; }
+
+    public Guid ProjectId { get; set; }
+
+    public Guid ComponentId { get; set; }
+
+    /// <summary>From the organisation's counter, shared with alerts.</summary>
+    public int Number { get; set; }
+
+    /// <summary>The maximum over its open findings; kept when it closes.</summary>
+    public int Level { get; set; }
+
+    /// <summary>The highest fix version of its open findings (master plan 7.4).</summary>
+    public string? TargetVersion { get; set; }
+
+    public int OpenFindings { get; set; }
+
+    /// <summary>The highest exploitation over its open findings.</summary>
+    public string Exploitation { get; set; } = "none";
+
+    public bool FixAvailable { get; set; }
+
+    /// <summary><c>open</c>, <c>in_review</c> or <c>closed</c>.</summary>
+    public required string Status { get; set; }
+
+    public Guid? AssignedTo { get; set; }
+
+    /// <summary>Start plus the deadline of the current level (master plan 4.9); <c>null</c> once closed.</summary>
+    public DateTimeOffset? DueAt { get; set; }
+
+    /// <summary>A person set the deadline; the level no longer moves it.</summary>
+    public bool DueAtManual { get; set; }
+
+    public DateTimeOffset OpenedAt { get; set; }
+
+    public DateTimeOffset? LevelRaisedAt { get; set; }
+
+    public DateTimeOffset? ClosedAt { get; set; }
+
+    /// <summary>The most frequent outcome of its findings, e.g. <c>remediated</c>, <c>fixed_by_update</c>, <c>component_removed</c>.</summary>
+    public string? CloseReason { get; set; }
+
+    /// <summary>Opened by a first fill (master plan 7.7): no <c>action.raised</c>.</summary>
+    public bool IsBackfill { get; set; }
+
+    public DateTimeOffset ChangedAt { get; set; }
+}
+
+/// <summary>
+/// The history of actions and findings (master plan 4.6). The row's id is the event's id for the
+/// notifications (master plan 8.2); <c>action.*</c> and <c>backfill.completed</c> are notification events.
+/// </summary>
+internal sealed class AssessEvent : IOrganizationOwned
+{
+    public Guid Id { get; set; }
+
+    public Guid OrganizationId { get; set; }
+
+    public Guid? RemediationId { get; set; }
+
+    public Guid? FindingId { get; set; }
+
+    /// <summary>The project, for <c>backfill.completed</c>.</summary>
+    public Guid? ProjectId { get; set; }
+
+    public DateTimeOffset At { get; set; }
+
+    public required string Kind { get; set; }
+
+    /// <summary>The person who acted; <c>null</c> for the system.</summary>
+    public Guid? Actor { get; set; }
+
+    public required JsonDocument Data { get; set; }
+}
+
+/// <summary>The organisation's number range for actions and alerts (master plan 4.9).</summary>
+internal sealed class OrgCounter : IOrganizationOwned
+{
+    public Guid OrganizationId { get; set; }
+
+    public int NextNumber { get; set; }
+}
+
+/// <summary>
+/// What the reverse search has seen of a project: the project itself (<c>repository_link_id</c> empty)
+/// and each repository link. A first look is a first fill (master plan 7.7).
+/// </summary>
+internal sealed class MatchScope : IOrganizationOwned
+{
+    public Guid Id { get; set; }
+
+    public Guid OrganizationId { get; set; }
+
+    public Guid ProjectId { get; set; }
+
+    public Guid? RepositoryLinkId { get; set; }
+
+    public DateTimeOffset MatchedAt { get; set; }
 }

@@ -275,6 +275,8 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
 
     public async Task InOrganizationAsync(Guid organization, Func<IServiceProvider, Task> work)
     {
+        // Every unit of work happens a moment after the previous one, so the history has an order.
+        Clock.Advance(TimeSpan.FromSeconds(1));
         await using var scope = Services.CreateAsyncScope();
         scope.ServiceProvider.GetRequiredService<TenantContext>().SetOrganization(organization);
         await work(scope.ServiceProvider);
@@ -283,6 +285,7 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
 
     public async Task InSystemAsync(Func<IServiceProvider, Task> work)
     {
+        Clock.Advance(TimeSpan.FromSeconds(1));
         await using var scope = Services.CreateAsyncScope();
         await work(scope.ServiceProvider);
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);

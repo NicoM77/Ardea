@@ -22,6 +22,11 @@ public sealed class QueryPlanTests(PostgresServer server)
     [InlineData("SELECT a.organization_id FROM assess.alert a WHERE a.entry_id = @id", "ix_alert_entry")]
     [InlineData("SELECT DISTINCT f.entry_id FROM assess.finding f WHERE f.project_id = @id", "ix_finding_project_entry")]
     [InlineData("SELECT * FROM assess.finding f WHERE f.alert_id = @id", "ux_finding_component")]
+    // Actions: kept in step per component, read with their findings and history.
+    [InlineData("SELECT * FROM assess.finding f WHERE f.component_id = @id", "ix_finding_component")]
+    [InlineData("SELECT * FROM assess.remediation r WHERE r.component_id = @id AND r.status <> 'closed'", "ux_remediation_component_open")]
+    [InlineData("SELECT * FROM assess.finding f WHERE f.remediation_id = @id", "ix_finding_remediation")]
+    [InlineData("SELECT * FROM assess.assess_event e WHERE e.remediation_id = @id ORDER BY e.at", "ix_assess_event_remediation")]
     public async Task Candidate_search_queries_use_their_indexes(string sql, string index)
     {
         await using var host = await AssessmentTestHost.StartAsync(server);

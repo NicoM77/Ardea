@@ -1,21 +1,20 @@
 # NOTES: Arbeitsstand und Wissen ausserhalb des Repositorys
 
-Stand: 19.11.2026, ca. 17:45 UTC, nach dem Stopp auf Anweisung des Eigentümers («STOPPE ALLES … nichts neues mehr beginnen»). Geschrieben von Claude als Kontext-Sicherung: alles, was ich über die
+Stand: 19.11.2026, ca. 20:40 UTC. Geschrieben von Claude als Kontext-Sicherung: alles, was ich über die
 Umsetzung weiss und was nicht schon im Repository steht (README, Masterplan, ADR, Abnahmen, PR-Texte,
 Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 
-## 1. Stand beim Stopp
-
-Alles ist angehalten: kein Agent läuft, kein CI-Lauf, keine offene Arbeit ausserhalb von Git. Alles ist
-committet und gepusht; das Haupt-Checkout ist sauber.
+## 1. Arbeitsstand
 
 | Was | Stand | Was als Nächstes zu tun wäre |
 |---|---|---|
-| #78 (6.4–6.8) und #79 (6.1) | **gemergt** (main `89ce572`). Vorher lokal zusammen geprüft: Build, `dotnet format`, 1 469 Backend-Tests grün, Web-Tests 152 + 18 grün, Web-Build grün (Bundle-Warnung 637 kB). | **Der CI-Lauf auf main für diesen Stand wurde beim Stopp abgebrochen** (Run 44577661177: Web, Web under CSP, Image, Dependencies grün; Backend und End to end abgebrochen). main ist also nur lokal geprüft. Nächster Push auf main oder `workflow_dispatch` prüft ihn. |
-| Task 7.6 `seed-demo` | **unfertig**, als WIP-Commit `1b56dcc` auf Branch `feat/seed-demo` gepusht, **kein PR**. Enthält `SeedDemoCommand`, `DemoJobRunner`, `CommandServices`, Seeder je Modul (`DemoSeed.cs` in Platform, Iam, Assets, Assessment; `Intel/Demo/`), `SeedDemoCommandTests`, `docs/operations/try-it.md`, README-Abschnitt. Der Agent war beim Anpassen des Tests und der Doku; **nicht gebaut, nicht getestet, nicht geprüft**. | Branch auschecken, `origin/main` hineinmergen, bauen, Test laufen lassen und fertigstellen (Anforderung siehe Masterplan 7.6 und Abnahme Phase 7: leere Instanz → Daten in unter 2 Minuten, ohne GitHub und Quellen; verweigert eine Datenbank mit Daten), dann PR. |
-| Phasen 0–5 | alle Aufgaben ✅, Abnahmen in `docs/acceptance/phase-1.md` … `phase-5.md` (Phase 0 im README) | offene Punkte des Eigentümers, siehe Abschnitt 4 |
-| Phase 6 | 6.1 ✅, 6.5 ✅; 6.4, 6.6, 6.7, 6.8 mit kleinen offenen Teilen (in #78 beschrieben); 6.2 und 6.3 brauchen Menschen | 6.6: Hinweis an den Instanz-Admin bei Warnungen (Kapitel 12.7) braucht eine Designentscheidung |
-| Phase 7 | 7.1 teilweise (Repository umbenannt), 7.13 neu (CI wieder auf PRs), Rest offen | siehe Masterplan Kapitel 14 |
+| #78 (6.4–6.8), #79 (6.1) | gemergt; der CI-Lauf auf main war abgebrochen, ist aber mit dem Lauf zu #82 (Run 44606106559, alles grün) nachgeholt | — |
+| #81 (6.6, ADR 043) | **gemergt**: Selbstcheck alle 5 min in `api` und `worker` (Transaktions-Advisory-Lock), Mail an die Instanz-Admins bei neuer Warnung, Erinnerung nach 24 h, Entwarnung; Zustand in `platform.instance_warning`; `iam.instance_administrators()` gibt nur IDs. Unabhängig geprüft (1 Blocker: OpenAPI-CRLF; behoben) | — |
+| #82 (7.6 `seed-demo`) | **gemergt**: Demo ohne Zuweisung/Frist/«in Prüfung», verweigert DB mit Daten, Worker-Herzschlag oder Jobs; Sammel-Mails an erfundene Personen abgeschaltet; KI-Policy `none`. Unabhängig geprüft (keine Blocker, 3 Should-fix behoben) | 5a passt die Demo an (Reminder, Hinweise) |
+| #83 | gemergt: Stammdaten-Suche ignoriert `Data/` ohne Katalog (Windows) | — |
+| Phase 5a | neu seit #80 (Kapitel 17). **Eigentümer-Entscheid 19.11.: 5a vor Phase 7.** 5a.1 (Versuch, ADR 044) läuft als Agent auf `spike/notices-per-week` | danach 5a.2 … 5a.6 |
+| Phase 6 | 6.1, 6.5, 6.6 ✅; 6.4/6.8 brauchen die eigene Instanz; 6.2, 6.3 brauchen Menschen; 6.7 offen nur wegen `SECURITY.md`-Zuordnung (README-Absatz) | |
+| Phase 7 | 7.6 ✅; 7.4, 7.5, 7.7, 7.8 erst **nach 5a** (5a baut Datenmodell und UI um); 7.10 jederzeit; 7.1/7.2/7.3/7.13 nur nach Rückfrage | |
 
 ## 2. Arbeitsregeln (vom Eigentümer, nicht im Repo festgehalten)
 
@@ -39,29 +38,38 @@ committet und gepusht; das Haupt-Checkout ist sauber.
   als freigegeben; der Eigentümer prüft im Nachhinein), Loader-Variante «Draw», Quellen mit Betreiber und
   Trägerschaft, `catalog.product` mit Zusatzspalten: vom Eigentümer, stehen teils in ADR/Masterplan.
 
-## 3. Umgebung dieser Sitzung (Cloud-Container, nicht dauerhaft)
 
-- .NET: `export PATH=/home/user/.dotnet-sdk10:$PATH DOTNET_ROOT=/home/user/.dotnet-sdk10`. Node: `eval
-  "$(fnm env)"; fnm use 24`. Docker läuft (Testcontainers, Playwright-Image v1.56.1 für die Flows).
-- Das frühere Hilfsskript `env.sh` im Scratchpad wechselte mit `cd` ins Haupt-Checkout; das hat einmal
-  dazu geführt, dass ein Agent im falschen Verzeichnis baute. Die `cd`-Zeile ist entfernt; Agents bekommen
-  die Exports direkt.
-- **Abnahme-Instanz** (Phasen 1–3): `<scratchpad>/acceptance/` mit `compose.yaml`,
-  `compose.reference.yaml` (2 vCPU, 4 GB), `.env`/`.env.app`, `src/` (Kopie von main zum Bauen), `status.sh`.
-  Gestoppt, Volumes behalten. Start: `ARDEA_IMAGE=ardea:acceptance docker compose -p ardea-acceptance -f
-  compose.yaml -f compose.reference.yaml up -d`; Image neu bauen mit `docker build -f deploy/Dockerfile -t
-  ardea:acceptance .` in `src/`. Enthält ~118 000 Records, 104 000 Einträge, das Projekt «Repositories of
-  phase 2» mit 1 109 Komponenten aus actions/checkout, actions/setup-node und expressjs/express. Projekt-ID
-  `01a1f2b4-cf7b-721c-aa54-3686b2ac9356`, Organisation `01a1f2b4-cf79-7673-aa31-03bf7364cf42`. Den
-  Rückwärtsabgleich habe ich dort per Job-Zeile in `platform.job` angestossen (es gibt keinen Befehl dafür).
-- **Spike-Daten** (11.–17.11.2026): `<scratchpad>/spike/11 … 17` (entpackte Delta-Archive, 168 MB). Daraus
-  erzeugen `tools/reference-set/select_pairs.py` und `spike_week.py` die Dateien in `data/reference/`.
-- Von hier aus nicht erreichbar: NCSC-Hub und BACS-Warnungen (Abruf scheitert in dieser Umgebung; offen,
-  ob das an der Umgebung oder an den Quellen liegt). Ein `curl` mit Browser-User-Agent wurde von der
-  Sitzungsumgebung blockiert; nicht wiederholen.
-- In Tests war `max_connections=500` für Postgres nötig, sonst CSRF-Fehler durch erschöpfte Verbindungen.
-- Claude-Ratenlimit: Agents brechen bei «5-hour limit» ab; nach dem Reset mit `SendMessage` an dieselbe
-  Agent-ID fortsetzen, ihr Stand bleibt erhalten.
+## 3. Umgebung (seit 19.11.2026 abends: Windows-Rechner des Eigentümers)
+
+- Arbeitsordner `C:\Dev\01_Mirello\Ardea` (der frühere Name `CSH-Alert` gilt nicht mehr). Git Bash und PowerShell.
+- **.NET SDK 10.0.404** benutzerlokal in `C:\Users\nicom\.dotnet-sdk10` (mit `dotnet-install.ps1`, Erlaubnis des
+  Eigentümers); das systemweite SDK 10.0.401 genügt `global.json` nicht. **Node 24** aus nvm
+  (`C:\Users\nicom\AppData\Local\nvm\v24.21.0`), ohne `nvm use` (das ändert den globalen Link). Beides setzt
+  `<scratchpad>/env.sh` (nur `export`, kein `cd`): `. <scratchpad>/env.sh`. Kein Python installiert; Skripte in
+  Node oder C#.
+- **Docker Desktop** muss laufen (Testcontainers, Playwright); bei Bedarf `Start-Process "C:\Program
+  Files\Docker\Docker\Docker Desktop.exe"`.
+- **Zeilenenden:** Git checkt hier mit `core.autocrlf=true` aus, `.editorconfig` verlangt LF. Folgen:
+  `dotnet format` meldet im normalen Checkout jede Datei; Agents haben einmal eine README mit CRLF
+  eingecheckt (#82, korrigiert). Prüf-Worktrees deshalb mit `git -c core.autocrlf=false worktree add …` und
+  `git config core.autocrlf false`; vor dem Merge `git cat-file -p <branch>:<datei> | tr -cd '\r' | wc -c` für
+  geänderte Dateien (nicht `grep -c $'\r'`, das zählt in Git Bash falsch).
+- **OpenAPI unter Windows:** der Generator schrieb mehrzeilige Beschreibungen mit `\r\n`; seit #81 glättet
+  `ApiDocument.Normalize` alle Zeichenketten auf `\n`.
+- **Playwright** im Image `mcr.microsoft.com/playwright:v1.56.1-noble`: auf dem Host bauen (`npm run build`,
+  ggf. Showcase-Build), dann mit dem Host-`node_modules` im Container:
+  `MSYS_NO_PATHCONV=1 docker run --rm --ipc=host -e HOME=/tmp -e CI=true -v "<worktree als Windows-Pfad>":/repo
+  -w /repo/web mcr.microsoft.com/playwright:v1.56.1-noble npx playwright test --project csp --project flows`
+  (33/33 am 19.11.). Das Image hat Node 22.20, für `ng build` zu alt, für den Testlauf genügt es.
+- **Spike-Daten** (11.–17.11.2026) neu geladen nach `<scratchpad>/spike/11 … 17` (Delta-Archive von
+  `CVEProject/cvelistV5`, ~20 MB gezippt, Erlaubnis des Eigentümers).
+- **Abnahme-Instanz** der Cloud-Umgebung existiert hier nicht. Neu aufbauen nur bei Bedarf: `docker build -f
+  deploy/Dockerfile -t ardea:acceptance .`, Compose aus `deploy/`, Erstbefüllung (51 min auf 2 vCPU).
+- Kombinierter Stand: ganze Backend-Suite ~10 min (1 382 Tests); `<scratchpad>/combined-tests.sh` läuft alle
+  Testprojekte nacheinander in `<scratchpad>/wt-combined`.
+- Parallele Testläufe zweier Agents auf diesem Rechner erzeugen gelegentlich Zeitüberschreitungen in
+  `Ardea.Iam.Tests` (SignIn/TenantIsolation); allein laufen sie grün.
+- Agents bekommen ihre Worktrees unter `.claude/worktrees/agent-*` (gesperrt, solange der Agent existiert).
 
 ## 4. Offene Punkte für den Eigentümer (gesammelt)
 
@@ -77,15 +85,23 @@ Die meisten stehen in `docs/acceptance/phase-*.md`; hier alle an einem Ort:
   geliefert (alle Tests mit aufgezeichneten Antworten).
 - Phase 5: Web Push von Hand auf iOS (installierte Web-App); echter Push-Dienst; Mockups der
   Benachrichtigungsseiten prüfen; Eskalation (8.7) ist nicht im MVP.
-- Phase 6: 6.2 unabhängige Sicherheitsprüfung durch eine Person; 6.3 manueller Zugänglichkeitsdurchgang;
-  6.4/6.8 Beobachtungen an der projekteigenen Instanz (braucht Infrastruktur des Eigentümers); 6.6
-  Benachrichtigung des Instanz-Admins bei Warnungen (Designentscheidung).
+- Phase 5a: Erinnerungsrhythmus und «nur das Produkt selbst» (E26, 17.2) bestätigen; Schwellen aus 5a.1.
+- Phase 6: 6.2 unabhängige Sicherheitsprüfung durch eine Person (Umfang: Anmeldung, Mandantentrennung,
+  ausgehende Verbindungen; Grundlage `docs/security/threat-review.md`); 6.3 manueller Zugänglichkeitsdurchgang
+  der Kernabläufe mit Tastatur und Screenreader (sinnvoll erst nach 5a, weil 5a die Kernabläufe ändert);
+  6.4/6.8 Beobachtungen an der projekteigenen Instanz (braucht Infrastruktur des Eigentümers).
+- Masterplan 9.2 hat durch #81 eine Zeile mehr (neue Systemoperation `iam.instance_administrators`); falls
+  der Plan unverändert bleiben soll, sagen.
+- Phase 7 nur nach Rückfrage: 7.1 (Branch-Schutz, Dependabot, CodeQL: Kosten), 7.2/7.3 (Release), 7.13.
 - Erreichbarkeit von NCSC/BACS klären.
 
 ## 5. Bekannte Schwächen und technische Schulden (nicht oder nur verstreut dokumentiert)
 
-- **Initial-Bundle der Web-App** liegt bei ~636 kB über dem Warnbudget von 600 kB (Fehlergrenze 1 MB).
+- **Initial-Bundle der Web-App** liegt bei ~637 kB über dem Warnbudget von 600 kB (Fehlergrenze 1 MB).
   Ursache vor allem die eingebauten englischen Texte; neue Seiten sind lazy. Kein Fehler, aber wachsend.
+- **NG8011** in `web/.../features/admin/operations-card.ts:18`: `<span uiCardMeta>` steht in einem `@if` mit
+  mehreren Knoten und wird nicht in den Slot projiziert (seit #78). Kleiner echter Fehler; mit 7.5 beheben
+  (Build soll ohne Warnung laufen).
 - **#69** (seltener 500 durch einen verschmutzten Pool-Connector): wahrscheinlich durch #70 behoben (Live-
   Listener mit eigener Verbindung), Issue bleibt offen zur Beobachtung.
 - **#52** (Flakes): Hauptursache in #59 behoben (doppelte Transaktions-Freigabe im UnitOfWork), Issue offen.
@@ -98,8 +114,12 @@ Die meisten stehen in `docs/acceptance/phase-*.md`; hier alle an einem Ort:
   die Roh-Schlüssel zum Zeitpunkt der Umstellung; später zugeordnete Roh-Schlüssel erst bei ihrer nächsten
   Änderung (#71).
 - `repository.unavailable` ist in Regeln wählbar, wird aber noch nirgends ausgelöst.
-- Der Restore-Weg aus der Doku (`pg_restore --clean --if-exists` über migrierte Tabellen) funktioniert nicht;
-  #78 korrigiert die Anleitung (Datenbank neu anlegen, dann `pg_restore --no-owner`).
+- **Selbstcheck (ADR 043):** ein Worker-Neustart über 2 min ergibt eine Warn- und eine Entwarnungsmail;
+  Uhrenversatz zwischen getrennten API- und Worker-Hosts lässt `worker_stalled` flattern (gleicher Host
+  unkritisch); stirbt ein Prozess zwischen Commit und Versand, geht die Mail verloren (Warnung bleibt sichtbar).
+- **seed-demo:** alle Zeitstempel sind «jetzt» (Massnahmen erscheinen als eben entstanden); für die
+  Screenshots von 7.7 evtl. zurückdatieren (bräuchte eine verschobene Uhr im Job-System). Der Weg über das
+  Docker-Image (`docker compose run … seed-demo`) ist nicht von Hand getestet, nur `dotnet run`.
 
 ## 6. Fehlerklassen, die mehrfach vorkamen (für Reviews und Agent-Aufträge)
 
@@ -118,6 +138,10 @@ Die meisten stehen in `docs/acceptance/phase-*.md`; hier alle an einem Ort:
 7. **ADR-Nummern** kollidieren, wenn zwei Agents parallel ADRs schreiben (040 doppelt, umbenannt auf 041).
    Agents die nächste freie Nummer auf main prüfen lassen und beim Mergen nachsehen.
 8. **Veraltete Testbinaries** täuschen Fehler vor: vor dem Vertrauen auf ein Ergebnis neu bauen.
+9. **Zeilenenden unter Windows**: CRLF im Commit (README in #82) oder im erzeugten OpenAPI-Dokument (#81);
+   vor dem Merge geänderte Dateien auf `` prüfen (Abschnitt 3).
+10. **Demo- und Testdaten, die nach aussen wirken**: erfundene Adressen bekamen Sammel-Mails über
+   Vorgaberegeln (#82); bei neuen Daten auch zeitgesteuerte Wege (Digests, Erinnerungen) prüfen.
 
 ## 7. Ablauf, der sich bewährt hat
 
@@ -127,9 +151,11 @@ Die meisten stehen in `docs/acceptance/phase-*.md`; hier alle an einem Ort:
 - Nach jeder Zusammenführung mehrerer PRs: kombinierten Stand lokal bauen und ganze Testsuite laufen lassen
   (~10 min), erst dann mergen.
 
+
 ## 8. Lokale Reste
 
-- `CSH-Alert/.claude/worktrees/agent-*`: ~20 Worktrees fertiger Agents; können gelöscht werden
-  (`git worktree remove --force …`, dann `git worktree prune`), ihre Branches sind gepusht oder gemergt.
-- `../wt-p6` (Branch `p6-check`, nur lokal) und `../wt-notes` (dieser Branch): nach Gebrauch löschen.
-- Scratchpad: Logs, Hilfsskripte, Abnahme-Instanz, Spike-Daten; nichts davon gehört ins Repository.
+- `<scratchpad>/wt-combined` (Branch `check/combined`, nur lokal) und `<scratchpad>/wt-notes` (dieser Branch):
+  Prüf-Worktrees, nach Gebrauch löschen (`git worktree remove --force …`, `git branch -D check/combined`).
+- `.claude/worktrees/agent-*`: Worktrees fertiger Agents (gesperrt); Branches sind gepusht/gemergt.
+- Scratchpad: `env.sh`, Spike-Daten, Logs; nichts davon gehört ins Repository.
+- Viele gemergte Remote-Branches; Aufräumen ist Aufgabe 7.14.

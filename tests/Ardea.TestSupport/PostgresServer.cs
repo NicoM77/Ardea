@@ -19,6 +19,8 @@ public sealed class PostgresServer : IAsyncLifetime
         .WithUsername(OwnerUser)
         .WithPassword(OwnerPassword)
         .WithDatabase("postgres_admin")
+        // Every test host has its own pools; with tests in parallel the default of 100 runs out.
+        .WithCommand("-c", "max_connections=500")
         .Build();
 
     private int _counter;

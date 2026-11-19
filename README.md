@@ -70,7 +70,7 @@ Organisations with projects and technology profile; profile from GitHub reposito
 | 2.2 | Tenant isolation per the result of 0.6; member directory; database functions for system operations; cross-tenant test for all endpoints | 2.1 | ✅ |
 | 2.3 | Projects and components with version, origin, exposure, criticality, mitigation; profile replacement as an ID-preserving reconcile | 2.1 | ✅ |
 | 2.4 | Fill the catalogue: about 300 products with aliases, CPE mapping, related products; search | 1.1 | ✅ [ADR 030](docs/adr/0030-catalogue-format-and-master-data.md) |
-| 2.5 | Search index `component_key` with match strength | 2.3, 2.4 | ⬜ |
+| 2.5 | Search index `component_key` with match strength | 2.3, 2.4 | ✅ |
 | 2.6 | Mockups for the setup wizard and the project profile; owner reviews afterwards | | ⬜ |
 | 2.7 | Setup wizard (repository, operations, technologies); project pages with links, packages and suggestions; organisation settings with access and audit log | 2.3, 2.4, 2.6, 2.13 | ⬜ |
 | 2.8 | Coverage hints: missing versions, platforms without components, distro packages, packages without lock file, ecosystems not yet checkable | 2.5 | ⬜ |

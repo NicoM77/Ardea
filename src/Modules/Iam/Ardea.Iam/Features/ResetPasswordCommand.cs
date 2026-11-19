@@ -32,7 +32,13 @@ internal static class ResetPasswordCommand
         }
 
         var users = services.GetRequiredService<UserManager<ArdeaUser>>();
-        var user = await users.FindByEmailAsync(email);
+        var userId = await Security.AccountLookup.UserIdByEmailAsync(services.GetRequiredService<Npgsql.NpgsqlDataSource>(), users.NormalizeEmail(email), cancellationToken);
+        if (userId is { } id)
+        {
+            services.GetRequiredService<Platform.Tenancy.TenantContext>().SetUser(id);
+        }
+
+        var user = userId is null ? null : await users.FindByIdAsync(userId.Value.ToString());
         if (user is null)
         {
             await Console.Error.WriteLineAsync($"No account with the e-mail address {email}.");

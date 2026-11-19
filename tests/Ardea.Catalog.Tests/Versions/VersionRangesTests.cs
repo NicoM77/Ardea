@@ -151,6 +151,28 @@ public sealed class VersionRangesTests
     }
 
     [Fact]
+    public void Lower_bound_equal_to_the_fix_is_no_lower_bound()
+    {
+        // Google's CNA for «Chrome prior to 157.0.8103.50» (CVE-2026-125344): read literally, the range is empty.
+        var stored = new VersionRange { Introduced = "157.0.8103.50", Fixed = "157.0.8103.50", Scheme = "custom" };
+
+        var range = VersionRanges.Normalize(stored);
+
+        Assert.Equal(new VersionRange { Fixed = "157.0.8103.50", Scheme = "custom" }, range);
+        var numeric = VersionSchemeRegistry.Instance.Find("numeric");
+        Assert.Equal(new VersionCheck(VersionVerdict.InRange, VersionCheckReason.InAffectedRange), VersionCheck.Evaluate(numeric, "157.0.8102.50", [range], VersionStatus.Unknown));
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges), VersionCheck.Evaluate(numeric, "157.0.8103.50", [range], VersionStatus.Unknown));
+    }
+
+    [Fact]
+    public void Lower_bound_below_the_fix_stays()
+    {
+        var range = VersionRanges.Normalize(new VersionRange { Introduced = "157.0", Fixed = "157.0.8103.50" });
+
+        Assert.Equal("157.0", range.Introduced);
+    }
+
+    [Fact]
     public void Normalising_keeps_status_and_does_not_split_rpm_releases()
     {
         var rpm = VersionRanges.Normalize(new VersionRange { Exact = "3.0.7-27.el9", Status = VersionStatus.Unaffected, Scheme = "rpm" });

@@ -163,7 +163,9 @@ public static class VersionRanges
     /// an open word alone (<c>*</c>, <c>unspecified</c>, <c>n/a</c>) stays as written, because most publishers mean «not stated» by it, not «every version»;</item>
     /// <item>an open lower bound (<c>0</c>, <c>*</c>, <c>unspecified</c>) becomes none, a placeholder lower bound its lowest version;</item>
     /// <item>an upper bound with a placeholder (<c>lessThan 6.12.*</c>, <c>lessThanOrEqual 6.12.*</c>) ends before or after
-    /// that line; any other upper bound with a wildcard (<c>*</c>, <c>log4j-core*</c>) names no end.</item>
+    /// that line; any other upper bound with a wildcard (<c>*</c>, <c>log4j-core*</c>) names no end;</item>
+    /// <item>a lower bound equal to the fix is no lower bound: Google's CNA writes «before 157.0.8103.50» as
+    /// <c>{"version": "157.0.8103.50", "lessThan": "157.0.8103.50"}</c>, which read literally contains no version at all.</item>
     /// </list>
     /// Applying it twice gives the same range.
     /// </summary>
@@ -195,6 +197,11 @@ public static class VersionRanges
             {
                 lastAffected = upTo;
             }
+        }
+
+        if (introduced is not null && fixedVersion is not null && string.Equals(introduced, fixedVersion, StringComparison.Ordinal))
+        {
+            introduced = null;
         }
 
         return range with { Introduced = introduced, Fixed = fixedVersion, LastAffected = lastAffected };

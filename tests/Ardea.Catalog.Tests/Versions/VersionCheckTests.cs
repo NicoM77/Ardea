@@ -191,7 +191,18 @@ public sealed class VersionCheckTests
         var fixedCommit = new VersionRange { Exact = "8df4bcdb0a4232192b2445256c39b787d58ef14d", Scheme = VersionSchemeNames.Git };
 
         Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.NoComparableRange), Check("6.12.1", VersionStatus.Unaffected, commits, fixedCommit));
-        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.NoComparableRange), Check("6.12.1", VersionStatus.Affected, commits));
+    }
+
+    [Fact]
+    public void An_affected_default_still_holds_next_to_commit_ranges_only()
+    {
+        // Every version is affected: by default, or inside an affected commit range. Only an unaffected commit range leaves doubt.
+        var commits = new VersionRange { Introduced = "abcdef1", Fixed = "1234abc", Scheme = VersionSchemeNames.Git };
+        var fixedCommit = new VersionRange { Introduced = "1234abc", Scheme = VersionSchemeNames.Git, Status = VersionStatus.Unaffected };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.InRange, VersionCheckReason.DefaultAffected), Check("1.0", VersionStatus.Affected, commits));
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.NoComparableRange), Check("1.0", VersionStatus.Affected, commits, fixedCommit));
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.NoComparableRange), Check("1.0", VersionStatus.Unknown, commits));
     }
 
     [Fact]

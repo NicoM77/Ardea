@@ -37,6 +37,34 @@ internal static class IntelCommands
             return 0;
         });
 
+    /// <summary>
+    /// <c>ardea intel import --full [--source &lt;key&gt;]</c>: the whole inventory of a source instead of
+    /// the look-back window, by default the CVE Program (master plan 12.8; about 10 GB more, 12.9).
+    /// </summary>
+    public static readonly MaintenanceCommand ImportFull = new(
+        "intel-import",
+        "intel import --full [--source <key>]",
+        "Load a source's whole inventory, by default every CVE record since 1999 (about 10 GB more)",
+        async (services, args, cancellationToken) =>
+        {
+            var index = Array.IndexOf(args, "--source");
+            var key = index >= 0 && index + 1 < args.Length ? args[index + 1] : "cve-program";
+            var db = services.GetRequiredService<IntelDbContext>();
+            var source = await db.Sources.AsNoTracking().SingleOrDefaultAsync(s => s.Key == key, cancellationToken);
+            if (!args.Contains("--full") || source is null)
+            {
+                await Console.Error.WriteLineAsync("Usage: ardea intel import --full [--source <key>]; known sources: " +
+                    string.Join(", ", await db.Sources.Select(s => s.Key).OrderBy(k => k).ToListAsync(cancellationToken)));
+                return 64;
+            }
+
+            await services.GetRequiredService<IJobQueue>().EnqueueAsync(
+                new SyncSource(source.Key, Full: true), new EnqueueOptions { CoalesceKey = $"intel.sync:{source.Key}" }, cancellationToken);
+            await services.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
+            Console.WriteLine($"The worker loads the whole inventory of {source.Key}; follow it on the «Sources» page or in the worker log.");
+            return 0;
+        });
+
     /// <summary><c>ardea intel recompute</c>: build every entry again from its observations, e.g. after new precedence rules.</summary>
     public static readonly MaintenanceCommand Recompute = new(
         "intel-recompute",

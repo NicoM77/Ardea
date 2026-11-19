@@ -87,6 +87,24 @@ public sealed class MaintenanceTests(PostgresServer server)
     }
 
     [Fact]
+    public async Task Import_full_reads_the_whole_inventory_regardless_of_cursor_and_look_back()
+    {
+        await using var host = await IntelTestHost.StartAsync(server);
+        host.Provider.Items.AddRange([ScriptedProvider.Json("A", """{"id":"A"}"""), new Checkpoint("c1")]);
+        await host.SyncAsync();
+        Assert.Equal(SyncMode.Backfill, host.Provider.ModeSeen);
+        Assert.True(host.Provider.BackfillFromSeen > new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
+
+        Assert.Equal(64, await host.RunCommandAsync(IntelCommands.ImportFull, "--source", ScriptedProvider.Key));
+        Assert.Equal(0, await host.RunCommandAsync(IntelCommands.ImportFull, "--full", "--source", ScriptedProvider.Key));
+        await host.RunJobsAsync("intel.sync-source");
+
+        Assert.Equal(SyncMode.Backfill, host.Provider.ModeSeen);
+        Assert.Null(host.Provider.CursorSeen);
+        Assert.Equal(new DateTimeOffset(1999, 1, 1, 0, 0, 0, TimeSpan.Zero), host.Provider.BackfillFromSeen);
+    }
+
+    [Fact]
     public async Task Recompute_merges_every_entry_again()
     {
         await using var host = await IntelTestHost.StartAsync(server);

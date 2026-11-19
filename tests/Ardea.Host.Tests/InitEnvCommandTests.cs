@@ -30,4 +30,31 @@ public sealed class InitEnvCommandTests
 
         Assert.Matches("^[A-Za-z0-9_-]{32}$", secret);
     }
+
+    [Fact]
+    public void A_folder_it_cannot_write_gives_a_hint_instead_of_a_crash()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows() || Environment.UserName == "root", "Needs a folder the current user cannot write.");
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var directory = Directory.CreateTempSubdirectory("ardea-init-env-");
+        File.SetUnixFileMode(directory.FullName, UnixFileMode.UserRead | UnixFileMode.UserExecute);
+        var error = new StringWriter();
+        var previous = Console.Error;
+        Console.SetError(error);
+        try
+        {
+            Assert.Equal(73, InitEnvCommand.Run(["--dir", directory.FullName]));
+            Assert.Contains("--user", error.ToString(), StringComparison.Ordinal);
+        }
+        finally
+        {
+            Console.SetError(previous);
+            File.SetUnixFileMode(directory.FullName, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            directory.Delete(recursive: true);
+        }
+    }
 }

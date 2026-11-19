@@ -1,5 +1,5 @@
 # Ardea: a complete instance with one file and one command (master plan 12).
-#   docker run --rm -v "$PWD:/out" ghcr.io/nicom77/ardea:0 init-env --dir /out
+#   docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/out" ghcr.io/nicom77/ardea:0 init-env --dir /out
 #   docker compose up -d
 # The API listens on 127.0.0.1:8080 only. It needs HTTPS in front: use compose.caddy.yaml,
 # or your own proxy or tunnel (see examples in this folder).

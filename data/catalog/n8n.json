@@ -9,6 +9,8 @@
       "versionScheme": "semver",
       "cpe": ["n8n:n8n"],
       "packages": ["pkg:npm/n8n"],
+      // VulnCheck names the vendor after the GitHub organisation «n8n-io».
+      "aliases": [{ "vendor": "n8n-io", "names": ["n8n"] }],
       "related": ["nodejs"],
       "images": ["n8nio/n8n"]
     }

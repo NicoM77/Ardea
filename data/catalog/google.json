@@ -11,6 +11,20 @@
       "packages": ["pkg:npm/@angular/core"],
       "aliases": [{ "vendor": "angular", "names": ["Angular", "@angular/core"] }],
       "related": ["nodejs"]
+    },
+    {
+      // The Go vulnerability database lists the standard library and the toolchain as packages «stdlib» and «toolchain».
+      "key": "go",
+      "name": "Go",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["golang:go"],
+      "packages": ["pkg:golang/stdlib", "pkg:golang/toolchain"],
+      "aliases": [
+        { "names": ["Golang"] },
+        { "vendor": "Go", "names": ["Go {line}", "Go standard library"] }
+      ],
+      "images": ["golang"]
     }
   ]
 }

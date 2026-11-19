@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Python Software Foundation",
+  "products": [
+    {
+      "key": "python",
+      "name": "Python",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["python:python"],
+      "aliases": [
+        { "names": ["CPython"] },
+        { "vendor": "Python Software Foundation", "names": ["Python 3", "Python {line}", "CPython {line}"] }
+      ],
+      "images": ["python"]
+    }
+  ]
+}

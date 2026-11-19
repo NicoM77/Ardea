@@ -16,7 +16,7 @@
         }
       ],
       "related": ["aspnetcore"],
-      "images": ["mcr.microsoft.com/dotnet/runtime", "mcr.microsoft.com/dotnet/runtime-deps"]
+      "images": ["mcr.microsoft.com/dotnet/runtime", "mcr.microsoft.com/dotnet/runtime-deps", "mcr.microsoft.com/dotnet/sdk"]
     },
     {
       "key": "aspnetcore",
@@ -34,6 +34,49 @@
       "kind": "service",
       "versionScheme": "numeric",
       "aliases": [{ "vendor": "Microsoft", "names": ["Entra ID", "Azure Active Directory", "Azure AD"] }]
+    },
+    {
+      // CVE records name «Windows Server 2022 (Server Core installation)», «Windows Server 2012 R2»; NVD has one CPE product per release.
+      "key": "windows-server",
+      "name": "Windows Server",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:windows_server_2012", "microsoft:windows_server_2016", "microsoft:windows_server_2019", "microsoft:windows_server_2022", "microsoft:windows_server_2025"],
+      "aliases": [
+        { "vendor": "Microsoft", "names": ["Microsoft Windows Server", "Windows Server {line}", "Windows Server {line} *", "Microsoft Windows Server {line}"] }
+      ],
+      "images": ["mcr.microsoft.com/windows/servercore", "mcr.microsoft.com/windows/server", "mcr.microsoft.com/windows/nanoserver"]
+    },
+    {
+      "key": "windows",
+      "name": "Windows",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:windows_10", "microsoft:windows_11", "microsoft:windows_10_21h2", "microsoft:windows_10_22h2", "microsoft:windows_11_22h2", "microsoft:windows_11_23h2", "microsoft:windows_11_24h2"],
+      "aliases": [
+        { "vendor": "Microsoft", "names": ["Microsoft Windows", "Windows {line}", "Windows {line} Version *", "Microsoft Windows {line}"] }
+      ],
+      "related": ["windows-server"]
+    },
+    {
+      "key": "dotnet-framework",
+      "name": ".NET Framework",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:.net_framework"],
+      "aliases": [
+        { "vendor": "Microsoft", "names": ["Microsoft .NET Framework", ".NET Framework {line}", "Microsoft .NET Framework {line}", "Microsoft .NET Framework {line} *"] }
+      ],
+      "images": ["mcr.microsoft.com/dotnet/framework/runtime", "mcr.microsoft.com/dotnet/framework/aspnet"]
+    },
+    {
+      "key": "powershell",
+      "name": "PowerShell",
+      "kind": "runtime",
+      "versionScheme": "semver",
+      "cpe": ["microsoft:powershell"],
+      "aliases": [{ "vendor": "Microsoft", "names": ["PowerShell {line}", "PowerShell Core", "Microsoft PowerShell"] }],
+      "images": ["mcr.microsoft.com/powershell"]
     }
   ]
 }

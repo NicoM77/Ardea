@@ -8,7 +8,8 @@
       "kind": "runtime",
       "versionScheme": "semver",
       "cpe": ["nodejs:node.js"],
-      "aliases": [{ "names": ["Node.js"] }],
+      // Records of the Node.js CNA name vendor «nodejs» and product «node».
+      "aliases": [{ "names": ["Node.js"] }, { "vendor": "nodejs", "names": ["node", "Node.js {line}"] }],
       "images": ["node"]
     },
     {

@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Rocky Enterprise Software Foundation",
+  "products": [
+    {
+      "key": "rocky-linux",
+      "name": "Rocky Linux",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "aliases": [
+        { "names": ["Rocky Linux"] },
+        { "vendor": "Rocky Enterprise Software Foundation", "names": ["Rocky Linux {line}"] }
+      ],
+      "related": ["rhel"],
+      "images": ["rockylinux", "rockylinux/rockylinux"]
+    }
+  ]
+}

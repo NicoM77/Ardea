@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "AlmaLinux OS Foundation",
+  "products": [
+    {
+      "key": "almalinux",
+      "name": "AlmaLinux",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "aliases": [
+        { "names": ["AlmaLinux OS"] },
+        { "vendor": "AlmaLinux", "names": ["AlmaLinux {line}"] }
+      ],
+      "related": ["rhel"],
+      "images": ["almalinux"]
+    }
+  ]
+}

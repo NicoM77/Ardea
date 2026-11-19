@@ -1,0 +1,25 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Oracle",
+  "products": [
+    {
+      "key": "oracle-linux",
+      "name": "Oracle Linux",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["oracle:linux"],
+      "aliases": [{ "vendor": "Oracle", "names": ["Oracle Linux {line}"] }],
+      "related": ["rhel"],
+      "images": ["oraclelinux"]
+    },
+    {
+      "key": "oracle-java-se",
+      "name": "Oracle Java SE",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["oracle:jdk", "oracle:jre"],
+      "aliases": [{ "vendor": "Oracle", "names": ["Java SE", "Java SE JDK and JRE", "Oracle JDK", "Oracle JRE", "Oracle Java SE {line}"] }],
+      "related": ["openjdk"]
+    }
+  ]
+}

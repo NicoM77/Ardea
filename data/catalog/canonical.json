@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Canonical",
+  "products": [
+    {
+      "key": "ubuntu",
+      "name": "Ubuntu",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["canonical:ubuntu_linux"],
+      "aliases": [
+        { "names": ["Ubuntu Linux"] },
+        { "vendor": "Canonical", "names": ["Ubuntu {line}", "Ubuntu {line} LTS", "Ubuntu Server"] }
+      ],
+      "images": ["ubuntu"]
+    }
+  ]
+}

@@ -42,7 +42,7 @@ public sealed class CatalogIndexTests
     [InlineData("Acme", "Express")]
     [InlineData("Acme", "ESXi")]
     [InlineData(null, "login.php")]
-    [InlineData("Microsoft", "Windows 11")]
+    [InlineData("Microsoft", "Paint")]
     public void Unknown_or_foreign_spellings_find_nothing(string? vendor, string product) => Assert.Null(Index.FindByName(vendor, product));
 
     [Fact]

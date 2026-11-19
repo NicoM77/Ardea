@@ -1,0 +1,25 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "SUSE",
+  "products": [
+    {
+      "key": "sles",
+      "name": "SUSE Linux Enterprise Server",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["suse:linux_enterprise_server"],
+      "aliases": [{ "vendor": "SUSE", "names": ["SLES", "SUSE Linux Enterprise Server {line}", "SUSE Linux Enterprise Server {line} *"] }],
+      "images": ["registry.suse.com/suse/sle15", "registry.suse.com/bci/bci-base"]
+    },
+    {
+      "key": "opensuse-leap",
+      "name": "openSUSE Leap",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["opensuse:leap"],
+      "aliases": [{ "vendor": "openSUSE", "names": ["Leap", "openSUSE Leap {line}"] }],
+      "related": ["sles"],
+      "images": ["opensuse/leap"]
+    }
+  ]
+}

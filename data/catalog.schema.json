@@ -57,6 +57,10 @@
           "images": {
             "type": "array",
             "items": { "type": "string", "description": "Container image without registry docker.io, library/, tag or digest, e.g. postgres or mcr.microsoft.com/dotnet/aspnet." }
+          },
+          "noisy": {
+            "type": "boolean",
+            "description": "The vendor ships large releases on a fixed cycle that update by themselves (the browsers): «only important» notices then need active exploitation or an authority warning (ADR 044 decision 3)."
           }
         }
       }

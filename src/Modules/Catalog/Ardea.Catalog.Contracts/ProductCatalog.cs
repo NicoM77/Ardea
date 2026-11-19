@@ -149,6 +149,12 @@ public sealed record CatalogProduct
     /// <summary>Container images the product is recognised from, e.g. <c>postgres</c>, <c>mcr.microsoft.com/dotnet/aspnet</c>.</summary>
     public IReadOnlyList<string> ImageNames { get; init; } = [];
 
+    /// <summary>
+    /// A vendor ships large releases on a fixed cycle that update by themselves, as the browsers do (ADR 044 decision 3): for
+    /// such a product «only important» means actively exploited or warned about by an authority. Curated data, never learned.
+    /// </summary>
+    public bool Noisy { get; init; }
+
     public ProductOrigin Origin { get; init; } = ProductOrigin.Curated;
 
     public ProductState State { get; init; } = ProductState.Active;

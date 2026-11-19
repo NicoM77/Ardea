@@ -16,4 +16,6 @@ export interface OrganizationView {
   aiPolicy: string;
   role: string;
   createdAt: string;
+  emailContent: string;
+  allowMuteCritical: boolean;
 }

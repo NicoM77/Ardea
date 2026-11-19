@@ -24,6 +24,8 @@
     <InternalsVisibleTo Include="Ardea.Platform.Tests" />
     <!-- The reference set evaluation runs jobs of every kind through the registry (task 3.7). -->
     <InternalsVisibleTo Include="Ardea.Assessment.Tests" />
+    <!-- The notification tests run the chain of jobs (evaluate, deliver, digest) through the registry. -->
+    <InternalsVisibleTo Include="Ardea.Notifications.Tests" />
     <InternalsVisibleTo Include="ardea" />
   </ItemGroup>
 </Project>

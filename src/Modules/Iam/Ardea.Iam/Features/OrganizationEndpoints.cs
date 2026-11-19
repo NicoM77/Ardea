@@ -25,9 +25,14 @@ internal sealed record CreateOrganizationRequest(string? Name, string? Slug);
 /// <param name="TimeZone">The IANA time zone for digests and deadlines.</param>
 /// <param name="RequireMfa">Whether members must use two-factor authentication.</param>
 /// <param name="AiPolicy">The data policy for language models: <c>none</c>, <c>local_only</c> (the default) or <c>cloud_allowed</c>.</param>
-internal sealed record UpdateOrganizationRequest(string? Name, string? Locale, string? TimeZone, bool? RequireMfa, string? AiPolicy);
+/// <param name="EmailContent">How much notification e-mails say: <c>full</c> (the default) or <c>minimal</c> (level, number and link).</param>
+/// <param name="AllowMuteCritical">Whether members may mute a channel for level 5 too.</param>
+internal sealed record UpdateOrganizationRequest(
+    string? Name, string? Locale, string? TimeZone, bool? RequireMfa, string? AiPolicy, string? EmailContent = null, bool? AllowMuteCritical = null);
 
-internal sealed record OrganizationView(Guid Id, string Slug, string Name, string Locale, string TimeZone, bool RequireMfa, string AiPolicy, string Role, DateTimeOffset CreatedAt);
+internal sealed record OrganizationView(
+    Guid Id, string Slug, string Name, string Locale, string TimeZone, bool RequireMfa, string AiPolicy, string Role, DateTimeOffset CreatedAt,
+    string EmailContent, bool AllowMuteCritical);
 
 internal sealed record MemberView(Guid UserId, string DisplayName, string Email, string Role, DateTimeOffset JoinedAt);
 
@@ -88,7 +93,7 @@ internal static class OrganizationEndpoints
     /// <summary>Any signed-in user may found an organisation and becomes its owner.</summary>
     private static async Task<IResult> CreateAsync(
         CreateOrganizationRequest request, IamDbContext db, TenantContext tenant, IUnitOfWork unitOfWork, IAuditLog audit, TimeProvider time,
-        CancellationToken cancellationToken)
+        IEnumerable<Contracts.IOrganizationCreatedSubscriber> subscribers, CancellationToken cancellationToken)
     {
         var name = request.Name?.Trim();
         var slug = string.IsNullOrWhiteSpace(request.Slug) ? OrganizationDirectory.Slugify(name ?? string.Empty) : request.Slug.Trim().ToLowerInvariant();
@@ -119,6 +124,11 @@ internal static class OrganizationEndpoints
         }
 
         await audit.RecordAsync(new AuditEntry("org.created", "organization", organizationId.ToString(), new { name, slug }), cancellationToken);
+        foreach (var subscriber in subscribers)
+        {
+            await subscriber.OnOrganizationCreatedAsync(organizationId, cancellationToken);
+        }
+
         await unitOfWork.CommitAsync(cancellationToken);
         return Results.Created($"/api/v1/orgs/{organizationId}", View(organization, "owner"));
     }
@@ -130,7 +140,8 @@ internal static class OrganizationEndpoints
     }
 
     private static async Task<IResult> UpdateAsync(
-        UpdateOrganizationRequest request, HttpContext http, IamDbContext db, IUnitOfWork unitOfWork, IAuditLog audit, CancellationToken cancellationToken)
+        UpdateOrganizationRequest request, HttpContext http, IamDbContext db, IUnitOfWork unitOfWork, IAuditLog audit,
+        IEnumerable<Contracts.IOrganizationTimeZoneSubscriber> timeZoneSubscribers, CancellationToken cancellationToken)
     {
         var name = request.Name?.Trim();
         var errors = new FieldErrors()
@@ -138,7 +149,8 @@ internal static class OrganizationEndpoints
             .MaxLength("name", name, 200)
             .Check("locale", request.Locale is null || Locales.Contains(request.Locale), $"Choose one of {string.Join(", ", Locales)}.")
             .Check("timeZone", request.TimeZone is null || IsTimeZone(request.TimeZone), "Choose a time zone such as Europe/Zurich.")
-            .Check("aiPolicy", request.AiPolicy is null || AiDataPolicies.All.Contains(request.AiPolicy), $"Choose one of {string.Join(", ", AiDataPolicies.All)}.");
+            .Check("aiPolicy", request.AiPolicy is null || AiDataPolicies.All.Contains(request.AiPolicy), $"Choose one of {string.Join(", ", AiDataPolicies.All)}.")
+            .Check("emailContent", request.EmailContent is null or "full" or "minimal", "Choose full or minimal.");
         if (errors.Any)
         {
             return IamErrors.Validation(errors.Errors);
@@ -152,6 +164,7 @@ internal static class OrganizationEndpoints
         }
 
         var organization = await db.Organizations.SingleAsync(cancellationToken);
+        var timeZoneChanged = request.TimeZone is { } zone && zone != organization.TimeZone;
         organization.Name = name ?? organization.Name;
         organization.Locale = request.Locale ?? organization.Locale;
         organization.TimeZone = request.TimeZone ?? organization.TimeZone;
@@ -165,7 +178,25 @@ internal static class OrganizationEndpoints
             organization.Settings = organization.Settings with { AiPolicy = aiPolicy };
         }
 
+        if (request.EmailContent is { } emailContent)
+        {
+            organization.Settings = organization.Settings with { EmailContent = emailContent };
+        }
+
+        if (request.AllowMuteCritical is { } allowMuteCritical)
+        {
+            organization.Settings = organization.Settings with { AllowMuteCritical = allowMuteCritical };
+        }
+
         await db.SaveChangesAsync(cancellationToken);
+        if (timeZoneChanged)
+        {
+            foreach (var subscriber in timeZoneSubscribers)
+            {
+                await subscriber.OnTimeZoneChangedAsync(organization.OrganizationId, organization.TimeZone, cancellationToken);
+            }
+        }
+
         await audit.RecordAsync(new AuditEntry("org.settings_changed", "organization", organization.OrganizationId.ToString(), request), cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         return Results.Ok(View(organization, access.Role.ToApi()));
@@ -419,7 +450,8 @@ internal static class OrganizationEndpoints
     }
 
     private static OrganizationView View(Organization o, string role) =>
-        new(o.OrganizationId, o.Slug, o.Name, o.Locale, o.TimeZone, o.Settings.RequireMfa, o.Settings.AiPolicy ?? AiDataPolicies.Default, role, o.CreatedAt);
+        new(o.OrganizationId, o.Slug, o.Name, o.Locale, o.TimeZone, o.Settings.RequireMfa, o.Settings.AiPolicy ?? AiDataPolicies.Default, role, o.CreatedAt,
+            o.Settings.EmailContent ?? "full", o.Settings.AllowMuteCritical);
 
     private static InvitationView View(Invitation i, string inviter, DateTimeOffset now) =>
         new(i.Id, i.Email, i.Role, i.ExpiresAt, i.ExpiresAt <= now, inviter, i.CreatedAt);

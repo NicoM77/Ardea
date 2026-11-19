@@ -37,6 +37,7 @@ public sealed class AssessmentModule : IModule
         services.AddScoped<Remediations>();
         services.AddScoped<Features.ActionReader>();
         services.AddScoped<Features.ActionCommands>();
+        services.AddScoped<Contracts.IActionFacts, Features.ActionFactsReader>();
         services.AddScoped<Features.VerdictReviews>();
         services.AddScoped<IEntryChangeSubscriber, EntryChangeSubscriber>();
         services.AddScoped<IProfileChangeSubscriber, ProfileChangeSubscriber>();

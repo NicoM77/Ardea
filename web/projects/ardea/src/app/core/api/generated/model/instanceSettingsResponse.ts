@@ -9,6 +9,10 @@ import type { SettingView } from './settingView';
 import type { SmtpSettingsView } from './smtpSettingsView';
 
 export interface InstanceSettingsResponse {
+  /** invite, open or closed. */
   registration: SettingView;
+  /** The mail server. */
   smtp: SmtpSettingsView;
+  /** Hosts webhooks may reach in the private network, comma-separated (master plan 9.5). */
+  webhookInternalHosts: SettingView;
 }

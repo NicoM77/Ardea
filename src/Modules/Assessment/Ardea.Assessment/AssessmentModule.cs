@@ -26,6 +26,8 @@ public sealed class AssessmentModule : IModule
     public void AddServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddModuleDbContext<AssessDbContext>(AssessDbContext.Schema);
+        // The rule set is a file in the image (master plan 4.9); read once, checked on first use.
+        services.AddSingleton(_ => Rules.RuleSet.Load(MasterDataOptions.FromConfiguration(configuration).Directory));
         services.AddScoped<AlertAssessor>();
         services.AddScoped<IEntryChangeSubscriber, EntryChangeSubscriber>();
         services.AddScoped<IProfileChangeSubscriber, ProfileChangeSubscriber>();

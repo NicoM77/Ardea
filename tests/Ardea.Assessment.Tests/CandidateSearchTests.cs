@@ -36,8 +36,8 @@ public sealed class CandidateSearchTests(PostgresServer server)
 
         Assert.Equal(
             [
-                "Shop\tcpe\tin_range\taffected\t2\topen\t-\t16.4",
-                "Web\tpackage\tin_range\taffected\t2\topen\t-\t4.17.21",
+                "Shop\tcpe\tin_range\taffected\t3\topen\t-\t16.4",
+                "Web\tpackage\tin_range\taffected\t3\topen\t-\t4.17.21",
             ],
             await host.RowsAsync(Findings));
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM assess.alert WHERE organization_id = '{other}'"));
@@ -108,8 +108,8 @@ public sealed class CandidateSearchTests(PostgresServer server)
             [
                 "Ops\tproduct\tunknown\tuncertain\t2\topen\t-\t-",
                 "Ops\tproduct\tunknown\tuncertain\t2\topen\t-\t-",
-                "Ops\tproduct\tin_range\taffected\t2\topen\t-\t16.4",
-                "Ops\tproduct\tin_range\taffected\t2\topen\t-\t-",
+                "Ops\tproduct\tin_range\taffected\t3\topen\t-\t16.4",
+                "Ops\tproduct\tin_range\taffected\t3\topen\t-\t-",
                 "Ops\tproduct\tout_of_range\tnot_affected\t1\tnot_affected\tout_of_range\t-",
             ],
             await host.RowsAsync(Findings.Replace("ORDER BY p.name, c.version", "ORDER BY p.name, c.version NULLS FIRST", StringComparison.Ordinal)));
@@ -154,7 +154,7 @@ public sealed class CandidateSearchTests(PostgresServer server)
 
         await host.ProfileChangedAsync(acme, project);
         await host.RunJobsAsync();
-        Assert.Equal(["Ops\tcpe\tin_range\taffected\t2\topen\t-\t16.4"], await host.RowsAsync(Findings));
+        Assert.Equal(["Ops\tcpe\tin_range\taffected\t3\topen\t-\t16.4"], await host.RowsAsync(Findings));
         Assert.Equal(recent, await host.ScalarAsync<Guid>("SELECT entry_id FROM assess.finding"));
 
         // The same profile again changes nothing.

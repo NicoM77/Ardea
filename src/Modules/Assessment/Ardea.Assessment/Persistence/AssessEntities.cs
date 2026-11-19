@@ -68,6 +68,12 @@ internal sealed class Finding : IOrganizationOwned
     /// <summary>The match and the version check with their evidence: keys, installed version, ranges per source.</summary>
     public required JsonDocument Evidence { get; set; }
 
+    /// <summary>
+    /// How the rule set reached the level (master plan 7.6): its version, an exclusion, or the factors with
+    /// value, evidence and points, the sum and the bounds that applied. Recomputable from the stored inputs.
+    /// </summary>
+    public required JsonDocument Factors { get; set; }
+
     /// <summary><c>open</c>, <c>in_review</c>, <c>remediated</c>, <c>risk_accepted</c> or <c>not_affected</c>.</summary>
     public required string Status { get; set; }
 

@@ -48,6 +48,7 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             finding.Property(f => f.Verdict).HasMaxLength(20);
             finding.Property(f => f.VerdictSource).HasMaxLength(10);
             finding.Property(f => f.Evidence).HasColumnType("jsonb");
+            finding.Property(f => f.Factors).HasColumnType("jsonb");
             finding.Property(f => f.Status).HasMaxLength(20);
             finding.Property(f => f.StatusReason).HasMaxLength(40);
             finding.Property(f => f.StatusNote).HasMaxLength(2000);

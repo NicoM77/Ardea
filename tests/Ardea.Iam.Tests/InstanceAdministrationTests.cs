@@ -2,6 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Ardea.TestSupport;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
 
@@ -129,6 +132,47 @@ public sealed class InstanceAdministrationTests(PostgresServer server)
         Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/v1/instance/jobs/{jobId}/retry")).StatusCode);
         Assert.Equal("pending", await host.ScalarAsync<string>($"SELECT state FROM platform.job WHERE id = '{jobId}'"));
         Assert.Equal(HttpStatusCode.NotFound, (await admin.PostAsync($"/api/v1/instance/jobs/{jobId}/retry")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Every_instance_endpoint_requires_the_instance_role()
+    {
+        // The administration reads and changes data of every organisation (jobs, sources, catalogue, model quality).
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var admin = await AdminAsync(host);
+        using var member = host.Client();
+        await member.PostAsync("/api/v1/auth/register", new { email = "member@example.org", displayName = "Member", password = ApiTestHost.Password });
+        var endpoints = host.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
+            .Where(e => ("/" + e.RoutePattern.RawText?.TrimStart('/')).StartsWith("/api/v1/instance", StringComparison.Ordinal))
+            .ToList();
+        Assert.NotEmpty(endpoints);
+
+        var problems = new List<string>();
+        foreach (var endpoint in endpoints)
+        {
+            var route = "/" + endpoint.RoutePattern.RawText!.TrimStart('/');
+            if (!endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>().Any(a => a.Policy == Platform.Http.Policies.InstanceAdmin))
+            {
+                problems.Add($"{route}: not behind the policy {Platform.Http.Policies.InstanceAdmin}");
+            }
+
+            var path = System.Text.RegularExpressions.Regex.Replace(route, @"\{(\w+)(:(\w+))?\}", m => m.Groups[3].Value switch
+            {
+                "guid" => Guid.CreateVersion7().ToString(),
+                "int" => "1",
+                _ => "x",
+            });
+            foreach (var method in endpoint.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods ?? [])
+            {
+                var response = await member.SendAsync(new HttpMethod(method), path, method == "GET" ? null : new { });
+                if (response.StatusCode != HttpStatusCode.Forbidden)
+                {
+                    problems.Add($"{method} {route}: {(int)response.StatusCode} for a member");
+                }
+            }
+        }
+
+        Assert.Empty(problems);
     }
 
     private static async Task<ApiClient> AdminAsync(ApiTestHost host)

@@ -38,3 +38,17 @@ a handful of end-to-end tests for the core flows. No long-running and no schedul
 
 A test checks a rule or a defect that can be named, and its name says which. It sits at the lowest level where
 the statement is possible. There is no coverage quota.
+
+### Measuring coverage
+
+Coverage shows where a rule may lack a test; it is not a goal and the pipeline does not measure it.
+`build/coverage.sh` runs one test project under [coverlet](https://github.com/coverlet-coverage/coverlet)
+(`coverlet.console` from the local tool manifest, MIT) and prints line and branch coverage per assembly:
+
+```sh
+build/coverage.sh Ardea.Catalog.Tests '[Ardea.Catalog]*' '[Ardea.Catalog.Contracts]*'
+build/coverage.sh Ardea.Iam.Tests        # every Ardea assembly the tests load
+```
+
+The report for the uncovered lines is `artifacts/coverage/<TestProject>.cobertura.xml`, which IDEs and report
+tools read. Migrations and generated code are left out. Tests against the database need Docker, as for `dotnet test`.

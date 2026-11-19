@@ -405,6 +405,68 @@ public sealed class TenantIsolationTests(PostgresServer server)
     }
 
     [Fact]
+    public async Task Every_system_function_is_listed_in_adr_029_owned_by_the_migrator_and_pins_its_search_path()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        var adr = await File.ReadAllTextAsync(Path.Combine(RepositoryRoot(), "docs", "adr", "0029-row-level-security-as-hardening.md"), TestContext.Current.CancellationToken);
+        var listed = System.Text.RegularExpressions.Regex.Matches(adr, @"^\s*\| `(\w+\.\w+)\(", System.Text.RegularExpressions.RegexOptions.Multiline)
+            .Select(m => m.Groups[1].Value).ToHashSet(StringComparer.Ordinal);
+        Assert.NotEmpty(listed);
+
+        await using var connection = new NpgsqlConnection(host.Database.OwnerConnectionString("tests"));
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT n.nspname || '.' || p.proname, pg_get_userbyid(p.proowner), coalesce(array_to_string(p.proconfig, ','), '')
+            FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+            WHERE p.prosecdef AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+            ORDER BY 1
+            """, connection);
+        var problems = new List<string>();
+        var found = new HashSet<string>(StringComparer.Ordinal);
+        await using (var reader = await command.ExecuteReaderAsync(TestContext.Current.CancellationToken))
+        {
+            while (await reader.ReadAsync(TestContext.Current.CancellationToken))
+            {
+                var (function, owner, settings) = (reader.GetString(0), reader.GetString(1), reader.GetString(2));
+                found.Add(function);
+                if (!listed.Contains(function))
+                {
+                    problems.Add($"{function}: SECURITY DEFINER but not in the list of ADR 029");
+                }
+
+                if (owner != host.Database.OwnerUser)
+                {
+                    problems.Add($"{function}: owned by {owner}, not by the migrator");
+                }
+
+                if (!settings.Contains("search_path=", StringComparison.Ordinal))
+                {
+                    problems.Add($"{function}: no fixed search_path, so a caller's schema could shadow what it calls");
+                }
+            }
+        }
+
+        problems.AddRange(listed.Except(found).Select(f => $"{f}: listed in ADR 029 but not a SECURITY DEFINER function"));
+        Assert.Empty(problems);
+    }
+
+    [Fact]
+    public async Task A_session_of_another_account_cannot_be_revoked()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var alice = await SignedInAsync(host, "alice@example.org", setup: true);
+        using var bob = await SignedInAsync(host, "bob@example.org", setup: false);
+        var bobsSession = await host.ScalarAsync<Guid>(
+            "SELECT s.id FROM iam.session s JOIN iam.\"user\" u ON u.id = s.user_id WHERE u.normalized_email = 'BOB@EXAMPLE.ORG'");
+
+        var response = await alice.SendAsync(HttpMethod.Delete, $"/api/v1/account/sessions/{bobsSession}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await bob.SessionAsync()).StatusCode);
+    }
+
+    [Fact]
     public async Task Signing_in_as_another_account_in_a_signed_in_browser_is_refused()
     {
         await using var host = await ApiTestHost.StartAsync(server);
@@ -415,6 +477,17 @@ public sealed class TenantIsolationTests(PostgresServer server)
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Equal("signed_in", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
+    private static string RepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Ardea.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        return directory?.FullName ?? throw new DirectoryNotFoundException("No Ardea.slnx above the test binaries.");
     }
 
     private static string Normalize(string raw) =>

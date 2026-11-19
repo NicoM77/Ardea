@@ -1,22 +1,21 @@
 # NOTES: Arbeitsstand und Wissen ausserhalb des Repositorys
 
-Stand: 19.11.2026, ca. 17:30 UTC. Geschrieben von Claude als Kontext-Sicherung: alles, was ich über die
+Stand: 19.11.2026, ca. 17:45 UTC, nach dem Stopp auf Anweisung des Eigentümers («STOPPE ALLES … nichts neues mehr beginnen»). Geschrieben von Claude als Kontext-Sicherung: alles, was ich über die
 Umsetzung weiss und was nicht schon im Repository steht (README, Masterplan, ADR, Abnahmen, PR-Texte,
 Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 
-## 1. Woran gerade gearbeitet wird
+## 1. Stand beim Stopp
 
-| Was | Stand | Nächster Schritt |
+Alles ist angehalten: kein Agent läuft, kein CI-Lauf, keine offene Arbeit ausserhalb von Git. Alles ist
+committet und gepusht; das Haupt-Checkout ist sauber.
+
+| Was | Stand | Was als Nächstes zu tun wäre |
 |---|---|---|
-| PR #78 `feat/hardening-ops` (6.4–6.8: Plan-Tests mit Indizes, Restore-Test aus Vorab-Dump, Wartungsbefehle, Doku, SBOM und Lizenzdateien im Image) | fertig, lokal geprüft, nicht gemergt | zusammen mit #79 mergen |
-| PR #79 `feat/security-pass` (6.1: Bedrohungstabelle 9.7, acht Lücken behoben, `docs/security/threat-review.md`) | fertig, lokal geprüft, nicht gemergt | zusammen mit #78 mergen |
-| Kombinierte Prüfung #78 + #79 | läuft lokal im Worktree `../wt-p6` (Branch `p6-check`, nur lokal): Build, `dotnet format`, ganze Backend-Testsuite, Web Lint/Test/Build | bei grün: #78 mergen mit `[skip ci]` im Merge-Commit, danach #79 normal mergen → genau ein CI-Lauf auf main; dann `wt-p6` und `p6-check` löschen |
-| Task 7.6 `seed-demo` | ein Agent (Sonnet) baut ihn auf Branch `feat/seed-demo`, noch kein PR | PR abwarten, lokal prüfen, mergen |
-
-Danach in dieser Reihenfolge sinnvoll: offene Punkte von 6.6 (Benachrichtigung des Instanz-Admins bei
-Warnungen, Kapitel 12.7, braucht eine Designentscheidung), Phase 7 ohne die Aufgaben, die den Eigentümer
-brauchen (7.4 Repository aufräumen, 7.5 Code aufräumen, 7.7 Screenshots nach 7.6, 7.10 Abdeckung). 7.13
-(CI wieder auf PRs) erst, wenn das Budget es erlaubt.
+| #78 (6.4–6.8) und #79 (6.1) | **gemergt** (main `89ce572`). Vorher lokal zusammen geprüft: Build, `dotnet format`, 1 469 Backend-Tests grün, Web-Tests 152 + 18 grün, Web-Build grün (Bundle-Warnung 637 kB). | **Der CI-Lauf auf main für diesen Stand wurde beim Stopp abgebrochen** (Run 44577661177: Web, Web under CSP, Image, Dependencies grün; Backend und End to end abgebrochen). main ist also nur lokal geprüft. Nächster Push auf main oder `workflow_dispatch` prüft ihn. |
+| Task 7.6 `seed-demo` | **unfertig**, als WIP-Commit `1b56dcc` auf Branch `feat/seed-demo` gepusht, **kein PR**. Enthält `SeedDemoCommand`, `DemoJobRunner`, `CommandServices`, Seeder je Modul (`DemoSeed.cs` in Platform, Iam, Assets, Assessment; `Intel/Demo/`), `SeedDemoCommandTests`, `docs/operations/try-it.md`, README-Abschnitt. Der Agent war beim Anpassen des Tests und der Doku; **nicht gebaut, nicht getestet, nicht geprüft**. | Branch auschecken, `origin/main` hineinmergen, bauen, Test laufen lassen und fertigstellen (Anforderung siehe Masterplan 7.6 und Abnahme Phase 7: leere Instanz → Daten in unter 2 Minuten, ohne GitHub und Quellen; verweigert eine Datenbank mit Daten), dann PR. |
+| Phasen 0–5 | alle Aufgaben ✅, Abnahmen in `docs/acceptance/phase-1.md` … `phase-5.md` (Phase 0 im README) | offene Punkte des Eigentümers, siehe Abschnitt 4 |
+| Phase 6 | 6.1 ✅, 6.5 ✅; 6.4, 6.6, 6.7, 6.8 mit kleinen offenen Teilen (in #78 beschrieben); 6.2 und 6.3 brauchen Menschen | 6.6: Hinweis an den Instanz-Admin bei Warnungen (Kapitel 12.7) braucht eine Designentscheidung |
+| Phase 7 | 7.1 teilweise (Repository umbenannt), 7.13 neu (CI wieder auf PRs), Rest offen | siehe Masterplan Kapitel 14 |
 
 ## 2. Arbeitsregeln (vom Eigentümer, nicht im Repo festgehalten)
 

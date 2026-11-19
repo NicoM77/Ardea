@@ -189,8 +189,8 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
 
     /// <summary>
     /// Whether the text names a fix above the installed version while nothing names a fix of the installed
-    /// version's own line at or below it. The line is the version without its last part (6.3 for 6.3.4): a
-    /// record listing «6.4.0, 6.3.3 or 5.19.12» as fixes has fixed 6.3.4 with 6.3.3, whatever 6.4.0 says.
+    /// version's own line at or below it (<see cref="VersionLines.Line"/>: 6.3 for 6.3.4, 16.4 for both 16.4 and
+    /// 16.4.0): a record listing «6.4.0, 6.3.3 or 5.19.12» as fixes has fixed 6.3.4 with 6.3.3, whatever 6.4.0 says.
     /// </summary>
     private static bool FixNamedInTextAbove(
         IVersionScheme scheme, ParsedVersion version, string installed, IEnumerable<VersionRange> ranges, IReadOnlyCollection<string>? fixesInText)
@@ -215,45 +215,9 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
             VersionStatus.Unaffected => [r.Introduced, r.Exact],
             _ => [],
         }).OfType<string>();
-        var line = Line(installed);
+        var line = VersionLines.Line(installed);
         return line.Length > 0 && !structured.Concat(named.Select(f => f.Text)).Any(fix =>
-            scheme.TryParse(fix, out var parsed) && parsed <= version && SameLine(fix, line));
-    }
-
-    /// <summary>The leading numbers of a version without the last one: 6.3 for 6.3.4, 26 for 26.</summary>
-    private static long[] Line(string version)
-    {
-        var numbers = LeadingNumbers(version);
-        return numbers.Length > 1 ? numbers[..^1] : numbers;
-    }
-
-    /// <summary>Whether a version belongs to a line; missing parts count as 0 (1.20 is in line 1.20, not in 1.19).</summary>
-    private static bool SameLine(string version, long[] line)
-    {
-        var numbers = LeadingNumbers(version);
-        return line.Select((n, i) => (i < numbers.Length ? numbers[i] : 0) == n).All(same => same);
-    }
-
-    /// <summary>The dot-separated numbers a version starts with: 11.0.0 for 11.0.0-M2, none for «latest».</summary>
-    private static long[] LeadingNumbers(string version)
-    {
-        var numbers = new List<long>();
-        foreach (var part in version.Trim().TrimStart('v', 'V').Split('.'))
-        {
-            var digits = new string([.. part.TakeWhile(char.IsAsciiDigit)]);
-            if (digits.Length is 0 or > 18)
-            {
-                break;
-            }
-
-            numbers.Add(long.Parse(digits, System.Globalization.CultureInfo.InvariantCulture));
-            if (digits.Length < part.Length)
-            {
-                break;
-            }
-        }
-
-        return [.. numbers];
+            scheme.TryParse(fix, out var parsed) && parsed <= version && VersionLines.InLine(fix, line));
     }
 
     private static Position Locate(IVersionScheme scheme, ParsedVersion version, VersionRange range)

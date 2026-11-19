@@ -266,6 +266,18 @@ public sealed class VersionCheckTests
         Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.InUnaffectedRange), Check("5.10.201", VersionStatus.Affected, ["6.0"], backport));
     }
 
+    [Theory]
+    [InlineData("16.4")]
+    [InlineData("16.4.0")]
+    [InlineData("16.4.0.0")]
+    public void The_line_guard_does_not_depend_on_how_many_parts_the_version_is_written_with(string installed)
+    {
+        // The fix 16.2 belongs to the line 16.2, not to 16.4: the text's later fix 16.6 keeps every spelling unknown.
+        var range = new VersionRange { Introduced = "16.0", Fixed = "16.2" };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.FixNamedInTextAboveInstalled), Check(installed, VersionStatus.Unknown, ["16.6"], range));
+    }
+
     [Fact]
     public void Text_versions_the_scheme_cannot_read_are_ignored()
     {

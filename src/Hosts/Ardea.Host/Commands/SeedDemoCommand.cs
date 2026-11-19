@@ -10,19 +10,26 @@ namespace Ardea.Host.Commands;
 /// <c>ardea seed-demo</c> (task 7.6): fills an empty instance with the sample data of the mockups so that a visitor can
 /// look around: an organisation with three people and three projects, sixteen real CVE records of the spike week,
 /// and everything the pipeline makes of them (entries, findings, actions, history, notifications). The records go
-/// through the real jobs; nothing is fetched and no GitHub token is needed. A database that holds data is refused
-/// before anything is written. The owner's sign-in is printed once.
+/// through the real jobs; nothing is fetched and no GitHub token is needed. A database that holds data, or that a
+/// worker has already used, is refused before anything is written. The owner's sign-in is printed once.
 /// </summary>
 internal static class SeedDemoCommand
 {
-    /// <summary>What counts as data: the tables a used instance fills first, with the word the refusal uses for them.</summary>
-    private static readonly (string Table, string Noun)[] Occupancy =
+    /// <summary>
+    /// What counts as a used instance, with the words the refusal uses: the tables a used instance fills first, and any
+    /// trace of a worker. A worker that ran before the command may have queued a source sync in its first minutes, before
+    /// any record is stored, and it would take the demo's jobs out of the command's sight; so a heartbeat or any job, in
+    /// whatever state, refuses too. A freshly migrated database has neither.
+    /// </summary>
+    internal static readonly (string Table, string Noun)[] Occupancy =
     [
         ("iam.\"user\"", "account(s)"),
         ("iam.organization", "organisation(s)"),
         ("assets.project", "project(s)"),
         ("intel.source_record", "source record(s)"),
         ("intel.security_entry", "security entry/entries"),
+        ("platform.worker_heartbeat", "worker heartbeat(s)"),
+        ("platform.job", "job(s)"),
     ];
 
     public static async Task<int> RunAsync(string[] args)
@@ -65,15 +72,16 @@ internal static class SeedDemoCommand
         await using var owner = new NpgsqlConnection(database.OwnerConnectionString("ardea-seed-demo"));
         await owner.OpenAsync(cancellationToken);
 
-        // Two runs at once would both see an empty instance.
-        await using (var guard = new NpgsqlCommand("SELECT pg_advisory_lock(hashtext('ardea-seed-demo'))", owner))
+        // Two runs at once would both see an empty instance, and the first-user setup of the API (which takes the same
+        // key for its transaction) must not create an account in between. Both locks last as long as this session.
+        await using (var guard = new NpgsqlCommand("SELECT pg_advisory_lock(hashtext('ardea-seed-demo')), pg_advisory_lock(hashtext('ardea-setup'))", owner))
         {
             await guard.ExecuteNonQueryAsync(cancellationToken);
         }
 
         if (await HoldsAsync(owner, cancellationToken) is { Length: > 0 } holds)
         {
-            await error.WriteLineAsync($"The database holds data ({holds}). seed-demo works only on an empty instance and changed nothing.");
+            await error.WriteLineAsync($"The database is not empty ({holds}). seed-demo works only on a freshly migrated instance that no worker has used yet, and changed nothing.");
             return 1;
         }
 
@@ -94,10 +102,14 @@ internal static class SeedDemoCommand
 
             await RecordAsync(services, context, cancellationToken);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex)
         {
-            await error.WriteLineAsync($"seed-demo failed: {ex.Message}");
-            await error.WriteLineAsync("The instance is partly filled and a second run refuses it. Start over with an empty database (with Compose: `docker compose down -v`).");
+            await error.WriteLineAsync(ex is OperationCanceledException
+                ? "seed-demo stopped: it did not finish in time."
+                : $"seed-demo failed: {ex.Message}");
+            await error.WriteLineAsync(await WrittenAsync(owner)
+                ? "The instance is partly filled and a second run refuses it. Start over with an empty database (with Compose: `docker compose down -v`)."
+                : "Nothing was written; run it again once the cause is fixed.");
             return 1;
         }
 
@@ -121,10 +133,22 @@ internal static class SeedDemoCommand
         return string.Join(", ", found);
     }
 
+    /// <summary>Whether a failed run committed anything; when the database cannot tell, assume it did.</summary>
+    private static async Task<bool> WrittenAsync(NpgsqlConnection owner)
+    {
+        try
+        {
+            return (await HoldsAsync(owner, CancellationToken.None)).Length > 0;
+        }
+        catch (Exception ex) when (ex is NpgsqlException or InvalidOperationException)
+        {
+            return true;
+        }
+    }
+
     private static async Task RecordAsync(IServiceProvider services, DemoSeedContext context, CancellationToken cancellationToken)
     {
         await using var scope = context.CreateScope();
-        scope.ServiceProvider.GetRequiredService<AuditOrigin>().Origin = "command:seed-demo";
         await scope.ServiceProvider.GetRequiredService<IAuditLog>().RecordAsync(
             new AuditEntry("instance.demo_seeded", "organization", context.OrganizationId.ToString(), new { slug = "example-digital" }) { InstanceEvent = true },
             cancellationToken);

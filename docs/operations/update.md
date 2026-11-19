@@ -1,7 +1,9 @@
 # Update
 
 Versions follow Semantic Versioning; within a major version (`ghcr.io/nicom77/ardea:0`, published from the
-first release on) an update needs nothing but a pull and a restart. Read the release notes first.
+first release on) an update needs nothing but a pull and a restart. Read the release notes first. A new major version
+never arrives under this tag: change the tag yourself and read its notes. Ardea does not ask anywhere for new
+versions; the installed version is shown in the administration (and by `ardea version`).
 
 ```bash
 docker compose pull

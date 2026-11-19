@@ -16,7 +16,10 @@ Ardea runs as one image in three roles (`migrate`, `api`, `worker`) next to Post
   `raw.githubusercontent.com`, `objects.githubusercontent.com` and `release-assets.githubusercontent.com` (CVE
   Program), `www.cisa.gov` (KEV), `epss.empiricalsecurity.com` (EPSS), `osv-vulnerabilities.storage.googleapis.com`
   and `api.osv.dev` (OSV), `security-hub.ncsc.admin.ch` and `www.bacs.admin.ch` (NCSC). For repositories:
-  `api.github.com` and `dgpproduction.blob.core.windows.net`.
+  `api.github.com` and `dgpproduction.blob.core.windows.net`. For Web Push: the browser makers' push services
+  (`fcm.googleapis.com`, `updates.push.services.mozilla.com`, `web.push.apple.com`, `*.push.apple.com`,
+  `*.notify.windows.com`). For a hosted language model: its address (for example `api.anthropic.com`). Everything
+  else is closed to Ardea; `ardea doctor` tries the hosts of the sources, the SMTP server and the providers.
 - A host name with HTTPS in front of the API. Ardea answers API calls only over HTTPS.
 
 ## Steps
@@ -49,8 +52,18 @@ Ardea runs as one image in three roles (`migrate`, `api`, `worker`) next to Post
    also printed in the API log at the first start) and creates the first user, who is the instance
    administrator. Remove the token from `.env.app` afterwards.
 
-4. In the administration: registration mode (by invitation is the default), SMTP for e-mail, and the
-   sources. Then create an organisation; its setup wizard walks through the first project.
+4. In the administration: registration mode (by invitation is the default), SMTP for e-mail (with a test
+   e-mail), the sources, and, if you want assessments by a language model, the providers
+   ([Configuration](configuration.md), [Operation](operations.md#language-model)). Then create an organisation; its
+   setup wizard walks through the first project. Web Push needs nothing more than HTTPS
+   ([Notifications](operations.md#notifications)).
 
 `docker compose ps` shows all three services healthy; `docker compose run --rm api doctor` checks the
-configuration, database, schema, SMTP and the reachability of the sources.
+configuration, database and schema, and warns about an SMTP server, language model provider or source it cannot
+reach.
+
+The first load of the sources starts at once and runs in the background; the *Sources* page in the administration
+shows its progress. With the first load done, **the catalogue starts to learn** from the products the sources name
+and the curated catalogue does not know (once a day, or with `ardea catalog grow`);
+see [Operation](operations.md#catalogue-that-learns). Back up the database and the master key from the first day
+([Operation](operations.md#backups)).

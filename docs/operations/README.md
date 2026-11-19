@@ -7,8 +7,8 @@ these pages say what to do.
 |---|---|
 | [Installation](installation.md) | A new instance with Docker Compose, HTTPS, the first user |
 | [Configuration](configuration.md) | Every setting, where it lives and its default |
-| [Operation](operations.md) | Services, health, logs, backups, sources, maintenance commands |
-| [Update](update.md) | A new version, the dump before migration, going back |
+| [Operation](operations.md) | Services, health, logs, backups and restore, sources, language model, catalogue, notifications and Web Push, repositories, warnings and figures, maintenance commands |
+| [Update](update.md) | A new version, the dump before migration, going back (restoring) |
 | [Add a source](add-a-source.md) | Writing an adapter for another vulnerability source |
 
 Security issues in Ardea itself: [`SECURITY.md`](../../SECURITY.md).

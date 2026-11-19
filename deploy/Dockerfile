@@ -9,13 +9,18 @@ WORKDIR /src/web
 COPY web/package.json web/package-lock.json ./
 RUN --mount=type=cache,id=npm,target=/root/.npm npm ci --no-audit --no-fund
 COPY web/ ./
-RUN npm run build
+RUN npm run build \
+ && node scripts/third-party-notices.mjs /npm-notices.md
 
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
 ARG TARGETARCH
 ARG VERSION=0.0.0
 WORKDIR /src
 COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
+COPY .config/ .config/
+COPY build/third-party-notices.sh build/third-party-notices.sh
+COPY build/licenses/ build/licenses/
+COPY --from=web /npm-notices.md /npm-notices.md
 COPY src/ src/
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     dotnet restore src/Hosts/Ardea.Host/Ardea.Host.csproj -a "$TARGETARCH"
@@ -23,6 +28,10 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     dotnet publish src/Hosts/Ardea.Host/Ardea.Host.csproj -c Release -a "$TARGETARCH" --no-restore \
       -p:Version="$VERSION" -p:UseAppHost=true -o /app \
  && mkdir -p /scratch
+# Licence texts and notices of what the image ships (master plan 13.5): NuGet and npm packages.
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+    NPM_NOTICES=/npm-notices.md build/third-party-notices.sh /app/THIRD-PARTY-NOTICES.md
+COPY LICENSE /app/LICENSE
 
 # Without shell and package manager, non-root, with time zone data and ICU (experiment 0.7, ADR 0003).
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra

@@ -23,7 +23,7 @@ internal static class MessageRenderer
     public static InAppText InApp(MessageItem item, MessageContent content)
     {
         var texts = MessageTexts.For(content.Locale);
-        return new InAppText(Truncate(texts.Title(item), 300), Truncate(texts.Headline(item, content.RecipientUserId), 2000), content.PathOf(item));
+        return new InAppText(Truncate(texts.Title(item), 300), Truncate(texts.Headline(item), 2000), content.PathOf(item));
     }
 
     /// <summary>A digest in the app: its subject, and its first lines as the body.</summary>
@@ -95,7 +95,7 @@ internal static class MessageRenderer
         {
             var last = subjects[0].OrderBy(i => i.At).Last();
             return PushPayload(
-                texts.Locale, content.DeliveryId, texts.Title(last), texts.Headline(last, content.RecipientUserId), content.Link(content.PathOf(last) ?? inbox),
+                texts.Locale, content.DeliveryId, texts.Title(last), texts.Headline(last), content.Link(content.PathOf(last) ?? inbox),
                 content.Level, content.Organization.Slug);
         }
 
@@ -194,7 +194,7 @@ internal static class MessageRenderer
                 occurredAt = i.At,
                 level = i.Level,
                 title = texts.Title(i),
-                summary = texts.Headline(i, null),
+                summary = texts.Headline(i),
                 url = content.PathOf(i) is { } path ? content.Link(path).AbsoluteUri : null,
                 alreadyReported = i.AlreadyReported ? true : (bool?)null,
                 newFindings = i.NewFindings > 0 ? i.NewFindings : (int?)null,
@@ -253,7 +253,7 @@ internal static class MessageRenderer
     {
         foreach (var item in items)
         {
-            yield return new Paragraph(texts.Headline(item, content.RecipientUserId), Bold: true);
+            yield return new Paragraph(texts.Headline(item), Bold: true);
         }
 
         var last = items[^1];
@@ -323,7 +323,7 @@ internal static class MessageRenderer
         foreach (var item in items.OrderByDescending(i => i.Level ?? 0).ThenBy(i => i.At))
         {
             var line = minimal && item.Action is { } a ? $"#{a.Number}" : texts.Title(item);
-            var detail = item.Event == "finding.joined" ? texts.Format("digest.new_findings", item.NewFindings) : texts.Headline(item, content.RecipientUserId);
+            var detail = item.Event == "finding.joined" ? texts.Format("digest.new_findings", item.NewFindings) : texts.Headline(item);
             if (item.AlreadyReported)
             {
                 detail += $" ({texts["digest.already"]})";

@@ -223,33 +223,17 @@ internal sealed class Evaluator(
     }
 
     /// <summary>
-    /// Who hears about an event without a target naming them (master plan 8.2): the assignee about an
-    /// assignment and about the team's work on their action, unless it is their own doing, and every member
-    /// about a warning in the app.
+    /// Who hears about an event without a target naming them (master plan 8.2): every member about a warning in the
+    /// app. A reminder has no assignee (master plan 17.5), so nobody hears about the team's work without a rule.
     /// </summary>
     private static IEnumerable<(Recipient Recipient, string Channel)> Implicit(MessageItem item, bool ruleMatched, Context context)
     {
-        switch (item.Event)
+        if (item.Event == NotifyEvents.WarningPublished && ruleMatched)
         {
-            case NotifyEvents.ActionAssigned when Guid.TryParse(item.DataString("to"), out var assignee) && assignee != item.Actor && context.Directory.User(assignee) is { } person:
-                yield return (person, Channels.InApp);
-                if (context.EmailAvailable)
-                {
-                    yield return (person, Channels.Email);
-                }
-
-                break;
-            case NotifyEvents.ActionStatusChanged or NotifyEvents.ActionNoteAdded
-                when item.Action?.AssignedTo is { } assignee && assignee != item.Actor && context.Directory.User(assignee) is { } person:
-                yield return (person, Channels.InApp);
-                break;
-            case NotifyEvents.WarningPublished when ruleMatched:
-                foreach (var member in context.Directory.WithRole(OrganizationRole.Viewer))
-                {
-                    yield return (member, Channels.InApp);
-                }
-
-                break;
+            foreach (var member in context.Directory.WithRole(OrganizationRole.Viewer))
+            {
+                yield return (member, Channels.InApp);
+            }
         }
     }
 
@@ -385,7 +369,6 @@ internal sealed class Evaluator(
             Locale = context.Directory.Locale(recipient, context.Organization.Locale),
             PublicUrl = context.PublicUrl,
             Items = [item],
-            RecipientUserId = recipient.UserId,
         };
         var text = MessageRenderer.InApp(item, content);
         db.Notifications.Add(new Notification

@@ -85,7 +85,6 @@ internal sealed class DeliveryReader(
             Items = items,
             PeriodStart = delivery.PeriodStart,
             PeriodEnd = delivery.PeriodEnd,
-            RecipientUserId = recipient.UserId,
         };
         if (delivery.Kind == "immediate" && items.Count == 0)
         {

@@ -185,8 +185,8 @@ internal sealed class NotifyTestHost : IAsyncDisposable
             VALUES ('{organization}', '{entry}', '{key}', {number + 1000}, {level}, 1, now(), now()) RETURNING id
             """);
         var action = await ScalarAsync<Guid>($"""
-            INSERT INTO assess.remediation (organization_id, project_id, component_id, number, level, target_version, open_findings, exploitation, fix_available, status, due_at_manual, opened_at, is_backfill, changed_at)
-            VALUES ('{organization}', '{project}', '{component}', {number}, {level}, '16.4', 1, '{exploitation}', true, 'open', false, now(), {(backfill ? "true" : "false")}, now()) RETURNING id
+            INSERT INTO assess.remediation (organization_id, project_id, component_id, number, level, target_version, open_findings, exploitation, fix_available, status, opened_at, is_backfill, changed_at)
+            VALUES ('{organization}', '{project}', '{component}', {number}, {level}, '16.4', 1, '{exploitation}', true, 'open', now(), {(backfill ? "true" : "false")}, now()) RETURNING id
             """);
         await ExecuteAsync($"""
             INSERT INTO assess.finding (organization_id, alert_id, entry_id, project_id, component_id, remediation_id, match_type, version_verdict, verdict, verdict_source, level, evidence, factors, status, status_changed_at, is_backfill, created_at, changed_at, exploitation, fix_available, fixed_version)

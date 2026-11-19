@@ -4,10 +4,12 @@ Ardea is Latin for heron: a bird that stands still for a long time and strikes o
 
 A self-hosted, open-source early-warning system for security vulnerabilities: it collects advisories and CVE records from trusted sources, merges them into one entry per vulnerability, and tells each organization which ones affect its projects, how urgent they are, and what to do.
 
-## Status: phase 0 (foundation)
+## Status: phase 3 (findings and remediations)
 
-The master plan is approved and implementation has started. Progress follows the phases in
-chapter 14 of the plan (see the roadmap below); nothing is usable yet.
+The master plan is approved and implementation is under way. The tasks of phases 0 to 2 are done: an instance fetches and
+consolidates vulnerabilities from five sources and keeps organisations, projects and their technology profile,
+also read from GitHub repositories. Findings and remediations (phase 3) are in progress; there is no release
+yet. Progress follows chapter 14 of the plan (see the roadmap below).
 
 ## Roadmap
 
@@ -205,6 +207,8 @@ master plan and in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 | Ecosystem research with sources, 18 Nov 2026 | [`docs/research/`](docs/research/) |
 | Throwaway data spike | [`prototypes/`](prototypes/README.md) |
 | Contribution rules | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| Running an instance: installation, configuration, operation, update, adding a source | [`docs/operations/`](docs/operations/README.md) |
+| Reporting a security issue | [`SECURITY.md`](SECURITY.md) |
 
 ## Planned stack
 

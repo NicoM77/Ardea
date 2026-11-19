@@ -295,6 +295,14 @@ internal sealed class CatalogIndex
         }
 
         list.Add(product);
+
+        // A learned single word under a vendor («Agent» of Grafana) finds the entry only with that vendor: without one it
+        // is too generic to stand for the product (ADR 040).
+        if (product.Origin == ProductOrigin.Learned && vendorKey is not null && !Light(name).Contains(' ', StringComparison.Ordinal))
+        {
+            return;
+        }
+
         if (!_byName.TryGetValue(nameKey, out var byName))
         {
             _byName[nameKey] = byName = [];

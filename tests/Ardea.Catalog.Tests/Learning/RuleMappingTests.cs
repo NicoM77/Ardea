@@ -53,6 +53,41 @@ public sealed class RuleMappingTests
         Assert.Equal(["pkg:npm/left-pad-ng"], proposal?.NewProduct?.Packages);
     }
 
+    /// <summary>Review finding: the vendor stays in the name where the record has it, and comes in front of a generic word.</summary>
+    [Theory]
+    [InlineData("Redis", "Redis Insight 2.64", "redis:redisinsight", "Redis Insight", "redis-insight")]
+    [InlineData("Grafana Labs", "Agent", "grafana:agent", "Grafana Agent", "grafana-agent")]
+    [InlineData("Acme Corp.", "Server 4", "acme:server", "Acme Server", "acme-server")]
+    [InlineData("Acme Corp.", "Widget Server", "acme:widget_server", "Widget Server", "widget-server")]
+    public void A_new_entry_keeps_the_vendor_where_the_rest_is_generic(string vendor, string product, string cpe, string name, string key)
+    {
+        var proposal = RuleMapping.Map(Statement(vendor, product, cpe: [cpe]), Catalog, Keys);
+
+        Assert.Equal((name, key), (proposal?.NewProduct?.Name, proposal?.NewProduct?.Key));
+    }
+
+    [Fact]
+    public void A_learned_generic_word_finds_its_entry_only_with_the_vendor()
+    {
+        var proposal = RuleMapping.Map(Statement("Grafana Labs", "Agent", cpe: ["grafana:agent"]), Catalog, Keys)!;
+        var p = proposal.NewProduct!;
+        var learned = new CatalogLayers(CatalogFiles.Load(CatalogFilesTests.RepositoryCatalog).Products.Append(new CatalogProduct
+        {
+            Key = p.Key,
+            Name = p.Name,
+            Vendor = p.Vendor,
+            Kind = ProductKind.Other,
+            VersionScheme = p.VersionScheme,
+            CpePairs = [.. p.Cpe.Select(c => CpePair.TryParse(c, out var pair) ? pair : default)],
+            Aliases = p.Aliases,
+            Origin = ProductOrigin.Learned,
+        }));
+
+        Assert.Equal("grafana-agent", learned.FindByName("Grafana Labs", "Agent")?.Product.Key);
+        Assert.Equal("grafana-agent", learned.FindByName(null, "Grafana Agent")?.Product.Key);
+        Assert.Null(learned.FindByName(null, "Agent"));
+    }
+
     [Fact]
     public void A_name_alone_that_no_entry_has_is_left_to_the_model()
     {

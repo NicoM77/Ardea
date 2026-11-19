@@ -40,7 +40,8 @@ internal sealed class LearningHost : IAsyncDisposable
 
     public RecordingSubscriber Recomputed => Services.GetRequiredService<RecordingSubscriber>();
 
-    public static async Task<LearningHost> StartAsync(PostgresServer server, IAiProviders? providers = null, IReadOnlyDictionary<string, string?>? settings = null)
+    public static async Task<LearningHost> StartAsync(
+        PostgresServer server, IAiProviders? providers = null, IReadOnlyDictionary<string, string?>? settings = null, LearningOptions? options = null)
     {
         var database = await CatalogDatabase.CreateAsync(server);
         await using (var owner = await database.OpenOwnerAsync())
@@ -66,6 +67,11 @@ internal sealed class LearningHost : IAsyncDisposable
         }
 
         new CatalogModule().AddServices(services, configuration);
+        if (options is not null)
+        {
+            services.AddSingleton(options);
+        }
+
         services.AddSingleton<FakeFeed>();
         services.AddSingleton<IUnknownProductFeed>(sp => sp.GetRequiredService<FakeFeed>());
         services.AddSingleton<RecordingSubscriber>();
@@ -74,11 +80,11 @@ internal sealed class LearningHost : IAsyncDisposable
     }
 
     /// <summary>One run of <see cref="GrowCatalog"/>, as the worker runs it.</summary>
-    public async Task GrowAsync(bool collect = true)
+    public async Task GrowAsync(bool collect = true, string? rulesAfter = null)
     {
         await using var scope = Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<GrowCatalogHandler>()
-            .HandleAsync(new GrowCatalog(collect), new JobContext(Guid.CreateVersion7(), GrowCatalog.Kind, 1, null), CancellationToken.None);
+            .HandleAsync(new GrowCatalog(collect, rulesAfter), new JobContext(Guid.CreateVersion7(), GrowCatalog.Kind, 1, null), CancellationToken.None);
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 

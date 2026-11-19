@@ -61,8 +61,15 @@ internal sealed partial class SyncSourceHandler(
     SourceHttpFactory http,
     IConfiguration configuration,
     TimeProvider time,
+    IEnumerable<Catalog.Contracts.ICatalogGrowth> catalogGrowth,
     ILogger<SyncSourceHandler> logger) : IJobHandler<SyncSource>
 {
+    /// <summary>
+    /// After a source's first load the catalogue learns from what it brought (master plan 6.9 «nach der Erstbefüllung»),
+    /// once normalisation and merging had time to work through the records; until then the daily run would wait.
+    /// </summary>
+    internal static readonly TimeSpan CatalogAfterFirstLoad = TimeSpan.FromHours(1);
+
     /// <summary>Records stored in one transaction when a provider delivers many between checkpoints.</summary>
     internal const int FlushSize = 500;
 
@@ -136,6 +143,15 @@ internal sealed partial class SyncSourceHandler(
 
             await CommitAsync(sourceId, job.SourceKey, runId, buffer, newCursor: null, run, cancellationToken);
             await FinishAsync(sourceId, runId, run, interval, sync.NextSyncHint, error: null, cancellationToken);
+            if (mode == SyncMode.Backfill)
+            {
+                // In the job's unit of work: the run exists exactly when the load is recorded as done.
+                foreach (var growth in catalogGrowth)
+                {
+                    await growth.RequestAsync(CatalogAfterFirstLoad, cancellationToken);
+                }
+            }
+
             LogSucceeded(job.SourceKey, run.Fetched, run.Changed);
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)

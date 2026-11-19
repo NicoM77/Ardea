@@ -43,6 +43,7 @@ public sealed class CatalogModule : IModule
         services.AddSingleton(LearningOptions.FromConfiguration(configuration));
         services.AddScoped<Learner>();
         services.AddScoped<LearnedEntries>();
+        services.AddScoped<ICatalogGrowth, CatalogGrowth>();
         services.AddJob<GrowCatalog, GrowCatalogHandler>(new JobKindOptions
         {
             MaxConcurrency = 1,

@@ -40,12 +40,13 @@ internal static partial class RuleMapping
             }
         }
 
-        var name = Variants(statement.Vendor, statement.Product).FirstOrDefault() ?? statement.Product.Trim();
         var vendor = ProductKey.NormalizeVendor(statement.Vendor) is null ? null : statement.Vendor!.Trim();
         var cpe = statement.CpePairs.Select(ProductDrafts.CpeText).OfType<string>().Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
+        vendor ??= cpe.Count > 0 ? Words(cpe[0].Split(':')[0]) : null;
+        var name = NameOf(vendor, statement.Product);
         if (cpe.Count > 0)
         {
-            return New(statement, catalog, keys, name, vendor ?? Words(cpe[0].Split(':')[0]), "other", VersionSchemeNames.Numeric, cpe, package, "unknown CPE pair");
+            return New(statement, catalog, keys, name, vendor, "other", VersionSchemeNames.Numeric, cpe, package, "unknown CPE pair");
         }
 
         if (package is { } unknownPackage)
@@ -55,6 +56,64 @@ internal static partial class RuleMapping
 
         return null;
     }
+
+    /// <summary>
+    /// The name of a new entry made by rule: the record's name without trailing versions, the vendor's name kept where the
+    /// record has it (<c>Redis Insight</c>), and put in front where what is left is generic (<c>Agent</c> of Grafana is
+    /// <c>Grafana Agent</c>), so that a generic word never becomes an entry of its own.
+    /// </summary>
+    public static string NameOf(string? vendor, string product)
+    {
+        var words = product.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).ToList();
+        while (words.Count > 1 && VersionWord().IsMatch(words[^1]))
+        {
+            words.RemoveAt(words.Count - 1);
+        }
+
+        var name = words.Count == 0 ? product.Trim() : string.Join(' ', words);
+        var vendorName = VendorName(vendor);
+        if (vendorName is null || ProductKey.NormalizeProduct(name)?.StartsWith(ProductKey.NormalizeVendor(vendorName) ?? "\0", StringComparison.Ordinal) == true)
+        {
+            return name;
+        }
+
+        var generic = words.All(w => GenericWords.Contains(w.ToLowerInvariant().Trim('.', ',', '-'))) || name.Length <= 3;
+        return generic ? $"{vendorName} {name}" : name;
+    }
+
+    /// <summary>Words that name a kind of thing rather than a product.</summary>
+    private static readonly HashSet<string> GenericWords = new(StringComparer.Ordinal)
+    {
+        "agent", "server", "client", "portal", "gateway", "insight", "insights", "manager", "management", "console", "studio",
+        "cloud", "app", "application", "api", "core", "platform", "suite", "plugin", "connector", "controller", "dashboard",
+        "monitor", "monitoring", "proxy", "router", "firmware", "library", "sdk", "cli", "tool", "tools", "service", "services",
+        "center", "centre", "hub", "web", "desktop", "mobile", "enterprise", "community", "edition", "framework", "engine",
+        "system", "module", "extension", "viewer", "editor", "player", "reader", "driver", "operator", "exporter", "daemon",
+        "backup", "admin", "control", "panel", "online", "pro", "plus", "lite", "express", "standard",
+    };
+
+    /// <summary>The vendor as people write it, without a legal form at the end: <c>Acme Corp.</c> is <c>Acme</c>.</summary>
+    private static string? VendorName(string? vendor)
+    {
+        if (ProductKey.NormalizeVendor(vendor) is null)
+        {
+            return null;
+        }
+
+        var words = vendor!.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).ToList();
+        while (words.Count > 1 && LegalForms.Contains(words[^1].ToLowerInvariant().Trim('.', ',')))
+        {
+            words.RemoveAt(words.Count - 1);
+        }
+
+        return string.Join(' ', words).TrimEnd(',');
+    }
+
+    private static readonly HashSet<string> LegalForms = new(StringComparer.Ordinal)
+    {
+        "inc", "corp", "corporation", "co", "company", "ltd", "limited", "llc", "plc", "gmbh", "ag", "sa", "sas", "bv", "nv", "srl", "spa", "ab", "oy",
+        "labs", "software", "foundation", "project", "team", "technologies", "systems", "group",
+    };
 
     /// <summary>
     /// The product name without trailing version numbers (<c>Widget 2.4</c>, <c>Widget v3</c>, <c>Widget version 5</c>) and

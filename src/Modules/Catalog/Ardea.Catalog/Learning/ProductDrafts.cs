@@ -128,6 +128,13 @@ internal static partial class ProductDrafts
     public static bool Suspicious(string? vendor, string product) =>
         new[] { vendor, product }.OfType<string>().Any(t => t.Length > 120 || t.Any(char.IsControl) || Markup().IsMatch(t) || Instruction().IsMatch(t));
 
+    /// <summary>
+    /// Whether any other text that goes to the model reads like an instruction: titles, CPE pairs, package. Titles are
+    /// long and use quotes and brackets, so only control characters and the instruction patterns count for them.
+    /// </summary>
+    public static bool SuspiciousText(string? text) =>
+        text is not null && (text.Any(char.IsControl) || Instruction().IsMatch(text));
+
     /// <summary>The comparable form of a CPE pair as the catalogue writes it, or <c>null</c>.</summary>
     public static string? CpeText(string text) => CpePair.TryParse(text, out var pair) ? pair.ToString() : null;
 

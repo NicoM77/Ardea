@@ -19,6 +19,15 @@ internal sealed record LearningOptions(int DailyCalls, int MinRecords)
     /// <summary>Keys asked about in one run of <c>GrowCatalog</c>: with two calls of at most two minutes each, a run stays within its time limit.</summary>
     public const int KeysPerRun = 10;
 
+    /// <summary>Keys the mapping without a model works on in one unit of work.</summary>
+    public int RuleBatchSize { get; init; } = 250;
+
+    /// <summary>
+    /// Batches of the mapping without a model in one run; the rest goes to a continuation. After a first load of 180 days
+    /// thousands of keys wait: 20 batches of 250 keep a run well inside its time limit.
+    /// </summary>
+    public int RuleBatchesPerRun { get; init; } = 20;
+
     public static readonly LearningOptions Default = new(200, 2);
 
     /// <summary>

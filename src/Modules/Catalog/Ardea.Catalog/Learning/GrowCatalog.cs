@@ -12,10 +12,11 @@ using Microsoft.Extensions.Logging;
 namespace Ardea.Catalog.Learning;
 
 /// <summary>
-/// The catalogue grows by itself (master plan 6.9): once a day, on request of the administrator, and continued by
-/// itself while keys and calls are left. <see cref="Collect"/> is <c>false</c> for a continuation, which skips step 1.
+/// The catalogue grows by itself (master plan 6.9): once a day, after a source's first load, on request of the
+/// administrator, and continued by itself while keys and calls are left. <see cref="Collect"/> is <c>false</c> for a
+/// continuation, which skips step 1; <see cref="RulesAfter"/> is the raw key the mapping without a model goes on after.
 /// </summary>
-internal sealed record GrowCatalog(bool Collect = true) : IJob
+internal sealed record GrowCatalog(bool Collect = true, string? RulesAfter = null) : IJob
 {
     public static string Kind => "catalog.grow";
 
@@ -27,16 +28,15 @@ internal sealed record GrowCatalog(bool Collect = true) : IJob
 /// records; map without a model what rules can map; then, with a provider and calls left, ask the model about one key
 /// after the other, most frequent first: read in a short unit of work, call without an open transaction, write the
 /// outcome in another. The job's own unit of work stays unused, so no transaction is open while the model thinks.
-/// The kind has one attempt: a repeated run would ask the model again.
+/// The mapping without a model works in batches of its own units of work, so a run that ends early keeps what it did;
+/// after <see cref="LearningOptions.RuleBatchesPerRun"/> batches the run hands the rest to a continuation, before the
+/// model is asked. The kind has one attempt: a repeated run would ask the model again.
 /// </summary>
 internal sealed partial class GrowCatalogHandler(
     IUnitOfWorkFactory units, Learner learner, CatalogCache cache, IAiProviders providers, LearningOptions options, TimeProvider time,
     ILogger<GrowCatalogHandler> logger)
     : IJobHandler<GrowCatalog>
 {
-    /// <summary>Rounds of the mapping without a model: a new entry from one key can make another key an alias of it.</summary>
-    private const int RuleRounds = 3;
-
     public async Task HandleAsync(GrowCatalog job, JobContext context, CancellationToken cancellationToken)
     {
         if (job.Collect)
@@ -44,26 +44,16 @@ internal sealed partial class GrowCatalogHandler(
             await CollectAsync(cancellationToken);
         }
 
-        var mapped = 0;
-        for (var round = 0; round < RuleRounds; round++)
-        {
-            var changed = await MapByRulesAsync(cancellationToken);
-            mapped += changed;
-            if (changed == 0)
-            {
-                break;
-            }
-        }
-
-        var (asked, more) = context.Attempt > 1 ? (0, false) : await AskModelAsync(cancellationToken);
-        if (more)
+        var (mapped, rulesAfter) = await MapByRulesAsync(job.RulesAfter, cancellationToken);
+        var (asked, more) = rulesAfter is not null || context.Attempt > 1 ? (0, false) : await AskModelAsync(cancellationToken);
+        if (rulesAfter is not null || more)
         {
             await using var scope = units.CreateScope();
-            await scope.ServiceProvider.GetRequiredService<IJobQueue>().EnqueueAsync(new GrowCatalog(Collect: false), GrowCatalog.Options, cancellationToken);
+            await scope.ServiceProvider.GetRequiredService<IJobQueue>().EnqueueAsync(new GrowCatalog(Collect: false, rulesAfter), GrowCatalog.Options, cancellationToken);
             await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
         }
 
-        LogRun(mapped, asked, more);
+        LogRun(mapped, asked, rulesAfter is not null || more);
     }
 
     /// <summary>
@@ -113,21 +103,48 @@ internal sealed partial class GrowCatalogHandler(
     }
 
     /// <summary>
-    /// Step 2, without a model: what rules map takes effect at once; a suspicious statement waits for a person. One round
-    /// checks against the catalogue as it was at its start; a spelling one key of the round takes is left to the next.
+    /// Step 2, without a model: what rules map takes effect at once; a suspicious statement waits for a person. Keys in
+    /// raw key order, a batch per unit of work; each batch checks against the catalogue as the batches before left it,
+    /// and a spelling two keys of one batch would take is left to the next run. Returns the keys mapped and, when the run's
+    /// batches are used up, the raw key to go on after.
     /// </summary>
-    private async Task<int> MapByRulesAsync(CancellationToken cancellationToken)
+    private async Task<(int Mapped, string? After)> MapByRulesAsync(string? after, CancellationToken cancellationToken)
+    {
+        var mapped = 0;
+        for (var batch = 0; batch < options.RuleBatchesPerRun; batch++)
+        {
+            var (changed, last, count) = await MapBatchAsync(after, cancellationToken);
+            mapped += changed;
+            if (count < options.RuleBatchSize || last is null)
+            {
+                return (mapped, null);
+            }
+
+            after = last;
+        }
+
+        return (mapped, after);
+    }
+
+    private async Task<(int Changed, string? Last, int Count)> MapBatchAsync(string? after, CancellationToken cancellationToken)
     {
         var changed = 0;
+        string? last;
+        int count;
         await using (var scope = units.CreateScope())
         {
             var services = scope.ServiceProvider;
             var db = services.GetRequiredService<CatalogDbContext>();
             var entries = services.GetRequiredService<LearnedEntries>();
-            var rows = await Due(db.UnknownProducts).Where(u => u.Proposal == null).ToListAsync(cancellationToken);
+            var rows = await Due(db.UnknownProducts)
+                .Where(u => u.Proposal == null && (after == null || string.Compare(u.RawKey, after) > 0))
+                .OrderBy(u => u.RawKey)
+                .Take(options.RuleBatchSize)
+                .ToListAsync(cancellationToken);
+            (last, count) = (rows.LastOrDefault()?.RawKey, rows.Count);
             if (rows.Count == 0)
             {
-                return 0;
+                return (0, null, 0);
             }
 
             var layers = await services.GetRequiredService<ProductCatalog>().ReadLayersAsync(cancellationToken);
@@ -168,12 +185,14 @@ internal sealed partial class GrowCatalogHandler(
                 }
             }
 
+            // The last event is not written by an adoption's own save: save before the commit.
+            await db.SaveChangesAsync(cancellationToken);
             await services.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
         }
 
-        // Every process reads what this one wrote once its cache expires; this one at once.
+        // Every process reads what this one wrote at its next unit of work (ADR 040); this one at once.
         cache.Invalidate();
-        return changed;
+        return (changed, last, count);
     }
 
     /// <summary>
@@ -324,4 +343,11 @@ internal sealed partial class GrowCatalogHandler(
 
     [LoggerMessage(EventId = 2105, Level = LogLevel.Information, Message = "Catalogue grew: {Mapped} keys mapped by rules, {Asked} asked of the model, continues: {More}")]
     private partial void LogRun(int mapped, int asked, bool more);
+}
+
+/// <summary>Queues a run of <see cref="GrowCatalog"/> in the caller's unit of work, e.g. after a source's first load (master plan 6.9).</summary>
+internal sealed class CatalogGrowth(IJobQueue jobs) : ICatalogGrowth
+{
+    public Task RequestAsync(TimeSpan delay, CancellationToken cancellationToken) =>
+        jobs.EnqueueAsync(new GrowCatalog(), GrowCatalog.Options with { Delay = delay }, cancellationToken);
 }

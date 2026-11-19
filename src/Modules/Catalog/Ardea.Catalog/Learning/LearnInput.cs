@@ -42,7 +42,7 @@ internal sealed record LearnInput(LearnUnknown Unknown, IReadOnlyList<LearnCandi
     [JsonIgnore]
     public string RawKey { get; init; } = string.Empty;
 
-    /// <summary>The source's statement reads like an instruction (<see cref="ProductDrafts.Suspicious"/>); not sent.</summary>
+    /// <summary>A text the model reads looks like an instruction (<see cref="ProductDrafts.Suspicious"/>, <see cref="ProductDrafts.SuspiciousText"/>); not sent.</summary>
     [JsonIgnore]
     public bool Suspicious { get; init; }
 
@@ -74,7 +74,9 @@ internal sealed record LearnInput(LearnUnknown Unknown, IReadOnlyList<LearnCandi
             [.. candidates.Select(c => new LearnCandidate(c.Key, c.Name, c.Vendor, c.Kind.ToString().ToLowerInvariant(), [.. c.CpePairs.Select(p => p.ToString())]))])
         {
             RawKey = statement.RawKey,
-            Suspicious = ProductDrafts.Suspicious(statement.Vendor, statement.Product),
+            // Every text the model reads counts (master plan 6.9): a title can carry an instruction as well as a name.
+            Suspicious = ProductDrafts.Suspicious(statement.Vendor, statement.Product)
+                || titles.Concat(statement.CpePairs).Append(statement.Purl).Any(ProductDrafts.SuspiciousText),
         };
     }
 }

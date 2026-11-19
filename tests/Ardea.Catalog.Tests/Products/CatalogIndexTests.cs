@@ -84,9 +84,39 @@ public sealed class CatalogIndexTests
     {
         Assert.Equal("postgresql", Index.Search("postgres", 5)[0].Key);
         Assert.Equal("entra-id", Index.Search("azure active", 5).Single().Key);
-        Assert.Equal(["aspnetcore", "dotnet"], Index.Search(".net", 2).Select(p => p.Key).Order());
+        Assert.Equal("dotnet", Index.Search(".net", 5)[0].Key);
+        Assert.Contains("aspnetcore", Index.Search(".net", 5).Select(p => p.Key));
         Assert.Empty(Index.Search("   ", 5));
+        Assert.Empty(Index.Search("postgres", 0));
     }
+
+    [Fact]
+    public void Search_ranks_exact_spellings_before_prefixes_words_and_typos()
+    {
+        CatalogProduct[] products =
+        [
+            new() { Key = "tool", Name = "Tool", Vendor = "Acme", Kind = ProductKind.Library, VersionScheme = "semver" },
+            new() { Key = "toolbox", Name = "Toolbox", Vendor = "Acme", Kind = ProductKind.Library, VersionScheme = "semver" },
+            new() { Key = "power-tool", Name = "Power Tool", Vendor = "Acme", Kind = ProductKind.Library, VersionScheme = "semver" },
+            new() { Key = "gadget", Name = "Gadget", Vendor = "Tool Works", Kind = ProductKind.Library, VersionScheme = "semver" },
+            new() { Key = "tolo", Name = "Tolo", Vendor = "Other", Kind = ProductKind.Library, VersionScheme = "semver" },
+        ];
+        var index = new CatalogIndex(products);
+
+        Assert.Equal(["tool", "power-tool", "toolbox", "gadget", "tolo"], index.Search("tool", 10).Select(p => p.Key));
+        Assert.Equal(["tolo", "tool"], index.Search("tolo", 10).Select(p => p.Key));
+        Assert.Equal(["toolbox"], index.Search("toolbxo", 10).Select(p => p.Key));
+        Assert.Empty(index.Search("xyz", 10));
+    }
+
+    [Theory]
+    [InlineData("kitten", "sitting", 3)]
+    [InlineData("graphana", "grafana", 2)]
+    [InlineData("serach", "search", 1)]
+    [InlineData("abc", "abc", 0)]
+    [InlineData("a", "abcdef", 3)]
+    public void Distance_counts_edits_and_swaps_and_stops_past_the_bound(string a, string b, int expected) =>
+        Assert.Equal(expected, CatalogSearch.Distance(a, b, 2));
 
     [Fact]
     public void Learned_entry_adds_spellings_but_never_overrides_a_curated_one()

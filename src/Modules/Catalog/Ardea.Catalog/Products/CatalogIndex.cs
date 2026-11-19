@@ -22,6 +22,7 @@ internal sealed class CatalogIndex
     private readonly List<(string? Vendor, Regex Pattern, CatalogProduct Product)> _patterns = [];
     private readonly Dictionary<string, string> _learnedAliases;
     private readonly List<string> _conflicts = [];
+    private readonly CatalogSearch _search;
 
     /// <param name="products">Entries in effect.</param>
     /// <param name="learnedAliases">Raw keys the instance has mapped to a catalogue key (<c>unknown_product</c> with outcome <c>alias</c>).</param>
@@ -78,6 +79,8 @@ internal sealed class CatalogIndex
                 }
             }
         }
+
+        _search = new CatalogSearch(Products);
     }
 
     /// <summary>Entries in effect, curated first.</summary>
@@ -124,27 +127,8 @@ internal sealed class CatalogIndex
         return match;
     }
 
-    /// <summary>Products whose key, name, vendor or alias contains every word of the text; best first.</summary>
-    public IReadOnlyList<CatalogProduct> Search(string text, int limit)
-    {
-        var words = Light(text).Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (words.Length == 0 || limit <= 0)
-        {
-            return [];
-        }
-
-        var query = string.Join(' ', words);
-        return Products
-            .Select(p => (Product: p, Haystack: Light(string.Join(' ', [p.Key, p.Name, p.Vendor ?? string.Empty, .. p.Aliases.SelectMany(a => a.Names)]))))
-            .Where(x => words.All(w => x.Haystack.Contains(w, StringComparison.Ordinal)))
-            .Select(x => (x.Product, Score: Score(x.Product, query)))
-            .OrderBy(x => x.Score)
-            .ThenBy(x => x.Product.Origin)
-            .ThenBy(x => x.Product.Name, StringComparer.OrdinalIgnoreCase)
-            .Take(limit)
-            .Select(x => x.Product)
-            .ToList();
-    }
+    /// <summary>Products for what someone types, best first (<see cref="CatalogSearch"/>).</summary>
+    public IReadOnlyList<CatalogProduct> Search(string text, int limit) => _search.Search(text, limit);
 
     /// <summary>Image without registry <c>docker.io</c>, <c>library/</c>, tag and digest, in lower case.</summary>
     public static string NormalizeImage(string image)
@@ -260,15 +244,6 @@ internal sealed class CatalogIndex
         }
 
         return null;
-    }
-
-    private static int Score(CatalogProduct product, string query)
-    {
-        var name = Light(product.Name);
-        return product.Key == query || name == query ? 0
-            : name.StartsWith(query, StringComparison.Ordinal) || product.Key.StartsWith(query, StringComparison.Ordinal) ? 1
-            : name.Split(' ').Any(w => w.StartsWith(query, StringComparison.Ordinal)) ? 2
-            : 3;
     }
 
     private void AddName(string? vendorKey, string name, CatalogProduct product)

@@ -54,7 +54,7 @@ public sealed class OrganizationSubscription : IDisposable
 }
 
 /// <summary>The listener: one connection per API process, reconnecting after a failure (master plan 3.6).</summary>
-internal sealed partial class OrganizationSignals(NpgsqlDataSource dataSource, TimeProvider time, ILogger<OrganizationSignals> logger)
+internal sealed partial class OrganizationSignals(Persistence.DatabaseOptions database, TimeProvider time, ILogger<OrganizationSignals> logger)
     : BackgroundService, IOrganizationSignals
 {
     public const string Channel = "ardea_org_changed";
@@ -77,7 +77,14 @@ internal sealed partial class OrganizationSignals(NpgsqlDataSource dataSource, T
         {
             try
             {
-                await using var connection = await dataSource.OpenConnectionAsync(stoppingToken);
+                // A connection of its own, outside the pool: it listens for good, and a connector that carried a
+                // LISTEN or was interrupted while notifications arrived must never be handed to a unit of work (#69).
+                await using var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(database.AppConnectionString("ardea-live"))
+                {
+                    Pooling = false,
+                    KeepAlive = 30,
+                }.ConnectionString);
+                await connection.OpenAsync(stoppingToken);
                 connection.Notification += (_, e) => Publish(e.Payload, "changed");
                 await using (var listen = new NpgsqlCommand($"LISTEN {Channel}", connection))
                 {

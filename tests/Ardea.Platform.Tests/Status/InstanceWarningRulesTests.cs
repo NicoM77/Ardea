@@ -101,6 +101,17 @@ public sealed class InstanceWarningRulesTests
     }
 
     [Fact]
+    public void A_long_message_is_cut_to_the_column_without_splitting_a_surrogate_pair()
+    {
+        var split = new string('a', 999) + "\U0001F426" + "tail";
+        var plain = new string('b', 1200);
+
+        Assert.Equal(new string('a', 999), InstanceWarningRules.Truncate(split));
+        Assert.Equal(1000, InstanceWarningRules.Truncate(plain).Length);
+        Assert.Equal("short", InstanceWarningRules.Truncate("short"));
+    }
+
+    [Fact]
     public void A_warning_nobody_was_told_about_ends_without_a_mail()
     {
         Round(Minutes(0), claim: false, Stalled);

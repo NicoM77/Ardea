@@ -84,7 +84,7 @@ internal static class InstanceWarningRules
             }
 
             row.Severity = warning.Severity;
-            row.Message = warning.Message.Length > MaxMessageLength ? warning.Message[..MaxMessageLength] : warning.Message;
+            row.Message = Truncate(warning.Message);
             row.LastSeenAt = now;
             row.ClearedAt = null;
             if (!claim)
@@ -136,6 +136,18 @@ internal static class InstanceWarningRules
             ? WarningMail.Empty
             : new WarningMail(raised, reminded, resolved) { PreviousReminders = previous };
         return new Outcome(added, removed, mail);
+    }
+
+    /// <summary>At most the column's length, never cutting a surrogate pair in two.</summary>
+    internal static string Truncate(string message)
+    {
+        if (message.Length <= MaxMessageLength)
+        {
+            return message;
+        }
+
+        var length = char.IsHighSurrogate(message[MaxMessageLength - 1]) ? MaxMessageLength - 1 : MaxMessageLength;
+        return message[..length];
     }
 
     private static WarningNotice Notice(InstanceWarningRow row) =>

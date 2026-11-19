@@ -24,7 +24,7 @@ internal sealed record SetupView(IReadOnlyList<string> StepsDone, Guid? FirstPro
 internal static class SetupEndpoints
 {
     /// <summary>The steps of master plan 11.6, in order.</summary>
-    public static readonly string[] Steps = ["organization", "project", "repository", "operations", "technologies", "coverage", "notifications", "overview"];
+    public static readonly string[] Steps = ["organization", "stack", "project", "repository", "operations", "technologies", "coverage", "notifications", "overview"];
 
     public static void Map(IEndpointRouteBuilder api)
     {
@@ -52,9 +52,11 @@ internal static class SetupEndpoints
 
         var organization = await db.Organizations.SingleAsync(cancellationToken);
         var before = organization.Settings.Setup ?? new SetupState();
+        // Steps this build does not know (written by another version during an upgrade, master plan 4.11) are kept
+        // after the known ones instead of being dropped.
         var steps = request.StepDone is null || before.StepsDone.Contains(request.StepDone)
             ? before.StepsDone
-            : [.. Steps.Where(s => s == request.StepDone || before.StepsDone.Contains(s))];
+            : [.. Steps.Where(s => s == request.StepDone || before.StepsDone.Contains(s)), .. before.StepsDone.Where(s => !Steps.Contains(s))];
         var after = before with { StepsDone = steps, FirstProjectId = request.FirstProjectId ?? before.FirstProjectId };
         if (!after.StepsDone.SequenceEqual(before.StepsDone) || after.FirstProjectId != before.FirstProjectId)
         {

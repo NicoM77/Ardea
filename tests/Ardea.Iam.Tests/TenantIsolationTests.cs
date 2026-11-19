@@ -81,6 +81,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["POST /api/v1/orgs/{orgId}/projects"] = _ => new { name = "Planted" },
         ["GET /api/v1/orgs/{orgId}/projects/{projectId}"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/stack"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/stack/suggestions"] = _ => null,
         ["PATCH /api/v1/orgs/{orgId}/projects/{projectId}"] = _ => new { name = "Taken over", exposure = "internet" },
         ["DELETE /api/v1/orgs/{orgId}/projects/{projectId}"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/projects/{projectId}/components"] = _ => null,

@@ -13,13 +13,32 @@ namespace Ardea.Assets.Features;
 /// The three projects of the demo (<c>ardea seed-demo</c>, task 7.6): the example projects A, B and C of the requirements
 /// under the names of the mockups, each with the versions installed before the spike week's security updates. Every
 /// component passes the checks of the profile endpoints, which take kind and version scheme from the catalogue, and each
-/// project queues its reverse search.
+/// project queues its reverse search. The organisation's stack (master plan 17.2, task 5a.4) names what the agency runs
+/// besides the projects, as the wizard would: broad entries, two with a version line, the firewall with every entry.
 /// </summary>
 internal sealed class DemoSeed : IDemoSeedStep
 {
     private sealed record Part(string? Key, string Version, string Packaging = "upstream", string? Name = null, string? Vendor = null, string? Kind = null);
 
     private sealed record Demo(string Name, string Description, string Criticality, string Exposure, Part[] Parts);
+
+    private sealed record StackEntry(string Key, string? Version = null, string? Precision = null, string? Threshold = null);
+
+    /// <summary>
+    /// Eight entries, none named by the demo's records, so the stack adds no finding of its own until notices are raised
+    /// from it (task 5a.3). Ubuntu without the Linux kernel leaves the wizard's companion suggestion to show (ADR 044).
+    /// </summary>
+    private static readonly StackEntry[] Stack =
+    [
+        new("ubuntu", "24.04", VersionPrecisions.Line),
+        new("nginx"),
+        new("docker-engine"),
+        new("kubernetes"),
+        new("nodejs", "22"),
+        new("angular"),
+        new("redis"),
+        new("fortios", Threshold: NoticeThresholds.Everything),
+    ];
 
     private static readonly Demo[] Projects =
     [
@@ -48,7 +67,7 @@ internal sealed class DemoSeed : IDemoSeedStep
 
     public int Order => DemoSeedOrder.Profile;
 
-    public string Description => "three projects with their components";
+    public string Description => "three projects with their components, and the stack";
 
     public async Task SeedAsync(DemoSeedContext context, CancellationToken cancellationToken)
     {
@@ -90,6 +109,38 @@ internal sealed class DemoSeed : IDemoSeedStep
             await services.GetRequiredService<IJobQueue>().EnqueueAsync(new ProjectProfileChanged(project.Id), ProjectProfileChanged.Options(project.Id), cancellationToken);
             await services.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
         }
+
+        await SeedStackAsync(context, cancellationToken);
+    }
+
+    /// <summary>The stack's entries, as the wizard adds them through the component endpoints: checked, keyed, audited, searched.</summary>
+    private static async Task SeedStackAsync(DemoSeedContext context, CancellationToken cancellationToken)
+    {
+        await using var scope = context.CreateScope(context.OrganizationId, context.Members[DemoUpdate.Owner].UserId);
+        var services = scope.ServiceProvider;
+        var db = services.GetRequiredService<AssetsDbContext>();
+        var catalog = services.GetRequiredService<IProductCatalog>();
+        var now = context.Time.GetUtcNow();
+        var stackId = await db.Projects.Where(p => p.Kind == Project.StackKind).Select(p => p.Id).SingleAsync(cancellationToken);
+        var components = new List<Component>(Stack.Length);
+        foreach (var entry in Stack)
+        {
+            var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
+            var input = new ComponentInput(null, null, entry.Key, null, null, null, entry.Version, null, null, null, null, null, null, null, entry.Precision, entry.Threshold);
+            var values = await ComponentRules.CheckAsync(input, catalog, errors, string.Empty, cancellationToken)
+                ?? throw new InvalidOperationException($"The demo stack entry {entry.Key} is not valid: {string.Join(" ", errors.SelectMany(e => e.Value))}");
+            var component = new Component { Id = Guid.CreateVersion7(), ProjectId = stackId, Kind = values.Kind, CreatedAt = now, ChangedAt = now };
+            values.ApplyTo(component);
+            components.Add(component);
+        }
+
+        db.Components.AddRange(components);
+        await db.SaveChangesAsync(cancellationToken);
+        await ComponentKeys.RefreshAsync(db, catalog, components, cancellationToken);
+        await services.GetRequiredService<IAuditLog>().RecordAsync(
+            new AuditEntry("profile.replaced", "project", stackId.ToString(), new { created = components.Select(c => c.Id) }), cancellationToken);
+        await services.GetRequiredService<IJobQueue>().EnqueueAsync(new ProjectProfileChanged(stackId), ProjectProfileChanged.Options(stackId), cancellationToken);
+        await services.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
     }
 }
 

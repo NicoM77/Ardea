@@ -25,9 +25,20 @@ public sealed class SetupAndAuditTests(PostgresServer server)
         Assert.Equal(["project", "operations"], saved.GetProperty("stepsDone").EnumerateArray().Select(s => s.GetString()));
         Assert.Equal(projectId, saved.GetProperty("firstProjectId").GetGuid());
 
+        // The stack comes before the projects (master plan 11.6 step 1b, task 5a.4), also when an organisation that
+        // started the wizard before saves it afterwards.
+        var stack = await Json(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "stack" }));
+        Assert.Equal(["stack", "project", "operations"], stack.GetProperty("stepsDone").EnumerateArray().Select(s => s.GetString()));
+
+        // A step another version wrote, which this one does not know, stays when a step is saved (master plan 4.11).
+        Assert.Equal(1, await host.ScalarAsync<int>(
+            $"UPDATE iam.organization SET settings = jsonb_set(settings, '{{setup,stepsDone}}', (settings -> 'setup' -> 'stepsDone') || '[\"later\"]') WHERE id = '{orgId}' RETURNING 1"));
+        var kept = await Json(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "repository" }));
+        Assert.Equal(["stack", "project", "repository", "operations", "later"], kept.GetProperty("stepsDone").EnumerateArray().Select(s => s.GetString()));
+
         // Saving a step twice changes nothing.
         await Json(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "project" }));
-        Assert.Equal(2, (await Json(await owner.GetAsync($"/api/v1/orgs/{orgId}/setup"))).GetProperty("stepsDone").GetArrayLength());
+        Assert.Equal(5, (await Json(await owner.GetAsync($"/api/v1/orgs/{orgId}/setup"))).GetProperty("stepsDone").GetArrayLength());
         await ExpectProblem(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "dance" }), HttpStatusCode.BadRequest, "validation_failed");
 
         var completed = await Json(await owner.PostAsync($"/api/v1/orgs/{orgId}/setup/complete"));

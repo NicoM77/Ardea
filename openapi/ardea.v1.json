@@ -2841,6 +2841,60 @@
         }
       }
     },
+    "/api/v1/orgs/{orgId}/stack/suggestions": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "operationId": "listStackSuggestions",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StackSuggestionView"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orgs/{orgId}/repository-connections": {
       "get": {
         "tags": [
@@ -13584,6 +13638,43 @@
           },
           "termsMode": {
             "type": "string"
+          }
+        }
+      },
+      "StackSuggestionView": {
+        "required": [
+          "productKey",
+          "name",
+          "kind",
+          "reason",
+          "basis",
+          "projects"
+        ],
+        "type": "object",
+        "properties": {
+          "productKey": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "basis": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

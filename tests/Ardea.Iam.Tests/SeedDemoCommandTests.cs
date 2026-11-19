@@ -59,13 +59,17 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM iam.organization WHERE settings -> 'setup' ->> 'completedAt' IS NOT NULL"));
         Assert.Equal(3L, await host.ScalarAsync<long>("SELECT count(*) FROM iam.membership"));
         Assert.Equal(3L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.project WHERE kind = 'project'"));
-        Assert.Equal(16L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component"));
+        Assert.Equal(11L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component c JOIN assets.project p ON p.id = c.project_id WHERE p.kind = 'project'"));
 
-        // The organisation has its stack from its creation on (master plan 17.2), with five entries without a version or
-        // with a line; the projects' versions are releases, and the managed Azure SQL has none (ADR 046).
+        // The organisation has its stack from its creation on (master plan 17.2) with eight broad entries as the wizard adds
+        // them (task 5a.4), two with a version line and the firewall with every entry, and five the demo's records hit (task
+        // 5a.3); the projects' versions are releases, and the managed Azure SQL has none (ADR 046).
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.project WHERE kind = 'organization_stack'"));
-        Assert.Equal("exact 10, line 1, none 5", await host.ScalarAsync<string>(
-            "SELECT string_agg(version_precision || ' ' || n, ', ' ORDER BY version_precision) FROM (SELECT version_precision, count(*) AS n FROM assets.component GROUP BY 1) p"));
+        Assert.Equal("exact 10, none 1", await host.ScalarAsync<string>(
+            "SELECT string_agg(version_precision || ' ' || n, ', ' ORDER BY version_precision) FROM (SELECT version_precision, count(*) AS n FROM assets.component c JOIN assets.project p ON p.id = c.project_id WHERE p.kind = 'project' GROUP BY 1) p"));
+        Assert.Equal("line 3, none 10", await host.ScalarAsync<string>(
+            "SELECT string_agg(version_precision || ' ' || n, ', ' ORDER BY version_precision) FROM (SELECT version_precision, count(*) AS n FROM assets.component c JOIN assets.project p ON p.id = c.project_id WHERE p.kind = 'organization_stack' GROUP BY 1) p"));
+        Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component WHERE notice_threshold = 'everything'"));
 
         // The stack's notices (task 5a.3): raised by the pipeline, one answered each way, the rest new for the Notices page.
         Assert.Equal("affects_us 1, not_affected 1, open 6", await host.ScalarAsync<string>(

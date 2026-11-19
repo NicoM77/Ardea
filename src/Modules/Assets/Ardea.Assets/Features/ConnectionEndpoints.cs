@@ -52,21 +52,21 @@ internal static class ConnectionEndpoints
     {
         var org = api.MapOrganization().WithTags("Repository connections");
         org.MapGet("/repository-connections", ListAsync).WithName("listRepositoryConnections").Produces<IReadOnlyList<ConnectionView>>().Problems(403, 404);
-        org.MapPost("/repository-connections", CreateAsync).WithName("createRepositoryConnection").RequireOrganizationRole(OrganizationRole.Admin)
+        org.MapPost("/repository-connections", CreateAsync).WithName("createRepositoryConnection").RequireRateLimiting(RateLimits.Outbound).RequireOrganizationRole(OrganizationRole.Admin)
             .Produces<ConnectionView>(StatusCodes.Status201Created).Problems(400, 403, 404);
-        org.MapPatch("/repository-connections/{id:guid}", UpdateAsync).WithName("updateRepositoryConnection").RequireOrganizationRole(OrganizationRole.Admin)
+        org.MapPatch("/repository-connections/{id:guid}", UpdateAsync).WithName("updateRepositoryConnection").RequireRateLimiting(RateLimits.Outbound).RequireOrganizationRole(OrganizationRole.Admin)
             .Produces<ConnectionView>().Problems(400, 403, 404);
         org.MapDelete("/repository-connections/{id:guid}", DeleteAsync).WithName("deleteRepositoryConnection").RequireOrganizationRole(OrganizationRole.Admin)
             .NoContent().Problems(403, 404);
-        org.MapPost("/repository-connections/{id:guid}/test", TestAsync).WithName("testRepositoryConnection").RequireOrganizationRole(OrganizationRole.Member)
+        org.MapPost("/repository-connections/{id:guid}/test", TestAsync).WithName("testRepositoryConnection").RequireRateLimiting(RateLimits.Outbound).RequireOrganizationRole(OrganizationRole.Member)
             .Produces<ConnectionView>().Problems(403, 404);
-        org.MapGet("/repository-connections/{id:guid}/repositories", RepositoriesAsync).WithName("listConnectionRepositories")
+        org.MapGet("/repository-connections/{id:guid}/repositories", RepositoriesAsync).WithName("listConnectionRepositories").RequireRateLimiting(RateLimits.Outbound)
             .RequireOrganizationRole(OrganizationRole.Member).Produces<IReadOnlyList<RepositoryView>>().Problems(403, 404, 502);
 
         // The organisations' choice of servers; only the instance administrator changes it (16.9).
         api.MapGet("/github-hosts", HostsAsync).WithTags("Repository connections").WithName("listGitHubHosts").RequireAuthorization();
         var admin = api.MapGroup("/instance/github-hosts").WithTags("Repository connections").RequireAuthorization(Policies.InstanceAdmin);
-        admin.MapPost("/", AddHostAsync).WithName("addGitHubHost").Produces<EnterpriseHostView>(StatusCodes.Status201Created).Problems(400);
+        admin.MapPost("/", AddHostAsync).WithName("addGitHubHost").RequireRateLimiting(RateLimits.Outbound).Produces<EnterpriseHostView>(StatusCodes.Status201Created).Problems(400);
         admin.MapDelete("/{hostId}", RemoveHostAsync).WithName("removeGitHubHost").NoContent().Problems(404, 409);
     }
 

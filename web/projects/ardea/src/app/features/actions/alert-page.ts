@@ -21,6 +21,7 @@ import {
 } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
 import { reloadOnLiveChange } from '../../core/live/live-events';
+import { webUrl } from '../entries/entry-detail-format';
 import { score } from '../entries/entry-format';
 import { injectOrganization } from '../organizations/current-organization';
 import { roleRank } from '../organizations/org-format';
@@ -281,8 +282,8 @@ import { ModelReview, type ReviewChange } from './model-review';
               @for (s of sources.value() ?? []; track s.source) {
                 <li>
                   <b>
-                    @if (s.url) {
-                      <a class="link" [href]="s.url" target="_blank" rel="noopener noreferrer">{{
+                    @if (web(s.url); as href) {
+                      <a class="link" [href]="href" target="_blank" rel="noopener noreferrer">{{
                         s.name
                       }}</a>
                     } @else {
@@ -514,6 +515,7 @@ export class AlertPage {
   }
 
   protected readonly priority = priorityOf;
+  protected readonly web = webUrl;
   protected readonly check = checkLabel;
   protected readonly actionNumber = num;
   protected readonly proposal = isProposal;

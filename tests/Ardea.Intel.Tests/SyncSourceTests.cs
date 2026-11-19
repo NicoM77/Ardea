@@ -25,6 +25,9 @@ public sealed class SyncSourceTests(PostgresServer server)
         Assert.Equal("cursor-1", await host.ScalarAsync<string>("SELECT cursor FROM intel.source WHERE key = 'scripted'"));
         Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source_record"));
         Assert.Equal("failed", await host.ScalarAsync<string>("SELECT outcome FROM intel.source_run"));
+        // Every signed-in user reads the health reason; only the administrator's run log keeps the exception's text.
+        Assert.Equal("The source could not be reached.", await host.ScalarAsync<string>("SELECT health_reason FROM intel.source WHERE key = 'scripted'"));
+        Assert.Contains("source went away", await host.ScalarAsync<string>("SELECT error FROM intel.source_run"), StringComparison.Ordinal);
 
         host.Provider.FailAfter = null;
         host.Clock.Advance(TimeSpan.FromHours(2));
@@ -34,6 +37,19 @@ public sealed class SyncSourceTests(PostgresServer server)
         Assert.Equal(SyncMode.Incremental, host.Provider.ModeSeen);
         Assert.Equal("cursor-2", await host.ScalarAsync<string>("SELECT cursor FROM intel.source WHERE key = 'scripted'"));
         Assert.Equal(3L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source_record"));
+    }
+
+    [Theory]
+    [InlineData(typeof(InvalidOperationException), "The sync failed; the instance administrator finds the details in the run log.")]
+    [InlineData(typeof(System.Text.Json.JsonException), "The source's answer could not be read.")]
+    [InlineData(typeof(TimeoutException), "The source did not answer in time.")]
+    public void The_public_health_reason_names_the_kind_of_failure_and_never_the_exceptions_text(Type type, string reason)
+    {
+        const string Internal = "password authentication failed for user \"ardea_app\" at 10.0.0.5, /var/lib/ardea/work";
+        var exception = (Exception)Activator.CreateInstance(type, Internal)!;
+
+        Assert.Equal(reason, SyncSourceHandler.PublicReason(exception));
+        Assert.Equal("The source answered HTTP 503.", SyncSourceHandler.PublicReason(new HttpRequestException(Internal, null, System.Net.HttpStatusCode.ServiceUnavailable)));
     }
 
     [Fact]

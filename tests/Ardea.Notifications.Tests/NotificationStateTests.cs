@@ -13,6 +13,26 @@ public sealed class NotificationStateTests(PostgresServer server)
     private static readonly string[] Raises = ["action.raised", "action.level_raised", "action.exploitation_escalated", "backfill.completed"];
 
     [Fact]
+    public async Task Above_sixty_immediate_messages_an_hour_on_a_channel_the_next_waits_for_the_digest()
+    {
+        // A flood from a faulty or hostile source (master plan 9.7) ends at the cap of 8.6 per channel and organisation.
+        await using var host = await NotifyTestHost.StartAsync(server);
+        var s = await Scenario.StartAsync(host);
+        await s.RuleAsync("High", 4, ["action.raised"], Scenario.Target("email"));
+        var earlier = host.Time.GetUtcNow().AddMinutes(-30);
+        await host.ExecuteAsync($"""
+            INSERT INTO notify.delivery (id, organization_id, kind, channel, recipient_key, send_after, state, attempts, created_at)
+            SELECT gen_random_uuid(), '{s.Organization}', 'immediate', 'email', 'user:' || gen_random_uuid(), '{earlier:O}', 'sent', 1, '{earlier:O}'
+            FROM generate_series(1, {Evaluation.Evaluator.HourlyLimit})
+            """);
+
+        await s.EventAsync("action.raised", await s.ActionAsync(2, level: 4));
+        await s.EvaluateAsync();
+
+        Assert.Equal("suppressed", await host.ScalarAsync<string>($"SELECT state FROM notify.delivery WHERE created_at > '{earlier:O}'"));
+    }
+
+    [Fact]
     public async Task Same_event_processed_three_times_yields_one_delivery_per_recipient_and_channel()
     {
         await using var host = await NotifyTestHost.StartAsync(server);

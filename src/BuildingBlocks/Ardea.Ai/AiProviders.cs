@@ -1,4 +1,5 @@
 using System.ClientModel;
+using System.ClientModel.Primitives;
 using System.Diagnostics;
 using Anthropic;
 using Ardea.Platform.Ai;
@@ -95,13 +96,40 @@ internal sealed partial class AiProviders : IAiProviders, IDisposable
     private static IChatClient Create(AiProviderOptions options) => options.Kind switch
     {
         AiProviderKinds.OpenAiCompatible => new OpenAIClient(
-                new ApiKeyCredential(options.ApiKey ?? "none"), new OpenAIClientOptions { Endpoint = options.Endpoint })
+                new ApiKeyCredential(options.ApiKey ?? "none"),
+                new OpenAIClientOptions { Endpoint = options.Endpoint, Transport = new HttpClientPipelineTransport(CreateHttpClient()) })
             .GetChatClient(options.Model).AsIChatClient(),
-        AiProviderKinds.Ollama => new OllamaApiClient(options.Endpoint!, options.Model),
-        AiProviderKinds.Anthropic => new AnthropicClient { ApiKey = options.ApiKey!, BaseUrl = options.Endpoint?.ToString() ?? "https://api.anthropic.com" }
+        AiProviderKinds.Ollama => new OllamaApiClient(WithBase(CreateHttpClient(), options.Endpoint!), options.Model),
+        AiProviderKinds.Anthropic => new AnthropicClient
+        {
+            ApiKey = options.ApiKey!,
+            BaseUrl = options.Endpoint?.ToString() ?? "https://api.anthropic.com",
+            HttpClient = CreateHttpClient(),
+        }
             .AsIChatClient(options.Model),
         _ => throw new InvalidOperationException($"Unknown provider kind {options.Kind}."),
     };
+
+    /// <summary>
+    /// The HTTP client of every provider SDK. The operator chose the address, which may well be internal (a local
+    /// model server), but a redirect is the provider's choice: it is not followed, so neither the key in a header nor
+    /// the answer of an internal service (cloud metadata) can be reached through it (master plan 9.5, 9.7). The call
+    /// time limit is <see cref="AiLimits.CallTimeout"/>, set by the caller; the client adds none of its own.
+    /// </summary>
+    internal static HttpClient CreateHttpClient() => new(new SocketsHttpHandler
+    {
+        AllowAutoRedirect = false,
+        PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+    })
+    {
+        Timeout = Timeout.InfiniteTimeSpan,
+    };
+
+    private static HttpClient WithBase(HttpClient client, Uri baseAddress)
+    {
+        client.BaseAddress = baseAddress;
+        return client;
+    }
 
     [LoggerMessage(EventId = 1401, Level = LogLevel.Warning, Message = "Connection test of AI provider {Provider} failed: {Error}")]
     private partial void LogTestFailed(string provider, string error);

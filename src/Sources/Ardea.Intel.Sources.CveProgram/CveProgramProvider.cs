@@ -30,6 +30,9 @@ public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
+    /// <summary>Bounds for unpacking the full archive; tests set small ones.</summary>
+    internal ArchiveLimits ArchiveLimits { get; init; } = ArchiveLimits.Default;
+
     public SourceDescriptor Descriptor { get; } = new()
     {
         Key = Key,
@@ -156,7 +159,7 @@ public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
         return await response.Content.ReadAsStringAsync(cancellationToken);
     }
 
-    private static async IAsyncEnumerable<FetchItem> FetchArchiveAsync(SyncContext context, [EnumeratorCancellation] CancellationToken cancellationToken)
+    private async IAsyncEnumerable<FetchItem> FetchArchiveAsync(SyncContext context, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var release = await LatestArchiveAsync(context, cancellationToken);
         var archive = Path.Combine(context.WorkDirectory, "all-cves.zip.zip");
@@ -168,7 +171,7 @@ public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
         }
 
         var from = context.BackfillFrom ?? DateTimeOffset.MinValue;
-        await foreach (var item in ArchiveReader.ReadAsync(archive, context.WorkDirectory, from, cancellationToken))
+        await foreach (var item in ArchiveReader.ReadAsync(archive, context.WorkDirectory, from, ArchiveLimits, cancellationToken))
         {
             yield return item;
         }

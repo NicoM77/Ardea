@@ -64,6 +64,7 @@ internal sealed class ApiTestHost : IAsyncDisposable
             ["REGISTRATION"] = "open",
             ["PASSWORD_HASH_ITERATIONS"] = "1000",
             ["RATE_LIMIT:AUTH_PER_MINUTE"] = "1000",
+            ["RATE_LIMIT:OUTBOUND_PER_MINUTE"] = "1000",
         };
         foreach (var (key, value) in settings ?? [])
         {
@@ -124,6 +125,9 @@ internal sealed class ApiClient : IDisposable
     public Task<HttpResponseMessage> SessionAsync() => _http.GetAsync(new Uri("/api/v1/auth/session", UriKind.Relative));
 
     public Task<HttpResponseMessage> GetAsync(string path) => _http.GetAsync(new Uri(path, UriKind.Relative));
+
+    /// <summary>A request exactly as built, without the CSRF token or a session read before it.</summary>
+    public Task<HttpResponseMessage> SendRawAsync(HttpRequestMessage request) => _http.SendAsync(request);
 
     /// <summary>A GET whose body is read as it arrives, for Server-Sent Events.</summary>
     public Task<HttpResponseMessage> StreamAsync(string path, CancellationToken cancellationToken) =>

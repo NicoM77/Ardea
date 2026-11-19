@@ -2,6 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { UiButton, UiCard } from 'ui';
 import type { ModelAnswersView } from '../../core/api/client';
+import { webUrl } from '../entries/entry-detail-format';
 import { budget, refs } from './model-format';
 
 /**
@@ -83,12 +84,12 @@ import { budget, refs } from './model-format';
             @for (s of m.sources; track s.number) {
               <li>
                 <span class="n">{{ s.number }}.</span>
-                @if (s.url) {
-                  <a class="link" [href]="s.url" target="_blank" rel="noopener noreferrer">{{
+                @if (web(s.url); as href) {
+                  <a class="link" [href]="href" target="_blank" rel="noopener noreferrer">{{
                     s.name ?? s.url
                   }}</a>
                 } @else {
-                  <span>{{ s.name ?? ('aiAssessment.unnamed' | transloco) }}</span>
+                  <span>{{ s.name ?? s.url ?? ('aiAssessment.unnamed' | transloco) }}</span>
                 }
               </li>
             }
@@ -245,6 +246,8 @@ export class AiAssessmentCard {
 
   private readonly transloco = inject(TranslocoService);
   protected readonly numbers = refs;
+  /** Source links come from source data: they open only when they are web addresses. */
+  protected readonly web = webUrl;
   protected readonly figures = computed(() => budget(this.model()));
   protected readonly rulesetVersion = computed(() => String(this.model().rulesetVersion));
   protected readonly when = computed(() =>

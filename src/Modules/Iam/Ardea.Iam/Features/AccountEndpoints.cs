@@ -24,7 +24,7 @@ internal static class AccountEndpoints
         var account = api.MapGroup("/account").WithTags("Account").RequireAuthorization();
         account.MapPatch("", UpdateAsync).WithName("updateAccount").NoContent().Problems(400);
         account.MapPost("/password", ChangePasswordAsync).WithName("changePassword").NoContent().Problems(400).RequireRateLimiting(AuthEndpoints.RateLimitPolicy);
-        account.MapPost("/mfa/setup", SetupMfaAsync).WithName("startMfaSetup").Produces<MfaSetupResponse>().Problems(400, 409);
+        account.MapPost("/mfa/setup", SetupMfaAsync).WithName("startMfaSetup").RequireRateLimiting(AuthEndpoints.RateLimitPolicy).Produces<MfaSetupResponse>().Problems(400, 409);
         account.MapPost("/mfa", EnableMfaAsync).WithName("enableMfa").Produces<RecoveryCodesResponse>().Problems(400).RequireRateLimiting(AuthEndpoints.RateLimitPolicy);
         account.MapDelete("/mfa", DisableMfaAsync).WithName("disableMfa").NoContent().Problems(400).RequireRateLimiting(AuthEndpoints.RateLimitPolicy);
         account.MapGet("/sessions", ListSessionsAsync).WithName("listSessions");

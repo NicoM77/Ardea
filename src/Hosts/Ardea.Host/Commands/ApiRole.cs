@@ -55,7 +55,11 @@ internal static partial class ApiRole
         HostConfiguration.AddJsonLogging(builder.Logging);
         var port = int.TryParse(builder.Configuration["HTTP_PORT"], out var p) ? p : 8080;
         builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
-        builder.WebHost.ConfigureKestrel(k => k.AddServerHeader = false);
+        builder.WebHost.ConfigureKestrel(k =>
+        {
+            k.AddServerHeader = false;
+            k.Limits.MaxRequestBodySize = RequestProtection.MaxRequestBodyBytes;
+        });
 
         builder.Services.AddArdeaPlatform(builder.Configuration, "api");
         builder.Services.AddUnitOfWork();
@@ -76,9 +80,10 @@ internal static partial class ApiRole
         overrideServices?.Invoke(builder.Services);
         var app = builder.Build();
         app.UseForwardedHeaders();
+        app.Use(RequestProtection.SecurityHeaders);
         app.UseExceptionHandler();
         app.UseStatusCodePages();
-        app.Use(RequestProtection.SecurityHeaders);
+        app.Use(RequestProtection.LimitBody);
         var httpsRequired = new Uri(builder.Configuration[HostConfiguration.PublicUrlKey]!).Scheme == Uri.UriSchemeHttps;
         app.Use(next => RequestProtection.RequireHttps(next, httpsRequired));
         app.Use((context, next) =>

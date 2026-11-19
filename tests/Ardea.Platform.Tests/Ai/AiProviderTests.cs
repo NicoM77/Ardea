@@ -98,6 +98,61 @@ public sealed class AiProviderTests
         Assert.All(providers.All, p => Assert.Equal("llm", p.Host));
     }
 
+    [Theory]
+    [InlineData(AiProviderKinds.OpenAiCompatible)]
+    [InlineData(AiProviderKinds.Ollama)]
+    [InlineData(AiProviderKinds.Anthropic)]
+    public async Task No_provider_follows_a_redirect_so_neither_its_key_nor_an_internal_answer_moves_elsewhere(string kind)
+    {
+        using var listener = new System.Net.HttpListener();
+        var port = FreePort();
+        listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+        listener.Start();
+        var redirected = 0;
+        var server = Task.Run(async () =>
+        {
+            while (listener.IsListening)
+            {
+                System.Net.HttpListenerContext context;
+                try
+                {
+                    context = await listener.GetContextAsync();
+                }
+                catch (System.Net.HttpListenerException)
+                {
+                    return;
+                }
+                catch (ObjectDisposedException)
+                {
+                    return;
+                }
+
+                if (context.Request.Url!.AbsolutePath.StartsWith("/elsewhere", StringComparison.Ordinal))
+                {
+                    Interlocked.Increment(ref redirected);
+                    context.Response.StatusCode = 200;
+                }
+                else
+                {
+                    context.Response.StatusCode = 307;
+                    context.Response.RedirectLocation = $"http://127.0.0.1:{port}/elsewhere";
+                }
+
+                context.Response.Close();
+            }
+        }, TestContext.Current.CancellationToken);
+
+        var endpoint = kind == AiProviderKinds.OpenAiCompatible ? $"http://127.0.0.1:{port}/v1" : $"http://127.0.0.1:{port}";
+        using var providers = new AiProviders([new AiProviderOptions("p", kind, new Uri(endpoint), "m", "sk-secret", Local: true)], NullLoggerFactory.Instance);
+
+        var result = await providers.TestAsync("p", TestContext.Current.CancellationToken);
+
+        listener.Stop();
+        await server;
+        Assert.False(result!.Ok);
+        Assert.Equal(0, redirected);
+    }
+
     [Fact]
     public void The_data_policy_decides_which_providers_an_organisation_may_use_local_ones_first()
     {
@@ -108,6 +163,13 @@ public sealed class AiProviderTests
         Assert.Equal(["ollama", "vllm", "claude"], AiDataPolicies.Allowed("cloud_allowed", providers).Select(p => p.Name));
         Assert.Empty(AiDataPolicies.Allowed("local_only", [providers[0]]));
         Assert.Empty(AiDataPolicies.Allowed("unknown", providers));
+    }
+
+    private static int FreePort()
+    {
+        using var probe = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        probe.Start();
+        return ((System.Net.IPEndPoint)probe.LocalEndpoint).Port;
     }
 
     private static IConfiguration Configuration(Dictionary<string, string?> values) => new ConfigurationBuilder().AddInMemoryCollection(values).Build();

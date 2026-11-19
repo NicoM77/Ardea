@@ -37,7 +37,9 @@ Ardea runs as one image in three roles (`migrate`, `api`, `worker`) next to Post
 
    `.env` holds the database passwords for the database and `migrate`; `.env.app` holds what API and worker
    need. **Keep `ARDEA_MASTER_KEY` in a separate backup**: it encrypts tokens and the SMTP password, and a
-   database restored without it cannot decrypt them.
+   database restored without it cannot decrypt them. Keep it apart from the database dumps, too: a dump alone
+   shows the technology profiles of every organisation but none of the secrets. Put the Docker volumes and the
+   backups on an encrypted disk; the profiles are a map of each organisation's attack surface.
 
 2. Start with HTTPS in front. With the bundled Caddy, which gets a certificate for a public domain itself:
 

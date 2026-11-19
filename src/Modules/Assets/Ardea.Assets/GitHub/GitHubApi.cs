@@ -62,7 +62,17 @@ internal sealed class GitHubApi(IHttpClientFactory clients)
         }
         catch (HttpRequestException ex)
         {
-            return new TokenCheck(false, kind, null, null, [], ex.Message);
+            // Every member of the organisation reads the connection's last error: the kind of failure, never the
+            // exception's text with addresses and ports of the network the instance runs in.
+            return new TokenCheck(false, kind, null, null, [], Describe(ex));
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new TokenCheck(false, kind, null, null, [], "GitHub did not answer in time.");
+        }
+        catch (JsonException)
+        {
+            return new TokenCheck(false, kind, null, null, [], "GitHub's answer could not be read.");
         }
     }
 
@@ -101,6 +111,12 @@ internal sealed class GitHubApi(IHttpClientFactory clients)
 
         return [.. result.Where(r => string.IsNullOrEmpty(query) || $"{r.Owner}/{r.Name}".Contains(query, StringComparison.OrdinalIgnoreCase)).Take(100)];
     }
+
+    /// <summary>A failed call in words for the organisation: Ardea's own messages as they are, others by their kind only.</summary>
+    internal static string Describe(HttpRequestException exception) =>
+        exception.Message.StartsWith("GitHub ", StringComparison.Ordinal) ? exception.Message
+        : exception.Message.Contains("resolves to no address Ardea may connect to", StringComparison.Ordinal) ? "The GitHub server resolves to an address Ardea may not connect to."
+        : $"GitHub could not be reached ({exception.HttpRequestError}).";
 
     private async Task<HttpResponseMessage> SendAsync(GitHubHost host, string path, string? token, CancellationToken cancellationToken)
     {

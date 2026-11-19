@@ -1,4 +1,3 @@
-
 namespace Ardea.Host.Commands;
 
 /// <summary><c>ardea admin &lt;command&gt;</c>: maintenance commands of the modules (master plan 12.8).</summary>

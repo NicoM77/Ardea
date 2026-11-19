@@ -104,6 +104,8 @@ Findings, actions and alerts with level and reasoning; overview, list, detail.
 | 3.10 | Action and vulnerability detail; status, assignment, deadline, note, revert | 3.5, 3.1 | ✅ |
 | 3.11 | Live updates via Server-Sent Events; command to recompute levels | 3.8 | ✅ |
 
+Acceptance: [observed and tested](docs/acceptance/phase-3.md); open: the owner's review of the reference set's labels and of the mockups, and the decision on bundling transitive packages (34 open actions from the three repositories against 6 for the spike week).
+
 ### Phase 4 · AI assessment (3–4 weeks)
 
 AI assessment as an optional step; a catalogue that grows by itself.

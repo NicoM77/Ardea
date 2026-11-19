@@ -28,8 +28,8 @@ public sealed class RepositoryLinkTests(PostgresServer server)
 
         // A component the repository delivered goes with the link.
         await host.ScalarAsync<int>($"""
-            INSERT INTO assets.component (organization_id, project_id, product_key, kind, version, packaging, protection, origin, repository_link_id, purl, created_at, changed_at)
-            VALUES ('{orgId}', '{projectId}', 'newtonsoft-json', 'library', '13.0.3', 'upstream', 'none', 'repository', '{linkId}', 'pkg:nuget/Newtonsoft.Json@13.0.3', now(), now())
+            INSERT INTO assets.component (organization_id, project_id, product_key, kind, version, version_precision, packaging, protection, origin, repository_link_id, purl, created_at, changed_at)
+            VALUES ('{orgId}', '{projectId}', 'newtonsoft-json', 'library', '13.0.3', 'exact', 'upstream', 'none', 'repository', '{linkId}', 'pkg:nuget/Newtonsoft.Json@13.0.3', now(), now())
             RETURNING 1
             """);
         Assert.Equal(1, (await Json(await client.GetAsync(path))).EnumerateArray().Single().GetProperty("componentCount").GetInt32());

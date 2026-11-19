@@ -38,7 +38,17 @@ internal sealed record ComponentView(
     string? Purl,
     string? DependencyScope,
     string? DependencyRelation,
+    string VersionPrecision,
+    string NoticeThreshold,
     CatalogMatchView? CatalogMatch = null);
+
+/// <summary>
+/// The organisation's stack (master plan 17.2, ADR 046): a system project created with the organisation. Its entries are
+/// components of <see cref="ProjectId"/> and change through the component endpoints of that project.
+/// </summary>
+/// <param name="ProjectId">The stack's system project.</param>
+/// <param name="Components">Its entries, each with version precision and notice threshold.</param>
+internal sealed record StackView(Guid ProjectId, IReadOnlyList<ComponentView> Components);
 
 /// <summary>
 /// A free entry the catalogue now knows (master plan 6.9 «Vorschläge»): its name matches this catalogue entry, often a
@@ -69,9 +79,10 @@ internal static class ProjectEndpoints
             .Produces<ProjectView>(StatusCodes.Status201Created).Problems(400, 403, 404);
         org.MapGet("/projects/{projectId:guid}", GetAsync).WithName("getProject").Produces<ProjectDetail>().Problems(403, 404);
         org.MapPatch("/projects/{projectId:guid}", UpdateAsync).WithName("updateProject").RequireOrganizationRole(OrganizationRole.Member)
-            .Produces<ProjectView>().Problems(400, 403, 404);
+            .Produces<ProjectView>().Problems(400, 403, 404, 409);
         org.MapDelete("/projects/{projectId:guid}", ArchiveAsync).WithName("archiveProject").RequireOrganizationRole(OrganizationRole.Member)
-            .NoContent().Problems(403, 404);
+            .NoContent().Problems(403, 404, 409);
+        org.MapGet("/stack", StackAsync).WithName("getStack").Produces<StackView>().Problems(403, 404);
 
         org.MapGet("/projects/{projectId:guid}/components", ComponentsAsync).WithName("listComponents").Produces<IReadOnlyList<ComponentView>>().Problems(403, 404);
         org.MapPost("/projects/{projectId:guid}/components", AddComponentAsync).WithName("addComponent").RequireOrganizationRole(OrganizationRole.Member)
@@ -86,12 +97,22 @@ internal static class ProjectEndpoints
             .Produces<ComponentView>().Problems(403, 404, 409);
     }
 
+    /// <summary>The organisation's projects; the stack is a system project and not among them (<c>GET stack</c> reads it).</summary>
     private static async Task<IReadOnlyList<ProjectView>> ListAsync(bool? archived, AssetsDbContext db, CancellationToken cancellationToken)
     {
-        var projects = await db.Projects.AsNoTracking().Where(p => archived == true || p.ArchivedAt == null)
+        var projects = await db.Projects.AsNoTracking().Where(p => p.Kind == Project.ProjectKind && (archived == true || p.ArchivedAt == null))
             .Select(p => new { Project = p, Count = db.Components.Count(c => c.ProjectId == p.Id) })
             .ToListAsync(cancellationToken);
         return [.. projects.OrderBy(p => p.Project.Name, StringComparer.CurrentCultureIgnoreCase).Select(p => View(p.Project, p.Count))];
+    }
+
+    /// <summary>The stack with its entries (master plan 17.2); every organisation has one from its creation on.</summary>
+    private static async Task<IResult> StackAsync(AssetsDbContext db, IProductCatalog catalog, CancellationToken cancellationToken)
+    {
+        var stack = await db.Projects.AsNoTracking().Where(p => p.Kind == Project.StackKind).Select(p => (Guid?)p.Id).SingleOrDefaultAsync(cancellationToken);
+        return stack is { } id
+            ? Results.Ok(new StackView(id, await ViewsAsync(db, catalog, id, cancellationToken)))
+            : ApiProblems.Problem("stack_not_found", StatusCodes.Status404NotFound, "The organisation has no stack.");
     }
 
     private static async Task<IResult> CreateAsync(
@@ -149,6 +170,11 @@ internal static class ProjectEndpoints
             return ProjectNotFound();
         }
 
+        if (project.Kind == Project.StackKind)
+        {
+            return StackProject();
+        }
+
         var (criticality, exposure, archived) = (project.Criticality, project.Exposure, project.ArchivedAt is not null);
         project.Name = Trimmed(request.Name) ?? project.Name;
         project.Description = request.Description is null ? project.Description : Trimmed(request.Description);
@@ -185,6 +211,11 @@ internal static class ProjectEndpoints
         if (project is null)
         {
             return ProjectNotFound();
+        }
+
+        if (project.Kind == Project.StackKind)
+        {
+            return StackProject();
         }
 
         if (project.ArchivedAt is null)
@@ -255,7 +286,7 @@ internal static class ProjectEndpoints
         }
 
         var changesIdentity = request.ProductKey is not null || request.CustomName is not null || request.CustomVendor is not null
-            || request.Kind is not null || request.Version is not null || request.Packaging is not null;
+            || request.Kind is not null || request.Version is not null || request.Packaging is not null || request.VersionPrecision is not null;
         if (component.Origin == "repository" && changesIdentity)
         {
             return RepositoryComponent();
@@ -276,7 +307,10 @@ internal static class ProjectEndpoints
             request.Exposure ?? component.Exposure,
             request.Criticality ?? component.Criticality,
             request.Protection ?? component.Protection,
-            request.ProtectionNote ?? component.ProtectionNote);
+            request.ProtectionNote ?? component.ProtectionNote,
+            // A new version without a stated precision gets the one that follows from it (ADR 046).
+            request.VersionPrecision ?? (request.Version is null ? component.VersionPrecision : null),
+            request.NoticeThreshold ?? component.NoticeThreshold);
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
         var values = await ComponentRules.CheckAsync(merged, catalog, errors, string.Empty, cancellationToken);
         if (request.ParentId is { } parentId && (parentId == id || !await db.Components.AnyAsync(c => c.Id == parentId && c.ProjectId == projectId, cancellationToken)))
@@ -420,7 +454,7 @@ internal static class ProjectEndpoints
         return new ComponentView(
             c.Id, c.ProductKey, product?.Name ?? c.CustomName ?? c.ProductKey ?? "?", product?.Vendor ?? c.CustomVendor, product is not null, c.Kind,
             c.Version, c.VersionScheme, c.Packaging, c.ParentComponentId, c.Exposure, c.Criticality, c.Protection, c.ProtectionNote, c.Origin,
-            c.Purl, c.DependencyScope, c.DependencyRelation,
+            c.Purl, c.DependencyScope, c.DependencyRelation, c.VersionPrecision, c.NoticeThreshold,
             match is null ? null : new CatalogMatchView(match.Product.Key, match.Product.Name, match.Learned || match.Product.Origin == ProductOrigin.Learned));
     }
 
@@ -463,6 +497,9 @@ internal static class ProjectEndpoints
         ApiProblems.Validation("validation_failed", "Some values are missing or not valid.", errors);
 
     private static IResult ProjectNotFound() => ApiProblems.Problem("project_not_found", StatusCodes.Status404NotFound, "No such project.");
+
+    private static IResult StackProject() => ApiProblems.Problem("stack_project", StatusCodes.Status409Conflict,
+        "The stack is the organisation's system project; it cannot be renamed, changed or archived. Change its entries instead.");
 
     private static IResult ComponentNotFound() => ApiProblems.Problem("component_not_found", StatusCodes.Status404NotFound, "No such component.");
 

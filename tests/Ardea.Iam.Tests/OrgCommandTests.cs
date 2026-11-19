@@ -32,7 +32,8 @@ public sealed class OrgCommandTests(PostgresServer server)
         Assert.Equal("Acme", export.GetProperty("organization").GetProperty("name").GetString());
         Assert.Equal("Owner Ünïcode", export.GetProperty("members")[0].GetProperty("displayName").GetString());
         var tables = export.GetProperty("tables");
-        Assert.Equal(1, tables.GetProperty("assets.project").GetArrayLength());
+        // The project and the organisation's stack (master plan 17.2).
+        Assert.Equal(2, tables.GetProperty("assets.project").GetArrayLength());
         Assert.Equal(2, tables.GetProperty("assets.component").GetArrayLength());
         Assert.Equal(1, tables.GetProperty("iam.invitation").GetArrayLength());
         // The other organisation is not in it, and no encrypted value leaves the instance.
@@ -48,7 +49,7 @@ public sealed class OrgCommandTests(PostgresServer server)
             Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM {table} WHERE organization_id = '{acme}'"));
         }
 
-        Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.project WHERE organization_id = '{other}'"));
+        Assert.Equal(2L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.project WHERE organization_id = '{other}'"));
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM iam.\"user\""));
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.audit_event WHERE action = 'instance.organization_deleted' AND organization_id IS NULL"));
         Assert.Null(await OrgCommand.DeleteAsync(owner, "acme", TestContext.Current.CancellationToken));

@@ -140,6 +140,7 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
             var db = services.GetRequiredService<AssetsDbContext>();
             var component = new Component { Id = id, ProjectId = project, Kind = "other", CreatedAt = Clock.GetUtcNow(), ChangedAt = Clock.GetUtcNow() };
             configure(component);
+            WithPrecision(component);
             db.Components.Add(component);
             await db.SaveChangesAsync();
             await ComponentKeys.RefreshAsync(db, services.GetRequiredService<IProductCatalog>(), [component], CancellationToken.None);
@@ -154,9 +155,19 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
             var db = services.GetRequiredService<AssetsDbContext>();
             var row = db.Components.Single(c => c.Id == component);
             change(row);
+            WithPrecision(row);
             await db.SaveChangesAsync();
             await ComponentKeys.RefreshAsync(db, services.GetRequiredService<IProductCatalog>(), [row], CancellationToken.None);
         });
+
+    /// <summary>The precision that follows from the version, as the profile endpoints set it, unless the test set one that fits (ADR 046).</summary>
+    internal static void WithPrecision(Component component)
+    {
+        if (!VersionPrecisions.Fits(component.VersionPrecision, component.Version))
+        {
+            component.VersionPrecision = VersionPrecisions.Of(component.Version, component.Purl, component.Origin);
+        }
+    }
 
     /// <summary>Writes a consolidated entry with its affected products, as the correlation would.</summary>
     public async Task<Guid> AddEntryAsync(TestEntry entry)

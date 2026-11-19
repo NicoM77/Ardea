@@ -88,9 +88,16 @@ internal static class LinkEndpoints
         Guid projectId, CreateLinkRequest request, HttpContext http, AssetsDbContext db, IUnitOfWork unitOfWork, IAuditLog audit, TimeProvider time,
         CancellationToken cancellationToken)
     {
-        if (!await db.Projects.AnyAsync(p => p.Id == projectId, cancellationToken))
+        var kind = await db.Projects.Where(p => p.Id == projectId).Select(p => p.Kind).SingleOrDefaultAsync(cancellationToken);
+        if (kind is null)
         {
             return ProjectNotFound();
+        }
+
+        // The stack is coarse by design; a repository makes a project precise (master plan 17.4).
+        if (kind == Project.StackKind)
+        {
+            return ApiProblems.Problem("stack_project", StatusCodes.Status409Conflict, "Connect repositories to a project; the stack names technologies only.");
         }
 
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
@@ -305,7 +312,8 @@ internal static class LinkEndpoints
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
         var version = request.Version is null ? suggestion.Version : Optional(request.Version);
         var values = await ComponentRules.CheckAsync(
-            new ComponentInput(null, null, suggestion.ProductKey, null, null, null, version, null, null, null, null, null, null, null), catalog, errors, string.Empty, cancellationToken);
+            new ComponentInput(null, null, suggestion.ProductKey, null, null, null, version, null, null, null, null, null, null, null,
+                VersionPrecisions.Of(version, null, "repository")), catalog, errors, string.Empty, cancellationToken);
         if (values is null)
         {
             return Validation(errors);

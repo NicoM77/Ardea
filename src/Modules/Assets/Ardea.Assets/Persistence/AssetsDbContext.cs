@@ -32,14 +32,18 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
             {
                 t.HasCheckConstraint("ck_project_criticality", "criticality IN ('low', 'normal', 'high')");
                 t.HasCheckConstraint("ck_project_exposure", "exposure IN ('internet', 'internal', 'isolated')");
+                t.HasCheckConstraint("ck_project_kind", "kind IN ('project', 'organization_stack')");
             });
             project.HasKey(p => p.Id);
             project.Property(p => p.Id).HasDefaultValueSql("uuidv7()");
+            project.Property(p => p.Kind).HasMaxLength(20).HasDefaultValue(Project.ProjectKind);
             project.Property(p => p.Name).HasMaxLength(200);
             project.Property(p => p.Description).HasMaxLength(2000);
             project.Property(p => p.Criticality).HasMaxLength(10);
             project.Property(p => p.Exposure).HasMaxLength(10);
             project.HasIndex(p => new { p.OrganizationId, p.Name }).HasDatabaseName("ix_project_org_name");
+            // Exactly one stack per organisation (master plan 17.2): created with the organisation, never a second.
+            project.HasIndex(p => p.OrganizationId).IsUnique().HasFilter("kind = 'organization_stack'").HasDatabaseName("ux_project_stack");
         });
 
         modelBuilder.Entity<Component>(component =>
@@ -56,6 +60,10 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
                 t.HasCheckConstraint("ck_component_origin", "origin IN ('manual', 'repository')");
                 t.HasCheckConstraint("ck_component_scope", "dependency_scope IS NULL OR dependency_scope IN ('runtime', 'development', 'unknown')");
                 t.HasCheckConstraint("ck_component_relation", "dependency_relation IS NULL OR dependency_relation IN ('direct', 'transitive', 'unknown')");
+                // «none» exactly when there is no version (ADR 046).
+                t.HasCheckConstraint("ck_component_version_precision",
+                    "version_precision IN ('none', 'line', 'exact') AND (version_precision = 'none') = (version IS NULL OR btrim(version) = '')");
+                t.HasCheckConstraint("ck_component_notice_threshold", "notice_threshold IN ('only_important', 'everything')");
             });
             component.HasKey(c => c.Id);
             component.Property(c => c.Id).HasDefaultValueSql("uuidv7()");
@@ -64,6 +72,8 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
             component.Property(c => c.CustomName).HasMaxLength(200);
             component.Property(c => c.Kind).HasMaxLength(20);
             component.Property(c => c.Version).HasMaxLength(100);
+            component.Property(c => c.VersionPrecision).HasMaxLength(10).HasDefaultValue(VersionPrecisions.None);
+            component.Property(c => c.NoticeThreshold).HasMaxLength(20).HasDefaultValue(NoticeThresholds.OnlyImportant);
             component.Property(c => c.VersionScheme).HasMaxLength(30);
             component.Property(c => c.Packaging).HasMaxLength(20);
             component.Property(c => c.Exposure).HasMaxLength(10);

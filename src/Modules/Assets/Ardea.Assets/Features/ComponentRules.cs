@@ -3,7 +3,12 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Assets.Features;
 
-/// <summary>A component as the API takes it; <see cref="Ref"/> and <see cref="ParentRef"/> link new items within one request.</summary>
+/// <summary>
+/// A component as the API takes it; <see cref="Ref"/> and <see cref="ParentRef"/> link new items within one request.
+/// <see cref="VersionPrecision"/> (<c>none</c>, <c>line</c>, <c>exact</c>) follows from the version when left out;
+/// <see cref="NoticeThreshold"/> (<c>only_important</c>, <c>everything</c>) is <c>only_important</c> when left out
+/// (master plan 17.2, ADR 044, ADR 046).
+/// </summary>
 internal sealed record ComponentInput(
     Guid? Id,
     string? Ref,
@@ -18,7 +23,9 @@ internal sealed record ComponentInput(
     string? Exposure,
     string? Criticality,
     string? Protection,
-    string? ProtectionNote);
+    string? ProtectionNote,
+    string? VersionPrecision = null,
+    string? NoticeThreshold = null);
 
 /// <summary>The checked values of a component, ready to write.</summary>
 internal sealed record ComponentValues(
@@ -32,7 +39,9 @@ internal sealed record ComponentValues(
     string? Exposure,
     string? Criticality,
     string Protection,
-    string? ProtectionNote)
+    string? ProtectionNote,
+    string VersionPrecision,
+    string NoticeThreshold)
 {
     /// <summary>What identifies a component without its id when a profile is replaced (master plan 4.9).</summary>
     public string Identity => ProductKey ?? $"custom:{Normalize(CustomVendor)}/{Normalize(CustomName)}";
@@ -42,7 +51,8 @@ internal sealed record ComponentValues(
     public bool SameAs(Component c) =>
         c.ProductKey == ProductKey && c.CustomVendor == CustomVendor && c.CustomName == CustomName && c.Kind == Kind
         && c.Version == Version && c.VersionScheme == VersionScheme && c.Packaging == Packaging && c.Exposure == Exposure
-        && c.Criticality == Criticality && c.Protection == Protection && c.ProtectionNote == ProtectionNote;
+        && c.Criticality == Criticality && c.Protection == Protection && c.ProtectionNote == ProtectionNote
+        && c.VersionPrecision == VersionPrecision && c.NoticeThreshold == NoticeThreshold;
 
     public void ApplyTo(Component c)
     {
@@ -51,6 +61,8 @@ internal sealed record ComponentValues(
         c.CustomName = CustomName;
         c.Kind = Kind;
         c.Version = Version;
+        c.VersionPrecision = VersionPrecision;
+        c.NoticeThreshold = NoticeThreshold;
         c.VersionScheme = VersionScheme;
         c.Packaging = Packaging;
         c.Exposure = Exposure;
@@ -162,7 +174,25 @@ internal static class ComponentRules
             Error("protectionNote", "Use at most 1000 characters.");
         }
 
-        return errors.Count > before ? null : new ComponentValues(productKey, vendor, name, kind, version, scheme, packaging, exposure, criticality, protection, note);
+        // A stated precision must fit the version; without one it follows from the version (ADR 046).
+        var precision = Empty(input.VersionPrecision) ?? VersionPrecisions.Of(version, null, "manual");
+        if (!VersionPrecisions.All.Contains(precision))
+        {
+            Error("versionPrecision", "Choose none, line or exact.");
+        }
+        else if (!VersionPrecisions.Fits(precision, version))
+        {
+            Error("versionPrecision", version is null ? "Without a version the precision is none." : "With a version, choose line or exact.");
+        }
+
+        var threshold = Empty(input.NoticeThreshold) ?? NoticeThresholds.OnlyImportant;
+        if (!NoticeThresholds.All.Contains(threshold))
+        {
+            Error("noticeThreshold", "Choose only_important or everything.");
+        }
+
+        return errors.Count > before ? null
+            : new ComponentValues(productKey, vendor, name, kind, version, scheme, packaging, exposure, criticality, protection, note, precision, threshold);
     }
 
     private static string? Empty(string? value, bool lower = true) =>

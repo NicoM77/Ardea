@@ -23,6 +23,7 @@ public sealed class AssetsModule : IModule
         services.AddModuleDbContext<AssetsDbContext>(AssetsDbContext.Schema);
         services.AddScoped<Platform.Status.IInstanceStatusContributor, AssetsStatusContributor>();
         services.AddScoped<Contracts.IProfileQueries, ProfileQueries>();
+        services.AddScoped<Iam.Contracts.IOrganizationCreatedSubscriber, StackProject>();
         services.AddSingleton<IDemoSeedStep, DemoSeed>();
         services.AddSingleton<IDemoSeedStep, DemoUpdate>();
         services.AddJob<ProjectProfileChanged, ProjectProfileChangedHandler>(new JobKindOptions { MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(1) });

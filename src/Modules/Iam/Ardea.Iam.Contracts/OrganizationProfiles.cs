@@ -11,7 +11,7 @@ public sealed record OrganizationProfile(Guid Id, string Locale, string AiPolicy
     /// <summary>The name in the web app's address, <c>/o/{slug}/…</c>.</summary>
     public string Slug { get; init; } = string.Empty;
 
-    /// <summary>IANA time zone for digests and deadlines.</summary>
+    /// <summary>IANA time zone for digests and reminders.</summary>
     public string TimeZone { get; init; } = "UTC";
 
     /// <summary>How much e-mails say (master plan 8.5): <c>full</c>, or <c>minimal</c> for level, number and link only.</summary>

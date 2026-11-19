@@ -48,6 +48,26 @@
         { "vendor": "Fedora Project", "names": ["Fedora {line}"] }
       ],
       "images": ["fedora"]
+    },
+    {
+      "key": "openshift",
+      "name": "Red Hat OpenShift Container Platform",
+      "kind": "container",
+      "versionScheme": "numeric",
+      "cpe": ["redhat:openshift_container_platform", "redhat:openshift"],
+      "aliases": [
+        { "vendor": "Red Hat", "names": ["OpenShift", "OpenShift Container Platform", "Red Hat OpenShift Container Platform {line}"] }
+      ],
+      "related": ["kubernetes"]
+    },
+    {
+      "key": "podman",
+      "name": "Podman",
+      "kind": "container",
+      "versionScheme": "go",
+      "packages": ["pkg:golang/github.com/containers/podman/v4", "pkg:golang/github.com/containers/podman/v5"],
+      "aliases": [{ "vendor": "containers", "names": ["Podman"] }],
+      "images": ["quay.io/podman/stable"]
     }
   ]
 }

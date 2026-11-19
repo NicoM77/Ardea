@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Prometheus",
+  "products": [
+    {
+      "key": "prometheus",
+      "name": "Prometheus",
+      "kind": "other",
+      "versionScheme": "go",
+      "cpe": ["prometheus:prometheus"],
+      "packages": ["pkg:golang/github.com/prometheus/prometheus"],
+      "images": ["prom/prometheus"]
+    }
+  ]
+}

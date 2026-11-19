@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Helm",
+  "products": [
+    {
+      "key": "helm",
+      "name": "Helm",
+      "kind": "container",
+      "versionScheme": "go",
+      "cpe": ["helm:helm"],
+      "packages": ["pkg:golang/helm.sh/helm/v3"],
+      "related": ["kubernetes"],
+      "images": ["alpine/helm"]
+    }
+  ]
+}

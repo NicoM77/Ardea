@@ -18,6 +18,33 @@
       "versionScheme": "numeric",
       "cpe": ["vmware:esxi"],
       "aliases": [{ "vendor": "VMware", "names": ["ESXi", "VMware ESXi"] }]
+    },
+    {
+      "key": "vcenter-server",
+      "name": "VMware vCenter Server",
+      "kind": "virtualization",
+      "versionScheme": "numeric",
+      "cpe": ["vmware:vcenter_server"],
+      "aliases": [
+        { "vendor": "VMware", "names": ["vCenter", "vCenter Server", "VMware vCenter", "VMware vCenter Server Appliance", "VCSA"] }
+      ],
+      "related": ["esxi"]
+    },
+    {
+      "key": "vmware-workstation",
+      "name": "VMware Workstation",
+      "kind": "virtualization",
+      "versionScheme": "numeric",
+      "cpe": ["vmware:workstation"],
+      "aliases": [{ "vendor": "VMware", "names": ["Workstation", "Workstation Pro", "VMware Workstation Pro"] }]
+    },
+    {
+      "key": "vmware-tools",
+      "name": "VMware Tools",
+      "kind": "virtualization",
+      "versionScheme": "numeric",
+      "cpe": ["vmware:tools"],
+      "related": ["esxi"]
     }
   ]
 }

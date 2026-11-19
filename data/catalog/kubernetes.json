@@ -9,7 +9,18 @@
       "versionScheme": "semver",
       "cpe": ["kubernetes:kubernetes"],
       "packages": ["pkg:golang/k8s.io/kubernetes"],
-      "aliases": [{ "names": ["Kubernetes"] }]
+      "aliases": [{ "names": ["Kubernetes"] }, { "vendor": "Kubernetes", "names": ["K8s", "kubelet", "kube-apiserver", "kubectl"] }],
+      "images": ["registry.k8s.io/kube-apiserver", "registry.k8s.io/kube-controller-manager", "registry.k8s.io/kube-proxy"]
+    },
+    {
+      "key": "ingress-nginx",
+      "name": "Ingress NGINX Controller",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["kubernetes:ingress-nginx"],
+      "aliases": [{ "vendor": "Kubernetes", "names": ["ingress-nginx", "NGINX Ingress Controller for Kubernetes"] }],
+      "related": ["kubernetes", "nginx"],
+      "images": ["registry.k8s.io/ingress-nginx/controller"]
     }
   ]
 }

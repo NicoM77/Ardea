@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Istio",
+  "products": [
+    {
+      "key": "istio",
+      "name": "Istio",
+      "kind": "network",
+      "versionScheme": "go",
+      "cpe": ["istio:istio"],
+      "packages": ["pkg:golang/istio.io/istio"],
+      "related": ["kubernetes", "envoy"],
+      "images": ["istio/pilot", "istio/proxyv2"]
+    }
+  ]
+}

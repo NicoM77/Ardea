@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Envoy Proxy",
+  "products": [
+    {
+      "key": "envoy",
+      "name": "Envoy",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["envoyproxy:envoy"],
+      "aliases": [{ "vendor": "envoyproxy", "names": ["Envoy Proxy"] }],
+      "images": ["envoyproxy/envoy"]
+    }
+  ]
+}

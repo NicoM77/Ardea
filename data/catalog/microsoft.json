@@ -98,6 +98,15 @@
         { "vendor": "Microsoft", "names": ["SQL Server", "MSSQL", "MS SQL Server", "SQL Server {line}", "Microsoft SQL Server {line}", "Microsoft SQL Server {line} *"] }
       ],
       "images": ["mcr.microsoft.com/mssql/server"]
+    },
+    {
+      // Records about Hyper-V name the Windows releases; this entry serves the input.
+      "key": "hyper-v",
+      "name": "Hyper-V",
+      "kind": "virtualization",
+      "versionScheme": "numeric",
+      "aliases": [{ "vendor": "Microsoft", "names": ["Windows Hyper-V", "Microsoft Hyper-V", "Hyper-V Server"] }],
+      "related": ["windows-server"]
     }
   ]
 }

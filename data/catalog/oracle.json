@@ -41,6 +41,14 @@
       "cpe": ["oracle:database_server"],
       "aliases": [{ "vendor": "Oracle", "names": ["Oracle Database", "Oracle DB", "Oracle Database {line}"] }],
       "images": ["container-registry.oracle.com/database/enterprise", "container-registry.oracle.com/database/free"]
+    },
+    {
+      "key": "virtualbox",
+      "name": "Oracle VM VirtualBox",
+      "kind": "virtualization",
+      "versionScheme": "numeric",
+      "cpe": ["oracle:vm_virtualbox"],
+      "aliases": [{ "vendor": "Oracle", "names": ["VirtualBox", "VM VirtualBox"] }]
     }
   ]
 }

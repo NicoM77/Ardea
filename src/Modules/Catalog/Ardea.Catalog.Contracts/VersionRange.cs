@@ -100,7 +100,8 @@ public static class VersionRanges
         }
 
         var parts = prefix.TrimStart('v', 'V').Split('.');
-        if (parts.Any(p => p.Length == 0 || !p.All(char.IsAsciiDigit)) || parts.Length > 6)
+        // At most 18 digits a part, as in NumericParts: a longer number does not fit a long and is no version anyway.
+        if (parts.Any(p => p.Length is 0 or > 18 || !p.All(char.IsAsciiDigit)) || parts.Length > 6)
         {
             return false;
         }

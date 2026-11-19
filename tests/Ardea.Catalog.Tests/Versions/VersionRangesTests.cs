@@ -17,6 +17,15 @@ public sealed class VersionRangesTests
         Assert.Equal((lower, upper), (from, to));
     }
 
+    [Fact]
+    public void A_placeholder_with_an_oversized_part_is_no_placeholder_and_does_not_throw()
+    {
+        // A part beyond 18 digits overflowed long.Parse inside the correlation, which then failed instead of degrading.
+        Assert.False(VersionRanges.TryExpandWildcard("99999999999999999999.*", out _, out _));
+        var range = VersionRanges.Normalize(new VersionRange { Introduced = "1.0", LastAffected = "99999999999999999999.*" });
+        Assert.Equal((null, null), (range.Fixed, range.LastAffected));
+    }
+
     [Theory]
     [InlineData("8.4.0-8.4.13", "8.4.0", "8.4.13")]
     [InlineData("8.4.0 - 8.4.13", "8.4.0", "8.4.13")]

@@ -29,6 +29,11 @@ public sealed class AssessmentModule : IModule
         // The rule set is a file in the image (master plan 4.9); read once, checked on first use.
         services.AddSingleton(_ => Rules.RuleSet.Load(MasterDataOptions.FromConfiguration(configuration).Directory));
         services.AddScoped<AlertAssessor>();
+        services.AddScoped<History>();
+        services.AddScoped<Numbers>();
+        services.AddScoped<Remediations>();
+        services.AddScoped<Features.ActionReader>();
+        services.AddScoped<Features.ActionCommands>();
         services.AddScoped<IEntryChangeSubscriber, EntryChangeSubscriber>();
         services.AddScoped<IProfileChangeSubscriber, ProfileChangeSubscriber>();
         services.AddJob<MatchEntry, MatchEntryHandler>(new JobKindOptions { MaxConcurrency = 4, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(2) });
@@ -36,7 +41,5 @@ public sealed class AssessmentModule : IModule
         services.AddJob<MatchProject, MatchProjectHandler>(new JobKindOptions { MaxConcurrency = 2, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(10) });
     }
 
-    public void MapEndpoints(IEndpointRouteBuilder endpoints)
-    {
-    }
+    public void MapEndpoints(IEndpointRouteBuilder endpoints) => Features.ActionEndpoints.Map(endpoints);
 }

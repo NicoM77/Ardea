@@ -268,6 +268,8 @@ export async function api(page: Page, signedIn: boolean): Promise<void> {
             aiPolicy: 'local_only',
             role: 'owner',
             createdAt: '2026-11-17T08:00:00Z',
+            emailContent: 'full',
+            allowMuteCritical: false,
           },
         });
       case `/api/v1/orgs/${ORG_ID}/setup`:

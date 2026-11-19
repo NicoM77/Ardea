@@ -30,4 +30,9 @@ export interface UpdateInstanceSettingsRequest {
      * @nullable
      */
   smtpSecurity: string | null;
+  /**
+     * Hosts webhooks may reach in the private network, comma-separated
+     * @nullable
+     */
+  webhookInternalHosts?: string | null;
 }

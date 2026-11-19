@@ -75,7 +75,7 @@ Organisations with projects and technology profile; profile from GitHub reposito
 | 2.7 | Setup wizard (repository, operations, technologies); project pages with links, packages and suggestions; organisation settings with access and audit log | 2.3, 2.4, 2.6, 2.13 | ⬜ |
 | 2.8 | Coverage hints: missing versions, platforms without components, distro packages, packages without lock file, ecosystems not yet checkable | 2.5 | ⬜ |
 | 2.9 | **Spike:** asynchronous SBOM export with a public and a private repository and a fine-grained token; ADR | | ⬜ |
-| 2.10 | GitHub access with encrypted token, check, expiry, list of readable repositories; GitHub Enterprise Server hosts in administration | 2.3, 2.9 | ⬜ |
+| 2.10 | GitHub access with encrypted token, check, expiry, list of readable repositories; GitHub Enterprise Server hosts in administration | 2.3, 2.9 | ✅ |
 | 2.11 | Connection via `IRepositoryHost`: branch head with ETag, SBOM request, file tree, files with limits; readers for SPDX, `packages.lock.json`, `package-lock.json` | 2.10 | ⬜ |
 | 2.12 | Detection rules for Dockerfile, Compose, `global.json`, project files, `engines` and `.nvmrc`, `composer.json`, `go.mod`; image names in the catalogue; suggestions with evidence | 2.4, 2.11 | ⬜ |
 | 2.13 | `IndexRepository` job with due time and system operation; reconcile per 16.5 holding back much smaller states; `repository.unavailable`; audit with commit as origin | 2.5, 2.11, 2.12 | ⬜ |

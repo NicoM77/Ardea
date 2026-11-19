@@ -110,3 +110,46 @@ internal sealed class ComponentKey : IOrganizationOwned
     /// <summary><c>strong</c> or <c>weak</c> (master plan 7.2).</summary>
     public required string Strength { get; set; }
 }
+
+/// <summary>
+/// An organisation's access to GitHub (master plan 4.5, 16.4): a fine-grained, read-only token for
+/// selected repositories, or none for public repositories. The token is stored encrypted and never
+/// shown again; only its last four characters and its expiry are.
+/// </summary>
+internal sealed class RepositoryConnection : IOrganizationOwned
+{
+    public Guid Id { get; set; }
+
+    public Guid OrganizationId { get; set; }
+
+    public required string Name { get; set; }
+
+    /// <summary>A registered GitHub Enterprise Server; <c>null</c> for github.com.</summary>
+    public string? HostId { get; set; }
+
+    /// <summary>The token, encrypted with the instance's master key; <c>null</c> for public repositories only.</summary>
+    public string? TokenEnc { get; set; }
+
+    public string? TokenHint { get; set; }
+
+    /// <summary><c>none</c>, <c>fine_grained</c>, <c>classic</c> or <c>other</c>.</summary>
+    public string TokenKind { get; set; } = "none";
+
+    /// <summary>The scopes of a classic token, shown as a warning about what it can do.</summary>
+    public string[] TokenScopes { get; set; } = [];
+
+    public DateTimeOffset? TokenExpiresAt { get; set; }
+
+    /// <summary>The GitHub account the token belongs to.</summary>
+    public string? Login { get; set; }
+
+    public Guid CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset? LastCheckedAt { get; set; }
+
+    public DateTimeOffset? LastOkAt { get; set; }
+
+    public string? LastError { get; set; }
+}

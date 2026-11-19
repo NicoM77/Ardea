@@ -41,7 +41,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
     private static readonly string[] OrganizationSchemas = ["assets"];
 
     /// <summary>Bob's objects that Alice tries to reach.</summary>
-    private sealed record Foreign(Guid User, Guid Invitation, Guid Project, Guid Component);
+    private sealed record Foreign(Guid User, Guid Invitation, Guid Project, Guid Component, Guid Connection);
 
     /// <summary>
     /// Every organisation endpoint with a request body that passes validation, so a foreign id is what
@@ -69,6 +69,12 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["PATCH /api/v1/orgs/{orgId}/projects/{projectId}/components/{id}"] = f => new { version = "0.0.1", parentId = f.Component },
         ["DELETE /api/v1/orgs/{orgId}/projects/{projectId}/components/{id}"] = _ => null,
         ["POST /api/v1/orgs/{orgId}/projects/{projectId}/components/{id}/detach"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/repository-connections"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/repository-connections"] = _ => new { name = "Planted" },
+        ["PATCH /api/v1/orgs/{orgId}/repository-connections/{id}"] = _ => new { name = "Taken over" },
+        ["DELETE /api/v1/orgs/{orgId}/repository-connections/{id}"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/repository-connections/{id}/test"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/repository-connections/{id}/repositories"] = _ => null,
     };
 
     /// <summary>Bob's object a route parameter names: <c>{id}</c> is the object of the path segment before it.</summary>
@@ -78,6 +84,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         "projectId" => foreign.Project,
         "id" when route.Contains("/components/{id}", StringComparison.Ordinal) => foreign.Component,
         "id" when route.Contains("/invitations/{id}", StringComparison.Ordinal) => foreign.Invitation,
+        "id" when route.Contains("/repository-connections/{id}", StringComparison.Ordinal) => foreign.Connection,
         _ => null,
     };
 
@@ -141,7 +148,9 @@ public sealed class TenantIsolationTests(PostgresServer server)
         var bobsComponent = (await Json(await bob.PostAsync($"/api/v1/orgs/{bobOrg}/projects/{bobsProject}/components", new { productKey = "wordpress", version = "6.7.1" }), HttpStatusCode.Created))
             .GetProperty("id").GetGuid();
         var aliceProject = (await Json(await alice.PostAsync($"/api/v1/orgs/{aliceOrg}/projects", new { name = "Alice's shop" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
-        var foreign = new Foreign(bobId, bobsInvitation, bobsProject, bobsComponent);
+        var bobsConnection = (await Json(await bob.PostAsync($"/api/v1/orgs/{bobOrg}/repository-connections", new { name = "Bob's GitHub" }), HttpStatusCode.Created))
+            .GetProperty("id").GetGuid();
+        var foreign = new Foreign(bobId, bobsInvitation, bobsProject, bobsComponent, bobsConnection);
 
         var endpoints = host.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText?.Contains("/orgs/{orgId", StringComparison.Ordinal) == true)
@@ -203,6 +212,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         Assert.Equal("Bob's shop|internal|", await host.ScalarAsync<string>($"SELECT name || '|' || exposure || '|' || coalesce(archived_at::text, '') FROM assets.project WHERE id = '{bobsProject}'"));
         Assert.Equal("6.7.1|manual", await host.ScalarAsync<string>($"SELECT version || '|' || origin FROM assets.component WHERE id = '{bobsComponent}'"));
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.component WHERE organization_id = '{bobOrg}'"));
+        Assert.Equal("Bob's GitHub", await host.ScalarAsync<string>($"SELECT name FROM assets.repository_connection WHERE id = '{bobsConnection}'"));
     }
 
     private static async Task ExpectHiddenAsync(List<string> problems, string what, HttpResponseMessage response, bool notFoundOnly)

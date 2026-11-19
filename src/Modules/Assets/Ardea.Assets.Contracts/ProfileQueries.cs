@@ -54,6 +54,9 @@ public sealed record ProfileComponent
 
     public required string ProjectName { get; init; }
 
+    /// <summary><c>project</c>, or <c>organization_stack</c> for the organisation's stack (master plan 17.2).</summary>
+    public string ProjectKind { get; init; } = "project";
+
     public string? ProductKey { get; init; }
 
     public string? CustomVendor { get; init; }
@@ -66,6 +69,15 @@ public sealed record ProfileComponent
     public required string Kind { get; init; }
 
     public string? Version { get; init; }
+
+    /// <summary>
+    /// <c>none</c>, <c>line</c> or <c>exact</c> (master plan 17.1, ADR 046): <c>exact</c> takes the precise path (finding and
+    /// reminder), <c>none</c> and <c>line</c> the coarse one (notice).
+    /// </summary>
+    public string VersionPrecision { get; init; } = "exact";
+
+    /// <summary><c>only_important</c> or <c>everything</c>: when a coarse component raises a notice (ADR 044, ADR 046).</summary>
+    public string NoticeThreshold { get; init; } = "only_important";
 
     public string? VersionScheme { get; init; }
 

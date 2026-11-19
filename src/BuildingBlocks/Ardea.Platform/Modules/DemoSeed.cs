@@ -49,10 +49,14 @@ public sealed class DemoSeedContext(IServiceScopeFactory scopes, TimeProvider ti
     /// <summary>Writes a progress line for the operator.</summary>
     public void Report(string line) => report(line);
 
-    /// <summary>A scope for one unit of work with its own tenant; the caller commits it.</summary>
+    /// <summary>The origin of the audit entries of the command, its steps and the jobs it runs.</summary>
+    public const string AuditOrigin = "command:seed-demo";
+
+    /// <summary>A scope for one unit of work with its own tenant and the command's audit origin; the caller commits it.</summary>
     public AsyncServiceScope CreateScope(Guid? organizationId = null, Guid? userId = null)
     {
         var scope = scopes.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<Audit.AuditOrigin>().Origin = AuditOrigin;
         var tenant = scope.ServiceProvider.GetRequiredService<TenantContext>();
         if (organizationId is { } organization)
         {

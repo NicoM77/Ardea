@@ -1,5 +1,6 @@
 using Ardea.Platform.Audit;
 using Ardea.Platform.Jobs;
+using Ardea.Platform.Modules;
 using Ardea.Platform.Persistence;
 using Ardea.Platform.Tenancy;
 using Npgsql;
@@ -81,7 +82,7 @@ internal static class DemoJobRunner
             }
 
             await using var scope = scopes.CreateAsyncScope();
-            scope.ServiceProvider.GetRequiredService<AuditOrigin>().Origin = "command:seed-demo";
+            scope.ServiceProvider.GetRequiredService<AuditOrigin>().Origin = DemoSeedContext.AuditOrigin;
             if (job.OrganizationId is { } organization)
             {
                 scope.ServiceProvider.GetRequiredService<TenantContext>().SetOrganization(organization);

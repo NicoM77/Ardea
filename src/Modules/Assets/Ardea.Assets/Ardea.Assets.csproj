@@ -3,6 +3,12 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ardea.Iam.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../../../BuildingBlocks/Ardea.Platform/Ardea.Platform.csproj" />
     <ProjectReference Include="../Ardea.Assets.Contracts/Ardea.Assets.Contracts.csproj" />
     <ProjectReference Include="../../Iam/Ardea.Iam.Contracts/Ardea.Iam.Contracts.csproj" />

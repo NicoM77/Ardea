@@ -37,20 +37,48 @@ public sealed class TenantIsolationTests(PostgresServer server)
     /// <summary>Schemas whose every table is global: intelligence and catalogue are the same for all (master plan 4.1).</summary>
     private static readonly string[] GlobalSchemas = ["intel", "catalog"];
 
+    /// <summary>Schemas whose every table is organisation data (master plan 4.1).</summary>
+    private static readonly string[] OrganizationSchemas = ["assets"];
+
+    /// <summary>Bob's objects that Alice tries to reach.</summary>
+    private sealed record Foreign(Guid User, Guid Invitation, Guid Project, Guid Component);
+
     /// <summary>
     /// Every organisation endpoint with a request body that passes validation, so a foreign id is what
-    /// the handler meets. A new endpoint fails the test until it is listed here.
+    /// the handler meets; bodies may carry foreign ids themselves. A new endpoint fails the test until
+    /// it is listed here.
     /// </summary>
-    private static readonly Dictionary<string, object?> Bodies = new(StringComparer.Ordinal)
+    private static readonly Dictionary<string, Func<Foreign, object?>> Bodies = new(StringComparer.Ordinal)
     {
-        ["GET /api/v1/orgs/{orgId}/"] = null,
-        ["PATCH /api/v1/orgs/{orgId}/"] = new { name = "Taken over" },
-        ["GET /api/v1/orgs/{orgId}/members"] = null,
-        ["PATCH /api/v1/orgs/{orgId}/members/{userId}"] = new { role = "viewer" },
-        ["DELETE /api/v1/orgs/{orgId}/members/{userId}"] = null,
-        ["GET /api/v1/orgs/{orgId}/invitations"] = null,
-        ["POST /api/v1/orgs/{orgId}/invitations"] = new { email = "intruder@example.org", role = "admin" },
-        ["DELETE /api/v1/orgs/{orgId}/invitations/{id}"] = null,
+        ["GET /api/v1/orgs/{orgId}/"] = _ => null,
+        ["PATCH /api/v1/orgs/{orgId}/"] = _ => new { name = "Taken over" },
+        ["GET /api/v1/orgs/{orgId}/members"] = _ => null,
+        ["PATCH /api/v1/orgs/{orgId}/members/{userId}"] = _ => new { role = "viewer" },
+        ["DELETE /api/v1/orgs/{orgId}/members/{userId}"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/invitations"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/invitations"] = _ => new { email = "intruder@example.org", role = "admin" },
+        ["DELETE /api/v1/orgs/{orgId}/invitations/{id}"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/projects"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/projects"] = _ => new { name = "Planted" },
+        ["GET /api/v1/orgs/{orgId}/projects/{projectId}"] = _ => null,
+        ["PATCH /api/v1/orgs/{orgId}/projects/{projectId}"] = _ => new { name = "Taken over", exposure = "internet" },
+        ["DELETE /api/v1/orgs/{orgId}/projects/{projectId}"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/projects/{projectId}/components"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/projects/{projectId}/components"] = f => new { productKey = "php", parentId = f.Component },
+        ["PUT /api/v1/orgs/{orgId}/projects/{projectId}/components"] = f => new { components = new object[] { new { id = f.Component, productKey = "php" } } },
+        ["PATCH /api/v1/orgs/{orgId}/projects/{projectId}/components/{id}"] = f => new { version = "0.0.1", parentId = f.Component },
+        ["DELETE /api/v1/orgs/{orgId}/projects/{projectId}/components/{id}"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/projects/{projectId}/components/{id}/detach"] = _ => null,
+    };
+
+    /// <summary>Bob's object a route parameter names: <c>{id}</c> is the object of the path segment before it.</summary>
+    private static Guid? ForeignId(string route, string parameter, Foreign foreign) => parameter switch
+    {
+        "userId" => foreign.User,
+        "projectId" => foreign.Project,
+        "id" when route.Contains("/components/{id}", StringComparison.Ordinal) => foreign.Component,
+        "id" when route.Contains("/invitations/{id}", StringComparison.Ordinal) => foreign.Invitation,
+        _ => null,
     };
 
     [Fact]
@@ -74,7 +102,9 @@ public sealed class TenantIsolationTests(PostgresServer server)
         while (await reader.ReadAsync())
         {
             var (table, rls, policies, hasOrganization) = (reader.GetString(0), reader.GetBoolean(1), reader.GetInt64(2), reader.GetBoolean(3));
-            var kind = TableKinds.GetValueOrDefault(table) ?? (GlobalSchemas.Contains(table.Split('.')[0]) ? "global" : null);
+            var schema = table.Split('.')[0];
+            var kind = TableKinds.GetValueOrDefault(table)
+                ?? (GlobalSchemas.Contains(schema) ? "global" : OrganizationSchemas.Contains(schema) ? "organization" : null);
             if (kind is null)
             {
                 problems.Add($"{table}: no kind; add it to TableKinds (master plan 4.1)");
@@ -107,9 +137,11 @@ public sealed class TenantIsolationTests(PostgresServer server)
         var bobsInvitation = (await Json(await bob.PostAsync($"/api/v1/orgs/{bobOrg}/invitations", new { email = "carol@example.org", role = "member" }), HttpStatusCode.Created))
             .GetProperty("id").GetGuid();
         var bobId = await host.ScalarAsync<Guid>("SELECT id FROM iam.\"user\" WHERE normalized_email = 'BOB@EXAMPLE.ORG'");
-
-        // Objects of Bob's organisation, by the name of the route parameter that carries them.
-        var foreign = new Dictionary<string, Guid> { ["userId"] = bobId, ["id"] = bobsInvitation };
+        var bobsProject = (await Json(await bob.PostAsync($"/api/v1/orgs/{bobOrg}/projects", new { name = "Bob's shop" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
+        var bobsComponent = (await Json(await bob.PostAsync($"/api/v1/orgs/{bobOrg}/projects/{bobsProject}/components", new { productKey = "wordpress", version = "6.7.1" }), HttpStatusCode.Created))
+            .GetProperty("id").GetGuid();
+        var aliceProject = (await Json(await alice.PostAsync($"/api/v1/orgs/{aliceOrg}/projects", new { name = "Alice's shop" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
+        var foreign = new Foreign(bobId, bobsInvitation, bobsProject, bobsComponent);
 
         var endpoints = host.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText?.Contains("/orgs/{orgId", StringComparison.Ordinal) == true)
@@ -122,35 +154,42 @@ public sealed class TenantIsolationTests(PostgresServer server)
         foreach (var (method, route) in endpoints)
         {
             var key = $"{method} {route}";
-            if (!Bodies.TryGetValue(key, out var body))
+            if (!Bodies.TryGetValue(key, out var bodyOf))
             {
                 problems.Add($"{key}: not covered; add it to Bodies");
                 continue;
             }
 
+            var body = bodyOf(foreign);
             var parameters = System.Text.RegularExpressions.Regex.Matches(route, @"\{(\w+)\}").Select(m => m.Groups[1].Value).Where(p => p != "orgId").ToList();
-            var missing = parameters.Where(p => !foreign.ContainsKey(p)).ToList();
+            var missing = parameters.Where(p => ForeignId(route, p, foreign) is null).ToList();
             if (missing.Count > 0)
             {
                 problems.Add($"{key}: no foreign object for {string.Join(", ", missing)}");
                 continue;
             }
 
+            var bobs = parameters.ToDictionary(p => p, p => ForeignId(route, p, foreign)!.Value);
+
             // 1. Bob's organisation in the path: it does not exist for Alice.
-            var path = Fill(route, bobOrg, foreign);
-            var response = await alice.SendAsync(new HttpMethod(method), path, body);
-            if (response.StatusCode != HttpStatusCode.NotFound)
-            {
-                problems.Add($"{key} with Bob's organisation: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
-            }
+            await ExpectHiddenAsync(problems, $"{key} with Bob's organisation", await alice.SendAsync(new HttpMethod(method), Fill(route, bobOrg, bobs), body), notFoundOnly: true);
 
             // 2. Alice's own organisation with ids of Bob's objects: not found either.
             if (parameters.Count > 0)
             {
-                response = await alice.SendAsync(new HttpMethod(method), Fill(route, aliceOrg, foreign), body);
-                if (response.StatusCode != HttpStatusCode.NotFound)
+                await ExpectHiddenAsync(problems, $"{key} with Bob's objects", await alice.SendAsync(new HttpMethod(method), Fill(route, aliceOrg, bobs), body), notFoundOnly: true);
+            }
+
+            // 3. Alice's own project with Bob's other objects, in the path or in the body.
+            if (route.Contains("{projectId}", StringComparison.Ordinal))
+            {
+                var mixed = new Dictionary<string, Guid>(bobs) { ["projectId"] = aliceProject };
+                var foreignInBody = body is not null && JsonSerializer.Serialize(body).Contains(foreign.Component.ToString(), StringComparison.Ordinal);
+                var response = await alice.SendAsync(new HttpMethod(method), Fill(route, aliceOrg, mixed), body);
+                if (parameters.Count > 1 || foreignInBody)
                 {
-                    problems.Add($"{key} with Bob's objects: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
+                    // A foreign id in the body is a validation error naming it as not found; never a success.
+                    await ExpectHiddenAsync(problems, $"{key} in Alice's project", response, notFoundOnly: parameters.Count > 1);
                 }
             }
         }
@@ -161,6 +200,18 @@ public sealed class TenantIsolationTests(PostgresServer server)
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM iam.invitation WHERE organization_id = '{bobOrg}'"));
         Assert.Equal("Bob Corp", await host.ScalarAsync<string>($"SELECT name FROM iam.organization WHERE id = '{bobOrg}'"));
         Assert.Equal("owner", await host.ScalarAsync<string>($"SELECT role FROM iam.membership WHERE organization_id = '{bobOrg}'"));
+        Assert.Equal("Bob's shop|internal|", await host.ScalarAsync<string>($"SELECT name || '|' || exposure || '|' || coalesce(archived_at::text, '') FROM assets.project WHERE id = '{bobsProject}'"));
+        Assert.Equal("6.7.1|manual", await host.ScalarAsync<string>($"SELECT version || '|' || origin FROM assets.component WHERE id = '{bobsComponent}'"));
+        Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.component WHERE organization_id = '{bobOrg}'"));
+    }
+
+    private static async Task ExpectHiddenAsync(List<string> problems, string what, HttpResponseMessage response, bool notFoundOnly)
+    {
+        var allowed = notFoundOnly ? response.StatusCode == HttpStatusCode.NotFound : response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.BadRequest;
+        if (!allowed)
+        {
+            problems.Add($"{what}: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
+        }
     }
 
     [Fact]
@@ -222,7 +273,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
     private static string Normalize(string raw) =>
         System.Text.RegularExpressions.Regex.Replace(raw.StartsWith('/') ? raw : "/" + raw, @"\{(\w+)(:[^}]*)?\}", "{$1}");
 
-    private static string Fill(string route, Guid organization, Dictionary<string, Guid> foreign)
+    private static string Fill(string route, Guid organization, IReadOnlyDictionary<string, Guid> foreign)
     {
         var path = route.Replace("{orgId}", organization.ToString(), StringComparison.Ordinal);
         foreach (var (name, id) in foreign)

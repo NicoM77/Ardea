@@ -52,6 +52,9 @@ internal sealed class EntryRow
 
     public string[] CweIds { get; set; } = [];
 
+    /// <summary>The versions the description and solutions name as fixes, for the version check (master plan 6.6).</summary>
+    public string[] FixVersionsInText { get; set; } = [];
+
     /// <summary>An advisory or warning of a national authority names this entry (master plan 5.6, 7.6).</summary>
     public bool AuthorityWarning { get; set; }
 

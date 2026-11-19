@@ -47,22 +47,29 @@ internal static class VersionMatch
 {
     private static readonly HashSet<string> GenericSchemes = new(StringComparer.OrdinalIgnoreCase) { "custom", "other", "string", "numeric" };
 
-    public static VersionResult Check(ProfileComponent component, string matchType, IReadOnlyList<AffectedFacts> affected, IVersionSchemes schemes)
+    /// <summary>Checks the installed version of a component against an entry's statements about the product.</summary>
+    /// <param name="component">The component that was hit.</param>
+    /// <param name="matchType">How it was hit (<see cref="MatchTypes"/>); a package hit compares in its ecosystem's scheme.</param>
+    /// <param name="affected">The entry's statements that caused the hit.</param>
+    /// <param name="schemes">The version schemes of the instance.</param>
+    /// <param name="fixesInText">The versions the entry's text names as fixes (<see cref="EntryFacts.FixVersionsInText"/>).</param>
+    public static VersionResult Check(
+        ProfileComponent component, string matchType, IReadOnlyList<AffectedFacts> affected, IVersionSchemes schemes, IReadOnlyCollection<string>? fixesInText = null)
     {
         var statements = new List<VersionStatement>();
         var fixedVersions = new List<(string Text, ParsedVersion? Parsed)>();
-        string? fixedVersion = null;
-        ParsedVersion? fixedParsed = null;
+        var ownFixes = new List<(VersionStatement Statement, string Text, ParsedVersion Parsed)>();
         foreach (var group in affected.GroupBy(a => (a.SourceId, a.ProductKey, a.CpeVendor, a.CpeProduct, a.PurlType, a.PurlName, a.Vendor, a.Product, a.DefaultStatus)))
         {
             var rows = group.ToList();
             var ranges = rows.Select(Range).ToList();
             var scheme = SchemeFor(component, matchType, rows, schemes);
             var defaultStatus = Status(group.Key.DefaultStatus);
-            var check = VersionCheck.Evaluate(scheme, component.Version, ranges, defaultStatus);
-            statements.Add(new VersionStatement(
+            var check = VersionCheck.Evaluate(scheme, component.Version, ranges, defaultStatus, fixesInText);
+            var statement = new VersionStatement(
                 group.Key.SourceId, scheme?.Name, Verdict(check.Verdict), Snake(check.Reason.ToString()), group.Key.DefaultStatus,
-                [.. rows.Select(r => new RangeView(r.Introduced, r.Fixed, r.LastAffected, r.Exact, r.Status))]));
+                [.. rows.Select(r => new RangeView(r.Introduced, r.Fixed, r.LastAffected, r.Exact, r.Status))]);
+            statements.Add(statement);
 
             foreach (var range in ranges.Where(r => r.Status == VersionStatus.Affected && r.Fixed is not null))
             {
@@ -79,12 +86,24 @@ internal static class VersionMatch
 
                 // The fix that belongs to the installed version's own branch: the range that contains it.
                 if (check.Verdict == VersionVerdict.InRange && parsed is not null
-                    && VersionCheck.Evaluate(scheme, component.Version, [range], VersionStatus.Unknown).Reason == VersionCheckReason.InAffectedRange
-                    && (fixedParsed is null || (parsed.Scheme == fixedParsed.Scheme && parsed > fixedParsed)))
+                    && VersionCheck.Evaluate(scheme, component.Version, [range], VersionStatus.Unknown).Verdict == VersionVerdict.InRange)
                 {
-                    fixedVersion = range.Fixed;
-                    fixedParsed = parsed;
+                    ownFixes.Add((statement, range.Fixed!, parsed));
                 }
+            }
+        }
+
+        // Every statement stays in the evidence; the overruled ones do not decide.
+        var overruled = OverruledEmptyRanges(component.Version, statements);
+        var deciding = statements.Where(s => !overruled.Contains(s)).ToList();
+        string? fixedVersion = null;
+        ParsedVersion? fixedParsed = null;
+        foreach (var (_, text, parsed) in ownFixes.Where(f => !overruled.Contains(f.Statement)))
+        {
+            if (fixedParsed is null || (parsed.Scheme == fixedParsed.Scheme && parsed > fixedParsed))
+            {
+                fixedVersion = text;
+                fixedParsed = parsed;
             }
         }
 
@@ -94,29 +113,46 @@ internal static class VersionMatch
             return new VersionResult(VersionVerdicts.Unknown, "distribution_package", null, ordered, statements);
         }
 
-        if (statements.Find(s => s.Verdict == VersionVerdicts.InRange) is { } inRange)
+        if (deciding.Find(s => s.Verdict == VersionVerdicts.InRange) is { } inRange)
         {
             return new VersionResult(VersionVerdicts.InRange, inRange.Reason, fixedVersion, ordered, statements);
         }
 
         var silent = Snake(nameof(VersionCheckReason.NoComparableRange));
-        if (statements.Find(s => s.Verdict == VersionVerdicts.Unknown && s.Reason != silent) is { } undecided)
+        if (deciding.Find(s => s.Verdict == VersionVerdicts.Unknown && s.Reason != silent) is { } undecided)
         {
             return new VersionResult(VersionVerdicts.Unknown, undecided.Reason, null, ordered, statements);
         }
 
-        if (statements.Find(s => s.Verdict == VersionVerdicts.OutOfRange) is { } outside)
+        if (deciding.Find(s => s.Verdict == VersionVerdicts.OutOfRange) is { } outside)
         {
             return new VersionResult(VersionVerdicts.OutOfRange, outside.Reason, null, ordered, statements);
         }
 
-        return new VersionResult(VersionVerdicts.Unknown, statements.Count == 0 ? silent : statements[0].Reason, null, ordered, statements);
+        return new VersionResult(VersionVerdicts.Unknown, deciding.Count == 0 ? silent : deciding[0].Reason, null, ordered, statements);
+    }
+
+    /// <summary>
+    /// Statements that are «in range» only through an empty range read as «before its fix», while another statement
+    /// of the entry names the installed version's own line and places the version out of range: then the empty range
+    /// is about another line. Microsoft writes «Visual Studio 2026 version 18.12» as 18.12.0 to before 18.12.0, and its
+    /// 18.11 statement fixes 18.11.9 at 18.11.4 (reference pair P055). Such statements do not decide; they stay in the evidence.
+    /// </summary>
+    private static HashSet<VersionStatement> OverruledEmptyRanges(string? installed, List<VersionStatement> statements)
+    {
+        var line = VersionLines.Line(installed);
+        var empty = Snake(nameof(VersionCheckReason.BeforeEmptyRange));
+        var ownLineDecided = line.Length > 0 && statements.Exists(s => s.Verdict == VersionVerdicts.OutOfRange
+            && s.Ranges.Any(r => r.Status == "affected" && (r.Introduced ?? r.Exact) is { } lower && VersionLines.InLine(lower, line)));
+        return new HashSet<VersionStatement>(ownLineDecided ? statements.Where(s => s.Reason == empty) : [], ReferenceEqualityComparer.Instance);
     }
 
     /// <summary>
     /// The scheme to compare in: a package's ecosystem; otherwise the record's own version type when it
-    /// names a specific one, then the component's, then the numeric fallback, whichever reads the
-    /// installed version first.
+    /// names a specific one, then the component's, then the numeric fallback: the first that reads the
+    /// installed version and every bound of the statement, else the first that reads the installed version.
+    /// A record often names its type on some entries only: Mattermost tags «0 to 6.3.2» semver and leaves
+    /// the unaffected «6.3.1.0» untyped, which semver cannot read; the numeric fallback reads both.
     /// </summary>
     private static IVersionScheme? SchemeFor(ProfileComponent component, string matchType, IReadOnlyList<AffectedFacts> rows, IVersionSchemes schemes)
     {
@@ -135,7 +171,14 @@ internal static class VersionMatch
         candidates.Add(component.VersionScheme is null ? null : schemes.Find(component.VersionScheme));
         candidates.Add(schemes.Find(VersionSchemeNames.Numeric));
         var usable = candidates.OfType<IVersionScheme>().ToList();
-        return usable.Find(s => component.Version is not null && s.IsVersion(component.Version.Trim())) ?? usable.FirstOrDefault();
+        var installed = component.Version?.Trim();
+        var bounds = rows.Select(Range).Where(r => !r.IsCommitRange && !r.NamesNoVersion)
+            .SelectMany(r => new[] { r.Introduced, r.Fixed, r.LastAffected, r.Exact })
+            .OfType<string>()
+            .ToList();
+        return usable.Find(s => installed is not null && s.IsVersion(installed) && bounds.TrueForAll(b => s.IsVersion(b)))
+            ?? usable.Find(s => installed is not null && s.IsVersion(installed))
+            ?? usable.FirstOrDefault();
     }
 
     private static VersionRange Range(AffectedFacts row) => new()

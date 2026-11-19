@@ -314,6 +314,11 @@ namespace Ardea.Intel.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("fix_available");
 
+                    b.PrimitiveCollection<string[]>("FixVersionsInText")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("fix_versions_in_text");
+
                     b.Property<string>("Kind")
                         .IsRequired()
                         .HasMaxLength(20)

@@ -32,6 +32,8 @@ public sealed class CatalogIndexTests
     [InlineData("Cisco", "Cisco Adaptive Security Appliance (ASA) Software", "cisco-asa")]
     [InlineData("Team Yoast", "Yoast SEO – Advanced SEO with real-time guidance", "yoast-seo")]
     [InlineData("HashiCorp", "Vault", "vault")]
+    [InlineData("n8n-io", "n8n", "n8n")]
+    [InlineData("Oracle Corporation", "MySQL Server", "mysql")]
     public void Spellings_of_vendor_and_product_find_the_product(string? vendor, string product, string key) =>
         Assert.Equal(key, Index.FindByName(vendor, product)?.Product.Key);
 

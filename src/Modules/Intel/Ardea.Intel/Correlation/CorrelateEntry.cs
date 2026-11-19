@@ -330,6 +330,7 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         entry.ExploitationEvidence = projection.ExploitationEvidence.Count == 0 ? null : JsonSerializer.SerializeToDocument(projection.ExploitationEvidence, NormalizeRecordsHandler.Json);
         entry.FixAvailable = projection.FixAvailable;
         entry.CweIds = [.. projection.CweIds];
+        entry.FixVersionsInText = [.. projection.FixVersionsInText];
         entry.AuthorityWarning = projection.AuthorityWarning;
         entry.Provenance = JsonSerializer.SerializeToDocument(projection.Provenance);
         entry.Details = JsonSerializer.SerializeToDocument(new { metrics = projection.AllMetrics, solutions = projection.Solutions, workarounds = projection.Workarounds }, NormalizeRecordsHandler.Json);

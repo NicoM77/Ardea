@@ -124,6 +124,32 @@ public sealed class ProjectionTests
         Assert.Contains(rows, r => r.PurlType == "npm" && r.PurlName == "@angular/core");
     }
 
+    [Fact]
+    public void Affected_ranges_are_stored_with_their_peculiarities_resolved()
+    {
+        // As the CVE reader delivers them: Oracle's range in one field, a kernel stable line ending in a placeholder.
+        var record = Contribution(Cve, "cve-program", "mandated", ObservationKind.Vulnerability, new ClaimBlock
+        {
+            Aliases = [new Identifier("CVE", "CVE-2026-114949")],
+            Affected =
+            [
+                new AffectedProduct { Vendor = "Oracle Corporation", Product = "MySQL Server", Versions = [new VersionRange { Exact = "8.4.0-8.4.13" }] },
+                new AffectedProduct
+                {
+                    Vendor = "Linux",
+                    Product = "Linux",
+                    VersionScheme = "semver",
+                    Versions = [new VersionRange { Introduced = "6.12.116", LastAffected = "6.12.*", Status = AffectedStatus.Unaffected }],
+                },
+            ],
+        });
+
+        var rows = Projection.Compute([record]).Affected;
+
+        Assert.Contains(rows, r => r.Product == "MySQL Server" && r is { Introduced: "8.4.0", LastAffected: "8.4.13", Exact: null, Status: "affected" });
+        Assert.Contains(rows, r => r.Product == "Linux" && r is { Introduced: "6.12.116", Fixed: "6.13", LastAffected: null, Status: "unaffected", VersionScheme: "semver" });
+    }
+
     private static ClaimBlock Block(string description, string fixedIn) => new()
     {
         Aliases = [new Identifier("CVE", "CVE-2026-6")],

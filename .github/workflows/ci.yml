@@ -1,10 +1,11 @@
 name: CI
 
-# GitHub Actions minutes are limited: pull requests only, and not for changes to documentation alone.
-# A merge into main does not run everything again; the visual comparison and the arm64 image run on demand
-# (Actions → CI → Run workflow on main).
+# GitHub Actions minutes are limited (owner's decision of 19.11.2026): CI runs only on main, never on pull
+# requests. A pull request is verified locally before it is merged; changes to documentation alone run nothing.
+# The visual comparison and the arm64 image run on demand (Actions → CI → Run workflow on main).
 on:
-  pull_request:
+  push:
+    branches: [main]
     paths-ignore:
       - "docs/**"
       - "**/*.md"

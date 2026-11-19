@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "MongoDB",
+  "products": [
+    {
+      "key": "mongodb",
+      "name": "MongoDB",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["mongodb:mongodb"],
+      "aliases": [{ "vendor": "MongoDB", "names": ["Mongo", "MongoDB Server", "MongoDB Community Server", "MongoDB Enterprise Server"] }],
+      "images": ["mongo", "mongodb/mongodb-community-server"]
+    }
+  ]
+}

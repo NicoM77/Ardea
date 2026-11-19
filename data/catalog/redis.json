@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Redis",
+  "products": [
+    {
+      "key": "redis",
+      "name": "Redis",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["redis:redis", "redislabs:redis"],
+      "aliases": [{ "vendor": "Redis", "names": ["Redis Server", "Redis OSS", "Redis Open Source", "Redis Stack"] }],
+      "images": ["redis", "redis/redis-stack-server"]
+    }
+  ]
+}

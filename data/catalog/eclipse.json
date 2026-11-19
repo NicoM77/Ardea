@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Eclipse Foundation",
+  "products": [
+    {
+      "key": "mosquitto",
+      "name": "Eclipse Mosquitto",
+      "kind": "messaging",
+      "versionScheme": "numeric",
+      "cpe": ["eclipse:mosquitto"],
+      "aliases": [{ "vendor": "Eclipse", "names": ["Mosquitto"] }],
+      "images": ["eclipse-mosquitto"]
+    }
+  ]
+}

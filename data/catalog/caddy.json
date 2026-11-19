@@ -1,0 +1,19 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Caddy",
+  "products": [
+    {
+      "key": "caddy",
+      "name": "Caddy",
+      "kind": "network",
+      "versionScheme": "go",
+      "cpe": ["caddyserver:caddy"],
+      "packages": ["pkg:golang/github.com/caddyserver/caddy/v2"],
+      "aliases": [
+        { "names": ["Caddy Server"] },
+        { "vendor": "caddyserver", "names": ["Caddy"] }
+      ],
+      "images": ["caddy"]
+    }
+  ]
+}

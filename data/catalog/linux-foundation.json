@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Linux Foundation",
+  "products": [
+    {
+      // The open fork of Redis 7.2 under the Linux Foundation.
+      "key": "valkey",
+      "name": "Valkey",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "aliases": [{ "vendor": "Valkey", "names": ["Valkey"] }],
+      "related": ["redis"],
+      "images": ["valkey/valkey"]
+    }
+  ]
+}

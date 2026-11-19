@@ -13,6 +13,14 @@
         { "vendor": "nginx", "names": ["nginx", "NGINX Open Source"] }
       ],
       "images": ["nginx", "nginxinc/nginx-unprivileged"]
+    },
+    {
+      "key": "nginx-plus",
+      "name": "NGINX Plus",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["f5:nginx_plus"],
+      "related": ["nginx"]
     }
   ]
 }

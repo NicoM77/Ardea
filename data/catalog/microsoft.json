@@ -77,6 +77,27 @@
       "cpe": ["microsoft:powershell"],
       "aliases": [{ "vendor": "Microsoft", "names": ["PowerShell {line}", "PowerShell Core", "Microsoft PowerShell"] }],
       "images": ["mcr.microsoft.com/powershell"]
+    },
+    {
+      "key": "iis",
+      "name": "Internet Information Services",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:internet_information_services", "microsoft:iis"],
+      "aliases": [{ "vendor": "Microsoft", "names": ["IIS", "Microsoft IIS", "Internet Information Server", "IIS {line}"] }],
+      "related": ["windows-server"]
+    },
+    {
+      // CVE records write e.g. «Microsoft SQL Server 2022 (GDR)»: the version line comes from the name.
+      "key": "sql-server",
+      "name": "Microsoft SQL Server",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:sql_server"],
+      "aliases": [
+        { "vendor": "Microsoft", "names": ["SQL Server", "MSSQL", "MS SQL Server", "SQL Server {line}", "Microsoft SQL Server {line}", "Microsoft SQL Server {line} *"] }
+      ],
+      "images": ["mcr.microsoft.com/mssql/server"]
     }
   ]
 }

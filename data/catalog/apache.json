@@ -10,6 +10,96 @@
       "cpe": ["apache:log4j"],
       "packages": ["pkg:maven/org.apache.logging.log4j/log4j-core"],
       "aliases": [{ "vendor": "Apache", "names": ["Apache Log4j", "Apache Log4j2", "Log4j2", "Apache Log4j Core"] }]
+    },
+    {
+      "key": "apache-httpd",
+      "name": "Apache HTTP Server",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["apache:http_server"],
+      "aliases": [{ "vendor": "Apache", "names": ["Apache", "Apache httpd", "httpd", "Apache2", "Apache HTTP Server {line}"] }],
+      "images": ["httpd"]
+    },
+    {
+      "key": "tomcat",
+      "name": "Apache Tomcat",
+      "kind": "runtime",
+      "versionScheme": "maven",
+      "cpe": ["apache:tomcat"],
+      "packages": ["pkg:maven/org.apache.tomcat.embed/tomcat-embed-core", "pkg:maven/org.apache.tomcat/tomcat-catalina"],
+      "aliases": [{ "vendor": "Apache", "names": ["Tomcat", "Apache Tomcat {line}"] }],
+      "related": ["openjdk"],
+      "images": ["tomcat"]
+    },
+    {
+      "key": "kafka",
+      "name": "Apache Kafka",
+      "kind": "messaging",
+      "versionScheme": "maven",
+      "cpe": ["apache:kafka"],
+      "packages": ["pkg:maven/org.apache.kafka/kafka-clients", "pkg:maven/org.apache.kafka/kafka_2.13"],
+      "aliases": [{ "vendor": "Apache", "names": ["Kafka"] }],
+      "images": ["apache/kafka"]
+    },
+    {
+      "key": "activemq",
+      "name": "Apache ActiveMQ",
+      "kind": "messaging",
+      "versionScheme": "maven",
+      "cpe": ["apache:activemq"],
+      "packages": ["pkg:maven/org.apache.activemq/activemq-client", "pkg:maven/org.apache.activemq/activemq-broker"],
+      "aliases": [{ "vendor": "Apache", "names": ["ActiveMQ", "ActiveMQ Classic", "Apache ActiveMQ Classic"] }],
+      "images": ["apache/activemq-classic"]
+    },
+    {
+      "key": "activemq-artemis",
+      "name": "Apache ActiveMQ Artemis",
+      "kind": "messaging",
+      "versionScheme": "maven",
+      "cpe": ["apache:activemq_artemis"],
+      "packages": ["pkg:maven/org.apache.activemq/artemis-server"],
+      "aliases": [{ "vendor": "Apache", "names": ["ActiveMQ Artemis"] }],
+      "related": ["activemq"],
+      "images": ["apache/activemq-artemis"]
+    },
+    {
+      "key": "solr",
+      "name": "Apache Solr",
+      "kind": "database",
+      "versionScheme": "maven",
+      "cpe": ["apache:solr"],
+      "packages": ["pkg:maven/org.apache.solr/solr-core"],
+      "aliases": [{ "vendor": "Apache", "names": ["Solr"] }],
+      "images": ["solr"]
+    },
+    {
+      "key": "zookeeper",
+      "name": "Apache ZooKeeper",
+      "kind": "other",
+      "versionScheme": "maven",
+      "cpe": ["apache:zookeeper"],
+      "packages": ["pkg:maven/org.apache.zookeeper/zookeeper"],
+      "aliases": [{ "vendor": "Apache", "names": ["ZooKeeper"] }],
+      "images": ["zookeeper"]
+    },
+    {
+      "key": "cassandra",
+      "name": "Apache Cassandra",
+      "kind": "database",
+      "versionScheme": "maven",
+      "cpe": ["apache:cassandra"],
+      "packages": ["pkg:maven/org.apache.cassandra/cassandra-all"],
+      "aliases": [{ "vendor": "Apache", "names": ["Cassandra"] }],
+      "images": ["cassandra"]
+    },
+    {
+      "key": "couchdb",
+      "name": "Apache CouchDB",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["apache:couchdb"],
+      "aliases": [{ "vendor": "Apache", "names": ["CouchDB"] }],
+      "images": ["couchdb"]
     }
   ]
 }

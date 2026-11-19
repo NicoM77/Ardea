@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "InfluxData",
+  "products": [
+    {
+      "key": "influxdb",
+      "name": "InfluxDB",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["influxdata:influxdb"],
+      "images": ["influxdb"]
+    }
+  ]
+}

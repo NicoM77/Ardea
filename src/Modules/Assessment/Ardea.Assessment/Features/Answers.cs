@@ -39,6 +39,12 @@ internal sealed record AnswersView(
 /// <param name="Unknowns">What the profile does not tell.</param>
 /// <param name="Reasoning">Sentences with the numbers of their sources.</param>
 /// <param name="Sources">The numbered sources the numbers refer to.</param>
+/// <param name="Provider">The configured provider that answered, e.g. <c>local</c>.</param>
+/// <param name="RulesetVersion">The rule set the assessment was made with.</param>
+/// <param name="TokensIn">Tokens sent.</param>
+/// <param name="TokensOut">Tokens received.</param>
+/// <param name="DurationMs">How long the calls took.</param>
+/// <param name="RequestedByPerson">A person asked for it; otherwise the system did, within the action's quota.</param>
 internal sealed record ModelAnswersView(
     Guid AssessmentId,
     string Language,
@@ -55,13 +61,19 @@ internal sealed record ModelAnswersView(
     IReadOnlyList<ModelStepView> Actions,
     IReadOnlyList<string> Unknowns,
     IReadOnlyList<ModelReasonView> Reasoning,
-    IReadOnlyList<ModelSourceView> Sources);
+    IReadOnlyList<ModelSourceView> Sources,
+    string? Provider,
+    int RulesetVersion,
+    int TokensIn,
+    int TokensOut,
+    int DurationMs,
+    bool RequestedByPerson);
 
 /// <summary>The model's verdict on one component.</summary>
 /// <param name="Project">The component's project.</param>
 /// <param name="Component">The component.</param>
 /// <param name="Verdict"><c>affected</c>, <c>likely</c>, <c>uncertain</c>, <c>unlikely</c> or <c>not_affected</c>.</param>
-/// <param name="Proposal">The verdict is «probably not affected»: a proposal a person confirms by closing the finding as
+/// <param name="Proposal">The verdict is «probably not affected»: a proposal a person confirms through the finding's review, which closes it as
 /// not affected; until then it counts like <c>unlikely</c> (master plan 7.5).</param>
 internal sealed record ModelVerdictView(ActionProjectRef Project, ActionComponentRef Component, string Verdict, bool Proposal);
 
@@ -191,7 +203,8 @@ internal static class AnswerTemplates
             [.. estimate.Actions.Select(a => new ModelStepView(a.Step, a.Sources, a.Own))],
             estimate.Unknowns,
             [.. estimate.Reasoning.Select(r => new ModelReasonView(r.Sentence, r.Sources, r.Components))],
-            [.. estimate.Sources.Select(s => new ModelSourceView(s.N, s.Name, s.Url))]);
+            [.. estimate.Sources.Select(s => new ModelSourceView(s.N, s.Name, s.Url))],
+            current.Provider, current.RulesetVersion, current.TokensIn, current.TokensOut, current.DurationMs, current.RequestedBy is not null);
         return new AnswersView("model", what, affected, todo, model);
     }
 

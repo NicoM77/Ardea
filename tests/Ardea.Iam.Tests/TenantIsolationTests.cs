@@ -33,6 +33,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["iam.user_token"] = "user",
         ["iam.session"] = "user",
         ["assess.assessment"] = "organization",
+        ["assess.assessment_feedback"] = "organization",
     };
 
     /// <summary>Schemas whose every table is global: intelligence and catalogue are the same for all (master plan 4.1).</summary>
@@ -100,6 +101,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["POST /api/v1/orgs/{orgId}/actions/{number}/notes"] = _ => new { text = "Planted" },
         ["GET /api/v1/orgs/{orgId}/findings"] = _ => null,
         ["PATCH /api/v1/orgs/{orgId}/findings/{findingId}"] = _ => new { status = "risk_accepted", expectedStatus = "open" },
+        ["POST /api/v1/orgs/{orgId}/findings/{findingId}/review"] = _ => new { decision = "correct", expectedVerdict = "affected", expectedSource = "rules", verdict = "unlikely", reason = "Planted" },
         ["GET /api/v1/orgs/{orgId}/alerts"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/alerts/{number}"] = _ => null,
         ["POST /api/v1/orgs/{orgId}/alerts/{number}/assessment"] = _ => null,
@@ -276,6 +278,8 @@ public sealed class TenantIsolationTests(PostgresServer server)
         Assert.Equal("open|open|", await host.ScalarAsync<string>(
             $"SELECT r.status || '|' || f.status || '|' || coalesce(r.due_at::text, '') FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id WHERE r.id = '{bobsAction}'"));
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM assess.assess_event"));
+        Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM assess.assessment_feedback"));
+        Assert.Equal("affected|rules", await host.ScalarAsync<string>($"SELECT verdict || '|' || verdict_source FROM assess.finding WHERE id = '{bobsFinding}'"));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'assess.estimate-alert'"));
     }
 

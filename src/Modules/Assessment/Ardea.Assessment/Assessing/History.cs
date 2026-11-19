@@ -30,6 +30,12 @@ internal static class EventKinds
 
     /// <summary>A person set the outcome of a finding; history only.</summary>
     public const string FindingStatusChanged = "finding.status_changed";
+
+    /// <summary>A person confirmed the model's estimate of a finding (task 4.7); history only.</summary>
+    public const string FindingVerdictConfirmed = "finding.verdict_confirmed";
+
+    /// <summary>A person corrected the verdict or the level of a finding with a reason (task 4.7); history only.</summary>
+    public const string FindingVerdictCorrected = "finding.verdict_corrected";
 }
 
 /// <summary>Writes history rows in the unit of work; the row's id is the event's id (master plan 8.2).</summary>

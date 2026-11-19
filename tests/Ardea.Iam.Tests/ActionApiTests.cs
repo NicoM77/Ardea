@@ -63,6 +63,14 @@ public sealed class ActionApiTests(PostgresServer server)
         var note = await Json(await client.PostAsync($"{path}/actions/2/notes", new { text = "Window on Friday" }), HttpStatusCode.Created);
         Assert.Equal("action.note_added", note.GetProperty("kind").GetString());
 
+        // A review names what the caller saw and why; only the model's estimate can be confirmed (task 4.7).
+        var review = $"{path}/findings/{finding}/review";
+        await ExpectProblem(await client.PostAsync(review, new { decision = "correct", expectedVerdict = "affected", expectedSource = "rules", verdict = "unlikely" }), HttpStatusCode.BadRequest, "invalid_review");
+        await ExpectProblem(await client.PostAsync(review, new { decision = "confirm", expectedVerdict = "likely", expectedSource = "model" }), HttpStatusCode.Conflict, "verdict_conflict");
+        await ExpectProblem(await client.PostAsync(review, new { decision = "confirm", expectedVerdict = "affected", expectedSource = "rules" }), HttpStatusCode.Conflict, "nothing_to_confirm");
+        await ExpectProblem(await client.PostAsync($"{path}/findings/{Guid.CreateVersion7()}/review", new { decision = "confirm", expectedVerdict = "affected", expectedSource = "model" }), HttpStatusCode.NotFound, "finding_not_found");
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assessment_feedback"));
+
         // The outcome of the single finding closes the action.
         var closed = await Json(await client.SendAsync(HttpMethod.Patch, $"{path}/findings/{finding}", new { status = "remediated", expectedStatus = "in_review" }));
         Assert.Equal("remediated", closed.GetProperty("status").GetString());

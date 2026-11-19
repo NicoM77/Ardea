@@ -8,6 +8,7 @@
 import type { ActionComponentRef } from './actionComponentRef';
 import type { ActionEntryRef } from './actionEntryRef';
 import type { ActionProjectRef } from './actionProjectRef';
+import type { FindingReviewView } from './findingReviewView';
 import type { JsonElement } from './jsonElement';
 
 export interface FindingView {
@@ -50,4 +51,5 @@ export interface FindingView {
   isBackfill: boolean;
   factors: JsonElement;
   evidence: JsonElement;
+  review?: null | FindingReviewView;
 }

@@ -16,11 +16,14 @@ namespace Ardea.Assessment.Assessing;
 /// What the assessment looks at: every project of the organisation, or one project (the reverse search).
 /// <see cref="Backfill"/> names the components whose new findings belong to a first fill (master plan 7.7).
 /// </summary>
-internal sealed record AssessmentScope(ProjectProfile? Project, IReadOnlySet<Guid> Backfill)
+internal sealed record AssessmentScope(ProjectProfile? Project, IReadOnlySet<Guid> Backfill, Guid? Component = null)
 {
     public static readonly AssessmentScope Organization = new(null, new HashSet<Guid>());
 
     public static AssessmentScope ForProject(ProjectProfile project, IReadOnlySet<Guid>? backfill = null) => new(project, backfill ?? new HashSet<Guid>());
+
+    /// <summary>One component's finding of the entry, after a person reviewed its assessment (master plan 7.7: «dieser Befund»).</summary>
+    public static AssessmentScope ForComponent(Guid componentId) => new(null, new HashSet<Guid>(), componentId);
 }
 
 /// <summary>
@@ -51,12 +54,11 @@ internal sealed class AlertAssessor(
     /// <returns>The components whose findings changed.</returns>
     public async Task<IReadOnlyCollection<Guid>> AssessAsync(EntryFacts entry, AssessmentScope scope, CancellationToken cancellationToken)
     {
-        var organization = tenant.RequiredOrganizationId;
-        await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"assess.alert:" + organization + ":" + entry.Id}, 0))", cancellationToken);
+        await LockAsync(entry.Id, cancellationToken);
 
         var alert = await db.Alerts.SingleOrDefaultAsync(a => a.EntryId == entry.Id, cancellationToken);
         var existing = alert is null ? [] : await db.Findings
-            .Where(f => f.AlertId == alert.Id && (scope.Project == null || f.ProjectId == scope.Project.Id))
+            .Where(f => f.AlertId == alert.Id && (scope.Project == null || f.ProjectId == scope.Project.Id) && (scope.Component == null || f.ComponentId == scope.Component))
             .ToListAsync(cancellationToken);
 
         var relevant = entry.Kind == "vulnerability" && entry.State is "published" or "disputed";
@@ -145,6 +147,13 @@ internal sealed class AlertAssessor(
     }
 
     /// <summary>
+    /// Takes the alert's lock until the unit of work ends. Work on the alert takes it before the component locks of
+    /// <see cref="Remediations.LockAsync"/>, so a person's review and a job lock in the same order. Re-entrant.
+    /// </summary>
+    public async Task LockAsync(Guid entryId, CancellationToken cancellationToken) =>
+        await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"assess.alert:" + tenant.RequiredOrganizationId + ":" + entryId}, 0))", cancellationToken);
+
+    /// <summary>
     /// The verdicts per component of the alert's current assessment by the model, when it was made for this
     /// revision of the entry (master plan 7.1 property 2: the stored verdict is an input of the rules). Each verdict
     /// carries the component's context when asked; <see cref="Evaluate"/> uses it only while that still holds.
@@ -172,6 +181,11 @@ internal sealed class AlertAssessor(
         if (scope.Project is { } project)
         {
             return project.Archived ? [.. project.Components.Select(c => c with { ProjectArchived = true })] : project.Components;
+        }
+
+        if (scope.Component is { } only)
+        {
+            return await profiles.FindComponentsAsync([only], cancellationToken);
         }
 
         var ids = existing.Select(f => f.ComponentId).ToHashSet();
@@ -255,7 +269,9 @@ internal sealed class AlertAssessor(
             VersionReason = version?.Reason,
             InstalledVersion = component.Version,
             HumanExcluded = known is { StatusChangedBy: not null, Status: "not_affected" },
-            HumanVerdict = human is "affected" or "likely" or "unlikely" ? human : null,
+            // A person's «not affected» (task 4.7) closes the finding; should the level rise beyond it and reopen the
+            // finding (master plan 6.7), it counts like «unlikely», as the model's does.
+            HumanVerdict = human is "affected" or "likely" or "unlikely" ? human : human == "not_affected" ? "unlikely" : null,
             CvssScore = entry.CvssScore,
             CvssVersion = entry.CvssVersion,
             Exploitation = entry.Exploitation,

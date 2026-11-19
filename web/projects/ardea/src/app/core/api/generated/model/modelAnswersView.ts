@@ -29,4 +29,15 @@ export interface ModelAnswersView {
   unknowns: string[];
   reasoning: ModelReasonView[];
   sources: ModelSourceView[];
+  /** @nullable */
+  provider: string | null;
+  /** @pattern ^-?(?:0|[1-9]\d*)$ */
+  rulesetVersion: number | string;
+  /** @pattern ^-?(?:0|[1-9]\d*)$ */
+  tokensIn: number | string;
+  /** @pattern ^-?(?:0|[1-9]\d*)$ */
+  tokensOut: number | string;
+  /** @pattern ^-?(?:0|[1-9]\d*)$ */
+  durationMs: number | string;
+  requestedByPerson: boolean;
 }

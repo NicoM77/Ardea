@@ -23,6 +23,12 @@ public sealed class InstanceAdministrationTests(PostgresServer server)
         Assert.Equal(HttpStatusCode.Forbidden, (await member.GetAsync("/api/v1/instance/settings")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await stranger.GetAsync("/api/v1/instance/settings")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await member.PostAsync("/api/v1/instance/jobs/" + Guid.CreateVersion7() + "/retry")).StatusCode);
+
+        // The correction rate per model and prompt version (task 4.7): counts over all organisations, for the administrator only.
+        var quality = await admin.GetAsync("/api/v1/instance/ai/quality");
+        Assert.Equal(HttpStatusCode.OK, quality.StatusCode);
+        Assert.Equal(0, (await quality.Content.ReadFromJsonAsync<JsonElement>()).GetArrayLength());
+        Assert.Equal(HttpStatusCode.Forbidden, (await member.GetAsync("/api/v1/instance/ai/quality")).StatusCode);
     }
 
     [Fact]

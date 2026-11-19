@@ -131,6 +131,26 @@ export function historyLines(
         line.key = 'actionDetail.history.findingReopened';
         line.params = { entry: entry(event.findingId) };
         break;
+      case 'finding.verdict_confirmed':
+        line.key = 'actionDetail.history.verdictConfirmed';
+        line.params = { who, entry: entry(event.findingId), verdict: text(d, 'to') ?? '' };
+        line.quote = text(d, 'reason');
+        break;
+      case 'finding.verdict_corrected': {
+        const to = text(d, 'to');
+        line.key = to
+          ? 'actionDetail.history.verdictCorrected'
+          : 'actionDetail.history.levelQuestioned';
+        line.params = { who, entry: entry(event.findingId), verdict: to ?? '' };
+        if (!to && d['expectedLevel'] !== null && d['expectedLevel'] !== undefined) {
+          line.change = [
+            priorityOfLevel(d['level'] as number),
+            priorityOfLevel(d['expectedLevel'] as number),
+          ];
+        }
+        line.quote = text(d, 'reason');
+        break;
+      }
     }
     return line;
   });

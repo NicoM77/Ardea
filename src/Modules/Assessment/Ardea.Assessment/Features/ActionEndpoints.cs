@@ -58,6 +58,8 @@ internal static class ActionEndpoints
         org.MapGet("/findings", FindingsAsync).WithName("listFindings").Produces<ListPage<FindingView>>().Problems(400, 403, 404);
         org.MapPatch("/findings/{findingId:guid}", SetFindingStatusAsync).WithName("setFindingStatus").RequireOrganizationRole(OrganizationRole.Member)
             .Produces<FindingView>().Problems(400, 403, 404, 409);
+        org.MapPost("/findings/{findingId:guid}/review", ReviewFindingAsync).WithName("reviewFinding").RequireOrganizationRole(OrganizationRole.Member)
+            .Produces<FindingView>().Problems(400, 403, 404, 409);
         org.MapGet("/alerts", AlertsAsync).WithName("listAlerts").Produces<ListPage<AlertSummary>>().Problems(400, 403, 404);
         org.MapGet("/alerts/{number:int}", AlertAsync).WithName("getAlert").Produces<AlertDetailView>().Problems(403, 404);
         org.MapPost("/alerts/{number:int}/assessment", RequestAssessmentAsync).WithName("requestAlertAssessment").RequireOrganizationRole(OrganizationRole.Member)
@@ -250,6 +252,25 @@ internal static class ActionEndpoints
         CancellationToken cancellationToken)
     {
         var result = await commands.SetFindingStatusAsync(findingId, request, http.OrganizationAccess().UserId, cancellationToken);
+        if (result.Refusal is { } refusal)
+        {
+            return refusal.ToResult();
+        }
+
+        var view = (await reader.FindingsAsync([result.Value!], cancellationToken))[0];
+        await unitOfWork.CommitAsync(cancellationToken);
+        return Results.Ok(view);
+    }
+
+    /// <summary>
+    /// A person confirms the model's estimate of a finding or corrects its verdict or level (task 4.7, master plan 7.9).
+    /// The finding is assessed again in the same unit of work; the answer is the finding as it is then.
+    /// </summary>
+    private static async Task<IResult> ReviewFindingAsync(
+        Guid findingId, ReviewVerdictRequest request, HttpContext http, VerdictReviews reviews, ActionReader reader, IUnitOfWork unitOfWork,
+        CancellationToken cancellationToken)
+    {
+        var result = await reviews.ReviewAsync(findingId, request, http.OrganizationAccess().UserId, cancellationToken);
         if (result.Refusal is { } refusal)
         {
             return refusal.ToResult();

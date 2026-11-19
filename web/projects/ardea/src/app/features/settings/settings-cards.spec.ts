@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import type { ConnectionView, SessionOrganization } from '../../core/api/client';
 import { AccessesCard } from './accesses-card';
+import { AiPolicyCard } from './ai-policy-card';
 import { AuditCard } from './audit-card';
 
 const ORG = '0190a000-0000-7000-8000-0000000000aa';
@@ -115,5 +116,47 @@ describe('AuditCard', () => {
     await settle(fixture);
     expect(element.querySelectorAll('ol li')).toHaveLength(2);
     expect(element.querySelector('button')).toBeNull();
+  });
+});
+
+describe('AiPolicyCard', () => {
+  it('saves the chosen AI data policy and nothing else', async () => {
+    const { fixture, http } = setUp(AiPolicyCard);
+    await settle(fixture);
+    const view = {
+      id: ORG,
+      slug: 'heron',
+      name: 'Heron',
+      locale: 'en',
+      timeZone: 'Europe/Zurich',
+      requireMfa: false,
+      aiPolicy: 'local_only',
+      role: 'admin',
+      createdAt: '2026-11-19T08:00:00Z',
+    };
+    http.expectOne(`/api/v1/orgs/${ORG}`).flush(view);
+    await settle(fixture);
+    const element = fixture.nativeElement as HTMLElement;
+    const radios = [...element.querySelectorAll<HTMLInputElement>('input[type=radio]')];
+    expect(radios.map((r) => r.value)).toEqual(['none', 'local_only', 'cloud_allowed']);
+    expect(radios[1].checked).toBe(true);
+    const save = element.querySelector<HTMLButtonElement>('ui-card button')!;
+    expect(save.disabled).toBe(true);
+
+    radios[0].click();
+    await settle(fixture);
+    save.click();
+    await settle(fixture);
+    const patch = http.expectOne((r) => r.method === 'PATCH');
+    expect(patch.request.body).toEqual({
+      name: null,
+      locale: null,
+      timeZone: null,
+      requireMfa: null,
+      aiPolicy: 'none',
+    });
+    patch.flush({ ...view, aiPolicy: 'none' });
+    await settle(fixture);
+    expect(element.textContent).toContain('en.settings.ai.saved');
   });
 });

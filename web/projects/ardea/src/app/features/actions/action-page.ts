@@ -39,15 +39,20 @@ import {
   statusOptions,
   storedStatus,
 } from './action-status';
+import { AiAssessmentCard } from './ai-assessment-card';
 import { Answers } from './answers';
 import { injectNow } from './duration';
 import { FindingsList, type FindingChange } from './findings-list';
 import { historyLines } from './history-format';
+import { isStaleReview, REVIEW_PROBLEMS } from './model-format';
+import type { ReviewChange } from './model-review';
 
 interface Confirmation {
   key: string;
   params?: Record<string, string>;
   undo?: () => void;
+  /** The sentences for a refusal; the action's by default. */
+  problems?: typeof ACTION_PROBLEMS;
 }
 
 /**
@@ -55,7 +60,9 @@ interface Confirmation {
  * its findings, the details with status, owner, deadline and the closing's reason, and the history
  * with notes. Every change is confirmed by a toast with Undo; a change someone else made meanwhile
  * (409) is said in a sentence and the page shows the current state. On phones the main move and the
- * status sit in a bar at the bottom.
+ * status sit in a bar at the bottom. With the model's assessment (phase 4, mockup
+ * remediation.html?ai) the answers carry its texts, each finding its verdict to confirm or
+ * correct, and a card its preconditions, reasoning, sources and budget.
  */
 @Component({
   selector: 'ardea-action-page',
@@ -73,6 +80,7 @@ interface Confirmation {
     UiPriority,
     ActionDetails,
     ActionHistory,
+    AiAssessmentCard,
     Answers,
     FindingsList,
   ],
@@ -126,9 +134,14 @@ interface Confirmation {
               [findings]="v.findings"
               [canEdit]="canEdit()"
               [busy]="busy()"
+              [members]="members.value() ?? []"
               (outcome)="setFinding($event)"
+              (review)="review($event)"
             />
           </ui-card>
+          @if (v.answers && v.answers.origin === 'model' && v.answers.model; as model) {
+            <ardea-ai-assessment-card [model]="model" />
+          }
         </div>
         <div class="stack">
           <ardea-action-details
@@ -536,6 +549,38 @@ export class ActionPage {
     );
   }
 
+  /** A person confirms the model's estimate or corrects the assessment of a finding (task 4.7). */
+  protected review(change: ReviewChange): void {
+    const org = this.orgId();
+    if (!org) return;
+    const { finding, decision, verdict, level, reason } = change;
+    const confirmation =
+      decision === 'correct'
+        ? 'actionDetail.toast.corrected'
+        : finding.verdict === 'not_affected'
+          ? 'actionDetail.toast.confirmedClosed'
+          : 'actionDetail.toast.confirmed';
+    void this.run(
+      async () => {
+        await firstValueFrom(
+          this.api.reviewFinding(org, finding.id, {
+            decision,
+            expectedVerdict: finding.verdict,
+            expectedSource: finding.verdictSource,
+            verdict,
+            level,
+            reason,
+          }),
+        );
+        this.findingsList()?.done();
+        // The finding was assessed again; the action may have changed level or closed with it.
+        this.detail.reload();
+        return null;
+      },
+      { key: confirmation, params: { entry: finding.entry.key }, problems: REVIEW_PROBLEMS },
+    );
+  }
+
   private status(status: ActionStatus, expectedStatus: string, note: string | null) {
     return firstValueFrom(
       this.api.setActionStatus(this.orgId()!, num(this.number()), { status, expectedStatus, note }),
@@ -563,9 +608,10 @@ export class ActionPage {
         undo: confirmation.undo,
       });
     } catch (error) {
-      this.problem.set(problemMessageKey(error, ACTION_PROBLEMS));
+      this.problem.set(problemMessageKey(error, confirmation.problems ?? ACTION_PROBLEMS));
       // Someone else changed it: show the state as it is now, and let the person decide again.
-      if (isStale(problemOf(error)?.code)) {
+      const code = problemOf(error)?.code;
+      if (isStale(code) || isStaleReview(code)) {
         this.pending.set(null);
         this.detail.reload();
       }

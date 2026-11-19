@@ -78,6 +78,7 @@ Every query bypasses the EF filter, so only the database separates tenants.
   | `assess.organizations_with_alert(entry)` | reassessment, withdrawal of an entry: the organisations with an alert for it (ADR 033) |
   | `assess.alerts_to_reassess()` | `ardea admin assess-recompute`: the pairs of organisation and entry that have an alert (task 3.11) |
   | `assess.model_tokens_exhausted(since, quota)` | token quota of the instance: whether all organisations together used the quota since a point in time, a flag only (ADR 037) |
+  | `assess.model_feedback_counts()` | quality of the model: per provider, model and prompt version, assessments, verdicts and the reviews that confirmed or corrected them, counts only (ADR 039) |
 
 - `TenantIsolationTests` checks that every table has exactly one kind and the matching policy, and calls
   every organisation endpoint with foreign organisations and foreign object ids.

@@ -262,6 +262,98 @@ namespace Ardea.Assessment.Persistence.Migrations
                     b.ToTable("assess_event", "assess");
                 });
 
+            modelBuilder.Entity("Ardea.Assessment.Persistence.AssessmentFeedback", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<Guid>("Actor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor");
+
+                    b.Property<Guid>("AlertId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("alert_id");
+
+                    b.Property<Guid?>("AssessmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assessment_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int?>("ExpectedLevel")
+                        .HasColumnType("integer")
+                        .HasColumnName("expected_level");
+
+                    b.Property<Guid>("FindingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("finding_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<int>("LevelBefore")
+                        .HasColumnType("integer")
+                        .HasColumnName("level_before");
+
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("reason");
+
+                    b.Property<string>("Verdict")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("verdict");
+
+                    b.Property<string>("VerdictBefore")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("verdict_before");
+
+                    b.Property<string>("VerdictSource")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("verdict_source");
+
+                    b.HasKey("Id")
+                        .HasName("pk_assessment_feedback");
+
+                    b.HasIndex("AssessmentId")
+                        .HasDatabaseName("ix_assessment_feedback_assessment");
+
+                    b.HasIndex("FindingId", "CreatedAt")
+                        .HasDatabaseName("ix_assessment_feedback_finding");
+
+                    b.ToTable("assessment_feedback", "assess", t =>
+                        {
+                            t.HasCheckConstraint("ck_assessment_feedback_correction", "kind = 'confirmed' OR ((verdict IS NOT NULL OR expected_level IS NOT NULL) AND reason IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_assessment_feedback_kind", "kind IN ('confirmed', 'corrected')");
+
+                            t.HasCheckConstraint("ck_assessment_feedback_levels", "level_before BETWEEN 1 AND 5 AND (expected_level IS NULL OR expected_level BETWEEN 1 AND 5)");
+
+                            t.HasCheckConstraint("ck_assessment_feedback_source", "verdict_source IN ('rules', 'model', 'human')");
+
+                            t.HasCheckConstraint("ck_assessment_feedback_verdicts", "verdict_before IN ('affected', 'likely', 'uncertain', 'unlikely', 'not_affected') AND (verdict IS NULL OR verdict IN ('affected', 'likely', 'uncertain', 'unlikely', 'not_affected'))");
+                        });
+                });
+
             modelBuilder.Entity("Ardea.Assessment.Persistence.Finding", b =>
                 {
                     b.Property<Guid>("Id")
@@ -611,6 +703,22 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_assessment_alert_alert_id");
+                });
+
+            modelBuilder.Entity("Ardea.Assessment.Persistence.AssessmentFeedback", b =>
+                {
+                    b.HasOne("Ardea.Assessment.Persistence.AlertAssessment", null)
+                        .WithMany()
+                        .HasForeignKey("AssessmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_assessment_feedback_assessment_assessment_id");
+
+                    b.HasOne("Ardea.Assessment.Persistence.Finding", null)
+                        .WithMany()
+                        .HasForeignKey("FindingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_assessment_feedback_finding_finding_id");
                 });
 
             modelBuilder.Entity("Ardea.Assessment.Persistence.Finding", b =>

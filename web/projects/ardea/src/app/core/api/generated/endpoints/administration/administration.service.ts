@@ -39,6 +39,7 @@ import type {
   InstanceResponse,
   InstanceSettingsResponse,
   InstanceStatusView,
+  ModelQualityView,
   StatusWarning,
   TestEmailRequest,
   UpdateInstanceSettingsRequest
@@ -131,6 +132,15 @@ export function getStatusWarningsResource(options: OrvalHttpResourceOptions<Stat
 export function getStatusWarningsResource(options?: OrvalHttpResourceOptions<StatusWarning[], unknown>): HttpResourceRef<StatusWarning[] | undefined>;
 export function getStatusWarningsResource(options?: OrvalHttpResourceOptions<StatusWarning[], unknown>): HttpResourceRef<StatusWarning[] | undefined> {
   return httpResource<StatusWarning[]>(() => applyOrvalRequestExtension(`/api/v1/status`, options), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function listModelQualityResource(options: OrvalHttpResourceOptions<ModelQualityView[], unknown> & { defaultValue: NoInfer<ModelQualityView[]> }): HttpResourceRef<ModelQualityView[]>;
+export function listModelQualityResource(options?: OrvalHttpResourceOptions<ModelQualityView[], unknown>): HttpResourceRef<ModelQualityView[] | undefined>;
+export function listModelQualityResource(options?: OrvalHttpResourceOptions<ModelQualityView[], unknown>): HttpResourceRef<ModelQualityView[] | undefined> {
+  return httpResource<ModelQualityView[]>(() => applyOrvalRequestExtension(`/api/v1/instance/ai/quality`, options), options);
 }
 
 /**
@@ -347,11 +357,13 @@ export class AdministrationService {
 };
 
 export type GetStatusWarningsResourceResult = NonNullable<StatusWarning[]>
+export type ListModelQualityResourceResult = NonNullable<ModelQualityView[]>
 export type GetInstanceResourceResult = NonNullable<InstanceResponse>
 export type GetInstanceSettingsResourceResult = NonNullable<InstanceSettingsResponse>
 export type ListAiProvidersResourceResult = NonNullable<AiProviderInfo[]>
 export type ListAbandonedJobsResourceResult = NonNullable<AbandonedJobResponse[]>
 export type GetInstanceStatusResourceResult = NonNullable<InstanceStatusView>
+
 
 
 

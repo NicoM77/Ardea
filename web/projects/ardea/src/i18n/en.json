@@ -158,6 +158,38 @@
       "retried": "{kind} is queued again.",
       "gone": "This job is no longer waiting for a retry. The list is up to date again.",
       "retryFailed": "The job could not be queued again. Try again in a moment."
+    },
+    "ai": {
+      "title": "AI providers",
+      "intro": "The language models this instance may ask, set through environment variables. Each organization chooses in its settings whether its alerts may go to a local model, a cloud model, or none.",
+      "loading": "Loading the AI providers",
+      "loadFailed": "The AI providers could not be loaded.",
+      "emptyHeading": "No AI provider configured",
+      "emptyText": "Without one, Ardea assesses with the rules and the source data alone. Add a provider with the ARDEA_AI__PROVIDERS__… variables and restart.",
+      "local": "Local",
+      "cloud": "Cloud",
+      "kind": "Kind",
+      "model": "Model",
+      "host": "Host",
+      "defaultHost": "the provider’s default",
+      "test": "Test connection",
+      "testLabel": "Test the connection to {name}",
+      "testOk": "The provider answered in {ms, number} ms.",
+      "testFailed": "The test failed.",
+      "testError": "The test could not be run. Try again in a moment.",
+      "notFound": "This provider is no longer configured.",
+      "quality": {
+        "title": "How people judged the model",
+        "intro": "Per model and prompt version: how many of its verdicts people confirmed or corrected on the action and alert pages. The share of corrections among the reviewed shows how far to trust it.",
+        "loadFailed": "The figures could not be loaded.",
+        "none": "No assessment by a model yet.",
+        "prompt": "Prompt",
+        "assessments": "Assessments",
+        "verdicts": "Verdicts",
+        "confirmed": "Confirmed",
+        "corrected": "Corrected",
+        "rate": "Corrected of reviewed"
+      }
     }
   },
   "home": {
@@ -1059,7 +1091,7 @@
     }
   },
   "settings": {
-    "lead": "{name}: name, language, two-factor requirement, accesses to GitHub and the audit log.",
+    "lead": "{name}: name, language, two-factor requirement, AI data policy, accesses to GitHub and the audit log.",
     "save": "Save",
     "adminsOnly": "Owner and admins change these settings.",
     "general": {
@@ -1144,6 +1176,20 @@
         "connectionChanged": "changed an access to GitHub",
         "connectionDeleted": "deleted an access to GitHub"
       }
+    },
+    "ai": {
+      "title": "AI data policy",
+      "intro": "Whether Ardea may ask a language model about this organization’s alerts. The model writes the three answers and judges each hit component; the rules still set the priority, and the model can never close a finding on its own.",
+      "legend": "Which language models may see this organization’s alerts?",
+      "none": "None",
+      "noneHint": "No model is asked. The answers come from the rules and the source data alone.",
+      "localOnly": "Local models only",
+      "localOnlyHint": "Only models on the instance’s own network, never a cloud service, not even when the local one fails.",
+      "cloudAllowed": "Cloud models too",
+      "cloudAllowedHint": "A local model first; if none answers, a cloud provider the instance configured.",
+      "leaves": "What leaves Ardea: the public entry with its sources, and of the hit components only fixed values such as product, version and exposure. No project, component or organization names, no notes.",
+      "saved": "The AI data policy is saved.",
+      "loadFailed": "The AI data policy could not be loaded."
     }
   },
   "time": {
@@ -1290,7 +1336,10 @@
       "due": "Due date moved to {date}",
       "note": "Note saved",
       "finding": "{entry}: {status, select, open {open again} remediated {remediated} risk_accepted {risk accepted} not_affected {not affected} other {another status}}",
-      "undone": "Undone"
+      "undone": "Undone",
+      "confirmed": "{entry}: estimate confirmed",
+      "confirmedClosed": "{entry}: confirmed as not affected and closed",
+      "corrected": "{entry}: correction saved, the finding was assessed again"
     },
     "history": {
       "title": "History",
@@ -1315,7 +1364,10 @@
       "joined": "{entry} joined the action",
       "findingClosed": "{entry} closed",
       "findingReopened": "{entry} is open again",
-      "someone": "Someone"
+      "someone": "Someone",
+      "verdictConfirmed": "{who} confirmed the model’s estimate for {entry}: {verdict, select, affected {affected} likely {likely} uncertain {uncertain} unlikely {unlikely} not_affected {not affected} other {no verdict}}",
+      "verdictCorrected": "{who} corrected {entry} to {verdict, select, affected {affected} likely {likely} uncertain {uncertain} unlikely {unlikely} not_affected {not affected} other {no verdict}}",
+      "levelQuestioned": "{who} expects another priority for {entry}"
     },
     "note": {
       "label": "Note",
@@ -1373,6 +1425,16 @@
       "copy": "Copy",
       "from": "From {version}, the version installed now",
       "advisory": "Read the advisory"
+    },
+    "model": {
+      "tag": "AI",
+      "written": "Written by the model from the numbered sources; the record’s own words are in the entry.",
+      "without": "Without AI assessment: the model was asked and gave no usable answer, so the rules and the source data answer here.",
+      "verdict": "Model: {verdict, select, affected {affected} likely {likely} uncertain {uncertain} unlikely {unlikely} not_affected {not affected} other {no verdict}}",
+      "proposal": "proposal: probably not affected",
+      "likelihood": "Likelihood of an attack here, according to the model: {likelihood, select, high {high} medium {medium} low {low} other {not known}}.",
+      "own": "(own recommendation)",
+      "source": "source {number}"
     }
   },
   "findings": {
@@ -1509,6 +1571,70 @@
       "title": "Sources",
       "all": "All sources",
       "none": "No source has reported yet."
+    }
+  },
+  "estimate": {
+    "estimate": "Model estimate",
+    "model": "Model",
+    "corrected": "Corrected",
+    "proposal": "Proposal: probably not affected",
+    "withModel": "with the model:",
+    "counts": "The version is unknown, so the model’s verdict counts.",
+    "held": "The version is unknown, so the model’s verdict counts; it lowers the priority by at most one level until a person confirms it.",
+    "proposalNote": "The model cannot close a finding: it stays open until a person confirms the proposal, which closes it as not affected.",
+    "expected": "{who} expects {level}:",
+    "confirm": "Confirm the estimate",
+    "correct": "Correct this assessment",
+    "correctAgain": "Correct this assessment",
+    "confirmedBy": "confirmed by {who}",
+    "correctedBy": "by {who}:",
+    "reassessed": "The finding was assessed again with the person’s verdict; the model’s estimate stays in the history.",
+    "verdict": "Verdict",
+    "level": "Priority you expect",
+    "levelRight": "The priority is right",
+    "levels": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "notRelevant": "Not relevant"
+    },
+    "why": "Why",
+    "save": "Save the correction",
+    "errors": {
+      "nothing": "Choose another verdict or the priority you expect.",
+      "why": "Say why; it stays in the history and helps judge the model.",
+      "conflict": "This assessment changed in the meantime. It shows the current state now; decide again.",
+      "closed": "The finding is closed. Take the closing back to review it.",
+      "nothingToConfirm": "Only the model’s estimate can be confirmed; correct the verdict instead.",
+      "invalid": "The review is not valid.",
+      "gone": "This finding does not exist any more."
+    }
+  },
+  "aiAssessment": {
+    "title": "AI assessment",
+    "engine": "Rules + model",
+    "preconditions": "Preconditions for an attack",
+    "state": "{state, select, met {Met} not_met {Not met} other {Unknown}}",
+    "impact": "Impact",
+    "likelihood": "Likelihood {likelihood, select, high {high} medium {medium} low {low} other {not known}}, confidence {confidence, select, high {high} medium {medium} low {low} other {not known}}.",
+    "why": "Why",
+    "source": "source {number}",
+    "unknowns": "What the profile does not say",
+    "sources": "Sources the model was given",
+    "unnamed": "A source without a name",
+    "made": "{model} ({provider}) · prompt {prompt} · rule set v{ruleset} · {when}",
+    "budget": "{tokensIn, number} tokens in, {tokensOut, number} out, {seconds, number} s. Only the hit components left Ardea, without project names.",
+    "byPerson": "Asked for by a person.",
+    "bySystem": "Asked for by Ardea, within the quota of the action.",
+    "again": "Assess again",
+    "request": {
+      "button": "Request an AI assessment",
+      "queued": "AI assessment requested. The page shows the model’s answers as soon as it has answered.",
+      "waiting": "An AI assessment of this alert is already waiting; it covers your request.",
+      "notAvailable": "No language model is available under the organization’s AI data policy. Owners and admins set the policy in the settings.",
+      "exhausted": "The organization has used today’s requests for AI assessments. Try again tomorrow.",
+      "forbidden": "Only members can request an AI assessment."
     }
   }
 }

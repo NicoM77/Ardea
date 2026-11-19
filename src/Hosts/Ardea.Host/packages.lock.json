@@ -218,7 +218,8 @@
           "Ardea.Catalog.Contracts": "[0.0.0, )",
           "Ardea.Iam.Contracts": "[0.0.0, )",
           "Ardea.Intel.Contracts": "[0.0.0, )",
-          "Ardea.Platform": "[0.0.0, )"
+          "Ardea.Platform": "[0.0.0, )",
+          "Microsoft.Extensions.AI": "[11.0.0, )"
         }
       },
       "ardea.assessment.contracts": {

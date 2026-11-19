@@ -1,0 +1,13 @@
+{
+  "verdicts": "{VERDICTS}",
+  "level": 1,
+  "status": "not_affected",
+  "likelihood": { "level": "low", "reason": "Laut Hersteller ist kein Handlungsbedarf gegeben." },
+  "confidence": "high",
+  "what_happened": "Kein relevantes Problem.",
+  "preconditions": [],
+  "impact": "Keine Auswirkung.",
+  "actions": [ { "step": "Meldung schliessen.", "sources": [1], "own": false } ],
+  "unknowns": [],
+  "reasoning": [ { "sentence": "Die Quelle sagt, dass nichts zu tun ist.", "sources": [1], "components": [] } ]
+}

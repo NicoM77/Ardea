@@ -51,13 +51,16 @@ public sealed class ReferenceSetTests(PostgresServer server)
     /// <summary>
     /// The spike week (master plan 14, phase 3 acceptance): all 6 452 records of 11 to 17 November 2026 against
     /// the three example projects of the requirements, each with the versions installed before that week's
-    /// security updates. One organisation with all three gives at most 8 open actions.
+    /// security updates. One organisation with all three gives at most 8 open actions; with a local model the
+    /// assessment asks it at most 40 times (phase 4 acceptance: 8 actions times 5), answered by a recorded model.
     /// </summary>
     [Fact(Timeout = 600_000)]
-    public async Task The_spike_week_gives_at_most_eight_open_actions_for_the_three_example_projects()
+    public async Task The_spike_week_gives_at_most_eight_open_actions_and_forty_model_calls_for_the_three_example_projects()
     {
         var watch = Stopwatch.StartNew();
-        await using var host = await ReferenceHost.StartAsync(server);
+        var model = new Estimating.RecordedModel(request => Estimating.Recorded.For("valid.json", request, "uncertain"));
+        await using var host = await ReferenceHost.StartAsync(
+            server, services => services.AddSingleton<Platform.Ai.IAiProviders>(new Estimating.RecordedProviders(("local", true, model))));
         var organization = Guid.CreateVersion7();
         foreach (var (name, attributes, components) in SpikeWeek.Projects)
         {
@@ -66,6 +69,9 @@ public sealed class ReferenceSetTests(PostgresServer server)
             {
                 await host.AddComponentAsync(organization, project, component);
             }
+
+            // The organisation was set up before the week: its first fill is done when the week's records arrive.
+            await host.ProfileChangedAsync(organization, project);
         }
 
         await host.RunJobsAsync();
@@ -78,11 +84,12 @@ public sealed class ReferenceSetTests(PostgresServer server)
             FROM assess.remediation r JOIN assets.component c ON c.id = r.component_id JOIN assets.project p ON p.id = r.project_id
             WHERE r.status <> 'closed' ORDER BY r.level DESC, p.name, 2
             """);
-        var summary = $"Spike week: {actions.Count} open actions in {watch.Elapsed.TotalSeconds:F0} s{Environment.NewLine}{string.Join(Environment.NewLine, actions)}";
+        var summary = $"Spike week: {actions.Count} open actions, {model.Requests.Count} calls to the model, in {watch.Elapsed.TotalSeconds:F0} s{Environment.NewLine}{string.Join(Environment.NewLine, actions)}";
         await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "spike-week-report.txt"), summary, TestContext.Current.CancellationToken);
         TestContext.Current.SendDiagnosticMessage(summary);
         Assert.True(actions.Count <= 8, $"{actions.Count} open actions, at most 8:{Environment.NewLine}{string.Join(Environment.NewLine, actions)}");
         Assert.NotEmpty(actions);
+        Assert.InRange(model.Requests.Count, 1, 40);
     }
 
     [Fact]
@@ -139,7 +146,7 @@ internal sealed class ReferenceHost : IAsyncDisposable
         _clock = clock;
     }
 
-    public static async Task<ReferenceHost> StartAsync(PostgresServer server)
+    public static async Task<ReferenceHost> StartAsync(PostgresServer server, Action<IServiceCollection>? configure = null)
     {
         var name = await server.CreateDatabaseAsync("reference");
         var database = new DatabaseOptions
@@ -183,6 +190,8 @@ internal sealed class ReferenceHost : IAsyncDisposable
         new Intel.IntelModule().AddServices(services, configuration);
         new Intel.IntelModule().AddWorkerServices(services, configuration);
         new AssessmentModule().AddServices(services, configuration);
+        services.AddSingleton<Iam.Contracts.IOrganizationProfiles, Estimating.TestOrganizations>();
+        configure?.Invoke(services);
         var built = services.BuildServiceProvider(validateScopes: true);
 
         // Registers the CVE Program as a source, as the worker does at start. Nothing syncs: no scheduler runs.
@@ -218,6 +227,11 @@ internal sealed class ReferenceHost : IAsyncDisposable
         });
         return project;
     }
+
+    /// <summary>Assets' profile change: queues the project's reverse search, as the profile endpoints do.</summary>
+    public Task ProfileChangedAsync(Guid organization, Guid project) =>
+        InOrganizationAsync(organization, services => services.GetRequiredService<IJobQueue>()
+            .EnqueueAsync(new Assessing.MatchProject(project), Assessing.MatchProject.Options(organization, project)));
 
     public Task AddComponentAsync(Guid organization, Guid project, ReferenceComponent c) =>
         InOrganizationAsync(organization, async services =>

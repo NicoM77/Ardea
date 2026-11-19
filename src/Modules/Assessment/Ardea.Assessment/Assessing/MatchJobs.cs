@@ -76,7 +76,9 @@ internal sealed class MatchEntryHandler(IEntryQueries entries, IProfileQueries p
     }
 }
 
-internal sealed class AssessAlertHandler(IEntryQueries entries, AlertAssessor assessor, Remediations remediations) : IJobHandler<AssessAlert>
+/// <summary>The rules first; then, above the threshold and within the quota, the model's assessment as a job of its own (master plan 7.5).</summary>
+internal sealed class AssessAlertHandler(IEntryQueries entries, AlertAssessor assessor, Remediations remediations, Estimating.EstimateTrigger estimates)
+    : IJobHandler<AssessAlert>
 {
     public async Task HandleAsync(AssessAlert job, JobContext context, CancellationToken cancellationToken)
     {
@@ -84,6 +86,7 @@ internal sealed class AssessAlertHandler(IEntryQueries entries, AlertAssessor as
         {
             var touched = await assessor.AssessAsync(entry, AssessmentScope.Organization, cancellationToken);
             await remediations.SyncAsync(touched, actor: null, cancellationToken);
+            await estimates.QueueAfterRulesAsync(entry.Id, cancellationToken);
         }
     }
 }

@@ -11,11 +11,75 @@ namespace Ardea.Assessment.Features;
 /// not sentences, so the interface words them in the reader's language; only the source's text is
 /// quoted as written.
 /// </summary>
-/// <param name="Origin"><c>template</c>; <c>model</c> once an assessment exists (phase 4).</param>
+/// <param name="Origin"><c>template</c>; <c>model</c> when the alert behind the answers has a current assessment by the
+/// language model: its texts are in <paramref name="Model"/>, the structured parts here stay as the data gives them.</param>
 /// <param name="WhatHappened">What happened.</param>
 /// <param name="Affected">Are we affected.</param>
 /// <param name="ToDo">What to do.</param>
-internal sealed record AnswersView(string Origin, WhatHappenedAnswer WhatHappened, AffectedAnswer Affected, ToDoAnswer ToDo);
+/// <param name="Model">The model's assessment (master plan 7.5), in the organisation's language; <c>null</c> without one.</param>
+/// <param name="ModelNote"><c>without_model</c> when the model was asked and failed twice: the answers come from the rules
+/// and templates alone («ohne KI-Einschätzung»).</param>
+internal sealed record AnswersView(
+    string Origin, WhatHappenedAnswer WhatHappened, AffectedAnswer Affected, ToDoAnswer ToDo, ModelAnswersView? Model = null, string? ModelNote = null);
+
+/// <summary>The assessment by the language model behind the answers (master plan 7.5, table «Ausgabe als JSON»).</summary>
+/// <param name="AssessmentId">The stored assessment.</param>
+/// <param name="Language">The language of its texts.</param>
+/// <param name="Model">The model that wrote it.</param>
+/// <param name="PromptVersion">The prompt's version.</param>
+/// <param name="CreatedAt">When it was made.</param>
+/// <param name="WhatHappened">One or two sentences, at most 240 characters.</param>
+/// <param name="Likelihood">Of a successful attack here: <c>high</c>, <c>medium</c>, <c>low</c>.</param>
+/// <param name="LikelihoodReason">One sentence.</param>
+/// <param name="Confidence">Of the assessment: <c>high</c>, <c>medium</c>, <c>low</c>.</param>
+/// <param name="Impact">One sentence, at most 120 characters.</param>
+/// <param name="Verdicts">Per hit component.</param>
+/// <param name="Preconditions">The conditions an attack needs and whether they hold here.</param>
+/// <param name="Actions">Ordered steps, each with its sources or marked as the model's own.</param>
+/// <param name="Unknowns">What the profile does not tell.</param>
+/// <param name="Reasoning">Sentences with the numbers of their sources.</param>
+/// <param name="Sources">The numbered sources the numbers refer to.</param>
+internal sealed record ModelAnswersView(
+    Guid AssessmentId,
+    string Language,
+    string? Model,
+    string PromptVersion,
+    DateTimeOffset CreatedAt,
+    string WhatHappened,
+    string Likelihood,
+    string LikelihoodReason,
+    string Confidence,
+    string Impact,
+    IReadOnlyList<ModelVerdictView> Verdicts,
+    IReadOnlyList<ModelPreconditionView> Preconditions,
+    IReadOnlyList<ModelStepView> Actions,
+    IReadOnlyList<string> Unknowns,
+    IReadOnlyList<ModelReasonView> Reasoning,
+    IReadOnlyList<ModelSourceView> Sources);
+
+/// <summary>The model's verdict on one component.</summary>
+/// <param name="Project">The component's project.</param>
+/// <param name="Component">The component.</param>
+/// <param name="Verdict"><c>affected</c>, <c>likely</c>, <c>uncertain</c>, <c>unlikely</c> or <c>not_affected</c>.</param>
+/// <param name="Proposal">The verdict is «probably not affected»: a proposal a person confirms by closing the finding as
+/// not affected; until then it counts like <c>unlikely</c> (master plan 7.5).</param>
+internal sealed record ModelVerdictView(ActionProjectRef Project, ActionComponentRef Component, string Verdict, bool Proposal);
+
+/// <param name="Condition">What an attack needs.</param>
+/// <param name="State"><c>met</c>, <c>not_met</c> or <c>unknown</c>.</param>
+internal sealed record ModelPreconditionView(string Condition, string State);
+
+/// <param name="Text">At most 140 characters.</param>
+/// <param name="Sources">Numbers of <see cref="ModelAnswersView.Sources"/>.</param>
+/// <param name="Own">The model's own recommendation, without a source.</param>
+internal sealed record ModelStepView(string Text, IReadOnlyList<int> Sources, bool Own);
+
+internal sealed record ModelReasonView(string Sentence, IReadOnlyList<int> Sources, IReadOnlyList<Guid> Components);
+
+/// <param name="Number">The number the texts refer to.</param>
+/// <param name="Name">The source of the record, for number 1.</param>
+/// <param name="Url">The reference's address.</param>
+internal sealed record ModelSourceView(int Number, string? Name, string? Url);
 
 /// <summary>What happened: the entry's title and the first sentences of its description, in the source's words.</summary>
 /// <param name="EntryKey">The entry the answer is about: for an action, its open finding of the highest level.</param>
@@ -68,7 +132,8 @@ internal static class AnswerTemplates
         IReadOnlyList<Finding> findings,
         IReadOnlyDictionary<Guid, EntryText> texts,
         Func<Finding, (ActionProjectRef Project, ActionComponentRef Component)> refs,
-        string? targetVersion)
+        string? targetVersion,
+        IReadOnlyDictionary<Guid, AlertAssessment>? assessments = null)
     {
         var ordered = findings
             .OrderByDescending(f => f.Status is "open" or "in_review").ThenByDescending(f => f.Level).ThenBy(f => f.Id).ToList();
@@ -101,8 +166,37 @@ internal static class AnswerTemplates
             : steps.Count > 0
                 ? new ToDoAnswer("source_guidance", null, installed, steps, text?.AdvisoryUrl)
                 : new ToDoAnswer("no_fix", null, installed, [], text?.AdvisoryUrl);
-        return new AnswersView("template", what, affected, todo);
+        // The lead alert's current assessment, if any (phase 4): the model's texts, or the note that it failed.
+        var current = assessments?.GetValueOrDefault(lead.AlertId);
+        if (current is null)
+        {
+            return new AnswersView("template", what, affected, todo);
+        }
+
+        if (current.Engine != AlertAssessment.ModelEngine || Estimating.StoredEstimate.Read(current.Output) is not { } estimate)
+        {
+            return new AnswersView("template", what, affected, todo, ModelNote: Estimating.FailedEstimate.WithoutModel);
+        }
+
+        var byComponent = findings.GroupBy(f => f.ComponentId).ToDictionary(g => g.Key, g => g.First());
+        var model = new ModelAnswersView(
+            current.Id, current.Language ?? string.Empty, current.Model, current.PromptVersion ?? string.Empty, current.CreatedAt,
+            estimate.WhatHappened, Name(estimate.Likelihood.Level), estimate.Likelihood.Reason, Name(estimate.Confidence), estimate.Impact,
+            [.. estimate.Verdicts.Where(v => byComponent.ContainsKey(v.ComponentId)).Select(v =>
+            {
+                var (project, component) = refs(byComponent[v.ComponentId]);
+                return new ModelVerdictView(project, component, Name(v.Verdict), v.Verdict == Estimating.ModelVerdict.NotAffected);
+            })],
+            [.. estimate.Preconditions.Select(p => new ModelPreconditionView(p.Condition, Name(p.State)))],
+            [.. estimate.Actions.Select(a => new ModelStepView(a.Step, a.Sources, a.Own))],
+            estimate.Unknowns,
+            [.. estimate.Reasoning.Select(r => new ModelReasonView(r.Sentence, r.Sources, r.Components))],
+            [.. estimate.Sources.Select(s => new ModelSourceView(s.N, s.Name, s.Url))]);
+        return new AnswersView("model", what, affected, todo, model);
     }
+
+    private static string Name<T>(T value)
+        where T : struct, Enum => Estimating.StoredEstimate.Name(value);
 
     /// <summary>
     /// A source text cut to at most <paramref name="length"/> characters at the end of a sentence (master plan

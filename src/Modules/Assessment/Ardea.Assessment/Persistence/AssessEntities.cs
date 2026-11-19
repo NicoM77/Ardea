@@ -26,6 +26,12 @@ internal sealed class Alert : IOrganizationOwned
     /// <summary>The entry's revision the findings were last computed from.</summary>
     public int AssessedEntryRevision { get; set; }
 
+    /// <summary>
+    /// The latest assessment with a language model (master plan 4.6): a successful one, or a failed attempt that
+    /// gives the note «ohne KI-Einschätzung». <c>null</c> while the model never looked at the alert.
+    /// </summary>
+    public Guid? CurrentAssessmentId { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset ChangedAt { get; set; }
@@ -226,4 +232,63 @@ internal sealed class MatchScope : IOrganizationOwned
     public Guid? RepositoryLinkId { get; set; }
 
     public DateTimeOffset MatchedAt { get; set; }
+}
+
+/// <summary>
+/// One immutable assessment of an alert over all its hit components (master plan 4.6, 7.5): what went in
+/// (fingerprint, entry revision, rule set and prompt versions), which model answered, and its checked output.
+/// A failed attempt is stored too, with <c>engine</c> <c>rules</c>: it carries the note «ohne KI-Einschätzung»
+/// and its tokens count against the quotas. The database refuses updates.
+/// </summary>
+internal sealed class AlertAssessment : IOrganizationOwned
+{
+    public const string RulesEngine = "rules";
+    public const string ModelEngine = "rules+model";
+
+    public Guid Id { get; set; }
+
+    public Guid OrganizationId { get; set; }
+
+    public Guid AlertId { get; set; }
+
+    public int EntryRevision { get; set; }
+
+    /// <summary>A hash over entry revision, hit components with version and context, rule set and prompt version (master plan 4.9).</summary>
+    public required string InputFingerprint { get; set; }
+
+    /// <summary><c>rules+model</c> for a checked answer of the model; <c>rules</c> when the model failed twice.</summary>
+    public required string Engine { get; set; }
+
+    public int RulesetVersion { get; set; }
+
+    /// <summary>The provider's name as configured, e.g. <c>local</c>.</summary>
+    public string? Provider { get; set; }
+
+    /// <summary>The model the provider was asked for, e.g. <c>qwen3:14b</c>.</summary>
+    public string? Model { get; set; }
+
+    public string? PromptVersion { get; set; }
+
+    /// <summary>The language of the generated texts, the organisation's (master plan 7.8).</summary>
+    public string? Language { get; set; }
+
+    /// <summary>
+    /// The checked output with real component ids and the numbered source list it refers to; for a failed
+    /// attempt, the reason (<c>invalid_output</c>, <c>provider_error</c>, <c>timeout</c>) and no text of the model.
+    /// </summary>
+    public required JsonDocument Output { get; set; }
+
+    public int TokensIn { get; set; }
+
+    public int TokensOut { get; set; }
+
+    public int DurationMs { get; set; }
+
+    /// <summary>The person who asked for it; <c>null</c> when the system did, which counts against the actions' quota (master plan 7.5).</summary>
+    public Guid? RequestedBy { get; set; }
+
+    /// <summary>The open actions the assessment covered when it ran, for the quota of five per action in seven days.</summary>
+    public Guid[] RemediationIds { get; set; } = [];
+
+    public DateTimeOffset CreatedAt { get; set; }
 }

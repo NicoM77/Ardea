@@ -176,6 +176,7 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             pending.ToTable("pending_event");
             pending.HasKey(p => new { p.OrganizationId, p.EventId });
             pending.Property(p => p.Kind).HasMaxLength(40);
+            pending.Property(p => p.LastError).HasMaxLength(2000);
             pending.HasIndex(p => new { p.OrganizationId, p.At }).HasDatabaseName("ix_pending_event_org");
         });
 

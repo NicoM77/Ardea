@@ -33,13 +33,17 @@ internal sealed class NotifyTestHost : IAsyncDisposable
 
     private readonly WebApplication _app;
 
-    private NotifyTestHost(WebApplication app, DatabaseOptions database, FakeTimeProvider time, CapturingEmailSender? mail)
+    private NotifyTestHost(WebApplication app, DatabaseOptions database, FakeTimeProvider time, CapturingEmailSender? mail, CapturingLogs logs)
     {
         _app = app;
         Database = database;
         Time = time;
         Mail = mail;
+        Logs = logs;
     }
+
+    /// <summary>Everything logged at Warning and above, and every log of outgoing HTTP requests.</summary>
+    public CapturingLogs Logs { get; }
 
     public DatabaseOptions Database { get; }
 
@@ -54,8 +58,10 @@ internal sealed class NotifyTestHost : IAsyncDisposable
     /// <param name="settings">Further configuration, e.g. SMTP for a real mail server.</param>
     /// <param name="captureMail">Replace SMTP by a capturing sender that is always configured.</param>
     /// <param name="start">The fake clock's start; now by default. Sessions are checked against the database's clock, so the API is used before the clock moves far.</param>
+    /// <param name="services">Replaces services after every registration.</param>
     public static async Task<NotifyTestHost> StartAsync(
-        PostgresServer server, Dictionary<string, string?>? settings = null, bool captureMail = true, DateTimeOffset? start = null)
+        PostgresServer server, Dictionary<string, string?>? settings = null, bool captureMail = true, DateTimeOffset? start = null,
+        Action<IServiceCollection>? services = null)
     {
         var name = await server.CreateDatabaseAsync("notify");
         var database = new DatabaseOptions
@@ -94,24 +100,38 @@ internal sealed class NotifyTestHost : IAsyncDisposable
 
         var time = new FakeTimeProvider(start ?? DateTimeOffset.UtcNow);
         var mail = captureMail ? new CapturingEmailSender() : null;
+        var logs = new CapturingLogs();
         var app = ApiRole.Build([], out var check, builder =>
         {
             builder.WebHost.UseTestServer();
             builder.Configuration.AddInMemoryCollection(values);
             builder.Logging.SetMinimumLevel(LogLevel.Warning);
-        }, services =>
+            builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Trace);
+        }, collection =>
         {
-            services.AddSingleton<TimeProvider>(time);
+            collection.AddSingleton<TimeProvider>(time);
+            // Here, after the host replaced the providers with its JSON console.
+            collection.AddSingleton<ILoggerProvider>(logs);
             if (mail is not null)
             {
-                services.AddScoped<IEmailSender>(_ => mail);
+                collection.AddScoped<IEmailSender>(_ => mail);
             }
+
+            services?.Invoke(collection);
         }) ?? throw new InvalidOperationException(string.Join(" ", check.Errors));
         await app.StartAsync();
-        return new NotifyTestHost(app, database, time, mail);
+        return new NotifyTestHost(app, database, time, mail, logs);
     }
 
     public ApiClient Client() => new(_app.GetTestServer(), "https://ardea.test");
+
+    /// <summary>A plain client without cookies or CSRF token, as a mail client's server is.</summary>
+    public HttpClient RawClient()
+    {
+        var client = _app.GetTestServer().CreateClient();
+        client.BaseAddress = new Uri("https://ardea.test");
+        return client;
+    }
 
     /// <summary>Sets up the instance with its first user, who founds an organisation.</summary>
     public async Task<(ApiClient Client, Guid Organization)> OwnerAsync(string email = "owner@example.org", string organization = "Acme")
@@ -345,10 +365,18 @@ internal sealed class CapturingEmailSender : IEmailSender
         }
     }
 
+    /// <summary>When set, sending throws this instead, as a broken mail server would.</summary>
+    public Func<Exception>? Failure { get; set; }
+
     public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken) => Task.FromResult(true);
 
     public Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
     {
+        if (Failure is { } failure)
+        {
+            throw failure();
+        }
+
         lock (_sent)
         {
             _sent.Add(message);
@@ -432,5 +460,30 @@ internal sealed class ApiClient : IDisposable
 
             return response;
         }
+    }
+}
+
+/// <summary>Collects log messages with their category.</summary>
+internal sealed class CapturingLogs : ILoggerProvider
+{
+    private readonly System.Collections.Concurrent.ConcurrentQueue<string> _messages = new();
+
+    public IReadOnlyList<string> Messages => [.. _messages];
+
+    public ILogger CreateLogger(string categoryName) => new Logger(categoryName, _messages);
+
+    public void Dispose()
+    {
+    }
+
+    private sealed class Logger(string category, System.Collections.Concurrent.ConcurrentQueue<string> messages) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+            messages.Enqueue($"{category}: {formatter(state, exception)}");
     }
 }

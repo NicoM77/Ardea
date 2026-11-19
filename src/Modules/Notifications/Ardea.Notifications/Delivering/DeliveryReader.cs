@@ -219,7 +219,7 @@ internal sealed class DeliveryReader(
             var item = new MessageItem { EventId = fact.Id, Event = fact.Kind, At = fact.At, Data = fact.Data, Level = row.Level };
             if (fact.RemediationId is { } remediation && actions.TryGetValue(remediation, out var action))
             {
-                items.Add(item with { Action = action, Level = action.Level });
+                items.Add(item with { Action = action, Level = row.Level ?? action.Level });
             }
             else if (fact.ProjectId is { } project)
             {

@@ -51,7 +51,7 @@ public sealed class WebhookChannelTests(PostgresServer server)
         var s = await Scenario.StartAsync(host);
         Assert.Equal(HttpStatusCode.OK, (await s.Owner.SendAsync(HttpMethod.Patch, "/api/v1/instance/settings", new { webhookInternalHosts = address.ToString() })).StatusCode);
         var created = await NotifyTestHost.JsonAsync(
-            await s.Owner.PostAsync($"{s.Path}/endpoints", new { name = "SIEM", url = $"http://{address}:{receiver.Port}/ardea" }), HttpStatusCode.Created);
+            await s.Owner.PostAsync($"{s.Path}/endpoints", new { name = "SIEM", url = $"http://{address}:{receiver.Port}/hooks/T0001/s3cr3t-in-the-path" }), HttpStatusCode.Created);
         var secret = created.GetProperty("secret").GetString()!;
         var endpoint = created.GetProperty("id").GetGuid();
         Assert.StartsWith("whsec_", secret, StringComparison.Ordinal);
@@ -84,6 +84,9 @@ public sealed class WebhookChannelTests(PostgresServer server)
         Assert.Equal("https://ardea.test/o/acme/actions/2", item.GetProperty("url").GetString());
         Assert.Equal("sent", await host.ScalarAsync<string>("SELECT state FROM notify.delivery WHERE channel = 'webhook'"));
         Assert.Equal("200", await host.ScalarAsync<string>("SELECT last_status FROM notify.endpoint"));
+
+        // Chat services carry the webhook's secret in its path: no log line names the address.
+        Assert.DoesNotContain(host.Logs.Messages, m => m.Contains("s3cr3t", StringComparison.Ordinal));
 
         // 503 is worth another attempt; 410 ends the retries.
         receiver.Answers.Enqueue(503);
@@ -142,7 +145,7 @@ public sealed class WebhookChannelTests(PostgresServer server)
             builder.WebHost.UseKestrel(k => k.Listen(address, 0, o => o.Protocols = HttpProtocols.Http1));
             var app = builder.Build();
             Receiver? self = null;
-            app.MapPost("/ardea", async (HttpRequest request) =>
+            app.MapPost("/{**path}", async (HttpRequest request) =>
             {
                 using var reader = new StreamReader(request.Body);
                 self!.Requests.Enqueue(new Received(request.Headers["Ardea-Signature"].ToString(), await reader.ReadToEndAsync()));

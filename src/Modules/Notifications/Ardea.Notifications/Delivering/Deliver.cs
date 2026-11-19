@@ -88,7 +88,17 @@ internal sealed partial class DeliverHandler(
         }
 
         var channel = channels.Single(c => c.Name == message.Channel);
-        var result = await channel.SendAsync(message, cancellationToken);
+        SendResult result;
+        try
+        {
+            result = await channel.SendAsync(message, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            // A channel answers with a result; should one throw all the same, the delivery must not stay in «sending».
+            result = new SendResult(SendOutcome.Transient, $"{ex.GetType().Name}: {ex.Message}");
+        }
+
         delivery.Attempts = context.Attempt;
         await RecordEndpointAsync(message, result, cancellationToken);
         switch (result.Outcome)

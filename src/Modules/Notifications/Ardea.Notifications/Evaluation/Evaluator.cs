@@ -37,12 +37,13 @@ internal sealed class Evaluator(
     /// <summary>Immediate messages per channel and organisation and hour; above, the event waits for the digest (master plan 8.6).</summary>
     public const int HourlyLimit = 60;
 
-    public async Task EvaluateAsync(IReadOnlyList<PendingEvent> pending, CancellationToken cancellationToken)
+    /// <summary>Reads what every event of the batch needs once: organisation, rules, recipients, events and actions.</summary>
+    public async Task<Batch?> LoadAsync(IReadOnlyList<PendingEvent> pending, CancellationToken cancellationToken)
     {
         var organization = await organizations.FindAsync(tenant.RequiredOrganizationId, cancellationToken);
         if (organization is null)
         {
-            return;
+            return null;
         }
 
         var rules = await db.Rules.AsNoTracking().Include(r => r.Targets).Where(r => r.Enabled).ToListAsync(cancellationToken);
@@ -50,16 +51,17 @@ internal sealed class Evaluator(
         var emailAvailable = await email.IsConfiguredAsync(cancellationToken);
         var events = (await facts.EventsAsync([.. pending.Where(p => p.EntryId is null).Select(p => p.EventId)], cancellationToken)).ToDictionary(e => e.Id);
         var actions = (await facts.ActionsAsync([.. events.Values.Select(e => e.RemediationId).OfType<Guid>().Distinct()], cancellationToken)).ToDictionary(a => a.Id);
-        var context = new Context(organization, rules, directory, emailAvailable, PublicUrl(configuration), time.GetUtcNow());
+        return new Batch(new Context(organization, rules, directory, emailAvailable, PublicUrl(configuration), time.GetUtcNow()), events, actions);
+    }
 
-        foreach (var next in pending)
+    /// <summary>Evaluates one event of the batch and saves what it decided.</summary>
+    public async Task EvaluateAsync(Batch batch, PendingEvent pending, CancellationToken cancellationToken)
+    {
+        var item = await ItemAsync(pending, batch.Events, batch.Actions, cancellationToken);
+        if (item is not null)
         {
-            var item = await ItemAsync(next, events, actions, cancellationToken);
-            if (item is not null)
-            {
-                await EvaluateAsync(item, context, cancellationToken);
-                await db.SaveChangesAsync(cancellationToken);
-            }
+            await EvaluateAsync(item, batch.Context, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
         }
     }
 
@@ -104,8 +106,23 @@ internal sealed class Evaluator(
         }
 
         return fact.RemediationId is { } remediation && actions.TryGetValue(remediation, out var action)
-            ? new MessageItem { EventId = fact.Id, Event = fact.Kind, At = fact.At, Data = fact.Data, Actor = fact.Actor, Action = action, Level = action.Level }
+            ? new MessageItem { EventId = fact.Id, Event = fact.Kind, At = fact.At, Data = fact.Data, Actor = fact.Actor, Action = action, Level = EventLevel(fact, action) }
             : null;
+    }
+
+    /// <summary>
+    /// The level the event reports, from its own data: the action may have moved on since, and a rule's threshold and
+    /// the state compare against what this event says (raised at 4, then raised to 5, are two events at 4 and 5).
+    /// </summary>
+    internal static int EventLevel(ActionEventFacts fact, ActionFacts action)
+    {
+        var item = new MessageItem { EventId = fact.Id, Event = fact.Kind, At = fact.At, Data = fact.Data };
+        return fact.Kind switch
+        {
+            NotifyEvents.ActionRaised => item.DataInt("level"),
+            NotifyEvents.ActionLevelRaised or NotifyEvents.ActionLevelLowered => item.DataInt("to"),
+            _ => null,
+        } ?? action.Level;
     }
 
     private async Task EvaluateAsync(MessageItem item, Context context, CancellationToken cancellationToken)
@@ -169,7 +186,7 @@ internal sealed class Evaluator(
             await SendAsync(recipient, channel, item, context, cancellationToken);
             if (HasState(item.Event) && item.Action is { } reported)
             {
-                Record(state, reported, key, channel, item.Event, context.Now);
+                Record(state, reported, item.Level ?? reported.Level, key, channel, item.Event, context.Now);
             }
         }
 
@@ -243,14 +260,14 @@ internal sealed class Evaluator(
     /// <summary>The table of master plan 8.4: whether the recipient learns something new on this channel.</summary>
     internal static bool ShouldSend(MessageItem item, RecipientState? state, string channel) => item.Event switch
     {
-        NotifyEvents.ActionRaised or NotifyEvents.ActionLevelRaised => (item.Action?.Level ?? 0) > (state?.LastLevel ?? 0),
+        NotifyEvents.ActionRaised or NotifyEvents.ActionLevelRaised => (item.Level ?? 0) > (state?.LastLevel ?? 0),
         NotifyEvents.ActionExploitationEscalated => Exploitation.Rank(item.Action?.Exploitation) > Exploitation.Rank(state?.LastExploitation),
         NotifyEvents.ActionFixAvailable => !(state?.FixNotified ?? false),
         NotifyEvents.ActionLevelLowered or NotifyEvents.ActionWithdrawn => channel == Channels.InApp || state?.LastNotifiedAt is not null,
         _ => true,
     };
 
-    private void Record(RecipientState? state, ActionFacts action, string key, string channel, string kind, DateTimeOffset now)
+    private void Record(RecipientState? state, ActionFacts action, int level, string key, string channel, string kind, DateTimeOffset now)
     {
         if (state is null)
         {
@@ -260,7 +277,7 @@ internal sealed class Evaluator(
 
         if (!NotifyEvents.IsAllClear(kind))
         {
-            state.LastLevel = Math.Max(state.LastLevel, action.Level);
+            state.LastLevel = Math.Max(state.LastLevel, level);
             if (Exploitation.Rank(action.Exploitation) > Exploitation.Rank(state.LastExploitation))
             {
                 state.LastExploitation = action.Exploitation;
@@ -427,6 +444,8 @@ internal sealed class Evaluator(
         _ => false,
     };
 
-    private sealed record Context(
+    internal sealed record Batch(Context Context, Dictionary<Guid, ActionEventFacts> Events, Dictionary<Guid, ActionFacts> Actions);
+
+    internal sealed record Context(
         OrganizationProfile Organization, IReadOnlyList<NotificationRule> Rules, RecipientDirectory Directory, bool EmailAvailable, Uri PublicUrl, DateTimeOffset Now);
 }

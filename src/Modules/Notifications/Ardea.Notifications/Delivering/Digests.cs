@@ -12,7 +12,9 @@ namespace Ardea.Notifications.Delivering;
 
 /// <summary>
 /// The instance's recurring job (master plan 8.4, 9.2): asks which digest targets are due, through the narrow
-/// function <c>notify.due_digest_targets</c>, and queues one job per target in its organisation.
+/// function <c>notify.due_digest_targets</c>, and queues one job per target in its organisation. As a safety net it
+/// also queues the evaluation of organisations whose events have waited too long
+/// (<c>notify.organizations_with_waiting_events</c>): a lost wake-up, or an event that failed and is tried again.
 /// </summary>
 internal sealed record FindDueDigests : IJob
 {
@@ -29,6 +31,14 @@ internal sealed class FindDueDigestsHandler(NotifyDbContext db, IJobQueue jobs, 
         foreach (var target in due)
         {
             await jobs.EnqueueAsync(new SendDigest(target.TargetId), SendDigest.Options(target.OrganizationId, target.TargetId), cancellationToken);
+        }
+
+        var waiting = await db.Database.SqlQuery<Guid>($"""
+            SELECT organization_id AS "Value" FROM notify.organizations_with_waiting_events({time.GetUtcNow() - EvaluateEvents.Stale})
+            """).ToListAsync(cancellationToken);
+        foreach (var organization in waiting)
+        {
+            await jobs.EnqueueAsync(new EvaluateEvents(), EvaluateEvents.Options(organization), cancellationToken);
         }
     }
 

@@ -1,5 +1,6 @@
 using Ardea.Iam.Contracts;
 using Ardea.Notifications.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Notifications.Rules;
 
@@ -84,5 +85,20 @@ internal sealed class DefaultRules(NotifyDbContext db, IOrganizationProfiles org
             Rule("weekly", "Weekly summary", 2, [.. ActionEvents, NotifyEvents.WarningPublished],
                 Target(Channels.Email, "viewer", "digest", Mondays, sendEmpty: true)),
         ];
+    }
+}
+
+/// <summary>Moves the next digest of every target to the time its schedule names in the new time zone (master plan 8.3).</summary>
+internal sealed class DigestRescheduler(NotifyDbContext db, TimeProvider time) : IOrganizationTimeZoneSubscriber
+{
+    public async Task OnTimeZoneChangedAsync(Guid organizationId, string timeZone, CancellationToken cancellationToken)
+    {
+        var now = time.GetUtcNow();
+        foreach (var target in await db.Targets.Where(t => t.Mode == "digest" && t.DigestCron != null).ToListAsync(cancellationToken))
+        {
+            target.NextDigestAt = DigestSchedule.Next(target.DigestCron!, timeZone, now);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
     }
 }

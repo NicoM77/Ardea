@@ -23,3 +23,12 @@ public interface IOrganizationCreatedSubscriber
 {
     Task OnOrganizationCreatedAsync(Guid organizationId, CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// Told when an organisation's time zone changed, inside the unit of work that changes it. The Notifications
+/// module moves the next digests to the times of the new zone (master plan 8.3).
+/// </summary>
+public interface IOrganizationTimeZoneSubscriber
+{
+    Task OnTimeZoneChangedAsync(Guid organizationId, string timeZone, CancellationToken cancellationToken);
+}

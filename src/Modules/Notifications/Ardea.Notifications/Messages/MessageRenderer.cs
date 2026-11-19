@@ -60,6 +60,8 @@ internal static class MessageRenderer
         {
             ["List-Unsubscribe"] = $"<{(oneClick ?? settingsOrUnsubscribe).AbsoluteUri}>",
             ["Auto-Submitted"] = "auto-generated",
+            // Stable across retries: a receiver may drop a second copy of the same message by it (at-least-once, ADR 038).
+            ["X-Ardea-Delivery"] = content.DeliveryId.ToString(),
         };
         if (oneClick is not null)
         {

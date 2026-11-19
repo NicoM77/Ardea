@@ -92,10 +92,10 @@ internal sealed class EmailChannel(IEmailSender email) : INotificationChannel
         {
             return new SendResult(SendOutcome.Permanent, $"The mail server refused the recipient: {(int)ex.StatusCode} {ex.Message}");
         }
-        catch (Exception ex) when (ex is SmtpCommandException or SmtpProtocolException or MailKit.ServiceNotConnectedException or MailKit.Security.AuthenticationException
-                                   or System.Net.Sockets.SocketException or IOException or TimeoutException
-                                   || (ex is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
+            // Every other failure (connection, TLS handshake, authentication, a reply the client cannot parse) may
+            // pass: try again. The job system's back-off and last attempt decide when to give up.
             return new SendResult(SendOutcome.Transient, $"{ex.GetType().Name}: {ex.Message}");
         }
     }
@@ -162,6 +162,10 @@ internal sealed class WebhookChannel(IHttpClientFactory http, TimeProvider time)
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             return new SendResult(SendOutcome.Transient, $"The endpoint did not answer within {watch.Elapsed.TotalSeconds:0} seconds.", "timeout");
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return new SendResult(SendOutcome.Transient, $"{ex.GetType().Name}: {ex.Message}", "error");
         }
     }
 

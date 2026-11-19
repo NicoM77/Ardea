@@ -75,8 +75,10 @@ public sealed class RecipientTests(PostgresServer server)
         var oneClick = new Uri(message.Headers["List-Unsubscribe"].Trim('<', '>'));
         Assert.Contains("unsubscribe?token=", message.Text, StringComparison.Ordinal);
 
-        // A mail client posts the one-click unsubscribe from its own servers.
-        Assert.Equal(HttpStatusCode.NoContent, (await stranger.PostAsync(oneClick.PathAndQuery, csrf: false)).StatusCode);
+        // A mail client posts the one-click unsubscribe from its own servers (RFC 8058): a form body, no cookie, no CSRF token.
+        using var mailClient = host.RawClient();
+        using var form = new FormUrlEncodedContent([new KeyValuePair<string, string>("List-Unsubscribe", "One-Click")]);
+        Assert.Equal(HttpStatusCode.NoContent, (await mailClient.PostAsync(oneClick, form, TestContext.Current.CancellationToken)).StatusCode);
         var third = await s.ActionAsync(4, level: 5);
         await s.EventAsync("action.raised", third);
         await s.EvaluateAsync();
@@ -85,6 +87,48 @@ public sealed class RecipientTests(PostgresServer server)
 
         // A forged or foreign token finds nothing.
         Assert.Equal(HttpStatusCode.NotFound, (await stranger.PostAsync("/api/v1/notify/addresses/unsubscribe?token=forged", csrf: false)).StatusCode);
+
+        // The organisation cannot ask again, nor remove the address to add it anew; only the recipient can take it back.
+        Assert.Equal("address_unsubscribed", await CodeAsync(await s.Owner.PostAsync($"{s.Path}/external-addresses/{address}/resend")));
+        Assert.Equal("address_unsubscribed", await CodeAsync(await s.Owner.SendAsync(HttpMethod.Delete, $"{s.Path}/external-addresses/{address}")));
+        Assert.Equal(HttpStatusCode.NoContent, (await stranger.PostAsync(oneClick.PathAndQuery.Replace("/unsubscribe?", "/resubscribe?", StringComparison.Ordinal), csrf: false)).StatusCode);
+        Assert.Equal("confirmed", (await NotifyTestHost.JsonAsync(await s.Owner.GetAsync($"{s.Path}/external-addresses")))[0].GetProperty("state").GetString());
+    }
+
+    [Fact]
+    public async Task Confirmation_mails_have_a_cooldown_a_limit_per_address_and_organisation_and_a_cap_on_addresses()
+    {
+        await using var host = await NotifyTestHost.StartAsync(server);
+        var s = await Scenario.StartAsync(host);
+        var path = $"{s.Path}/external-addresses";
+        var address = (await NotifyTestHost.JsonAsync(await s.Owner.PostAsync(path, new { address = "victim@example.net" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
+
+        Assert.Equal("confirmation_limit", await CodeAsync(await s.Owner.PostAsync($"{path}/{address}/resend")));
+        host.Time.Advance(TimeSpan.FromMinutes(16));
+        Assert.Equal(HttpStatusCode.OK, (await s.Owner.PostAsync($"{path}/{address}/resend")).StatusCode);
+        host.Time.Advance(TimeSpan.FromMinutes(16));
+        Assert.Equal(HttpStatusCode.OK, (await s.Owner.PostAsync($"{path}/{address}/resend")).StatusCode);
+        host.Time.Advance(TimeSpan.FromMinutes(16));
+        Assert.Equal("confirmation_limit", await CodeAsync(await s.Owner.PostAsync($"{path}/{address}/resend")));
+
+        // Over the instance: an address asked by three organisations today is not asked by a fourth.
+        await host.ExecuteAsync($"""
+            INSERT INTO notify.external_address (organization_id, address, normalized_address, confirmation_sent_at, confirmations_sent, created_at)
+            SELECT o.id, 'target@example.net', 'TARGET@EXAMPLE.NET', now(), 1, now() FROM (VALUES (gen_random_uuid()), (gen_random_uuid()), (gen_random_uuid())) AS o(id)
+            """);
+        Assert.Equal("confirmation_limit", await CodeAsync(await s.Owner.PostAsync(path, new { address = "target@example.net" })));
+
+        // Per organisation and day, and in all.
+        await host.ExecuteAsync($"""
+            INSERT INTO notify.external_address (organization_id, address, normalized_address, confirmation_sent_at, confirmations_sent, created_at)
+            SELECT '{s.Organization}', 'bulk' || i || '@example.net', 'BULK' || i || '@EXAMPLE.NET', '{host.Time.GetUtcNow():O}', 1, now() FROM generate_series(1, 19) AS i
+            """);
+        Assert.Equal("confirmation_limit", await CodeAsync(await s.Owner.PostAsync(path, new { address = "one-more@example.net" })));
+        await host.ExecuteAsync($"""
+            INSERT INTO notify.external_address (organization_id, address, normalized_address, created_at)
+            SELECT '{s.Organization}', 'old' || i || '@example.net', 'OLD' || i || '@EXAMPLE.NET', now() FROM generate_series(1, 30) AS i
+            """);
+        Assert.Equal("address_limit", await CodeAsync(await s.Owner.PostAsync(path, new { address = "fifty-first@example.net" })));
     }
 
     [Fact]
@@ -141,6 +185,9 @@ public sealed class RecipientTests(PostgresServer server)
 
     /// <summary>The notification e-mails, without the account e-mails of registration.</summary>
     private static List<EmailMessage> Notifications(NotifyTestHost host) => [.. host.Mail!.Sent.Where(m => m.Subject.StartsWith('['))];
+
+    private static async Task<string?> CodeAsync(HttpResponseMessage response) =>
+        System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("code").GetString();
 
     private static string Describe(System.Text.Json.JsonElement target) =>
         string.Join(' ', new[] { "channel", "recipientKind", "recipientRef", "mode", "digestCron" }

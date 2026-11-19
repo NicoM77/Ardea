@@ -267,6 +267,14 @@ namespace Ardea.Notifications.Persistence.Migrations
                         .HasColumnType("character varying(320)")
                         .HasColumnName("address");
 
+                    b.Property<DateTimeOffset?>("ConfirmationSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmation_sent_at");
+
+                    b.Property<int>("ConfirmationsSent")
+                        .HasColumnType("integer")
+                        .HasColumnName("confirmations_sent");
+
                     b.Property<DateTimeOffset?>("ConfirmedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("confirmed_at");
@@ -467,15 +475,28 @@ namespace Ardea.Notifications.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("at");
 
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
                     b.Property<Guid?>("EntryId")
                         .HasColumnType("uuid")
                         .HasColumnName("entry_id");
+
+                    b.Property<DateTimeOffset?>("FailedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("failed_at");
 
                     b.Property<string>("Kind")
                         .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)")
                         .HasColumnName("kind");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("last_error");
 
                     b.HasKey("OrganizationId", "EventId")
                         .HasName("pk_pending_event");

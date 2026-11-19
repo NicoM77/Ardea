@@ -34,14 +34,18 @@ public sealed class NotificationsModule : IModule
         services.AddScoped<IActionEventSubscriber, ActionEventInbox>();
         services.AddScoped<IEntryChangeSubscriber, WarningSubscriber>();
         services.AddScoped<IOrganizationCreatedSubscriber, DefaultRules>();
+        services.AddScoped<IOrganizationTimeZoneSubscriber, DigestRescheduler>();
         services.AddScoped<Evaluator>();
+        services.AddScoped<Platform.Status.IInstanceStatusContributor, NotifyStatusContributor>();
         services.AddScoped<DeliveryReader>();
         services.AddScoped<EmailChannel>();
         services.AddScoped<WebhookChannel>();
         services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<EmailChannel>());
         services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<WebhookChannel>());
+        // No request logging: chat services (Slack, Teams, Discord) carry the webhook's secret in its path.
         services.AddHttpClient(WebhookChannel.ClientName, client => client.Timeout = TimeSpan.FromSeconds(10))
-            .ConfigurePrimaryHttpMessageHandler(OutboundAddresses.CreateHandler);
+            .ConfigurePrimaryHttpMessageHandler(OutboundAddresses.CreateHandler)
+            .RemoveAllLoggers();
 
         services.AddJob<EvaluateEvents, EvaluateEventsHandler>(new JobKindOptions { MaxConcurrency = 4, MaxAttempts = 8, Timeout = TimeSpan.FromMinutes(2), Priority = JobPriority.Urgent });
         services.AddJob<Deliver, DeliverHandler>(Deliver.KindOptions);

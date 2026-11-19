@@ -68,7 +68,8 @@ internal sealed class MessageTexts
         if (item.Action is { } action)
         {
             var subject = string.IsNullOrEmpty(action.ProjectName) ? action.ComponentName : Format("title.in", action.ComponentName, action.ProjectName);
-            return Format("title.action", action.Level, LevelName(action.Level), action.Number, subject);
+            var level = item.Level ?? action.Level;
+            return Format("title.action", level, LevelName(level), action.Number, subject);
         }
 
         if (item.Warning is { } warning)

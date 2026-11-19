@@ -5,6 +5,7 @@ using Ardea.Notifications.Rules;
 using Ardea.Platform.Jobs;
 using Ardea.Platform.Tenancy;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 
 namespace Ardea.Notifications.Evaluation;
@@ -19,30 +20,73 @@ internal sealed record EvaluateEvents : IJob
 
     public const int Batch = 200;
 
+    /// <summary>An event whose evaluation failed this often is set aside; the organisation's other events go on.</summary>
+    public const int MaxEventAttempts = 5;
+
+    /// <summary>Events waiting longer than this are queued again by the instance's sweep (<c>notify.find-due-digests</c>).</summary>
+    public static readonly TimeSpan Stale = TimeSpan.FromMinutes(2);
+
     public static EnqueueOptions Options(Guid organizationId) =>
         new() { CoalesceKey = $"notify.evaluate:{organizationId}", OrganizationId = organizationId, Priority = JobPriority.Urgent };
 }
 
-internal sealed class EvaluateEventsHandler(NotifyDbContext db, Evaluator evaluator, ITenantContext tenant, IJobQueue jobs) : IJobHandler<EvaluateEvents>
+/// <summary>
+/// Each event is evaluated under a savepoint of its own: an event that fails is rolled back alone, counted, and tried
+/// again when the sweep finds it waiting, so one broken event does not hold back its organisation's notifications. After
+/// <see cref="EvaluateEvents.MaxEventAttempts"/> it is set aside with its error (instance status, ADR 038).
+/// </summary>
+internal sealed partial class EvaluateEventsHandler(
+    NotifyDbContext db, Evaluator evaluator, ITenantContext tenant, IJobQueue jobs, TimeProvider time, ILogger<EvaluateEventsHandler> logger)
+    : IJobHandler<EvaluateEvents>
 {
     public async Task HandleAsync(EvaluateEvents job, JobContext context, CancellationToken cancellationToken)
     {
         var organization = tenant.RequiredOrganizationId;
         await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"notify.evaluate:" + organization}, 0))", cancellationToken);
-        var pending = await db.PendingEvents.OrderBy(p => p.At).ThenBy(p => p.EventId).Take(EvaluateEvents.Batch).ToListAsync(cancellationToken);
+        var pending = await db.PendingEvents.AsNoTracking().Where(p => p.FailedAt == null)
+            .OrderBy(p => p.At).ThenBy(p => p.EventId).Take(EvaluateEvents.Batch).ToListAsync(cancellationToken);
         if (pending.Count == 0)
         {
             return;
         }
 
-        await evaluator.EvaluateAsync(pending, cancellationToken);
-        db.PendingEvents.RemoveRange(pending);
-        await db.SaveChangesAsync(cancellationToken);
+        var batch = await evaluator.LoadAsync(pending, cancellationToken);
+        foreach (var next in pending)
+        {
+            await db.Database.ExecuteSqlRawAsync("SAVEPOINT notify_event", cancellationToken);
+            try
+            {
+                if (batch is not null)
+                {
+                    await evaluator.EvaluateAsync(batch, next, cancellationToken);
+                }
+
+                await db.PendingEvents.Where(p => p.EventId == next.EventId).ExecuteDeleteAsync(cancellationToken);
+                await db.Database.ExecuteSqlRawAsync("RELEASE SAVEPOINT notify_event", cancellationToken);
+            }
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                await db.Database.ExecuteSqlRawAsync("ROLLBACK TO SAVEPOINT notify_event", cancellationToken);
+                db.ChangeTracker.Clear();
+                var attempts = next.Attempts + 1;
+                var error = $"{ex.GetType().Name}: {ex.Message}";
+                error = error.Length > 2000 ? error[..2000] : error;
+                var failedAt = attempts >= EvaluateEvents.MaxEventAttempts ? time.GetUtcNow() : (DateTimeOffset?)null;
+                await db.PendingEvents.Where(p => p.EventId == next.EventId).ExecuteUpdateAsync(
+                    p => p.SetProperty(x => x.Attempts, attempts).SetProperty(x => x.LastError, error).SetProperty(x => x.FailedAt, failedAt),
+                    cancellationToken);
+                LogEventFailed(ex, next.EventId, next.Kind, attempts);
+            }
+        }
+
         if (pending.Count == EvaluateEvents.Batch)
         {
             await jobs.EnqueueAsync(new EvaluateEvents(), EvaluateEvents.Options(organization), cancellationToken);
         }
     }
+
+    [LoggerMessage(EventId = 6001, Level = LogLevel.Warning, Message = "Evaluating event {EventId} ({Kind}) failed, attempt {Attempt}; the organisation's other events went on")]
+    private partial void LogEventFailed(Exception exception, Guid eventId, string kind, int attempt);
 }
 
 /// <summary>

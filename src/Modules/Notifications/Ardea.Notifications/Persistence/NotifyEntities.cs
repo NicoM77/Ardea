@@ -109,8 +109,14 @@ internal sealed class ExternalAddress : IOrganizationOwned
 
     public DateTimeOffset? TokenExpiresAt { get; set; }
 
-    /// <summary>The recipient unsubscribed with the signed link; no message goes there any more.</summary>
+    /// <summary>The recipient unsubscribed with the signed link; no message goes there any more, nor a new confirmation.</summary>
     public DateTimeOffset? UnsubscribedAt { get; set; }
+
+    /// <summary>When a confirmation mail was last asked for: the cooldown and the daily limits count from it.</summary>
+    public DateTimeOffset? ConfirmationSentAt { get; set; }
+
+    /// <summary>Confirmation mails asked for so far; at most <c>AddressLimits.ConfirmationsPerAddress</c>.</summary>
+    public int ConfirmationsSent { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 }
@@ -292,4 +298,12 @@ internal sealed class PendingEvent : IOrganizationOwned
 
     /// <summary>The entry of a warning without identifier.</summary>
     public Guid? EntryId { get; set; }
+
+    /// <summary>Evaluations of this event that failed; the others of its organisation went on (ADR 038).</summary>
+    public int Attempts { get; set; }
+
+    public string? LastError { get; set; }
+
+    /// <summary>Given up after <c>EvaluateEvents.MaxEventAttempts</c>; stays for the instance status and the operator.</summary>
+    public DateTimeOffset? FailedAt { get; set; }
 }

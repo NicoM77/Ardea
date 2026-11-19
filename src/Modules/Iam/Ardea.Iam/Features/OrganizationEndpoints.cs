@@ -140,7 +140,8 @@ internal static class OrganizationEndpoints
     }
 
     private static async Task<IResult> UpdateAsync(
-        UpdateOrganizationRequest request, HttpContext http, IamDbContext db, IUnitOfWork unitOfWork, IAuditLog audit, CancellationToken cancellationToken)
+        UpdateOrganizationRequest request, HttpContext http, IamDbContext db, IUnitOfWork unitOfWork, IAuditLog audit,
+        IEnumerable<Contracts.IOrganizationTimeZoneSubscriber> timeZoneSubscribers, CancellationToken cancellationToken)
     {
         var name = request.Name?.Trim();
         var errors = new FieldErrors()
@@ -163,6 +164,7 @@ internal static class OrganizationEndpoints
         }
 
         var organization = await db.Organizations.SingleAsync(cancellationToken);
+        var timeZoneChanged = request.TimeZone is { } zone && zone != organization.TimeZone;
         organization.Name = name ?? organization.Name;
         organization.Locale = request.Locale ?? organization.Locale;
         organization.TimeZone = request.TimeZone ?? organization.TimeZone;
@@ -187,6 +189,14 @@ internal static class OrganizationEndpoints
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        if (timeZoneChanged)
+        {
+            foreach (var subscriber in timeZoneSubscribers)
+            {
+                await subscriber.OnTimeZoneChangedAsync(organization.OrganizationId, organization.TimeZone, cancellationToken);
+            }
+        }
+
         await audit.RecordAsync(new AuditEntry("org.settings_changed", "organization", organization.OrganizationId.ToString(), request), cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         return Results.Ok(View(organization, access.Role.ToApi()));

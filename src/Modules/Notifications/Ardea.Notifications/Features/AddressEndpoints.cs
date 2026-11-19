@@ -32,6 +32,28 @@ internal static class AddressEndpoints
 {
     public static readonly TimeSpan ConfirmationLifetime = TimeSpan.FromDays(7);
 
+    /// <summary>
+    /// Limits against using confirmation mails for spam or phishing (ADR 038): anyone may found an organisation
+    /// under any name, so its admins must not be able to mail arbitrary addresses at will.
+    /// </summary>
+    internal static class Limits
+    {
+        /// <summary>External addresses per organisation.</summary>
+        public const int AddressesPerOrganization = 50;
+
+        /// <summary>Confirmation mails to one address of an organisation, in all.</summary>
+        public const int ConfirmationsPerAddress = 3;
+
+        /// <summary>Time between two confirmation mails to the same address of an organisation.</summary>
+        public static readonly TimeSpan Cooldown = TimeSpan.FromMinutes(15);
+
+        /// <summary>Confirmation mails an organisation may ask for in 24 hours.</summary>
+        public const int ConfirmationsPerOrganizationPerDay = 20;
+
+        /// <summary>Organisations that may ask the same address for confirmation in 24 hours, over the instance.</summary>
+        public const int OrganizationsPerAddressPerDay = 3;
+    }
+
     public static void Map(IEndpointRouteBuilder api)
     {
         var addresses = api.MapOrganization().WithTags("Notifications").MapGroup("/external-addresses").RequireOrganizationRole(OrganizationRole.Admin);
@@ -44,6 +66,7 @@ internal static class AddressEndpoints
         links.MapGet("/preview", PreviewAsync).WithName("previewAddressLink").AllowAnonymous().Produces<AddressSubscriptionView>().Problems(404);
         links.MapPost("/confirm", ConfirmAsync).WithName("confirmExternalAddress").AuthenticatedByToken().NoContent().Problems(404);
         links.MapPost("/unsubscribe", UnsubscribeAsync).WithName("unsubscribeExternalAddress").AuthenticatedByToken().NoContent().Problems(404);
+        links.MapPost("/resubscribe", ResubscribeAsync).WithName("resubscribeExternalAddress").AuthenticatedByToken().NoContent().Problems(404);
     }
 
     private static async Task<IReadOnlyList<ExternalAddressView>> ListAsync(NotifyDbContext db, TimeProvider time, CancellationToken cancellationToken) =>
@@ -70,8 +93,18 @@ internal static class AddressEndpoints
             return ApiProblems.Problem("address_exists", StatusCodes.Status409Conflict, "This address is already on the list.");
         }
 
+        if (await db.Addresses.CountAsync(cancellationToken) >= Limits.AddressesPerOrganization)
+        {
+            return ApiProblems.Problem("address_limit", StatusCodes.Status409Conflict, $"An organisation can have at most {Limits.AddressesPerOrganization} external addresses.");
+        }
+
         var now = time.GetUtcNow();
         var entry = new ExternalAddress { Id = Guid.CreateVersion7(), Address = address, NormalizedAddress = normalized, CreatedAt = now };
+        if (await LimitedAsync(entry, db, now, cancellationToken) is { } limited)
+        {
+            return limited;
+        }
+
         db.Addresses.Add(entry);
         await RequestConfirmationAsync(entry, db, jobs, tenant, now, cancellationToken);
         await audit.RecordAsync(new AuditEntry("notify.address_added", "address", entry.Id.ToString(), new { entry.Address }), cancellationToken);
@@ -88,15 +121,22 @@ internal static class AddressEndpoints
             return NotFound();
         }
 
-        if (entry.ConfirmedAt is not null && entry.UnsubscribedAt is null)
+        if (entry.UnsubscribedAt is not null)
+        {
+            return Unsubscribed();
+        }
+
+        if (entry.ConfirmedAt is not null)
         {
             return ApiProblems.Problem("address_confirmed", StatusCodes.Status409Conflict, "This address is already confirmed.");
         }
 
-        // A recipient who unsubscribed can opt in again only through a new confirmation.
-        entry.ConfirmedAt = null;
-        entry.UnsubscribedAt = null;
         var now = time.GetUtcNow();
+        if (await LimitedAsync(entry, db, now, cancellationToken) is { } limited)
+        {
+            return limited;
+        }
+
         await RequestConfirmationAsync(entry, db, jobs, tenant, now, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         return Results.Ok(View(entry, now));
@@ -108,6 +148,12 @@ internal static class AddressEndpoints
         if (entry is null)
         {
             return NotFound();
+        }
+
+        if (entry.UnsubscribedAt is not null)
+        {
+            // Kept, so that it cannot be added and asked again: the recipient's no stands.
+            return Unsubscribed();
         }
 
         var reference = id.ToString();
@@ -123,11 +169,44 @@ internal static class AddressEndpoints
         return Results.NoContent();
     }
 
+    /// <summary>The limits on confirmation mails; <c>null</c> when one more may go out now.</summary>
+    private static async Task<IResult?> LimitedAsync(ExternalAddress entry, NotifyDbContext db, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        if (entry.ConfirmationsSent >= Limits.ConfirmationsPerAddress)
+        {
+            return TooMany($"This address was asked {Limits.ConfirmationsPerAddress} times already. Ask the recipient to look for the mail, or to contact you.");
+        }
+
+        if (entry.ConfirmationSentAt is { } last && now - last < Limits.Cooldown)
+        {
+            return TooMany($"A confirmation mail went to this address less than {Limits.Cooldown.TotalMinutes:0} minutes ago.");
+        }
+
+        var dayAgo = now - TimeSpan.FromDays(1);
+        if (await db.Addresses.CountAsync(a => a.ConfirmationSentAt > dayAgo, cancellationToken) >= Limits.ConfirmationsPerOrganizationPerDay)
+        {
+            return TooMany($"This organisation asked for {Limits.ConfirmationsPerOrganizationPerDay} confirmations within 24 hours. Try again tomorrow.");
+        }
+
+        var askedBy = (await db.Database.SqlQuery<long>(
+            $"SELECT notify.address_confirmations_since({entry.NormalizedAddress}, {dayAgo}) AS \"Value\"").ToListAsync(cancellationToken))[0];
+        return askedBy >= Limits.OrganizationsPerAddressPerDay
+            ? TooMany("This address was asked for confirmation too often today. Try again tomorrow.")
+            : null;
+    }
+
+    private static IResult TooMany(string title) => ApiProblems.Problem("confirmation_limit", StatusCodes.Status429TooManyRequests, title);
+
+    private static IResult Unsubscribed() => ApiProblems.Problem(
+        "address_unsubscribed", StatusCodes.Status409Conflict, "The recipient unsubscribed. Only they can subscribe again, with the link in their last message.");
+
     private static async Task RequestConfirmationAsync(ExternalAddress entry, NotifyDbContext db, IJobQueue jobs, ITenantContext tenant, DateTimeOffset now, CancellationToken cancellationToken)
     {
         // The job makes the token: a job carries ids only, never a secret (master plan 4.1).
         entry.TokenHash = null;
         entry.TokenExpiresAt = now + ConfirmationLifetime;
+        entry.ConfirmationSentAt = now;
+        entry.ConfirmationsSent++;
         await db.SaveChangesAsync(cancellationToken);
         await jobs.EnqueueAsync(new SendAddressConfirmation(entry.Id), new EnqueueOptions { CoalesceKey = $"notify.confirm-address:{entry.Id}" }, cancellationToken);
     }
@@ -191,6 +270,30 @@ internal static class AddressEndpoints
             }
 
             entry.UnsubscribedAt ??= time.GetUtcNow();
+            await db.SaveChangesAsync(cancellationToken);
+            return Results.NoContent();
+        }, commit: true, cancellationToken);
+    }
+
+    /// <summary>
+    /// The recipient takes back their unsubscribe with the same signed link: only they can, the organisation cannot.
+    /// </summary>
+    private static async Task<IResult> ResubscribeAsync(string? token, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken)
+    {
+        if (Resolve(token, secrets) is not { Confirmation: false } link)
+        {
+            return NotFound();
+        }
+
+        return await InOrganizationAsync(services, link.Organization, async (db, _, _) =>
+        {
+            var entry = await db.Addresses.SingleOrDefaultAsync(a => a.Id == link.Address && a.ConfirmedAt != null, cancellationToken);
+            if (entry is null)
+            {
+                return NotFound();
+            }
+
+            entry.UnsubscribedAt = null;
             await db.SaveChangesAsync(cancellationToken);
             return Results.NoContent();
         }, commit: true, cancellationToken);
@@ -287,7 +390,7 @@ internal sealed class SendAddressConfirmationHandler(IUnitOfWorkFactory units, I
         await using (var scope = units.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<NotifyDbContext>();
-            var entry = await db.Addresses.SingleOrDefaultAsync(a => a.Id == job.AddressId && a.ConfirmedAt == null && a.TokenExpiresAt != null, cancellationToken);
+            var entry = await db.Addresses.SingleOrDefaultAsync(a => a.Id == job.AddressId && a.ConfirmedAt == null && a.UnsubscribedAt == null && a.TokenExpiresAt != null, cancellationToken);
             profile = await scope.ServiceProvider.GetRequiredService<IOrganizationProfiles>().FindAsync(organization, cancellationToken);
             if (entry is null || profile is null)
             {

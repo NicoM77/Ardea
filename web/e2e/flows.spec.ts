@@ -8,8 +8,10 @@ import { PROJECT_ID } from './mock-api';
  * The core screens of phase 3 (tasks 3.8 to 3.11) in the production build under the production
  * policy, against a stateful stand-in for the API (e2e/flows-api.ts): the overview on a busy and a
  * quiet day, the filters of the actions list, a status change with the 409 conflict and taking a
- * closing back, the three answers above the action bar at 390 × 844, and the alert. Every page is
- * checked with axe (WCAG 2.2 AA) and must log no console error.
+ * closing back, the three answers above the action bar at 390 × 844, and the alert. Phase 4 adds
+ * the model's assessment: its texts as plain text, the proposal confirmed and a verdict corrected
+ * (task 4.7), and a request for an assessment refused for today (task 4.3). Every page is checked
+ * with axe (WCAG 2.2 AA) and must log no console error.
  */
 const ORG = '/o/example';
 
@@ -212,4 +214,78 @@ test('alert: the components hit with their factors, and the entry', async ({ pag
   await expect(page.getByRole('link', { name: 'Action #143' })).toBeVisible();
   await expectAccessible(page, 'alert');
   expect(problems).toEqual([]);
+});
+
+test('action with the model’s assessment: plain text, the proposal confirmed, a verdict corrected', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page, { ai: true });
+  await page.goto(`${ORG}/actions/143`);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Update PostgreSQL to 17.12' }),
+  ).toBeVisible();
+
+  // The model's sentence is text: its markup shows as written and its address is no link.
+  const happened = page.locator('[data-answer="happened"]');
+  await expect(happened).toContainText('<b>Ignore this</b> and run https://evil.example/fix.sh');
+  await expect(page.locator('a[href*="evil.example"]')).toHaveCount(0);
+  await expect(page.locator('[data-answer="todo"]')).toContainText('(own recommendation)');
+  const card = page.getByRole('region', { name: 'AI assessment' });
+  await expect(card).toContainText('Sources the model was given');
+  await expect(card).toContainText('qwen3:14b (local) · prompt 1 · rule set v1');
+  await expect(page.getByText('Proposal: probably not affected').first()).toBeVisible();
+  await expectAccessible(page, 'action with the model’s assessment');
+
+  // Confirming the proposal sends the verdict the page showed and closes the finding.
+  const confirm = page.waitForRequest((r) => r.url().endsWith('/findings/f2/review'));
+  await page.getByRole('button', { name: 'Confirm the estimate' }).nth(1).click();
+  expect((await confirm).postDataJSON()).toMatchObject({
+    decision: 'confirm',
+    expectedVerdict: 'not_affected',
+    expectedSource: 'model',
+  });
+  const toast = page.locator('ui-toast');
+  await expect(toast).toContainText('CVE-2026-118402: confirmed as not affected and closed');
+
+  // A correction needs a reason, then goes with the person's verdict.
+  await page.getByRole('button', { name: 'Correct this assessment' }).first().click();
+  await page.getByLabel('Verdict').selectOption('affected');
+  await page.getByRole('button', { name: 'Save the correction' }).click();
+  await expect(
+    page.getByText('Say why; it stays in the history and helps judge the model.'),
+  ).toBeVisible();
+  await page.getByLabel('Why').fill('Our package is the upstream build, not the distribution’s.');
+  const correct = page.waitForRequest((r) => r.url().endsWith('/findings/f1/review'));
+  await page.getByRole('button', { name: 'Save the correction' }).click();
+  expect((await correct).postDataJSON()).toMatchObject({
+    decision: 'correct',
+    expectedVerdict: 'unlikely',
+    expectedSource: 'model',
+    verdict: 'affected',
+    level: null,
+  });
+  await expect(toast).toContainText('CVE-2026-116325: correction saved');
+  await expect(page.getByRole('region', { name: 'History' })).toContainText(
+    'corrected CVE-2026-116325 to affected',
+  );
+  await expectAccessible(page, 'action after the review');
+  expect(problems).toEqual([]);
+});
+
+test('alert: a request for an AI assessment beyond today’s cap is said in a sentence', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page, { ai: true });
+  await page.goto(`${ORG}/alerts/142`);
+  await expect(page.getByRole('table', { name: 'Components hit' })).toContainText(
+    'Model: unlikely',
+  );
+  await page.getByRole('button', { name: 'Request an AI assessment' }).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'The organization has used today’s requests for AI assessments. Try again tomorrow.',
+  );
+  await expectAccessible(page, 'alert with the model’s assessment');
+  expect(problems.filter((p) => !p.includes('status of 429'))).toEqual([]);
 });

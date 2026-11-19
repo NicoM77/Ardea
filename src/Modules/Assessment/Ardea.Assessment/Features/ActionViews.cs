@@ -78,7 +78,21 @@ internal sealed record FindingView(
     bool FixAvailable,
     bool IsBackfill,
     JsonElement Factors,
-    JsonElement Evidence);
+    JsonElement Evidence,
+    FindingReviewView? Review = null);
+
+/// <summary>A person's latest review of the finding's assessment (task 4.7).</summary>
+/// <param name="Decision"><c>confirmed</c> or <c>corrected</c>.</param>
+/// <param name="By">The person.</param>
+/// <param name="At">When.</param>
+/// <param name="VerdictSource">Whose verdict the person reviewed: <c>rules</c>, <c>model</c> or <c>human</c>.</param>
+/// <param name="VerdictBefore">The verdict the person reviewed.</param>
+/// <param name="Verdict">The person's verdict; <c>null</c> when only the level was questioned.</param>
+/// <param name="LevelBefore">The level the person saw.</param>
+/// <param name="ExpectedLevel">The level the person expects instead; feedback for the rule set and the model, the rules keep setting the level.</param>
+/// <param name="Reason">Why.</param>
+internal sealed record FindingReviewView(
+    string Decision, Guid By, DateTimeOffset At, string VerdictSource, string VerdictBefore, string? Verdict, int LevelBefore, int? ExpectedLevel, string? Reason);
 
 /// <summary>A row of the history; its id is the event's id for the notifications (master plan 8.2).</summary>
 internal sealed record ActionEventView(Guid Id, string Kind, DateTimeOffset At, Guid? Actor, Guid? FindingId, JsonElement Data);
@@ -125,6 +139,13 @@ internal sealed record AddNoteRequest(string? Text);
 
 /// <summary>Sets the outcome of one finding, or <c>open</c> to take it back; <c>expectedStatus</c> as for actions.</summary>
 internal sealed record SetFindingStatusRequest(string? Status, string? ExpectedStatus, string? Note);
+
+/// <summary>
+/// A person's review of a finding's assessment (task 4.7). <c>decision</c> <c>confirm</c> takes the model's estimate as
+/// a person's verdict; <c>correct</c> names another <c>verdict</c>, the <c>level</c> the person expects, or both, with a
+/// <c>reason</c>. <c>expectedVerdict</c> and <c>expectedSource</c> are the verdict and its source the caller saw.
+/// </summary>
+internal sealed record ReviewVerdictRequest(string? Decision, string? ExpectedVerdict, string? ExpectedSource, string? Verdict, int? Level, string? Reason);
 
 /// <summary>The answer to a request for the model's assessment of an alert.</summary>
 /// <param name="Queued"><c>false</c> when an assessment of the alert was already waiting; it covers this request.</param>

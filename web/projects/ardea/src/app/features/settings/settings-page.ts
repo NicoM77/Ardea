@@ -5,16 +5,26 @@ import { injectOrganization } from '../organizations/current-organization';
 import { canManage } from '../organizations/org-format';
 import { MfaSettingCard } from '../team/mfa-setting-card';
 import { AccessesCard } from './accesses-card';
+import { AiPolicyCard } from './ai-policy-card';
 import { AuditCard } from './audit-card';
 import { GeneralCard } from './general-card';
 
 /**
  * The organization's settings (master plan 11.4): name, language and time zone, the
- * two-factor requirement, the accesses to GitHub and, for owner and admins, the audit log.
+ * two-factor requirement, the AI data policy, the accesses to GitHub and, for owner and admins,
+ * the audit log.
  */
 @Component({
   selector: 'ardea-settings-page',
-  imports: [TranslocoPipe, UiPageHeader, AccessesCard, AuditCard, GeneralCard, MfaSettingCard],
+  imports: [
+    TranslocoPipe,
+    UiPageHeader,
+    AccessesCard,
+    AiPolicyCard,
+    AuditCard,
+    GeneralCard,
+    MfaSettingCard,
+  ],
   template: `
     @if (organization(); as org) {
       <ui-page-header
@@ -25,6 +35,7 @@ import { GeneralCard } from './general-card';
         <ardea-general-card class="span-7" [organization]="org" />
         @if (manage()) {
           <ardea-mfa-setting-card class="span-5" [organization]="org" [here]="here()" />
+          <ardea-ai-policy-card class="span-12" [organization]="org" />
         }
         <ardea-accesses-card class="span-12" [organization]="org" />
         @if (manage()) {

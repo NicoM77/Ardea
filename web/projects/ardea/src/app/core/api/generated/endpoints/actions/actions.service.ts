@@ -46,6 +46,7 @@ import type {
   ListPageOfAlertSummary,
   ListPageOfFindingView,
   OverviewView,
+  ReviewVerdictRequest,
   SetActionStatusRequest,
   SetFindingStatusRequest,
   UpdateActionRequest
@@ -512,6 +513,42 @@ export class ActionsService {
     );
   }
 
+ reviewFinding<TData = FindingView>(orgId: string,
+    findingId: string,
+    reviewVerdictRequest: ReviewVerdictRequest, options?: HttpClientBodyOptions): Observable<TData>;
+  reviewFinding<TData = FindingView>(
+    orgId: string,
+    findingId: string,
+    reviewVerdictRequest: ReviewVerdictRequest, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/orgs/${orgId}/findings/${findingId}/review`,
+      reviewVerdictRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/orgs/${orgId}/findings/${findingId}/review`,
+      reviewVerdictRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/orgs/${orgId}/findings/${findingId}/review`,
+      reviewVerdictRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
  requestAlertAssessment<TData = AssessmentRequestView>(orgId: string,
     number: number, options?: HttpClientBodyOptions): Observable<TData>;
   requestAlertAssessment<TData = AssessmentRequestView>(
@@ -567,10 +604,12 @@ export type GetAlertResourceResult = NonNullable<AlertDetailView>
 
 
 
+
 export type UpdateActionClientResult = NonNullable<ActionDetailView>
 export type SetActionStatusClientResult = NonNullable<ActionDetailView>
 export type AddActionNoteClientResult = NonNullable<ActionEventView>
 export type SetFindingStatusClientResult = NonNullable<FindingView>
+export type ReviewFindingClientResult = NonNullable<FindingView>
 export type RequestAlertAssessmentClientResult = NonNullable<AssessmentRequestView>
 
 /**

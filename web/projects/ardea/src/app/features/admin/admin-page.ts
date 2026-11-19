@@ -7,6 +7,7 @@ import {
   listAbandonedJobsResource,
   type InstanceSettingsResponse,
 } from '../../core/api/client';
+import { AiCard } from './ai-card';
 import { JobsCard } from './jobs-card';
 import { RegistrationCard } from './registration-card';
 import { count } from './settings-patch';
@@ -14,13 +15,15 @@ import { SmtpCard } from './smtp-card';
 
 /**
  * The first administration (task 0.13, master plan 11.4), for the instance administrator:
- * the installed version and the job queue, registration, SMTP with a test e-mail, and the jobs
- * that gave up, with a retry each.
+ * the installed version and the job queue, registration, SMTP with a test e-mail, the AI
+ * providers with a connection test and the models' correction rate (tasks 4.1, 4.7), and the
+ * jobs that gave up, with a retry each.
  */
 @Component({
   selector: 'ardea-admin-page',
   imports: [
     TranslocoPipe,
+    AiCard,
     JobsCard,
     RegistrationCard,
     SmtpCard,
@@ -92,6 +95,8 @@ import { SmtpCard } from './smtp-card';
             <ui-loader [label]="'admin.loading' | transloco" />
           </ui-card>
         }
+
+        <ardea-ai-card class="span-12" />
 
         <ardea-jobs-card
           class="span-12"

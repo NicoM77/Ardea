@@ -2,8 +2,9 @@ import { Component, computed, inject, input } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideExternalLink } from '@lucide/angular';
 import { UiCopyButton } from 'ui';
-import type { AffectedItem, AnswersView } from '../../core/api/client';
+import type { AffectedItem, AnswersView, ModelVerdictView } from '../../core/api/client';
 import { num } from './action-format';
+import { refs } from './model-format';
 import {
   affectedLabel,
   checkLabel,
@@ -17,22 +18,35 @@ import {
  * The three answers that open an action and an alert (master plan 11.2, «in five seconds»): what
  * happened, are we affected, what to do. Built from the structured answers of the API (task 3.6);
  * the source's own words are a quotation with their source named. At 390 × 844 all three sit above
- * the action bar, so the layout stays compact on phones.
+ * the action bar, so the layout stays compact on phones. With the model's assessment (`origin`
+ * `model`, mockup remediation.html?ai) its sentence answers «what happened», its verdict and the
+ * likelihood join «are we affected», and its steps with their source numbers join «what to do»;
+ * its texts are plain text, never markup or links. When the model was asked and failed, a line
+ * says the answers come without it («ohne KI-Einschätzung»).
  */
 @Component({
   selector: 'ardea-answers',
   imports: [TranslocoPipe, LucideExternalLink, UiCopyButton],
   template: `
     @let a = answers();
+    @let m = a.origin === 'model' ? a.model : null;
     <section class="answer-part" data-answer="happened" [attr.aria-labelledby]="uid + '-happened'">
-      <h2 class="label" [id]="uid + '-happened'">{{ 'answers.happened.label' | transloco }}</h2>
+      <h2 class="label" [id]="uid + '-happened'">
+        {{ 'answers.happened.label' | transloco }}
+        @if (m) {
+          <span class="ai-tag">{{ 'answers.model.tag' | transloco }}</span>
+        }
+      </h2>
       <p class="lead">
         @if (a.whatHappened.entryKey) {
           <span class="id">{{ a.whatHappened.entryKey }}</span>
         }
         {{ a.whatHappened.title ?? ('answers.happened.untitled' | transloco) }}
       </p>
-      @if (a.whatHappened.excerpt) {
+      @if (m) {
+        <p class="model-text" [attr.lang]="m.language || null">{{ m.whatHappened }}</p>
+        <p class="source">{{ 'answers.model.written' | transloco }}</p>
+      } @else if (a.whatHappened.excerpt) {
         <figure>
           <blockquote [attr.lang]="lang()">{{ a.whatHappened.excerpt }}</blockquote>
           @if (a.whatHappened.source) {
@@ -44,6 +58,9 @@ import {
       }
       @if (moreEntries()) {
         <p class="source">{{ 'answers.happened.more' | transloco: { count: moreEntries() } }}</p>
+      }
+      @if (a.modelNote === 'without_model') {
+        <p class="source without">{{ 'answers.model.without' | transloco }}</p>
       }
     </section>
 
@@ -58,9 +75,23 @@ import {
               <span class="id">{{ item.component.version }}</span>
             }
             <span class="check">{{ checkLine(item) }}</span>
+            @if (verdictOf(item); as v) {
+              &ngsp;<span class="ai-tag">{{
+                'answers.model.verdict' | transloco: { verdict: v.verdict }
+              }}</span>
+              @if (v.proposal) {
+                &ngsp;<span class="proposal">{{ 'answers.model.proposal' | transloco }}</span>
+              }
+            }
           </li>
         }
       </ul>
+      @if (m) {
+        <p class="note" [attr.lang]="m.language || null">
+          {{ 'answers.model.likelihood' | transloco: { likelihood: m.likelihood } }}
+          {{ m.likelihoodReason }}
+        </p>
+      }
       @if (moreItems()) {
         <p class="source">{{ 'answers.affected.more' | transloco: { count: moreItems() } }}</p>
       }
@@ -102,6 +133,28 @@ import {
           <p class="note">{{ 'answers.todo.noFixNote' | transloco }}</p>
         }
       }
+      @if (m && m.actions.length) {
+        <ol class="ai-steps" [attr.lang]="m.language || null">
+          @for (step of m.actions; track $index) {
+            <li>
+              <span
+                >{{ step.text }}
+                @if (step.own) {
+                  <em>{{ 'answers.model.own' | transloco }}</em>
+                }
+                @for (n of numbers(step.sources); track n) {
+                  &ngsp;<span class="ref"
+                    ><span class="sr-only">{{
+                      'answers.model.source' | transloco: { number: n }
+                    }}</span
+                    ><span aria-hidden="true">{{ n }}</span></span
+                  >
+                }
+              </span>
+            </li>
+          }
+        </ol>
+      }
       @if (a.toDo.advisoryUrl) {
         <p class="source">
           <a class="link" [href]="a.toDo.advisoryUrl" target="_blank" rel="noopener noreferrer">
@@ -134,6 +187,64 @@ import {
     .lead {
       font-weight: 500;
       overflow-wrap: anywhere;
+    }
+    .label {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .ai-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 4px;
+      background: var(--accent-soft);
+      color: var(--text);
+      font-size: var(--fs-small);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .proposal {
+      color: var(--text);
+      font-weight: 500;
+    }
+    .model-text {
+      margin-top: var(--space-xs);
+      overflow-wrap: anywhere;
+    }
+    .without {
+      color: var(--text);
+    }
+    .ai-steps {
+      display: grid;
+      gap: 4px;
+      margin-top: var(--space-xs);
+      padding-left: 18px;
+      list-style: decimal;
+      font-size: var(--fs-sub);
+      line-height: var(--lh-sub);
+      overflow-wrap: anywhere;
+    }
+    .ai-steps em {
+      margin-left: 4px;
+      color: var(--muted);
+      font-style: normal;
+    }
+    .ref {
+      display: inline-grid;
+      place-items: center;
+      min-width: 16px;
+      height: 16px;
+      margin-left: 2px;
+      padding: 0 3px;
+      border-radius: 3px;
+      background: var(--raised);
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1;
+      vertical-align: 1px;
     }
     .lead .id {
       margin-right: var(--space-xs);
@@ -241,6 +352,18 @@ export class Answers {
   );
   protected readonly moreEntries = computed(() => num(this.answers().whatHappened.moreEntries));
   protected readonly moreItems = computed(() => num(this.answers().affected.moreItems));
+  protected readonly numbers = refs;
+  private readonly verdicts = computed(() => {
+    const a = this.answers();
+    return new Map(
+      (a.origin === 'model' ? (a.model?.verdicts ?? []) : []).map((v) => [v.component.id, v]),
+    );
+  });
+
+  /** The model's verdict on a component of «are we affected», when it judged one. */
+  protected verdictOf(item: AffectedItem): ModelVerdictView | null {
+    return this.verdicts().get(item.component.id) ?? null;
+  }
 
   /**
    * One component's check in one line: «In range: 17 to before 17.12», «Version unknown (no

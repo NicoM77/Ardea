@@ -112,13 +112,13 @@ AI assessment as an optional step; a catalogue that grows by itself.
 
 | No. | Task | Depends on | Status |
 |---|---|---|---|
-| 4.1 | Integration via Microsoft.Extensions.AI; named providers marked local or not; connection test; settings in administration | 3.5 | ⬜ |
+| 4.1 | Integration via Microsoft.Extensions.AI; named providers marked local or not; connection test; settings in administration | 3.5 | ✅ |
 | 4.2 | Prompt, output schema, output validation, one retry, fallback to rules | 4.1 | ✅ [ADR 037](docs/adr/0037-assessment-by-language-model.md) |
-| 4.3 | Trigger as its own job by threshold and quota per action; on demand in the UI | 4.2 | 🔄 job and API done, UI open |
+| 4.3 | Trigger as its own job by threshold and quota per action; on demand in the UI | 4.2 | ✅ |
 | 4.4 | Data-minimal input; data policy per organisation | 4.2 | ✅ |
-| 4.5 | Model verdict as a factor only for unknown versions; «not affected» as a suggestion to confirm | 4.2, 3.4 | 🔄 rules and API done, UI open |
+| 4.5 | Model verdict as a factor only for unknown versions; «not affected» as a suggestion to confirm | 4.2, 3.4 | ✅ |
 | 4.6 | Limits: concurrency, quotas, timeout; metrics | 4.1 | ✅ |
-| 4.7 | «Correct assessment» with re-evaluation | 4.2, 3.10 | ⬜ |
+| 4.7 | «Correct assessment» with re-evaluation | 4.2, 3.10 | ✅ [ADR 039](docs/adr/0039-review-of-an-assessment.md) |
 | 4.8 | Integration tests with recorded model answers, including invalid and manipulated ones; local model recommendation in the guide | 4.2 | ✅ |
 | 4.9 | Catalogue learning (plan 6.9): collect unknown products, rule-based mapping without a model, `GrowCatalog` job with the model, validation, auto-apply by confidence, review list, recompute | 4.2, 1.11, 2.4 | ⬜ |
 | 4.10 | Withdraw learned entries; note on the match; suggestions for organisations' free entries; export in the catalogue file format; metrics in administration | 4.9, 3.10 | ⬜ |

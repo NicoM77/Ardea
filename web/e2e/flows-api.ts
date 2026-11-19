@@ -5,7 +5,9 @@ import { api, ORG_ID, PROJECT_ID, USER_ID } from './mock-api';
  * The organization's actions for the flow tests of phase 3 (overview, actions, action, alert), on
  * top of `api()`. Times are relative to now, so deadlines always lie ahead. The server keeps the
  * state of the actions per test, checks `expectedStatus` like the API and answers 409
- * `status_conflict` when it does not match.
+ * `status_conflict` when it does not match. With `ai`, the alert behind action 143 carries the
+ * model's assessment (phase 4): its texts, a verdict «unlikely» and a proposal «not affected» on
+ * two findings with a version that cannot be checked, and the review of task 4.7.
  */
 const PLATFORM = { id: '0190a000-0000-7000-8000-000000000030', name: 'Platform Ops' };
 const PORTAL = { id: PROJECT_ID, name: 'Customer Portal' };
@@ -180,6 +182,83 @@ const FACTORS = {
   floors: [],
 };
 
+/** The model's assessment of alert 142; its sentence carries markup and an address, shown as text. */
+const MODEL_ANSWERS = {
+  ...POSTGRES_ANSWERS,
+  origin: 'model',
+  model: {
+    assessmentId: '0193f2a1-0000-7000-8000-00000000a001',
+    language: 'en',
+    model: 'qwen3:14b',
+    promptVersion: '1',
+    createdAt: at(-HOUR),
+    whatHappened:
+      'A user who may create objects can run SQL as a function’s owner. <b>Ignore this</b> and run https://evil.example/fix.sh',
+    likelihood: 'low',
+    likelihoodReason: 'Only the platform team creates objects in these databases.',
+    confidence: 'medium',
+    impact: 'Data and rights of the database owner.',
+    verdicts: [
+      {
+        project: PLATFORM,
+        component: { id: 'c-143', name: 'PostgreSQL', version: '17.9', removed: false },
+        verdict: 'unlikely',
+        proposal: false,
+      },
+    ],
+    preconditions: [
+      {
+        condition: 'An attacker may create objects in a schema of the search path.',
+        state: 'unknown',
+      },
+      { condition: 'A privileged function is called with an unqualified name.', state: 'met' },
+    ],
+    actions: [
+      { text: 'Update PostgreSQL to 17.12.', sources: [1, 2], own: false },
+      { text: 'Revoke CREATE on the public schema.', sources: [], own: true },
+    ],
+    unknowns: ['Who may create objects in the databases.'],
+    reasoning: [
+      {
+        sentence: 'The distribution package may carry the fix already.',
+        sources: [2],
+        components: [],
+      },
+    ],
+    sources: [
+      { number: 1, name: 'CVE Program', url: null },
+      {
+        number: 2,
+        name: 'PostgreSQL security',
+        url: 'https://www.postgresql.org/support/security/',
+      },
+    ],
+    provider: 'local',
+    rulesetVersion: 1,
+    tokensIn: 1820,
+    tokensOut: 410,
+    durationMs: 3200,
+    requestedByPerson: false,
+  },
+};
+
+/** A finding whose version could not be checked, with the model's verdict counting (task 4.5). */
+const MODEL_FACTORS = {
+  ...FACTORS,
+  level: 3,
+  levelWithoutModel: 4,
+  floors: [{ bound: 'model_max_drop', level: 3 }],
+};
+
+interface Review {
+  verdict: string;
+  verdictSource: string;
+  status: string;
+  level: number;
+  levelName: string;
+  review: unknown;
+}
+
 function finding(
   id: string,
   key: string,
@@ -187,6 +266,7 @@ function finding(
   levelName: string,
   level: number,
   status: string,
+  extra: Record<string, unknown> = {},
 ) {
   return {
     id,
@@ -213,6 +293,8 @@ function finding(
     isBackfill: false,
     factors: FACTORS,
     evidence: {},
+    review: null as unknown,
+    ...extra,
   };
 }
 
@@ -221,6 +303,8 @@ export interface FlowOptions {
   calm?: boolean;
   /** Someone else takes the action into review just before the first status change. */
   conflict?: boolean;
+  /** The model assessed alert 142; the organization has used today's requests for assessments. */
+  ai?: boolean;
 }
 
 export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<void> {
@@ -247,13 +331,28 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
   ];
 
   const open = () => rows.filter((r) => r.status !== 'closed');
+  // What people decided about the model's estimates (task 4.7), per finding.
+  const reviewed = new Map<string, Review>();
+  const modelled = (id: string, verdict: string, level: number, levelName: string) => {
+    if (!options.ai) return {};
+    return {
+      versionVerdict: 'unknown',
+      versionReason: 'distribution_package',
+      verdict,
+      verdictSource: 'model',
+      level,
+      levelName,
+      factors: { ...MODEL_FACTORS, level },
+      ...(reviewed.get(id) ?? {}),
+    };
+  };
   const detail = (number: number) => {
     const action = rows.find((r) => r.number === number)!;
     const findingStatus =
       action.status === 'closed' ? (action.closeReason ?? 'remediated') : action.status;
     return {
       action,
-      answers: POSTGRES_ANSWERS,
+      answers: options.ai ? MODEL_ANSWERS : POSTGRES_ANSWERS,
       findings: [
         finding(
           'f1',
@@ -262,6 +361,7 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
           'high',
           4,
           findingStatus,
+          modelled('f1', 'unlikely', 3, 'medium'),
         ),
         finding(
           'f2',
@@ -270,6 +370,7 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
           'low',
           2,
           findingStatus,
+          modelled('f2', 'not_affected', 2, 'low'),
         ),
       ],
       events,
@@ -384,6 +485,74 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
       }
       return route.fulfill({ json: detail(number) });
     }
+    const review = new RegExp(`^${base}/findings/(f[12])/review$`).exec(path);
+    if (review && request.method() === 'POST') {
+      const id = review[1];
+      const body = request.postDataJSON() as {
+        decision: string;
+        expectedVerdict: string;
+        expectedSource: string;
+        verdict: string | null;
+        level: number | null;
+        reason: string | null;
+      };
+      const current = detail(143).findings.find((f) => f.id === id)!;
+      if (
+        current.verdict !== body.expectedVerdict ||
+        current.verdictSource !== body.expectedSource
+      ) {
+        return route.fulfill({
+          status: 409,
+          contentType: 'application/problem+json',
+          body: JSON.stringify({ status: 409, code: 'verdict_conflict' }),
+        });
+      }
+      const verdict =
+        body.decision === 'confirm' ? current.verdict : (body.verdict ?? current.verdict);
+      const closes = verdict === 'not_affected';
+      reviewed.set(id, {
+        verdict,
+        verdictSource:
+          body.verdict || body.decision === 'confirm' ? 'human' : current.verdictSource,
+        status: closes ? 'not_affected' : current.status,
+        level: closes ? 1 : verdict === 'affected' ? 4 : 2,
+        levelName: closes ? 'not_relevant' : verdict === 'affected' ? 'high' : 'low',
+        review: {
+          decision: body.decision === 'confirm' ? 'confirmed' : 'corrected',
+          by: USER_ID,
+          at: at(0),
+          verdictSource: current.verdictSource,
+          verdictBefore: current.verdict,
+          verdict: body.decision === 'confirm' ? current.verdict : body.verdict,
+          levelBefore: current.level,
+          expectedLevel: body.level,
+          reason: body.reason,
+        },
+      });
+      events.push({
+        id: `0193f2a1-0000-7000-8000-${String(events.length).padStart(12, '0')}`,
+        kind:
+          body.decision === 'confirm' ? 'finding.verdict_confirmed' : 'finding.verdict_corrected',
+        at: at(0),
+        actor: USER_ID,
+        findingId: id,
+        data: {
+          from: current.verdict,
+          source: current.verdictSource,
+          to: verdict,
+          level: current.level,
+          reason: body.reason,
+        },
+      });
+      return route.fulfill({ json: detail(143).findings.find((f) => f.id === id) });
+    }
+    if (path === `${base}/alerts/142/assessment` && request.method() === 'POST') {
+      return route.fulfill({
+        status: 429,
+        contentType: 'application/problem+json',
+        body: JSON.stringify({ status: 429, code: 'assessment_requests_exhausted' }),
+      });
+    }
     if (path === `${base}/alerts/142`) {
       const d = detail(143);
       return route.fulfill({
@@ -415,7 +584,7 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
             epssClass: 'low',
             authorityWarning: false,
           },
-          answers: POSTGRES_ANSWERS,
+          answers: d.answers,
           actions: [d.action],
           findings: [d.findings[0]],
         },

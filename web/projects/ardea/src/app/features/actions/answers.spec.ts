@@ -120,6 +120,67 @@ describe('the three answers', () => {
     ).toBe('answers.range.exact');
   });
 
+  it('shows the model’s answers as plain text with their source numbers, and says when it failed', () => {
+    const model = render({
+      ...ANSWERS,
+      origin: 'model',
+      model: {
+        assessmentId: 'a1',
+        language: 'en',
+        model: 'qwen3:14b',
+        promptVersion: '1',
+        createdAt: '2026-11-19T08:00:00Z',
+        whatHappened:
+          'A crafted <b>search path</b> runs SQL as the owner; see https://evil.example/fix.',
+        likelihood: 'low',
+        likelihoodReason: 'Only trusted users create objects.',
+        confidence: 'medium',
+        impact: 'Data of the database.',
+        verdicts: [
+          {
+            project: { id: 'p1', name: 'Platform Ops' },
+            component: { id: 'c1', name: 'PostgreSQL', version: '17.9', removed: false },
+            verdict: 'not_affected',
+            proposal: true,
+          },
+        ],
+        preconditions: [],
+        actions: [
+          { text: 'Update to 17.12.', sources: [1, 3], own: false },
+          { text: 'Revoke CREATE on public.', sources: [], own: true },
+        ],
+        unknowns: [],
+        reasoning: [],
+        sources: [{ number: 1, name: 'CVE Program', url: null }],
+        provider: 'local',
+        rulesetVersion: 1,
+        tokensIn: 1800,
+        tokensOut: 400,
+        durationMs: 3200,
+        requestedByPerson: false,
+      },
+    });
+    const happened = model.querySelector('[data-answer="happened"]');
+    expect(text(happened?.querySelector('.model-text') ?? null)).toBe(
+      'A crafted <b>search path</b> runs SQL as the owner; see https://evil.example/fix.',
+    );
+    expect(happened?.querySelector('b, a')).toBeNull();
+    expect(text(model.querySelector('[data-answer="affected"]'))).toContain(
+      'Model: not affected proposal: probably not affected',
+    );
+    const steps = model.querySelectorAll('[data-answer="todo"] .ai-steps li');
+    expect(text(steps[0])).toContain('Update to 17.12.');
+    expect([...steps[0].querySelectorAll('.ref .sr-only')].map((n) => text(n))).toEqual([
+      'source 1',
+      'source 3',
+    ]);
+    expect(text(steps[1])).toBe('Revoke CREATE on public. (own recommendation)');
+
+    TestBed.resetTestingModule();
+    const failed = render({ ...ANSWERS, modelNote: 'without_model' });
+    expect(text(failed.querySelector('.without'))).toContain('Without AI assessment');
+  });
+
   it('marks the English source text with its language when the interface speaks another', () => {
     expect(quoteLang('en')).toBeNull();
     expect(quoteLang('de-CH')).toBe('en');

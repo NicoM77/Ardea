@@ -33,6 +33,12 @@ internal static class EventKinds
     /// <summary>A person set the outcome of a finding; history only.</summary>
     public const string FindingStatusChanged = "finding.status_changed";
 
+    /// <summary>A person confirmed the model's estimate of a finding (task 4.7); history only.</summary>
+    public const string FindingVerdictConfirmed = "finding.verdict_confirmed";
+
+    /// <summary>A person corrected the verdict or the level of a finding with a reason (task 4.7); history only.</summary>
+    public const string FindingVerdictCorrected = "finding.verdict_corrected";
+
     /// <summary>The events of master plan 8.2 the notifications hear about; the other kinds are history only.</summary>
     public static bool IsNotifiable(string kind) => kind.StartsWith("action.", StringComparison.Ordinal) || kind == BackfillCompleted;
 }

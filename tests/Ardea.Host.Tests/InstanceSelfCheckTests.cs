@@ -112,12 +112,122 @@ public sealed class InstanceSelfCheckTests(PostgresServer server)
         await using var worker = await SelfCheckHost.StartAsync(server, mail, api.Database);
         await api.AddUserAsync("admin@example.org", admin: true, confirmed: true);
 
-        var rounds = await Task.WhenAll(api.RoundAsync(), worker.RoundAsync());
+        await Task.WhenAll(api.RoundAsync(), worker.RoundAsync());
 
         Assert.Single(mail.Sent);
-        Assert.Single(rounds, ran => !ran);
         Assert.True(await worker.RoundAsync());
         Assert.Single(mail.Sent);
+    }
+
+    [Fact]
+    public async Task A_round_is_skipped_while_another_process_reconciles()
+    {
+        var mail = new CapturingEmailSender();
+        await using var host = await SelfCheckHost.StartAsync(server, mail);
+        await host.AddUserAsync("admin@example.org", admin: true, confirmed: true);
+
+        await using (var other = new NpgsqlConnection(host.Database.OwnerConnectionString("tests")))
+        {
+            await other.OpenAsync();
+            await using var transaction = await other.BeginTransactionAsync();
+            await using var command = new NpgsqlCommand($"SELECT pg_advisory_xact_lock({InstanceSelfCheck.LockKey})", other, transaction);
+            await command.ExecuteNonQueryAsync();
+
+            Assert.False(await host.RoundAsync());
+            Assert.Empty(mail.Sent);
+            Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.instance_warning"));
+        }
+
+        Assert.True(await host.RoundAsync());
+        Assert.Single(mail.Sent);
+    }
+
+    [Fact]
+    public async Task An_address_refused_for_good_does_not_make_the_others_get_the_mail_again()
+    {
+        var mail = new CapturingEmailSender { Refused = { "gone@example.org" } };
+        await using var host = await SelfCheckHost.StartAsync(server, mail);
+        await host.AddUserAsync("admin@example.org", admin: true, confirmed: true);
+        await host.AddUserAsync("gone@example.org", admin: true, confirmed: true);
+
+        await host.RoundAsync();
+        host.Time.Advance(TimeSpan.FromMinutes(5));
+        await host.RoundAsync();
+
+        Assert.Equal("admin@example.org", Assert.Single(mail.Sent).To);
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.instance_warning WHERE notified_at IS NOT NULL"));
+    }
+
+    [Fact]
+    public async Task A_failed_reminder_is_given_back_and_sent_by_the_next_round()
+    {
+        var mail = new CapturingEmailSender();
+        await using var host = await SelfCheckHost.StartAsync(server, mail);
+        await host.AddUserAsync("admin@example.org", admin: true, confirmed: true);
+        await host.RoundAsync();
+
+        mail.Failure = () => new IOException("connection reset");
+        host.Time.Advance(TimeSpan.FromHours(24));
+        await host.RoundAsync();
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.instance_warning WHERE reminded_at IS NULL"));
+
+        mail.Failure = null;
+        host.Time.Advance(TimeSpan.FromMinutes(5));
+        await host.RoundAsync();
+        Assert.Equal(["Ardea: 1 new warning about the instance", "Ardea: 1 warning still active"], mail.Sent.Select(m => m.Subject));
+    }
+
+    [Fact]
+    public async Task A_failed_resolved_mail_is_given_back_and_sent_by_the_next_round()
+    {
+        var mail = new CapturingEmailSender();
+        await using var host = await SelfCheckHost.StartAsync(server, mail);
+        await host.AddUserAsync("admin@example.org", admin: true, confirmed: true);
+        await host.RoundAsync();
+        host.Time.Advance(TimeSpan.FromMinutes(5));
+        await host.BeatAsync();
+        await host.RoundAsync();
+
+        mail.Failure = () => new IOException("connection reset");
+        host.Time.Advance(TimeSpan.FromMinutes(5));
+        await host.BeatAsync();
+        await host.RoundAsync();
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.instance_warning WHERE resolved_at IS NULL"));
+
+        mail.Failure = null;
+        host.Time.Advance(TimeSpan.FromMinutes(5));
+        await host.BeatAsync();
+        await host.RoundAsync();
+        Assert.Equal("Ardea: 1 warning over", mail.Sent[^1].Subject);
+    }
+
+    [Fact]
+    public async Task A_round_stopped_while_sending_gives_its_claim_back()
+    {
+        var mail = new CapturingEmailSender { Failure = () => new OperationCanceledException() };
+        await using var host = await SelfCheckHost.StartAsync(server, mail);
+        await host.AddUserAsync("admin@example.org", admin: true, confirmed: true);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(host.RoundAsync);
+
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.instance_warning WHERE notified_at IS NULL"));
+    }
+
+    [Fact]
+    public void The_worker_role_runs_the_self_check_too()
+    {
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["DB_HOST"] = "localhost",
+            ["DB_APP_PASSWORD"] = "unused",
+            ["MASTER_KEY"] = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
+            ["PUBLIC_URL"] = "https://localhost",
+        });
+
+        WorkerRole.AddServices(builder);
+
+        Assert.Contains(builder.Services, d => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(InstanceSelfCheckService));
     }
 
     [Fact]
@@ -304,6 +414,9 @@ public sealed class InstanceSelfCheckTests(PostgresServer server)
         /// <summary>How long the mail server takes to accept a message.</summary>
         public TimeSpan Delay { get; init; }
 
+        /// <summary>Addresses the mail server refuses every time.</summary>
+        public HashSet<string> Refused { get; } = new(StringComparer.Ordinal);
+
         public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken) => Task.FromResult(true);
 
         public async Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
@@ -312,6 +425,11 @@ public sealed class InstanceSelfCheckTests(PostgresServer server)
             if (Failure is { } failure)
             {
                 throw failure();
+            }
+
+            if (Refused.Contains(message.To))
+            {
+                throw new InvalidOperationException("550 recipient not accepted");
             }
 
             lock (_sent)

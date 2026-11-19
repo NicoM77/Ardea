@@ -11,55 +11,23 @@ namespace Ardea.Host.Features;
 /// The instance tells its administrators when it warns about itself (master plan 12.7, task 6.6, ADR 043). A round
 /// computes the status through the modules' contributors, brings <c>platform.instance_warning</c> in line with it
 /// and claims what to mail in one short unit of work, commits, and only then talks to the mail server; a mail that
-/// could not be sent gives its claim back in a new short unit of work, so the next round tries again. It runs in
-/// the <c>api</c> and the <c>worker</c> role and needs no job: a stalled worker cannot report itself. One process
-/// at a time does a round (session advisory lock on a connection of its own, try-lock, skip if taken).
+/// could not be sent to anyone gives its claim back in a new short unit of work, so the next round tries again. It
+/// runs in the <c>api</c> and the <c>worker</c> role and needs no job: a stalled worker cannot report itself. One
+/// process at a time reconciles: a transaction-level advisory try-lock in the reconciling unit of work (skip the
+/// round if taken), which ends with that transaction; no lock and no connection is held while the mail is sent.
 /// </summary>
 internal sealed partial class InstanceSelfCheck(
-    NpgsqlDataSource dataSource, IServiceScopeFactory scopes, TimeProvider time, IConfiguration configuration, ILogger<InstanceSelfCheck> logger)
+    IServiceScopeFactory scopes, TimeProvider time, IConfiguration configuration, ILogger<InstanceSelfCheck> logger)
 {
     public static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
 
-    private const long LockKey = 0x41524445_53454C46; // "ARDESELF"
+    internal const long LockKey = 0x41524445_53454C46; // "ARDESELF"
 
     private bool _toldNoSmtp;
     private bool _toldNoRecipients;
 
-    /// <summary>One round; false when another process is doing one right now.</summary>
+    /// <summary>One round; false when another process is reconciling right now.</summary>
     public async Task<bool> RunRoundAsync(CancellationToken cancellationToken)
-    {
-        await using var session = await dataSource.OpenConnectionAsync(cancellationToken);
-        await using (var command = new NpgsqlCommand($"SELECT pg_try_advisory_lock({LockKey})", session))
-        {
-            if (!(bool)(await command.ExecuteScalarAsync(cancellationToken))!)
-            {
-                LogSkipped();
-                return false;
-            }
-        }
-
-        try
-        {
-            await RoundAsync(cancellationToken);
-        }
-        finally
-        {
-            try
-            {
-                await using var unlock = new NpgsqlCommand($"SELECT pg_advisory_unlock({LockKey})", session);
-                await unlock.ExecuteScalarAsync(CancellationToken.None);
-            }
-            catch (NpgsqlException ex)
-            {
-                // A broken session has ended, and with it the lock.
-                LogUnlockFailed(ex);
-            }
-        }
-
-        return true;
-    }
-
-    private async Task RoundAsync(CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
 
@@ -76,6 +44,13 @@ internal sealed partial class InstanceSelfCheck(
         int active;
         await using (var scope = scopes.CreateAsyncScope())
         {
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            if (!await LockAsync(unitOfWork, wait: false, cancellationToken))
+            {
+                LogSkipped();
+                return false;
+            }
+
             var status = new InstanceStatusBuilder();
             foreach (var contributor in scope.ServiceProvider.GetServices<IInstanceStatusContributor>())
             {
@@ -85,17 +60,17 @@ internal sealed partial class InstanceSelfCheck(
             active = status.Warnings.Count;
             mail = await scope.ServiceProvider.GetRequiredService<InstanceWarningLedger>()
                 .ReconcileAsync(status.Warnings, now, claim: recipients.Count > 0, cancellationToken);
-            await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
         }
 
         TellWhyNobodyHears(active, configured, recipients.Count);
         if (mail.IsEmpty)
         {
-            return;
+            return true;
         }
 
-        // No transaction is open from here on.
-        var failed = 0;
+        // No transaction and no lock is held from here on.
+        var delivered = 0;
         try
         {
             foreach (var recipient in recipients)
@@ -103,35 +78,50 @@ internal sealed partial class InstanceSelfCheck(
                 try
                 {
                     await email.SendAsync(Render(recipient, mail), cancellationToken);
+                    delivered++;
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    failed++;
                     LogSendFailed(recipient.UserId, ex.GetType().Name);
                 }
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (delivered == 0)
         {
-            await ReleaseAsync(mail, CancellationToken.None);
+            await ReleaseAsync(mail);
             throw;
         }
 
-        if (failed > 0)
+        if (delivered == 0)
         {
-            // Everybody gets it again with the next round: a duplicate rather than a lost warning.
-            await ReleaseAsync(mail, cancellationToken);
-            return;
+            // Nobody got it: the next round tries again.
+            await ReleaseAsync(mail);
+            return true;
         }
 
-        LogMailed(recipients.Count, mail.Raised.Count, mail.Reminded.Count, mail.Resolved.Count);
+        // Somebody got it: the claim stands, so one address the mail server refuses for good does not make the
+        // others get the same mail every five minutes. The ones it failed for hear of the warning with the reminder.
+        LogMailed(delivered, recipients.Count, mail.Raised.Count, mail.Reminded.Count, mail.Resolved.Count);
+        return true;
     }
 
-    private async Task ReleaseAsync(WarningMail mail, CancellationToken cancellationToken)
+    /// <summary>Gives a claim back; with no token, so a stopping process still does it.</summary>
+    private async Task ReleaseAsync(WarningMail mail)
     {
         await using var scope = scopes.CreateAsyncScope();
-        await scope.ServiceProvider.GetRequiredService<InstanceWarningLedger>().ReleaseAsync(mail, cancellationToken);
-        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        await LockAsync(unitOfWork, wait: true, CancellationToken.None);
+        await scope.ServiceProvider.GetRequiredService<InstanceWarningLedger>().ReleaseAsync(mail, CancellationToken.None);
+        await unitOfWork.CommitAsync(CancellationToken.None);
+    }
+
+    /// <summary>The transaction-level lock of the self-check's state: it ends with the unit of work's transaction.</summary>
+    private static async Task<bool> LockAsync(IUnitOfWork unitOfWork, bool wait, CancellationToken cancellationToken)
+    {
+        var connection = await unitOfWork.GetConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(
+            wait ? $"SELECT true FROM (SELECT pg_advisory_xact_lock({LockKey})) AS l" : $"SELECT pg_try_advisory_xact_lock({LockKey})", connection);
+        return (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
     }
 
     /// <summary>Without a mail server or an administrator with a confirmed address the warnings stay on the overview; said once.</summary>
@@ -223,14 +213,11 @@ internal sealed partial class InstanceSelfCheck(
     [LoggerMessage(EventId = 1503, Level = LogLevel.Information, Message = "The instance warns about itself ({Active} warning(s)), but no instance administrator has a confirmed e-mail address: the warnings stay on the overview")]
     private partial void LogNoRecipients(int active);
 
-    [LoggerMessage(EventId = 1504, Level = LogLevel.Information, Message = "Mailed {Recipients} instance administrator(s) about {Raised} new, {Reminded} lasting and {Resolved} resolved warning(s)")]
-    private partial void LogMailed(int recipients, int raised, int reminded, int resolved);
+    [LoggerMessage(EventId = 1504, Level = LogLevel.Information, Message = "Mailed {Delivered} of {Recipients} instance administrator(s) about {Raised} new, {Reminded} lasting and {Resolved} resolved warning(s)")]
+    private partial void LogMailed(int delivered, int recipients, int raised, int reminded, int resolved);
 
-    [LoggerMessage(EventId = 1505, Level = LogLevel.Warning, Message = "The mail about instance warnings to administrator {UserId} failed with {Error}; the next round tries again")]
+    [LoggerMessage(EventId = 1505, Level = LogLevel.Warning, Message = "The mail about instance warnings to administrator {UserId} failed with {Error}; if nobody got it, the next round tries again, otherwise the reminder")]
     private partial void LogSendFailed(Guid userId, string error);
-
-    [LoggerMessage(EventId = 1506, Level = LogLevel.Warning, Message = "The self-check's lock could not be released")]
-    private partial void LogUnlockFailed(Exception exception);
 }
 
 /// <summary>Runs a self-check round every five minutes; the first one an interval after the start, when a worker started together with it has beaten.</summary>

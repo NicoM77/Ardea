@@ -24,6 +24,23 @@ internal static class WorkerRole
         }
 
         HostConfiguration.AddJsonLogging(builder.Logging);
+        AddServices(builder);
+        using var host = builder.Build();
+        var behind = await SchemaGate.FindBehindAsync(
+            host.Services.GetRequiredService<NpgsqlDataSource>(), host.Services.GetRequiredService<DatabaseOptions>(), CancellationToken.None);
+        if (behind.Count > 0)
+        {
+            await Console.Error.WriteLineAsync($"The database schema is older than this version ({string.Join(", ", behind)}). Run `ardea migrate` first.");
+            return 75;
+        }
+
+        await host.RunAsync();
+        return 0;
+    }
+
+    /// <summary>Everything the worker runs; on its own so that a test can see what is registered.</summary>
+    internal static void AddServices(HostApplicationBuilder builder)
+    {
         builder.Services.AddArdeaPlatform(builder.Configuration, "worker");
         builder.Services.AddSingleton(WorkerIdentity.FromConfiguration(builder.Configuration));
         builder.Services.AddHostedService(sp => ActivatorUtilities.CreateInstance<WorkerHeartbeat>(sp, AppVersion.Current));
@@ -39,17 +56,5 @@ internal static class WorkerRole
             module.AddServices(builder.Services, builder.Configuration);
             module.AddWorkerServices(builder.Services, builder.Configuration);
         }
-
-        using var host = builder.Build();
-        var behind = await SchemaGate.FindBehindAsync(
-            host.Services.GetRequiredService<NpgsqlDataSource>(), host.Services.GetRequiredService<DatabaseOptions>(), CancellationToken.None);
-        if (behind.Count > 0)
-        {
-            await Console.Error.WriteLineAsync($"The database schema is older than this version ({string.Join(", ", behind)}). Run `ardea migrate` first.");
-            return 75;
-        }
-
-        await host.RunAsync();
-        return 0;
     }
 }

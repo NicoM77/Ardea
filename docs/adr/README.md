@@ -9,6 +9,7 @@ Der Masterplan ist seit dem 18.11.2026 freigegeben; damit sind alle Einträge **
 | [0030](0030-catalogue-format-and-master-data.md) | Catalogue format (JSON per vendor) and master data loaded by `migrate`; refines 022 |
 | [0031](0031-osv-source.md) | OSV source for six package ecosystems: endpoints, terms of the data sources, cursor per ecosystem; refines 027 |
 | [0032](0032-github-sbom-export.md) | GitHub SBOM export (experiment 2.9): asynchronous flow, rights, download host, what Ardea's own readers must supply; refines 026 |
+| [0033](0033-candidate-search-and-version-verdicts.md) | Candidate search, version verdicts from several sources and the assessment job chain; refines 010, 011 and 029 |
 
 | Nr. | Entscheidung | Wichtigste verworfene Alternative | Kapitel | Status |
 |---|---|---|---|---|

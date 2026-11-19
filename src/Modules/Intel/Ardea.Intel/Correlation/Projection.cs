@@ -74,6 +74,9 @@ internal sealed record EntryProjection
 
     public IReadOnlyList<string> Workarounds { get; init; } = [];
 
+    /// <summary>The versions the description and solutions name as fixes (<see cref="FixVersionText"/>).</summary>
+    public IReadOnlyList<string> FixVersionsInText { get; init; } = [];
+
     /// <summary>From the signals (task 1.8): <c>high</c>, <c>low</c> or none.</summary>
     public string? EpssClass { get; init; }
 
@@ -86,7 +89,8 @@ internal sealed record EntryProjection
         Exploitation,
         FixAvailable.ToString(),
         AuthorityWarning.ToString(),
-        epssClass ?? string.Empty);
+        epssClass ?? string.Empty,
+        string.Join('\n', FixVersionsInText));
 
     /// <summary>Hash over what tells people what to do: a new workaround updates the answer without reassessment.</summary>
     public string RemediationFingerprint() => Hash(
@@ -236,6 +240,7 @@ internal static class Projection
             AllMetrics = [.. metrics.Select(m => m.Metric)],
             Solutions = solutions,
             Workarounds = workarounds,
+            FixVersionsInText = FixVersionText.Extract(solutions.Prepend(description)),
         };
     }
 
@@ -268,11 +273,20 @@ internal static class Projection
             yield break;
         }
 
-        foreach (var range in product.Versions)
+        foreach (var stated in product.Versions)
         {
+            // Placeholders, ranges in one field and open bounds are resolved here, once, for every source (master plan 6.6).
+            var range = VersionRanges.Normalize(new Catalog.Contracts.VersionRange
+            {
+                Introduced = stated.Introduced,
+                Fixed = stated.Fixed,
+                LastAffected = stated.LastAffected,
+                Exact = stated.Exact,
+                Scheme = stated.Scheme ?? product.VersionScheme,
+            });
             yield return new AffectedData(sourceId, product.Vendor, product.Product, key, cpe?.Vendor, cpe?.Product, package?.Type, package?.Name,
-                range.Scheme ?? product.VersionScheme, range.Introduced, range.Fixed, range.LastAffected, range.Exact,
-                Status(range.Status) ?? "unknown", defaultStatus);
+                range.Scheme, range.Introduced, range.Fixed, range.LastAffected, range.Exact,
+                Status(stated.Status) ?? "unknown", defaultStatus);
         }
     }
 

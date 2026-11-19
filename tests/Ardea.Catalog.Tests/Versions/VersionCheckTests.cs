@@ -13,6 +13,9 @@ public sealed class VersionCheckTests
     private static VersionCheck Check(string? installed, VersionStatus defaultStatus, params VersionRange[] ranges) =>
         VersionCheck.Evaluate(Numeric, installed, ranges, defaultStatus);
 
+    private static VersionCheck Check(string? installed, VersionStatus defaultStatus, string[] fixesInText, params VersionRange[] ranges) =>
+        VersionCheck.Evaluate(Numeric, installed, ranges, defaultStatus, fixesInText);
+
     [Fact]
     public void Row_1_inside_an_affected_range_is_in_range()
     {
@@ -134,7 +137,22 @@ public sealed class VersionCheckTests
     {
         var unreadable = new VersionRange { Introduced = "before the rewrite", Fixed = "2.0" };
 
-        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.RangeNotReadable), Check("9.0", VersionStatus.Unaffected, unreadable));
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.RangeNotReadable), Check("1.5", VersionStatus.Unaffected, unreadable));
+    }
+
+    [Fact]
+    public void Unreadable_lower_bound_does_not_matter_at_or_above_a_readable_fix()
+    {
+        // Microsoft, System.Text.Json (CVE-2026-120796): {"version": "NOT_YET_AVAILABLE", "lessThan": "11.0.0"}.
+        var range = new VersionRange { Introduced = "NOT_YET_AVAILABLE", Fixed = "11.0.0" };
+        var upTo = new VersionRange { Introduced = "NOT_YET_AVAILABLE", LastAffected = "10.0.4" };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges), Check("11.0.1", VersionStatus.Unknown, range));
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges), Check("11.0.0", VersionStatus.Unknown, range));
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges), Check("10.0.5", VersionStatus.Unknown, upTo));
+
+        // Below the fix the unreadable lower bound decides whether the version is inside: unknown.
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.RangeNotReadable), Check("10.0.9", VersionStatus.Unknown, range));
     }
 
     [Fact]
@@ -162,6 +180,166 @@ public sealed class VersionCheckTests
 
         Assert.Equal(VersionVerdict.InRange, Check("5.15.100", VersionStatus.Unknown, commits, versions).Verdict);
         Assert.Equal(VersionVerdict.OutOfRange, Check("5.15.140", VersionStatus.Unknown, commits, versions).Verdict);
+    }
+
+    [Fact]
+    public void Default_status_is_not_applied_when_the_record_names_only_git_commits()
+    {
+        // Linux kernel records: one entry with commit ranges and default «unaffected». Any version may lie inside a
+        // commit range, so «in no range, default unaffected» cannot be concluded; the version entry decides instead.
+        var commits = new VersionRange { Introduced = "db6fbc106786f26d95889c50c18b1f28aa543a17", Fixed = "253cff0526781e28b1b0f9fdacd74ecdc23d3ab7", Scheme = VersionSchemeNames.Git };
+        var fixedCommit = new VersionRange { Exact = "8df4bcdb0a4232192b2445256c39b787d58ef14d", Scheme = VersionSchemeNames.Git };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.NoComparableRange), Check("6.12.1", VersionStatus.Unaffected, commits, fixedCommit));
+    }
+
+    [Theory]
+    // VulnCheck: {"version": "0", "status": "affected"} for products whose versions it does not know (83 statements in the spike week).
+    [InlineData("0", VersionStatus.Unknown, VersionVerdict.Unknown, VersionCheckReason.NoComparableRange)]
+    [InlineData("0", VersionStatus.Unaffected, VersionVerdict.Unknown, VersionCheckReason.NoComparableRange)]
+    [InlineData("0", VersionStatus.Affected, VersionVerdict.InRange, VersionCheckReason.DefaultAffected)]
+    [InlineData("n/a", VersionStatus.Unaffected, VersionVerdict.Unknown, VersionCheckReason.NoComparableRange)]
+    [InlineData("unspecified", VersionStatus.Unknown, VersionVerdict.Unknown, VersionCheckReason.NoComparableRange)]
+    public void An_exact_version_that_names_no_version_is_never_out_of_range(string exact, VersionStatus defaultStatus, VersionVerdict verdict, VersionCheckReason reason)
+    {
+        var range = VersionRanges.Normalize(VersionRange.ExactVersion(exact));
+
+        Assert.True(range.NamesNoVersion);
+        Assert.Equal(new VersionCheck(verdict, reason), Check("1.2", defaultStatus, range));
+    }
+
+    [Fact]
+    public void A_range_that_names_no_version_leaves_the_other_ranges_of_the_statement_to_decide()
+    {
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges), Check("2.4.52", VersionStatus.Unknown, VersionRange.ExactVersion("0"), Affected24));
+        Assert.Equal(new VersionCheck(VersionVerdict.InRange, VersionCheckReason.InAffectedRange), Check("2.4.50", VersionStatus.Unknown, VersionRange.ExactVersion("0"), Affected24));
+        Assert.False(VersionRange.ExactVersion("0.1").NamesNoVersion);
+    }
+
+    [Fact]
+    public void An_affected_default_still_holds_next_to_commit_ranges_only()
+    {
+        // Every version is affected: by default, or inside an affected commit range. Only an unaffected commit range leaves doubt.
+        var commits = new VersionRange { Introduced = "abcdef1", Fixed = "1234abc", Scheme = VersionSchemeNames.Git };
+        var fixedCommit = new VersionRange { Introduced = "1234abc", Scheme = VersionSchemeNames.Git, Status = VersionStatus.Unaffected };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.InRange, VersionCheckReason.DefaultAffected), Check("1.0", VersionStatus.Affected, commits));
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.NoComparableRange), Check("1.0", VersionStatus.Affected, commits, fixedCommit));
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.NoComparableRange), Check("1.0", VersionStatus.Unknown, commits));
+    }
+
+    [Fact]
+    public void Version_numbers_tagged_git_are_compared_as_versions()
+    {
+        // Symfony (CVE-2026-118515): {"version": "0", "lessThan": "5.4.56", "versionType": "git"}, stored without the open lower bound.
+        var tagged = new VersionRange { Fixed = "5.4.56", Scheme = VersionSchemeNames.Git };
+        var line = new VersionRange { Introduced = "6.0.0", Fixed = "6.4.50", Scheme = VersionSchemeNames.Git };
+
+        Assert.False(tagged.IsCommitRange);
+        Assert.Equal(new VersionCheck(VersionVerdict.InRange, VersionCheckReason.InAffectedRange), Check("1.0.0", VersionStatus.Unaffected, tagged, line));
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected), Check("6.4.50", VersionStatus.Unaffected, tagged, line));
+    }
+
+    [Theory]
+    [InlineData("1da177e4c3f4", null, true)]
+    [InlineData("0", "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2", true)]
+    [InlineData(null, null, true)]
+    [InlineData("0", null, true)]
+    [InlineData("6.0.0", "6.4.50", false)]
+    [InlineData(null, "5.4.56", false)]
+    public void A_git_range_is_a_commit_range_when_a_bound_is_a_hash_or_none_is_named(string? introduced, string? fixedVersion, bool commits)
+    {
+        Assert.Equal(commits, new VersionRange { Introduced = introduced, Fixed = fixedVersion, Scheme = "git" }.IsCommitRange);
+        Assert.False(new VersionRange { Introduced = introduced, Fixed = fixedVersion, Scheme = "semver" }.IsCommitRange);
+    }
+
+    [Fact]
+    public void Fix_named_in_text_above_the_version_keeps_row_4_unknown()
+    {
+        // Apache DataSketches (CVE-2026-122096): «through 9.0.0», default unaffected; «upgrade to version 9.1.0, which fixes the issue».
+        var through = new VersionRange { LastAffected = "9.0.0" };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.FixNamedInTextAboveInstalled), Check("9.0.1", VersionStatus.Unaffected, ["9.1.0"], through));
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected), Check("9.1.0", VersionStatus.Unaffected, ["9.1.0"], through));
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected), Check("9.0.1", VersionStatus.Unaffected, [], through));
+    }
+
+    [Fact]
+    public void Fix_named_in_text_above_the_version_keeps_row_5_unknown()
+    {
+        // Apache TomEE (CVE-2026-111245): openejb 4.0.0-beta-1 through 4.7.5, no fix in that line; «upgrade to 10.3.0 or 11.0.0-M2».
+        var old = new VersionRange { Introduced = "4.0.0", LastAffected = "4.7.5" };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.FixNamedInTextAboveInstalled), Check("4.7.6", VersionStatus.Unknown, ["10.3.0", "11.0.0"], old));
+    }
+
+    [Fact]
+    public void A_fix_of_the_versions_own_line_at_or_below_it_lets_the_ranges_stand()
+    {
+        // ActiveMQ (CVE-2026-108500): 6.3.0 before 6.3.3 and 5.19.0 before 5.19.12; «upgrade to 6.4.0, 6.3.3 or 5.19.12».
+        VersionRange[] ranges = [new() { Introduced = "6.3.0", Fixed = "6.3.3" }, new() { Introduced = "5.19.0", Fixed = "5.19.12" }];
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected), Check("6.3.4", VersionStatus.Unaffected, ["6.4.0", "6.3.3", "5.19.12"], ranges));
+
+        // n8n (CVE-2026-126388): «before 2.46.1» in the text, but the ranges fix the 2.45 line with 2.45.5 (an unaffected version).
+        VersionRange[] backport = [new() { Fixed = "2.45.5" }, VersionRange.ExactVersion("2.45.5", VersionStatus.Unaffected)];
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.DefaultUnaffected), Check("2.45.6", VersionStatus.Unaffected, ["2.46.1"], backport));
+
+        // The same text fix in another line (1.20 is not the line 1.19) does not count as the version's own.
+        Assert.Equal(VersionVerdict.Unknown, Check("1.19.1", VersionStatus.Unaffected, ["1.20"], new VersionRange { LastAffected = "1.19.0" }).Verdict);
+    }
+
+    [Fact]
+    public void Text_does_not_change_a_version_between_ranges_or_inside_an_unaffected_range()
+    {
+        // Between two lines the later line's fix is above the version, but the version is not above every range.
+        VersionRange[] lines = [new() { Introduced = "1.0", Fixed = "1.5.3" }, new() { Introduced = "2.0", Fixed = "2.1.4" }];
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.OutsideNamedBounds), Check("1.6", VersionStatus.Unknown, ["1.5.3", "2.1.4"], lines));
+
+        // An explicit unaffected statement is more specific than any prose.
+        var backport = new VersionRange { Introduced = "5.10.200", Fixed = "5.11", Status = VersionStatus.Unaffected };
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.InUnaffectedRange), Check("5.10.201", VersionStatus.Affected, ["6.0"], backport));
+    }
+
+    [Theory]
+    [InlineData("16.4")]
+    [InlineData("16.4.0")]
+    [InlineData("16.4.0.0")]
+    public void The_line_guard_does_not_depend_on_how_many_parts_the_version_is_written_with(string installed)
+    {
+        // The fix 16.2 belongs to the line 16.2, not to 16.4: the text's later fix 16.6 keeps every spelling unknown.
+        var range = new VersionRange { Introduced = "16.0", Fixed = "16.2" };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.FixNamedInTextAboveInstalled), Check(installed, VersionStatus.Unknown, ["16.6"], range));
+    }
+
+    [Fact]
+    public void Text_versions_the_scheme_cannot_read_are_ignored()
+    {
+        Assert.Equal(VersionVerdict.OutOfRange, Check("2.4.52", VersionStatus.Unaffected, ["build 4711"], Affected24).Verdict);
+    }
+
+    [Theory]
+    // Google writes «Chrome prior to 157.0.8103.50» as an empty range: below it, it reads as «before the fix».
+    [InlineData("157.0.8103.50", "157.0.8103.50", "157.0.8102.50", VersionVerdict.InRange, VersionCheckReason.BeforeEmptyRange)]
+    [InlineData("157.0.8103.50", "157.0.8103.50", "157.0.8103.50", VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges)]
+    // An empty range never serves as an explicit lower bound, also when it starts a line or differs only in writing.
+    [InlineData("2.0.0", "2.0.0", "1.9.0", VersionVerdict.InRange, VersionCheckReason.BeforeEmptyRange)]
+    [InlineData("v2.0.1", "2.0.1", "1.9", VersionVerdict.InRange, VersionCheckReason.BeforeEmptyRange)]
+    [InlineData("18.12.0", "18.12.0", "18.11.9", VersionVerdict.InRange, VersionCheckReason.BeforeEmptyRange)]
+    public void An_empty_range_reads_as_before_its_fix(string introduced, string fixedVersion, string installed, VersionVerdict verdict, VersionCheckReason reason)
+    {
+        var empty = new VersionRange { Introduced = introduced, Fixed = fixedVersion };
+
+        Assert.Equal(new VersionCheck(verdict, reason), Check(installed, VersionStatus.Unknown, empty));
+    }
+
+    [Fact]
+    public void An_explicit_unaffected_range_wins_over_the_reading_of_an_empty_range()
+    {
+        var empty = new VersionRange { Introduced = "2.0.0", Fixed = "2.0.0" };
+        var unaffected = new VersionRange { Introduced = "1.9.0", Fixed = "2.0.0", Status = VersionStatus.Unaffected };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.InUnaffectedRange), Check("1.9.5", VersionStatus.Unknown, empty, unaffected));
     }
 
     [Fact]

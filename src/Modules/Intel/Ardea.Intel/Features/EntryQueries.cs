@@ -111,6 +111,7 @@ internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
             EpssClass = entry.EpssClass,
             FixAvailable = entry.FixAvailable,
             AuthorityWarning = entry.AuthorityWarning,
+            FixVersionsInText = entry.FixVersionsInText,
             Affected = [.. affected.OrderBy(a => a.Id).Select(a => new AffectedFacts
             {
                 SourceId = a.SourceId,

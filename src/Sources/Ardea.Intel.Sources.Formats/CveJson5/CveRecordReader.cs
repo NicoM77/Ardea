@@ -11,7 +11,8 @@ namespace Ardea.Intel.Sources.Formats.CveJson5;
 /// </summary>
 public static class CveRecordReader
 {
-    public const int ParserVersion = 1;
+    /// <summary>2: upper bounds with wildcards are kept as written instead of dropped.</summary>
+    public const int ParserVersion = 2;
 
     public static NormalizationResult Read(string json)
     {
@@ -75,7 +76,7 @@ public static class CveRecordReader
         var exploitation = Exploitation(adps.Prepend(cna));
         var solutions = EnglishAll(cna, "solutions");
         var workarounds = EnglishAll(cna, "workarounds");
-        var fixKnown = affected.Any(a => a.Versions.Any(v => v.Fixed is not null || v.Status == AffectedStatus.Unaffected))
+        var fixKnown = affected.Any(a => a.Versions.Any(v => NamesFix(v.Fixed) || v.Status == AffectedStatus.Unaffected))
             || solutions.Count > 0
             || references.Any(r => r.Tags.Contains("patch", StringComparer.OrdinalIgnoreCase));
 
@@ -153,7 +154,8 @@ public static class CveRecordReader
     /// <summary>
     /// A version entry: <c>version</c> with <c>lessThan</c> (exclusive upper bound) or
     /// <c>lessThanOrEqual</c> (inclusive) is a range from <c>version</c>; without either it is one exact
-    /// version. An upper bound with a wildcard (<c>*</c>, or text like <c>log4j-core*</c>) means none.
+    /// version. Bounds are kept as written, wildcards included (<c>6.12.*</c>, <c>*</c>, <c>log4j-core*</c>):
+    /// the correlation resolves them with the other peculiarities of master plan 6.6 (<c>VersionRanges.Normalize</c>).
     /// <c>changes</c> switch the status inside the range at given versions, so one entry becomes
     /// several consecutive ranges, e.g. Log4Shell's fixed 2.3.1, 2.12.2 and 2.15.0 lines.
     /// </summary>
@@ -197,8 +199,15 @@ public static class CveRecordReader
         yield return new VersionRange { Status = current, Introduced = start, Fixed = lessThan, LastAffected = lessThanOrEqual, Scheme = scheme, Raw = raw };
     }
 
-    private static string? Bound(string? value) =>
-        string.IsNullOrWhiteSpace(value) || value.Contains('*', StringComparison.Ordinal) ? null : value.Trim();
+    private static string? Bound(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>
+    /// Whether an upper bound names a fixed version. Bounds are kept as written, so open and wildcard bounds
+    /// (Siemens' «lessThan: *», «6.12.*», «log4j-core*», «unspecified», «0») are no fix.
+    /// </summary>
+    private static bool NamesFix(string? bound) =>
+        bound is not null && bound != "0" && !bound.Contains('*', StringComparison.Ordinal)
+        && !bound.EndsWith(".x", StringComparison.OrdinalIgnoreCase) && bound.Any(char.IsAsciiDigit);
 
     /// <summary>SSVC "Exploitation" from any container, and KEV from CISA-ADP; the strongest wins.</summary>
     private static Exploitation? Exploitation(IEnumerable<JsonElement> containers)

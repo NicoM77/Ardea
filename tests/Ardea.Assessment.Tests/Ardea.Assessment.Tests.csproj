@@ -7,6 +7,7 @@
     <ProjectReference Include="../../src/Modules/Assets/Ardea.Assets/Ardea.Assets.csproj" />
     <ProjectReference Include="../../src/Modules/Intel/Ardea.Intel/Ardea.Intel.csproj" />
     <ProjectReference Include="../../src/Modules/Catalog/Ardea.Catalog/Ardea.Catalog.csproj" />
+    <ProjectReference Include="../../src/Sources/Ardea.Intel.Sources.CveProgram/Ardea.Intel.Sources.CveProgram.csproj" />
     <ProjectReference Include="../Ardea.TestSupport/Ardea.TestSupport.csproj" />
   </ItemGroup>
 </Project>

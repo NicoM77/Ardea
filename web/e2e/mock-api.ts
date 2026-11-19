@@ -265,6 +265,7 @@ export async function api(page: Page, signedIn: boolean): Promise<void> {
             locale: 'en',
             timeZone: 'Europe/Zurich',
             requireMfa: false,
+            aiPolicy: 'local_only',
             role: 'owner',
             createdAt: '2026-11-17T08:00:00Z',
           },

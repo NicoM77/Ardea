@@ -213,7 +213,7 @@ internal sealed class AlertAssessor(
             ["match"] = new { type = candidate.MatchType, keys = candidate.Keys.Select(k => $"{k.Type} {k.Value}").ToList() },
             ["installed"] = candidate.Component.Version,
         };
-        var version = candidate.IsStrong ? VersionMatch.Check(candidate.Component, candidate.MatchType, candidate.Affected, schemes) : null;
+        var version = candidate.IsStrong ? VersionMatch.Check(candidate.Component, candidate.MatchType, candidate.Affected, schemes, entry.FixVersionsInText) : null;
         if (version is not null)
         {
             evidence["version"] = version;

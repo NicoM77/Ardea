@@ -1,5 +1,6 @@
 using Ardea.Intel.Features;
 using Ardea.Intel.Sources.Abstractions;
+using Ardea.Intel.Sync;
 using Ardea.TestSupport;
 
 namespace Ardea.Intel.Tests;
@@ -84,6 +85,32 @@ public sealed class MaintenanceTests(PostgresServer server)
         Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source_record WHERE parse_status = 'pending'"));
         await host.RunJobsAsync("intel.normalize-records");
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source_record WHERE parse_status = 'pending'"));
+    }
+
+    [Fact]
+    public async Task Records_an_older_parser_read_are_normalised_again_when_the_worker_starts()
+    {
+        await using var host = await IntelTestHost.StartAsync(server);
+        host.Provider.Items.AddRange([ScriptedProvider.Json("A", """{"id":"A"}"""), ScriptedProvider.Json("B", """{"id":"B"}"""), new Checkpoint("c1")]);
+        await host.SyncAsync();
+        await host.NormalizeAsync();
+        await host.ExecuteAsync("UPDATE platform.job SET state = 'succeeded' WHERE state = 'pending'");
+        // As if A had been read by the parser before the current one, and quarantined by it.
+        await host.ExecuteAsync("UPDATE intel.source_record SET parser_version = 0, parse_status = 'quarantined' WHERE external_id = 'A'");
+
+        var registrar = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions
+            .GetServices<Microsoft.Extensions.Hosting.IHostedService>(host.Services).OfType<SourceRegistrar>().Single();
+        await registrar.RegisterAsync(CancellationToken.None);
+
+        Assert.Equal("A", await host.ScalarAsync<string>("SELECT string_agg(external_id, ',') FROM intel.source_record WHERE parse_status = 'pending'"));
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE state = 'pending' AND kind = 'intel.normalize-records'"));
+        await host.RunJobsAsync("intel.normalize-records");
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source_record WHERE parse_status <> 'parsed' OR parser_version <> 1"));
+
+        // Nothing outdated: a further start queues nothing.
+        await host.ExecuteAsync("UPDATE platform.job SET state = 'succeeded' WHERE state = 'pending'");
+        await registrar.RegisterAsync(CancellationToken.None);
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE state = 'pending'"));
     }
 
     [Fact]

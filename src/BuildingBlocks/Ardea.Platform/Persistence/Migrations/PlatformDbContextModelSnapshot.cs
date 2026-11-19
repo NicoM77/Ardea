@@ -211,7 +211,7 @@ namespace Ardea.Platform.Persistence.Migrations
                         .HasDatabaseName("ix_job_running_lease")
                         .HasFilter("state = 'running'");
 
-                    b.HasIndex("Priority", "RunAt")
+                    b.HasIndex("Kind", "Priority", "RunAt")
                         .HasDatabaseName("ix_job_due")
                         .HasFilter("state = 'pending'");
 

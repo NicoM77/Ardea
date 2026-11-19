@@ -85,7 +85,7 @@ Die meisten stehen in `docs/acceptance/phase-*.md`; hier alle an einem Ort:
   geliefert (alle Tests mit aufgezeichneten Antworten).
 - Phase 5: Web Push von Hand auf iOS (installierte Web-App); echter Push-Dienst; Mockups der
   Benachrichtigungsseiten prüfen; Eskalation (8.7) ist nicht im MVP.
-- Phase 5a: Erinnerungsrhythmus und «nur das Produkt selbst» (E26, 17.2) bestätigen; Schwellen aus 5a.1.
+- Phase 5a: Erinnerungsrhythmus und «nur das Produkt selbst» (E26, 17.2) bestätigen. Schwellen aus 5a.1 (ADR 044: kritisch oder ausgenutzt, N = 25) am 19.11. bestätigt (#88).
 - Phase 6: 6.2 unabhängige Sicherheitsprüfung durch eine Person (Umfang: Anmeldung, Mandantentrennung,
   ausgehende Verbindungen; Grundlage `docs/security/threat-review.md`); 6.3 manueller Zugänglichkeitsdurchgang
   der Kernabläufe mit Tastatur und Screenreader (sinnvoll erst nach 5a, weil 5a die Kernabläufe ändert);

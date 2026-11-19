@@ -54,11 +54,21 @@ public sealed class ActionApiTests(PostgresServer server)
         Assert.Equal("CVE-2026-0001", (await Json(await client.GetAsync($"{path}/alerts/1"))).GetProperty("answers").GetProperty("whatHappened").GetProperty("entryKey").GetString());
         Assert.Equal(1, detail.GetProperty("findings")[0].GetProperty("alertNumber").GetInt32());
 
+        // A reminder is open or done: no assignee, no deadline, no «in review» (master plan 17.5, ADR 046).
+        foreach (var gone in new[] { "assignedTo", "dueAt", "overdue" })
+        {
+            Assert.False(item.TryGetProperty(gone, out var value), $"{gone}: {value}");
+        }
+
+        Assert.False((await Json(await client.GetAsync($"{path}/overview"))).TryGetProperty("overdue", out var overdue), overdue.ToString());
+        Assert.Contains(
+            (await client.SendAsync(HttpMethod.Patch, $"{path}/actions/2", new { dueAt = "2030-01-01T00:00:00Z" })).StatusCode,
+            new[] { HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed });
+        await ExpectProblem(await client.PostAsync($"{path}/actions/2/status", new { status = "in_review", expectedStatus = "open" }), HttpStatusCode.BadRequest, "invalid_status_change");
+        await ExpectProblem(await client.GetAsync($"{path}/actions?status=in_review"), HttpStatusCode.BadRequest, "invalid_filter");
+
         // The status the caller saw must still hold.
-        await ExpectProblem(await client.PostAsync($"{path}/actions/2/status", new { status = "in_review", expectedStatus = "in_review" }), HttpStatusCode.Conflict, "status_conflict");
-        var inReview = await Json(await client.PostAsync($"{path}/actions/2/status", new { status = "in_review", expectedStatus = "open", note = "Checking" }));
-        Assert.Equal("in_review", inReview.GetProperty("action").GetProperty("status").GetString());
-        Assert.Equal("in_review", inReview.GetProperty("findings")[0].GetProperty("status").GetString());
+        await ExpectProblem(await client.PostAsync($"{path}/actions/2/status", new { status = "risk_accepted", expectedStatus = "closed" }), HttpStatusCode.Conflict, "status_conflict");
 
         var note = await Json(await client.PostAsync($"{path}/actions/2/notes", new { text = "Window on Friday" }), HttpStatusCode.Created);
         Assert.Equal("action.note_added", note.GetProperty("kind").GetString());
@@ -72,13 +82,13 @@ public sealed class ActionApiTests(PostgresServer server)
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assessment_feedback"));
 
         // The outcome of the single finding closes the action.
-        var closed = await Json(await client.SendAsync(HttpMethod.Patch, $"{path}/findings/{finding}", new { status = "remediated", expectedStatus = "in_review" }));
+        var closed = await Json(await client.SendAsync(HttpMethod.Patch, $"{path}/findings/{finding}", new { status = "remediated", expectedStatus = "open" }));
         Assert.Equal("remediated", closed.GetProperty("status").GetString());
         var after = await Json(await client.GetAsync($"{path}/actions/2"));
         Assert.Equal("closed", after.GetProperty("action").GetProperty("status").GetString());
         Assert.Equal("remediated", after.GetProperty("action").GetProperty("closeReason").GetString());
         Assert.Equal(
-            ["action.status_changed", "action.note_added", "finding.status_changed"],
+            ["action.note_added", "finding.status_changed"],
             (await Json(await client.GetAsync($"{path}/actions/2/events"))).EnumerateArray().Select(e => e.GetProperty("kind").GetString()));
         Assert.Empty((await Json(await client.GetAsync($"{path}/actions"))).GetProperty("items").EnumerateArray());
         Assert.Single((await Json(await client.GetAsync($"{path}/actions?status=closed"))).GetProperty("items").EnumerateArray());
@@ -96,9 +106,40 @@ public sealed class ActionApiTests(PostgresServer server)
 
         var overview = await Json(await client.GetAsync($"{path}/overview"));
         Assert.All(overview.GetProperty("openByLevel").EnumerateArray(), l => Assert.Equal(0, l.GetProperty("actions").GetInt32()));
-        Assert.Equal(2, overview.GetProperty("last24Hours").GetArrayLength());
+        Assert.Equal(["action.note_added"], overview.GetProperty("last24Hours").EnumerateArray().Select(c => c.GetProperty("kind").GetString()));
 
-        Assert.Equal("action.status_changed", await host.ScalarAsync<string>($"SELECT action FROM platform.audit_event WHERE subject_type = 'action' LIMIT 1"));
+        Assert.Equal("finding.status_changed", await host.ScalarAsync<string>($"SELECT action FROM platform.audit_event WHERE subject_type = 'finding' LIMIT 1"));
+    }
+
+    [Fact]
+    public async Task History_written_before_the_reminder_leaves_out_assignment_and_review()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        var client = host.Client();
+        await client.PostAsync("/api/v1/setup", new { setupToken = ApiTestHost.SetupTokenValue, email = "owner@example.org", displayName = "Owner", password = ApiTestHost.Password });
+        using var _ = client;
+        var org = (await Json(await client.PostAsync("/api/v1/orgs", new { name = "Acme" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
+        var project = (await Json(await client.PostAsync($"/api/v1/orgs/{org}/projects", new { name = "Platform Ops" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
+        var component = (await Json(await client.PostAsync($"/api/v1/orgs/{org}/projects/{project}/components", new { productKey = "postgresql", version = "16.2" }), HttpStatusCode.Created))
+            .GetProperty("id").GetGuid();
+        await SeedAsync(host, org, project, component);
+        var action = await host.ScalarAsync<Guid>($"SELECT id FROM assess.remediation WHERE organization_id = '{org}'");
+
+        // Rows as the history held them before ADR 046: assigned, taken into review, given back, closed from review, reopened into review.
+        await host.ScalarAsync<int>($$"""
+            INSERT INTO assess.assess_event (organization_id, remediation_id, at, kind, data) VALUES
+                ('{{org}}', '{{action}}', now() - interval '5 minutes', 'action.assigned', '{"from": null, "to": "{{Guid.CreateVersion7()}}"}'),
+                ('{{org}}', '{{action}}', now() - interval '4 minutes', 'action.status_changed', '{"from": "open", "to": "in_review"}'),
+                ('{{org}}', '{{action}}', now() - interval '3 minutes', 'action.status_changed', '{"from": "in_review", "to": "open"}'),
+                ('{{org}}', '{{action}}', now() - interval '2 minutes', 'action.status_changed', '{"from": "in_review", "to": "risk_accepted"}'),
+                ('{{org}}', '{{action}}', now() - interval '1 minute', 'action.status_changed', '{"from": "closed", "to": "in_review"}')
+            RETURNING 1
+            """);
+
+        var events = (await Json(await client.GetAsync($"/api/v1/orgs/{org}/actions/2/events"))).EnumerateArray()
+            .Select(e => $"{e.GetProperty("kind").GetString()} {e.GetProperty("data").GetProperty("from").GetString()}>{e.GetProperty("data").GetProperty("to").GetString()}")
+            .ToList();
+        Assert.Equal(["action.status_changed open>risk_accepted", "action.status_changed closed>open"], events);
     }
 
     [Fact]
@@ -117,7 +158,7 @@ public sealed class ActionApiTests(PostgresServer server)
         // Several people decide at once from what they all saw: open. One decision wins, the others reload.
         var responses = await Task.WhenAll(Enumerable.Range(0, 6).Select(i => client.PostAsync(
             $"/api/v1/orgs/{org}/actions/2/status",
-            i % 2 == 0 ? new { status = "in_review", expectedStatus = "open" } : (object)new { status = "risk_accepted", expectedStatus = "open" })));
+            new { status = (i % 3) switch { 0 => "remediated", 1 => "risk_accepted", _ => "not_affected" }, expectedStatus = "open" })));
         Assert.Equal(1, responses.Count(r => r.StatusCode == HttpStatusCode.OK));
         Assert.Equal(5, responses.Count(r => r.StatusCode == HttpStatusCode.Conflict));
         Assert.Equal(1, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'action.status_changed'"));
@@ -135,8 +176,8 @@ public sealed class ActionApiTests(PostgresServer server)
             VALUES ('{org}', '{entry}', 'CVE-2026-0001', 1, 4, 1, now(), now(), now()) RETURNING id
             """);
         var action = await host.ScalarAsync<Guid>($"""
-            INSERT INTO assess.remediation (organization_id, project_id, component_id, number, level, target_version, open_findings, exploitation, fix_available, status, due_at, due_at_manual, opened_at, is_backfill, changed_at)
-            VALUES ('{org}', '{project}', '{component}', 2, 4, '16.4', 1, 'none', true, 'open', now() + interval '7 days', false, now(), false, now()) RETURNING id
+            INSERT INTO assess.remediation (organization_id, project_id, component_id, number, level, target_version, open_findings, exploitation, fix_available, status, opened_at, is_backfill, changed_at)
+            VALUES ('{org}', '{project}', '{component}', 2, 4, '16.4', 1, 'none', true, 'open', now(), false, now()) RETURNING id
             """);
         await host.ScalarAsync<int>($"INSERT INTO assess.org_counter (organization_id, next_number) VALUES ('{org}', 3) RETURNING 1");
         return await host.ScalarAsync<Guid>($"""

@@ -74,11 +74,12 @@ public sealed class ActionTests(PostgresServer server)
         await host.RunJobsAsync();
         Assert.Equal(["3\t16.4\t2"], await host.RowsAsync("SELECT level, target_version, open_findings FROM assess.remediation"));
 
-        // A third raises the level, and the deadline starts again from the raise.
+        // A third raises the level; the reminder has no deadline, so nothing but the level and the time of the raise moves (ADR 046).
         var third = await host.AddEntryAsync(new TestEntry("CVE-2026-8003", new TestAffected { ProductKey = "postgresql", Fixed = "16.4" }) { Score = 9.8 });
         await host.EntryChangedAsync(third);
         await host.RunJobsAsync();
-        Assert.Equal(["4\t3\tTrue"], await host.RowsAsync("SELECT level, open_findings, due_at = level_raised_at + interval '7 days' FROM assess.remediation"));
+        Assert.Equal(["4\t3\tTrue\tTrue"], await host.RowsAsync(
+            "SELECT level, open_findings, level_raised_at IS NOT NULL, due_at IS NULL AND assigned_to IS NULL AND NOT due_at_manual FROM assess.remediation"));
 
         // Exploitation becomes known without a higher level: its own event.
         await host.ScalarAsync<int>($"UPDATE intel.security_entry SET exploitation = 'poc', revision = 2 WHERE id = '{first}' RETURNING 1");
@@ -111,13 +112,16 @@ public sealed class ActionTests(PostgresServer server)
         var number = await host.ScalarAsync<int>("SELECT number FROM assess.remediation");
 
         // A stale starting status is refused.
-        var stale = await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("in_review", "in_review", null), Alice, default));
+        var stale = await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("risk_accepted", "closed", null), Alice, default));
         Assert.Equal("status_conflict", stale.Refusal?.Code);
 
-        await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("in_review", "open", "Checking the cluster"), Alice, default));
-        Assert.Equal(["in_review\tin_review"], await host.RowsAsync("SELECT r.status, f.status FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id"));
+        // «In review» no longer exists (master plan 17.5): an action is open or done.
+        var review = await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("in_review", "open", null), Alice, default));
+        Assert.Equal("invalid_status_change", review.Refusal?.Code);
+        var again = await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("open", "open", null), Alice, default));
+        Assert.Equal("action_open", again.Refusal?.Code);
 
-        await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("risk_accepted", "in_review", "Internal only"), Alice, default));
+        await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("risk_accepted", "open", "Internal only"), Alice, default));
         Assert.Equal(["closed\trisk_accepted\trisk_accepted"], await host.RowsAsync("SELECT r.status, r.close_reason, f.status FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id"));
 
         // A reassessment with the same level leaves a person's decision alone.
@@ -129,7 +133,7 @@ public sealed class ActionTests(PostgresServer server)
         await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("open", "closed", null), Alice, default));
         Assert.Equal(["open\topen"], await host.RowsAsync("SELECT r.status, f.status FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id"));
         Assert.Equal(
-            ["action.raised\t-", "action.status_changed\tin_review", "action.status_changed\trisk_accepted", "action.status_changed\topen"],
+            ["action.raised\t-", "action.status_changed\trisk_accepted", "action.status_changed\topen"],
             await host.RowsAsync("SELECT kind, coalesce(data->>'to', '-') FROM assess.assess_event WHERE kind LIKE 'action.%' ORDER BY at, id"));
     }
 
@@ -156,7 +160,7 @@ public sealed class ActionTests(PostgresServer server)
     }
 
     [Fact]
-    public async Task Assignment_deadline_and_notes_go_into_the_history()
+    public async Task Notes_go_into_the_history_and_the_retired_columns_stay_unwritten()
     {
         await using var host = await AssessmentTestHost.StartAsync(server);
         var acme = AssessmentTestHost.NewOrganization();
@@ -166,25 +170,55 @@ public sealed class ActionTests(PostgresServer server)
         await host.RunJobsAsync();
         var number = await host.ScalarAsync<int>("SELECT number FROM assess.remediation");
 
-        var due = new DateTimeOffset(2026, 12, 24, 12, 0, 0, TimeSpan.Zero);
         await CommandAsync(host, acme, c => c.AddNoteAsync(number, new AddNoteRequest("Patch window on Friday"), Alice, default));
-        await host.InOrganizationAsync(acme, async services =>
-        {
-            var commands = services.GetRequiredService<ActionCommands>();
-            var result = await commands.UpdateActionAsync(number, new UpdateActionRequest(null, null, due, null), Alice, new NoMembers(), default);
-            Assert.Null(result.Refusal);
-        });
-        Assert.Equal(["True\t2026-12-24"], await host.RowsAsync("SELECT due_at_manual, to_char(due_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') FROM assess.remediation"));
-
-        // A new finding with a higher level does not move a deadline a person set.
         var worse = await host.AddEntryAsync(new TestEntry("CVE-2026-9202", new TestAffected { ProductKey = "postgresql", Fixed = "16.4" }) { Score = 9.8 });
         await host.EntryChangedAsync(worse);
         await host.RunJobsAsync();
-        Assert.Equal("2026-12-24", await host.ScalarAsync<string>("SELECT to_char(due_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') FROM assess.remediation"));
 
         Assert.Equal(
             ["action.raised", "action.note_added", "action.level_raised"],
             await host.RowsAsync("SELECT kind FROM assess.assess_event WHERE kind LIKE 'action.%' ORDER BY at, id"));
+
+        // assigned_to, due_at and due_at_manual wait for their removal one version later (master plan 4.11, ADR 046).
+        Assert.Equal(["True"], await host.RowsAsync("SELECT assigned_to IS NULL AND due_at IS NULL AND NOT due_at_manual FROM assess.remediation"));
+    }
+
+    [Fact]
+    public async Task A_finding_moved_to_a_notice_stays_closed_until_its_component_gets_a_version()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        var project = await host.AddProjectAsync(acme, "Platform Ops");
+        var component = await host.AddComponentAsync(acme, project, c => (c.ProductKey, c.Kind) = ("postgresql", "database"));
+        await host.ProfileChangedAsync(acme, project);
+        await host.RunJobsAsync();
+        var entry = await host.AddEntryAsync(new TestEntry("CVE-2026-9301", new TestAffected { ProductKey = "postgresql", Fixed = "16.4" }) { Score = 9.8 });
+        await host.EntryChangedAsync(entry);
+        await host.RunJobsAsync();
+        Assert.Equal(["open\topen"], await host.RowsAsync("SELECT r.status, f.status FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id"));
+
+        // What the migration of ADR 046 does to an open action on a component without a version.
+        await host.ScalarAsync<int>("""
+            WITH f AS (
+                UPDATE assess.finding SET status = 'not_affected', status_reason = 'moved_to_notice', level = 1,
+                    factors = '{"rulesetVersion": 1, "level": 1, "exclusion": "moved_to_notice", "factors": [], "caps": [], "floors": []}'
+                RETURNING 1)
+            UPDATE assess.remediation SET status = 'closed', close_reason = 'moved_to_notice', closed_at = now(), open_findings = 0 RETURNING 1
+            """);
+
+        // A reassessment leaves it with the notice while the component has no version.
+        await host.ScalarAsync<int>($"UPDATE intel.security_entry SET exploitation = 'active', revision = 2 WHERE id = '{entry}' RETURNING 1");
+        await host.EntryChangedAsync(entry);
+        await host.RunJobsAsync();
+        Assert.Equal(["not_affected\tmoved_to_notice\t1"], await host.RowsAsync("SELECT status, status_reason, level FROM assess.finding"));
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation WHERE status <> 'closed'"));
+
+        // With a version the component takes the precise path again: the finding opens a new action.
+        await host.ChangeComponentAsync(acme, component, c => c.Version = "16.2");
+        await host.ProfileChangedAsync(acme, project);
+        await host.RunJobsAsync();
+        Assert.Equal(["open"], await host.RowsAsync("SELECT status FROM assess.finding"));
+        Assert.Equal(["closed\tmoved_to_notice", "open\t-"], await host.RowsAsync("SELECT status, coalesce(close_reason, '-') FROM assess.remediation ORDER BY number"));
     }
 
     private static async Task<(Guid Project, Guid Component)> ProjectAsync(AssessmentTestHost host, Guid organization)
@@ -201,11 +235,5 @@ public sealed class ActionTests(PostgresServer server)
         CommandResult<T> result = default;
         await host.InOrganizationAsync(organization, async services => result = await command(services.GetRequiredService<ActionCommands>()));
         return result;
-    }
-
-    private sealed class NoMembers : Platform.Tenancy.IOrganizationMembership
-    {
-        public Task<Platform.Tenancy.OrganizationAccess?> FindAsync(Guid organizationId, Guid userId, CancellationToken cancellationToken) =>
-            Task.FromResult<Platform.Tenancy.OrganizationAccess?>(null);
     }
 }

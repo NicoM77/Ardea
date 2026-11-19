@@ -65,7 +65,7 @@ internal sealed record EstimateInput
 
     /// <summary>The hit components of the alert: its open findings with a strong match, highest level first.</summary>
     public static IReadOnlyList<Finding> HitFindings(IEnumerable<Finding> findings) =>
-        [.. findings.Where(f => f.Status is "open" or "in_review" && f.MatchType is "package" or "cpe" or "product")
+        [.. findings.Where(f => f.Status == "open" && f.MatchType is "package" or "cpe" or "product")
             .OrderByDescending(f => f.Level).ThenBy(f => f.ComponentId)];
 
     /// <summary>

@@ -16,7 +16,10 @@ internal static class EventKinds
     public const string ActionFixAvailable = "action.fix_available";
     public const string ActionLevelLowered = "action.level_lowered";
     public const string ActionWithdrawn = "action.withdrawn";
-    public const string ActionAssigned = "action.assigned";
+
+    /// <summary>Written until ADR 046 removed the assignment; such rows stay in the table but are never shown or announced.</summary>
+    public const string LegacyActionAssigned = "action.assigned";
+
     public const string ActionStatusChanged = "action.status_changed";
     public const string ActionNoteAdded = "action.note_added";
     public const string BackfillCompleted = "backfill.completed";
@@ -41,6 +44,46 @@ internal static class EventKinds
 
     /// <summary>The events of master plan 8.2 the notifications hear about; the other kinds are history only.</summary>
     public static bool IsNotifiable(string kind) => kind.StartsWith("action.", StringComparison.Ordinal) || kind == BackfillCompleted;
+}
+
+/// <summary>
+/// History rows written before the reminder lost its assignee and its review state (master plan 17.5, ADR 046). They
+/// stay in the table, as history is never deleted (master plan 4.10), but reads leave out what no longer exists:
+/// assignments, and taking an open action into review or giving it back. Wherever else «in review» appears, it reads
+/// as «open»: the migration of ADR 046 made every action and finding in review open.
+/// </summary>
+internal static class LegacyHistory
+{
+    private const string InReview = "in_review";
+
+    /// <summary>A row the history and the notifications leave out.</summary>
+    public static bool Hidden(string kind, JsonElement data) =>
+        kind == EventKinds.LegacyActionAssigned
+        || (kind is EventKinds.ActionStatusChanged or EventKinds.FindingStatusChanged
+            && ((Text(data, "to") == InReview && Text(data, "from") != "closed") || (Text(data, "from") == InReview && Text(data, "to") == "open")));
+
+    /// <summary>The row's data as it reads today: «in review» in <c>from</c> or <c>to</c> is «open».</summary>
+    public static JsonElement Shown(JsonElement data)
+    {
+        if (Text(data, "from") != InReview && Text(data, "to") != InReview)
+        {
+            return data.Clone();
+        }
+
+        var node = System.Text.Json.Nodes.JsonNode.Parse(data.GetRawText())!.AsObject();
+        foreach (var property in new[] { "from", "to" })
+        {
+            if (Text(data, property) == InReview)
+            {
+                node[property] = "open";
+            }
+        }
+
+        return JsonSerializer.SerializeToElement(node);
+    }
+
+    private static string? Text(JsonElement data, string property) =>
+        data.ValueKind == JsonValueKind.Object && data.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 }
 
 /// <summary>

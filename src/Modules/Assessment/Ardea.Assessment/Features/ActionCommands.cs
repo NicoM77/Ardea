@@ -10,9 +10,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Ardea.Assessment.Features;
 
 /// <summary>
-/// What people do with actions and findings (master plan 7.4, 4.9, 10.2): status for all findings of an
-/// action, outcome of a single finding, taking a closing back, assignment, deadline, notes. Every change
-/// checks the status the caller saw, is audited and written to the history.
+/// What people do with actions and findings (master plan 7.4, 4.9, 10.2, 17.5): an outcome for all findings of an
+/// action, the outcome of a single finding, taking a closing back, notes. An action is open or done; nobody is
+/// assigned and there is no deadline (ADR 046). Every change checks the status the caller saw, is audited and
+/// written to the history.
 /// </summary>
 internal sealed class ActionCommands(
     AssessDbContext db, Remediations remediations, History history, RuleSet rules, IAuditLog audit, IJobQueue jobs, ITenantContext tenant, TimeProvider time)
@@ -23,14 +24,14 @@ internal sealed class ActionCommands(
     {
         var status = request.Status?.Trim().ToLowerInvariant();
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
-        if (status is not ("open" or "in_review") && !Outcomes.Contains(status))
+        if (status != "open" && !Outcomes.Contains(status))
         {
-            errors["status"] = ["Choose open, in_review, remediated, risk_accepted or not_affected."];
+            errors["status"] = ["Choose remediated, risk_accepted or not_affected, or open to take a closing back."];
         }
 
-        if (request.ExpectedStatus is not ("open" or "in_review" or "closed"))
+        if (request.ExpectedStatus is not ("open" or "closed"))
         {
-            errors["expectedStatus"] = ["Send the status you saw: open, in_review or closed."];
+            errors["expectedStatus"] = ["Send the status you saw: open or closed."];
         }
 
         CheckNote(request.Note, errors);
@@ -53,36 +54,33 @@ internal sealed class ActionCommands(
         var now = time.GetUtcNow();
         var from = action.Status;
         var findings = await db.Findings.Where(f => f.RemediationId == action.Id).ToListAsync(cancellationToken);
-        if (status is "open" or "in_review")
+        if (status == "open")
         {
-            if (action.Status == "closed")
+            if (action.Status != "closed")
             {
-                // Taking a closing back: the outcomes people set return to the action (master plan 3.10 «Rücknahme»).
-                if (await db.Remediations.AnyAsync(r => r.ComponentId == action.ComponentId && r.Status != "closed", cancellationToken))
-                {
-                    return Refusal.Conflict("action_superseded", "A newer action for this component is open; work there.");
-                }
+                return Refusal.Conflict("action_open", "The action is open already.");
+            }
 
-                var back = findings.Where(f => f.StatusChangedBy is not null && Outcomes.Contains(f.Status)).ToList();
-                if (back.Count == 0)
-                {
-                    return Refusal.Conflict("nothing_to_reopen", "No finding of this action was closed by a person.");
-                }
+            // Taking a closing back: the outcomes people set return to the action (master plan 3.10 «Rücknahme»).
+            if (await db.Remediations.AnyAsync(r => r.ComponentId == action.ComponentId && r.Status != "closed", cancellationToken))
+            {
+                return Refusal.Conflict("action_superseded", "A newer action for this component is open; work there.");
+            }
 
-                foreach (var finding in back)
-                {
-                    Reopen(finding, status, user, now);
-                }
+            var back = findings.Where(f => f.StatusChangedBy is not null && Outcomes.Contains(f.Status)).ToList();
+            if (back.Count == 0)
+            {
+                return Refusal.Conflict("nothing_to_reopen", "No finding of this action was closed by a person.");
+            }
 
-                action.ClosedAt = null;
-                action.CloseReason = null;
+            foreach (var finding in back)
+            {
+                Reopen(finding, user, now, request.Note);
             }
 
             action.Status = status;
-            foreach (var finding in findings.Where(f => f.Status is "open" or "in_review"))
-            {
-                SetPersonStatus(finding, status, user, request.Note, now);
-            }
+            action.ClosedAt = null;
+            action.CloseReason = null;
         }
         else
         {
@@ -91,7 +89,7 @@ internal sealed class ActionCommands(
                 return Refusal.Conflict("action_closed", "The action is closed; take the closing back first.");
             }
 
-            foreach (var finding in findings.Where(f => f.Status is "open" or "in_review"))
+            foreach (var finding in findings.Where(f => f.Status == "open"))
             {
                 Conclude(finding, status!, user, request.Note, now);
             }
@@ -112,7 +110,7 @@ internal sealed class ActionCommands(
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
         if (status != "open" && !Outcomes.Contains(status))
         {
-            errors["status"] = ["Choose remediated, risk_accepted or not_affected, or open to take a closing back; in review is set at the action."];
+            errors["status"] = ["Choose remediated, risk_accepted or not_affected, or open to take a closing back."];
         }
 
         if (string.IsNullOrWhiteSpace(request.ExpectedStatus))
@@ -145,13 +143,13 @@ internal sealed class ActionCommands(
         var from = finding.Status;
         if (status == "open")
         {
-            if (finding.Status is "open" or "in_review")
+            if (finding.Status == "open")
             {
                 return Refusal.Conflict("finding_open", "The finding is open already.");
             }
 
             // It joins the open action of its component or opens a new one; the rules compute its level again.
-            Reopen(finding, "open", user, now);
+            Reopen(finding, user, now);
             finding.RemediationId = await db.Remediations.Where(r => r.ComponentId == finding.ComponentId && r.Status != "closed")
                 .Select(r => (Guid?)r.Id).SingleOrDefaultAsync(cancellationToken);
             await jobs.EnqueueAsync(new AssessAlert(finding.EntryId), AssessAlert.Options(tenant.RequiredOrganizationId, finding.EntryId), cancellationToken);
@@ -167,68 +165,6 @@ internal sealed class ActionCommands(
         await UpdateAlertsAsync([finding.AlertId], cancellationToken);
         await audit.RecordAsync(new AuditEntry("finding.status_changed", "finding", finding.Id.ToString(), new { from, to = status }), cancellationToken);
         return finding;
-    }
-
-    public async Task<CommandResult<Remediation>> UpdateActionAsync(int number, UpdateActionRequest request, Guid user, IOrganizationMembership members, CancellationToken cancellationToken)
-    {
-        var action = await LockedActionAsync(number, cancellationToken);
-        if (action is null)
-        {
-            return NotFound();
-        }
-
-        var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
-        if (request.AssignedTo is { } assignee && await members.FindAsync(tenant.RequiredOrganizationId, assignee, cancellationToken) is null)
-        {
-            errors["assignedTo"] = ["Not a member of this organisation."];
-        }
-
-        if (request.AssignedTo is not null && request.Unassign == true)
-        {
-            errors["unassign"] = ["Assign or unassign, not both."];
-        }
-
-        if (request.DueAt is not null && request.ResetDueAt == true)
-        {
-            errors["resetDueAt"] = ["Set a deadline or reset it, not both."];
-        }
-
-        if (errors.Count > 0)
-        {
-            return Refusal.Validation("invalid_action_change", "The change is not valid.", errors);
-        }
-
-        if (action.Status == "closed")
-        {
-            return Refusal.Conflict("action_closed", "The action is closed.");
-        }
-
-        var now = time.GetUtcNow();
-        if (request.AssignedTo is not null || request.Unassign == true)
-        {
-            var to = request.Unassign == true ? null : request.AssignedTo;
-            if (to != action.AssignedTo)
-            {
-                history.Add(EventKinds.ActionAssigned, new { from = action.AssignedTo, to }, action.Id, actor: user);
-                action.AssignedTo = to;
-            }
-        }
-
-        if (request.DueAt is { } due)
-        {
-            action.DueAt = due;
-            action.DueAtManual = true;
-        }
-        else if (request.ResetDueAt == true)
-        {
-            action.DueAtManual = false;
-            action.DueAt = rules.DeadlineOf(action.Level) is { } deadline ? (action.LevelRaisedAt ?? action.OpenedAt) + deadline : null;
-        }
-
-        action.ChangedAt = now;
-        await db.SaveChangesAsync(cancellationToken);
-        await audit.RecordAsync(new AuditEntry("action.changed", "action", number.ToString(System.Globalization.CultureInfo.InvariantCulture), request), cancellationToken);
-        return action;
     }
 
     public async Task<CommandResult<AssessEvent>> AddNoteAsync(int number, AddNoteRequest request, Guid user, CancellationToken cancellationToken)
@@ -297,7 +233,7 @@ internal sealed class ActionCommands(
     /// <summary>A person's outcome; «not affected» is an exclusion and gives level 1 (master plan 7.6 step 1).</summary>
     internal void Conclude(Finding finding, string outcome, Guid user, string? note, DateTimeOffset now)
     {
-        if (finding.Status is "open" or "in_review")
+        if (finding.Status == "open")
         {
             finding.ClosedLevel = finding.Level;
             finding.ClosedVersionVerdict = finding.VersionVerdict;
@@ -311,7 +247,7 @@ internal sealed class ActionCommands(
         }
     }
 
-    private static void Reopen(Finding finding, string status, Guid user, DateTimeOffset now)
+    private static void Reopen(Finding finding, Guid user, DateTimeOffset now, string? note = null)
     {
         // Until the rules compute it again, it keeps the level it had when it closed, at least level 2.
         finding.Level = Math.Max(finding.ClosedLevel ?? finding.Level, 2);
@@ -330,7 +266,7 @@ internal sealed class ActionCommands(
             finding.VerdictSource = "rules";
         }
 
-        SetPersonStatus(finding, status, user, null, now);
+        SetPersonStatus(finding, "open", user, note, now);
     }
 
     private async Task UpdateAlertsAsync(IEnumerable<Guid> alertIds, CancellationToken cancellationToken)

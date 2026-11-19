@@ -38,9 +38,6 @@ internal sealed record RuleSet
 
     public required FloorRules Floors { get; init; }
 
-    /// <summary>The default deadline per level in hours (master plan 7.6); level 1 has none.</summary>
-    public required Dictionary<string, int> DeadlineHours { get; init; }
-
     /// <summary>The factors of version 1, in the order they are shown.</summary>
     public static readonly IReadOnlyList<string> Factors =
         ["severity", "exploitation", "affectedness", "criticality", "exposure", "protection", "authorityWarning", "epss"];
@@ -85,10 +82,6 @@ internal sealed record RuleSet
     public string SeverityOf(double? score) =>
         score is not { } value ? "unrated"
         : SeverityClasses.Where(c => value >= c.Value).OrderByDescending(c => c.Value).Select(c => c.Key).FirstOrDefault() ?? "low";
-
-    /// <summary>The default deadline of a level, or <c>null</c> for level 1.</summary>
-    public TimeSpan? DeadlineOf(int level) =>
-        DeadlineHours.TryGetValue(level.ToString(CultureInfo.InvariantCulture), out var hours) ? TimeSpan.FromHours(hours) : null;
 
     private List<string> Check()
     {
@@ -142,7 +135,6 @@ internal sealed record RuleSet
             problems.Add("levels from points lie between 2 and 5; level 1 only comes from an exclusion");
         }
 
-        problems.AddRange(new[] { "2", "3", "4", "5" }.Where(l => !DeadlineHours.ContainsKey(l)).Select(l => $"deadlineHours.{l} is missing"));
         if (Caps.Unconfirmed is < 2 or > 5 || Caps.Development is < 2 or > 5)
         {
             problems.Add("caps lie between 2 and 5");

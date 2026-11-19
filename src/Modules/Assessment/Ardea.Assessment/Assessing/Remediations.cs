@@ -1,17 +1,16 @@
 using Ardea.Assessment.Persistence;
-using Ardea.Assessment.Rules;
 using Ardea.Catalog.Contracts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assessment.Assessing;
 
 /// <summary>
-/// Keeps the actions in step with their findings (master plan 7.4, 4.9, 8.2): one action per component
-/// with open findings, its level the maximum over them, its deadline from the level, and an event for
-/// every change a person must hear about. Called once at the end of every unit of work that changed
-/// findings, with the components it touched.
+/// Keeps the actions in step with their findings (master plan 7.4, 4.9, 8.2, 17.5): one action per component
+/// with open findings, its level the maximum over them, and an event for every change a person must hear about;
+/// no assignee and no deadline (ADR 046). Called once at the end of every unit of work that changed findings,
+/// with the components it touched.
 /// </summary>
-internal sealed class Remediations(AssessDbContext db, Numbers numbers, History history, RuleSet rules, IVersionSchemes schemes, TimeProvider time)
+internal sealed class Remediations(AssessDbContext db, Numbers numbers, History history, IVersionSchemes schemes, TimeProvider time)
 {
     private static readonly Dictionary<string, int> ExploitationRank = new(StringComparer.Ordinal) { ["none"] = 0, ["poc"] = 1, ["active"] = 2 };
 
@@ -42,7 +41,7 @@ internal sealed class Remediations(AssessDbContext db, Numbers numbers, History 
     {
         var now = time.GetUtcNow();
         var findings = await db.Findings.Where(f => f.ComponentId == componentId).ToListAsync(cancellationToken);
-        var active = findings.Where(f => f.Status is "open" or "in_review").ToList();
+        var active = findings.Where(f => f.Status == "open").ToList();
         var current = await db.Remediations.SingleOrDefaultAsync(r => r.ComponentId == componentId && r.Status != "closed", cancellationToken);
 
         if (active.Count == 0)
@@ -76,9 +75,8 @@ internal sealed class Remediations(AssessDbContext db, Numbers numbers, History 
         var (level, exploitation, fix) = (current.Level, current.Exploitation, current.FixAvailable);
         foreach (var finding in active.Where(f => f.RemediationId != current.Id))
         {
-            // A finding joins the action and takes its status, open or in review (master plan 7.4).
+            // A finding joins the open action of its component (master plan 7.4).
             finding.RemediationId = current.Id;
-            finding.Status = current.Status;
             finding.ChangedAt = now;
             if (!finding.IsBackfill)
             {
@@ -115,13 +113,6 @@ internal sealed class Remediations(AssessDbContext db, Numbers numbers, History 
         if (!created && current.FixAvailable && !fix)
         {
             history.Add(EventKinds.ActionFixAvailable, new { current.TargetVersion }, current.Id);
-        }
-
-        if (!current.DueAtManual)
-        {
-            // Start plus the deadline of the current level; a lower level keeps the start and gets the longer deadline (master plan 4.9).
-            var start = current.LevelRaisedAt ?? current.OpenedAt;
-            current.DueAt = rules.DeadlineOf(current.Level) is { } deadline ? start + deadline : null;
         }
 
         current.ChangedAt = now;

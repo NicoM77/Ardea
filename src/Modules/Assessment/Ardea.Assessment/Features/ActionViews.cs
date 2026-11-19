@@ -16,16 +16,13 @@ internal sealed record ActionEntryRef(Guid Id, string Key, string? Title);
 /// <param name="Number">The organisation's number, shared with alerts.</param>
 /// <param name="Level">2 to 5; the maximum over its open findings.</param>
 /// <param name="LevelName"><c>critical</c>, <c>high</c>, <c>medium</c>, <c>low</c>.</param>
-/// <param name="Status"><c>open</c>, <c>in_review</c> or <c>closed</c>.</param>
+/// <param name="Status"><c>open</c> or <c>closed</c> (master plan 17.5: open and done).</param>
 /// <param name="Project">The project of the component.</param>
 /// <param name="Component">The component the action is about.</param>
 /// <param name="TargetVersion">The highest fix version of its open findings.</param>
-/// <param name="OpenFindings">How many findings are open or in review.</param>
+/// <param name="OpenFindings">How many findings are open.</param>
 /// <param name="Exploitation">The highest exploitation over its open findings.</param>
 /// <param name="FixAvailable">One of its entries names a fix.</param>
-/// <param name="AssignedTo">The member it is assigned to.</param>
-/// <param name="DueAt">Start plus the deadline of its level, or a deadline a person set.</param>
-/// <param name="Overdue">Not closed and past its deadline.</param>
 /// <param name="OpenedAt">When it opened.</param>
 /// <param name="LevelRaisedAt">When its level last rose.</param>
 /// <param name="ClosedAt">When it closed.</param>
@@ -43,9 +40,6 @@ internal sealed record ActionSummary(
     int OpenFindings,
     string Exploitation,
     bool FixAvailable,
-    Guid? AssignedTo,
-    DateTimeOffset? DueAt,
-    bool Overdue,
     DateTimeOffset OpenedAt,
     DateTimeOffset? LevelRaisedAt,
     DateTimeOffset? ClosedAt,
@@ -123,17 +117,14 @@ internal sealed record ChangeCountView(string Kind, int Count);
 
 /// <summary>Everything the overview needs in one call (master plan 10.2): counts per level, the most urgent actions, level per project, recent changes.</summary>
 internal sealed record OverviewView(
-    IReadOnlyList<LevelCountView> OpenByLevel, int Overdue, IReadOnlyList<UrgentActionView> Urgent, IReadOnlyList<ProjectLevelView> Projects, IReadOnlyList<ChangeCountView> Last24Hours);
+    IReadOnlyList<LevelCountView> OpenByLevel, IReadOnlyList<UrgentActionView> Urgent, IReadOnlyList<ProjectLevelView> Projects, IReadOnlyList<ChangeCountView> Last24Hours);
 
 /// <summary>
-/// Sets the status of an action for all its findings (master plan 7.4): <c>open</c> or <c>in_review</c>,
-/// or an outcome <c>remediated</c>, <c>risk_accepted</c>, <c>not_affected</c>. <c>expectedStatus</c> is the
-/// status the caller saw (master plan 10.1); <c>open</c> on a closed action takes back its closing.
+/// Sets the outcome of an action for all its open findings (master plan 7.4, 17.5): <c>remediated</c>,
+/// <c>risk_accepted</c> or <c>not_affected</c>; <c>open</c> on a closed action takes back its closing.
+/// <c>expectedStatus</c> is the status the caller saw, <c>open</c> or <c>closed</c> (master plan 10.1).
 /// </summary>
 internal sealed record SetActionStatusRequest(string? Status, string? ExpectedStatus, string? Note);
-
-/// <summary>Assigns an action or changes its deadline; <c>unassign</c> and <c>resetDueAt</c> undo either.</summary>
-internal sealed record UpdateActionRequest(Guid? AssignedTo, bool? Unassign, DateTimeOffset? DueAt, bool? ResetDueAt);
 
 internal sealed record AddNoteRequest(string? Text);
 

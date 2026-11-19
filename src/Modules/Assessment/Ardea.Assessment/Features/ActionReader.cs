@@ -1,3 +1,4 @@
+using Ardea.Assessment.Assessing;
 using Ardea.Assessment.Persistence;
 using Ardea.Assets.Contracts;
 using Ardea.Intel.Contracts;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Ardea.Assessment.Features;
 
 /// <summary>Builds the views of actions, findings and alerts with names from Assets and titles from Intel.</summary>
-internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles, IEntryQueries entries, TimeProvider time)
+internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles, IEntryQueries entries)
 {
     public async Task<IReadOnlyList<ActionSummary>> SummariesAsync(IReadOnlyList<Remediation> actions, CancellationToken cancellationToken)
     {
@@ -24,16 +25,15 @@ internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles,
                 select new { RemediationId = finding.RemediationId!.Value, finding.Level, finding.Status, alert.EntryKey })
             .ToListAsync(cancellationToken))
             .ToLookup(k => k.RemediationId);
-        var now = time.GetUtcNow();
         return [.. actions.Select(a =>
         {
             var (project, component) = Refs(components, a.ComponentId, a.ProjectId);
             var entryKeys = keys[a.Id]
-                .OrderByDescending(k => k.Status is "open" or "in_review").ThenByDescending(k => k.Level).ThenBy(k => k.EntryKey, StringComparer.Ordinal)
+                .OrderByDescending(k => k.Status == "open").ThenByDescending(k => k.Level).ThenBy(k => k.EntryKey, StringComparer.Ordinal)
                 .Select(k => k.EntryKey).Distinct().Take(3).ToList();
             return new ActionSummary(
                 a.Number, a.Level, Levels.Name(a.Level), a.Status, project, component, a.TargetVersion, a.OpenFindings, a.Exploitation, a.FixAvailable,
-                a.AssignedTo, a.DueAt, a.Status != "closed" && a.DueAt < now, a.OpenedAt, a.LevelRaisedAt, a.ClosedAt, a.CloseReason, a.IsBackfill, entryKeys);
+                a.OpenedAt, a.LevelRaisedAt, a.ClosedAt, a.CloseReason, a.IsBackfill, entryKeys);
         })];
     }
 
@@ -84,7 +84,7 @@ internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles,
         var titles = (await entries.FindManyAsync([.. alerts.Select(a => a.EntryId)], cancellationToken)).ToDictionary(e => e.Id, e => e.Title);
         return [.. alerts.Select(a => new AlertSummary(
             a.Number ?? 0, a.Level, Levels.Name(a.Level), new ActionEntryRef(a.EntryId, a.EntryKey, titles.GetValueOrDefault(a.EntryId)),
-            counts[a.Id].Where(f => f.Status is "open" or "in_review").Select(f => f.RemediationId).Distinct().Count(),
+            counts[a.Id].Where(f => f.Status == "open").Select(f => f.RemediationId).Distinct().Count(),
             counts[a.Id].Count(), a.FirstRaisedAt, a.ChangedAt))];
     }
 
@@ -119,11 +119,14 @@ internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles,
         return current.ToDictionary(a => a.AlertId);
     }
 
+    /// <summary>The history of an action, without the rows of assignment and review written before ADR 046.</summary>
     public async Task<IReadOnlyList<ActionEventView>> EventsAsync(Guid remediationId, CancellationToken cancellationToken) =>
-        (await db.Events.AsNoTracking().Where(e => e.RemediationId == remediationId).OrderBy(e => e.At).ThenBy(e => e.Id).ToListAsync(cancellationToken))
+        (await db.Events.AsNoTracking().Where(e => e.RemediationId == remediationId && e.Kind != EventKinds.LegacyActionAssigned)
+            .OrderBy(e => e.At).ThenBy(e => e.Id).ToListAsync(cancellationToken))
+        .Where(e => !LegacyHistory.Hidden(e.Kind, e.Data.RootElement))
         .Select(View).ToList();
 
-    public static ActionEventView View(AssessEvent e) => new(e.Id, e.Kind, e.At, e.Actor, e.FindingId, e.Data.RootElement.Clone());
+    public static ActionEventView View(AssessEvent e) => new(e.Id, e.Kind, e.At, e.Actor, e.FindingId, LegacyHistory.Shown(e.Data.RootElement));
 
     private async Task<Dictionary<Guid, ProfileComponent>> ComponentsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken) =>
         (await profiles.FindComponentsAsync([.. ids.Distinct()], cancellationToken)).ToDictionary(c => c.Id);

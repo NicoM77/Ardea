@@ -45,6 +45,9 @@ internal sealed class AlertAssessor(
     ITenantContext tenant,
     TimeProvider time)
 {
+    /// <summary>The reason of a finding whose open action the migration of ADR 046 turned into a notice.</summary>
+    internal const string MovedToNotice = "moved_to_notice";
+
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -144,7 +147,7 @@ internal sealed class AlertAssessor(
         }
 
         // The alert gets its number once one of its findings reaches level 2 (master plan 4.6).
-        if (alert.Number is null && findings.Exists(f => f.Status is "open" or "in_review"))
+        if (alert.Number is null && findings.Exists(f => f.Status == "open"))
         {
             alert.Number = await numbers.NextAsync(cancellationToken);
             alert.FirstRaisedAt = now;
@@ -363,7 +366,13 @@ internal sealed class AlertAssessor(
             : outcome.ReopenLevel > (finding.ClosedLevel ?? finding.Level) && outcome.ReopenLevel >= 2 ? "level_raised"
             : outcome.VersionVerdict == VersionVerdicts.InRange && finding.ClosedVersionVerdict != VersionVerdicts.InRange && outcome.ReopenLevel >= 2 ? "in_range_again"
             : null;
-        var (level, factors) = reopen is null ? (outcome.Level, outcome.Factors) : (outcome.ReopenLevel, outcome.ReopenFactors);
+
+        // A finding the migration of ADR 046 moved to a notice stays with the notice while its component has no version;
+        // once a version is entered it takes the precise path again. Task 5a.3 routes every coarse component to notices.
+        var withNotice = finding is { StatusReason: MovedToNotice, StatusChangedBy: null } && string.IsNullOrWhiteSpace(installedNow);
+        var (level, factors) = withNotice ? (1, Document(new RuleResult { RulesetVersion = rules.Version, Level = 1, Exclusion = MovedToNotice }))
+            : reopen is null ? (outcome.Level, outcome.Factors)
+            : (outcome.ReopenLevel, outcome.ReopenFactors);
 
         var changed = finding.MatchType != outcome.MatchType || finding.VersionVerdict != outcome.VersionVerdict
             || finding.VersionReason != outcome.VersionReason || finding.FixedVersion != outcome.FixedVersion
@@ -386,6 +395,11 @@ internal sealed class AlertAssessor(
             finding.ChangedAt = now;
         }
 
+        if (withNotice)
+        {
+            return;
+        }
+
         if (personClosed)
         {
             if (reopen is not null)
@@ -397,7 +411,7 @@ internal sealed class AlertAssessor(
             return;
         }
 
-        var open = finding.Status is "open" or "in_review";
+        var open = finding.Status == "open";
         var (status, reason) = outcome.Level >= 2
             ? (open ? finding.Status : "open", (string?)null)
             // A raised version in the profile closes what it fixes, «fixed by update» (master plan 7.4).
@@ -421,7 +435,7 @@ internal sealed class AlertAssessor(
             finding.ChangedAt = now;
         }
 
-        if (finding.StatusChangedBy is null || finding.Status is "open" or "in_review")
+        if (finding.StatusChangedBy is null || finding.Status == "open")
         {
             SetStatus(finding, reason is "component_removed" or "project_archived" ? "remediated" : "not_affected", reason, now);
         }
@@ -435,7 +449,7 @@ internal sealed class AlertAssessor(
             return;
         }
 
-        if (finding.Status is "open" or "in_review" && status is not ("open" or "in_review") && finding.RemediationId is not null)
+        if (finding.Status == "open" && status != "open" && finding.RemediationId is not null)
         {
             history.Add(EventKinds.FindingClosed, new { reason = reason ?? status, status }, finding.RemediationId, finding.Id);
         }

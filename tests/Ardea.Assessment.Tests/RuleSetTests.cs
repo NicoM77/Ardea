@@ -5,7 +5,7 @@ using Ardea.Platform.Persistence;
 
 namespace Ardea.Assessment.Tests;
 
-/// <summary>Rule set version 1 (task 3.4; master plan 7.6): factors, bounds, deadlines and the worked examples.</summary>
+/// <summary>Rule set version 1 (task 3.4; master plan 7.6): factors, bounds and the worked examples.</summary>
 public sealed class RuleSetTests
 {
     private static readonly RuleSet Rules = RuleSet.Load(MasterDataOptions.FindDefault());
@@ -144,15 +144,15 @@ public sealed class RuleSetTests
         Assert.Contains("\"rulesetVersion\":1", first, StringComparison.Ordinal);
     }
 
-    [Theory]
-    [InlineData(5, 48)]
-    [InlineData(4, 7 * 24)]
-    [InlineData(3, 30 * 24)]
-    [InlineData(2, 90 * 24)]
-    public void Deadlines_follow_the_level(int level, int hours) => Assert.Equal(TimeSpan.FromHours(hours), Rules.DeadlineOf(level));
-
     [Fact]
-    public void Level_1_has_no_deadline() => Assert.Null(Rules.DeadlineOf(1));
+    public void A_rule_set_names_no_deadlines()
+    {
+        // Reminders have no deadline (master plan 17.5, ADR 046): a rule set that still names some is refused, not half read.
+        var text = File.ReadAllText(Path.Combine(MasterDataOptions.FindDefault(), RuleSet.Folder, "ruleset-1.json"));
+        Assert.DoesNotContain("deadline", text, StringComparison.OrdinalIgnoreCase);
+        var withDeadlines = text.TrimEnd().TrimEnd('}') + ", \"deadlineHours\": { \"5\": 48 } }";
+        Assert.ThrowsAny<JsonException>(() => RuleSet.Parse(withDeadlines));
+    }
 
     [Theory]
     [InlineData(null, "unrated")]

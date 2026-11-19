@@ -58,16 +58,21 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
         // The sample data of the mockups: one organisation, three people, three projects, and what the pipeline made of the records.
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM iam.organization WHERE settings -> 'setup' ->> 'completedAt' IS NOT NULL"));
         Assert.Equal(3L, await host.ScalarAsync<long>("SELECT count(*) FROM iam.membership"));
-        Assert.Equal(3L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.project"));
+        Assert.Equal(3L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.project WHERE kind = 'project'"));
         Assert.Equal(11L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component"));
+
+        // The organisation has its stack from its creation on (master plan 17.2), still empty; the demo's versions are
+        // releases, and the managed Azure SQL has none (ADR 046).
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.project WHERE kind = 'organization_stack'"));
+        Assert.Equal("exact 10, none 1", await host.ScalarAsync<string>(
+            "SELECT string_agg(version_precision || ' ' || n, ', ' ORDER BY version_precision) FROM (SELECT version_precision, count(*) AS n FROM assets.component GROUP BY 1) p"));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component WHERE product_key IS NOT NULL AND version_scheme IS NULL"));
         Assert.Equal(16L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.security_entry"));
         Assert.True(await host.ScalarAsync<long>("SELECT count(*) FROM assess.finding WHERE level >= 3") >= 10);
 
-        // Open and done only: phase 5a drops assignment, deadline set by hand and «in review», so the demo uses none of them.
+        // Open and done only (master plan 17.5); the retired columns of assignment and deadline stay unwritten (ADR 046).
         Assert.InRange(await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation WHERE status = 'open'"), 3, 6);
-        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation WHERE status = 'in_review' OR assigned_to IS NOT NULL OR due_at_manual"));
-        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.finding WHERE status = 'in_review'"));
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation WHERE assigned_to IS NOT NULL OR due_at IS NOT NULL OR due_at_manual"));
         // Done once by a person, once by the pipeline after the profile follows the .NET update.
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation WHERE status = 'closed' AND close_reason = 'not_affected'"));
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation WHERE status = 'closed' AND close_reason = 'fixed_by_update'"));

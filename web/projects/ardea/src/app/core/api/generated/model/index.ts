@@ -164,6 +164,7 @@ export * from './setupView';
 export * from './smtpSettingsView';
 export * from './sourceRunView';
 export * from './sourceStatus';
+export * from './stackSuggestionView';
 export * from './stackView';
 export * from './statusMetric';
 export * from './statusWarning';

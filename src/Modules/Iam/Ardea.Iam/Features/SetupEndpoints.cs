@@ -24,7 +24,7 @@ internal sealed record SetupView(IReadOnlyList<string> StepsDone, Guid? FirstPro
 internal static class SetupEndpoints
 {
     /// <summary>The steps of master plan 11.6, in order.</summary>
-    public static readonly string[] Steps = ["organization", "project", "repository", "operations", "technologies", "coverage", "notifications", "overview"];
+    public static readonly string[] Steps = ["organization", "stack", "project", "repository", "operations", "technologies", "coverage", "notifications", "overview"];
 
     public static void Map(IEndpointRouteBuilder api)
     {

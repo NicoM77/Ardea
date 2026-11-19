@@ -25,9 +25,14 @@ public sealed class SetupAndAuditTests(PostgresServer server)
         Assert.Equal(["project", "operations"], saved.GetProperty("stepsDone").EnumerateArray().Select(s => s.GetString()));
         Assert.Equal(projectId, saved.GetProperty("firstProjectId").GetGuid());
 
+        // The stack comes before the projects (master plan 11.6 step 1b, task 5a.4), also when an organisation that
+        // started the wizard before saves it afterwards.
+        var stack = await Json(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "stack" }));
+        Assert.Equal(["stack", "project", "operations"], stack.GetProperty("stepsDone").EnumerateArray().Select(s => s.GetString()));
+
         // Saving a step twice changes nothing.
         await Json(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "project" }));
-        Assert.Equal(2, (await Json(await owner.GetAsync($"/api/v1/orgs/{orgId}/setup"))).GetProperty("stepsDone").GetArrayLength());
+        Assert.Equal(3, (await Json(await owner.GetAsync($"/api/v1/orgs/{orgId}/setup"))).GetProperty("stepsDone").GetArrayLength());
         await ExpectProblem(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "dance" }), HttpStatusCode.BadRequest, "validation_failed");
 
         var completed = await Json(await owner.PostAsync($"/api/v1/orgs/{orgId}/setup/complete"));

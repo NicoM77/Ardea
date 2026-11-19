@@ -71,6 +71,51 @@ public sealed class StackApiTests(PostgresServer server)
         Assert.Equal(JsonValueKind.Null, cleared.GetProperty("version").ValueKind);
     }
 
+    [Fact]
+    public async Task Suggestions_name_companions_first_then_what_the_projects_name_then_the_usual_entries_each_once_and_never_an_entry_of_the_stack()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        var (owner, orgId) = await OrgAsync(host);
+        using var _ = owner;
+        var path = $"/api/v1/orgs/{orgId}";
+        var stackId = (await Json(await owner.GetAsync($"{path}/stack"))).GetProperty("projectId").GetGuid();
+        var portal = (await Json(await owner.PostAsync($"{path}/projects", new { name = "Portal" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
+        var shop = (await Json(await owner.PostAsync($"{path}/projects", new { name = "Shop" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
+        await Json(await owner.SendAsync(HttpMethod.Put, $"{path}/projects/{portal}/components", new
+        {
+            components = new object[] { new { productKey = "postgresql", version = "17.11" }, new { productKey = "dotnet", version = "10.0.1" }, new { productKey = "newtonsoft-json", version = "13.0.3" } },
+        }));
+        await Json(await owner.SendAsync(HttpMethod.Put, $"{path}/projects/{shop}/components", new { components = new object[] { new { productKey = "postgresql", version = "16.4" } } }));
+        await Json(await owner.PostAsync($"{path}/projects/{stackId}/components", new { productKey = "iis" }), HttpStatusCode.Created);
+
+        var suggestions = (await Json(await owner.GetAsync($"{path}/stack/suggestions"))).EnumerateArray().ToList();
+        var keys = suggestions.Select(s => s.GetProperty("productKey").GetString()).ToList();
+        Assert.Equal(keys.Distinct().Count(), keys.Count);
+
+        // IIS is named in Windows Server records (ADR 044): its companion comes first, with the entry it goes with.
+        Assert.Equal("windows-server", keys[0]);
+        Assert.Equal("companion", suggestions[0].GetProperty("reason").GetString());
+        Assert.Equal("Internet Information Services", suggestions[0].GetProperty("basis").GetString());
+
+        // Then what the projects name, the most named first, with the projects; a library is no stack entry.
+        Assert.Equal(["postgresql", "dotnet"], keys.Skip(1).Take(2));
+        Assert.Equal(["Portal", "Shop"], suggestions[1].GetProperty("projects").EnumerateArray().Select(p => p.GetString()));
+        Assert.Equal("project", suggestions[1].GetProperty("reason").GetString());
+        Assert.DoesNotContain("newtonsoft-json", keys);
+
+        // Then the usual entries of master plan 17.8, without what is already suggested or in the stack.
+        Assert.All(suggestions.Skip(3), s => Assert.Equal("common", s.GetProperty("reason").GetString()));
+        Assert.Contains("angular", keys);
+        Assert.DoesNotContain("iis", keys);
+        Assert.Equal("framework", suggestions.Single(s => s.GetProperty("productKey").GetString() == "angular").GetProperty("kind").GetString());
+
+        // An entry added to the stack is no longer suggested.
+        await Json(await owner.PostAsync($"{path}/projects/{stackId}/components", new { productKey = "postgresql" }), HttpStatusCode.Created);
+        var after = (await Json(await owner.GetAsync($"{path}/stack/suggestions"))).EnumerateArray().Select(s => s.GetProperty("productKey").GetString()).ToList();
+        Assert.DoesNotContain("postgresql", after);
+        Assert.Equal("dotnet", after[1]);
+    }
+
     private static async Task<(ApiClient Client, Guid OrgId)> OrgAsync(ApiTestHost host)
     {
         var client = host.Client();

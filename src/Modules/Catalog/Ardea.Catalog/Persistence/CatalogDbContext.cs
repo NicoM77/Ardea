@@ -229,8 +229,8 @@ internal sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> option
             unknown.Property(u => u.Outcome).HasMaxLength(10).HasDefaultValue("open");
             unknown.Property(u => u.ProductKey).HasMaxLength(200);
             unknown.Property(u => u.FirstSeenAt).HasDefaultValueSql("now()");
-            // The daily collection works through the most frequent open keys first (master plan 6.9).
-            unknown.HasIndex(u => new { u.Outcome, u.RecordCount }).HasDatabaseName("ix_unknown_product_outcome_count");
+            // The list of open keys and the daily choice of what to ask: in KEV first, then the most records (master plan 6.9).
+            unknown.HasIndex(u => new { u.Outcome, u.InKev, u.RecordCount, u.RawKey }).IsDescending(false, true, true, false).HasDatabaseName("ix_unknown_product_outcome_count");
             unknown.Property(u => u.Proposal).HasColumnType("jsonb");
             unknown.Property(u => u.Attempts).HasDefaultValue(0);
         });

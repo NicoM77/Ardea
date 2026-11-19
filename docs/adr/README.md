@@ -14,6 +14,7 @@ Der Masterplan ist seit dem 18.11.2026 freigegeben; damit sind alle Einträge **
 | [0035](0035-actions-history-and-first-fill.md) | Actions kept in step once per unit of work, events as history rows, first fill by match scope, numbers, people's decisions, read API; refines 011 and 014 |
 | [0036](0036-reference-set-and-calibration.md) | Reference set of 250 labelled pairs from the spike week, selected by script and run through the real pipeline in the build; spike week as test data; labels by a model for owner review; calibration of the version check; refines 007, 033, 034 |
 | [0037](0037-assessment-by-language-model.md) | Assessment by a language model: versioned prompt and schema, no free profile text in the input, checked answers, two attempts at allowed providers only, immutable `assessment` rows, verdict as a factor for unknown versions, threshold, call quota per action, daily caps, `assess.model_tokens_exhausted`; refines 007, 023, 029 and 035 |
+| [0038](0038-notifications.md) | Notifications: hand-off in the event's transaction, ordered evaluation per organisation, state written on decision, built-in recipients, bundling under a row lock, three-step delivery, digest schedule, warnings, external addresses with signed links, signed webhooks, default rules; `notify.organizations_with_warning_rules`, `notify.due_digest_targets`; refines 014, 023, 029 and 035 |
 
 | Nr. | Entscheidung | Wichtigste verworfene Alternative | Kapitel | Status |
 |---|---|---|---|---|

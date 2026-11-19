@@ -6,6 +6,7 @@ export * from './administration/administration.service';
 export * from './authentication/authentication.service';
 export * from './catalog/catalog.service';
 export * from './entries/entries.service';
+export * from './live/live.service';
 export * from './organizations/organizations.service';
 export * from './projects/projects.service';
 export * from './repositories/repositories.service';

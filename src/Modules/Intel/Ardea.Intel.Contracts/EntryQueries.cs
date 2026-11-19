@@ -17,7 +17,32 @@ public interface IEntryQueries
     /// <paramref name="since"/>, that name one of the keys as an affected product.
     /// </summary>
     Task<IReadOnlyList<Guid>> FindAffectingAsync(AffectedKeys keys, DateTimeOffset since, CancellationToken cancellationToken);
+
+    /// <summary>The texts of the entries for the answers from templates (master plan 7.5); unknown ids are left out.</summary>
+    Task<IReadOnlyList<EntryText>> TextsAsync(IReadOnlyCollection<Guid> entryIds, CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// What a source says about an entry in its own words (master plan 7.5): title, description, solutions and
+/// workarounds as the source wrote them, the source the description comes from, and the advisory to read.
+/// </summary>
+/// <param name="Id">The entry.</param>
+/// <param name="Key">Its primary key, e.g. <c>CVE-2026-116325</c>.</param>
+/// <param name="Title">Its title.</param>
+/// <param name="Description">Its description in the source's words.</param>
+/// <param name="DescriptionSource">The name of the source whose description the entry shows, e.g. <c>CVE Program</c>.</param>
+/// <param name="Solutions">The sources' solutions, as written.</param>
+/// <param name="Workarounds">The sources' workarounds, as written.</param>
+/// <param name="AdvisoryUrl">A reference tagged as the vendor's advisory, else one tagged as a patch, else the first.</param>
+public sealed record EntryText(
+    Guid Id,
+    string Key,
+    string? Title,
+    string? Description,
+    string? DescriptionSource,
+    IReadOnlyList<string> Solutions,
+    IReadOnlyList<string> Workarounds,
+    string? AdvisoryUrl);
 
 /// <summary>Keys of affected products, in the forms of <c>intel.entry_affected</c>.</summary>
 /// <param name="ProductKeys">Product keys: catalogue keys or raw keys.</param>

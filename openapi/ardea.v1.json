@@ -1621,6 +1621,29 @@
         }
       }
     },
+    "/api/v1/status": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "operationId": "getStatusWarnings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatusWarning"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orgs/{orgId}/projects": {
       "get": {
         "tags": [
@@ -4937,6 +4960,50 @@
         }
       }
     },
+    "/api/v1/orgs/{orgId}/events": {
+      "get": {
+        "tags": [
+          "Live"
+        ],
+        "operationId": "streamOrganizationEvents",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/instance": {
       "get": {
         "tags": [
@@ -5101,6 +5168,26 @@
         }
       }
     },
+    "/api/v1/instance/status": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "operationId": "getInstanceStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceStatusView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/instance/jobs/{jobId}/retry": {
       "post": {
         "tags": [
@@ -5246,6 +5333,7 @@
       "ActionDetailView": {
         "required": [
           "action",
+          "answers",
           "findings",
           "events"
         ],
@@ -5253,6 +5341,16 @@
         "properties": {
           "action": {
             "$ref": "#/components/schemas/ActionSummary"
+          },
+          "answers": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AnswersView"
+              }
+            ]
           },
           "findings": {
             "type": "array",
@@ -5486,6 +5584,113 @@
           }
         }
       },
+      "AffectedAnswer": {
+        "required": [
+          "verdict",
+          "items",
+          "moreItems"
+        ],
+        "type": "object",
+        "properties": {
+          "verdict": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AffectedItem"
+            }
+          },
+          "moreItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "AffectedItem": {
+        "required": [
+          "project",
+          "component",
+          "level",
+          "versionVerdict",
+          "versionReason",
+          "ranges"
+        ],
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/ActionProjectRef"
+          },
+          "component": {
+            "$ref": "#/components/schemas/ActionComponentRef"
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "versionVerdict": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "versionReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AffectedRange"
+            }
+          }
+        }
+      },
+      "AffectedRange": {
+        "required": [
+          "introduced",
+          "fixed",
+          "lastAffected",
+          "exact"
+        ],
+        "type": "object",
+        "properties": {
+          "introduced": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fixed": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lastAffected": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exact": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "AffectedView": {
         "required": [
           "vendor",
@@ -5579,6 +5784,7 @@
         "required": [
           "alert",
           "entry",
+          "answers",
           "actions",
           "findings"
         ],
@@ -5589,6 +5795,16 @@
           },
           "entry": {
             "$ref": "#/components/schemas/AlertEntryView"
+          },
+          "answers": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AnswersView"
+              }
+            ]
           },
           "actions": {
             "type": "array",
@@ -5763,6 +5979,29 @@
           "changedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "AnswersView": {
+        "required": [
+          "origin",
+          "whatHappened",
+          "affected",
+          "toDo"
+        ],
+        "type": "object",
+        "properties": {
+          "origin": {
+            "type": "string"
+          },
+          "whatHappened": {
+            "$ref": "#/components/schemas/WhatHappenedAnswer"
+          },
+          "affected": {
+            "$ref": "#/components/schemas/AffectedAnswer"
+          },
+          "toDo": {
+            "$ref": "#/components/schemas/ToDoAnswer"
           }
         }
       },
@@ -7092,6 +7331,33 @@
           }
         }
       },
+      "InstanceStatusView": {
+        "required": [
+          "warnings",
+          "metrics",
+          "at"
+        ],
+        "type": "object",
+        "properties": {
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusWarning"
+            }
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusMetric"
+            }
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "The first administration (task 0.13, master plan 11.4): registration, SMTP with a test mail,\nabandoned jobs with retry, the installed version. Instance administrator only."
+      },
       "InvitationPreview": {
         "required": [
           "organizationName",
@@ -7620,7 +7886,7 @@
           "urgent": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ActionSummary"
+              "$ref": "#/components/schemas/UrgentActionView"
             }
           },
           "projects": {
@@ -8582,6 +8848,70 @@
           }
         }
       },
+      "StatusMetric": {
+        "required": [
+          "group",
+          "name",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "One figure of the operation, e.g. jobs waiting of a kind; counts only, never contents (master plan 9.2)."
+      },
+      "StatusWarning": {
+        "required": [
+          "code",
+          "severity",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "since": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "subject": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "The system warns about itself when it no longer works reliably (master plan 12.7): a source not\nfetched for six hours, a stalled worker, failing deliveries. Users see the warning on the overview;\nthe instance administrator also sees the operating figures."
+      },
       "SuggestionEvidenceView": {
         "required": [
           "file",
@@ -8664,6 +8994,45 @@
         "type": "object",
         "properties": {
           "to": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ToDoAnswer": {
+        "required": [
+          "kind",
+          "targetVersion",
+          "installedVersion",
+          "steps",
+          "advisoryUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "targetVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "installedVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "advisoryUrl": {
             "type": [
               "null",
               "string"
@@ -8977,6 +9346,62 @@
             "format": "int32"
           }
         }
+      },
+      "UrgentActionView": {
+        "required": [
+          "action",
+          "answers"
+        ],
+        "type": "object",
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/ActionSummary"
+          },
+          "answers": {
+            "$ref": "#/components/schemas/AnswersView"
+          }
+        }
+      },
+      "WhatHappenedAnswer": {
+        "required": [
+          "entryKey",
+          "title",
+          "excerpt",
+          "source",
+          "moreEntries"
+        ],
+        "type": "object",
+        "properties": {
+          "entryKey": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "excerpt": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "source": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "moreEntries": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
       }
     }
   },
@@ -9003,6 +9428,9 @@
       "name": "Sources"
     },
     {
+      "name": "Administration"
+    },
+    {
       "name": "Projects"
     },
     {
@@ -9015,7 +9443,7 @@
       "name": "Actions"
     },
     {
-      "name": "Administration"
+      "name": "Live"
     }
   ]
 }

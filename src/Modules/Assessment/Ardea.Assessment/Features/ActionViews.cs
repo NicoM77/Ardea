@@ -84,7 +84,7 @@ internal sealed record FindingView(
 internal sealed record ActionEventView(Guid Id, string Kind, DateTimeOffset At, Guid? Actor, Guid? FindingId, JsonElement Data);
 
 /// <summary>An action with its findings, sorted by level, and its history.</summary>
-internal sealed record ActionDetailView(ActionSummary Action, IReadOnlyList<FindingView> Findings, IReadOnlyList<ActionEventView> Events);
+internal sealed record ActionDetailView(ActionSummary Action, AnswersView? Answers, IReadOnlyList<FindingView> Findings, IReadOnlyList<ActionEventView> Events);
 
 /// <summary>A vulnerability from the organisation's point of view, in lists.</summary>
 internal sealed record AlertSummary(int Number, int Level, string LevelName, ActionEntryRef Entry, int OpenActions, int Findings, DateTimeOffset? FirstRaisedAt, DateTimeOffset ChangedAt);
@@ -95,7 +95,10 @@ internal sealed record AlertEntryView(
     string? CvssVector, string Exploitation, string? ExploitationSource, DateTimeOffset? ExploitationSince, bool FixAvailable, string? EpssClass, bool AuthorityWarning);
 
 /// <summary>An alert with the actions it belongs to and its findings with factors per component (master plan 10.3).</summary>
-internal sealed record AlertDetailView(AlertSummary Alert, AlertEntryView Entry, IReadOnlyList<ActionSummary> Actions, IReadOnlyList<FindingView> Findings);
+internal sealed record AlertDetailView(AlertSummary Alert, AlertEntryView Entry, AnswersView? Answers, IReadOnlyList<ActionSummary> Actions, IReadOnlyList<FindingView> Findings);
+
+/// <summary>An urgent action on the overview with its three answers (master plan 11.2: the answers come first).</summary>
+internal sealed record UrgentActionView(ActionSummary Action, AnswersView Answers);
 
 internal sealed record LevelCountView(int Level, string LevelName, int Actions);
 
@@ -106,7 +109,7 @@ internal sealed record ChangeCountView(string Kind, int Count);
 
 /// <summary>Everything the overview needs in one call (master plan 10.2): counts per level, the most urgent actions, level per project, recent changes.</summary>
 internal sealed record OverviewView(
-    IReadOnlyList<LevelCountView> OpenByLevel, int Overdue, IReadOnlyList<ActionSummary> Urgent, IReadOnlyList<ProjectLevelView> Projects, IReadOnlyList<ChangeCountView> Last24Hours);
+    IReadOnlyList<LevelCountView> OpenByLevel, int Overdue, IReadOnlyList<UrgentActionView> Urgent, IReadOnlyList<ProjectLevelView> Projects, IReadOnlyList<ChangeCountView> Last24Hours);
 
 /// <summary>
 /// Sets the status of an action for all its findings (master plan 7.4): <c>open</c> or <c>in_review</c>,

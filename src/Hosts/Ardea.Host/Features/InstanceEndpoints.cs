@@ -13,8 +13,35 @@ namespace Ardea.Host.Features;
 /// The first administration (task 0.13, master plan 11.4): registration, SMTP with a test mail,
 /// abandoned jobs with retry, the installed version. Instance administrator only.
 /// </summary>
+internal sealed record InstanceStatusView(IReadOnlyList<Platform.Status.StatusWarning> Warnings, IReadOnlyList<Platform.Status.StatusMetric> Metrics, DateTimeOffset At);
+
 internal static class InstanceEndpoints
 {
+    /// <summary>The system's warnings about itself and the operating figures (master plan 12.7; task 6.6).</summary>
+    private static async Task<InstanceStatusView> StatusAsync(
+        IEnumerable<Platform.Status.IInstanceStatusContributor> contributors, TimeProvider time, CancellationToken cancellationToken)
+    {
+        var status = await CollectAsync(contributors, cancellationToken);
+        return new InstanceStatusView(status.Warnings, status.Metrics, time.GetUtcNow());
+    }
+
+    /// <summary>Only the warnings, without figures: whether the data shown is current.</summary>
+    private static async Task<IReadOnlyList<Platform.Status.StatusWarning>> WarningsAsync(
+        IEnumerable<Platform.Status.IInstanceStatusContributor> contributors, CancellationToken cancellationToken) =>
+        (await CollectAsync(contributors, cancellationToken)).Warnings;
+
+    private static async Task<Platform.Status.InstanceStatusBuilder> CollectAsync(
+        IEnumerable<Platform.Status.IInstanceStatusContributor> contributors, CancellationToken cancellationToken)
+    {
+        var status = new Platform.Status.InstanceStatusBuilder();
+        foreach (var contributor in contributors)
+        {
+            await contributor.ContributeAsync(status, cancellationToken);
+        }
+
+        return status;
+    }
+
     public static void Map(IEndpointRouteBuilder api)
     {
         var instance = api.MapGroup("/instance").WithTags("Administration").RequireAuthorization(IamPolicies.InstanceAdmin);
@@ -23,6 +50,10 @@ internal static class InstanceEndpoints
         instance.MapPatch("/settings", UpdateSettingsAsync).WithName("updateInstanceSettings").Produces<InstanceSettingsResponse>().Problems(400, 409);
         instance.MapPost("/smtp/test", TestSmtpAsync).WithName("sendTestEmail").NoContent().Problems(400, 409, 502);
         instance.MapGet("/jobs", ListJobsAsync).WithName("listAbandonedJobs");
+        instance.MapGet("/status", StatusAsync).WithName("getInstanceStatus").Produces<InstanceStatusView>();
+
+        // Every signed-in user sees whether the data is current (master plan 12.7: «Stand von 02:10, Quelle nicht erreichbar»).
+        api.MapGet("/status", WarningsAsync).WithTags("Administration").WithName("getStatusWarnings").RequireAuthorization().Produces<IReadOnlyList<Platform.Status.StatusWarning>>();
         instance.MapPost("/jobs/{jobId:guid}/retry", RetryJobAsync).WithName("retryJob").NoContent().Problems(404);
     }
 

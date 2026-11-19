@@ -125,6 +125,10 @@ internal sealed class ApiClient : IDisposable
 
     public Task<HttpResponseMessage> GetAsync(string path) => _http.GetAsync(new Uri(path, UriKind.Relative));
 
+    /// <summary>A GET whose body is read as it arrives, for Server-Sent Events.</summary>
+    public Task<HttpResponseMessage> StreamAsync(string path, CancellationToken cancellationToken) =>
+        _http.GetAsync(new Uri(path, UriKind.Relative), HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+
     public async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, object? body = null, bool csrf = true, string? origin = null, string? fetchSite = null)
     {
         if (csrf && Xsrf() is null)

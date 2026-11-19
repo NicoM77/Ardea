@@ -90,6 +90,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["GET /api/v1/orgs/{orgId}/projects/{projectId}/suggestions"] = _ => null,
         ["PATCH /api/v1/orgs/{orgId}/projects/{projectId}/suggestions/{id}"] = _ => new { decision = "accept" },
         ["GET /api/v1/orgs/{orgId}/overview"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/events"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/actions"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/actions/{number}"] = _ => null,
         ["PATCH /api/v1/orgs/{orgId}/actions/{number}"] = _ => new { dueAt = "2030-01-01T00:00:00Z" },

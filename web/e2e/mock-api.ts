@@ -20,7 +20,8 @@ const SESSION = {
     },
   ],
 };
-const ORG_ID = SESSION.organizations[0].id;
+export const ORG_ID = SESSION.organizations[0].id;
+export const USER_ID = SESSION.user.id;
 const INVITATION = {
   id: '0190a000-0000-7000-8000-000000000005',
   email: 'invited.person@example.org',
@@ -30,8 +31,9 @@ const INVITATION = {
   invitedBy: 'Sample Person',
   createdAt: '2026-11-18T08:00:00Z',
 };
+export const PROJECT_ID = '0190a000-0000-7000-8000-000000000010';
 const PROJECT = {
-  id: '0190a000-0000-7000-8000-000000000010',
+  id: PROJECT_ID,
   name: 'Customer Portal',
   description: 'Online self-service for customers.',
   criticality: 'high',
@@ -136,6 +138,14 @@ const SETTING = (value: string | null, locked = false) => ({
 export async function api(page: Page, signedIn: boolean): Promise<void> {
   await page.route('**/api/v1/**', (route) => {
     const path = new URL(route.request().url()).pathname;
+    // The organization's live stream: one `ready`, then it ends; the long retry keeps the browser
+    // from opening it again during a test.
+    if (/^\/api\/v1\/orgs\/[^/]+\/events$/.test(path))
+      return route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: 'retry: 600000\nevent: ready\ndata: {}\n\n',
+      });
     switch (path) {
       case '/api/v1/setup/status':
         return route.fulfill({ json: { setupRequired: false } });

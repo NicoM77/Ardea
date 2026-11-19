@@ -83,7 +83,9 @@ public sealed class SecretProtectionTests(PostgresServer server)
             return Record(s, "settings.changed");
         });
 
-        Assert.Equal(1, await host.CountAsync("SELECT count(*) FROM platform.audit_event WHERE origin = 'api' AND ip_address = '203.0.113.7' AND organization_id IS NULL"));
+        // Instance events are for the operator: the application role writes them but cannot read them back.
+        Assert.Equal(1, await host.CountAsOwnerAsync("SELECT count(*) FROM platform.audit_event WHERE origin = 'api' AND ip_address = '203.0.113.7' AND organization_id IS NULL"));
+        Assert.Equal(0, await host.CountAsync("SELECT count(*) FROM platform.audit_event"));
 
         static Task Record(IServiceProvider s, string action) =>
             s.GetRequiredService<IAuditLog>().RecordAsync(new AuditEntry(action, "setting", "smtp.host") { InstanceEvent = true }, CancellationToken.None);

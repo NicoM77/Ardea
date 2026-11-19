@@ -48,6 +48,41 @@ public sealed class ReferenceSetTests(PostgresServer server)
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures.Prepend("The reference set's thresholds are not met (master plan 7.9):")) + Environment.NewLine + report);
     }
 
+    /// <summary>
+    /// The spike week (master plan 14, phase 3 acceptance): all 6 452 records of 11 to 17 November 2026 against
+    /// the three example projects of the requirements, each with the versions installed before that week's
+    /// security updates. One organisation with all three gives at most 8 open actions.
+    /// </summary>
+    [Fact(Timeout = 600_000)]
+    public async Task The_spike_week_gives_at_most_eight_open_actions_for_the_three_example_projects()
+    {
+        var watch = Stopwatch.StartNew();
+        await using var host = await ReferenceHost.StartAsync(server);
+        var organization = Guid.CreateVersion7();
+        foreach (var (name, attributes, components) in SpikeWeek.Projects)
+        {
+            var project = await host.AddProjectAsync(organization, name, attributes);
+            foreach (var component in components)
+            {
+                await host.AddComponentAsync(organization, project, component);
+            }
+        }
+
+        await host.RunJobsAsync();
+        TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
+        await host.StoreRecordsAsync(SpikeWeek.Records());
+        await host.RunJobsAsync();
+
+        var actions = await host.RowsAsync("""
+            SELECT p.name, coalesce(c.product_key, c.custom_name), c.version, r.level, r.open_findings
+            FROM assess.remediation r JOIN assets.component c ON c.id = r.component_id JOIN assets.project p ON p.id = r.project_id
+            WHERE r.status <> 'closed' ORDER BY r.level DESC, p.name, 2
+            """);
+        TestContext.Current.SendDiagnosticMessage($"Spike week: {actions.Count} open actions in {watch.Elapsed.TotalSeconds:F0} s{Environment.NewLine}{string.Join(Environment.NewLine, actions)}");
+        Assert.True(actions.Count <= 8, $"{actions.Count} open actions, at most 8:{Environment.NewLine}{string.Join(Environment.NewLine, actions)}");
+        Assert.NotEmpty(actions);
+    }
+
     [Fact]
     public void Every_pair_names_a_record_of_the_set_and_a_valid_label()
     {
@@ -157,32 +192,72 @@ internal sealed class ReferenceHost : IAsyncDisposable
     public async Task<Guid> AddPairAsync(ReferencePair pair)
     {
         var organization = Guid.CreateVersion7();
+        var project = await AddProjectAsync(organization, pair.Id, pair.Project);
+        await AddComponentAsync(organization, project, pair.Component);
+        return project;
+    }
+
+    public async Task<Guid> AddProjectAsync(Guid organization, string name, ReferenceProject attributes)
+    {
         var project = Guid.CreateVersion7();
+        await InOrganizationAsync(organization, services =>
+        {
+            var now = _clock.GetUtcNow();
+            services.GetRequiredService<AssetsDbContext>().Projects.Add(new Project
+            {
+                Id = project, Name = name, Criticality = attributes.Criticality, Exposure = attributes.Exposure, CreatedAt = now, ChangedAt = now,
+            });
+            return services.GetRequiredService<AssetsDbContext>().SaveChangesAsync();
+        });
+        return project;
+    }
+
+    public Task AddComponentAsync(Guid organization, Guid project, ReferenceComponent c) =>
+        InOrganizationAsync(organization, async services =>
+        {
+            var db = services.GetRequiredService<AssetsDbContext>();
+            var now = _clock.GetUtcNow();
+            var component = new Component
+            {
+                Id = Guid.CreateVersion7(),
+                ProjectId = project,
+                ProductKey = c.ProductKey,
+                CustomName = c.ProductKey is null ? c.Name : null,
+                Kind = c.Kind,
+                Version = c.Version,
+                Packaging = c.Packaging,
+                Purl = c.Purl,
+                DependencyScope = c.DependencyScope,
+                CreatedAt = now,
+                ChangedAt = now,
+            };
+            db.Components.Add(component);
+            await db.SaveChangesAsync();
+            await ComponentKeys.RefreshAsync(db, services.GetRequiredService<IProductCatalog>(), [component], CancellationToken.None);
+        });
+
+    private async Task InOrganizationAsync(Guid organization, Func<IServiceProvider, Task> work)
+    {
         await using var scope = _services.CreateAsyncScope();
         scope.ServiceProvider.GetRequiredService<TenantContext>().SetOrganization(organization);
-        var db = scope.ServiceProvider.GetRequiredService<AssetsDbContext>();
-        var now = _clock.GetUtcNow();
-        db.Projects.Add(new Project { Id = project, Name = pair.Id, Criticality = pair.Project.Criticality, Exposure = pair.Project.Exposure, CreatedAt = now, ChangedAt = now });
-        var c = pair.Component;
-        var component = new Component
-        {
-            Id = Guid.CreateVersion7(),
-            ProjectId = project,
-            ProductKey = c.ProductKey,
-            CustomName = c.ProductKey is null ? c.Name : null,
-            Kind = c.Kind,
-            Version = c.Version,
-            Packaging = c.Packaging,
-            Purl = c.Purl,
-            DependencyScope = c.DependencyScope,
-            CreatedAt = now,
-            ChangedAt = now,
-        };
-        db.Components.Add(component);
-        await db.SaveChangesAsync();
-        await ComponentKeys.RefreshAsync(db, scope.ServiceProvider.GetRequiredService<IProductCatalog>(), [component], CancellationToken.None);
+        await work(scope.ServiceProvider);
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
-        return project;
+    }
+
+    /// <summary>Runs a query as the owner and returns its rows as tab-separated text.</summary>
+    public async Task<IReadOnlyList<string>> RowsAsync(string sql)
+    {
+        await using var connection = new NpgsqlConnection(_database.OwnerConnectionString("tests"));
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand(sql, connection);
+        await using var reader = await command.ExecuteReaderAsync();
+        var rows = new List<string>();
+        while (await reader.ReadAsync())
+        {
+            rows.Add(string.Join('\t', Enumerable.Range(0, reader.FieldCount).Select(i => reader.IsDBNull(i) ? string.Empty : Convert.ToString(reader.GetValue(i), System.Globalization.CultureInfo.InvariantCulture))));
+        }
+
+        return rows;
     }
 
     /// <summary>Stores the records as the CVE Program source's sync would, and queues their normalisation.</summary>

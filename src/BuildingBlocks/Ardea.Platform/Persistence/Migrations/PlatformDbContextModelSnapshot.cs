@@ -109,6 +109,60 @@ namespace Ardea.Platform.Persistence.Migrations
                     b.ToTable("data_protection_key", "platform");
                 });
 
+            modelBuilder.Entity("Ardea.Platform.Persistence.Entities.InstanceWarningRow", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("subject");
+
+                    b.Property<DateTimeOffset?>("ClearedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cleared_at");
+
+                    b.Property<DateTimeOffset>("FirstSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_seen_at");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("message");
+
+                    b.Property<DateTimeOffset?>("NotifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("notified_at");
+
+                    b.Property<DateTimeOffset?>("RemindedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reminded_at");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("severity");
+
+                    b.HasKey("Code", "Subject")
+                        .HasName("pk_instance_warning");
+
+                    b.ToTable("instance_warning", "platform");
+                });
+
             modelBuilder.Entity("Ardea.Platform.Persistence.Entities.JobRow", b =>
                 {
                     b.Property<Guid>("Id")

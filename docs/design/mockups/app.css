@@ -140,7 +140,7 @@ body { display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr)
 .topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 12px; height: var(--topbar); padding: 0 16px 0 0; background: var(--ground); view-transition-name: topbar; }
 .search-trigger { display: flex; align-items: center; gap: 8px; width: min(520px, 100%); height: 32px; padding: 0 8px 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--faint); cursor: pointer; transition: border-color var(--t-hover) ease, transform var(--t-press) var(--ease-out); }
 .search-trigger:active { transform: scale(0.99); }
-.search-trigger span { flex: 1; text-align: left; }
+.search-trigger span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 4px; background: var(--raised); color: var(--muted); font: 500 var(--fs-small)/1 var(--font); }
 .topbar .menu-toggle, .topbar .brand-mark { display: none; }
 .topbar .account { position: absolute; right: 16px; padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; }

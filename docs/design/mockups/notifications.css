@@ -11,7 +11,7 @@
 
 /* A switch between sample states; mockup control, the app has no such switch */
 .samples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 16px; color: var(--faint); font-size: var(--fs-small); }
-.sample-switch { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; border-radius: 8px; background: var(--raised); }
+.sample-switch { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; border-radius: 8px; background: var(--raised); }
 .sample-switch button { height: 28px; padding: 0 12px; border: 0; border-radius: 6px; background: none; color: var(--muted); white-space: nowrap; cursor: pointer; }
 .sample-switch button[aria-pressed="true"] { background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); color: var(--text); font-weight: 500; }
 [data-sample][hidden] { display: none !important; }
@@ -54,7 +54,7 @@
 .editor > .side { grid-column: span 4; display: grid; gap: var(--gap); position: sticky; top: calc(var(--topbar) + 16px); }
 .form-grid { display: grid; gap: 16px; }
 .field small { color: var(--muted); font-size: var(--fs-sub); font-weight: 400; }
-.levels { display: inline-grid; grid-template-columns: repeat(4, auto); gap: 2px; padding: 2px; border-radius: 8px; background: var(--raised); }
+.levels { display: inline-grid; grid-template-columns: repeat(4, auto); gap: 2px; padding: 4px; border-radius: 8px; background: var(--raised); }
 .levels button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
 .levels button .sym { width: 14px; height: 14px; color: var(--c); }
 .levels button[aria-pressed="true"] { background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); color: var(--text); font-weight: 500; }
@@ -67,8 +67,8 @@ legend { margin-bottom: 8px; padding: 0; font-weight: 500; }
 .group-label { grid-column: 1 / -1; margin-top: 8px; color: var(--faint); font-size: var(--fs-small); }
 .group-label:first-child { margin-top: 0; }
 .targets { display: grid; }
-.target { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr) 32px; align-items: end; gap: 12px; padding: 12px 0; border-top: 1px solid var(--rule); }
-.target:first-child { border-top: 0; padding-top: 0; }
+.target { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr) 32px; align-items: end; gap: 12px; padding: 16px 0; border-top: 1px solid var(--rule); }
+.target:first-child { border-top: 0; padding-top: 4px; }
 .target .field > span { font-size: var(--fs-sub); color: var(--muted); font-weight: 400; }
 .target .select { width: 100%; }
 .target .schedule { grid-column: 3 / 4; display: grid; gap: 8px; }
@@ -113,6 +113,8 @@ legend { margin-bottom: 8px; padding: 0; font-weight: 500; }
 .more { display: flex; justify-content: center; margin-top: 16px; }
 
 /* ---------- Inbox ---------- */
+/* The segmented track keeps its buttons 4px in from its edge */
+.inbox-tools .segmented { padding: 4px; }
 .inbox-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .day { margin: 20px 0 4px; color: var(--faint); font-size: var(--fs-small); font-weight: 500; }
 .day:first-child { margin-top: 0; }
@@ -139,7 +141,7 @@ legend { margin-bottom: 8px; padding: 0; font-weight: 500; }
 .device-state p { color: var(--muted); font-size: var(--fs-sub); line-height: 18px; }
 .device-state .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .install { display: grid; gap: 0; counter-reset: step; width: 100%; }
-.install li { display: grid; grid-template-columns: 28px 36px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 56px; border-top: 1px solid var(--rule); }
+.install li { display: grid; grid-template-columns: 28px 36px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 56px; padding: 12px 0; border-top: 1px solid var(--rule); }
 .install li:first-child { border-top: 0; }
 .install li::before { counter-increment: step; content: counter(step); display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--raised); color: var(--muted); font-size: var(--fs-small); font-weight: 600; }
 .install .pict { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border); color: var(--text); }

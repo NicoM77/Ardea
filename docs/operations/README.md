@@ -5,6 +5,7 @@ these pages say what to do.
 
 | Page | For |
 |---|---|
+| [Try it](try-it.md) | Look at an instance with sample data, without GitHub token or access to the sources |
 | [Installation](installation.md) | A new instance with Docker Compose, HTTPS, the first user |
 | [Configuration](configuration.md) | Every setting, where it lives and its default |
 | [Operation](operations.md) | Services, health, logs, backups, sources, maintenance commands |

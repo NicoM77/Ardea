@@ -24,6 +24,7 @@ public sealed class IntelModule : IModule
         services.AddModuleDbContext<IntelDbContext>(IntelDbContext.Schema);
         services.AddScoped<Platform.Status.IInstanceStatusContributor, Features.IntelStatusContributor>();
         services.AddSingleton<SourceRegistry>();
+        services.AddSingleton<IDemoSeedStep, Demo.DemoSeed>();
         services.AddSingleton<HostRateLimits>();
         services.AddSingleton<SourceHttpFactory>();
         services.AddScoped<Contracts.IEntryQueries, Features.EntryQueries>();

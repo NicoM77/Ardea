@@ -33,6 +33,7 @@ internal static class HelpCommand
               intel import --full [--source <key>] Load a source's whole inventory (about 10 GB more for the CVE Program)
               org export <slug> [--out file]       An organisation's data as JSON (owner role, no secrets)
               org delete <slug> --confirm <slug>   Remove an organisation and all its data
+              seed-demo           Fill an empty instance with the sample data (organisation, three projects, findings, actions); refuses a database with data
               version             Print the installed version
             """);
         return known ? 0 : 64;

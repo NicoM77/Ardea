@@ -16,6 +16,7 @@ return command switch
     // `ardea intel renormalize …` is the admin command `intel-renormalize` (master plan 12.8 names it so).
     "intel" when rest.Length > 0 => await AdminCommand.RunAsync(["intel-" + rest[0], .. rest[1..]]),
     "org" => await OrgCommand.RunAsync(rest),
+    "seed-demo" => await SeedDemoCommand.RunAsync(rest),
     "version" or "--version" => VersionCommand.Run(),
     _ => HelpCommand.Run(command),
 };

@@ -18,13 +18,18 @@ public interface IDemoSeedStep
     Task SeedAsync(DemoSeedContext context, CancellationToken cancellationToken);
 }
 
-/// <summary>The order of the steps: the people first, then what they own, then what is known about the world.</summary>
+/// <summary>
+/// The order of the steps: the people first, then what they own, then what is known about the world, then what the
+/// people do about it, then a profile that follows an update, and last what keeps the demo from reaching out.
+/// </summary>
 public static class DemoSeedOrder
 {
     public const int Accounts = 10;
     public const int Profile = 20;
     public const int Intelligence = 30;
     public const int Workflow = 50;
+    public const int Updates = 60;
+    public const int Quiet = 90;
 }
 
 /// <summary>What the steps share: the scopes to work in and the identifiers earlier steps created.</summary>

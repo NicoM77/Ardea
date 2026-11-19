@@ -5,6 +5,11 @@ from them and the notifications they raise. `ardea seed-demo` loads this into an
 a minute. It needs no GitHub token, no initial load and no access to any source: the records are part of the
 image, and the instance fetches nothing.
 
+> **For local evaluation only.** Run the demo on your own machine, never on an instance that others can reach or
+> that will become your production instance: the demo owner is an instance administrator at an address printed
+> in this guide, and the data is invented. Start production from a fresh database. If the printed password may
+> have been seen by someone else, set a new one with `ardea admin reset-password nina.meier@example.org`.
+
 ## Steps
 
 You need Docker with Compose v2. Until the first release (task 7.3) build the image from a checkout and set
@@ -19,7 +24,8 @@ You need Docker with Compose v2. Until the first release (task 7.3) build the im
    docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/out" "${ARDEA_IMAGE:-ghcr.io/nicom77/ardea:0}" init-env --dir /out --public-url http://localhost:8080
    ```
 
-2. Start the database, the migration and the API, but not yet the worker:
+2. Start the database, the migration and the API, but not yet the worker. The command refuses a database a
+   worker has already used:
 
    ```bash
    docker compose up -d --wait api
@@ -33,10 +39,13 @@ You need Docker with Compose v2. Until the first release (task 7.3) build the im
    ```
 
    It prints what it made and, once, the sign-in of the demo owner (`nina.meier@example.org` and a generated
-   password; the database keeps only a hash of it). Nothing of this goes to the logs.
+   password; the database keeps only a hash of it). Ardea writes neither to its logs, but the command prints
+   them to the container's output, which Docker keeps beyond the `--rm` container if a log driver such as
+   journald or syslog is configured. While the command runs, the owner password of the database is visible in
+   this machine's process list as part of the `docker compose run` command line.
 
 4. Start the rest, the worker. With the sources switched off it fetches nothing; it keeps the instance alive
-   (notifications, digests in the app) and stops the administration from warning that no worker runs:
+   (notifications of what you do in the app) and stops the administration from warning that no worker runs:
 
    ```bash
    docker compose up -d --wait
@@ -68,17 +77,19 @@ You need Docker with Compose v2. Until the first release (task 7.3) build the im
 
 The records are the CVE Program's own; the demo organisation, its people, projects and versions are invented.
 The instance's sources are registered but **switched off**, so the worker does not load the world into the
-demo. Turn them on in the administration to continue with live data. Messages outside the app that the demo's
-events would cause, e-mail on an instance with SMTP, are suppressed; the delivery log says why.
+demo. Turn them on in the administration to continue with live data. The demo's notifications stay in the app:
+its rules lose their e-mail and push targets, the weekly e-mail summary is switched off, and messages already
+queued for e-mail are suppressed with a reason in the delivery log. So nobody at the invented addresses is
+mailed, now or by a later digest, even on an instance with SMTP. Its policy for language models is «none», so no
+data of the demo goes to a model either.
 
-All of it happens at the moment you run the command: the actions were raised «just now», and their deadlines
-count from then.
+All of it happens at the moment you run the command: the actions were raised «just now».
 
 ## An instance with data is refused
 
-`seed-demo` works on an empty instance only. If the database holds accounts, organisations, projects, source
-records or security entries, it says so and exits with code 1 before it writes anything. To start over,
-remove the volumes (`docker compose down -v`) and begin at step 2. Run it before the worker starts, as above:
-a worker that takes the demo's jobs at the same time does the same work, only out of the command's sight. If a
-step fails, the command stops with a message: the instance is then partly filled and is best started over as
-well.
+`seed-demo` works on a freshly migrated instance only. If the database holds accounts, organisations, projects,
+source records or security entries, or shows that a worker has run (a worker heartbeat or any job), it says so
+and exits with code 1 before it writes anything. A worker that started first may already have queued a fetch of
+the sources and would take the demo's jobs out of the command's sight; that is why the worker starts after the
+data, as above. To start over, remove the volumes (`docker compose down -v`) and begin at step 2. If a step
+fails, the command stops and says whether it wrote anything; a partly filled instance is best started over.

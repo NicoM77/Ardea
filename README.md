@@ -226,7 +226,8 @@ docker compose up -d --wait            # the worker; with the sources switched o
 ```
 
 `seed-demo` prints the demo owner's e-mail address and a generated password once; it refuses a database that
-already holds data. The full guide, with the first steps (`compose.yaml` and `init-env`) and what the demo
+already holds data or that a worker has used. The demo is for local evaluation only, never for an instance others
+can reach or that will become production. The full guide, with the first steps (`compose.yaml` and `init-env`) and what the demo
 contains, is [`docs/operations/try-it.md`](docs/operations/try-it.md).
 
 ## Development

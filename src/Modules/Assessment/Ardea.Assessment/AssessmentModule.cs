@@ -35,6 +35,7 @@ public sealed class AssessmentModule : IModule
         services.AddScoped<Remediations>();
         services.AddScoped<Features.ActionReader>();
         services.AddScoped<Features.ActionCommands>();
+        services.AddScoped<Contracts.IActionFacts, Features.ActionFactsReader>();
         services.AddScoped<IEntryChangeSubscriber, EntryChangeSubscriber>();
         services.AddScoped<IProfileChangeSubscriber, ProfileChangeSubscriber>();
         services.AddJob<MatchEntry, MatchEntryHandler>(new JobKindOptions { MaxConcurrency = 4, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(2) });

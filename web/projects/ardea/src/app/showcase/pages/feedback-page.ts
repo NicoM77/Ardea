@@ -1,6 +1,15 @@
 import { Component } from '@angular/core';
 import { LucideFolder, LucideListChecks } from '@lucide/angular';
-import { UiButton, UiCard, UiCopyButton, UiEmptyState, UiNotice, UiPageHeader, UiLoader } from 'ui';
+import {
+  UiButton,
+  UiCard,
+  UiCopyButton,
+  UiEmptyState,
+  UiNotice,
+  UiPageHeader,
+  UiLoader,
+  UiToast,
+} from 'ui';
 
 /** Notices, empty states, loading and copy feedback. */
 @Component({
@@ -15,6 +24,7 @@ import { UiButton, UiCard, UiCopyButton, UiEmptyState, UiNotice, UiPageHeader, U
     UiNotice,
     UiPageHeader,
     UiLoader,
+    UiToast,
   ],
   template: `
     <div class="sc-page">
@@ -52,6 +62,14 @@ import { UiButton, UiCard, UiCopyButton, UiEmptyState, UiNotice, UiPageHeader, U
           Clear a filter to see more actions.
         </ui-empty-state>
       </div>
+
+      <ui-card heading="Confirmation">
+        <span uiCardMeta>A dark toast at the bottom, with Undo where there is a way back</span>
+        <div class="sc-stack">
+          <div><ui-toast text="In review and assigned to you" [undoable]="true" /></div>
+          <div><ui-toast text="Note saved" /></div>
+        </div>
+      </ui-card>
 
       <ui-card heading="Loader">
         <span uiCardMeta>Draw, 2.4 s per cycle, shown after 300 ms</span>

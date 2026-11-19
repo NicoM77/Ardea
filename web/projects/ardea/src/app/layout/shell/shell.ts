@@ -6,6 +6,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideKeyRound } from '@lucide/angular';
+import { UiToastHost } from 'ui';
 import { filter, firstValueFrom, map } from 'rxjs';
 import { AuthenticationService } from '../../core/api/client';
 import { Session } from '../../core/session/session';
@@ -24,7 +25,7 @@ const SLUG = /^\/o\/([^/?#]+)/;
  */
 @Component({
   selector: 'ardea-shell',
-  imports: [CdkTrapFocus, RouterOutlet, TranslocoPipe, Sidebar, Topbar],
+  imports: [CdkTrapFocus, RouterOutlet, TranslocoPipe, Sidebar, Topbar, UiToastHost],
   host: {
     '[class.is-narrow]': 'narrow()',
     '(document:keydown)': 'onKeydown($event)',
@@ -64,6 +65,8 @@ const SLUG = /^\/o\/([^/?#]+)/;
         <router-outlet />
       </div>
     </main>
+
+    <ui-toast-host />
   `,
   styles: `
     :host {

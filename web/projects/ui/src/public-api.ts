@@ -19,3 +19,4 @@ export * from './lib/qr-code/qr-code';
 export * from './lib/qr-code/qr-path';
 export * from './lib/loader/loader';
 export * from './lib/status/status';
+export * from './lib/toast/toast';

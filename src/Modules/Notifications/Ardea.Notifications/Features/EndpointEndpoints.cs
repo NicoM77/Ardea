@@ -26,10 +26,10 @@ internal static class EndpointEndpoints
     {
         var endpoints = api.MapOrganization().WithTags("Notifications").MapGroup("/endpoints").RequireOrganizationRole(OrganizationRole.Admin);
         endpoints.MapGet("/", ListAsync).WithName("listWebhookEndpoints").Produces<IReadOnlyList<WebhookEndpointView>>().Problems(403, 404);
-        endpoints.MapPost("/", CreateAsync).WithName("createWebhookEndpoint").Produces<WebhookEndpointView>(StatusCodes.Status201Created).Problems(400, 403, 404);
-        endpoints.MapPut("/{id:guid}", UpdateAsync).WithName("updateWebhookEndpoint").Produces<WebhookEndpointView>().Problems(400, 403, 404);
+        endpoints.MapPost("/", CreateAsync).WithName("createWebhookEndpoint").RequireRateLimiting(RateLimits.Outbound).Produces<WebhookEndpointView>(StatusCodes.Status201Created).Problems(400, 403, 404);
+        endpoints.MapPut("/{id:guid}", UpdateAsync).WithName("updateWebhookEndpoint").RequireRateLimiting(RateLimits.Outbound).Produces<WebhookEndpointView>().Problems(400, 403, 404);
         endpoints.MapDelete("/{id:guid}", DeleteAsync).WithName("deleteWebhookEndpoint").NoContent().Problems(403, 404, 409);
-        endpoints.MapPost("/{id:guid}/test", TestAsync).WithName("testWebhookEndpoint").Produces<WebhookTestView>().Problems(403, 404);
+        endpoints.MapPost("/{id:guid}/test", TestAsync).WithName("testWebhookEndpoint").RequireRateLimiting(RateLimits.Outbound).Produces<WebhookTestView>().Problems(403, 404);
     }
 
     private static async Task<IReadOnlyList<WebhookEndpointView>> ListAsync(NotifyDbContext db, ISecretProtector secrets, CancellationToken cancellationToken) =>

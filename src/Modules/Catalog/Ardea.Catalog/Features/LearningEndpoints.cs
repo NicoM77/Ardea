@@ -32,7 +32,7 @@ internal static class LearningEndpoints
         admin.MapPatch("/learning", UpdateAsync).WithName("updateCatalogLearning").Produces<LearningStatusView>().Problems(400, 409);
         admin.MapPost("/learning/run", RunAsync).WithName("runCatalogLearning").Produces(StatusCodes.Status202Accepted);
         admin.MapGet("/learned", ListAsync).WithName("listLearnedEntries").Produces<IReadOnlyList<LearnedItemView>>().Problems(400);
-        admin.MapGet("/learned/export", ExportAsync).WithName("exportLearnedEntries").Produces(StatusCodes.Status200OK, contentType: "application/zip");
+        admin.MapGet("/learned/export", ExportAsync).WithName("exportLearnedEntries").RequireRateLimiting(RateLimits.Outbound).Produces(StatusCodes.Status200OK, contentType: "application/zip");
         admin.MapPost("/learned/{id:guid}/adopt", AdoptAsync).WithName("adoptLearnedEntry").Produces<LearnedItemView>().Problems(400, 404, 409);
         admin.MapPost("/learned/{id:guid}/reject", RejectAsync).WithName("rejectLearnedEntry").NoContent().Problems(404, 409);
         admin.MapPost("/learned/{id:guid}/withdraw", WithdrawAsync).WithName("withdrawLearnedEntry").NoContent().Problems(404, 409);

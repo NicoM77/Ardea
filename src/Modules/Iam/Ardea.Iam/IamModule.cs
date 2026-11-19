@@ -111,6 +111,7 @@ public sealed class IamModule : IModule
         });
 
         var perMinute = int.TryParse(configuration["RATE_LIMIT:AUTH_PER_MINUTE"], CultureInfo.InvariantCulture, out var limit) && limit > 0 ? limit : 10;
+        var outboundPerMinute = int.TryParse(configuration["RATE_LIMIT:OUTBOUND_PER_MINUTE"], CultureInfo.InvariantCulture, out var outbound) && outbound > 0 ? outbound : 10;
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -124,6 +125,11 @@ public sealed class IamModule : IModule
             options.AddPolicy(AuthEndpoints.ReadRateLimitPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
                 ClientKey(http.Connection.RemoteIpAddress),
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = perMinute * 6, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+            // Calls out of the instance while the request waits: per account, so one member cannot keep the
+            // instance busy with test messages or GitHub searches, and per client network for anything without one.
+            options.AddPolicy(Platform.Http.RateLimits.Outbound, http => RateLimitPartition.GetFixedWindowLimiter(
+                http.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value is { } user ? "user:" + user : ClientKey(http.Connection.RemoteIpAddress),
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = outboundPerMinute, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
             options.OnRejected = async (context, cancellationToken) =>
             {
                 if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))

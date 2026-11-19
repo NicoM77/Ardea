@@ -6175,20 +6175,21 @@
       }
     },
     "/api/v1/notify/addresses/preview": {
-      "get": {
+      "post": {
         "tags": [
           "Notifications"
         ],
         "operationId": "previewAddressLink",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "schema": {
-              "type": "string"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressLinkRequest"
+              }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -6219,15 +6220,16 @@
           "Notifications"
         ],
         "operationId": "confirmExternalAddress",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "schema": {
-              "type": "string"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressLinkRequest"
+              }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": "No Content"
@@ -6251,6 +6253,39 @@
           "Notifications"
         ],
         "operationId": "unsubscribeExternalAddress",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notify/addresses/unsubscribe/one-click": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "unsubscribeExternalAddressOneClick",
         "parameters": [
           {
             "name": "token",
@@ -6283,15 +6318,16 @@
           "Notifications"
         ],
         "operationId": "resubscribeExternalAddress",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "schema": {
-              "type": "string"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressLinkRequest"
+              }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": "No Content"
@@ -7534,6 +7570,20 @@
         "type": "object",
         "properties": {
           "text": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AddressLinkRequest": {
+        "required": [
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
             "type": [
               "null",
               "string"

@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 
-export type PreviewAddressLinkParams = {
-  token?: string;
-};
+export interface AddressLinkRequest {
+  /** @nullable */
+  token: string | null;
+}

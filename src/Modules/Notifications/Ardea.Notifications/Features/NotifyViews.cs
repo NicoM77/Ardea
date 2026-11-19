@@ -64,6 +64,9 @@ internal sealed record ExternalAddressView(Guid Id, string Address, string State
 
 internal sealed record ExternalAddressRequest(string? Address);
 
+/// <summary>The token of a link in a mail to an external address: a confirmation or the signed unsubscribe token.</summary>
+internal sealed record AddressLinkRequest(string? Token);
+
 /// <summary>What the signed link of an external address shows before the recipient acts.</summary>
 internal sealed record AddressSubscriptionView(string OrganizationName, string Address, string State);
 

@@ -73,6 +73,12 @@ public static class OutboundAddresses
     /// <summary>Set on a request to a host the instance administrator registered: it may resolve to a private address.</summary>
     public static readonly HttpRequestOptionsKey<bool> AllowInternal = new("ardea.allow-internal");
 
+    /// <summary>
+    /// Set on a request whose address is a secret (a push endpoint, a chat webhook with its token in the path): the
+    /// HTTP client instrumentation records no span for it, so its URL never reaches a trace exporter.
+    /// </summary>
+    public static readonly HttpRequestOptionsKey<bool> Untraced = new("ardea.untraced");
+
     /// <summary>A handler that connects only to checked addresses and follows no redirect.</summary>
     public static SocketsHttpHandler CreateHandler() => new()
     {

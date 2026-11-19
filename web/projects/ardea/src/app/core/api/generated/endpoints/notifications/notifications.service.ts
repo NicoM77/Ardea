@@ -33,8 +33,8 @@ import type {
 } from 'rxjs';
 
 import type {
+  AddressLinkRequest,
   AddressSubscriptionView,
-  ConfirmExternalAddressParams,
   DeletePushSubscriptionByEndpointParams,
   DeliveryListView,
   ExternalAddressRequest,
@@ -48,14 +48,12 @@ import type {
   NotificationPreferencesView,
   NotificationRuleRequest,
   NotificationRuleView,
-  PreviewAddressLinkParams,
   PushPublicKeyView,
   PushSubscriptionRequest,
   PushSubscriptionView,
   PushTestView,
-  ResubscribeExternalAddressParams,
   UnreadCountView,
-  UnsubscribeExternalAddressParams,
+  UnsubscribeExternalAddressOneClickParams,
   WebhookEndpointRequest,
   WebhookEndpointView,
   WebhookTestView
@@ -284,25 +282,6 @@ export function listExternalAddressesResource(orgId: Signal<string | undefined>,
 export function listExternalAddressesResource(orgId: Signal<string | undefined>,
   options?: OrvalHttpResourceOptions<ExternalAddressView[], unknown>): HttpResourceRef<ExternalAddressView[] | undefined> {
   return httpResource<ExternalAddressView[]>(() => (orgId() === undefined ? undefined : applyOrvalRequestExtension(`/api/v1/orgs/${orgId()}/external-addresses`, options)), options);
-}
-
-/**
- * @remarks httpResource is available in Angular 19.2 and later.
- */
-export function previewAddressLinkResource(params: Signal<PreviewAddressLinkParams | undefined> | undefined,
-  options: OrvalHttpResourceOptions<AddressSubscriptionView, unknown> & { defaultValue: NoInfer<AddressSubscriptionView> }): HttpResourceRef<AddressSubscriptionView>;
-export function previewAddressLinkResource(params?: Signal<PreviewAddressLinkParams | undefined>,
-  options?: OrvalHttpResourceOptions<AddressSubscriptionView, unknown>): HttpResourceRef<AddressSubscriptionView | undefined>;
-export function previewAddressLinkResource(params?: Signal<PreviewAddressLinkParams | undefined>,
-  options?: OrvalHttpResourceOptions<AddressSubscriptionView, unknown>): HttpResourceRef<AddressSubscriptionView | undefined> {
-  return httpResource<AddressSubscriptionView>(() => {
-    if (params && params() === undefined) return undefined;
-    const request = ({
-      url: `/api/v1/notify/addresses/preview`,
-      params: filterParams(params?.() ?? {}, new Set<string>([]))
-    });
-    return applyOrvalRequestExtension(request, options);
-  }, options);
 }
 
 /**
@@ -757,48 +736,110 @@ export class NotificationsService {
     );
   }
 
- confirmExternalAddress<TData = void>(params?: ConfirmExternalAddressParams, options?: HttpClientBodyOptions): Observable<TData>;
+ previewAddressLink<TData = AddressSubscriptionView>(addressLinkRequest: AddressLinkRequest, options?: HttpClientBodyOptions): Observable<TData>;
+  previewAddressLink<TData = AddressSubscriptionView>(
+    addressLinkRequest: AddressLinkRequest, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/notify/addresses/preview`,
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/notify/addresses/preview`,
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/notify/addresses/preview`,
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
+ confirmExternalAddress<TData = void>(addressLinkRequest: AddressLinkRequest, options?: HttpClientBodyOptions): Observable<TData>;
   confirmExternalAddress<TData = void>(
-    params?: ConfirmExternalAddressParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
-    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
-
+    addressLinkRequest: AddressLinkRequest, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
     if (options?.observe === 'events') {
       return this.http.post<TData>(
       `/api/v1/notify/addresses/confirm`,
-      undefined,{
-    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'events',
-        params: filteredParams,}
+      }
     );
     }
 
     if (options?.observe === 'response') {
       return this.http.post<TData>(
       `/api/v1/notify/addresses/confirm`,
-      undefined,{
-    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'response',
-        params: filteredParams,}
+      }
     );
     }
 
     return this.http.post<TData>(
       `/api/v1/notify/addresses/confirm`,
-      undefined,{
-    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'body',
-        params: filteredParams,}
+      }
     );
   }
 
- unsubscribeExternalAddress<TData = void>(params?: UnsubscribeExternalAddressParams, options?: HttpClientBodyOptions): Observable<TData>;
+ unsubscribeExternalAddress<TData = void>(addressLinkRequest: AddressLinkRequest, options?: HttpClientBodyOptions): Observable<TData>;
   unsubscribeExternalAddress<TData = void>(
-    params?: UnsubscribeExternalAddressParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    addressLinkRequest: AddressLinkRequest, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/notify/addresses/unsubscribe`,
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/notify/addresses/unsubscribe`,
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/notify/addresses/unsubscribe`,
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
+ unsubscribeExternalAddressOneClick<TData = void>(params?: UnsubscribeExternalAddressOneClickParams, options?: HttpClientBodyOptions): Observable<TData>;
+  unsubscribeExternalAddressOneClick<TData = void>(
+    params?: UnsubscribeExternalAddressOneClickParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
     const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
 
     if (options?.observe === 'events') {
       return this.http.post<TData>(
-      `/api/v1/notify/addresses/unsubscribe`,
+      `/api/v1/notify/addresses/unsubscribe/one-click`,
       undefined,{
     ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'events',
@@ -808,7 +849,7 @@ export class NotificationsService {
 
     if (options?.observe === 'response') {
       return this.http.post<TData>(
-      `/api/v1/notify/addresses/unsubscribe`,
+      `/api/v1/notify/addresses/unsubscribe/one-click`,
       undefined,{
     ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'response',
@@ -817,7 +858,7 @@ export class NotificationsService {
     }
 
     return this.http.post<TData>(
-      `/api/v1/notify/addresses/unsubscribe`,
+      `/api/v1/notify/addresses/unsubscribe/one-click`,
       undefined,{
     ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'body',
@@ -825,37 +866,35 @@ export class NotificationsService {
     );
   }
 
- resubscribeExternalAddress<TData = void>(params?: ResubscribeExternalAddressParams, options?: HttpClientBodyOptions): Observable<TData>;
+ resubscribeExternalAddress<TData = void>(addressLinkRequest: AddressLinkRequest, options?: HttpClientBodyOptions): Observable<TData>;
   resubscribeExternalAddress<TData = void>(
-    params?: ResubscribeExternalAddressParams, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
-    const filteredParams = filterParams({...params, ...options?.params}, new Set<string>([]));
-
+    addressLinkRequest: AddressLinkRequest, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
     if (options?.observe === 'events') {
       return this.http.post<TData>(
       `/api/v1/notify/addresses/resubscribe`,
-      undefined,{
-    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'events',
-        params: filteredParams,}
+      }
     );
     }
 
     if (options?.observe === 'response') {
       return this.http.post<TData>(
       `/api/v1/notify/addresses/resubscribe`,
-      undefined,{
-    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'response',
-        params: filteredParams,}
+      }
     );
     }
 
     return this.http.post<TData>(
       `/api/v1/notify/addresses/resubscribe`,
-      undefined,{
-    ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+      addressLinkRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
         observe: 'body',
-        params: filteredParams,}
+      }
     );
   }
 
@@ -1059,12 +1098,12 @@ export type ListNotificationRulesResourceResult = NonNullable<NotificationRuleVi
 export type GetNotificationRuleResourceResult = NonNullable<NotificationRuleView>
 export type ListWebhookEndpointsResourceResult = NonNullable<WebhookEndpointView[]>
 export type ListExternalAddressesResourceResult = NonNullable<ExternalAddressView[]>
-export type PreviewAddressLinkResourceResult = NonNullable<AddressSubscriptionView>
 export type ListDeliveriesResourceResult = NonNullable<DeliveryListView>
 export type ListInAppNotificationsResourceResult = NonNullable<InAppNotificationListView>
 export type CountUnreadNotificationsResourceResult = NonNullable<UnreadCountView>
 export type GetNotificationPreferencesResourceResult = NonNullable<NotificationPreferencesView>
 export type ListPushSubscriptionsResourceResult = NonNullable<PushSubscriptionView[]>
+
 
 
 
@@ -1106,8 +1145,10 @@ export type TestWebhookEndpointClientResult = NonNullable<WebhookTestView>
 export type AddExternalAddressClientResult = NonNullable<ExternalAddressView>
 export type ResendAddressConfirmationClientResult = NonNullable<ExternalAddressView>
 export type DeleteExternalAddressClientResult = NonNullable<void>
+export type PreviewAddressLinkClientResult = NonNullable<AddressSubscriptionView>
 export type ConfirmExternalAddressClientResult = NonNullable<void>
 export type UnsubscribeExternalAddressClientResult = NonNullable<void>
+export type UnsubscribeExternalAddressOneClickClientResult = NonNullable<void>
 export type ResubscribeExternalAddressClientResult = NonNullable<void>
 export type MarkNotificationsReadClientResult = NonNullable<UnreadCountView>
 export type SetNotificationPreferencesClientResult = NonNullable<NotificationPreferencesView>

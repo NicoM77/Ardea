@@ -61,6 +61,9 @@ internal static class HostConfiguration
     public static void AddJsonLogging(ILoggingBuilder logging)
     {
         logging.ClearProviders();
+        // «Request starting» and «Request finished» name the query string, and links carry tokens there (the RFC 8058
+        // one-click address of an e-mail). The request lines are left out for every endpoint; traces keep the timings.
+        logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
         logging.AddJsonConsole(o =>
         {
             o.UseUtcTimestamp = true;

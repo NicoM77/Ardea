@@ -137,6 +137,7 @@ internal sealed class WebhookChannel(IHttpClientFactory http, TimeProvider time)
         var timestamp = time.GetUtcNow().ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture);
         using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
         request.Options.Set(OutboundAddresses.AllowInternal, allowInternal);
+        request.Options.Set(OutboundAddresses.Untraced, true);
         request.Headers.UserAgent.Add(new ProductInfoHeaderValue("Ardea", null));
         request.Headers.Add("Ardea-Delivery", deliveryId.ToString());
         request.Headers.Add(SignatureHeader, $"t={timestamp},v1={Sign(secret, timestamp, body)}");

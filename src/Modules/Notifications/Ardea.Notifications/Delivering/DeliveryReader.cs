@@ -113,8 +113,8 @@ internal sealed class DeliveryReader(
                 var token = Uri.EscapeDataString(UnsubscribeToken(secrets, organization, recipient.Id));
                 message = message with
                 {
-                    Unsubscribe = new Uri(publicUrl, $"notifications/unsubscribe?token={token}"),
-                    OneClick = new Uri(publicUrl, $"api/v1/notify/addresses/unsubscribe?token={token}"),
+                    Unsubscribe = new Uri(publicUrl, $"notifications/unsubscribe#token={token}"),
+                    OneClick = new Uri(publicUrl, $"api/v1/notify/addresses/unsubscribe/one-click?token={token}"),
                 };
                 break;
             case RecipientKinds.Endpoint:

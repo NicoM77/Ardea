@@ -25,6 +25,9 @@ internal static class AuthEndpoints
 {
     public const string RateLimitPolicy = "ardea-auth";
 
+    /// <summary>For read-only lookups before sign-in; six times the limit of <see cref="RateLimitPolicy"/>.</summary>
+    public const string ReadRateLimitPolicy = "ardea-auth-read";
+
     private static readonly ArdeaUser Nobody = new() { DisplayName = "-" };
     private static string? _dummyHash;
 
@@ -41,7 +44,7 @@ internal static class AuthEndpoints
     public static void Map(IEndpointRouteBuilder api)
     {
         var setup = api.MapGroup("/setup").WithTags("Setup").RequireRateLimiting(RateLimitPolicy);
-        setup.MapGet("/status", SetupStatusAsync).WithName("getSetupStatus");
+        setup.MapGet("/status", SetupStatusAsync).WithName("getSetupStatus").RequireRateLimiting(ReadRateLimitPolicy);
         setup.MapPost("", SetupAsync).WithName("completeSetup").NoContent().Problems(400, 403, 409);
 
         var auth = api.MapGroup("/auth").WithTags("Authentication");

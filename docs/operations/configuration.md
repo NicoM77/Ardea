@@ -20,7 +20,8 @@ environment wins and is shown there as locked.
 | `ARDEA_AI__PARALLELISM` | `1` | Assessments that wait for a language model at the same time, per worker. One suits a local model on one GPU or a CPU. |
 | `ARDEA_AI__CALL_TIMEOUT_SECONDS` | `120` | Time limit of one call to a model. A call over it counts as failed; the assessment tries once more, then the rules alone apply. |
 | `ARDEA_AI__DAILY_TOKENS` | `2000000` | Tokens (in and out) per UTC day for the whole instance. Once used up, new alerts are assessed with rules and templates alone until the next day. |
-| `ARDEA_AI__DAILY_TOKENS_PER_ORGANIZATION` | `100000` | The same per organisation. One assessment needs about 2 000 to 3 600 tokens; the default covers about 40 a day. |
+| `ARDEA_AI__DAILY_TOKENS_PER_ORGANIZATION` | `100000` | The same per organisation. One assessment needs about 2 000 to 3 600 tokens; the default covers about 40 a day. A call that fails or times out is charged its estimate (prompt length / 4 plus 2 000). |
+| `ARDEA_AI__DAILY_REQUESTS_PER_ORGANIZATION` | `20` | Assessments the people of one organisation may ask for per UTC day. Their requests run before the system's, so the cap keeps one organisation from holding the others back. Beyond it the request is refused with 429. |
 | `ARDEA_RATE_LIMIT__AUTH_PER_MINUTE` | `10` | Sign-in, registration and reset attempts per client network and minute; read-only lookups get six times as many. |
 | `ARDEA_PASSWORD_HASH_ITERATIONS` | Identity's default | PBKDF2 iterations for new password hashes. |
 | `ARDEA_INTEL__BACKFILL_DAYS` | `180` | Look-back of the first load. |

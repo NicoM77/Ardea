@@ -31,8 +31,11 @@ Ardea works completely without a language model. With one, it adds an assessment
 *High* or *Critical*, or *Medium* with an unknown version: under which conditions the vulnerability can be
 exploited, whether they probably hold here, and what to do first. The model never sets the priority; its verdict
 can lower it by one level at most, only where the installed version is unknown, and «probably not affected» is a
-proposal a person confirms. At most five assessments per action in seven days are started automatically; people
-can ask for more on an alert. Configure providers and limits with the `ARDEA_AI__…` variables
+proposal a person confirms. At most five calls per action in seven days are made automatically; people can ask
+for more on an alert, up to a daily cap per organisation. The model sees the vulnerability's public texts and, of
+the organisation, only the affected components' version, kind, exposure, criticality and whether a protection is
+in place, under placeholders: no names of components, projects or the organisation, and no free text such as the
+protection note. Configure providers and limits with the `ARDEA_AI__…` variables
 ([Configuration](configuration.md)); each organisation chooses in its settings whether nothing, only local
 providers, or also cloud providers may be used. The default is «local only».
 

@@ -68,6 +68,13 @@ public sealed class ConfigurationCheck(IConfiguration configuration)
         return this;
     }
 
+    /// <summary>Adds errors found by a check of its own, e.g. the AI providers (master plan 7.8).</summary>
+    public ConfigurationCheck Add(IEnumerable<string> errors)
+    {
+        _errors.AddRange(errors);
+        return this;
+    }
+
     public ConfigurationCheck PositiveInt(string key)
     {
         var value = configuration[key];

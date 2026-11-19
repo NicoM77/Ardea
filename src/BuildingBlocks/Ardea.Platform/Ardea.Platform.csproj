@@ -5,6 +5,7 @@
   <ItemGroup>
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Cronos" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
     <PackageReference Include="MailKit" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />

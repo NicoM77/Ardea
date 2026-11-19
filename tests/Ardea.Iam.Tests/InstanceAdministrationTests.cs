@@ -26,6 +26,34 @@ public sealed class InstanceAdministrationTests(PostgresServer server)
     }
 
     [Fact]
+    public async Task The_administrator_sees_the_ai_providers_without_their_keys_and_can_test_one()
+    {
+        await using var host = await ApiTestHost.StartAsync(server, new()
+        {
+            ["AI:PROVIDERS:local:KIND"] = "ollama",
+            ["AI:PROVIDERS:local:ENDPOINT"] = "http://127.0.0.1:9",
+            ["AI:PROVIDERS:local:MODEL"] = "qwen3:14b",
+            ["AI:PROVIDERS:local:API_KEY"] = "sk-never-shown",
+        });
+        using var admin = await AdminAsync(host);
+
+        var list = await admin.GetAsync("/api/v1/instance/ai/providers");
+        var text = await list.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("sk-never-shown", text, StringComparison.Ordinal);
+        var provider = Assert.Single((await list.Content.ReadFromJsonAsync<JsonElement>()).EnumerateArray());
+        Assert.Equal(("local", "ollama", "qwen3:14b", true, "127.0.0.1"), (
+            provider.GetProperty("name").GetString(), provider.GetProperty("kind").GetString(), provider.GetProperty("model").GetString(),
+            provider.GetProperty("local").GetBoolean(), provider.GetProperty("host").GetString()));
+
+        // Nothing listens on the discard port: the test fails, says so in words, and is audited.
+        var test = await (await admin.PostAsync("/api/v1/instance/ai/providers/local/test")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(test.GetProperty("ok").GetBoolean());
+        Assert.Equal("The provider could not be reached.", test.GetProperty("error").GetString());
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.audit_event WHERE action = 'instance.ai_provider_tested'"));
+        Assert.Equal(HttpStatusCode.NotFound, (await admin.PostAsync("/api/v1/instance/ai/providers/other/test")).StatusCode);
+    }
+
+    [Fact]
     public async Task Registration_mode_set_here_takes_effect_unless_an_environment_variable_locks_it()
     {
         await using var host = await ApiTestHost.StartAsync(server, new() { ["REGISTRATION"] = null });

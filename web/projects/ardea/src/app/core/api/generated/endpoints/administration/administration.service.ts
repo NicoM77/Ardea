@@ -34,6 +34,8 @@ import type {
 
 import type {
   AbandonedJobResponse,
+  AiConnectionResult,
+  AiProviderInfo,
   InstanceResponse,
   InstanceSettingsResponse,
   InstanceStatusView,
@@ -147,6 +149,15 @@ export function getInstanceSettingsResource(options: OrvalHttpResourceOptions<In
 export function getInstanceSettingsResource(options?: OrvalHttpResourceOptions<InstanceSettingsResponse, unknown>): HttpResourceRef<InstanceSettingsResponse | undefined>;
 export function getInstanceSettingsResource(options?: OrvalHttpResourceOptions<InstanceSettingsResponse, unknown>): HttpResourceRef<InstanceSettingsResponse | undefined> {
   return httpResource<InstanceSettingsResponse>(() => applyOrvalRequestExtension(`/api/v1/instance/settings`, options), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function listAiProvidersResource(options: OrvalHttpResourceOptions<AiProviderInfo[], unknown> & { defaultValue: NoInfer<AiProviderInfo[]> }): HttpResourceRef<AiProviderInfo[]>;
+export function listAiProvidersResource(options?: OrvalHttpResourceOptions<AiProviderInfo[], unknown>): HttpResourceRef<AiProviderInfo[] | undefined>;
+export function listAiProvidersResource(options?: OrvalHttpResourceOptions<AiProviderInfo[], unknown>): HttpResourceRef<AiProviderInfo[] | undefined> {
+  return httpResource<AiProviderInfo[]>(() => applyOrvalRequestExtension(`/api/v1/instance/ai/providers`, options), options);
 }
 
 /**
@@ -269,6 +280,38 @@ export class AdministrationService {
     );
   }
 
+ testAiProvider<TData = AiConnectionResult>(name: string, options?: HttpClientBodyOptions): Observable<TData>;
+  testAiProvider<TData = AiConnectionResult>(
+    name: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.post<TData>(
+      `/api/v1/instance/ai/providers/${name}/test`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.post<TData>(
+      `/api/v1/instance/ai/providers/${name}/test`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.post<TData>(
+      `/api/v1/instance/ai/providers/${name}/test`,
+      undefined,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
  retryJob<TData = void>(jobId: string, options?: HttpClientBodyOptions): Observable<TData>;
   retryJob<TData = void>(
     jobId: string, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
@@ -306,6 +349,7 @@ export class AdministrationService {
 export type GetStatusWarningsResourceResult = NonNullable<StatusWarning[]>
 export type GetInstanceResourceResult = NonNullable<InstanceResponse>
 export type GetInstanceSettingsResourceResult = NonNullable<InstanceSettingsResponse>
+export type ListAiProvidersResourceResult = NonNullable<AiProviderInfo[]>
 export type ListAbandonedJobsResourceResult = NonNullable<AbandonedJobResponse[]>
 export type GetInstanceStatusResourceResult = NonNullable<InstanceStatusView>
 
@@ -316,8 +360,11 @@ export type GetInstanceStatusResourceResult = NonNullable<InstanceStatusView>
 
 
 
+
+
 export type UpdateInstanceSettingsClientResult = NonNullable<InstanceSettingsResponse>
 export type SendTestEmailClientResult = NonNullable<void>
+export type TestAiProviderClientResult = NonNullable<AiConnectionResult>
 export type RetryJobClientResult = NonNullable<void>
 
 /**

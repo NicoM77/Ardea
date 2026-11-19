@@ -19,6 +19,8 @@ export * from './affectedAnswer';
 export * from './affectedItem';
 export * from './affectedRange';
 export * from './affectedView';
+export * from './aiConnectionResult';
+export * from './aiProviderInfo';
 export * from './alertDetailView';
 export * from './alertEntryView';
 export * from './alertSummary';

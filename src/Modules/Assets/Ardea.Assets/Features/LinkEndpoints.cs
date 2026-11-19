@@ -34,9 +34,9 @@ internal sealed record LinkView(
     bool ShrinkPending,
     int ComponentCount);
 
-internal sealed record EvidenceView(string File, int Line, string Value);
+internal sealed record SuggestionEvidenceView(string File, int Line, string Value);
 
-internal sealed record SuggestionView(Guid Id, Guid LinkId, string ProductKey, string ProductName, string? Version, IReadOnlyList<EvidenceView> Evidence, string State, Guid? ComponentId);
+internal sealed record SuggestionView(Guid Id, Guid LinkId, string ProductKey, string ProductName, string? Version, IReadOnlyList<SuggestionEvidenceView> Evidence, string State, Guid? ComponentId);
 
 internal sealed record DecideSuggestionRequest(string? Decision, string? Version);
 
@@ -301,7 +301,7 @@ internal static class LinkEndpoints
         var product = await catalog.FindByKeyAsync(s.ProductKey, cancellationToken);
         var evidence = s.Evidence.RootElement.ValueKind == JsonValueKind.Array
             ? s.Evidence.RootElement.EnumerateArray()
-                .Select(e => new EvidenceView(e.GetProperty("file").GetString() ?? "", e.GetProperty("line").GetInt32(), e.GetProperty("value").GetString() ?? ""))
+                .Select(e => new SuggestionEvidenceView(e.GetProperty("file").GetString() ?? "", e.GetProperty("line").GetInt32(), e.GetProperty("value").GetString() ?? ""))
                 .ToList()
             : [];
         return new SuggestionView(s.Id, s.RepositoryLinkId, s.ProductKey, product?.Name ?? s.ProductKey, s.Version, evidence, s.State, s.ComponentId);

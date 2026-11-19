@@ -5,7 +5,7 @@
  * Self-hosted early warning for security vulnerabilities. Errors are RFC 9457 problem details with a stable `code`.
  * OpenAPI spec version: v1
  */
-import type { EvidenceView } from './evidenceView';
+import type { SuggestionEvidenceView } from './suggestionEvidenceView';
 
 export interface SuggestionView {
   id: string;
@@ -14,7 +14,7 @@ export interface SuggestionView {
   productName: string;
   /** @nullable */
   version: string | null;
-  evidence: EvidenceView[];
+  evidence: SuggestionEvidenceView[];
   state: string;
   /** @nullable */
   componentId: string | null;

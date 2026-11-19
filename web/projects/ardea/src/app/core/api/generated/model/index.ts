@@ -79,6 +79,7 @@ export * from './setupStatusResponse';
 export * from './smtpSettingsView';
 export * from './sourceRunView';
 export * from './sourceStatus';
+export * from './suggestionEvidenceView';
 export * from './suggestionView';
 export * from './testEmailRequest';
 export * from './twoFactorRequest';

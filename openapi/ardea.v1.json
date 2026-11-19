@@ -4941,25 +4941,31 @@
       },
       "EvidenceView": {
         "required": [
-          "file",
-          "line",
-          "value"
+          "source",
+          "state",
+          "evidence",
+          "since"
         ],
         "type": "object",
         "properties": {
-          "file": {
+          "source": {
             "type": "string"
           },
-          "line": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
+          "state": {
+            "type": "string"
+          },
+          "evidence": {
             "type": [
-              "integer",
+              "null",
+              "string"
+            ]
+          },
+          "since": {
+            "type": [
+              "null",
               "string"
             ],
-            "format": "int32"
-          },
-          "value": {
-            "type": "string"
+            "format": "date-time"
           }
         }
       },
@@ -6242,6 +6248,30 @@
           }
         }
       },
+      "SuggestionEvidenceView": {
+        "required": [
+          "file",
+          "line",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "line": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
       "SuggestionView": {
         "required": [
           "id",
@@ -6278,7 +6308,7 @@
           "evidence": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/EvidenceView"
+              "$ref": "#/components/schemas/SuggestionEvidenceView"
             }
           },
           "state": {

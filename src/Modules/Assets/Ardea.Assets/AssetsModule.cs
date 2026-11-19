@@ -29,6 +29,7 @@ public sealed class AssetsModule : IModule
         services.AddScoped<Contracts.IProfilePlacement, ProfilePlacement>();
         services.AddScoped<Iam.Contracts.IOrganizationCreatedSubscriber, StackProject>();
         services.AddSingleton<IDemoSeedStep, DemoSeed>();
+        services.AddSingleton<IDemoSeedStep, DemoStack>();
         services.AddSingleton<IDemoSeedStep, DemoUpdate>();
         services.AddJob<ProjectProfileChanged, ProjectProfileChangedHandler>(new JobKindOptions { MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(1) });
         // One reading at a time per worker slot of four; a reading talks to GitHub and may wait for the SBOM.

@@ -133,7 +133,7 @@ internal sealed class ApiClient : IDisposable
     public Task<HttpResponseMessage> StreamAsync(string path, CancellationToken cancellationToken) =>
         _http.GetAsync(new Uri(path, UriKind.Relative), HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
-    public async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, object? body = null, bool csrf = true, string? origin = null, string? fetchSite = null)
+    public async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, object? body = null, bool csrf = true, string? origin = null, string? fetchSite = null, CancellationToken cancellationToken = default)
     {
         if (csrf && Xsrf() is null)
         {
@@ -161,7 +161,7 @@ internal sealed class ApiClient : IDisposable
             request.Headers.Add("Sec-Fetch-Site", fetchSite);
         }
 
-        var response = await _http.SendAsync(request);
+        var response = await _http.SendAsync(request, cancellationToken);
         if (response.IsSuccessStatusCode && ChangesIdentity(path))
         {
             // The token is bound to the signed-in user; the web app reads the session again after these calls.

@@ -26,6 +26,8 @@ environment wins and is shown there as locked.
 | `ARDEA_AI__DAILY_TOKENS` | `2000000` | Tokens (in and out) per UTC day for the whole instance. Once used up, new alerts are assessed with rules and templates alone until the next day. |
 | `ARDEA_AI__DAILY_TOKENS_PER_ORGANIZATION` | `100000` | The same per organisation. One assessment needs about 2 000 to 3 600 tokens; the default covers about 40 a day. A call that fails or times out is charged its estimate (prompt length / 4 plus 2 000). |
 | `ARDEA_AI__DAILY_REQUESTS_PER_ORGANIZATION` | `20` | Assessments the people of one organisation may ask for per UTC day. Their requests run before the system's, so the cap keeps one organisation from holding the others back. Beyond it the request is refused with 429. |
+| `ARDEA_AI__CATALOG_PROVIDER` | first local provider | The provider the catalogue asks when it learns unknown products (master plan 6.9, ADR 040): a provider's name, or `none` for none. The catalogue sends only public data of the sources, so the organisations' data policies do not apply; a provider that is not local is used only when it is named here or in *Sources → Catalogue*. Set here, the field in the administration is locked. |
+| `ARDEA_AI__CATALOG_DAILY_CALLS` | `200` | Calls per UTC day for the catalogue, retries included; the rest waits for the next day. |
 | `ARDEA_RATE_LIMIT__AUTH_PER_MINUTE` | `10` | Sign-in, registration and reset attempts per client network and minute; read-only lookups get six times as many. |
 | `ARDEA_PASSWORD_HASH_ITERATIONS` | Identity's default | PBKDF2 iterations for new password hashes. |
 | `ARDEA_INTEL__BACKFILL_DAYS` | `180` | Look-back of the first load. |

@@ -66,7 +66,7 @@ internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
             return [];
         }
 
-        // Three lookups, each on its own index of entry_affected (master plan 4.4), then the entry's state and age.
+        // Four lookups, each on its own index of entry_affected (master plan 4.4), then the entry's state and age.
         var products = keys.ProductKeys.Distinct(StringComparer.Ordinal).ToArray();
         var cpeVendors = keys.CpePairs.Select(p => p.First).ToArray();
         var cpeProducts = keys.CpePairs.Select(p => p.Second).ToArray();
@@ -77,6 +77,8 @@ internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
             FROM intel.security_entry e
             WHERE e.id IN (
                 SELECT a.entry_id FROM intel.entry_affected a WHERE a.product_key = ANY ({products})
+                UNION
+                SELECT a.entry_id FROM intel.entry_affected a WHERE a.learned_from = ANY ({products})
                 UNION
                 SELECT a.entry_id FROM intel.entry_affected a
                 JOIN unnest({cpeVendors}::text[], {cpeProducts}::text[]) AS k(vendor, product) ON a.cpe_vendor = k.vendor AND a.cpe_product = k.product
@@ -121,6 +123,7 @@ internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
                 Vendor = a.Vendor,
                 Product = a.Product,
                 ProductKey = a.ProductKey,
+                LearnedFrom = a.LearnedFrom,
                 CpeVendor = a.CpeVendor,
                 CpeProduct = a.CpeProduct,
                 PurlType = a.PurlType,

@@ -1,13 +1,20 @@
 name: CI
 
+# GitHub Actions minutes are limited (owner's decision of 19.11.2026): CI runs only on main, never on pull
+# requests. A pull request is verified locally before it is merged; changes to documentation alone run nothing.
+# The visual comparison and the arm64 image run on demand (Actions → CI → Run workflow on main).
 on:
-  pull_request:
   push:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "prototypes/**"
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -105,7 +112,7 @@ jobs:
   # The same image as for local runs, so the committed baselines match pixel for pixel.
   web-visual:
     name: Web visual comparison
-    if: github.event_name == 'push'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
@@ -238,7 +245,7 @@ jobs:
       - name: Smoke test (compose up, healthy, doctor)
         run: build/smoke-test.sh ardea:ci
       - name: Build image (arm64, cross-compiled)
-        if: github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v6
         with:
           context: .

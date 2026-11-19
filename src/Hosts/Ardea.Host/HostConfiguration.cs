@@ -29,13 +29,22 @@ internal static class HostConfiguration
             .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyTokensKey)
             .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyTokensPerOrganizationKey)
             .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyRequestsPerOrganizationKey)
+            .PositiveInt("AI:CATALOG_DAILY_CALLS")
             .Add(AiErrors(configuration))
             .Add(Ardea.Notifications.NotificationsModule.ConfigurationErrors(configuration));
 
     /// <summary>A provider that is configured wrongly stops the start instead of failing on its first call (master plan 7.8).</summary>
     private static IReadOnlyList<string> AiErrors(IConfiguration configuration)
     {
-        Ardea.Platform.Ai.AiProviderOptions.FromConfiguration(configuration, out var errors);
+        var providers = Ardea.Platform.Ai.AiProviderOptions.FromConfiguration(configuration, out var errors);
+
+        // The catalogue's provider (ADR 040): a configured provider's name, or none.
+        if (configuration["AI:CATALOG_PROVIDER"]?.Trim() is { Length: > 0 } catalog && catalog != "none" && errors.Count == 0
+            && !providers.Any(p => string.Equals(p.Name, catalog, StringComparison.Ordinal)))
+        {
+            return [.. errors, "ARDEA_AI__CATALOG_PROVIDER must name a configured provider (ARDEA_AI__PROVIDERS__<Name>__…) or be none."];
+        }
+
         return errors;
     }
 

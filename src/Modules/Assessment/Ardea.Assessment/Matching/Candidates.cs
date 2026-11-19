@@ -17,6 +17,9 @@ internal static class MatchTypes
     public static bool IsStrong(string matchType) => matchType is Package or Cpe or Product;
 }
 
+/// <summary>A hit through a learned catalogue entry: the key it came under and the raw keys of the sources the entry maps.</summary>
+internal sealed record LearnedHit(string ProductKey, IReadOnlyList<string> RawKeys);
+
 /// <summary>An entry's hit on one component, with the affected products that caused it.</summary>
 /// <param name="Component">The component hit.</param>
 /// <param name="MatchType">One of <see cref="MatchTypes"/>.</param>
@@ -32,9 +35,14 @@ internal sealed record Candidate(ProfileComponent Component, string MatchType, I
 /// pairs and packages of its affected products, and the platforms of affected plugins for the weak
 /// «ecosystem» hit.
 /// </summary>
+/// <param name="Direct">The strong keys of the affected products, with the statements behind each.</param>
+/// <param name="Platforms">Platforms of affected plugins, with the plugins.</param>
+/// <param name="LearnedOnly">Product keys that only a learned catalogue entry gave (master plan 6.9): every statement
+/// behind them resolved through one. A key a statement also gives without learning is not among them.</param>
 internal sealed record EntryKeys(
     IReadOnlyDictionary<ProfileKey, IReadOnlyList<AffectedFacts>> Direct,
-    IReadOnlyDictionary<ProfileKey, IReadOnlyList<string>> Platforms)
+    IReadOnlyDictionary<ProfileKey, IReadOnlyList<string>> Platforms,
+    IReadOnlySet<ProfileKey> LearnedOnly)
 {
     public IReadOnlyList<ProfileKey> All => [.. Direct.Keys.Concat(Platforms.Keys).Distinct()];
 
@@ -51,11 +59,23 @@ internal sealed record EntryKeys(
             rows.Add(row);
         }
 
+        var learned = new HashSet<ProfileKey>();
+        var plain = new HashSet<ProfileKey>();
         foreach (var row in entry.Affected)
         {
             if (row.ProductKey is { Length: > 0 } product)
             {
-                Add(new ProfileKey("product", product), row);
+                var key = new ProfileKey("product", product);
+                Add(key, row);
+                (row.LearnedFrom is { Length: > 0 } ? learned : plain).Add(key);
+            }
+
+            // A key from a learned entry keeps its raw key: a free entry that matched the raw key still does (master plan 6.9).
+            if (row.LearnedFrom is { Length: > 0 } raw)
+            {
+                var key = new ProfileKey("product", raw);
+                Add(key, row);
+                plain.Add(key);
             }
 
             if (row.CpeVendor is { Length: > 0 } vendor && row.CpeProduct is { Length: > 0 } cpeProduct)
@@ -85,9 +105,39 @@ internal sealed record EntryKeys(
             }
         }
 
+        learned.ExceptWith(plain);
         return new EntryKeys(
             direct.ToDictionary(d => d.Key, d => (IReadOnlyList<AffectedFacts>)d.Value),
-            platforms.ToDictionary(p => p.Key, p => (IReadOnlyList<string>)p.Value));
+            platforms.ToDictionary(p => p.Key, p => (IReadOnlyList<string>)p.Value),
+            learned);
+    }
+
+    /// <summary>
+    /// How a strong hit came about through a learned catalogue entry, or <c>null</c> when the curated catalogue alone
+    /// gives it (master plan 6.9: «über gelernten Katalogeintrag»). It does when every key it matched under is a product
+    /// key only a learned entry gave, or belongs to a learned product the component is recorded as.
+    /// </summary>
+    /// <param name="candidate">The hit.</param>
+    /// <param name="learnedProducts">Keys of learned products in effect among the hit's keys and the component's product.</param>
+    public LearnedHit? Learned(Candidate candidate, ISet<string> learnedProducts)
+    {
+        if (!candidate.IsStrong)
+        {
+            return null;
+        }
+
+        var componentLearned = candidate.Component.ProductKey is { } own && learnedProducts.Contains(own);
+        var viaLearned = candidate.Keys.All(k =>
+            (k.Type == "product" && (LearnedOnly.Contains(k) || learnedProducts.Contains(k.Value))) || (k.Type != "product" && componentLearned));
+        if (!viaLearned)
+        {
+            return null;
+        }
+
+        var product = candidate.Keys.Where(k => k.Type == "product").Select(k => k.Value).FirstOrDefault() ?? candidate.Component.ProductKey!;
+        var raw = candidate.Keys.Where(Direct.ContainsKey).SelectMany(k => Direct[k]).Select(a => a.LearnedFrom).OfType<string>()
+            .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
+        return new LearnedHit(product, raw);
     }
 
     /// <summary>

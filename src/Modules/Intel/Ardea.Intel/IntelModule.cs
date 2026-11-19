@@ -27,6 +27,9 @@ public sealed class IntelModule : IModule
         services.AddSingleton<HostRateLimits>();
         services.AddSingleton<SourceHttpFactory>();
         services.AddScoped<Contracts.IEntryQueries, Features.EntryQueries>();
+        // The catalogue learns from the unknown products of the entries and has the entries merged again (master plan 6.9).
+        services.AddScoped<Catalog.Contracts.IUnknownProductFeed, Features.UnknownProductFeed>();
+        services.AddScoped<Catalog.Contracts.ICatalogChangeSubscriber, Features.LearnedEntriesSubscriber>();
 
         services.AddHttpClient(SourceHttp.ClientName)
             .ConfigurePrimaryHttpMessageHandler(PrimaryHandler)

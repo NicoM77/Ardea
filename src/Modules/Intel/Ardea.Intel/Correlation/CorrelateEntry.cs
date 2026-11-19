@@ -243,7 +243,7 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
     /// </summary>
     private async Task<EntryProjection> WithCatalogKeysAsync(EntryProjection projection, CancellationToken cancellationToken)
     {
-        var resolved = new Dictionary<(string?, string?, string?, string?, string?, string?), string?>();
+        var resolved = new Dictionary<(string?, string?, string?, string?, string?, string?), (string? Key, string? LearnedFrom)>();
         var affected = new List<AffectedData>(projection.Affected.Count);
         foreach (var row in projection.Affected)
         {
@@ -253,12 +253,13 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
                 var name = row.Product ?? row.PurlName;
                 CpePair? cpe = row.CpeVendor is not null && row.CpeProduct is not null ? new CpePair(row.CpeVendor, row.CpeProduct) : null;
                 PackageCoordinate? package = row.PurlType is not null && row.PurlName is not null ? new PackageCoordinate(row.PurlType, row.PurlName) : null;
-                key = name is null && cpe is null ? row.ProductKey
-                    : (await catalog.ResolveKeyAsync(row.Vendor, name ?? cpe!.Value.Product, cpe, package, cancellationToken))?.Value ?? row.ProductKey;
+                var resolution = name is null && cpe is null ? null : await catalog.ResolveAsync(row.Vendor, name ?? cpe!.Value.Product, cpe, package, cancellationToken);
+                key = resolution is null ? (row.ProductKey, null) : (resolution.Key.Value, resolution.LearnedFrom);
                 resolved[lookup] = key;
             }
 
-            affected.Add(row with { ProductKey = key });
+            // A key from a learned entry keeps its raw key: what found the raw key before still finds it (master plan 6.9).
+            affected.Add(row with { ProductKey = key.Key, LearnedFrom = key.LearnedFrom });
         }
 
         return projection with { Affected = affected };
@@ -393,6 +394,7 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
             Vendor = Cut(a.Vendor),
             Product = Cut(a.Product),
             ProductKey = Cut(a.ProductKey),
+            LearnedFrom = Cut(a.LearnedFrom),
             CpeVendor = Cut(a.CpeVendor),
             CpeProduct = Cut(a.CpeProduct),
             PurlType = a.PurlType,
@@ -424,7 +426,8 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
             entry.Title, entry.Summary, entry.Description, entry.State, entry.CvssScore, entry.CvssVector, entry.Exploitation,
             entry.FixAvailable, entry.AuthorityWarning,
             Join(aliases),
-            Join(affected.Select(a => string.Join('|', a.SourceId, a.ProductKey, a.CpeVendor, a.CpeProduct, a.PurlType, a.PurlName, a.VersionScheme, a.Introduced, a.Fixed, a.LastAffected, a.Exact, a.Status, a.DefaultStatus))),
+            Join(affected.Select(a => string.Join('|', a.SourceId, a.ProductKey, a.CpeVendor, a.CpeProduct, a.PurlType, a.PurlName, a.VersionScheme, a.Introduced, a.Fixed, a.LastAffected, a.Exact, a.Status, a.DefaultStatus)
+                + (a.LearnedFrom is null ? string.Empty : "|learned:" + a.LearnedFrom))),
             Join(references),
             Join(entry.CweIds));
     }
@@ -432,7 +435,7 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
     private static EntrySnapshot Snapshot(EntryProjection p) => new(
         p.Title, p.Summary, p.Description, p.State, p.CvssScore, p.CvssVector, p.Exploitation, p.FixAvailable, p.AuthorityWarning,
         Join(p.Aliases.Select(a => a.Scheme.ToUpperInvariant() + ":" + a.Value)),
-        Join(p.Affected.Select(a => string.Join('|', a.SourceId, a.ProductKey, a.CpeVendor, a.CpeProduct, a.PurlType, a.PurlName, a.VersionScheme, a.Introduced, a.Fixed, a.LastAffected, a.Exact, a.Status, a.DefaultStatus))),
+        Join(p.Affected.Select(a => a.SourceId + "|" + a.Compared)),
         Join(p.References.Select(r => r.Url)),
         Join(p.CweIds));
 

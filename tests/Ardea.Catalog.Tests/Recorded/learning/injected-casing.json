@@ -1,0 +1,7 @@
+{
+  "decision": "Alias",
+  "alias_of": "postgresql",
+  "new_product": null,
+  "confidence": "HIGH",
+  "reasoning": "Upper case values."
+}

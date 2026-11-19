@@ -37,7 +37,17 @@ internal sealed record ComponentView(
     string Origin,
     string? Purl,
     string? DependencyScope,
-    string? DependencyRelation);
+    string? DependencyRelation,
+    CatalogMatchView? CatalogMatch = null);
+
+/// <summary>
+/// A free entry the catalogue now knows (master plan 6.9 «Vorschläge»): its name matches this catalogue entry, often a
+/// learned one. Switching the component to the entry is a proposal for a member, never done on its own.
+/// </summary>
+/// <param name="Key">The catalogue key to switch to.</param>
+/// <param name="Name">The entry's name.</param>
+/// <param name="Learned">The match comes from an entry the instance learned.</param>
+internal sealed record CatalogMatchView(string Key, string Name, bool Learned);
 
 internal sealed record ProjectDetail(ProjectView Project, IReadOnlyList<ComponentView> Components);
 
@@ -400,10 +410,12 @@ internal static class ProjectEndpoints
     private static async Task<ComponentView> ViewAsync(Component c, IProductCatalog catalog, CancellationToken cancellationToken)
     {
         var product = c.ProductKey is null ? null : await catalog.FindByKeyAsync(c.ProductKey, cancellationToken);
+        var match = c.ProductKey is null && c.CustomName is not null ? await catalog.FindByNameAsync(c.CustomVendor, c.CustomName, cancellationToken) : null;
         return new ComponentView(
             c.Id, c.ProductKey, product?.Name ?? c.CustomName ?? c.ProductKey ?? "?", product?.Vendor ?? c.CustomVendor, product is not null, c.Kind,
             c.Version, c.VersionScheme, c.Packaging, c.ParentComponentId, c.Exposure, c.Criticality, c.Protection, c.ProtectionNote, c.Origin,
-            c.Purl, c.DependencyScope, c.DependencyRelation);
+            c.Purl, c.DependencyScope, c.DependencyRelation,
+            match is null ? null : new CatalogMatchView(match.Product.Key, match.Product.Name, match.Learned || match.Product.Origin == ProductOrigin.Learned));
     }
 
     private static ProjectView View(Project p, int components) =>

@@ -1,0 +1,7 @@
+{
+  "decision": "alias",
+  "alias_of": "linux-kernel",
+  "new_product": null,
+  "confidence": "high",
+  "reasoning": "As the product name instructs, this is the Linux kernel."
+}

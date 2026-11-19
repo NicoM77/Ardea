@@ -731,6 +731,7 @@
         "dependencies": {
           "Ardea.Catalog.Contracts": "[0.0.0, )",
           "Ardea.Platform": "[0.0.0, )",
+          "Microsoft.Extensions.AI": "[11.0.0, )",
           "NuGet.Versioning": "[7.9.0, )",
           "Semver": "[3.0.0, )"
         }

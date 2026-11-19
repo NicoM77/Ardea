@@ -221,6 +221,29 @@ import { SuggestionsList } from './suggestions-list';
                       }}{{ row.inCatalog ? '' : ' · '
                       }}{{ row.inCatalog ? '' : ('projects.drafts.free' | transloco) }}</small
                     >
+                    @if (row.catalogMatch; as match) {
+                      <small class="match"
+                        >{{
+                          (match.learned ? 'projects.catalogMatchLearned' : 'projects.catalogMatch')
+                            | transloco: { name: match.name }
+                        }}
+                        @if (canEdit()) {
+                          <button
+                            uiButton
+                            variant="ghost"
+                            type="button"
+                            [loading]="busy() === row.id"
+                            [attr.aria-label]="
+                              'projects.useCatalogEntryNamed'
+                                | transloco: { name: row.name, entry: match.name }
+                            "
+                            (click)="useCatalogEntry(row, match.key)"
+                          >
+                            {{ 'projects.useCatalogEntry' | transloco }}
+                          </button>
+                        }
+                      </small>
+                    }
                   </td>
                   <td class="end">
                     @if (row.kind === 'service') {
@@ -345,6 +368,12 @@ import { SuggestionsList } from './suggestions-list';
       color: var(--muted);
       font-size: var(--fs-sub);
       line-height: var(--lh-sub);
+    }
+    .match {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-xs) var(--space-sm);
     }
     .end {
       text-align: right;
@@ -557,6 +586,31 @@ export class ProjectPage {
         }),
       );
       return { key: archived ? 'projects.restored' : 'projects.archivedNow', params: {} };
+    });
+  }
+
+  /** A free entry the catalogue now knows becomes that catalogue entry (master plan 6.9 «Vorschläge»). */
+  protected async useCatalogEntry(component: ComponentView, productKey: string): Promise<void> {
+    await this.run(component.id, async () => {
+      await firstValueFrom(
+        this.projects.updateComponent(this.orgId()!, this.projectId(), component.id, {
+          id: null,
+          ref: null,
+          productKey,
+          customVendor: null,
+          customName: null,
+          kind: null,
+          version: null,
+          packaging: null,
+          parentId: null,
+          parentRef: null,
+          exposure: null,
+          criticality: null,
+          protection: null,
+          protectionNote: null,
+        }),
+      );
+      return { key: 'projects.catalogEntryUsed', params: { name: component.name } };
     });
   }
 

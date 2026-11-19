@@ -1664,6 +1664,326 @@
         }
       }
     },
+    "/api/v1/instance/catalog/learning": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "getCatalogLearning",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningStatusView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "updateCatalogLearning",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLearningRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningStatusView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/catalog/learning/run": {
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "runCatalogLearning",
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          }
+        }
+      }
+    },
+    "/api/v1/instance/catalog/learned": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "listLearnedEntries",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rawKey",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LearnedItemView"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/catalog/learned/export": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "exportLearnedEntries",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/instance/catalog/learned/{id}/adopt": {
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "adoptLearnedEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AdoptLearnedRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearnedItemView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/catalog/learned/{id}/reject": {
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "rejectLearnedEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/catalog/learned/{id}/withdraw": {
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "withdrawLearnedEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orgs/{orgId}/projects": {
       "get": {
         "tags": [
@@ -7610,6 +7930,32 @@
           }
         }
       },
+      "AdoptLearnedRequest": {
+        "required": [
+          "aliasOf",
+          "newProduct"
+        ],
+        "type": "object",
+        "properties": {
+          "aliasOf": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Key of the entry the raw key is another spelling of."
+          },
+          "newProduct": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LearnedProductInput"
+              }
+            ]
+          }
+        }
+      },
       "AffectedAnswer": {
         "required": [
           "verdict",
@@ -8202,6 +8548,25 @@
           }
         }
       },
+      "CatalogMatchView": {
+        "required": [
+          "key",
+          "name",
+          "learned"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "learned": {
+            "type": "boolean"
+          }
+        }
+      },
       "CatalogProductView": {
         "required": [
           "key",
@@ -8497,6 +8862,16 @@
             "type": [
               "null",
               "string"
+            ]
+          },
+          "catalogMatch": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CatalogMatchView"
+              }
             ]
           }
         }
@@ -9927,6 +10302,489 @@
         }
       },
       "JsonElement": {},
+      "LearnedItemView": {
+        "required": [
+          "id",
+          "rawKey",
+          "vendor",
+          "product",
+          "cpePairs",
+          "purl",
+          "recordCount",
+          "inKev",
+          "outcome",
+          "productKey",
+          "proposal",
+          "firstSeenAt",
+          "lastAttemptAt",
+          "decidedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rawKey": {
+            "type": "string"
+          },
+          "vendor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "product": {
+            "type": "string"
+          },
+          "cpePairs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "purl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "recordCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "inKev": {
+            "type": "boolean"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "productKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "proposal": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LearnedProposalView"
+              }
+            ]
+          },
+          "firstSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastAttemptAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "LearnedProductInput": {
+        "required": [
+          "name",
+          "vendor",
+          "kind",
+          "versionScheme",
+          "cpe",
+          "related",
+          "platform"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "vendor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "os, runtime, framework, cms, database, messaging, container, network, virtualization, library, plugin, service or other"
+          },
+          "versionScheme": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cpe": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "related": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "platform": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "LearnedProductView": {
+        "required": [
+          "key",
+          "name",
+          "vendor",
+          "kind",
+          "versionScheme",
+          "cpe",
+          "packages",
+          "aliases",
+          "related",
+          "platform"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "vendor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "versionScheme": {
+            "type": "string"
+          },
+          "cpe": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "packages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductAlias"
+            }
+          },
+          "related": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "platform": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "LearnedProposalView": {
+        "required": [
+          "decision",
+          "aliasOf",
+          "aliasName",
+          "newProduct",
+          "confidence",
+          "reasoning",
+          "learnedBy",
+          "provider",
+          "model",
+          "promptVersion",
+          "hold"
+        ],
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string"
+          },
+          "aliasOf": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "aliasName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "newProduct": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LearnedProductView"
+              }
+            ]
+          },
+          "confidence": {
+            "type": "string"
+          },
+          "reasoning": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "learnedBy": {
+            "type": "string"
+          },
+          "provider": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "model": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "promptVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hold": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "LearningProviderView": {
+        "required": [
+          "setting",
+          "locked",
+          "name",
+          "local",
+          "model"
+        ],
+        "type": "object",
+        "properties": {
+          "setting": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "locked": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "local": {
+            "type": "boolean"
+          },
+          "model": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "LearningStatusView": {
+        "required": [
+          "provider",
+          "callsToday",
+          "dailyCalls",
+          "productKeys",
+          "unknownKeys",
+          "unknownShare",
+          "collectedAt",
+          "outcomes",
+          "weeks"
+        ],
+        "type": "object",
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/LearningProviderView"
+          },
+          "callsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyCalls": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "productKeys": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unknownKeys": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "unknownShare": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "collectedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "outcomes": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "weeks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LearningWeekView"
+            }
+          }
+        }
+      },
+      "LearningWeekView": {
+        "required": [
+          "week",
+          "learned",
+          "adopted",
+          "confirmed",
+          "rejected",
+          "withdrawn"
+        ],
+        "type": "object",
+        "properties": {
+          "week": {
+            "type": "string",
+            "format": "date"
+          },
+          "learned": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "adopted": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "confirmed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "rejected": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "withdrawn": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "LevelCountView": {
         "required": [
           "level",
@@ -11107,6 +11965,28 @@
             "description": "Stable error code, e.g. invalid_credentials."
           }
         }
+      },
+      "ProductAlias": {
+        "required": [
+          "vendor",
+          "names"
+        ],
+        "type": "object",
+        "properties": {
+          "vendor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Name patterns of a product under one spelling of its vendor (\u0060aliases\u0060, master plan 6.5).\nA pattern without placeholders matches every spelling with the same product key; \u0060*\u0060 stands\nfor any text, \u0060{line}\u0060 captures a version line, \u0060{platform}\u0060 a platform, e.g.\n\u0060.NET {line} installed on {platform}\u0060. Without string? ProductAlias.Vendor, the names match whatever\nvendor a source gives, so they must be distinctive."
       },
       "ProjectDetail": {
         "required": [
@@ -12532,6 +13412,20 @@
           }
         },
         "description": "Absent fields stay unchanged; an empty string removes a stored value."
+      },
+      "UpdateLearningRequest": {
+        "required": [
+          "provider"
+        ],
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       },
       "UpdateLinkRequest": {
         "required": [

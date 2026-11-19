@@ -5,6 +5,7 @@
  * Self-hosted early warning for security vulnerabilities. Errors are RFC 9457 problem details with a stable `code`.
  * OpenAPI spec version: v1
  */
+import type { CatalogMatchView } from './catalogMatchView';
 
 export interface ComponentView {
   id: string;
@@ -36,4 +37,5 @@ export interface ComponentView {
   dependencyScope: string | null;
   /** @nullable */
   dependencyRelation: string | null;
+  catalogMatch?: null | CatalogMatchView;
 }

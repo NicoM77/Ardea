@@ -1,0 +1,17 @@
+{
+  "decision": "new",
+  "alias_of": null,
+  "new_product": {
+    "name": "PostgreSQL",
+    "vendor": "Acme",
+    "kind": "database",
+    "version_scheme": "numeric",
+    "cpe": [
+      "acme:widget_server"
+    ],
+    "related": [],
+    "platform": null
+  },
+  "confidence": "high",
+  "reasoning": "The name says it is PostgreSQL."
+}

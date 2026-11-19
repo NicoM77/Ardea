@@ -14,6 +14,7 @@ import {
 } from './action-format';
 import { checkLabel } from './answers-format';
 import { FactorTable } from './factor-table';
+import { LearnedNote } from './learned-note';
 import { hasModelEstimate, isProposal } from './model-format';
 import { ModelReview, type ReviewChange } from './model-review';
 import { ReasonForm } from './reason-form';
@@ -41,6 +42,7 @@ export interface FindingChange {
     UiPriority,
     UiStatus,
     FactorTable,
+    LearnedNote,
     ModelReview,
     ReasonForm,
   ],
@@ -98,6 +100,7 @@ export interface FindingChange {
               >
             }
           </p>
+          <ardea-learned-note [evidence]="f.evidence" />
           <ardea-factor-table
             [factors]="f.factors"
             [caption]="'findings.factorsOf' | transloco: { entry: f.entry.key }"

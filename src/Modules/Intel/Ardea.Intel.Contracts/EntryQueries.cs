@@ -134,6 +134,12 @@ public sealed record AffectedFacts
 
     public string? ProductKey { get; init; }
 
+    /// <summary>
+    /// The raw key when <see cref="ProductKey"/> comes from a learned catalogue entry (master plan 6.9): a hit through the
+    /// key alone came through a learned entry, and the raw key still finds what it found before.
+    /// </summary>
+    public string? LearnedFrom { get; init; }
+
     public string? CpeVendor { get; init; }
 
     public string? CpeProduct { get; init; }

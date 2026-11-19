@@ -29,6 +29,7 @@ import { num, priorityOf } from './action-format';
 import { checkLabel, reasonLabel } from './answers-format';
 import { AiAssessmentCard } from './ai-assessment-card';
 import { Answers } from './answers';
+import { LearnedNote } from './learned-note';
 import { FactorTable } from './factor-table';
 import { isProposal, isStaleReview, REQUEST_PROBLEMS, REVIEW_PROBLEMS } from './model-format';
 import { ModelReview, type ReviewChange } from './model-review';
@@ -57,6 +58,7 @@ import { ModelReview, type ReviewChange } from './model-review';
     AiAssessmentCard,
     Answers,
     FactorTable,
+    LearnedNote,
     ModelReview,
   ],
   template: `
@@ -145,6 +147,7 @@ import { ModelReview, type ReviewChange } from './model-review';
                         >{{ f.project.name }} ·
                         {{ 'alert.hits.match' | transloco: { type: f.matchType } }}</small
                       >
+                      <ardea-learned-note [evidence]="f.evidence" />
                     </td>
                     <td>
                       {{ check(f.versionVerdict) | transloco }}

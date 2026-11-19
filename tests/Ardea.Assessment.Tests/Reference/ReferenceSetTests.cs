@@ -121,6 +121,12 @@ public sealed class ReferenceSetTests(PostgresServer server)
         await host.StoreRecordsAsync(set.Records.Select(r => new RawRecord(r.Key, r.Value, "application/json")).ToList());
         await host.RunJobsAsync();
 
+        // The labels hold for the curated catalogue (master plan 6.9): no learned entry may take part in the run. Learning
+        // runs only by schedule or on request, which this host never does; the check makes it fail loudly if that changes.
+        Assert.Equal(
+            ["0\t0"],
+            await host.RowsAsync("SELECT (SELECT count(*) FROM catalog.product WHERE origin = 'learned'), (SELECT count(*) FROM catalog.unknown_product WHERE outcome IN ('alias', 'new'))"));
+
         var findings = await host.FindingsAsync();
         return [.. set.Pairs.Select(pair =>
         {
@@ -233,6 +239,45 @@ internal sealed class ReferenceHost : IAsyncDisposable
         InOrganizationAsync(organization, services => services.GetRequiredService<IJobQueue>()
             .EnqueueAsync(new Assessing.MatchProject(project), Assessing.MatchProject.Options(organization, project)));
 
+    /// <summary>A component as a test describes it, with its keys as the profile endpoints compute them.</summary>
+    public async Task<Guid> AddComponentAsync(Guid organization, Guid project, Action<Component> configure)
+    {
+        var id = Guid.CreateVersion7();
+        await InOrganizationAsync(organization, async services =>
+        {
+            var db = services.GetRequiredService<AssetsDbContext>();
+            var now = _clock.GetUtcNow();
+            var component = new Component { Id = id, ProjectId = project, Kind = "other", Packaging = "upstream", CreatedAt = now, ChangedAt = now };
+            configure(component);
+            db.Components.Add(component);
+            await db.SaveChangesAsync();
+            await ComponentKeys.RefreshAsync(db, services.GetRequiredService<IProductCatalog>(), [component], CancellationToken.None);
+        });
+        return id;
+    }
+
+    /// <summary>Changes a component and its keys as the profile endpoints do, and queues the project's reverse search.</summary>
+    public async Task ChangeComponentAsync(Guid organization, Guid project, Guid component, Action<Component> change)
+    {
+        await InOrganizationAsync(organization, async services =>
+        {
+            var db = services.GetRequiredService<AssetsDbContext>();
+            var row = await db.Components.SingleAsync(c => c.Id == component);
+            change(row);
+            await db.SaveChangesAsync();
+            await ComponentKeys.RefreshAsync(db, services.GetRequiredService<IProductCatalog>(), [row], CancellationToken.None);
+        });
+        await ProfileChangedAsync(organization, project);
+    }
+
+    /// <summary>Work in a unit of work of its own, without organisation, as a system job or the administration does it.</summary>
+    public async Task InSystemAsync(Func<IServiceProvider, Task> work)
+    {
+        await using var scope = _services.CreateAsyncScope();
+        await work(scope.ServiceProvider);
+        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+    }
+
     public Task AddComponentAsync(Guid organization, Guid project, ReferenceComponent c) =>
         InOrganizationAsync(organization, async services =>
         {
@@ -298,7 +343,7 @@ internal sealed class ReferenceHost : IAsyncDisposable
     /// Runs every waiting job, whatever its kind, the way the worker runs it: its own scope, its tenant,
     /// one committed unit of work; until none is left.
     /// </summary>
-    public async Task RunJobsAsync()
+    public async Task RunJobsAsync(string? except = null)
     {
         var registry = _services.GetRequiredService<JobRegistry>();
         for (var round = 0; round < 50; round++)
@@ -308,8 +353,9 @@ internal sealed class ReferenceHost : IAsyncDisposable
             {
                 await connection.OpenAsync();
                 await using var claim = new NpgsqlCommand(
-                    "UPDATE platform.job SET state = 'succeeded', finished_at = now() WHERE state = 'pending' RETURNING id, kind, payload::text, org_id",
+                    "UPDATE platform.job SET state = 'succeeded', finished_at = now() WHERE state = 'pending' AND kind <> $1 RETURNING id, kind, payload::text, org_id",
                     connection);
+                claim.Parameters.Add(new NpgsqlParameter { Value = except ?? string.Empty });
                 await using var reader = await claim.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {

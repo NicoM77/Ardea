@@ -2,13 +2,16 @@ import { defineConfig, devices } from '@playwright/test';
 import { existsSync } from 'node:fs';
 
 /**
- * Two Playwright projects, both in Chromium on Linux, both served by scripts/serve-static.mjs with
+ * Three Playwright projects, all in Chromium on Linux, all served by scripts/serve-static.mjs with
  * the production Content Security Policy:
  *
  * - `visual`: one image per component library page (master plan 13.6), against a development build
  *   in dist/showcase (the production build leaves the /ui pages out). Main branch only in CI.
  * - `csp`: the production build in dist/ardea loads its pages under the policy without a single
  *   console error. Runs on every pull request.
+ * - `flows`: the screens of phase 3 (overview, actions, action, alert) in the same build against a
+ *   stateful stand-in for the API (e2e/flows-api.ts), with axe (WCAG 2.2 AA) on every page and the
+ *   layout check of the three answers at 390 × 844. Runs on every pull request with `csp`.
  *
  * Build, then run in the official image so the images match CI (the repository is mounted whole,
  * because the server reads the policy from the host's source):
@@ -73,6 +76,16 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         baseURL: `http://127.0.0.1:${production.port}`,
+      },
+    },
+    {
+      // The screens of phase 3 with axe, against a stand-in for the API (e2e/flows-api.ts).
+      name: 'flows',
+      testMatch: 'flows.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: `http://127.0.0.1:${production.port}`,
+        viewport: { width: 1440, height: 900 },
       },
     },
   ],

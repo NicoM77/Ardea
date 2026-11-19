@@ -142,6 +142,7 @@ jobs:
 
   # The production build under the production Content Security Policy, on every pull request:
   # pages must load without a console error, so nothing that needs eval or inline script ships.
+  # The same job runs the flows of phase 3 against a stand-in for the API, with axe (a few seconds).
   web-csp:
     name: Web under CSP
     runs-on: ubuntu-latest
@@ -163,8 +164,8 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
-      - name: Load pages under the policy
-        run: npx playwright test --project csp
+      - name: Load pages under the policy, and the flows with axe
+        run: npx playwright test --project csp --project flows
         env:
           HOME: /root
       - uses: actions/upload-artifact@v4

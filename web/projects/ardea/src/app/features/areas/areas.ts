@@ -42,8 +42,6 @@ export const AREAS: readonly Area[] = [
     path: 'overview',
     label: 'nav.overview',
     icon: LucideLayoutGrid.icon,
-    emptyHeading: 'areas.overview.emptyHeading',
-    emptyText: 'areas.overview.emptyText',
     group: 'main',
   },
   {
@@ -51,8 +49,6 @@ export const AREAS: readonly Area[] = [
     path: 'actions',
     label: 'nav.actions',
     icon: LucideListChecks.icon,
-    emptyHeading: 'areas.actions.emptyHeading',
-    emptyText: 'areas.actions.emptyText',
     group: 'main',
   },
   {

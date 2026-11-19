@@ -171,7 +171,9 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
             EpssClass = entry.Epss,
             AuthorityWarning = entry.Authority,
             FixAvailable = entry.Affected.Any(a => a.Fixed is not null),
-            Provenance = JsonDocument.Parse("{}"),
+            Description = entry.Description,
+            Details = JsonSerializer.SerializeToDocument(new { solutions = entry.Solutions, workarounds = Array.Empty<string>() }),
+            Provenance = JsonDocument.Parse(entry.Description is null ? "{}" : """{"description": "test-source"}"""),
         });
         foreach (var a in entry.Affected)
         {
@@ -333,6 +335,10 @@ internal sealed record TestEntry(string Key, params TestAffected[] Affected)
     public bool Authority { get; init; }
 
     public DateTimeOffset? ChangedAt { get; init; }
+
+    public string? Description { get; init; }
+
+    public IReadOnlyList<string> Solutions { get; init; } = [];
 }
 
 /// <summary>One version statement about an affected product.</summary>

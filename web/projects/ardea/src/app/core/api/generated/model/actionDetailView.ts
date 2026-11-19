@@ -7,10 +7,12 @@
  */
 import type { ActionEventView } from './actionEventView';
 import type { ActionSummary } from './actionSummary';
+import type { AnswersView } from './answersView';
 import type { FindingView } from './findingView';
 
 export interface ActionDetailView {
   action: ActionSummary;
+  answers: null | AnswersView;
   findings: FindingView[];
   events: ActionEventView[];
 }

@@ -84,17 +84,17 @@ Ein Einlesen ersetzt nicht das Profil, es gleicht ab. Die Regeln aus Kapitel 4.9
 | Wem gehört eine Komponente | Komponenten mit der Herkunft `repository` gehören ihrer Verknüpfung. Ob es sie gibt und welche Version sie hat, bestimmt das Repository. Erreichbarkeit, Kritikalität und Schutzmassnahme setzt der Mensch; sie überstehen jedes Einlesen. Manuelle Komponenten berührt ein Einlesen nie. |
 | Version von Hand ändern | Bei Komponenten aus dem Repository nicht möglich. Wer abweichen will, löst die Komponente von der Verknüpfung; sie wird manuell und vom Einlesen nicht mehr verändert. |
 | Identität | Zuerst über Verknüpfung, Paket und Version. Was so nicht zugeordnet wird, wird je Paket mit den übrigen Ständen desselben Pakets gepaart. Ein Versionswechsel ist damit eine Änderung derselben Komponente und kein Entfernen mit Neuanlage. |
-| Version angehoben | Befunde, deren Bereich die neue Version nicht mehr enthält, schliessen mit «behoben durch Update» (Kapitel 7.4). Wer einen Pull Request von Dependabot oder Renovate zusammenführt, sieht die Massnahme in Ardea nach dem nächsten Einlesen geschlossen. |
-| Paket fehlt im neuen Stand | Die Komponente wird entfernt, ihre Massnahme schliesst mit «Komponente entfernt». |
+| Version angehoben | Befunde, deren Bereich die neue Version nicht mehr enthält, schliessen mit «behoben durch Update» (Kapitel 7.4). Wer einen Pull Request von Dependabot oder Renovate zusammenführt, sieht der Reminder in Ardea nach dem nächsten Einlesen geschlossen. |
+| Paket fehlt im neuen Stand | Die Komponente wird entfernt, ihre Reminder schliesst mit «Komponente entfernt». |
 | Plötzlich viel weniger | Schrumpft die Paketliste einer Verknüpfung um mehr als die Hälfte, wird der neue Stand nicht übernommen, sondern zur Bestätigung angezeigt. So löscht ein abgeschalteter Dependency Graph oder eine leere SBOM kein Profil. |
 | Einlesen schlägt fehl | Das Profil bleibt auf dem letzten guten Stand. Ein Fehler entfernt nie etwas. |
 | Doppelt erfasst | Ein manuelles Produkt, das das Repository ebenfalls liefert (von Hand «Angular 22», im Repository `@angular/core` 22.2.1), bietet der Wizard zum Zusammenlegen an. Die Komponente übernimmt dann die Version aus dem Repository und gehört fortan der Verknüpfung. |
 | Vorschläge | Bestätigte Vorschläge werden zu Komponenten mit Herkunft `repository` und Beleg. Abgelehnte merkt sich Ardea mit Datei und Wert und schlägt sie nicht erneut vor, solange sich die Angabe in der Datei nicht ändert. |
-| Erstbefüllung | Das erste Einlesen einer Verknüpfung ist eine Erstbefüllung wie ein neues Projekt (Kapitel 7.7): keine Einzelalarme, eine Sammelnachricht `backfill.completed`. Jedes weitere Einlesen ist eine gewöhnliche Profiländerung; ein neu hinzugefügtes, verwundbares Paket meldet sich also wie jede neue Massnahme. |
+| Erstbefüllung | Das erste Einlesen einer Verknüpfung ist eine Erstbefüllung wie ein neues Projekt (Kapitel 7.7): keine Einzelalarme, eine Sammelnachricht `backfill.completed`. Jedes weitere Einlesen ist eine gewöhnliche Profiländerung; ein neu hinzugefügtes, verwundbares Paket meldet sich also wie jede neue Reminder. |
 
 **Nur für die Entwicklung.** Pakete, die nur beim Bauen und Testen gebraucht werden (`devDependencies` bei npm), werden nicht ausgeliefert. Sie tragen das Merkmal `development`, und das Regelwerk begrenzt ihre Stufe auf 2, solange kein Mensch sie anders einstuft (Kapitel 7.6). Die Untergrenzen für aktiv ausgenutzte Lücken gelten trotzdem: Ein kompromittiertes Werkzeug auf dem Build-Server ist ein echtes Risiko. Fehlt die Angabe, gilt ein Paket als ausgeliefert.
 
-**Transitive Pakete.** Auch eine Massnahme zu einem transitiven Paket gehört zu genau einer Komponente. Wo die SBOM den Pfad kennt, nennt die Massnahme das direkte Paket, über das es kommt («über `@angular/build` 22.2.0»). Oft ist dessen Update der eigentliche Schritt; das Ziel nennt deshalb beide.
+**Transitive Pakete.** Auch ein Reminder zu einem transitiven Paket gehört zu genau einer Komponente. Wo die SBOM den Pfad kennt, nennt der Reminder das direkte Paket, über das es kommt («über `@angular/build` 22.2.0»). Oft ist dessen Update der eigentliche Schritt; das Ziel nennt deshalb beide.
 
 ## 16.6 Aktualität und Zustand
 
@@ -120,7 +120,7 @@ Alles ist überspringbar. Einmal Bestätigtes oder Abgelehntes fragt der Wizard 
 
 Schätzung, nicht gemessen: Eine Angular-Anwendung bringt mit ihren Werkzeugen 900 bis 1 300 npm-Pakete mit, ein .NET-Dienst 100 bis 250 NuGet-Pakete. Eine Organisation mit 20 Repositories hält damit rund 20 000 Komponenten, je unter 1 kB, mit je einem Suchschlüssel. Für Datenbank und Kandidatensuche ist das unerheblich.
 
-Für die Menge der Massnahmen ist es nicht unerheblich. Phase 2 beobachtet sie an Ardeas eigenem Repository und an zwei weiteren Repositories (Kapitel 14). Liegt die Zahl offener Massnahmen dort deutlich über der des Spikes, wird vor Phase 3 entschieden, ob transitive Pakete einer Verknüpfung zu einer Massnahme je direktem Paket gebündelt werden. Das Datenmodell lässt beides zu, weil jede Komponente ihre übergeordnete kennt.
+Für die Menge der Reminders ist es nicht unerheblich. Phase 2 beobachtet sie an Ardeas eigenem Repository und an zwei weiteren Repositories (Kapitel 14). Liegt die Zahl offener Reminders dort deutlich über der des Spikes, wird vor Phase 3 entschieden, ob transitive Pakete einer Verknüpfung zu einer Reminder je direktem Paket gebündelt werden. Das Datenmodell lässt beides zu, weil jede Komponente ihre übergeordnete kennt.
 
 ## 16.9 Sicherheit
 

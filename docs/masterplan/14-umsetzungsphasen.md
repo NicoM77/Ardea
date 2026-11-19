@@ -1,6 +1,6 @@
 # 14 · Umsetzungsphasen
 
-Acht Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen lässt. Enthalten ist nur, was in Kapitel 1.5 in der Spalte MVP steht. Abnahmekriterien werden als schnelle Tests in der Pipeline geprüft; wo das nicht geht, einmal in der Entwicklung beobachtet. Langläufer und zeitgesteuerte Tests gibt es nicht, und jede Pipeline bleibt unter 25 Minuten (Kapitel 13.6 und 13.7).
+Neun Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen lässt. Enthalten ist nur, was in Kapitel 1.5 in der Spalte MVP steht. Abnahmekriterien werden als schnelle Tests in der Pipeline geprüft; wo das nicht geht, einmal in der Entwicklung beobachtet. Langläufer und zeitgesteuerte Tests gibt es nicht, und jede Pipeline bleibt unter 25 Minuten (Kapitel 13.6 und 13.7).
 
 ## 14.1 Aufwand
 
@@ -9,9 +9,10 @@ Acht Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen l
 | 0 | Startbare Instanz mit Anmeldung, Job-System, Build-Kette, Administration in erster Form; technische Risiken geklärt | 5–6 Wochen |
 | 1 | Konsolidierte Einträge aus fünf Quellen einschliesslich OSV für Pakete, mit Verschmelzen; durchsuchbar | 7–10 Wochen |
 | 2 | Organisationen mit Projekten und Technologieprofil; Profil aus GitHub-Repositories; Setup-Wizard | 7–9 Wochen |
-| 3 | Befunde, Massnahmen und Meldungen mit Stufe und Begründung; Übersicht, Liste, Detail | 6–8 Wochen |
+| 3 | Befunde, Reminders und Meldungen mit Stufe und Begründung; Übersicht, Liste, Detail | 6–8 Wochen |
 | 4 | KI-Einschätzung als zuschaltbarer Schritt; Katalog, der selbst wächst | 3–4 Wochen |
 | 5 | Benachrichtigungen über vier Kanäle | 3–4 Wochen |
+| 5a | Stack der Organisation, Hinweise mit Ja/Nein, Reminder ohne Zuweisung und Frist | 4–6 Wochen |
 | 6 | Gehärtete, geprüfte und dokumentierte Instanz | 3–4 Wochen |
 | 7 | Aufgeräumtes Repository unter dem Namen Ardea; Release 1.0 mit automatisch gebauten, signierten Images; Demo-Befehl; englisches README und Website mit Dokumentation auf GitHub Pages; Abnahme aller Phasen; Masterplan gelöscht | 4–5 Wochen |
 | | **Summe** | **38–50 Wochen** |
@@ -25,12 +26,13 @@ flowchart LR
   P0[0 Fundament] --> P1[1 Quellen bis Eintrag]
   P0 --> P2[2 Organisationen, Profil]
   P1 -- Katalog und Produktschlüssel 1.1 --> P2
-  P1 --> P3[3 Befunde, Massnahmen, Oberfläche]
+  P1 --> P3[3 Befunde, Reminders, Oberfläche]
   P2 --> P3
   P3 --> P4[4 KI-Einschätzung]
   P3 --> P5[5 Benachrichtigungen]
   P4 --> P6[6 Härtung]
-  P5 --> P6
+  P5 --> P5a[5a Stack, Hinweise]
+  P5a --> P6
   P6 --> P7[7 Aufräumen, Release]
 ```
 
@@ -125,20 +127,20 @@ Abnahme:
 - Die Testperson erfasst die drei Beispielprojekte auch dann in unter 10 Minuten, wenn eines davon über ein Repository angelegt wird.
 - Ardeas eigenes Repository und zwei weitere werden eingelesen; Zahl der Komponenten, Anteil «Version unbekannt» und Dauer werden einmal beobachtet und festgehalten (Kapitel 16.8).
 
-## Phase 3 · Befunde, Massnahmen und die Oberfläche dazu
+## Phase 3 · Befunde, Reminders und die Oberfläche dazu
 
 | Nr. | Aufgabe | Abhängig von |
 |---|---|---|
-| 3.1 | Mockups: ruhige Übersicht, Massnahme mit mehreren Befunden, Fassung mit KI-Einschätzung; Durchsicht durch den Eigentümer im Nachhinein | |
+| 3.1 | Mockups: ruhige Übersicht, Reminder mit mehreren Befunden, Fassung mit KI-Einschätzung; Durchsicht durch den Eigentümer im Nachhinein | |
 | 3.2 | Kandidatensuche vorwärts und rückwärts, auch über Paketkoordinaten aus OSV; Trefferstärke; schwache Treffer als Stufe 1 | 1.7, 1.12, 2.5 |
 | 3.3 | Versionsprüfung mit den drei Ergebnissen einschliesslich Vorgabezustand der Records (Kapitel 6.6); Pakete aus Distributionen als unbekannt | 3.2, 1.1 |
 | 3.4 | Regelwerk Version 1 als Datei; Faktoren, Ober- und Untergrenzen, Fristen | 3.3 |
-| 3.5 | Befunde, Massnahmen, Meldungen, Verlauf; die Ereignisse aus Kapitel 8.2 als Verlaufszeilen mit Kennung; Abschluss durch Anheben der Version im Profil; Erstbefüllung ohne Einzelereignisse | 3.4 |
+| 3.5 | Befunde, Reminders, Meldungen, Verlauf; die Ereignisse aus Kapitel 8.2 als Verlaufszeilen mit Kennung; Abschluss durch Anheben der Version im Profil; Erstbefüllung ohne Einzelereignisse | 3.4 |
 | 3.6 | Antworten aus Vorlagen ohne Sprachmodell | 3.5 |
 | 3.7 | Referenzsatz mit mindestens 200 beschrifteten Paaren; die Wochendaten des Spikes als Testdatensatz; Bewertungslauf im Build; Kalibrierung der Gewichte | 3.4 |
 | 3.8 | Übersicht mit Warnungen ohne Kennung und ruhigem Zustand | 3.5, 3.1 |
-| 3.9 | Liste der Massnahmen mit Filter nach Priorität und Projekt, Suche, offen und abgeschlossen | 3.5, 3.1 |
-| 3.10 | Massnahme und Schwachstelle im Detail; Status, Zuweisung, Frist, Notiz, Rücknahme | 3.5, 3.1 |
+| 3.9 | Liste der Reminders mit Filter nach Priorität und Projekt, Suche, offen und abgeschlossen | 3.5, 3.1 |
+| 3.10 | Reminder und Schwachstelle im Detail; Status, Zuweisung, Frist, Notiz, Rücknahme | 3.5, 3.1 |
 | 3.11 | Live-Aktualisierung über Server-Sent Events; Befehl zum Neuberechnen der Stufen | 3.8 |
 
 Abnahme:
@@ -146,13 +148,13 @@ Abnahme:
 - Referenzsatz: kein übersehenes Paar unter den exakten Treffern, höchstens 2 % übersehene insgesamt, höchstens 20 % unbegründete ab Stufe 3 (Begriffe nach Kapitel 7.9).
 - Die Beispielfälle aus Kapitel 7.6 ergeben die dort genannten Stufen.
 - Gleiche gespeicherte Eingabe ergibt bei erneuter Berechnung dieselbe Stufe und dieselben Faktoren.
-- Die Daten des Spikes (eine Woche, drei Projekte) ergeben höchstens 8 offene Massnahmen.
-- Ein neues Projekt mit 40 Treffern im Rückblick erzeugt Befunde mit dem Vermerk Erstbefüllung, im Verlauf kein `action.raised` und genau ein `backfill.completed`.
+- Die Daten des Spikes (eine Woche, drei Projekte) ergeben höchstens 8 offene Reminders.
+- Ein neues Projekt mit 40 Treffern im Rückblick erzeugt Befunde mit dem Vermerk Erstbefüllung, im Verlauf kein `reminder.raised` und genau ein `backfill.completed`.
 - Wird im Profil eine Version angehoben, von Hand oder durch einen neuen Commit im Repository, schliessen sich die Befunde, die sie nicht mehr betreffen.
 - Ein Befund an einer Komponente mit dem Merkmal «nur Entwicklung» erhält höchstens Stufe 2, ausser eine Untergrenze greift.
-- Die drei eingelesenen Repositories aus Phase 2 ergeben eine Zahl offener Massnahmen, die festgehalten wird; liegt sie deutlich über der des Spikes, entscheidet der Eigentümer vor der Abnahme über das Bündeln transitiver Pakete (Kapitel 16.8).
+- Die drei eingelesenen Repositories aus Phase 2 ergeben eine Zahl offener Reminders, die festgehalten wird; liegt sie deutlich über der des Spikes, entscheidet der Eigentümer vor der Abnahme über das Bündeln transitiver Pakete (Kapitel 16.8).
 - Mit den Beispieldaten liegen bei 390 × 844 Punkten alle drei Antworten über der Aktionsleiste (automatischer Layouttest).
-- Ohne Sprachmodell zeigen Übersicht, Massnahme und Meldung alle drei Antworten aus strukturierten Daten.
+- Ohne Sprachmodell zeigen Übersicht, Reminder und Meldung alle drei Antworten aus strukturierten Daten.
 - Automatische Zugänglichkeitsprüfung der Seiten ohne Befund.
 
 ## Phase 4 · KI-Einschätzung
@@ -161,7 +163,7 @@ Abnahme:
 |---|---|---|
 | 4.1 | Anbindung über Microsoft.Extensions.AI; benannte Anbieter mit Kennzeichnung lokal oder nicht; Verbindungstest; Einstellungen dazu in der Administration | 3.5 |
 | 4.2 | Prompt, Ausgabeschema, Prüfung der Ausgabe, ein Wiederholungsversuch, Rückfall auf Regeln | 4.1 |
-| 4.3 | Auslösung als eigener Job nach Schwelle und Kontingent je Massnahme; auf Anforderung in der Oberfläche | 4.2 |
+| 4.3 | Auslösung als eigener Job nach Schwelle und Kontingent je Reminder; auf Anforderung in der Oberfläche | 4.2 |
 | 4.4 | Datensparsame Eingabe; Datenrichtlinie je Organisation | 4.2 |
 | 4.5 | Urteil des Modells als Faktor nur bei unbekannter Version; «nicht betroffen» als Vorschlag zum Bestätigen | 4.2, 3.4 |
 | 4.6 | Grenzen: Parallelität, Kontingente, Zeitlimit; Messwerte | 4.1 |
@@ -176,7 +178,7 @@ Abnahme:
 - 20 präparierte Einträge mit eingebetteten Anweisungen, je zur Hälfte mit Version im Bereich und mit unbekannter Version: Keiner erreicht ohne menschliche Bestätigung Stufe 1, keiner fällt unter die Untergrenzen, keiner liegt mehr als eine Stufe unter dem Ergebnis ohne Modell, keine ungültige Ausgabe gelangt in den Bestand.
 - Ein Test, der ausgehende Anfragen mitliest, findet darin keine Komponenten ausserhalb der Treffer und keine Projektnamen.
 - Eine Organisation mit der Richtlinie «nur lokal» erzeugt keinen Aufruf an einen nicht lokalen Anbieter, auch nicht bei Ausfall des lokalen.
-- Die Daten des Spikes (eine Woche, acht Massnahmen) lösen höchstens 40 Aufrufe aus.
+- Die Daten des Spikes (eine Woche, acht Reminders) lösen höchstens 40 Aufrufe aus.
 - Ein gelernter Katalogeintrag ändert keinen kuratierten Eintrag und entfernt keinen bestehenden Treffer (schneller Test).
 - Produktnamen mit eingebetteten Anweisungen führen zu keiner ungültigen Übernahme (aufgezeichnete Antworten).
 - Ohne Anbieter läuft die Zuordnung ohne Modell, sonst nichts.
@@ -196,6 +198,21 @@ Abnahme:
 | 5.8 | Mockup und Seiten für Regeln, Ziele, Zustellprotokoll, persönliche Einstellungen; Durchsicht des Mockups im Nachhinein | 5.1 |
 
 Abnahme: die Kriterien aus Kapitel 8.8.
+
+## Phase 5a · Stack und Hinweise
+
+Grundlage ist Kapitel 17.
+
+| Nr. | Aufgabe | Abhängig von |
+|---|---|---|
+| 5a.1 | **Versuch:** Hinweise je Woche für typische Stacks mit den Wochendaten des Spikes; Schwellen festlegen; Ergebnis als ADR | 3.7 |
+| 5a.2 | Datenmodell: `project.kind`, `version_precision`, `notice`; Zuweisung, Frist und «in Prüfung» entfernen; Migration offener Massnahmen ohne Version zu Hinweisen | 5a.1 |
+| 5a.3 | Erzeugung der Hinweise aus dem Stack mit Schwelle je Eintrag; «betrifft uns» erzeugt einen Reminder; Wiederkehr bei Ausnutzung oder KEV | 5a.2 |
+| 5a.4 | Wizard: Schritt Stack vor den Projekten; Projekte und Repository optional | 5a.2 |
+| 5a.5 | Seite «Notices»; Detailseite des Reminders gekürzt; Übersicht mit neuen Hinweisen | 5a.3 |
+| 5a.6 | Erinnerungen nach Stufe; Ereignis `notice.raised`; Eskalation entfällt | 5a.3, 5.2 |
+
+Abnahme: Ein Stack aus zehn Einträgen erzeugt in der Spike-Woche höchstens die in 5a.1 festgelegte Zahl von Hinweisen; «betrifft uns nicht» kehrt nicht zurück; kein Endpunkt und keine Seite kennt Zuweisung oder Frist.
 
 ## Phase 6 · Härtung
 
@@ -225,8 +242,8 @@ Keine neuen Funktionen für Benutzer. Hinzu kommen nur der Demo-Befehl, die Werk
 | 7.3 | Release-Pipeline nach Kapitel 13.7, im selben Workflow wie 7.2, weil ein mit dem `GITHUB_TOKEN` gesetztes Tag keinen weiteren Workflow auslöst: Images für `amd64` und `arm64` aus dem geprüften Stand in die Registry des Repositories mit den Tags aus Kapitel 12; Signatur mit cosign ohne eigenen Schlüssel (über die OIDC-Identität des Workflows) und Herkunftsnachweis (Build Provenance); SBOM, `compose.yaml` und Beispielkonfiguration als Anhang des Release; Befehl zum Prüfen von Signatur und Herkunft in der Installationsanleitung | 6.8, 7.2 |
 | 7.4 | Repository aufräumen: Inventar aller Dateien ausserhalb von `src`, `tests`, `web`, `deploy` und `build`; Arbeitsstände aus Planung und Design (`.impeccable/`, `prototypes/`, Mockups, Review-Bilder, Recherchen) löschen, mit der Entscheidung je Datei als Liste im Pull Request; verwaiste Skripte, Konfigurationen und Fixtures löschen; Git-Verlauf auf Geheimnisse und grosse Dateien prüfen | 6.7 |
 | 7.5 | Code aufräumen: Kommentare entfernen. Es bleiben nur die, ohne die etwas nicht funktioniert oder geprüft wird: XML-Dokumentation, aus der das OpenAPI-Dokument seine Beschreibungen bezieht; Begründungen an unterdrückten Analyzer- und Lint-Warnungen; Direktiven für Werkzeuge. Ein Prüfskript im Build verhindert neue. Dazu ungenutzter Code, Pakete, Übersetzungsschlüssel, Einstellungen und Testhilfen entfernen (Analyzer, `knip` für die Web-App); offene `TODO` gelöst oder als Issue erfasst | 6.1 |
-| 7.6 | Befehl `seed-demo`: spielt die Beispieldaten (Organisation, drei Projekte, Einträge, Befunde, Massnahmen, Benachrichtigungen) in eine leere Instanz ein, ohne GitHub-Token, ohne Erstbefüllung und ohne Abruf der Quellen; verweigert die Arbeit auf einer Datenbank mit Daten. Anleitung «Try it» für Interessierte | 6.6 |
-| 7.7 | Screenshots automatisch: Ein Playwright-Lauf gegen eine Instanz aus `seed-demo` erzeugt die Bilder für README und Website (Übersicht, Massnahme, Meldung, Wizard, Telefonbreite), damit sie mit der Oberfläche aktuell bleiben | 7.5, 7.6 |
+| 7.6 | Befehl `seed-demo`: spielt die Beispieldaten (Organisation, drei Projekte, Einträge, Befunde, Reminders, Benachrichtigungen) in eine leere Instanz ein, ohne GitHub-Token, ohne Erstbefüllung und ohne Abruf der Quellen; verweigert die Arbeit auf einer Datenbank mit Daten. Anleitung «Try it» für Interessierte | 6.6 |
+| 7.7 | Screenshots automatisch: Ein Playwright-Lauf gegen eine Instanz aus `seed-demo` erzeugt die Bilder für README und Website (Übersicht, Reminder, Meldung, Wizard, Telefonbreite), damit sie mit der Oberfläche aktuell bleiben | 7.5, 7.6 |
 | 7.8 | README auf Englisch: Logo aus `docs/design/brand/` in heller und dunkler Fassung; Zweck in zwei Sätzen; Screenshots aus 7.7; Funktionen; Schnellstart in drei Befehlen und «Try it» mit `seed-demo`; Systemanforderungen; Quellen mit ihren Nutzungsbedingungen; Verweise auf Website und Dokumentation; Mitwirken, Sicherheit, Lizenz. Die Roadmap schrumpft auf die Ausbaustufen nach 1.0 | 7.4, 7.7 |
 | 7.9 | Website auf GitHub Pages mit Produktseite und Dokumentation: Startseite im Designsystem aus `DESIGN.md` mit Logo, Zweck, Screenshots aus 7.7, Funktionen, Schnellstart und Verweis auf das neueste Release; darunter die Dokumentation (Installation, Konfiguration, Betrieb, Update, «Add a source», Architektur, API aus dem OpenAPI-Dokument, ADR), gelesen aus den Markdown-Dateien in `docs/` als einziger Quelle. Gebaut mit einem statischen Generator (Empfehlung: Astro mit Starlight, MIT), Lizenzprüfung wie für die Web-App; Bau und Veröffentlichung bei jedem Release und bei Änderungen an `docs/` im Hauptzweig; Linkprüfung und Zugänglichkeitsprüfung im Build | 7.1, 7.7, 7.8 |
 | 7.10 | Abdeckung messen, ohne Quote; Lücken in Anmeldung, Mandantentrennung, Versionsprüfung, Regelwerk und Benachrichtigung mit schnellen Tests schliessen, innerhalb des Zeitbudgets aus Kapitel 13.7 | 7.5 |

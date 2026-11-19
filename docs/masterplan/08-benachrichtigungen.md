@@ -4,11 +4,11 @@
 
 Eine Benachrichtigung ist ein Eingriff in die Arbeit eines Menschen. Das System sendet deshalb nur, wenn sich für den Empfänger etwas ändert, das er wissen oder tun muss, und es sendet dasselbe nie zweimal. Alles andere steht in der Oberfläche und in Sammelnachrichten.
 
-Benachrichtigt wird über **Massnahmen** (Kapitel 7.4), nicht über einzelne CVEs. Kommen zu einer offenen Massnahme zwanzig weitere Befunde hinzu, ohne dass ihre Stufe steigt, erfährt der Empfänger das in der nächsten Sammelnachricht und nicht in zwanzig einzelnen Nachrichten.
+Benachrichtigt wird über **Reminders** (Kapitel 7.4), nicht über einzelne CVEs. Kommen zu einer offenen Reminder zwanzig weitere Befunde hinzu, ohne dass ihre Stufe steigt, erfährt der Empfänger das in der nächsten Sammelnachricht und nicht in zwanzig einzelnen Nachrichten.
 
 ```mermaid
 flowchart LR
-  E[Ereignis an einer Massnahme] --> R[Regeln der Organisation auswerten]
+  E[Ereignis an einer Reminder] --> R[Regeln der Organisation auswerten]
   R --> T[Empfänger und Kanäle auflösen]
   T --> Z{Für Empfänger und Kanal<br/>etwas Neues?}
   Z -- nein --> X[verwerfen]
@@ -23,20 +23,20 @@ Diese Tabelle ist die einzige Liste der Ereignisse; andere Kapitel verweisen hie
 
 | Ereignis | Bedeutung | Vorgabe |
 |---|---|---|
-| `action.raised` | neue Massnahme ab Stufe 2 | benachrichtigt nach Regel |
-| `action.level_raised` | Stufe der Massnahme gestiegen | benachrichtigt nach Regel, auch wenn schon einmal gemeldet |
-| `action.exploitation_escalated` | bei einem ihrer Befunde wird Ausnutzung neu bekannt oder aktiv, ohne dass die Stufe steigt | benachrichtigt nach Regel |
-| `action.fix_available` | erstmals eine Korrektur verfügbar | nur wenn die Regel es verlangt |
-| `action.level_lowered`, `action.withdrawn` | Entwarnung | In-App; per E-Mail oder Push einmal, wenn zuvor dorthin gemeldet wurde |
-| `action.assigned` | Zuweisung | an die zugewiesene Person |
-| `action.status_changed`, `action.note_added` | Bearbeitung durch das Team | nur In-App |
+| `reminder.raised` | neue Reminder ab Stufe 2 | benachrichtigt nach Regel |
+| `reminder.level_raised` | Stufe der Reminder gestiegen | benachrichtigt nach Regel, auch wenn schon einmal gemeldet |
+| `reminder.exploitation_escalated` | bei einem ihrer Befunde wird Ausnutzung neu bekannt oder aktiv, ohne dass die Stufe steigt | benachrichtigt nach Regel |
+| `reminder.fix_available` | erstmals eine Korrektur verfügbar | nur wenn die Regel es verlangt |
+| `reminder.level_lowered`, `reminder.withdrawn` | Entwarnung | In-App; per E-Mail oder Push einmal, wenn zuvor dorthin gemeldet wurde |
+| `reminder.done`, `reminder.note_added` | Bearbeitung durch das Team | nur In-App |
 | `warning.published` | neue Warnung ohne Schwachstellenkennung, etwa eine Phishing-Warnung des BACS oder ein Advisory des NCSC, dem noch keine CVE zugeordnet ist | In-App und in der wöchentlichen Sammelnachricht; sofort nur, wenn eine Regel es verlangt |
+| `notice.raised` | neuer Hinweis «könnte euch betreffen» zu einem Stack-Eintrag | nur In-App und Sammelnachricht; sofort nur bei aktiver Ausnutzung oder KEV |
 | `backfill.completed` | Ersteinschätzung eines neuen Projekts oder eines neu verbundenen Repositorys fertig | eine Sammelnachricht statt Einzelalarme |
 | `repository.unavailable` | ein verbundenes Repository lässt sich seit 3 Tagen nicht einlesen, oder das Token seines Zugangs läuft in 14 Tagen ab (Kapitel 16.6) | In-App an Owner und Admins; per E-Mail, wenn eine Regel es verlangt; je Verknüpfung und Ursache einmal |
 
-Jedes Ereignis trägt eine eindeutige Kennung, die der Auslöser in derselben Transaktion vergibt wie die Änderung selbst; bei Massnahmen ist es die Kennung der Verlaufszeile. Sein Gegenstand ist eine Massnahme, bei `warning.published` ein Eintrag, bei `backfill.completed` und `repository.unavailable` ein Projekt. `warning.published` entsteht einmal für die Instanz und wird je Organisation ausgewertet, die eine Regel dafür hat.
+Jedes Ereignis trägt eine eindeutige Kennung, die der Auslöser in derselben Transaktion vergibt wie die Änderung selbst; bei Reminders ist es die Kennung der Verlaufszeile. Sein Gegenstand ist ein Reminder, bei `warning.published` ein Eintrag, bei `backfill.completed` und `repository.unavailable` ein Projekt. `warning.published` entsteht einmal für die Instanz und wird je Organisation ausgewertet, die eine Regel dafür hat.
 
-Kein Ereignis und damit nie eine Benachrichtigung: weitere Befunde in einer Massnahme ohne Anstieg von Stufe oder Ausnutzungsstand, geänderte Beschreibungen, neue Verweise, EPSS-Bewegungen innerhalb einer Klasse, Neubewertungen mit gleichem Ergebnis.
+Kein Ereignis und damit nie eine Benachrichtigung: weitere Befunde in einer Reminder ohne Anstieg von Stufe oder Ausnutzungsstand, geänderte Beschreibungen, neue Verweise, EPSS-Bewegungen innerhalb einer Klasse, Neubewertungen mit gleichem Ergebnis.
 
 ## 8.3 Regeln
 
@@ -62,16 +62,16 @@ Die Regeln überschneiden sich absichtlich; dass daraus keine doppelten Nachrich
 
 ## 8.4 Nie zweimal dasselbe
 
-Massgeblich ist nicht, welche Regel auslöst, sondern was ein Empfänger auf einem Kanal schon erfahren hat. Das System führt deshalb je Massnahme, Empfänger und Kanal einen **Benachrichtigungsstand**: die zuletzt gemeldete Stufe, den zuletzt gemeldeten Ausnutzungsstand, ob die Korrektur gemeldet wurde, und den Zeitpunkt.
+Massgeblich ist nicht, welche Regel auslöst, sondern was ein Empfänger auf einem Kanal schon erfahren hat. Das System führt deshalb je Reminder, Empfänger und Kanal einen **Benachrichtigungsstand**: die zuletzt gemeldete Stufe, den zuletzt gemeldeten Ausnutzungsstand, ob die Korrektur gemeldet wurde, und den Zeitpunkt.
 
 | Ereignis | Sofort gesendet, wenn |
 |---|---|
-| neue Massnahme oder Stufenanstieg | die neue Stufe über der zuletzt gemeldeten liegt und die Schwelle einer Regel erreicht |
+| neue Reminder oder Stufenanstieg | die neue Stufe über der zuletzt gemeldeten liegt und die Schwelle einer Regel erreicht |
 | Ausnutzung | der neue Stand über dem zuletzt gemeldeten liegt |
 | Korrektur verfügbar | noch nicht gemeldet und von einer Regel verlangt |
 | Entwarnung | zuvor auf diesem Kanal gemeldet wurde |
 
-Der Stand wird in zwei Fällen fortgeschrieben: nach jeder Zustellung, und immer dann, wenn die Stufe einer Massnahme sinkt. Im zweiten Fall sinkt die zuletzt gemeldete Stufe für jeden Empfänger mit, auch wenn er keine Entwarnung erhält, weil er den Kanal stummgeschaltet hat oder keine Regel sie verlangt. Steigt eine Massnahme von 4 auf 5, fällt auf 4 und steigt erneut auf 5, entstehen deshalb zwei Nachrichten über den Anstieg: Der Stand nach dem Absinken ist 4, und die beiden Anstiege sind zwei Ereignisse mit eigener Kennung.
+Der Stand wird in zwei Fällen fortgeschrieben: nach jeder Zustellung, und immer dann, wenn die Stufe einer Reminder sinkt. Im zweiten Fall sinkt die zuletzt gemeldete Stufe für jeden Empfänger mit, auch wenn er keine Entwarnung erhält, weil er den Kanal stummgeschaltet hat oder keine Regel sie verlangt. Steigt ein Reminder von 4 auf 5, fällt auf 4 und steigt erneut auf 5, entstehen deshalb zwei Nachrichten über den Anstieg: Der Stand nach dem Absinken ist 4, und die beiden Anstiege sind zwei Ereignisse mit eigener Kennung.
 
 Warnungen ohne Kennung und abgeschlossene Erstbefüllungen haben keinen Benachrichtigungsstand. Für sie genügt die Eindeutigkeit des Ereignisses.
 
@@ -79,9 +79,9 @@ Dazu drei Mechanismen:
 
 - **Technische Eindeutigkeit.** Empfänger, Kanal und Kennung des Ereignisses sind zusammen eindeutig (`delivery_event`). Ein doppelt verarbeitetes Ereignis oder ein wiederholter Job erzeugt keine zweite Nachricht. Die Regel ist bewusst nicht Teil des Schlüssels: Zwei Regeln mit demselben Empfänger und Kanal ergeben eine Nachricht.
 - **Bündelung.** Eine Sofortnachricht (`delivery`) wird mit zwei Minuten Vorlauf eingereiht. Jedes weitere Ereignis für denselben Empfänger und Kanal hängt sich an die wartende Nachricht, statt eine neue zu erzeugen. Der Job `Deliver` sendet, was bis dahin zusammengekommen ist. Das fängt Wellen ab, wenn mehrere Quellen kurz nacheinander aktualisieren.
-- **Sammelnachricht.** Was ein Ziel gesammelt erhalten soll, wird je Ziel vorgemerkt (`digest_item`). Zum Zeitplan löst der Job das Ziel in Empfänger auf und legt je Empfänger eine Nachricht für die Periode an; Ziel, Empfänger und Periodenende sind zusammen eindeutig. Sie enthält neue Massnahmen, Anstiege, Zuwachs an Befunden, Erledigtes und Warnungen. Was derselbe Empfänger auf demselben Kanal schon sofort erhalten hat, erscheint als «bereits gemeldet». Eine leere Sammelnachricht ist eine Nachricht ohne Einträge und steht wie jede andere im Protokoll. Der nächste Termin steht am Ziel selbst (`next_digest_at`); ein wiederkehrender Job der Instanz reiht fällige Ziele ein.
+- **Sammelnachricht.** Was ein Ziel gesammelt erhalten soll, wird je Ziel vorgemerkt (`digest_item`). Zum Zeitplan löst der Job das Ziel in Empfänger auf und legt je Empfänger eine Nachricht für die Periode an; Ziel, Empfänger und Periodenende sind zusammen eindeutig. Sie enthält neue Reminders, Anstiege, Zuwachs an Befunden, Erledigtes und Warnungen. Was derselbe Empfänger auf demselben Kanal schon sofort erhalten hat, erscheint als «bereits gemeldet». Eine leere Sammelnachricht ist eine Nachricht ohne Einträge und steht wie jede andere im Protokoll. Der nächste Termin steht am Ziel selbst (`next_digest_at`); ein wiederkehrender Job der Instanz reiht fällige Ziele ein.
 
-**Erstbefüllung.** Befunde aus der Rückwärtssuche tragen eine Markierung und lösen keine Einzelereignisse aus, auch kein `action.raised`. Am Ende steht ein `backfill.completed` je Projekt. Der Benachrichtigungsstand der dabei entstandenen Massnahmen wird für die Empfänger der Sammelnachricht auf die Stufe der Erstbefüllung gesetzt, damit erst ein späterer Anstieg meldet.
+**Erstbefüllung.** Befunde aus der Rückwärtssuche tragen eine Markierung und lösen keine Einzelereignisse aus, auch kein `reminder.raised`. Am Ende steht ein `backfill.completed` je Projekt. Der Benachrichtigungsstand der dabei entstandenen Reminders wird für die Empfänger der Sammelnachricht auf die Stufe der Erstbefüllung gesetzt, damit erst ein späterer Anstieg meldet.
 
 ## 8.5 Kanäle
 
@@ -110,10 +110,10 @@ Affected        Platform Ops runs Puppet Enterprise 2025.9.0, inside the affecte
 What to do      Upgrade to 2025.12.1 and restart Puppet Server.
 Covers          1 vulnerability
 
-Open: https://ardea.example.org/o/example/actions/143
+Open: https://ardea.example.org/o/example/reminders/143
 ```
 
-Bei einer Massnahme mit vielen Befunden nennt die Nachricht die Anzahl und die drei mit der höchsten Stufe. Eine Push-Nachricht trägt Stufe, Nummer und Titel; der Klick öffnet die Massnahme. Die Organisation wählt, wie viel E-Mails enthalten: vollständig wie oben oder nur Stufe, Nummer und Link. E-Mail ist nicht Ende-zu-Ende geschützt.
+Bei einer Reminder mit vielen Befunden nennt die Nachricht die Anzahl und die drei mit der höchsten Stufe. Eine Push-Nachricht trägt Stufe, Nummer und Titel; der Klick öffnet der Reminder. Die Organisation wählt, wie viel E-Mails enthalten: vollständig wie oben oder nur Stufe, Nummer und Link. E-Mail ist nicht Ende-zu-Ende geschützt.
 
 ## 8.6 Zustellung
 
@@ -123,17 +123,15 @@ Bei einer Massnahme mit vielen Befunden nennt die Nachricht die Anzahl und die d
 - Schlägt die Zustellung für Stufe 5 auf allen Kanälen eines Empfängers fehl, erhalten die Owner eine In-App-Warnung.
 - Obergrenze je Kanal und Organisation als Schutz vor Fehlkonfiguration: höchstens 60 Sofortnachrichten pro Stunde, darüber wird in die Sammelnachricht verschoben.
 
-## 8.7 Eskalation (Ausbaustufe 1)
+## 8.7 Erinnerung statt Eskalation
 
-Eine Eskalationsregel beschreibt Schritte mit Wartezeit: «Stufe 5, nach 2 Stunden noch offen und niemand zugewiesen: an Owner; nach 8 Stunden: an die Eskalationsadresse». Technisch ist jeder Schritt ein Job mit Fälligkeit, eingereiht beim Auslösen. Er prüft bei Ausführung den Zustand und tut nichts, wenn die Massnahme inzwischen bearbeitet wird. Für die Ausbaustufe kommen eine Tabelle für Eskalationsregeln, ihre Oberfläche und der Job hinzu; Regeln, Ziele und Zustellung werden wiederverwendet.
-
-Fristen sind im MVP sichtbar, lösen aber noch nichts aus: Jede Massnahme trägt ein Fälligkeitsdatum aus der Vorgabe ihrer Stufe (Kapitel 7.6); Liste und Übersicht zeigen Überfälliges.
+Ardea plant keine Arbeit: Es gibt keine Zuweisung, keine Frist und keine Eskalationskette. Ein offener Reminder erinnert stattdessen in einem Rhythmus, der von seiner Stufe abhängt: Stufe 5 täglich, Stufe 4 wöchentlich, Stufe 3 monatlich, darunter nur in der Sammelnachricht (Kapitel 7.6, 17.5). Technisch ist jede Erinnerung ein Job mit Fälligkeit (`next_reminder_at`); er prüft bei Ausführung den Zustand und tut nichts, wenn der Reminder erledigt ist. Der Rhythmus je Stufe ist je Organisation einstellbar. Neue Hinweise (Kapitel 17) lösen `notice.raised` aus.
 
 ## 8.8 Abnahmekriterien
 
 - Dasselbe Ereignis dreimal verarbeitet erzeugt pro Empfänger und Kanal genau eine Zustellung.
 - Zwei Regeln mit demselben Empfänger und Kanal erzeugen für ein Ereignis eine Nachricht.
-- Steigt die Stufe einer bereits gemeldeten Massnahme, wird erneut benachrichtigt; kommen nur Befunde hinzu oder ändert sich eine Beschreibung, nicht.
+- Steigt die Stufe einer bereits gemeldeten Reminder, wird erneut benachrichtigt; kommen nur Befunde hinzu oder ändert sich eine Beschreibung, nicht.
 - Anstieg, Absinken und erneuter Anstieg ergeben zwei Nachrichten über den Anstieg, auch für einen Empfänger, der die Entwarnung dazwischen nicht erhalten hat.
 - Drei Ereignisse für denselben Empfänger innerhalb von zwei Minuten ergeben eine Nachricht.
 - Ein neu angelegtes Projekt mit 40 Treffern im Rückblick erzeugt genau eine Nachricht.

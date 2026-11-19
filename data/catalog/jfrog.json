@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "JFrog",
+  "products": [
+    {
+      "key": "artifactory",
+      "name": "JFrog Artifactory",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["jfrog:artifactory"],
+      "aliases": [{ "vendor": "JFrog", "names": ["Artifactory"] }]
+    }
+  ]
+}

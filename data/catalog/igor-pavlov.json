@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Igor Pavlov",
+  "products": [
+    {
+      "key": "7-zip",
+      "name": "7-Zip",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["7-zip:7-zip"],
+      "aliases": [{ "vendor": "7-Zip", "names": ["7-Zip"] }]
+    }
+  ]
+}

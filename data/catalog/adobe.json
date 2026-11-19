@@ -33,6 +33,14 @@
       "versionScheme": "numeric",
       "cpe": ["adobe:coldfusion"],
       "aliases": [{ "vendor": "Adobe", "names": ["ColdFusion", "ColdFusion {line}"] }]
+    },
+    {
+      "key": "acrobat-reader",
+      "name": "Adobe Acrobat Reader",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["adobe:acrobat_reader_dc", "adobe:acrobat_reader"],
+      "aliases": [{ "vendor": "Adobe", "names": ["Acrobat Reader", "Acrobat Reader DC", "Adobe Reader"] }]
     }
   ]
 }

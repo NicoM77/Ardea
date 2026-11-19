@@ -123,6 +123,88 @@
       "versionScheme": "nuget",
       "packages": ["pkg:nuget/System.Text.Json"],
       "related": ["dotnet"]
+    },
+    {
+      "key": "exchange-server",
+      "name": "Microsoft Exchange Server",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:exchange_server"],
+      "aliases": [
+        { "vendor": "Microsoft", "names": ["Exchange", "Exchange Server", "Exchange Server {line}", "Microsoft Exchange Server {line}", "Microsoft Exchange Server {line} *"] }
+      ],
+      "related": ["windows-server"]
+    },
+    {
+      "key": "sharepoint-server",
+      "name": "Microsoft SharePoint Server",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:sharepoint_server", "microsoft:sharepoint_enterprise_server"],
+      "aliases": [
+        { "vendor": "Microsoft", "names": ["SharePoint", "SharePoint Server", "Microsoft SharePoint Server {line}", "Microsoft SharePoint Enterprise Server {line}", "Microsoft SharePoint Server Subscription Edition"] }
+      ],
+      "related": ["windows-server"]
+    },
+    {
+      "key": "office",
+      "name": "Microsoft Office",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:office", "microsoft:365_apps", "microsoft:office_long_term_servicing_channel"],
+      "aliases": [
+        { "vendor": "Microsoft", "names": ["Office", "Microsoft 365 Apps for Enterprise", "Microsoft Office {line}", "Microsoft Office LTSC {line}"] }
+      ]
+    },
+    {
+      "key": "microsoft-365",
+      "name": "Microsoft 365",
+      "kind": "service",
+      "versionScheme": "numeric",
+      "aliases": [{ "vendor": "Microsoft", "names": ["Office 365", "M365", "Exchange Online", "SharePoint Online"] }],
+      "related": ["entra-id"]
+    },
+    {
+      "key": "teams",
+      "name": "Microsoft Teams",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:teams"],
+      "aliases": [{ "vendor": "Microsoft", "names": ["Teams"] }]
+    },
+    {
+      "key": "edge",
+      "name": "Microsoft Edge",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:edge_chromium"],
+      "aliases": [{ "vendor": "Microsoft", "names": ["Edge", "Microsoft Edge (Chromium-based)"] }]
+    },
+    {
+      "key": "vscode",
+      "name": "Visual Studio Code",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:visual_studio_code"],
+      "aliases": [{ "vendor": "Microsoft", "names": ["VS Code", "VSCode"] }]
+    },
+    {
+      "key": "visual-studio",
+      "name": "Visual Studio",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:visual_studio_2019", "microsoft:visual_studio_2022"],
+      "aliases": [
+        { "vendor": "Microsoft", "names": ["Microsoft Visual Studio", "Microsoft Visual Studio {line}", "Microsoft Visual Studio {line} *"] }
+      ]
+    },
+    {
+      "key": "azure-devops-server",
+      "name": "Azure DevOps Server",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["microsoft:azure_devops_server"],
+      "aliases": [{ "vendor": "Microsoft", "names": ["Azure DevOps Server {line}", "Team Foundation Server"] }]
     }
   ]
 }

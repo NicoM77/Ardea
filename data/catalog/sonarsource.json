@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "SonarSource",
+  "products": [
+    {
+      "key": "sonarqube",
+      "name": "SonarQube",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["sonarsource:sonarqube"],
+      "aliases": [{ "vendor": "SonarSource", "names": ["SonarQube Server", "SonarQube Community Build"] }],
+      "images": ["sonarqube"]
+    }
+  ]
+}

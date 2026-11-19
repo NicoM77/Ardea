@@ -67,6 +67,14 @@
       "versionScheme": "go",
       "packages": ["pkg:golang/golang.org/x/crypto"],
       "related": ["go"]
+    },
+    {
+      "key": "chrome",
+      "name": "Google Chrome",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["google:chrome"],
+      "aliases": [{ "vendor": "Google", "names": ["Chrome"] }]
     }
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "AnyDesk Software",
+  "products": [
+    {
+      "key": "anydesk",
+      "name": "AnyDesk",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["anydesk:anydesk"]
+    }
+  ]
+}

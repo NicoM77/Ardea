@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "TeamViewer",
+  "products": [
+    {
+      "key": "teamviewer",
+      "name": "TeamViewer",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["teamviewer:teamviewer"],
+      "aliases": [{ "vendor": "TeamViewer", "names": ["TeamViewer Full Client", "TeamViewer Host", "TeamViewer Remote"] }]
+    }
+  ]
+}

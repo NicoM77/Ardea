@@ -1,0 +1,17 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Jenkins",
+  "products": [
+    {
+      "key": "jenkins",
+      "name": "Jenkins",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["jenkins:jenkins"],
+      "packages": ["pkg:maven/org.jenkins-ci.main/jenkins-core"],
+      "aliases": [{ "vendor": "Jenkins", "names": ["Jenkins LTS", "Jenkins weekly"] }],
+      "related": ["openjdk"],
+      "images": ["jenkins/jenkins"]
+    }
+  ]
+}

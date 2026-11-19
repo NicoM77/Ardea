@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "MinIO",
+  "products": [
+    {
+      "key": "minio",
+      "name": "MinIO",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["minio:minio"],
+      "packages": ["pkg:golang/github.com/minio/minio"],
+      "images": ["minio/minio"]
+    }
+  ]
+}

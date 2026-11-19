@@ -68,6 +68,21 @@
       "packages": ["pkg:golang/github.com/containers/podman/v4", "pkg:golang/github.com/containers/podman/v5"],
       "aliases": [{ "vendor": "containers", "names": ["Podman"] }],
       "images": ["quay.io/podman/stable"]
+    },
+    {
+      // A CNCF project; the records come from Red Hat.
+      "key": "keycloak",
+      "name": "Keycloak",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["redhat:keycloak"],
+      "packages": ["pkg:maven/org.keycloak/keycloak-core", "pkg:maven/org.keycloak/keycloak-services"],
+      "aliases": [
+        { "names": ["Keycloak"] },
+        { "vendor": "Red Hat", "names": ["Red Hat build of Keycloak"] }
+      ],
+      "related": ["openjdk"],
+      "images": ["quay.io/keycloak/keycloak"]
     }
   ]
 }

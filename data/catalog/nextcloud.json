@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Nextcloud",
+  "products": [
+    {
+      "key": "nextcloud-server",
+      "name": "Nextcloud Server",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["nextcloud:nextcloud_server"],
+      "aliases": [{ "vendor": "Nextcloud", "names": ["Nextcloud", "Nextcloud Hub", "Nextcloud Server {line}"] }],
+      "related": ["php"],
+      "images": ["nextcloud"]
+    }
+  ]
+}

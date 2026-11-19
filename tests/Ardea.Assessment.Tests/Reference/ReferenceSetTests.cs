@@ -207,7 +207,12 @@ internal sealed class ReferenceHost : IAsyncDisposable
             var now = _clock.GetUtcNow();
             services.GetRequiredService<AssetsDbContext>().Projects.Add(new Project
             {
-                Id = project, Name = name, Criticality = attributes.Criticality, Exposure = attributes.Exposure, CreatedAt = now, ChangedAt = now,
+                Id = project,
+                Name = name,
+                Criticality = attributes.Criticality,
+                Exposure = attributes.Exposure,
+                CreatedAt = now,
+                ChangedAt = now,
             });
             return services.GetRequiredService<AssetsDbContext>().SaveChangesAsync();
         });

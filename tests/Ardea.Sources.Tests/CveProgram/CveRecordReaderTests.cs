@@ -125,6 +125,27 @@ public sealed class CveRecordReaderTests
         Assert.Equal(expected, PackageUrl.From(collection, package));
     }
 
+    [Theory]
+    // Siemens writes «all versions» as lessThan «*»; with bounds kept as written that must not count as a fix.
+    [InlineData("*", false)]
+    [InlineData("6.12.*", false)]
+    [InlineData("log4j-core*", false)]
+    [InlineData("unspecified", false)]
+    [InlineData("2.4.51", true)]
+    public void Only_an_upper_bound_naming_a_version_makes_a_fix_known(string lessThan, bool fixKnown)
+    {
+        var json = $$"""
+            {"dataType": "CVE_RECORD", "dataVersion": "5.1",
+             "cveMetadata": {"cveId": "CVE-2026-1", "state": "PUBLISHED", "assignerShortName": "siemens"},
+             "containers": {"cna": {"providerMetadata": {"orgId": "x"}, "descriptions": [{"lang": "en", "value": "A flaw."}],
+               "affected": [{"vendor": "Siemens", "product": "SIMATIC", "versions": [{"version": "0", "lessThan": "{{lessThan}}", "status": "affected", "versionType": "custom"}]}]} } }
+            """;
+
+        var claim = Assert.Single(CveRecordReader.Read(json).Observation!.Claims);
+
+        Assert.Equal(fixKnown, claim.Remediation!.FixAvailable);
+    }
+
     private static ClaimBlock Read(string file) =>
         Assert.Single(CveRecordReader.Read(TestData.Read("cve-program", file)).Observation!.Claims);
 }

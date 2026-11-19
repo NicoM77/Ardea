@@ -76,7 +76,7 @@ public static class CveRecordReader
         var exploitation = Exploitation(adps.Prepend(cna));
         var solutions = EnglishAll(cna, "solutions");
         var workarounds = EnglishAll(cna, "workarounds");
-        var fixKnown = affected.Any(a => a.Versions.Any(v => v.Fixed is not null || v.Status == AffectedStatus.Unaffected))
+        var fixKnown = affected.Any(a => a.Versions.Any(v => NamesFix(v.Fixed) || v.Status == AffectedStatus.Unaffected))
             || solutions.Count > 0
             || references.Any(r => r.Tags.Contains("patch", StringComparer.OrdinalIgnoreCase));
 
@@ -200,6 +200,14 @@ public static class CveRecordReader
     }
 
     private static string? Bound(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>
+    /// Whether an upper bound names a fixed version. Bounds are kept as written, so open and wildcard bounds
+    /// (Siemens' «lessThan: *», «6.12.*», «log4j-core*», «unspecified», «0») are no fix.
+    /// </summary>
+    private static bool NamesFix(string? bound) =>
+        bound is not null && bound != "0" && !bound.Contains('*', StringComparison.Ordinal)
+        && !bound.EndsWith(".x", StringComparison.OrdinalIgnoreCase) && bound.Any(char.IsAsciiDigit);
 
     /// <summary>SSVC "Exploitation" from any container, and KEV from CISA-ADP; the strongest wins.</summary>
     private static Exploitation? Exploitation(IEnumerable<JsonElement> containers)

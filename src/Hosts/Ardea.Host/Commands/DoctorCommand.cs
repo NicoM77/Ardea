@@ -5,8 +5,9 @@ using Npgsql;
 namespace Ardea.Host.Commands;
 
 /// <summary>
-/// <c>ardea doctor</c> checks configuration, database, schema and the runtime image (master plan 12.8).
-/// SMTP, AI providers and sources join the list as their modules arrive.
+/// <c>ardea doctor</c> checks configuration, database, schema, the runtime image, and, as warnings, whether the
+/// configured SMTP server, language model providers and sources can be reached (master plan 12.8). A service
+/// that cannot be reached right now is a warning, not a failure: the instance keeps working and tries again.
 /// </summary>
 internal static class DoctorCommand
 {
@@ -24,12 +25,40 @@ internal static class DoctorCommand
             results.AddRange(await DatabaseChecksAsync(DatabaseOptions.FromConfiguration(configuration)));
         }
 
+        var services = await DoctorServiceChecks.RunAsync(configuration, DoctorServiceChecks.TryConnectAsync, SourceHosts(), CancellationToken.None);
+        results.AddRange(services.Where(r => r.Level != DoctorLevel.Warn).Select(r => (r.Check, r.Level == DoctorLevel.Ok, r.Detail)));
+
         foreach (var (check, ok, detail) in results)
         {
             Console.WriteLine($"{(ok ? "ok  " : "FAIL")} {check,-14} {detail}");
         }
 
+        foreach (var warning in services.Where(r => r.Level == DoctorLevel.Warn))
+        {
+            Console.WriteLine($"warn {warning.Check,-14} {warning.Detail}");
+        }
+
         return results.All(r => r.Ok) ? 0 : 1;
+    }
+
+    /// <summary>The hosts every source adapter in the image may reach, by source key.</summary>
+    private static IReadOnlyDictionary<string, IReadOnlyList<string>> SourceHosts()
+    {
+        var hosts = new SortedDictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        foreach (var type in SourceAdapters.Discover().Where(t => t.GetConstructor(Type.EmptyTypes) is not null))
+        {
+            switch (Activator.CreateInstance(type))
+            {
+                case Ardea.Intel.Sources.Abstractions.ISourceProvider provider:
+                    hosts[provider.Descriptor.Key] = provider.Descriptor.AllowedHosts;
+                    break;
+                case Ardea.Intel.Sources.Abstractions.ISignalProvider signal:
+                    hosts[signal.Descriptor.Key] = signal.Descriptor.AllowedHosts;
+                    break;
+            }
+        }
+
+        return hosts;
     }
 
     /// <summary>Time zones and ICU must work in the chiseled image (experiment 0.7, ADR 0003).</summary>

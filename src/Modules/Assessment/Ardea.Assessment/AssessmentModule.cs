@@ -32,6 +32,7 @@ public sealed class AssessmentModule : IModule
         // The rule set is a file in the image (master plan 4.9); read once, checked on first use.
         services.AddSingleton(_ => Rules.RuleSet.Load(MasterDataOptions.FromConfiguration(configuration).Directory));
         services.AddScoped<AlertAssessor>();
+        services.AddScoped<Platform.Status.IInstanceStatusContributor, Features.AssessStatusContributor>();
         services.AddScoped<History>();
         services.AddScoped<Numbers>();
         services.AddScoped<Remediations>();

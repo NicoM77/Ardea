@@ -4,18 +4,21 @@ import { UiButton, UiCard, UiLoader, UiNotice, UiPageHeader } from 'ui';
 import {
   getInstanceResource,
   getInstanceSettingsResource,
+  getInstanceStatusResource,
   listAbandonedJobsResource,
   type InstanceSettingsResponse,
 } from '../../core/api/client';
 import { AiCard } from './ai-card';
 import { JobsCard } from './jobs-card';
+import { OperationsCard } from './operations-card';
 import { RegistrationCard } from './registration-card';
 import { count } from './settings-patch';
 import { SmtpCard } from './smtp-card';
 
 /**
  * The first administration (task 0.13, master plan 11.4), for the instance administrator:
- * the installed version and the job queue, registration, SMTP with a test e-mail, the AI
+ * the installed version and the job queue, the system's warnings and operating figures (task 6.6),
+ * registration, SMTP with a test e-mail, the AI
  * providers with a connection test and the models' correction rate (tasks 4.1, 4.7), and the
  * jobs that gave up, with a retry each.
  */
@@ -25,6 +28,7 @@ import { SmtpCard } from './smtp-card';
     TranslocoPipe,
     AiCard,
     JobsCard,
+    OperationsCard,
     RegistrationCard,
     SmtpCard,
     UiButton,
@@ -96,6 +100,14 @@ import { SmtpCard } from './smtp-card';
           </ui-card>
         }
 
+        <ardea-operations-card
+          class="span-12"
+          [status]="status.hasValue() ? status.value() : null"
+          [loading]="status.isLoading()"
+          [failed]="!!status.error()"
+          (reload)="status.reload()"
+        />
+
         <ardea-ai-card class="span-12" />
 
         <ardea-jobs-card
@@ -164,6 +176,7 @@ export class AdminPage {
   protected readonly instance = getInstanceResource();
   protected readonly settings = getInstanceSettingsResource();
   protected readonly jobs = listAbandonedJobsResource();
+  protected readonly status = getInstanceStatusResource();
   protected readonly number = count;
 
   /** The whole page waits for its first answers once, then each card shows its own state. */
@@ -180,6 +193,7 @@ export class AdminPage {
 
   protected jobsChanged(): void {
     this.jobs.reload();
+    this.status.reload();
     this.instance.reload();
   }
 }

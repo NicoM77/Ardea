@@ -55,5 +55,5 @@ Angular · React · Vue.js · Node.js · .NET / ASP.NET Core · Java / Spring ·
 
 ## 17.9 Offen
 
-- **Lärm messen:** Hinweise je Woche für typische Stacks mit den Wochendaten des Spikes; danach Schwellen festlegen (Aufgabe 5a.1). Der Linux-Kernel liefert ohne Schwelle hunderte je Woche. *Beantwortet in [ADR 044](../adr/0044-notices-per-week-and-thresholds.md): «nur Wichtiges» heisst kritisch oder aktiv ausgenutzt (für laute Produkte wie Browser nur ausgenutzt), höchstens 25 Hinweise je Woche für einen Stack aus zehn Einträgen; die Vorgabe «hoch oder kritisch» in 17.2 ist damit ersetzt.*
+- **Lärm messen:** Hinweise je Woche für typische Stacks mit den Wochendaten des Spikes; danach Schwellen festlegen (Aufgabe 5a.1). Der Linux-Kernel liefert ohne Schwelle hunderte je Woche. *Beantwortet in [ADR 044](../adr/0044-notices-per-week-and-thresholds.md): «nur Wichtiges» heisst kritisch oder aktiv ausgenutzt (für laute Produkte wie Browser nur ausgenutzt), höchstens 25 Hinweise je Woche für einen Stack aus zehn Einträgen; die Vorgabe «hoch oder kritisch» in 17.2 ist damit ersetzt. Vom Eigentümer am 19.11.2026 bestätigt.*
 - Erinnerungsrhythmus und «nur das Produkt selbst» sind Empfehlungen (E26, 17.2), vom Eigentümer noch nicht bestätigt.

@@ -329,8 +329,133 @@ public sealed class SignInTests(PostgresServer server)
         Assert.Equal(key, IamModule.ClientKey(System.Net.IPAddress.Parse(address)));
     }
 
+    [Fact]
+    public async Task Second_step_without_the_password_step_is_refused()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var owner = host.Client();
+        await SetupAsync(owner);
+        await EnableTotpAsync(owner);
+        using var stranger = host.Client();
+
+        var response = await stranger.PostAsync("/api/v1/auth/login/two-factor", new { code = "123456", isRecoveryCode = false });
+
+        await ExpectProblem(response, HttpStatusCode.Unauthorized, "two_factor_expired");
+        await Expect(HttpStatusCode.Unauthorized, await stranger.SessionAsync());
+    }
+
+    [Fact]
+    public async Task Wrong_authenticator_codes_count_toward_the_lockout()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var browser = host.Client();
+        await SetupAsync(browser);
+        var key = await EnableTotpAsync(browser);
+        await browser.PostAsync("/api/v1/auth/logout");
+        await browser.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
+
+        var attempts = new List<HttpResponseMessage>();
+        for (var i = 0; i < 5; i++)
+        {
+            attempts.Add(await browser.PostAsync("/api/v1/auth/login/two-factor", new { code = WrongCode(key), isRecoveryCode = false }));
+        }
+
+        await ExpectProblem(attempts[0], HttpStatusCode.BadRequest, "invalid_code");
+        var correct = await browser.PostAsync("/api/v1/auth/login/two-factor", new { code = Totp.Code(key), isRecoveryCode = false });
+        await ExpectProblem(correct, HttpStatusCode.Unauthorized, "invalid_credentials");
+        await Expect(HttpStatusCode.Unauthorized, await browser.SessionAsync());
+    }
+
+    [Fact]
+    public async Task Changing_the_password_needs_the_current_one_and_a_wrong_one_counts_toward_lockout()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var thief = host.Client();
+        await SetupAsync(thief);
+
+        var wrong = await thief.PostAsync("/api/v1/account/password", new { currentPassword = "a guessed password", newPassword = "the thiefs new passphrase" });
+        var weak = await thief.PostAsync("/api/v1/account/password", new { currentPassword = ApiTestHost.Password, newPassword = "password1234" });
+
+        await ExpectProblem(wrong, HttpStatusCode.BadRequest, "validation_failed");
+        await ExpectProblem(weak, HttpStatusCode.BadRequest, "weak_password");
+        Assert.Equal(1, await host.ScalarAsync<int>("SELECT access_failed_count FROM iam.\"user\""));
+        using var owner = host.Client();
+        var login = await owner.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
+        Assert.Equal("signedIn", (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task Enabling_two_factor_needs_a_valid_code_and_an_active_authenticator_cannot_be_replaced()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var browser = host.Client();
+        await SetupAsync(browser);
+        var setup = await (await browser.PostAsync("/api/v1/account/mfa/setup", new { password = ApiTestHost.Password })).Content.ReadFromJsonAsync<JsonElement>();
+        var key = setup.GetProperty("sharedKey").GetString()!;
+
+        await ExpectProblem(await browser.PostAsync("/api/v1/account/mfa", new { code = WrongCode(key) }), HttpStatusCode.BadRequest, "invalid_code");
+        Assert.False((await SessionAsync(browser)).GetProperty("user").GetProperty("twoFactorEnabled").GetBoolean());
+
+        await Expect(HttpStatusCode.OK, await browser.PostAsync("/api/v1/account/mfa", new { code = Totp.Code(key) }));
+        var again = await browser.PostAsync("/api/v1/account/mfa/setup", new { password = ApiTestHost.Password });
+
+        await ExpectProblem(again, HttpStatusCode.Conflict, "mfa_enabled");
+        Assert.Equal(key.Replace(" ", string.Empty, StringComparison.Ordinal), await StoredKeyAsync(host), StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Turning_off_two_factor_needs_the_password_and_a_code()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var browser = host.Client();
+        await SetupAsync(browser);
+        var key = await EnableTotpAsync(browser, out var recoveryCodes);
+
+        await ExpectProblem(
+            await browser.SendAsync(HttpMethod.Delete, "/api/v1/account/mfa", new { password = "a guessed password", code = Totp.Code(key) }), HttpStatusCode.BadRequest, "invalid_password");
+        await ExpectProblem(
+            await browser.SendAsync(HttpMethod.Delete, "/api/v1/account/mfa", new { password = ApiTestHost.Password, code = WrongCode(key) }), HttpStatusCode.BadRequest, "invalid_code");
+        Assert.True((await SessionAsync(browser)).GetProperty("user").GetProperty("twoFactorEnabled").GetBoolean());
+
+        await Expect(HttpStatusCode.NoContent, await browser.SendAsync(HttpMethod.Delete, "/api/v1/account/mfa", new { password = ApiTestHost.Password, code = recoveryCodes[0] }));
+        await browser.PostAsync("/api/v1/auth/logout");
+        var login = await browser.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
+        Assert.Equal("signedIn", (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task Without_a_configured_setup_token_the_instance_makes_one_that_ends_with_the_setup()
+    {
+        await using var host = await ApiTestHost.StartAsync(server, new() { ["SETUP_TOKEN"] = string.Empty });
+        using var browser = host.Client();
+        var token = await StoredSetupTokenAsync(host);
+        Assert.False(string.IsNullOrEmpty(token));
+
+        await ExpectProblem(await SetupAsync(browser), HttpStatusCode.Forbidden, "invalid_setup_token");
+        await Expect(HttpStatusCode.NoContent, await SetupAsync(browser, token: token!));
+
+        Assert.Null(await StoredSetupTokenAsync(host));
+    }
+
+    /// <summary>A six-digit code that the key does not produce around now.</summary>
+    private static string WrongCode(string key)
+    {
+        var valid = Enumerable.Range(-3, 7).Select(step => Totp.Code(key, DateTimeOffset.UtcNow.AddSeconds(step * 30))).ToHashSet();
+        return Enumerable.Range(0, 10).Select(i => $"{i}{i}{i}{i}{i}{i}").First(code => !valid.Contains(code));
+    }
+
+    private static async Task<string?> StoredSetupTokenAsync(ApiTestHost host)
+    {
+        await using var scope = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.CreateAsyncScope(host.Services);
+        var settings = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Platform.Settings.IInstanceSettings>(scope.ServiceProvider);
+        return (await settings.GetAsync(Security.SetupToken.Setting, CancellationToken.None)).Value;
+    }
+
     /// <summary>The current code of the stored authenticator key, as the user's app shows it.</summary>
-    private static async Task<string> CurrentCodeAsync(ApiTestHost host)
+    private static async Task<string> CurrentCodeAsync(ApiTestHost host) => Totp.Code(await StoredKeyAsync(host));
+
+    /// <summary>The stored authenticator key of the account.</summary>
+    private static async Task<string> StoredKeyAsync(ApiTestHost host)
     {
         await using var scope = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.CreateAsyncScope(host.Services);
         // User data is visible only to its own account (row-level security), so the lookup acts for it.
@@ -338,7 +463,7 @@ public sealed class SignInTests(PostgresServer server)
         Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Platform.Tenancy.TenantContext>(scope.ServiceProvider).SetUser(userId);
         var users = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<Domain.ArdeaUser>>(scope.ServiceProvider);
         var user = await users.FindByIdAsync(userId.ToString());
-        return Totp.Code((await users.GetAuthenticatorKeyAsync(user!))!);
+        return (await users.GetAuthenticatorKeyAsync(user!))!;
     }
 
     private static Task<HttpResponseMessage> SetupAsync(ApiClient client, string token = ApiTestHost.SetupTokenValue, string email = Email, string password = ApiTestHost.Password) =>

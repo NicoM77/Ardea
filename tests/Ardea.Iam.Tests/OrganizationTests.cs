@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Ardea.TestSupport;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
@@ -195,6 +196,65 @@ public sealed class OrganizationTests(PostgresServer server)
         var profile = await scope.ServiceProvider.GetRequiredService<Ardea.Iam.Contracts.IOrganizationProfiles>().FindAsync(orgId, TestContext.Current.CancellationToken);
         Assert.Equal(("cloud_allowed", "en"), (profile!.AiPolicy, profile.Locale));
         Assert.Null(await scope.ServiceProvider.GetRequiredService<Ardea.Iam.Contracts.IOrganizationProfiles>().FindAsync(Guid.CreateVersion7(), TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task With_mfa_required_every_organisation_endpoint_refuses_a_member_without_it()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var owner = await SetUpAsync(host);
+        var orgId = await CreateOrgAsync(owner, "Acme");
+        using var member = await JoinAsync(host, owner, orgId, "member@example.org", "admin");
+        await EnableTotpAsync(owner);
+        await Expect(HttpStatusCode.OK, await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}", new { requireMfa = true }));
+        var endpoints = host.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
+            .Where(e => e.RoutePattern.RawText?.Contains("/orgs/{orgId", StringComparison.Ordinal) == true)
+            .SelectMany(e => (e.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods ?? []).Select(m => (Method: m, Route: e.RoutePattern.RawText!)))
+            .ToList();
+        Assert.NotEmpty(endpoints);
+
+        var problems = new List<string>();
+        foreach (var (method, route) in endpoints)
+        {
+            var path = System.Text.RegularExpressions.Regex.Replace(route, @"\{(\w+)(:(\w+))?\}", m => m.Groups[1].Value == "orgId" ? orgId.ToString() : m.Groups[3].Value switch
+            {
+                "guid" => Guid.CreateVersion7().ToString(),
+                "int" => "1",
+                _ => "x",
+            });
+            // A stream that starts instead of being refused must not hang the test.
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var response = await member.SendAsync(new HttpMethod(method), path, method == "GET" ? null : new { }, cancellationToken: timeout.Token);
+            var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            if (response.StatusCode != HttpStatusCode.Forbidden || !body.Contains("\"mfa_required\"", StringComparison.Ordinal))
+            {
+                problems.Add($"{method} {route}: {(int)response.StatusCode} {body}");
+            }
+        }
+
+        Assert.Empty(problems);
+    }
+
+    [Fact]
+    public async Task A_revoked_or_expired_invitation_can_no_longer_be_accepted()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var owner = await SetUpAsync(host);
+        var orgId = await CreateOrgAsync(owner, "Acme");
+        var revoked = await InviteAsync(owner, orgId, "revoked@example.org", "member");
+        var expired = await InviteAsync(owner, orgId, "expired@example.org", "admin");
+        var revokedId = await host.ScalarAsync<Guid>("SELECT id FROM iam.invitation WHERE normalized_email = 'REVOKED@EXAMPLE.ORG'");
+
+        await Expect(HttpStatusCode.NoContent, await owner.SendAsync(HttpMethod.Delete, $"/api/v1/orgs/{orgId}/invitations/{revokedId}"));
+        await ExpectProblem(await owner.SendAsync(HttpMethod.Delete, $"/api/v1/orgs/{orgId}/invitations/{revokedId}"), HttpStatusCode.NotFound, "invitation_not_found");
+        Assert.Equal(1, await host.ScalarAsync<int>("UPDATE iam.invitation SET expires_at = now() - interval '1 minute' WHERE normalized_email = 'EXPIRED@EXAMPLE.ORG' RETURNING 1"));
+
+        using var first = await RegisterAsync(host, "revoked@example.org");
+        using var second = await RegisterAsync(host, "expired@example.org");
+        await ExpectProblem(await first.PostAsync($"/api/v1/invitations/{revoked}/accept"), HttpStatusCode.NotFound, "invalid_invitation");
+        await ExpectProblem(await second.PostAsync($"/api/v1/invitations/{expired}/accept"), HttpStatusCode.NotFound, "invalid_invitation");
+        await ExpectProblem(await host.Client().GetAsync($"/api/v1/invitations/{expired}"), HttpStatusCode.NotFound, "invalid_invitation");
+        Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM iam.membership WHERE organization_id = '{orgId}'"));
     }
 
     private static async Task<ApiClient> SetUpAsync(ApiTestHost host)

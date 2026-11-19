@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text.Json;
+using Ardea.Platform.Http;
 using Ardea.TestSupport;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
@@ -104,6 +106,62 @@ public sealed class HardeningTests(PostgresServer server)
 
         Assert.DoesNotContain(HttpStatusCode.TooManyRequests, links[..6]);
         Assert.Equal(HttpStatusCode.TooManyRequests, links[6]);
+    }
+
+    /// <summary>
+    /// The only changing endpoints without the CSRF check: links in e-mails to external addresses, which carry their
+    /// own token and no session (<c>AuthenticatedByToken</c>). A new exemption must be added here on purpose.
+    /// </summary>
+    private static readonly string[] TokenAuthenticated =
+    [
+        "POST /api/v1/notify/addresses/confirm",
+        "POST /api/v1/notify/addresses/preview",
+        "POST /api/v1/notify/addresses/resubscribe",
+        "POST /api/v1/notify/addresses/unsubscribe",
+        "POST /api/v1/notify/addresses/unsubscribe/one-click",
+    ];
+
+    [Fact]
+    public async Task Every_changing_endpoint_refuses_a_request_without_the_csrf_token_or_from_another_origin()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var admin = host.Client();
+        var setup = await admin.PostAsync("/api/v1/setup", new { setupToken = ApiTestHost.SetupTokenValue, email = Email, displayName = "First Person", password = ApiTestHost.Password });
+        Assert.Equal(HttpStatusCode.NoContent, setup.StatusCode);
+        var endpoints = host.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
+            .SelectMany(e => (e.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods ?? [])
+                .Where(m => m is not ("GET" or "HEAD" or "OPTIONS"))
+                .Select(m => (Method: m, Route: "/" + e.RoutePattern.RawText!.TrimStart('/'), Exempt: e.Metadata.GetMetadata<TokenAuthenticated>() is not null)))
+            .Where(e => e.Route.StartsWith("/api/", StringComparison.Ordinal))
+            .ToList();
+        Assert.NotEmpty(endpoints);
+
+        var problems = new List<string>();
+        foreach (var (method, route, _) in endpoints.Where(e => !e.Exempt))
+        {
+            var path = System.Text.RegularExpressions.Regex.Replace(route, @"\{(\w+)(:(\w+))?\}", m => m.Groups[3].Value switch
+            {
+                "guid" => Guid.CreateVersion7().ToString(),
+                "int" => "1",
+                _ => "x",
+            });
+            foreach (var (what, response) in new[]
+            {
+                ("without the token", await admin.SendAsync(new HttpMethod(method), path, new { }, csrf: false)),
+                ("from another origin", await admin.SendAsync(new HttpMethod(method), path, new { }, origin: "https://evil.example")),
+            })
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                if (response.StatusCode != HttpStatusCode.Forbidden || !body.Contains("\"csrf_failed\"", StringComparison.Ordinal))
+                {
+                    problems.Add($"{method} {route} {what}: {(int)response.StatusCode} {body}");
+                }
+            }
+        }
+
+        Assert.Empty(problems);
+        Assert.Equal(TokenAuthenticated, endpoints.Where(e => e.Exempt).Select(e => $"{e.Method} {e.Route}").Order(StringComparer.Ordinal));
+        Assert.Equal(HttpStatusCode.OK, (await admin.SessionAsync()).StatusCode);
     }
 
     private static void AssertSecurityHeaders(HttpResponseMessage response)

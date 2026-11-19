@@ -14,6 +14,8 @@ public sealed class VersionMatchTests
 
     private static readonly Guid CveProgram = Guid.CreateVersion7();
 
+    private static readonly Guid Osv = Guid.CreateVersion7();
+
     [Fact]
     public void The_scheme_must_read_every_bound_when_one_can()
     {
@@ -84,11 +86,25 @@ public sealed class VersionMatchTests
         Assert.Equal(("in_range", "before_empty_range", "157.0.8103.50"), (result.Verdict, result.Reason, result.FixedVersion));
     }
 
+    [Fact]
+    public void A_record_without_a_comparable_range_neither_decides_nor_vetoes()
+    {
+        // A source that names only Git commits says nothing about the installed version.
+        var commits = Row(introduced: "1da177e4c3f4", @fixed: "a1b2c3d4e5f6", scheme: "git", defaultStatus: "unknown", source: Osv);
+
+        var alone = VersionMatch.Check(Component("6.3.4", null), MatchTypes.Product, [commits], Schemes);
+        var withRanges = VersionMatch.Check(Component("6.3.4", null), MatchTypes.Product, [commits, Row(lastAffected: "6.3.2")], Schemes);
+
+        Assert.Equal(("unknown", "no_comparable_range"), (alone.Verdict, alone.Reason));
+        Assert.Equal(("out_of_range", "default_unaffected"), (withRanges.Verdict, withRanges.Reason));
+        Assert.Equal(2, withRanges.Statements.Count);
+    }
+
     private static AffectedFacts Row(
         string? introduced = null, string? @fixed = null, string? lastAffected = null, string? exact = null,
-        string status = "affected", string? scheme = null, string defaultStatus = "unaffected", string product = "Mattermost") => new()
+        string status = "affected", string? scheme = null, string defaultStatus = "unaffected", string product = "Mattermost", Guid? source = null) => new()
         {
-            SourceId = CveProgram,
+            SourceId = source ?? CveProgram,
             Vendor = "Mattermost",
             Product = product,
             ProductKey = "mattermost",

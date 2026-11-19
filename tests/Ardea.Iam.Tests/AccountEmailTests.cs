@@ -78,6 +78,30 @@ public sealed class AccountEmailTests(PostgresServer server)
     }
 
     [Fact]
+    public async Task A_confirmation_link_confirms_only_its_own_account()
+    {
+        var mail = new CapturingEmailSender();
+        await using var host = await ApiTestHost.StartAsync(server, services: s => s.AddScoped<IEmailSender>(_ => mail));
+        using var browser = host.Client();
+        using var other = host.Client();
+        await browser.PostAsync("/api/v1/auth/register", new { email = "new@example.org", displayName = "New Person", password = ApiTestHost.Password });
+        await other.PostAsync("/api/v1/auth/register", new { email = "other@example.org", displayName = "Other Person", password = ApiTestHost.Password });
+        var userId = await host.ScalarAsync<Guid>("SELECT id FROM iam.\"user\" WHERE email = 'new@example.org'");
+        var otherId = await host.ScalarAsync<Guid>("SELECT id FROM iam.\"user\" WHERE email = 'other@example.org'");
+        await RunJobAsync(host, new SendEmailConfirmation(userId));
+        var token = QueryHelpers.ParseQuery(Link(Assert.Single(mail.Sent)).Query)["token"].ToString();
+
+        foreach (var (user, value) in new[] { (otherId, token), (userId, "forged"), (Guid.CreateVersion7(), token) })
+        {
+            var response = await other.PostAsync("/api/v1/auth/email/confirm", new { userId = user, token = value });
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal("invalid_token", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        }
+
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM iam.\"user\" WHERE email_confirmed"));
+    }
+
+    [Fact]
     public async Task Registering_a_taken_address_mails_its_owner_instead_of_telling_the_stranger()
     {
         var mail = new CapturingEmailSender();

@@ -21,8 +21,11 @@ organisation and without a user. And no transaction may stay open while the mail
 
 1. **Self-check in both roles.** A hosted service runs a round every five minutes in `api` and in `worker`; the
    first round waits one interval, so that a worker started together with the API has beaten by then. One process
-   at a time does a round: a session advisory lock (`pg_try_advisory_lock`) on a connection of its own, taken with a
-   try-lock and released at the end; a process that does not get it skips the round. The job queue plays no part.
+   at a time reconciles: the reconciling unit of work takes a transaction-level advisory lock with a try-lock
+   (`pg_try_advisory_xact_lock`) and the process skips the round if it is taken; giving a claim back waits for the
+   same lock (`pg_advisory_xact_lock`). The lock ends with its transaction, so nothing holds a lock or a connection
+   while the mail server is called, a frozen process cannot block the other one beyond its transaction, and a lost
+   connection rolls the reconcile back with it. The job queue plays no part.
 2. **State per warning.** `platform.instance_warning` (instance data, no organisation, no row-level security), keyed
    by code and subject (empty when the warning has none): severity, message, `first_seen_at`, `last_seen_at`,
    `cleared_at`, `notified_at`, `reminded_at`, `resolved_at`. A round computes the status through the existing
@@ -46,9 +49,12 @@ organisation and without a user. And no transaction may stay open while the mail
 4. **No transaction during SMTP.** Who can be told is read first, in short units of work of their own (the sender
    reads its settings, the directory below reads the accounts). Then one short unit of work computes the status,
    reconciles the state and claims what to mail, and commits; the mail goes out after that, without a transaction.
-   If sending fails for any recipient, a new short unit of work gives the claim back (`notified_at`, `reminded_at`
-   or `resolved_at` as before the round), so the next round tries again for everyone: a duplicate mail is preferred
-   to a lost warning. A process that stops between commit and send loses that mail; the warning stays visible.
+   If the mail reached nobody (every send failed, or the process was stopped before the first one succeeded), a new
+   short unit of work gives the claim back (`notified_at`, `reminded_at` or `resolved_at` as before the round), so
+   the next round tries again; it does so without a cancellation token, so a stopping process still releases. If the
+   mail reached at least one administrator, the claim stands: an address the mail server refuses for good must not
+   make the others get the same mail every five minutes. Those it failed for hear of a lasting warning with the
+   reminder 24 hours later. A process that dies between commit and send loses that mail; the warning stays visible.
 5. **Recipients through Iam's Contracts.** `IInstanceAdministrators.ListReachableAsync` returns the user id, name
    and confirmed address of each instance administrator. It does not add a function that hands out addresses: the
    new system function `iam.instance_administrators()` (`SECURITY DEFINER`, owned by the migrator, `search_path`
@@ -80,10 +86,19 @@ organisation and without a user. And no transaction may stay open while the mail
 ## Consequences
 
 - An instance without SMTP behaves as before, with one information line in each process's log.
-- A failure at one administrator's mail server repeats the mail for the others in the next round.
+- An administrator whose mail failed while another's succeeded does not get the «new» mail again; the card
+  *Operation* shows the time of the mail all the same.
+- **Known limitation: clock skew.** `worker_stalled` compares the worker's heartbeat with the clock of the process
+  that computes the status (as before this ADR). If the API and the worker run on hosts whose clocks differ by more
+  than the two-minute heartbeat window, the warning can come and go, and with it the mails. The bundled Compose
+  setup runs both on one host and is not affected; across hosts, keep the clocks synchronised (NTP).
+- `IInstanceAdministrators` is a contract of Iam, but only the host's self-check may use it;
+  `ModuleBoundaryTests.Only_the_host_reads_the_instance_administrators` fails when another module does.
 - `TenantIsolationTests` lists `platform.instance_warning` as global; ADR 029's table of system functions gains
   `iam.instance_administrators()`.
 - Tests: the rules (`InstanceWarningRulesTests`, without database) and the rounds against PostgreSQL
   (`InstanceSelfCheckTests`: one bundled mail to every administrator and none to others, nothing in the next round,
-  reminder after 24 hours, «resolved» only after a clear round, no SMTP, two processes at once, a stalled worker
-  reported by the API role without the job queue, a failed mail retried by the next round).
+  reminder after 24 hours, «resolved» only after a clear round, no SMTP, two processes at once, a round skipped
+  while another holds the lock, an address refused for good, a failed new, reminder and «resolved» mail retried by
+  the next round, a round stopped while sending, a stalled worker reported by the API role without the job queue,
+  the worker role registering the self-check); the `notified` field in `InstanceStatusTests`.

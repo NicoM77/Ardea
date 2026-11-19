@@ -37,6 +37,7 @@ internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext ten
     private NpgsqlTransaction? _transaction;
     private bool _completed;
     private bool _commitReserved;
+    private bool _failed;
     private readonly Queue<Func<CancellationToken, Task>> _beforeCommit = new();
 
     public NpgsqlConnection Connection { get; } = dataSource.CreateConnection();
@@ -109,9 +110,24 @@ internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext ten
     private async Task CommitCoreAsync(CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_completed, this);
+        if (_failed)
+        {
+            throw new InvalidOperationException("An action before the commit failed; the unit of work can only be rolled back.");
+        }
+
         while (_beforeCommit.TryDequeue(out var action))
         {
-            await action(cancellationToken);
+            try
+            {
+                await action(cancellationToken);
+            }
+            catch
+            {
+                // Its part of the work may be missing: what the rest wrote must not commit without it.
+                _failed = true;
+                _beforeCommit.Clear();
+                throw;
+            }
         }
 
         _completed = true;

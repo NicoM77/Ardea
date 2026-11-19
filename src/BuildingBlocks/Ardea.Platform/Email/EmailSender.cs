@@ -86,7 +86,15 @@ internal sealed class SmtpEmailSender(IUnitOfWorkFactory units) : IEmailSender
         }
 
         await client.SendAsync(new SmtpSendRequest(mime), cancellationToken);
-        await client.DisconnectAsync(quit: true, cancellationToken);
+        try
+        {
+            await client.DisconnectAsync(quit: true, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // The server accepted the message with its answer to DATA: it is sent. A failing goodbye must not
+            // make the caller send it again.
+        }
     }
 
     private async Task<Dictionary<string, string?>> ReadAsync(CancellationToken cancellationToken)

@@ -1,4 +1,5 @@
 using Ardea.Platform.Jobs;
+using Ardea.Platform.Persistence;
 using Ardea.TestSupport;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
@@ -125,6 +126,60 @@ public sealed class JobSystemTests(PostgresServer server)
 
         gate.Open.SetResult();
         await host.WaitForAsync("SELECT count(*) FROM platform.job WHERE state = 'succeeded'", 2, TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+    }
+
+    /// <summary>
+    /// ADR 038: a cause commits after the waiting job it coalesced onto. Without the share lock a worker could run the
+    /// job in between, miss what the cause wrote, and leave it unprocessed until the next enqueue.
+    /// </summary>
+    [Fact(Timeout = JobTestHost.TestTimeout)]
+    public async Task A_coalesced_enqueue_keeps_the_waiting_job_from_being_claimed_until_its_transaction_commits()
+    {
+        var cancellation = TestContext.Current.CancellationToken;
+        await using var host = await JobTestHost.CreateAsync(server, s => s.AddJob<EffectJob, EffectJobHandler>());
+        var keyed = new EnqueueOptions { CoalesceKey = "notify.evaluate:org" };
+        await host.InUnitOfWorkAsync(s => s.GetRequiredService<IJobQueue>().EnqueueAsync(new EffectJob("waiting"), keyed));
+
+        // Two causes coalesce onto the waiting job at the same time; neither waits for the other.
+        await using var a = host.Services.CreateAsyncScope();
+        await using var b = host.Services.CreateAsyncScope();
+        Assert.False(await a.ServiceProvider.GetRequiredService<IJobQueue>().EnqueueAsync(new EffectJob("a"), keyed, cancellation));
+        Assert.False(await b.ServiceProvider.GetRequiredService<IJobQueue>().EnqueueAsync(new EffectJob("b"), keyed, cancellation));
+
+        Assert.Empty(await JobStore.ClaimAsync(host.DataSource, "worker-a", EffectJob.Kind, 10, TimeSpan.FromSeconds(30), cancellation));
+        await a.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellation);
+        Assert.Empty(await JobStore.ClaimAsync(host.DataSource, "worker-a", EffectJob.Kind, 10, TimeSpan.FromSeconds(30), cancellation));
+        await b.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellation);
+        Assert.Single(await JobStore.ClaimAsync(host.DataSource, "worker-a", EffectJob.Kind, 10, TimeSpan.FromSeconds(30), cancellation));
+        Assert.Equal(1, await host.CountAsync("SELECT count(*) FROM platform.job"));
+    }
+
+    /// <summary>A cause that coalesces while the waiting job is being claimed enqueues a new one instead of losing its work.</summary>
+    [Fact(Timeout = JobTestHost.TestTimeout)]
+    public async Task A_coalesced_enqueue_racing_a_claim_enqueues_a_new_job()
+    {
+        var cancellation = TestContext.Current.CancellationToken;
+        await using var host = await JobTestHost.CreateAsync(server, s => s.AddJob<EffectJob, EffectJobHandler>());
+        var keyed = new EnqueueOptions { CoalesceKey = "notify.evaluate:org" };
+        await host.InUnitOfWorkAsync(s => s.GetRequiredService<IJobQueue>().EnqueueAsync(new EffectJob("waiting"), keyed));
+
+        // A worker's claim is in flight: it holds the row but has not committed yet.
+        await using var claim = await host.DataSource.OpenConnectionAsync(cancellation);
+        await using var transaction = await claim.BeginTransactionAsync(cancellation);
+        await using (var update = new NpgsqlCommand("UPDATE platform.job SET state = 'running' WHERE state = 'pending'", claim, transaction))
+        {
+            await update.ExecuteNonQueryAsync(cancellation);
+        }
+
+        await using var cause = host.Services.CreateAsyncScope();
+        var enqueue = cause.ServiceProvider.GetRequiredService<IJobQueue>().EnqueueAsync(new EffectJob("cause"), keyed, cancellation);
+        await Task.Delay(200, cancellation);
+        Assert.False(enqueue.IsCompleted);
+        await transaction.CommitAsync(cancellation);
+
+        Assert.True(await enqueue);
+        await cause.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellation);
+        Assert.Equal(1, await host.CountAsync("SELECT count(*) FROM platform.job WHERE state = 'pending'"));
     }
 
     [Fact(Timeout = JobTestHost.TestTimeout)]

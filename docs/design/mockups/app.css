@@ -144,6 +144,11 @@ body { display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr)
 kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 4px; background: var(--raised); color: var(--muted); font: 500 var(--fs-small)/1 var(--font); }
 .topbar .menu-toggle, .topbar .brand-mark { display: none; }
 .topbar .account { position: absolute; right: 16px; padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; }
+/* The in-app inbox: a bell with the unread count, left of the account (task 5.8) */
+.topbar .bell { position: absolute; right: 56px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-control); color: var(--muted); }
+.topbar .bell .icon { width: 18px; height: 18px; }
+.topbar .bell[aria-current] { background: var(--active); color: var(--text); }
+.bell-count { position: absolute; top: 2px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--primary); color: var(--primary-ink); font-size: 11px; font-weight: 600; line-height: 16px; text-align: center; }
 
 .sheet { margin: 0 8px 8px 0; padding: var(--pad) var(--pad) 32px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sheet); min-height: calc(100vh - var(--topbar) - 8px); }
 .content { max-width: 1240px; margin: 0 auto; view-transition-name: content; }
@@ -588,6 +593,7 @@ kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; 
   .topbar { justify-content: flex-start; padding: 0 12px; gap: 8px; }
   .topbar .menu-toggle, .sidebar .sidebar-close { display: inline-flex; }
   .topbar .brand-mark { display: block; width: 24px; height: 24px; }
+  .topbar .bell { position: relative; right: auto; margin-left: auto; width: 40px; height: 40px; }
   .topbar .account { position: static; }
   .search-trigger { flex: 1; width: auto; }
   .search-trigger kbd { display: none; }

@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Notification rules · Ardea (mockup, sample data)</title>
+<link rel="icon" href="../brand/ardea-favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="notifications.css">
+</head>
+<body data-page="rules">
+<main class="sheet" id="main">
+  <div class="content">
+
+    <!-- ===================== Rules, recipients, log: one page with three tabs ===================== -->
+    <div data-sample="list">
+      <header class="title-row">
+        <div>
+          <h1>Notification rules</h1>
+          <p class="title-sub">3 rules, 1 off. Who hears about which actions, on which channel, and when.</p>
+        </div>
+        <div class="title-actions"><button class="btn primary" type="button" data-show="editor">New rule</button></div>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Notification rules">
+        <button type="button" role="tab" id="t-rules" aria-controls="p-rules" aria-selected="true">Rules <span class="count">3</span></button>
+        <button type="button" role="tab" id="t-recipients" aria-controls="p-recipients" aria-selected="false">Recipients <span class="count">3</span></button>
+        <button type="button" role="tab" id="t-log" aria-controls="p-log" aria-selected="false">Delivery log</button>
+      </div>
+
+      <!-- Rules: the picture is the matrix of rules and channels -->
+      <section role="tabpanel" id="p-rules" aria-labelledby="t-rules">
+        <section class="card rise" aria-labelledby="h-matrix">
+          <header><h2 id="h-matrix">Who hears what</h2><span class="meta">Times in Europe/Zurich</span></header>
+          <table class="rule-matrix">
+            <thead><tr>
+              <th scope="col">Rule</th>
+              <th scope="col"><svg class="icon" aria-hidden="true"><use href="#i-rules"/></svg>In-app</th>
+              <th scope="col"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>E-mail</th>
+              <th scope="col"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>Push</th>
+              <th scope="col"><svg class="icon" aria-hidden="true"><use href="#i-webhook"/></svg>Webhook</th>
+              <th scope="col"><span class="sr-only">On</span></th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td class="rule-name"><a href="#" data-show="editor">Critical at once</a>
+                  <small><span class="prio prio--critical"><svg class="sym" aria-hidden="true"><use href="#i-p-critical"/></svg>Critical</span> · all projects · 6 events</small></td>
+                <td class="cell-wrap"><span class="cell" data-label="In-app"><b>At once</b><small>Owners and admins</small></span></td>
+                <td class="cell-wrap"><span class="cell" data-label="E-mail"><b>At once</b><small>Owners and admins</small></span></td>
+                <td class="cell-wrap"><span class="cell" data-label="Push"><b>At once</b><small>Owners and admins</small></span></td>
+                <td class="cell-wrap"><span class="cell" data-label="Webhook"><b>At once</b><small>SIEM</small></span></td>
+                <td><button class="switch" type="button" role="switch" aria-checked="true" aria-label="Critical at once is on"></button></td>
+              </tr>
+              <tr>
+                <td class="rule-name"><a href="#" data-show="editor">High</a>
+                  <small><span class="prio prio--high"><svg class="sym" aria-hidden="true"><use href="#i-p-high"/></svg>High</span> and above · all projects · 6 events</small></td>
+                <td class="cell-wrap"><span class="cell" data-label="In-app"><b>At once</b><small>Everyone</small></span></td>
+                <td class="cell-wrap"><span class="cell" data-label="E-mail"><b>Weekdays 08:00</b><small>Everyone</small></span></td>
+                <td class="cell-wrap"><span class="cell none" data-label="Push" aria-label="No push">–</span></td>
+                <td class="cell-wrap"><span class="cell none" data-label="Webhook" aria-label="No webhook">–</span></td>
+                <td><button class="switch" type="button" role="switch" aria-checked="true" aria-label="High is on"></button></td>
+              </tr>
+              <tr>
+                <td class="rule-name"><a href="#" data-show="editor">Weekly summary</a>
+                  <small><span class="prio prio--low"><svg class="sym" aria-hidden="true"><use href="#i-p-low"/></svg>Low</span> and above, and warnings · all projects</small></td>
+                <td class="cell-wrap"><span class="cell none" data-label="In-app" aria-label="No in-app">–</span></td>
+                <td class="cell-wrap"><span class="cell" data-label="E-mail"><b>Mondays 08:00</b><small>Everyone, also when nothing happened</small></span></td>
+                <td class="cell-wrap"><span class="cell none" data-label="Push" aria-label="No push">–</span></td>
+                <td class="cell-wrap"><span class="cell none" data-label="Webhook" aria-label="No webhook">–</span></td>
+                <td><button class="switch" type="button" role="switch" aria-checked="true" aria-label="Weekly summary is on"></button></td>
+              </tr>
+              <tr class="rule-off">
+                <td class="rule-name"><a href="#" data-show="editor">Webshop to the agency</a>
+                  <small><span class="prio prio--medium"><svg class="sym" aria-hidden="true"><use href="#i-p-medium"/></svg>Medium</span> and above · Webshop · 4 events</small></td>
+                <td class="cell-wrap"><span class="cell none" data-label="In-app" aria-label="No in-app">–</span></td>
+                <td class="cell-wrap"><span class="cell" data-label="E-mail"><b>At once</b><small>support@agency.example</small><span class="pill">Waiting for confirmation</span></span></td>
+                <td class="cell-wrap"><span class="cell none" data-label="Push" aria-label="No push">–</span></td>
+                <td class="cell-wrap"><span class="cell none" data-label="Webhook" aria-label="No webhook">–</span></td>
+                <td><button class="switch" type="button" role="switch" aria-checked="false" aria-label="Webshop to the agency is off"></button></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="matrix-foot">Rules overlap on purpose: nobody hears the same thing twice on one channel. A member can mute a channel for themselves; Critical still gets through.</p>
+        </section>
+      </section>
+
+      <!-- Recipients outside the team: webhooks and confirmed e-mail addresses -->
+      <section role="tabpanel" id="p-recipients" aria-labelledby="t-recipients" hidden>
+        <div class="grid">
+          <section class="card span-7" aria-labelledby="h-hooks">
+            <header><h2 id="h-hooks">Webhooks</h2><span class="meta">Signed with a shared secret</span></header>
+            <div class="rows">
+              <div>
+                <span class="row-icon"><svg class="icon" aria-hidden="true"><use href="#i-webhook"/></svg></span>
+                <span class="row-main"><b>SIEM</b><small class="mono">siem.example.org</small></span>
+                <span class="row-end"><span class="status-line is-ok"><svg class="sym" aria-hidden="true"><use href="#i-s-done"/></svg>200</span><br>18 Nov, 08:14</span>
+                <span class="row-actions"><button class="btn" type="button">Send test</button><button class="btn ghost icon-only" type="button" aria-label="More for SIEM"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button></span>
+              </div>
+              <div>
+                <span class="row-icon"><svg class="icon" aria-hidden="true"><use href="#i-webhook"/></svg></span>
+                <span class="row-main"><b>Ops chat</b><small class="mono">hooks.chat.example · off</small></span>
+                <span class="row-end"><span class="status-line"><svg class="sym" aria-hidden="true"><use href="#i-s-open"/></svg>Timed out</span><br>17 Nov, 22:40</span>
+                <span class="row-actions"><button class="btn" type="button">Send test</button><button class="btn ghost icon-only" type="button" aria-label="More for Ops chat"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button></span>
+              </div>
+            </div>
+            <div class="notice success" role="status">
+              <svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>
+              <div><b>Ops chat answered 200.</b>The test message arrived. Receivers check its signature with the shared secret.</div>
+            </div>
+            <form class="add-form" onsubmit="return false">
+              <label class="field"><span>Name</span><input class="input" value="Ticket system"></label>
+              <label class="field"><span>Address</span><input class="input" value="https://tickets.example.org/hooks/ardea" inputmode="url"></label>
+              <button class="btn" type="submit">Add webhook</button>
+            </form>
+            <div class="notice" style="margin-top: 16px">
+              <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+              <div><b>Copy the secret now. It is shown only once.</b>
+                <span class="secret"><code>whsec_q3V9mY1sZ0b8kD7tR2wX5eJ4nH6cL0aP</code><button class="btn" type="button">Copy</button></span></div>
+            </div>
+          </section>
+
+          <section class="card span-5" aria-labelledby="h-addresses">
+            <header><h2 id="h-addresses">External e-mail addresses</h2><span class="meta">2 of 50</span></header>
+            <div class="rows">
+              <div>
+                <span class="row-main"><b>support@agency.example</b><small>Added 18 Nov · link valid until 25 Nov</small></span>
+                <span class="pill">Waiting for confirmation</span>
+                <span class="row-actions"><button class="btn ghost icon-only" type="button" aria-label="More for support@agency.example"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button></span>
+              </div>
+              <div>
+                <span class="row-main"><b>security@parent.example</b><small>Confirmed 12 Nov</small></span>
+                <span class="pill pill--done">Confirmed</span>
+                <span class="row-actions"><button class="btn ghost icon-only" type="button" aria-label="More for security@parent.example"><svg class="icon" aria-hidden="true"><use href="#i-more"/></svg></button></span>
+              </div>
+            </div>
+            <form class="add-form two" onsubmit="return false">
+              <label class="field"><span>Address</span><input class="input" type="email" placeholder="name@example.org"></label>
+              <button class="btn" type="submit">Add address</button>
+            </form>
+            <p class="matrix-foot">An address receives messages only after its owner confirmed it with the link we mail. Every message carries a link to unsubscribe.</p>
+          </section>
+        </div>
+      </section>
+
+      <!-- The delivery log: one row per message -->
+      <section role="tabpanel" id="p-log" aria-labelledby="t-log" hidden>
+        <div class="filters" role="group" aria-label="Filter the log">
+          <label class="field"><span>State</span><select class="select"><option>All states</option><option>Sent</option><option>Waiting</option><option>Retrying</option><option>Given up</option><option>Not sent</option></select></label>
+          <label class="field"><span>Channel</span><select class="select"><option>All channels</option><option>In-app</option><option>E-mail</option><option>Push</option><option>Webhook</option></select></label>
+        </div>
+        <p class="title-sub" role="status" style="margin-bottom: 12px">Latest 6 messages. <strong>1 retrying</strong>, 1 given up.</p>
+        <table class="log" aria-label="Delivery log">
+          <thead><tr><th scope="col">When</th><th scope="col">Recipient</th><th scope="col">Channel</th><th scope="col">Message</th><th scope="col">State</th><th scope="col">Detail</th></tr></thead>
+          <tbody>
+            <tr><td>Today, 08:16</td><td>Nina Meier</td><td>Push</td><td>At once<small>1 event</small></td><td><span class="state is-sent"><svg class="sym" aria-hidden="true"><use href="#i-s-done"/></svg>Sent</span></td><td class="err"><small>2 devices</small></td></tr>
+            <tr><td>Today, 08:16</td><td>SIEM</td><td>Webhook</td><td>At once<small>1 event</small></td><td><span class="state is-sent"><svg class="sym" aria-hidden="true"><use href="#i-s-done"/></svg>Sent</span></td><td class="err"></td></tr>
+            <tr><td>Today, 08:16</td><td>Marc Keller</td><td>E-mail</td><td>At once<small>3 events</small></td><td><span class="state is-failed"><svg class="sym" aria-hidden="true"><use href="#i-s-review"/></svg>Retrying</span><small>Attempt 2 of 12</small></td><td class="err"><small>SocketException: Connection refused</small></td></tr>
+            <tr><td>Today, 08:00</td><td>Lea Brunner</td><td>E-mail</td><td>Digest<small>17 Nov, 08:00 – 18 Nov, 08:00</small></td><td><span class="state is-sent"><svg class="sym" aria-hidden="true"><use href="#i-s-done"/></svg>Sent</span></td><td class="err"></td></tr>
+            <tr><td>Yesterday, 22:40</td><td>Ops chat</td><td>Webhook</td><td>At once<small>1 event</small></td><td><span class="state is-dead"><svg class="sym" aria-hidden="true"><use href="#i-s-not-affected"/></svg>Given up</span></td><td class="err"><small>The endpoint answered 410.</small></td></tr>
+            <tr><td>Yesterday, 14:02</td><td>Lea Brunner</td><td>E-mail</td><td>At once<small>1 event</small></td><td><span class="state is-suppressed"><svg class="sym" aria-hidden="true"><use href="#i-s-open"/></svg>Not sent</span></td><td class="err"><small>The recipient muted this channel.</small></td></tr>
+          </tbody>
+        </table>
+        <div class="more"><button class="btn" type="button">Show older</button></div>
+      </section>
+    </div>
+
+    <!-- ===================== The rule editor ===================== -->
+    <div data-sample="editor" hidden>
+      <nav class="crumb-row" aria-label="Breadcrumb"><a href="#" data-show="list">Notification rules</a><svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg><span>Critical at once</span></nav>
+      <header class="title-row"><div><h1>Critical at once</h1><p class="title-sub">Default rule. Change it like any other.</p></div></header>
+      <form class="editor" onsubmit="return false">
+        <div class="main">
+          <section class="card" aria-labelledby="h-when">
+            <header><h2 id="h-when">When</h2></header>
+            <div class="form-grid">
+              <label class="field"><span>Name</span><input class="input" value="Critical at once"></label>
+              <div class="field"><span id="l-level">Report actions from</span>
+                <div class="levels" role="group" aria-labelledby="l-level">
+                  <button type="button" aria-pressed="false" class="c-low" style="--c: var(--low)"><svg class="sym" aria-hidden="true"><use href="#i-p-low"/></svg>Low</button>
+                  <button type="button" aria-pressed="false" style="--c: var(--medium)"><svg class="sym" aria-hidden="true"><use href="#i-p-medium"/></svg>Medium</button>
+                  <button type="button" aria-pressed="false" style="--c: var(--high)"><svg class="sym" aria-hidden="true"><use href="#i-p-high"/></svg>High</button>
+                  <button type="button" aria-pressed="true" style="--c: var(--critical)"><svg class="sym" aria-hidden="true"><use href="#i-p-critical"/></svg>Critical</button>
+                </div>
+                <small>Warnings without an identifier have no priority and come with every rule that names them.</small>
+              </div>
+              <fieldset><legend>Events</legend>
+                <div class="checks">
+                  <span class="group-label">Actions</span>
+                  <label class="check-row"><input type="checkbox" checked><span>New action<small>From its priority up</small></span></label>
+                  <label class="check-row"><input type="checkbox" checked><span>Priority raised<small>Also when reported before</small></span></label>
+                  <label class="check-row"><input type="checkbox" checked><span>Exploitation known<small>Without a higher priority</small></span></label>
+                  <label class="check-row"><input type="checkbox"><span>Fix available<small>The first time only</small></span></label>
+                  <label class="check-row"><input type="checkbox" checked><span>Priority lowered<small>Only where reported before</small></span></label>
+                  <label class="check-row"><input type="checkbox" checked><span>Withdrawn<small>Only where reported before</small></span></label>
+                  <span class="group-label">Team work</span>
+                  <label class="check-row"><input type="checkbox"><span>Assigned</span></label>
+                  <label class="check-row"><input type="checkbox"><span>Status changed<small>In-app and webhooks only</small></span></label>
+                  <label class="check-row"><input type="checkbox"><span>Note added<small>In-app and webhooks only</small></span></label>
+                  <span class="group-label">Other</span>
+                  <label class="check-row"><input type="checkbox"><span>Warning without an identifier</span></label>
+                  <label class="check-row"><input type="checkbox" checked><span>First assessment done<small>One message per project</small></span></label>
+                  <label class="check-row"><input type="checkbox"><span>Repository unavailable</span></label>
+                </div>
+              </fieldset>
+              <fieldset><legend>Projects</legend>
+                <div class="checks">
+                  <label class="check-row"><input type="radio" name="scope" checked><span>All projects<small>Also the ones added later</small></span></label>
+                  <label class="check-row"><input type="radio" name="scope"><span>Selected projects</span></label>
+                </div>
+              </fieldset>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="h-who">
+            <header><h2 id="h-who">Who hears it</h2><span class="meta">4 of 20</span></header>
+            <div class="targets">
+              <div class="target">
+                <label class="field"><span>Recipient</span><select class="select"><option>Owners and admins</option><option>Owners</option><option>Members and above</option><option>Everyone</option><option>Nina Meier</option><option>security@parent.example</option><option>SIEM</option></select></label>
+                <label class="field"><span>Channel</span><select class="select"><option>In-app</option><option>E-mail</option><option>Push</option></select></label>
+                <label class="field"><span>When</span><select class="select"><option>At once</option><option>Digest</option></select></label>
+                <button class="btn ghost icon-only" type="button" aria-label="Remove recipient 1"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></button>
+              </div>
+              <div class="target">
+                <label class="field"><span>Recipient</span><select class="select"><option>Owners and admins</option></select></label>
+                <label class="field"><span>Channel</span><select class="select"><option>E-mail</option></select></label>
+                <label class="field"><span>When</span><select class="select"><option>At once</option></select></label>
+                <button class="btn ghost icon-only" type="button" aria-label="Remove recipient 2"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></button>
+              </div>
+              <div class="target">
+                <label class="field"><span>Recipient</span><select class="select"><option>Owners and admins</option></select></label>
+                <label class="field"><span>Channel</span><select class="select"><option>Push</option></select></label>
+                <label class="field"><span>When</span><select class="select"><option>At once</option></select></label>
+                <button class="btn ghost icon-only" type="button" aria-label="Remove recipient 3"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></button>
+              </div>
+              <div class="target">
+                <label class="field"><span>Recipient</span><select class="select"><option>Everyone</option></select></label>
+                <label class="field"><span>Channel</span><select class="select"><option>E-mail</option></select></label>
+                <label class="field"><span>When</span><select class="select"><option>Digest</option></select></label>
+                <button class="btn ghost icon-only" type="button" aria-label="Remove recipient 4"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></button>
+                <div class="target-extra">
+                  <label>Schedule <select class="select"><option>Weekdays at 08:00</option><option>Mondays at 08:00</option><option>Every day at 08:00</option><option>Custom</option></select></label>
+                  <label><input type="checkbox"> Also when nothing happened</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-actions" style="margin-top: 12px"><button class="btn" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Add recipient</button></div>
+          </section>
+        </div>
+
+        <aside class="side">
+          <section class="card summary" aria-labelledby="h-summary">
+            <header><h2 id="h-summary">In one sentence</h2></header>
+            <p><b>Critical</b> actions in <b>all projects</b> reach <b>owners and admins</b> at once in the app, by e-mail and by push, and the <b>SIEM</b> webhook.</p>
+            <div class="notice"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><div>Members who muted e-mail or push still get Critical: the organization does not allow muting it.</div></div>
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Save rule</button>
+              <button class="btn" type="button" data-show="list">Cancel</button>
+              <button class="btn ghost push-end" type="button">Delete</button>
+            </div>
+          </section>
+        </aside>
+      </form>
+    </div>
+
+    <p class="footnote">Sample data. The matrix is the list: one row per rule, one column per channel, each cell says when and to whom. A rule that is off is greyed and stays in its place. The editor writes the rule into one sentence beside the form. Without SMTP every e-mail cell carries “E-mail is off”. Members who are neither owner nor admin see a short note and a link to their own settings instead of this page. <a class="link" href="notifications.html">Inbox</a> · <a class="link" href="notification-settings.html">Your notification settings</a> · <a class="link" href="notification-link.html">Pages behind e-mail links</a></p>
+  </div>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+  /* Mockup behaviour only: tabs, the editor, switches */
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) {
+          var on = t === tab;
+          t.setAttribute('aria-selected', String(on));
+          document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+        });
+      });
+    });
+    document.addEventListener('click', function (e) {
+      var show = e.target.closest('[data-show]');
+      if (show) {
+        e.preventDefault();
+        document.querySelectorAll('[data-sample]').forEach(function (s) { s.hidden = s.getAttribute('data-sample') !== show.getAttribute('data-show'); });
+        window.scrollTo(0, 0);
+      }
+      var sw = e.target.closest('.switch');
+      if (sw) sw.setAttribute('aria-checked', String(sw.getAttribute('aria-checked') !== 'true'));
+      var level = e.target.closest('.levels button');
+      if (level) level.parentNode.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === level)); });
+    });
+  })();
+</script>
+</body>
+</html>

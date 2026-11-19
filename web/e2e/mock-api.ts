@@ -30,6 +30,103 @@ const INVITATION = {
   invitedBy: 'Sample Person',
   createdAt: '2026-11-18T08:00:00Z',
 };
+const PROJECT = {
+  id: '0190a000-0000-7000-8000-000000000010',
+  name: 'Customer Portal',
+  description: 'Online self-service for customers.',
+  criticality: 'high',
+  exposure: 'internet',
+  archived: false,
+  componentCount: 3,
+  createdAt: '2026-11-18T08:00:00Z',
+  changedAt: '2026-11-18T08:00:00Z',
+};
+const COMPONENT = {
+  id: '0190a000-0000-7000-8000-000000000011',
+  productKey: 'aspnetcore',
+  name: 'ASP.NET Core',
+  vendor: 'Microsoft',
+  inCatalog: true,
+  kind: 'framework',
+  version: '10.0',
+  versionScheme: 'semver',
+  packaging: 'unknown',
+  parentId: null,
+  exposure: null,
+  criticality: null,
+  protection: 'none',
+  protectionNote: null,
+  origin: 'repository',
+  purl: null,
+  dependencyScope: null,
+  dependencyRelation: null,
+};
+const COMPONENTS = [
+  COMPONENT,
+  {
+    ...COMPONENT,
+    id: '0190a000-0000-7000-8000-000000000012',
+    productKey: 'azure-sql-database',
+    name: 'Azure SQL Database',
+    kind: 'service',
+    version: null,
+    origin: 'manual',
+  },
+  {
+    ...COMPONENT,
+    id: '0190a000-0000-7000-8000-000000000013',
+    productKey: null,
+    name: 'rxjs',
+    inCatalog: false,
+    kind: 'library',
+    version: '7.8.2',
+    purl: 'pkg:npm/rxjs@7.8.2',
+    dependencyScope: 'runtime',
+    dependencyRelation: 'direct',
+  },
+];
+const CONNECTION = {
+  id: '0190a000-0000-7000-8000-000000000014',
+  name: 'Example on GitHub',
+  hostId: null,
+  hostName: 'github.com',
+  tokenKind: 'fine_grained',
+  tokenHint: 'a91F',
+  tokenExpiresAt: '2027-02-12T00:00:00Z',
+  expiresSoon: false,
+  warnings: [],
+  login: 'ardea-reader',
+  lastOkAt: '2026-11-18T08:00:00Z',
+  lastError: null,
+  createdAt: '2026-11-17T08:00:00Z',
+};
+const LINK = {
+  id: '0190a000-0000-7000-8000-000000000015',
+  connectionId: CONNECTION.id,
+  connectionName: CONNECTION.name,
+  owner: 'example',
+  name: 'portal',
+  ref: null,
+  path: null,
+  state: 'partial',
+  stateReason: 'The dependency graph is not enabled for this repository.',
+  failingSince: null,
+  lastCommitSha: '4f2a9c1d0e',
+  lastIndexedAt: '2026-11-18T08:00:00Z',
+  nextCheckAt: '2026-11-18T09:00:00Z',
+  shrinkPending: false,
+  componentCount: 2,
+};
+const SUGGESTION = {
+  id: '0190a000-0000-7000-8000-000000000016',
+  linkId: LINK.id,
+  productKey: 'nginx',
+  productName: 'nginx',
+  version: '1.29',
+  evidence: [{ file: 'web/Dockerfile', line: 9, value: 'FROM nginx:1.29-alpine' }],
+  state: 'open',
+  componentId: null,
+};
 const SETTING = (value: string | null, locked = false) => ({
   value,
   isSet: value !== null,
@@ -146,6 +243,79 @@ export async function api(page: Page, signedIn: boolean): Promise<void> {
               email: 'second.person@example.org',
               role: 'viewer',
               joinedAt: '2026-11-18T08:00:00Z',
+            },
+          ],
+        });
+      case `/api/v1/orgs/${ORG_ID}`:
+        return route.fulfill({
+          json: {
+            id: ORG_ID,
+            slug: 'example',
+            name: 'Example Org',
+            locale: 'en',
+            timeZone: 'Europe/Zurich',
+            requireMfa: false,
+            role: 'owner',
+            createdAt: '2026-11-17T08:00:00Z',
+          },
+        });
+      case `/api/v1/orgs/${ORG_ID}/setup`:
+        return route.fulfill({
+          json: { stepsDone: ['project'], firstProjectId: PROJECT.id, completedAt: null },
+        });
+      case `/api/v1/orgs/${ORG_ID}/projects`:
+        return route.fulfill({ json: [PROJECT] });
+      case `/api/v1/orgs/${ORG_ID}/projects/${PROJECT.id}`:
+        return route.fulfill({ json: { project: PROJECT, components: COMPONENTS } });
+      case `/api/v1/orgs/${ORG_ID}/projects/${PROJECT.id}/repositories`:
+        return route.fulfill({ json: [LINK] });
+      case `/api/v1/orgs/${ORG_ID}/projects/${PROJECT.id}/suggestions`:
+        return route.fulfill({ json: [SUGGESTION] });
+      case `/api/v1/orgs/${ORG_ID}/repository-connections`:
+        return route.fulfill({ json: [CONNECTION] });
+      case `/api/v1/orgs/${ORG_ID}/repository-connections/${CONNECTION.id}/repositories`:
+        return route.fulfill({
+          json: [
+            {
+              owner: 'example',
+              name: 'portal',
+              private: true,
+              defaultBranch: 'main',
+              pushedAt: null,
+            },
+          ],
+        });
+      case '/api/v1/github-hosts':
+        return route.fulfill({ json: [] });
+      case `/api/v1/orgs/${ORG_ID}/audit`:
+        return route.fulfill({
+          json: {
+            items: [
+              {
+                id: '0190a000-0000-7000-8000-000000000020',
+                at: '2026-11-18T08:00:00Z',
+                action: 'project.created',
+                subjectType: 'project',
+                subjectId: PROJECT.id,
+                data: { name: PROJECT.name },
+                origin: 'ui',
+                actorKind: 'member',
+                actorName: 'Sample Person',
+              },
+            ],
+            nextCursor: null,
+          },
+        });
+      case '/api/v1/catalog/products':
+        return route.fulfill({
+          json: [
+            {
+              key: 'postgresql',
+              name: 'PostgreSQL',
+              vendor: 'PostgreSQL Global Development Group',
+              kind: 'database',
+              versionScheme: 'semver',
+              platformKey: null,
             },
           ],
         });

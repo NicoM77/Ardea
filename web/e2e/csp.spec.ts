@@ -29,6 +29,20 @@ const PAGES: { path: string; signedIn: boolean; title: string; heading: string }
   },
   { path: '/o/example/overview', signedIn: true, title: 'Overview · Ardea', heading: 'Overview' },
   { path: '/o/example/team', signedIn: true, title: 'Team · Ardea', heading: 'Team' },
+  { path: '/o/example/projects', signedIn: true, title: 'Projects · Ardea', heading: 'Projects' },
+  {
+    path: '/o/example/projects/0190a000-0000-7000-8000-000000000010',
+    signedIn: true,
+    title: 'Project · Ardea',
+    heading: 'Customer Portal',
+  },
+  {
+    path: '/o/example/setup?step=technologies',
+    signedIn: true,
+    title: 'Setup · Ardea',
+    heading: 'Set up your organization',
+  },
+  { path: '/o/example/settings', signedIn: true, title: 'Settings · Ardea', heading: 'Settings' },
   {
     path: '/organizations/new',
     signedIn: true,

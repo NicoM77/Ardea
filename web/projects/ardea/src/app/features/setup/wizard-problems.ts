@@ -1,0 +1,17 @@
+/** Problem codes of the project, component and repository endpoints the wizard and project pages call. */
+export const WIZARD_PROBLEMS: Readonly<Record<string, string>> = {
+  project_not_found: 'wizard.errors.projectNotFound',
+  component_not_found: 'wizard.errors.componentNotFound',
+  repository_component: 'wizard.errors.repositoryComponent',
+  already_manual: 'wizard.errors.alreadyManual',
+  insufficient_role: 'team.errors.insufficientRole',
+  mfa_required: 'team.errors.mfaRequired',
+  organization_not_found: 'team.errors.organizationNotFound',
+  link_exists: 'wizard.errors.linkExists',
+  repository_link_not_found: 'wizard.errors.linkNotFound',
+  suggestion_not_found: 'wizard.errors.suggestionNotFound',
+  suggestion_decided: 'wizard.errors.suggestionDecided',
+  connection_unusable: 'settings.accesses.errors.unusable',
+  github_unavailable: 'settings.accesses.errors.github',
+  repository_connection_not_found: 'settings.accesses.errors.notFound',
+};

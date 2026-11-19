@@ -124,7 +124,41 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await expectAccessible(page, 'create organization');
   await page.getByRole('button', { name: 'Create organization' }).click();
 
-  await expect(page).toHaveURL(/\/o\/heron-works\/team$/);
+  // Task 2.7: the setup wizard takes over with the first project (master plan 11.6). There is no
+  // access to GitHub on this instance, so the repository step is skipped.
+  await expect(page).toHaveURL(/\/o\/heron-works\/setup/);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Set up your organization' }),
+  ).toBeVisible();
+  await page.getByLabel('Name').fill('Customer Portal');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { name: 'Where Ardea reads from' })).toBeVisible();
+  await page.getByRole('button', { name: 'Skip: no repository' }).click();
+  await expect(page.getByRole('heading', { name: 'How it is reached' })).toBeVisible();
+  await page.getByRole('radio', { name: /^Internet-facing/ }).check();
+  await page.getByRole('radio', { name: /^High criticality/ }).check();
+  await expectAccessible(page, 'wizard operations');
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await page.getByRole('searchbox', { name: 'Search the catalogue' }).fill('PostgreSQL');
+  await page.getByRole('button', { name: 'Add PostgreSQL' }).click();
+  await page
+    .getByRole('group', { name: 'PostgreSQL' })
+    .getByLabel('Version', { exact: true })
+    .fill('18.1');
+  await expectAccessible(page, 'wizard technologies');
+  await page.getByRole('button', { name: 'Finish setup' }).click();
+
+  await expect(page).toHaveURL(/\/o\/heron-works\/projects\/[0-9a-f-]+$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Customer Portal' })).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Platforms and services' })).toContainText(
+    'PostgreSQL',
+  );
+  await expect(page.getByRole('table', { name: 'Platforms and services' })).toContainText('18.1');
+  await expect(page.getByText('Internet-facing')).toBeVisible();
+  await expectAccessible(page, 'project');
+
+  await navigation.getByRole('link', { name: 'Team' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Team' })).toBeVisible();
   await expect(page.getByRole('list', { name: 'Members' }).getByText(person.email)).toBeVisible();
   await page.getByLabel('Email').fill(invitee.email);

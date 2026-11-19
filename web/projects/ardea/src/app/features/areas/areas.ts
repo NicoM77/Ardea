@@ -68,8 +68,6 @@ export const AREAS: readonly Area[] = [
     path: 'projects',
     label: 'nav.projects',
     icon: LucideFolder.icon,
-    emptyHeading: 'areas.projects.emptyHeading',
-    emptyText: 'areas.projects.emptyText',
     group: 'main',
   },
   {
@@ -102,8 +100,6 @@ export const AREAS: readonly Area[] = [
     path: 'settings',
     label: 'nav.settings',
     icon: LucideSlidersHorizontal.icon,
-    emptyHeading: 'areas.settings.emptyHeading',
-    emptyText: 'areas.settings.emptyText',
     group: 'foot',
   },
 ];

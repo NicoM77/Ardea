@@ -12,24 +12,15 @@ import { canManage, organizationBySlug } from '../organizations/org-format';
 import { InvitationsCard } from './invitations-card';
 import { InviteCard } from './invite-card';
 import { MembersCard } from './members-card';
-import { MfaSettingCard } from './mfa-setting-card';
 
 /**
- * «Team» (master plan 11.4): the members with their roles, open invitations, the invite form and
- * the organization's two-factor requirement. Everyone reads the directory; owner and
- * administrators manage it (master plan 9.1).
+ * «Team» (master plan 11.4): the members with their roles, open invitations and the invite form.
+ * Everyone reads the directory; owner and administrators manage it (master plan 9.1). The
+ * two-factor requirement is in Settings.
  */
 @Component({
   selector: 'ardea-team-page',
-  imports: [
-    TranslocoPipe,
-    UiPageHeader,
-    MfaRequired,
-    InvitationsCard,
-    InviteCard,
-    MembersCard,
-    MfaSettingCard,
-  ],
+  imports: [TranslocoPipe, UiPageHeader, MfaRequired, InvitationsCard, InviteCard, MembersCard],
   template: `
     @if (organization(); as org) {
       @if (mfaRefused()) {
@@ -50,7 +41,6 @@ import { MfaSettingCard } from './mfa-setting-card';
           @if (manage()) {
             <div class="side">
               <ardea-invite-card [organization]="org" (invited)="invitations.reload()" />
-              <ardea-mfa-setting-card [organization]="org" [here]="here()" />
             </div>
           }
         </div>

@@ -69,7 +69,7 @@ describe('CreateOrganizationPage', () => {
     await settle(fixture);
     await settle(fixture);
     expect(refresh).toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith(['/o', 'heron-works', 'team']);
+    expect(navigate).toHaveBeenCalledWith(['/o', 'heron-works', 'setup']);
   });
 
   it('asks for another address when the API says it is taken', async () => {

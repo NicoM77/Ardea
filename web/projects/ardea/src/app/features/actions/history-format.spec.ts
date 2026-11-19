@@ -85,4 +85,45 @@ describe('history lines', () => {
     expect(lines[1].change).toEqual(['medium', 'critical']);
     expect(lines[2].params).toEqual({ entry: 'CVE-2026-118402' });
   });
+
+  it('words a person’s review of the model’s estimate, with the reason quoted (task 4.7)', () => {
+    const [levelOnly, corrected, confirmed] = historyLines(
+      [
+        event(
+          'finding.verdict_confirmed',
+          { from: 'unlikely', source: 'model', to: 'unlikely', level: 3, reason: null },
+          { actor: 'u1', findingId: 'f1' },
+        ),
+        event(
+          'finding.verdict_corrected',
+          { from: 'unlikely', source: 'model', to: 'affected', level: 3, reason: 'Same build' },
+          { actor: 'u1', findingId: 'f1' },
+        ),
+        event(
+          'finding.verdict_corrected',
+          {
+            from: 'unlikely',
+            source: 'model',
+            to: null,
+            level: 3,
+            expectedLevel: 2,
+            reason: 'Admin network only',
+          },
+          { actor: 'u1', findingId: 'f1' },
+        ),
+      ],
+      members,
+      findings,
+    );
+    expect(confirmed.key).toBe('actionDetail.history.verdictConfirmed');
+    expect(confirmed.params).toEqual({
+      who: 'Lea Brunner',
+      entry: 'CVE-2026-118402',
+      verdict: 'unlikely',
+    });
+    expect(corrected.key).toBe('actionDetail.history.verdictCorrected');
+    expect(corrected.quote).toBe('Same build');
+    expect(levelOnly.key).toBe('actionDetail.history.levelQuestioned');
+    expect(levelOnly.change).toEqual(['medium', 'low']);
+  });
 });

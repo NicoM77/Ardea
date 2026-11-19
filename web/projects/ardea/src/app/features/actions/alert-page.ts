@@ -1,27 +1,44 @@
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+  viewChildren,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
-import { UiButton, UiCard, UiLoader, UiNotice, UiPill, UiPriority } from 'ui';
+import { LucideChevronLeft, LucideChevronRight, LucideSparkles } from '@lucide/angular';
+import { firstValueFrom } from 'rxjs';
+import { UiButton, UiCard, UiLoader, UiNotice, UiPill, UiPriority, UiToaster } from 'ui';
 import {
+  ActionsService,
   getAlertResource,
   listEntrySourcesResource,
+  listMembersResource,
   type FindingView,
 } from '../../core/api/client';
-import { problemMessageKey } from '../../core/api/problem';
+import { problemMessageKey, problemOf } from '../../core/api/problem';
 import { reloadOnLiveChange } from '../../core/live/live-events';
 import { score } from '../entries/entry-format';
 import { injectOrganization } from '../organizations/current-organization';
+import { roleRank } from '../organizations/org-format';
 import { OPERATOR_KIND_LABELS } from '../sources/source-format';
 import { num, priorityOf } from './action-format';
 import { checkLabel, reasonLabel } from './answers-format';
+import { AiAssessmentCard } from './ai-assessment-card';
 import { Answers } from './answers';
 import { FactorTable } from './factor-table';
+import { isProposal, isStaleReview, REQUEST_PROBLEMS, REVIEW_PROBLEMS } from './model-format';
+import { ModelReview, type ReviewChange } from './model-review';
 
 /**
  * An alert (task 3.10, master plan 7.4, mockup alert.html): one vulnerability from the
  * organization's view. The three answers, every component it hits with its own version check,
- * level and factors, the action each belongs to, and the entry's facts and sources.
+ * level and factors, the action each belongs to, and the entry's facts and sources. Members ask
+ * for the model's assessment here (task 4.3); its verdict per component is marked, «not affected»
+ * as a proposal, and confirmed or corrected under the component's factors (task 4.7).
  */
 @Component({
   selector: 'ardea-alert-page',
@@ -30,14 +47,17 @@ import { FactorTable } from './factor-table';
     TranslocoPipe,
     LucideChevronLeft,
     LucideChevronRight,
+    LucideSparkles,
     UiButton,
     UiCard,
     UiLoader,
     UiNotice,
     UiPill,
     UiPriority,
+    AiAssessmentCard,
     Answers,
     FactorTable,
+    ModelReview,
   ],
   template: `
     @if (view(); as v) {
@@ -52,7 +72,15 @@ import { FactorTable } from './factor-table';
         </a>
       }
       <header class="head">
-        <h1>{{ v.entry.title ?? v.entry.key }}</h1>
+        <div class="title">
+          <h1>{{ v.entry.title ?? v.entry.key }}</h1>
+          @if (canEdit()) {
+            <button uiButton type="button" [loading]="requesting()" (click)="request()">
+              <svg lucideSparkles aria-hidden="true"></svg>
+              {{ 'aiAssessment.request.button' | transloco }}
+            </button>
+          }
+        </div>
         <p class="meta">
           <ui-priority [level]="priority(v.alert.levelName)" />
           <span class="id">#{{ actionNumber(v.alert.number) }}</span>
@@ -68,6 +96,10 @@ import { FactorTable } from './factor-table';
           }
         </p>
       </header>
+
+      @if (problem(); as p) {
+        <ui-notice class="problem" tone="error">{{ p | transloco }}</ui-notice>
+      }
 
       <div class="grid">
         <div class="stack">
@@ -119,6 +151,16 @@ import { FactorTable } from './factor-table';
                       @if (reason(f); as why) {
                         <small>{{ why | transloco }}</small>
                       }
+                      @if (f.verdictSource === 'model') {
+                        <small class="model"
+                          ><span class="ai-tag">{{
+                            'answers.model.verdict' | transloco: { verdict: f.verdict }
+                          }}</span>
+                          @if (proposal(f)) {
+                            {{ 'estimate.proposal' | transloco }}
+                          }
+                        </small>
+                      }
                     </td>
                     <td>
                       @if (f.actionNumber !== null) {
@@ -153,6 +195,13 @@ import { FactorTable } from './factor-table';
                     <tr class="factors" [id]="'factors-' + f.id">
                       <td colspan="5">
                         <ardea-factor-table [factors]="f.factors" [caption]="factorsCaption(f)" />
+                        <ardea-model-review
+                          [finding]="f"
+                          [members]="members.value() ?? []"
+                          [canEdit]="canEdit()"
+                          [busy]="busy()"
+                          (review)="review($event)"
+                        />
                       </td>
                     </tr>
                   }
@@ -160,6 +209,14 @@ import { FactorTable } from './factor-table';
               </tbody>
             </table>
           </ui-card>
+          @if (v.answers && v.answers.origin === 'model' && v.answers.model; as model) {
+            <ardea-ai-assessment-card
+              [model]="model"
+              [canRequest]="canEdit()"
+              [busy]="requesting()"
+              (again)="request()"
+            />
+          }
         </div>
 
         <div class="stack">
@@ -258,6 +315,35 @@ import { FactorTable } from './factor-table';
     }
     .head {
       margin-bottom: var(--space-xl);
+    }
+    .title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-md) var(--gap);
+    }
+    .problem {
+      margin-bottom: var(--space-lg);
+    }
+    .ai-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 4px;
+      background: var(--accent-soft);
+      color: var(--text);
+      font-size: var(--fs-small);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    td small.model {
+      margin-top: 4px;
+      color: var(--text);
+    }
+    ardea-model-review {
+      margin-top: var(--space-md);
     }
     .meta {
       display: flex;
@@ -390,11 +476,22 @@ export class AlertPage {
   readonly number = input.required<string>();
 
   private readonly transloco = inject(TranslocoService);
+  private readonly api = inject(ActionsService);
+  private readonly toaster = inject(UiToaster);
   private readonly organization = injectOrganization().organization;
+  private readonly orgId = computed(() => this.organization()?.id);
+  private readonly reviews = viewChildren(ModelReview);
   protected readonly detail = getAlertResource(
-    computed(() => this.organization()?.id),
+    this.orgId,
     computed(() => num(this.number()) || undefined),
   );
+  protected readonly members = listMembersResource(this.orgId);
+  protected readonly canEdit = computed(
+    () => roleRank(this.organization()?.role) >= roleRank('member'),
+  );
+  protected readonly busy = signal(false);
+  protected readonly requesting = signal(false);
+  protected readonly problem = signal<string | null>(null);
   protected readonly view = computed(() =>
     this.detail.hasValue() ? (this.detail.value() ?? null) : null,
   );
@@ -416,6 +513,66 @@ export class AlertPage {
   protected readonly priority = priorityOf;
   protected readonly check = checkLabel;
   protected readonly actionNumber = num;
+  protected readonly proposal = isProposal;
+
+  /**
+   * «Request an AI assessment» (task 4.3): the job is queued; the live stream reloads the page once
+   * the model answered. No provider under the organization's policy (409) and today's requests used
+   * up (429) are said in a sentence.
+   */
+  protected async request(): Promise<void> {
+    const org = this.orgId();
+    if (!org || this.requesting()) return;
+    this.requesting.set(true);
+    this.problem.set(null);
+    try {
+      const answer = await firstValueFrom(this.api.requestAlertAssessment(org, num(this.number())));
+      this.toaster.show({
+        text: this.transloco.translate(
+          answer.queued ? 'aiAssessment.request.queued' : 'aiAssessment.request.waiting',
+        ),
+      });
+    } catch (error) {
+      this.problem.set(problemMessageKey(error, REQUEST_PROBLEMS));
+    } finally {
+      this.requesting.set(false);
+    }
+  }
+
+  /** A person confirms the model's estimate or corrects the assessment of a component (task 4.7). */
+  protected async review(change: ReviewChange): Promise<void> {
+    const org = this.orgId();
+    if (!org || this.busy()) return;
+    const { finding, decision, verdict, level, reason } = change;
+    this.busy.set(true);
+    this.problem.set(null);
+    try {
+      await firstValueFrom(
+        this.api.reviewFinding(org, finding.id, {
+          decision,
+          expectedVerdict: finding.verdict,
+          expectedSource: finding.verdictSource,
+          verdict,
+          level,
+          reason,
+        }),
+      );
+      for (const r of this.reviews()) r.done();
+      this.detail.reload();
+      const key =
+        decision === 'correct'
+          ? 'actionDetail.toast.corrected'
+          : finding.verdict === 'not_affected'
+            ? 'actionDetail.toast.confirmedClosed'
+            : 'actionDetail.toast.confirmed';
+      this.toaster.show({ text: this.transloco.translate(key, { entry: finding.entry.key }) });
+    } catch (error) {
+      this.problem.set(problemMessageKey(error, REVIEW_PROBLEMS));
+      if (isStaleReview(problemOf(error)?.code)) this.detail.reload();
+    } finally {
+      this.busy.set(false);
+    }
+  }
 
   protected reason(f: FindingView): string | null {
     return f.versionVerdict === 'unknown' ? reasonLabel(f.versionReason) : null;

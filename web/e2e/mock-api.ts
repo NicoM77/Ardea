@@ -171,6 +171,27 @@ export async function api(page: Page, signedIn: boolean): Promise<void> {
             },
           },
         });
+      case '/api/v1/instance/ai/providers':
+        return route.fulfill({
+          json: [
+            { name: 'local', kind: 'ollama', model: 'qwen3:14b', local: true, host: '10.0.0.5' },
+          ],
+        });
+      case '/api/v1/instance/ai/quality':
+        return route.fulfill({
+          json: [
+            {
+              provider: 'local',
+              model: 'qwen3:14b',
+              promptVersion: '1',
+              assessments: 12,
+              verdicts: 20,
+              confirmed: 3,
+              corrected: 1,
+              correctionRate: 0.25,
+            },
+          ],
+        });
       case '/api/v1/instance/jobs':
         return route.fulfill({
           json: [

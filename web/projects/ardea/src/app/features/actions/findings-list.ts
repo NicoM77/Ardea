@@ -1,9 +1,9 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output, signal, viewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideChevronRight } from '@lucide/angular';
 import { UiInput, UiPill, UiPriority, UiStatus } from 'ui';
-import type { FindingView } from '../../core/api/client';
+import type { FindingView, MemberView } from '../../core/api/client';
 import {
   isOutcome,
   num,
@@ -14,6 +14,8 @@ import {
 } from './action-format';
 import { checkLabel } from './answers-format';
 import { FactorTable } from './factor-table';
+import { hasModelEstimate, isProposal } from './model-format';
+import { ModelReview, type ReviewChange } from './model-review';
 import { ReasonForm } from './reason-form';
 
 export interface FindingChange {
@@ -24,7 +26,9 @@ export interface FindingChange {
 
 /**
  * The findings of an action (mockup remediation.html «Findings»), highest level first: each opens
- * to its version check, its factors and its own outcome, which may differ from the action's.
+ * to its version check, its factors and its own outcome, which may differ from the action's. A
+ * finding whose verdict came from the model shows it, marks «not affected» as a proposal, and
+ * opens to «Confirm the estimate» and «Correct this assessment» (mockup remediation.html?ai).
  */
 @Component({
   selector: 'ardea-findings-list',
@@ -37,11 +41,12 @@ export interface FindingChange {
     UiPriority,
     UiStatus,
     FactorTable,
+    ModelReview,
     ReasonForm,
   ],
   template: `
     @for (f of findings(); track f.id; let first = $first) {
-      <details class="finding" [open]="first">
+      <details class="finding" [open]="first || waiting(f)">
         <summary>
           <ui-priority [level]="priority(f.levelName)" />
           <span class="title">
@@ -59,6 +64,13 @@ export interface FindingChange {
           </span>
           <span class="tags">
             <ui-pill>{{ check(f.versionVerdict) | transloco }}</ui-pill>
+            @if (proposal(f)) {
+              <span class="ai-tag">{{ 'estimate.proposal' | transloco }}</span>
+            } @else if (f.verdictSource === 'model') {
+              <span class="ai-tag">{{
+                'answers.model.verdict' | transloco: { verdict: f.verdict }
+              }}</span>
+            }
             @if (f.status !== 'open') {
               <ui-status [kind]="kind(f)" />
             }
@@ -89,6 +101,13 @@ export interface FindingChange {
           <ardea-factor-table
             [factors]="f.factors"
             [caption]="'findings.factorsOf' | transloco: { entry: f.entry.key }"
+          />
+          <ardea-model-review
+            [finding]="f"
+            [members]="members()"
+            [canEdit]="canEdit()"
+            [busy]="busy()"
+            (review)="review.emit($event)"
           />
           <div class="actions">
             @if (f.alertNumber !== null) {
@@ -165,6 +184,21 @@ export interface FindingChange {
       font-size: var(--fs-sub);
       line-height: var(--lh-sub);
     }
+    .ai-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 4px;
+      background: var(--accent-soft);
+      color: var(--text);
+      font-size: var(--fs-small);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    ardea-model-review:empty {
+      display: none;
+    }
     .tags {
       display: flex;
       flex-wrap: wrap;
@@ -223,12 +257,19 @@ export class FindingsList {
   readonly findings = input.required<readonly FindingView[]>();
   readonly canEdit = input(false);
   readonly busy = input(false);
+  /** The organization's members, to name who reviewed an assessment. */
+  readonly members = input<readonly MemberView[]>([]);
   readonly outcome = output<FindingChange>();
+  readonly review = output<ReviewChange>();
+
+  private readonly reviews = viewChildren(ModelReview);
 
   protected readonly pending = signal<{ id: string; status: Outcome } | null>(null);
 
   protected readonly priority = priorityOf;
   protected readonly check = checkLabel;
+  protected readonly waiting = hasModelEstimate;
+  protected readonly proposal = isProposal;
 
   protected kind(f: FindingView) {
     return statusKindOf(f.status, f.statusReason);
@@ -261,5 +302,6 @@ export class FindingsList {
   /** Called by the page once a change went through. */
   done(): void {
     this.pending.set(null);
+    for (const review of this.reviews()) review.done();
   }
 }

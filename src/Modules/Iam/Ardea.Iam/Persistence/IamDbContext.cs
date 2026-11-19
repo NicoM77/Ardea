@@ -51,6 +51,10 @@ internal sealed class IamDbContext(DbContextOptions<IamDbContext> options, ITena
             user.Property(u => u.NormalizedEmail).HasMaxLength(256);
             user.Property(u => u.DisplayName).HasMaxLength(200);
             user.Property(u => u.CreatedAt).HasDefaultValueSql("now()");
+            // Written only by the compare-and-set of SingleUseAuthenticatorTokenProvider (ADR 045). Identity's
+            // UpdateAsync marks every column modified; an account loaded before a code was claimed would otherwise
+            // write the older step back and make that code valid again.
+            user.Property(u => u.TotpLastStep).Metadata.SetAfterSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Ignore);
             user.HasMany<IdentityUserClaim<Guid>>().WithOne().HasForeignKey(c => c.UserId).IsRequired();
             user.HasMany<IdentityUserLogin<Guid>>().WithOne().HasForeignKey(l => l.UserId).IsRequired();
             user.HasMany<IdentityUserToken<Guid>>().WithOne().HasForeignKey(t => t.UserId).IsRequired();

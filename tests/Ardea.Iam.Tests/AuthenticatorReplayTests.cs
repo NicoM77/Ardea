@@ -1,7 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Ardea.Iam.Domain;
+using Ardea.Iam.Security;
+using Ardea.Platform.Persistence;
+using Ardea.Platform.Tenancy;
 using Ardea.TestSupport;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 
@@ -78,6 +83,56 @@ public sealed class AuthenticatorReplayTests(PostgresServer server)
         await ExpectProblem(Assert.Single(answers, a => a.StatusCode != HttpStatusCode.NoContent), HttpStatusCode.BadRequest, "invalid_code");
         var sessions = await Task.WhenAll(laptop.SessionAsync(), onlooker.SessionAsync());
         Assert.Single(sessions, s => s.StatusCode == HttpStatusCode.OK);
+        // The loser's lockout count must not have written the older step back.
+        Assert.Equal(AuthenticatorCode.StepAt(clock.GetUtcNow()), await host.ScalarAsync<long>("SELECT totp_last_step FROM iam.\"user\""));
+        using var third = await SignInAsync(host, code, HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task An_account_loaded_before_a_code_was_claimed_does_not_move_the_step_back_when_saved()
+    {
+        var (host, clock) = await StartAsync();
+        await using var _ = host;
+        using var owner = host.Client();
+        await SetupAsync(owner);
+        var key = await EnableTotpAsync(owner, clock);
+        clock.Advance(Step);
+        var code = Totp.Code(key, clock.GetUtcNow());
+        var userId = await host.ScalarAsync<Guid>("SELECT id FROM iam.\"user\"");
+
+        // A request that loaded the account before the code was claimed, such as a wrong password still being hashed.
+        await using var stale = host.Services.CreateAsyncScope();
+        var staleUsers = ActAs(stale, userId);
+        var staleUser = (await staleUsers.FindByIdAsync(userId.ToString()))!;
+
+        await using (var signIn = host.Services.CreateAsyncScope())
+        {
+            var users = ActAs(signIn, userId);
+            Assert.True(await users.VerifyTwoFactorTokenAsync((await users.FindByIdAsync(userId.ToString()))!, TokenOptions.DefaultAuthenticatorProvider, code));
+            await signIn.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+        }
+
+        Assert.True((await staleUsers.AccessFailedAsync(staleUser)).Succeeded);
+        await stale.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+
+        Assert.Equal(1, await host.ScalarAsync<int>("SELECT access_failed_count FROM iam.\"user\""));
+        Assert.Equal(AuthenticatorCode.StepAt(clock.GetUtcNow()), await host.ScalarAsync<long>("SELECT totp_last_step FROM iam.\"user\""));
+        using var replay = await SignInAsync(host, code, HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task The_database_never_lets_the_used_step_go_back()
+    {
+        var (host, clock) = await StartAsync();
+        await using var _ = host;
+        using var owner = host.Client();
+        await SetupAsync(owner);
+        await EnableTotpAsync(owner, clock);
+        var used = await host.ScalarAsync<long>("SELECT totp_last_step FROM iam.\"user\"");
+
+        Assert.Equal(used, await host.ScalarAsync<long>("UPDATE iam.\"user\" SET totp_last_step = totp_last_step - 1 RETURNING totp_last_step"));
+        Assert.Equal(used, await host.ScalarAsync<long>("UPDATE iam.\"user\" SET totp_last_step = NULL RETURNING totp_last_step"));
+        Assert.Equal(used + 1, await host.ScalarAsync<long>("UPDATE iam.\"user\" SET totp_last_step = totp_last_step + 1 RETURNING totp_last_step"));
     }
 
     [Fact]
@@ -141,6 +196,40 @@ public sealed class AuthenticatorReplayTests(PostgresServer server)
 
         Assert.Single(answers, a => a.StatusCode == HttpStatusCode.NoContent);
         await ExpectProblem(Assert.Single(answers, a => a.StatusCode != HttpStatusCode.NoContent), HttpStatusCode.BadRequest, "invalid_code");
+    }
+
+    [Fact]
+    public async Task Two_concurrent_sign_ins_with_different_recovery_codes_use_up_both()
+    {
+        var (host, clock) = await StartAsync();
+        await using var _ = host;
+        using var owner = host.Client();
+        await SetupAsync(owner);
+        var recoveryCodes = new List<string>();
+        await EnableTotpAsync(owner, clock, recoveryCodes);
+        using var laptop = host.Client();
+        using var phone = host.Client();
+        await laptop.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
+        await phone.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
+
+        var answers = await Task.WhenAll(
+            laptop.PostAsync("/api/v1/auth/login/two-factor", new { code = recoveryCodes[0], isRecoveryCode = true }),
+            phone.PostAsync("/api/v1/auth/login/two-factor", new { code = recoveryCodes[1], isRecoveryCode = true }));
+
+        Assert.All(answers, a => Assert.Equal(HttpStatusCode.NoContent, a.StatusCode));
+        foreach (var used in recoveryCodes.Take(2))
+        {
+            using var again = host.Client();
+            await again.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
+            await ExpectProblem(await again.PostAsync("/api/v1/auth/login/two-factor", new { code = used, isRecoveryCode = true }), HttpStatusCode.BadRequest, "invalid_code");
+        }
+    }
+
+    /// <summary>The user manager of a scope whose unit of work acts for <paramref name="userId"/>.</summary>
+    private static UserManager<ArdeaUser> ActAs(AsyncServiceScope scope, Guid userId)
+    {
+        scope.ServiceProvider.GetRequiredService<TenantContext>().SetUser(userId);
+        return scope.ServiceProvider.GetRequiredService<UserManager<ArdeaUser>>();
     }
 
     private async Task<(ApiTestHost Host, FakeTimeProvider Clock)> StartAsync()

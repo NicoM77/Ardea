@@ -16,7 +16,9 @@ namespace Ardea.Iam.Security;
 /// The step a code matched is claimed with a compare-and-set on the account row, in the request's unit of
 /// work: <c>UPDATE … SET totp_last_step = step WHERE id = user AND (totp_last_step IS NULL OR totp_last_step &lt; step)</c>.
 /// Of two requests with the same code, the second waits for the first one's row lock and then finds the
-/// step taken, so exactly one succeeds. A request that fails later rolls the claim back with everything else.
+/// step taken, so exactly one succeeds; the endpoints that check codes take that lock before they even load
+/// the account (<see cref="AccountLookup.LockAsync"/>). A request that throws later rolls the claim back with
+/// everything else. EF never writes the column, and a trigger keeps it from going back (ADR 045).
 /// </remarks>
 internal sealed partial class SingleUseAuthenticatorTokenProvider(
     IamDbContext db, TimeProvider time, IHttpContextAccessor http, ILogger<SingleUseAuthenticatorTokenProvider> logger)
@@ -46,14 +48,7 @@ internal sealed partial class SingleUseAuthenticatorTokenProvider(
             return false;
         }
 
-        // The tracked account now agrees with the row, without a second write of the column.
-        user.TotpLastStep = step;
-        var entry = db.Entry(user);
-        if (entry.State != EntityState.Detached)
-        {
-            entry.Property(u => u.TotpLastStep).OriginalValue = step;
-        }
-
+        // EF never writes the column back (IamDbContext), so the loaded account may keep the older value.
         return true;
     }
 

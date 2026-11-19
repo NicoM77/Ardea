@@ -203,6 +203,8 @@ internal static class AuthEndpoints
             return IamErrors.SignedIn();
         }
 
+        // One code check per account at a time, on the account as the previous one committed it.
+        await AccountLookup.LockAsync(unitOfWork, pendingId, cancellationToken);
         var user = await signIn.GetTwoFactorAuthenticationUserAsync();
         if (user is null)
         {

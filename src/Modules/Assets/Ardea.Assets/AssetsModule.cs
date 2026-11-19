@@ -24,6 +24,7 @@ public sealed class AssetsModule : IModule
         services.AddJob<ProjectProfileChanged, ProjectProfileChangedHandler>(new JobKindOptions { MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(1) });
         services.AddScoped<GitHub.GitHubHosts>();
         services.AddScoped<GitHub.GitHubApi>();
+        services.AddScoped<Repositories.IRepositoryHost, Repositories.GitHubRepositoryHost>();
         services.AddHttpClient(GitHub.GitHubApi.ClientName, client => client.Timeout = TimeSpan.FromSeconds(30))
             .ConfigurePrimaryHttpMessageHandler(Platform.Http.OutboundAddresses.CreateHandler);
     }

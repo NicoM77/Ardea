@@ -46,7 +46,7 @@ internal static class ConnectionEndpoints
     /// <summary>From this long before its expiry, a token is flagged (master plan 16.4).</summary>
     public static readonly TimeSpan ExpiryWarning = TimeSpan.FromDays(14);
 
-    private const string TokenPurpose = "assets.repository-connection.token";
+    internal const string TokenPurpose = "assets.repository-connection.token";
 
     public static void Map(IEndpointRouteBuilder api)
     {

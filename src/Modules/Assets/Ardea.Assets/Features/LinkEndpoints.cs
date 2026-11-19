@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Assets.Features;
 
@@ -58,6 +59,8 @@ internal static class LinkEndpoints
             .NoContent().Problems(403, 404);
         org.MapPost("/projects/{projectId:guid}/repositories/{linkId:guid}/sync", SyncAsync).WithName("syncRepositoryLink").RequireOrganizationRole(OrganizationRole.Member)
             .NoContent().Problems(403, 404);
+        org.MapPost("/projects/{projectId:guid}/repositories/{linkId:guid}/confirm-shrink", ConfirmShrinkAsync).WithName("confirmRepositoryShrink")
+            .RequireOrganizationRole(OrganizationRole.Member).NoContent().Problems(403, 404, 409);
         org.MapGet("/projects/{projectId:guid}/suggestions", SuggestionsAsync).WithName("listSuggestions").Produces<IReadOnlyList<SuggestionView>>().Problems(403, 404);
         org.MapPatch("/projects/{projectId:guid}/suggestions/{id:guid}", DecideAsync).WithName("decideSuggestion").RequireOrganizationRole(OrganizationRole.Member)
             .Produces<SuggestionView>().Problems(400, 403, 404, 409);
@@ -143,6 +146,9 @@ internal static class LinkEndpoints
         };
         db.RepositoryLinks.Add(link);
         await db.SaveChangesAsync(cancellationToken);
+        // Newly linked: read at once (master plan 16.2).
+        await http.RequestServices.GetRequiredService<IJobQueue>().EnqueueAsync(
+            new Repositories.Indexing.IndexRepository(link.Id), Repositories.Indexing.IndexRepository.Options(link.Id, http.OrganizationAccess().OrganizationId), cancellationToken);
         await audit.RecordAsync(new AuditEntry("repository_link.created", "repository_link", link.Id.ToString(), new { projectId, owner, name, reference, path }), cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         return Results.Created($"projects/{projectId}/repositories/{link.Id}", View(link, connection.Name, 0));
@@ -204,7 +210,8 @@ internal static class LinkEndpoints
     }
 
     /// <summary>"Read now" (master plan 16.6): the link is due at once and its branch head is asked again.</summary>
-    private static async Task<IResult> SyncAsync(Guid projectId, Guid linkId, AssetsDbContext db, IUnitOfWork unitOfWork, TimeProvider time, CancellationToken cancellationToken)
+    private static async Task<IResult> SyncAsync(
+        Guid projectId, Guid linkId, AssetsDbContext db, IJobQueue jobs, IUnitOfWork unitOfWork, TimeProvider time, CancellationToken cancellationToken)
     {
         var link = await db.RepositoryLinks.SingleOrDefaultAsync(l => l.Id == linkId && l.ProjectId == projectId, cancellationToken);
         if (link is null)
@@ -214,6 +221,28 @@ internal static class LinkEndpoints
 
         (link.HeadEtag, link.NextCheckAt) = (null, time.GetUtcNow());
         await db.SaveChangesAsync(cancellationToken);
+        await jobs.EnqueueAsync(new Repositories.Indexing.IndexRepository(linkId), Repositories.Indexing.IndexRepository.Options(linkId, link.OrganizationId), cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
+        return Results.NoContent();
+    }
+
+    /// <summary>Takes over a much smaller state that a reading held back (master plan 16.5).</summary>
+    private static async Task<IResult> ConfirmShrinkAsync(
+        Guid projectId, Guid linkId, AssetsDbContext db, IJobQueue jobs, IUnitOfWork unitOfWork, IAuditLog audit, CancellationToken cancellationToken)
+    {
+        var link = await db.RepositoryLinks.AsNoTracking().SingleOrDefaultAsync(l => l.Id == linkId && l.ProjectId == projectId, cancellationToken);
+        if (link is null)
+        {
+            return LinkNotFound();
+        }
+
+        if (link.PendingShrink is null)
+        {
+            return ApiProblems.Problem("no_shrink_pending", StatusCodes.Status409Conflict, "No smaller state is waiting for confirmation.");
+        }
+
+        await jobs.EnqueueAsync(new Repositories.Indexing.IndexRepository(linkId, ApplyShrink: true), Repositories.Indexing.IndexRepository.Options(linkId, link.OrganizationId), cancellationToken);
+        await audit.RecordAsync(new AuditEntry("repository.shrink_confirmed", "repository_link", linkId.ToString(), new { commit = link.PendingShrinkCommit }), cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         return Results.NoContent();
     }

@@ -13,7 +13,7 @@ public sealed class PlatformDetectionTests(PostgresServer server)
     {
         var dockerfile = await File.ReadAllTextAsync(Path.Combine(RepositoryRoot(), "deploy", "Dockerfile"), TestContext.Current.CancellationToken);
 
-        var suggestions = await DetectAsync(new RepositoryFile("deploy/Dockerfile", dockerfile));
+        var suggestions = await DetectAsync(new FileContent("deploy/Dockerfile", dockerfile));
 
         Assert.Equal(["aspnetcore 10.0", "dotnet 10.0", "nodejs 24"], suggestions.Select(s => $"{s.ProductKey} {s.VersionLine}"));
         var aspnet = suggestions.Single(s => s.ProductKey == "aspnetcore").Evidence.Single();
@@ -25,7 +25,7 @@ public sealed class PlatformDetectionTests(PostgresServer server)
     [Fact]
     public async Task Stages_scratch_unresolved_variables_and_unknown_images_suggest_nothing_but_arg_defaults_resolve()
     {
-        var suggestions = await DetectAsync(new RepositoryFile("Dockerfile", """
+        var suggestions = await DetectAsync(new FileContent("Dockerfile", """
             ARG PG=16.4
             FROM postgres:${PG}-alpine AS db
             FROM db
@@ -42,7 +42,7 @@ public sealed class PlatformDetectionTests(PostgresServer server)
     public async Task Compose_project_files_and_package_managers_give_their_platform_lines()
     {
         var suggestions = await DetectAsync(
-            new RepositoryFile("deploy/compose.yaml", """
+            new FileContent("deploy/compose.yaml", """
                 services:
                   db:
                     image: "postgres:17"   # main database
@@ -51,17 +51,17 @@ public sealed class PlatformDetectionTests(PostgresServer server)
                   app:
                     image: ${APP_IMAGE}
                 """),
-            new RepositoryFile("global.json", """{ "sdk": { "version": "10.0.404", "rollForward": "latestFeature" } }"""),
-            new RepositoryFile("src/Web/Web.csproj", """
+            new FileContent("global.json", """{ "sdk": { "version": "10.0.404", "rollForward": "latestFeature" } }"""),
+            new FileContent("src/Web/Web.csproj", """
                 <Project Sdk="Microsoft.NET.Sdk.Web">
                   <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
                 </Project>
                 """),
-            new RepositoryFile("legacy/Old.csproj", """<Project><PropertyGroup><TargetFrameworks>net48;netstandard2.0</TargetFrameworks></PropertyGroup></Project>"""),
-            new RepositoryFile("web/package.json", """{ "name": "web", "engines": { "node": ">=22.12 <25" } }"""),
-            new RepositoryFile("web/.nvmrc", "v24.11.1\n"),
-            new RepositoryFile("shop/composer.json", """{ "require": { "php": "^8.3", "laravel/framework": "^11.0" } }"""),
-            new RepositoryFile("tools/go.mod", "module example.com/tool\n\ngo 1.23.4\n\nrequire golang.org/x/net v0.30.0\n"));
+            new FileContent("legacy/Old.csproj", """<Project><PropertyGroup><TargetFrameworks>net48;netstandard2.0</TargetFrameworks></PropertyGroup></Project>"""),
+            new FileContent("web/package.json", """{ "name": "web", "engines": { "node": ">=22.12 <25" } }"""),
+            new FileContent("web/.nvmrc", "v24.11.1\n"),
+            new FileContent("shop/composer.json", """{ "require": { "php": "^8.3", "laravel/framework": "^11.0" } }"""),
+            new FileContent("tools/go.mod", "module example.com/tool\n\ngo 1.23.4\n\nrequire golang.org/x/net v0.30.0\n"));
 
         Assert.Equal(
             ["aspnetcore 10.0", "dotnet 10.0", "dotnet-framework 4.8", "go 1.23", "nodejs 22", "nodejs 24", "php 8.3", "postgresql 17", "redis 7.4"],
@@ -75,14 +75,14 @@ public sealed class PlatformDetectionTests(PostgresServer server)
     public async Task Hostile_files_are_read_as_data_only()
     {
         var suggestions = await DetectAsync(
-            new RepositoryFile("evil.csproj", """
+            new FileContent("evil.csproj", """
                 <?xml version="1.0"?>
                 <!DOCTYPE p [ <!ENTITY x SYSTEM "file:///etc/passwd"> ]>
                 <Project><PropertyGroup><TargetFramework>&x;</TargetFramework></PropertyGroup></Project>
                 """),
-            new RepositoryFile("package.json", "{ not json"),
-            new RepositoryFile("composer.json", """{ "require": { "php": 8 } }"""),
-            new RepositoryFile(".nvmrc", "lts/iron"));
+            new FileContent("package.json", "{ not json"),
+            new FileContent("composer.json", """{ "require": { "php": 8 } }"""),
+            new FileContent(".nvmrc", "lts/iron"));
 
         Assert.Empty(suggestions);
     }
@@ -111,7 +111,7 @@ public sealed class PlatformDetectionTests(PostgresServer server)
     public void Tags_become_version_lines(string? tag, string? line) =>
         Assert.Equal(line, PlatformDetection.VersionLine(tag));
 
-    private async Task<IReadOnlyList<PlatformSuggestion>> DetectAsync(params RepositoryFile[] files)
+    private async Task<IReadOnlyList<PlatformSuggestion>> DetectAsync(params FileContent[] files)
     {
         await using var host = await ApiTestHost.StartAsync(server);
         await using var scope = host.Services.CreateAsyncScope();

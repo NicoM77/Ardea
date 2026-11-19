@@ -232,8 +232,11 @@ internal static class ProjectEndpoints
         await db.SaveChangesAsync(cancellationToken);
         await ComponentKeys.RefreshAsync(db, catalog, [component], cancellationToken);
         await ProfileChangedAsync(audit, jobs, projectId, "component.added", component.Id, values, cancellationToken);
+
+        // The view reads the catalogue through the unit of work: before the commit, never after (ADR 023).
+        var view = await ViewAsync(component, catalog, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
-        return Results.Created($"projects/{projectId}/components/{component.Id}", await ViewAsync(component, catalog, cancellationToken));
+        return Results.Created($"projects/{projectId}/components/{component.Id}", view);
     }
 
     /// <summary>
@@ -295,7 +298,9 @@ internal static class ProjectEndpoints
             await db.SaveChangesAsync(cancellationToken);
             await ComponentKeys.RefreshAsync(db, catalog, [component], cancellationToken);
             await ProfileChangedAsync(audit, jobs, projectId, "component.changed", id, values, cancellationToken);
+            var changed = await ViewAsync(component, catalog, cancellationToken);
             await unitOfWork.CommitAsync(cancellationToken);
+            return Results.Ok(changed);
         }
 
         return Results.Ok(await ViewAsync(component, catalog, cancellationToken));
@@ -343,8 +348,9 @@ internal static class ProjectEndpoints
         component.ChangedAt = time.GetUtcNow();
         await db.SaveChangesAsync(cancellationToken);
         await audit.RecordAsync(new AuditEntry("component.detached", "component", id.ToString(), new { projectId }), cancellationToken);
+        var view = await ViewAsync(component, catalog, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
-        return Results.Ok(await ViewAsync(component, catalog, cancellationToken));
+        return Results.Ok(view);
     }
 
     /// <summary>

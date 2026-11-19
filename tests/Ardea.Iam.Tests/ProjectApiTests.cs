@@ -143,6 +143,34 @@ public sealed class ProjectApiTests(PostgresServer server)
         Assert.Equal("13.0.3", (await Json(await owner.SendAsync(HttpMethod.Patch, $"{path}/{repositoryComponent}", new { version = "13.0.3" }))).GetProperty("version").GetString());
     }
 
+    /// <summary>
+    /// Regression: every unit of work reads the catalogue anew after a decision about a learned entry (ADR 040). A response
+    /// that reads the catalogue after the commit then met a closed unit of work; the views are built before the commit.
+    /// </summary>
+    [Fact]
+    public async Task Component_responses_read_the_catalogue_before_the_commit_also_after_a_decision_about_a_learned_entry()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        var (owner, orgId) = await OrgAsync(host);
+        using var _ = owner;
+        var projectId = (await Json(await owner.PostAsync($"/api/v1/orgs/{orgId}/projects", new { name = "API" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
+        var path = $"/api/v1/orgs/{orgId}/projects/{projectId}/components";
+        var repositoryComponent = await host.ScalarAsync<Guid>(
+            $"""
+            INSERT INTO assets.component (organization_id, project_id, product_key, kind, version, packaging, protection, origin, purl, created_at, changed_at)
+            VALUES ('{orgId}', '{projectId}', 'newtonsoft-json', 'library', '13.0.1', 'upstream', 'none', 'repository', 'pkg:nuget/Newtonsoft.Json@13.0.1', now(), now())
+            RETURNING id
+            """);
+        Task<int> DecisionAsync() => host.ScalarAsync<int>("INSERT INTO catalog.learning_event (at, kind, raw_key, calls, tokens) VALUES (now(), 'adopted', 'acme/widget', 0, 0) RETURNING 1");
+
+        await DecisionAsync();
+        var added = await Json(await owner.PostAsync(path, new { customVendor = "Acme", customName = "Widget", kind = "library", version = "1.0" }), HttpStatusCode.Created);
+        await DecisionAsync();
+        Assert.Equal("1.1", (await Json(await owner.SendAsync(HttpMethod.Patch, $"{path}/{added.GetProperty("id").GetGuid()}", new { version = "1.1" }))).GetProperty("version").GetString());
+        await DecisionAsync();
+        Assert.Equal("manual", (await Json(await owner.PostAsync($"{path}/{repositoryComponent}/detach"))).GetProperty("origin").GetString());
+    }
+
     [Fact]
     public async Task Viewers_read_members_maintain_and_archived_projects_leave_the_list()
     {

@@ -968,7 +968,12 @@
         "repositoriesPartial": "{count, plural, one {Repository} other {Repositories}} read partly.",
         "repositoriesFailing": "{count, plural, one {Repository} other {Repositories}} failing; the last good state counts."
       }
-    }
+    },
+    "catalogMatch": "The catalogue knows this as {name}.",
+    "catalogMatchLearned": "The catalogue has learned this as {name}.",
+    "useCatalogEntry": "Use the catalogue entry",
+    "useCatalogEntryNamed": "Record {name} as the catalogue entry {entry}",
+    "catalogEntryUsed": "{name} is now recorded as a catalogue entry."
   },
   "wizard": {
     "title": "Setup",
@@ -1454,7 +1459,9 @@
     "change": "Set the outcome…",
     "reopen": "Take the closing back",
     "reasonLabel": "Why? ({entry})",
-    "reasonSave": "Save the outcome"
+    "reasonSave": "Save the outcome",
+    "learned": "Via the learned catalogue entry {key}",
+    "learnedOpen": "Open the entry"
   },
   "factors": {
     "excluded": "Not relevant: {reason, select, weak_match {a weak match} out_of_range {the version is outside the range} withdrawn {the entry was withdrawn} human {a person found it does not apply} other {excluded by the rules}}.",
@@ -1636,5 +1643,95 @@
       "exhausted": "The organization has used today’s requests for AI assessments. Try again tomorrow.",
       "forbidden": "Only members can request an AI assessment."
     }
+  },
+  "catalogLearning": {
+    "title": "Catalogue that learns",
+    "intro": "Products the sources name that the catalogue does not know. Rules map what they can; with a provider, the model proposes the rest. Confident answers take effect at once, the rest waits here. Learned entries only add hits; take back what is wrong.",
+    "unknownShare": "Unknown product keys",
+    "unknownOf": "{unknown} of {total} at the last collection",
+    "callsToday": "Model calls today",
+    "callsOf": "{calls} of {quota}",
+    "provider": "Provider",
+    "local": "local",
+    "cloud": "cloud",
+    "noProvider": "None: only the rules map",
+    "providerSetting": "Provider for the catalogue",
+    "providerHint": "The catalogue sends only public data of the sources. A cloud provider is used only when you choose it here.",
+    "providerLocked": "Set by ARDEA_AI__CATALOG_PROVIDER; change it in the environment.",
+    "providerDefault": "First local provider",
+    "providerNone": "None",
+    "providerNotice": "The catalogue's provider is saved.",
+    "run": "Learn now",
+    "runNotice": "The catalogue is learning; the lists fill in a few minutes.",
+    "export": "Export as catalogue files",
+    "weeksCaption": "Per week",
+    "week": "Week of",
+    "learned": "Learned",
+    "adopted": "Adopted at once",
+    "confirmed": "Confirmed",
+    "rejected": "Rejected",
+    "withdrawn": "Withdrawn",
+    "views": "Lists",
+    "view": {
+      "review": "To review",
+      "open": "Unknown",
+      "inEffect": "In effect",
+      "decided": "Rejected and withdrawn"
+    },
+    "filtered": "Showing the entry for {key}.",
+    "records": "{count, plural, one {# record} other {# records}}",
+    "kev": "In KEV",
+    "outcome": {
+      "open": "Not mapped",
+      "pending": "Proposal",
+      "alias": "Spelling in effect",
+      "new": "Entry in effect",
+      "unclear": "Unclear",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
+    },
+    "aliasOf": "Another spelling of {name} ({key})",
+    "newProduct": "New product {name} ({key}) · {kind} · {scheme}",
+    "unclear": "The model could not say what this is.",
+    "by": {
+      "rule": "By rule",
+      "model": "By the model",
+      "admin": "By an administrator"
+    },
+    "prompt": "prompt {version}",
+    "confidence": "confidence {confidence}",
+    "hold": {
+      "confidence": "waits: not confident enough",
+      "suspicious": "waits: the name reads like an instruction",
+      "invalid": "waits: the model's answers failed the check",
+      "unclear": "waits: unclear",
+      "check": "waits: the catalogue changed meanwhile"
+    },
+    "confirm": "Confirm",
+    "change": "Change",
+    "reject": "Reject",
+    "withdraw": "Withdraw",
+    "changeLegend": "What is it?",
+    "modeAlias": "Another spelling of an entry",
+    "modeNew": "A new product",
+    "aliasKey": "Catalogue key",
+    "aliasKeyHint": "For example postgresql",
+    "name": "Name",
+    "vendor": "Vendor",
+    "kind": "Kind",
+    "scheme": "Version scheme",
+    "save": "Save and apply",
+    "cancel": "Cancel",
+    "adoptedNotice": "{key} is mapped; the affected entries are computed again in a few minutes.",
+    "rejectedNotice": "{key} is rejected and will not be proposed again.",
+    "withdrawnNotice": "{key} is withdrawn; the affected entries are computed again in a few minutes.",
+    "emptyHeading": "Nothing here",
+    "emptyText": "No product keys in this list.",
+    "loading": "Loading the catalogue's lists",
+    "loadFailed": "The catalogue's lists could not be loaded.",
+    "invalid": "This does not pass the catalogue's check: the key must exist, and a new product needs a name no entry has.",
+    "decided": "This was decided meanwhile.",
+    "gone": "This product key no longer exists.",
+    "failed": "That did not work. Try again."
   }
 }

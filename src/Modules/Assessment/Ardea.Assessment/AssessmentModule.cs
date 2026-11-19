@@ -47,8 +47,8 @@ public sealed class AssessmentModule : IModule
 
         // The assessment with a language model (master plan 7.5, 7.8; phase 4). Without providers it never runs.
         var limits = AiLimits.FromConfiguration(configuration);
-        services.TryAddSingleton<IAiProviders, Estimating.NoAiProviders>();
-        services.AddSingleton(limits);
+        services.TryAddSingleton<IAiProviders, NoAiProviders>();
+        services.TryAddSingleton(limits);
         services.AddScoped<Estimating.Estimator>();
         services.AddScoped<Estimating.EstimateTrigger>();
         services.AddScoped<Estimating.EstimatePlanner>();

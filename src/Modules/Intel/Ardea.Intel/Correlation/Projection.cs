@@ -19,7 +19,18 @@ internal sealed record Contribution(
 internal sealed record AffectedData(
     Guid SourceId, string? Vendor, string? Product, string? ProductKey, string? CpeVendor, string? CpeProduct,
     string? PurlType, string? PurlName, string? VersionScheme, string? Introduced, string? Fixed, string? LastAffected,
-    string? Exact, string Status, string DefaultStatus);
+    string? Exact, string Status, string DefaultStatus)
+{
+    /// <summary>The raw key when <see cref="ProductKey"/> comes from a learned catalogue entry (master plan 6.9).</summary>
+    public string? LearnedFrom { get; init; }
+
+    /// <summary>
+    /// The row as the fingerprints and the change detection compare it. A learned key adds its raw key; without one the
+    /// text is what it was before learned entries existed, so no existing entry looks changed.
+    /// </summary>
+    public string Compared => string.Join('|', ProductKey, CpeVendor, CpeProduct, PurlType, PurlName, VersionScheme, Introduced, Fixed, LastAffected, Exact, Status, DefaultStatus)
+        + (LearnedFrom is null ? string.Empty : "|learned:" + LearnedFrom);
+}
 
 internal sealed record SourceLink(Guid SourceId, Guid? SourceRecordId, string Relation, string? Url);
 
@@ -85,7 +96,7 @@ internal sealed record EntryProjection
         State,
         SeverityClass(CvssScore),
         CvssVector ?? string.Empty,
-        string.Join('\n', Affected.Select(a => string.Join('|', a.ProductKey, a.CpeVendor, a.CpeProduct, a.PurlType, a.PurlName, a.VersionScheme, a.Introduced, a.Fixed, a.LastAffected, a.Exact, a.Status, a.DefaultStatus)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)),
+        string.Join('\n', Affected.Select(a => a.Compared).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)),
         Exploitation,
         FixAvailable.ToString(),
         AuthorityWarning.ToString(),

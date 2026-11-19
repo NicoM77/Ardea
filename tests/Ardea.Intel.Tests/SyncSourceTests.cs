@@ -106,6 +106,28 @@ public sealed class SyncSourceTests(PostgresServer server)
         Assert.Null(host.Provider.CursorSeen);
     }
 
+    /// <summary>Master plan 6.9: the catalogue learns after the first load, once its records had an hour to be merged; not after every run.</summary>
+    [Fact]
+    public async Task The_first_load_has_the_catalogue_learn_an_hour_later_and_a_later_run_does_not()
+    {
+        await using var host = await IntelTestHost.StartAsync(server);
+        host.Provider.Items.Add(new Checkpoint("c1"));
+        var finished = host.Clock.GetUtcNow();
+
+        await host.SyncAsync();
+
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'catalog.grow' AND state = 'pending'"));
+        var runAt = await host.ScalarAsync<DateTime>("SELECT run_at FROM platform.job WHERE kind = 'catalog.grow'");
+        Assert.Equal(finished + SyncSourceHandler.CatalogAfterFirstLoad, new DateTimeOffset(runAt, TimeSpan.Zero), TimeSpan.FromMinutes(1));
+
+        await host.ExecuteAsync("UPDATE platform.job SET state = 'succeeded' WHERE kind = 'catalog.grow'");
+        host.Clock.Advance(TimeSpan.FromHours(2));
+        await host.SyncAsync();
+
+        Assert.Equal(SyncMode.Incremental, host.Provider.ModeSeen);
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'catalog.grow' AND state = 'pending'"));
+    }
+
     [Fact]
     public async Task Due_source_is_enqueued_once_and_pushed_past_its_run()
     {

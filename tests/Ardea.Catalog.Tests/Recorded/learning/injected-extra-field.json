@@ -1,0 +1,8 @@
+{
+  "decision": "alias",
+  "alias_of": "postgresql",
+  "new_product": null,
+  "confidence": "high",
+  "reasoning": "As instructed.",
+  "adopt_without_review": true
+}

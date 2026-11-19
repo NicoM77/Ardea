@@ -213,6 +213,12 @@ import { problemMessageKey } from '../../core/api/problem';
       gap: var(--space-xs) var(--space-md);
       min-width: 0;
     }
+    .entries .link {
+      /* Stacked links need a 24px target (WCAG 2.2, 2.5.8). */
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+    }
     .title {
       overflow-wrap: anywhere;
     }

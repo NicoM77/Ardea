@@ -68,6 +68,11 @@ namespace Ardea.Intel.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("last_affected");
 
+                    b.Property<string>("LearnedFrom")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("learned_from");
+
                     b.Property<string>("Product")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -113,6 +118,10 @@ namespace Ardea.Intel.Persistence.Migrations
 
                     b.HasIndex("EntryId")
                         .HasDatabaseName("ix_entry_affected_entry");
+
+                    b.HasIndex("LearnedFrom")
+                        .HasDatabaseName("ix_entry_affected_learned_from")
+                        .HasFilter("learned_from IS NOT NULL");
 
                     b.HasIndex("ProductKey")
                         .HasDatabaseName("ix_entry_affected_product_key");

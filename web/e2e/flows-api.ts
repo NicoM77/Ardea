@@ -305,6 +305,8 @@ export interface FlowOptions {
   conflict?: boolean;
   /** The model assessed alert 142; the organization has used today's requests for assessments. */
   ai?: boolean;
+  /** The first finding came about through a learned catalogue entry (task 4.10). */
+  learned?: boolean;
 }
 
 export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<void> {
@@ -361,7 +363,16 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
           'high',
           4,
           findingStatus,
-          modelled('f1', 'unlikely', 3, 'medium'),
+          {
+            ...modelled('f1', 'unlikely', 3, 'medium'),
+            ...(options.learned
+              ? {
+                  evidence: {
+                    learned: { productKey: 'postgresql', rawKeys: ['enterprisedb/postgresplus'] },
+                  },
+                }
+              : {}),
+          },
         ),
         finding(
           'f2',

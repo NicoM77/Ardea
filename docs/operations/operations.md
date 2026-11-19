@@ -59,6 +59,40 @@ The worker logs each assessment with provider, tokens and duration, never the pr
 `OTEL_EXPORTER_OTLP_ENDPOINT` set, the meter `Ardea.Assessment.Ai` reports calls, tokens, durations, errors,
 retries and assessments by outcome.
 
+## Catalogue that learns
+
+Records name many products the curated catalogue does not know. Once a day (02:41 UTC), an hour after a source's first load, and when the instance
+administrator starts it on *Sources → Catalogue* or with `ardea catalog grow`, the catalogue collects these unknown
+product keys with the number of records naming them, maps what rules can map (a known CPE pair or package, the same
+name but for version, legal form or a leading vendor name; an unknown CPE pair or package becomes a new entry) and,
+with a provider, asks the model about the most frequent rest: keys from two records on, at once when one is in KEV,
+at most `ARDEA_AI__CATALOG_DAILY_CALLS` calls a day. Answers with high confidence that pass the checks take effect;
+everything else waits on the review list on *Sources → Catalogue*, where it is confirmed, changed or rejected. A
+product name or record title that reads like an instruction never takes effect without a person. Learned entries only add: what the
+curated catalogue finds stays as it is, and a hit that came about through a learned entry says so on the finding and
+can be taken back with one click. The same page exports the learned entries as catalogue files for a contribution to
+the project and shows the measures. Without a provider only the rules map; the rest stays on the list of unknown
+products for the administrator. Which provider is used is chosen there or with `ARDEA_AI__CATALOG_PROVIDER`; by
+default the first local one.
+
+**Observing it with a local model (phase 4 acceptance, manual).** Once per prompt version, a developer checks the
+model on real data; this is not part of the pipeline and has not been run yet for prompt `learn-1`.
+
+1. Start Ardea from a checkout with the first load done (`ARDEA_INTEL__BACKFILL_DAYS=180`) and a local provider, e.g.
+   Ollama with `qwen3:14b` as above. Set `ARDEA_AI__CATALOG_DAILY_CALLS=100`, so that 50 keys get their two attempts.
+2. Run `ardea catalog grow` once and wait until the worker logs «Catalogue grew» with `continues: False`, or repeat
+   it until 50 keys were asked: `SELECT count(*) FROM catalog.unknown_product WHERE attempts > 0`.
+3. Take the 50 most frequent keys that were asked:
+   `SELECT raw_key, vendor, product, outcome, product_key, proposal FROM catalog.unknown_product WHERE attempts > 0 ORDER BY record_count DESC LIMIT 50`.
+4. Judge each against its records by hand: right alias, right new product, or wrong. Count among those that took
+   effect (`alias`, `new` with `learned_by` `model`) the wrong ones, and the share that took effect at once.
+5. The acceptance holds when no wrong mapping took effect at once and at least half took effect at once. Record the
+   model, the prompt version, the date, the counts and every wrong mapping in `docs/acceptance/phase-4.md`; withdraw
+   the wrong ones on *Sources → Catalogue*.
+
+The worker logs each call with provider, calls, tokens, outcome and duration, never a product name or an answer;
+the meter `Ardea.Catalog.Learning` counts calls, retries and keys by outcome.
+
 ## Maintenance commands
 
 Run them in a one-off container: `docker compose run --rm api <command>`. The `org` commands need the owner
@@ -71,6 +105,7 @@ role: `docker compose run --rm migrate org …`.
 | `ardea intel renormalize --source <key>` | Read a source's stored records again with the current parser |
 | `ardea intel recompute` | Merge every entry again with the current rules |
 | `ardea intel import --full [--source <key>]` | Load a source's whole inventory instead of the look-back window; for the CVE Program about 10 GB more |
+| `ardea catalog grow` | Let the catalogue learn from the unknown products of the sources now, e.g. after the first load |
 | `ardea org export <slug> [--out file]` | An organisation's data as JSON, without secrets |
 | `ardea org delete <slug> --confirm <slug>` | Remove an organisation and all its data |
 

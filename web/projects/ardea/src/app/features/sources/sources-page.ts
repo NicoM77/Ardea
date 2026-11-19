@@ -6,6 +6,7 @@ import { UiButton, UiEmptyState, UiField, UiInput, UiLoader, UiNotice, UiPageHea
 import { listSourcesResource, type SourceStatus } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { Session } from '../../core/session/session';
+import { CatalogLearning } from './catalog-learning';
 import { ReviewList } from './review-list';
 import { SourceAdmin } from './source-admin';
 import {
@@ -27,6 +28,7 @@ import { SourceHealth } from './source-health';
   selector: 'ardea-sources-page',
   imports: [
     TranslocoPipe,
+    CatalogLearning,
     LucideChevronDown,
     LucideRadioTower,
     ReviewList,
@@ -206,6 +208,7 @@ import { SourceHealth } from './source-health';
 
     @if (isAdmin()) {
       <ardea-review-list class="review" />
+      <ardea-catalog-learning class="review" id="catalogue" [rawKey]="learned()" />
     }
   `,
   styles: `
@@ -316,6 +319,8 @@ export class SourcesPage {
   /** From the address: `?operatorKind=...&operator=...`. */
   readonly operatorKind = input<string>('');
   readonly operator = input<string>('');
+  /** `?learned=<raw key>`: the learned catalogue entry a hit links to (master plan 6.9). */
+  readonly learned = input<string>('');
 
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);

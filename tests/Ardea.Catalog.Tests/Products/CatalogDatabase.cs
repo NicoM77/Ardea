@@ -24,6 +24,8 @@ internal sealed class CatalogDatabase(PostgresServer server, string name)
         AppPassword = "app-test-password",
     };
 
+    public DatabaseOptions Options => _options;
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     public static async Task<CatalogDatabase> CreateAsync(PostgresServer server) => new(server, await server.CreateDatabaseAsync("catalog"));

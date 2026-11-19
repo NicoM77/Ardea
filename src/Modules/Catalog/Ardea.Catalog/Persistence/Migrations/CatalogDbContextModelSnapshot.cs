@@ -23,6 +23,62 @@ namespace Ardea.Catalog.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Ardea.Catalog.Persistence.LearningEventRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<Guid?>("Actor")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at");
+
+                    b.Property<int>("Calls")
+                        .HasColumnType("integer")
+                        .HasColumnName("calls");
+
+                    b.Property<string>("Data")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("data");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("ProductKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("product_key");
+
+                    b.Property<string>("RawKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("raw_key");
+
+                    b.Property<int>("Tokens")
+                        .HasColumnType("integer")
+                        .HasColumnName("tokens");
+
+                    b.HasKey("Id")
+                        .HasName("pk_learning_event");
+
+                    b.HasIndex("Kind", "At")
+                        .HasDatabaseName("ix_learning_event_kind_at");
+
+                    b.ToTable("learning_event", "catalog", t =>
+                        {
+                            t.HasCheckConstraint("ck_learning_event_kind", "kind IN ('collected', 'asked', 'learned', 'adopted', 'confirmed', 'rejected', 'withdrawn')");
+                        });
+                });
+
             modelBuilder.Entity("Ardea.Catalog.Persistence.ProductRow", b =>
                 {
                     b.Property<string>("Key")
@@ -147,7 +203,7 @@ namespace Ardea.Catalog.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_product_kind", "kind IN ('os', 'runtime', 'framework', 'cms', 'database', 'messaging', 'container', 'network', 'virtualization', 'library', 'plugin', 'service', 'other')");
 
-                            t.HasCheckConstraint("ck_product_learned_by", "learned_by IS NULL OR learned_by IN ('rule', 'model')");
+                            t.HasCheckConstraint("ck_product_learned_by", "learned_by IS NULL OR learned_by IN ('rule', 'model', 'admin')");
 
                             t.HasCheckConstraint("ck_product_origin", "origin IN ('curated', 'learned')");
 
@@ -163,10 +219,24 @@ namespace Ardea.Catalog.Persistence.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("uuidv7()");
 
+                    b.Property<int>("Attempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("attempts");
+
                     b.PrimitiveCollection<string[]>("CpePairs")
                         .IsRequired()
                         .HasColumnType("text[]")
                         .HasColumnName("cpe_pairs");
+
+                    b.Property<DateTimeOffset?>("DecidedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("decided_at");
+
+                    b.Property<Guid?>("DecidedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("decided_by");
 
                     b.Property<DateTimeOffset>("FirstSeenAt")
                         .ValueGeneratedOnAdd()
@@ -201,6 +271,10 @@ namespace Ardea.Catalog.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("product_key");
 
+                    b.Property<string>("Proposal")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("proposal");
+
                     b.Property<string>("Purl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -233,7 +307,7 @@ namespace Ardea.Catalog.Persistence.Migrations
 
                     b.ToTable("unknown_product", "catalog", t =>
                         {
-                            t.HasCheckConstraint("ck_unknown_product_outcome", "outcome IN ('open', 'alias', 'new', 'unclear', 'rejected')");
+                            t.HasCheckConstraint("ck_unknown_product_outcome", "outcome IN ('open', 'pending', 'alias', 'new', 'unclear', 'rejected', 'withdrawn')");
                         });
                 });
 #pragma warning restore 612, 618

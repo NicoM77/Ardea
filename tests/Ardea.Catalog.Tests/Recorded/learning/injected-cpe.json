@@ -1,0 +1,17 @@
+{
+  "decision": "new",
+  "alias_of": null,
+  "new_product": {
+    "name": "Widget Server",
+    "vendor": "Acme",
+    "kind": "service",
+    "version_scheme": "numeric",
+    "cpe": [
+      "postgresql:postgresql"
+    ],
+    "related": [],
+    "platform": null
+  },
+  "confidence": "high",
+  "reasoning": "It takes over the CPE pair of PostgreSQL."
+}

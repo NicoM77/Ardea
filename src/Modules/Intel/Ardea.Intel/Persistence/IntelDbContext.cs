@@ -168,7 +168,7 @@ internal sealed class IntelDbContext(DbContextOptions<IntelDbContext> options, I
             });
             affected.HasKey(a => a.Id);
             affected.Property(a => a.Id).HasDefaultValueSql("uuidv7()");
-            foreach (var name in new[] { nameof(EntryAffectedRow.Vendor), nameof(EntryAffectedRow.Product), nameof(EntryAffectedRow.ProductKey), nameof(EntryAffectedRow.CpeVendor), nameof(EntryAffectedRow.CpeProduct), nameof(EntryAffectedRow.PurlName) })
+            foreach (var name in new[] { nameof(EntryAffectedRow.Vendor), nameof(EntryAffectedRow.Product), nameof(EntryAffectedRow.ProductKey), nameof(EntryAffectedRow.LearnedFrom), nameof(EntryAffectedRow.CpeVendor), nameof(EntryAffectedRow.CpeProduct), nameof(EntryAffectedRow.PurlName) })
             {
                 affected.Property(name).HasMaxLength(500);
             }
@@ -179,6 +179,8 @@ internal sealed class IntelDbContext(DbContextOptions<IntelDbContext> options, I
             affected.Property(a => a.DefaultStatus).HasMaxLength(20);
             // The indexes the candidate search uses (master plan 4.4).
             affected.HasIndex(a => a.ProductKey).HasDatabaseName("ix_entry_affected_product_key");
+            // The raw keys learned entries resolved: the reverse search and a withdrawal find them (master plan 6.9).
+            affected.HasIndex(a => a.LearnedFrom).HasDatabaseName("ix_entry_affected_learned_from").HasFilter("learned_from IS NOT NULL");
             affected.HasIndex(a => new { a.CpeVendor, a.CpeProduct }).HasDatabaseName("ix_entry_affected_cpe");
             affected.HasIndex(a => new { a.PurlType, a.PurlName }).HasDatabaseName("ix_entry_affected_purl");
             affected.HasIndex(a => a.EntryId).HasDatabaseName("ix_entry_affected_entry");

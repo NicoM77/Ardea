@@ -4960,6 +4960,77 @@
         }
       }
     },
+    "/api/v1/orgs/{orgId}/alerts/{number}/assessment": {
+      "post": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "requestAlertAssessment",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRequestView"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orgs/{orgId}/events": {
       "get": {
         "tags": [
@@ -6127,6 +6198,33 @@
           },
           "toDo": {
             "$ref": "#/components/schemas/ToDoAnswer"
+          },
+          "model": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModelAnswersView"
+              }
+            ]
+          },
+          "modelNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AssessmentRequestView": {
+        "required": [
+          "queued"
+        ],
+        "type": "object",
+        "properties": {
+          "queued": {
+            "type": "boolean"
           }
         }
       },
@@ -7912,6 +8010,226 @@
           },
           "authenticatorUri": {
             "type": "string"
+          }
+        }
+      },
+      "ModelAnswersView": {
+        "required": [
+          "assessmentId",
+          "language",
+          "model",
+          "promptVersion",
+          "createdAt",
+          "whatHappened",
+          "likelihood",
+          "likelihoodReason",
+          "confidence",
+          "impact",
+          "verdicts",
+          "preconditions",
+          "actions",
+          "unknowns",
+          "reasoning",
+          "sources"
+        ],
+        "type": "object",
+        "properties": {
+          "assessmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "language": {
+            "type": "string"
+          },
+          "model": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "promptVersion": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "whatHappened": {
+            "type": "string"
+          },
+          "likelihood": {
+            "type": "string"
+          },
+          "likelihoodReason": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "string"
+          },
+          "impact": {
+            "type": "string"
+          },
+          "verdicts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelVerdictView"
+            }
+          },
+          "preconditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelPreconditionView"
+            }
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelStepView"
+            }
+          },
+          "unknowns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reasoning": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelReasonView"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelSourceView"
+            }
+          }
+        }
+      },
+      "ModelPreconditionView": {
+        "required": [
+          "condition",
+          "state"
+        ],
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        }
+      },
+      "ModelReasonView": {
+        "required": [
+          "sentence",
+          "sources",
+          "components"
+        ],
+        "type": "object",
+        "properties": {
+          "sentence": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "ModelSourceView": {
+        "required": [
+          "number",
+          "name",
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "number": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ModelStepView": {
+        "required": [
+          "text",
+          "sources",
+          "own"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "own": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ModelVerdictView": {
+        "required": [
+          "project",
+          "component",
+          "verdict",
+          "proposal"
+        ],
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/ActionProjectRef"
+          },
+          "component": {
+            "$ref": "#/components/schemas/ActionComponentRef"
+          },
+          "verdict": {
+            "type": "string"
+          },
+          "proposal": {
+            "type": "boolean"
           }
         }
       },

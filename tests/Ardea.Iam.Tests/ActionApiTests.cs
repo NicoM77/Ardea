@@ -79,6 +79,11 @@ public sealed class ActionApiTests(PostgresServer server)
         Assert.Equal("CVE-2026-0001", alert.GetProperty("entry").GetProperty("key").GetString());
         Assert.Equal(2, alert.GetProperty("actions")[0].GetProperty("number").GetInt32());
         Assert.Single((await Json(await client.GetAsync($"{path}/alerts"))).GetProperty("items").EnumerateArray());
+
+        // Without a provider nobody can ask the model; the request queues nothing (task 4.3).
+        await ExpectProblem(await client.PostAsync($"{path}/alerts/1/assessment", null), HttpStatusCode.Conflict, "ai_not_available");
+        await ExpectProblem(await client.PostAsync($"{path}/alerts/99/assessment", null), HttpStatusCode.NotFound, "alert_not_found");
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'assess.estimate-alert'"));
         Assert.Single((await Json(await client.GetAsync($"{path}/findings?status=remediated"))).GetProperty("items").EnumerateArray());
 
         var overview = await Json(await client.GetAsync($"{path}/overview"));

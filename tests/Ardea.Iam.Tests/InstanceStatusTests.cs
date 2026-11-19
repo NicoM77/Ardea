@@ -1,7 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Ardea.Host.Features;
+using Ardea.Platform.Email;
 using Ardea.TestSupport;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
 
@@ -39,5 +42,43 @@ public sealed class InstanceStatusTests(PostgresServer server)
         var userWarnings = await (await member.GetAsync("/api/v1/status")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(userWarnings.EnumerateArray(), w => w.GetProperty("code").GetString() == "source_stale");
         Assert.Equal(HttpStatusCode.Unauthorized, (await host.Client().GetAsync("/api/v1/status")).StatusCode);
+    }
+
+    [Fact]
+    public async Task The_administration_shows_when_the_administrators_were_mailed_about_a_warning()
+    {
+        var mail = new AcceptingEmailSender();
+        await using var host = await ApiTestHost.StartAsync(server, services: s => s.AddScoped<IEmailSender>(_ => mail));
+        using var admin = host.Client();
+        await admin.PostAsync("/api/v1/setup", new { setupToken = ApiTestHost.SetupTokenValue, email = "admin@example.org", displayName = "Admin", password = ApiTestHost.Password });
+
+        var before = await (await admin.GetAsync("/api/v1/instance/status")).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Empty(before.GetProperty("notified").EnumerateArray());
+
+        Assert.True(await host.Services.GetRequiredService<InstanceSelfCheck>().RunRoundAsync(TestContext.Current.CancellationToken));
+
+        var status = await (await admin.GetAsync("/api/v1/instance/status")).Content.ReadFromJsonAsync<JsonElement>();
+        var notified = Assert.Single(status.GetProperty("notified").EnumerateArray());
+        Assert.Equal("worker_stalled", notified.GetProperty("code").GetString());
+        Assert.Equal(JsonValueKind.Null, notified.GetProperty("subject").ValueKind);
+        Assert.True(notified.GetProperty("at").GetDateTimeOffset() > DateTimeOffset.UtcNow.AddMinutes(-1));
+        Assert.Equal("admin@example.org", Assert.Single(mail.Sent).To);
+    }
+
+    private sealed class AcceptingEmailSender : IEmailSender
+    {
+        public List<EmailMessage> Sent { get; } = [];
+
+        public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken) => Task.FromResult(true);
+
+        public Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
+        {
+            lock (Sent)
+            {
+                Sent.Add(message);
+            }
+
+            return Task.CompletedTask;
+        }
     }
 }

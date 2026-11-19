@@ -92,12 +92,21 @@ internal sealed class AlertAssessor(
         }
 
         var modelVerdicts = await ModelVerdictsAsync(alert, entry, cancellationToken);
+        var learnedProducts = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var key in candidates.SelectMany(c => c.Keys.Where(k => k.Type == "product").Select(k => k.Value).Append(c.Component.ProductKey)).OfType<string>().Distinct(StringComparer.Ordinal))
+        {
+            if (await catalog.FindByKeyAsync(key, cancellationToken) is { Origin: ProductOrigin.Learned })
+            {
+                learnedProducts.Add(key);
+            }
+        }
+
         var byComponent = existing.ToDictionary(f => f.ComponentId);
         var present = components.ToDictionary(c => c.Id);
         foreach (var candidate in candidates)
         {
             byComponent.TryGetValue(candidate.Component.Id, out var known);
-            var outcome = Evaluate(entry, candidate, known, modelVerdicts.GetValueOrDefault(candidate.Component.Id));
+            var outcome = Evaluate(entry, candidate, known, modelVerdicts.GetValueOrDefault(candidate.Component.Id), keys!.Learned(candidate, learnedProducts));
             if (byComponent.Remove(candidate.Component.Id, out var finding))
             {
                 Apply(finding, outcome, now);
@@ -239,13 +248,19 @@ internal sealed class AlertAssessor(
     }
 
     /// <summary>Match, version check and rule set for one candidate (master plan 7.2, 7.3, 7.6).</summary>
-    private Outcome Evaluate(EntryFacts entry, Candidate candidate, Finding? known, Estimating.StoredVerdict? modelVerdict)
+    private Outcome Evaluate(EntryFacts entry, Candidate candidate, Finding? known, Estimating.StoredVerdict? modelVerdict, LearnedHit? learned)
     {
         var evidence = new Dictionary<string, object?>
         {
             ["match"] = new { type = candidate.MatchType, keys = candidate.Keys.Select(k => $"{k.Type} {k.Value}").ToList() },
             ["installed"] = candidate.Component.Version,
         };
+        if (learned is not null)
+        {
+            // «über gelernten Katalogeintrag» (master plan 6.9): the hit names the learned entry, which can be withdrawn.
+            evidence["learned"] = new { productKey = learned.ProductKey, rawKeys = learned.RawKeys };
+        }
+
         var version = candidate.IsStrong ? VersionMatch.Check(candidate.Component, candidate.MatchType, candidate.Affected, schemes, entry.FixVersionsInText) : null;
         if (version is not null)
         {

@@ -10,7 +10,8 @@ namespace Ardea.Assets.Features;
 /// <item>A catalogue product: its key, its CPE pairs and its packages are strong; related but
 /// independent products (MariaDB for MySQL) are weak.</item>
 /// <item>A product by name: through the catalogue's aliases it is that product (strong); otherwise its
-/// raw key, strong with a vendor and weak with the name alone.</item>
+/// raw key, strong with a vendor and weak with the name alone. A name known only through a learned entry
+/// keeps its raw key besides.</item>
 /// <item>A package from a repository: its package is strong, and the product the catalogue knows for it.</item>
 /// </list>
 /// Hits on a platform through one of its plugins are decided at matching time, from the entry's side.
@@ -75,6 +76,12 @@ internal static class ComponentKeys
             if (await catalog.FindByNameAsync(component.CustomVendor, component.CustomName, cancellationToken) is { } match)
             {
                 AddProduct(match.Product);
+
+                // Known only through a learned entry: the raw key stays, so taking the entry back loses no hit (master plan 6.9).
+                if ((match.Learned || match.Product.Origin == ProductOrigin.Learned) && ProductKey.TryCreate(component.CustomVendor, component.CustomName, out var learnedRaw))
+                {
+                    Add("product", learnedRaw.Value, learnedRaw.Vendor is null ? "weak" : "strong");
+                }
             }
             else if (ProductKey.TryCreate(component.CustomVendor, component.CustomName, out var raw))
             {

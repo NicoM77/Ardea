@@ -67,7 +67,7 @@ Die API ist der einzige Zugang zu den Daten: Die Web-App, die spätere Mobile-Ap
 | `GET /orgs/{orgId}/overview` | Alles für die Übersicht in einem Aufruf: Zähler je Stufe, die dringendsten Reminders, Stufe je Projekt, Änderungen seit gestern, jüngste Warnungen, Stand der Quellen |
 | `GET /orgs/{orgId}/reminders?level=&status=&project=&q=` | Liste der Reminders mit Filtern |
 | `GET /orgs/{orgId}/reminders/{number}` | Reminder mit Ziel, Befunden und Verlauf |
-| `GET /orgs/{orgId}/notices` · `POST …/notices/{id}/decision` | Hinweise ansehen und mit «betrifft uns» (erzeugt einen Reminder) oder «betrifft uns nicht» entscheiden |
+| `GET /orgs/{orgId}/notices?state=&component=` · `GET …/notices/{noticeId}` · `POST …/{noticeId}/answer` · `POST …/{noticeId}/reopen` | Hinweise ansehen, mit «betrifft uns» (erzeugt einen Reminder, optional mit Projekt und Version) oder «betrifft uns nicht» beantworten und die Antwort zurücknehmen ([ADR 047](../adr/0047-notice-generation-and-answers.md)) |
 | `GET, PUT /orgs/{orgId}/stack` | Stack der Organisation: breite Einträge ohne Version, je Eintrag Schwelle «nur Wichtiges» oder «alles» |
 | `POST …/reminders/{number}/status` | Status für alle Befunde der Reminder setzen, mit Begründung |
 | `GET /orgs/{orgId}/findings?level=&project=` | Befunde, auch die der Stufe 1 für die Ansicht «Not relevant» |

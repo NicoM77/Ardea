@@ -395,6 +395,10 @@ namespace Ardea.Notifications.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_notification_event");
 
+                    b.HasIndex("OrganizationId", "UserId", "CreatedAt", "Id")
+                        .HasDatabaseName("ix_notification_unread")
+                        .HasFilter("read_at IS NULL");
+
                     b.ToTable("notification", "notify");
                 });
 

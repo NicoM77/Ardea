@@ -40,6 +40,8 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             alert.HasIndex(a => a.EntryId).HasDatabaseName("ix_alert_entry");
             alert.Property(a => a.EntryKey).HasMaxLength(300);
             alert.HasIndex(a => new { a.OrganizationId, a.Number }).IsUnique().HasDatabaseName("ux_alert_number");
+            // The alert list: most severe first, then newest number, a page at a time (master plan 10.2).
+            alert.HasIndex(a => new { a.OrganizationId, a.Level, a.Number }).HasDatabaseName("ix_alert_list");
         });
 
         modelBuilder.Entity<Finding>(finding =>
@@ -69,7 +71,8 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             finding.Property(f => f.Exploitation).HasMaxLength(10);
             finding.Property(f => f.ClosedVersionVerdict).HasMaxLength(20);
             finding.HasIndex(f => f.RemediationId).HasDatabaseName("ix_finding_remediation");
-            finding.HasIndex(f => new { f.OrganizationId, f.Level }).HasDatabaseName("ix_finding_org_level");
+            // The finding list: most severe first, then newest id; the id in the index lets a page stop after its rows.
+            finding.HasIndex(f => new { f.OrganizationId, f.Level, f.Id }).HasDatabaseName("ix_finding_org_level");
             finding.HasOne<Remediation>().WithMany().HasForeignKey(f => f.RemediationId).OnDelete(DeleteBehavior.SetNull);
             finding.HasIndex(f => new { f.AlertId, f.ComponentId }).IsUnique().HasDatabaseName("ux_finding_component");
             // The reverse search re-evaluates what a project already has (master plan 7.7).
@@ -97,6 +100,8 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             remediation.HasIndex(r => r.ComponentId).IsUnique().HasFilter("status <> 'closed'").HasDatabaseName("ux_remediation_component_open");
             // The list: by status, level and number within the organisation (master plan 10.2).
             remediation.HasIndex(r => new { r.OrganizationId, r.Status, r.Level, r.Number }).HasDatabaseName("ix_remediation_list");
+            // The list of «active» and «all», which no status narrows: most severe first, then newest number.
+            remediation.HasIndex(r => new { r.OrganizationId, r.Level, r.Number }).HasDatabaseName("ix_remediation_level");
         });
 
         modelBuilder.Entity<AssessEvent>(e =>

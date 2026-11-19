@@ -13,10 +13,31 @@ Logs are JSON on standard output: `docker compose logs -f worker`. Secrets never
 
 ## Backups
 
-- `migrate` writes a dump before applying migrations, into `backup/` of the database volume. It is meant for
-  going back after an update, not as a backup strategy.
+- `migrate` writes a dump before applying migrations, into `backup/` of the database volume (the newest three
+  are kept). It is meant for going back after an update, not as a backup strategy. With an external database
+  that does not let the owner role run server programs, `migrate` says so and writes none: back up before
+  updating then.
 - Back up regularly with `docker compose exec -T db pg_dump -U ardea_migrator -Fc ardea > ardea-$(date +%F).dump`
-  and keep `ARDEA_MASTER_KEY` with it, but stored separately.
+  (a cron entry on the host is enough) and keep `ARDEA_MASTER_KEY` with it, but stored separately. Without the key
+  everything restores except the stored secrets: tokens, the SMTP password, webhook secrets and the VAPID key pair.
+- Everything durable lives in PostgreSQL; API and worker keep no state.
+
+### Restoring
+
+On a new machine or after losing the volume. The order matters: the dump holds rights for the application role, so
+the role must exist first.
+
+1. Start only the database: `docker compose up -d db`. Set `.env` and `.env.app` as before, with the same
+   `ARDEA_MASTER_KEY`.
+2. Create the application role: `docker compose run --rm migrate migrate --roles-only`.
+3. Restore into the empty database: `docker compose exec -T db pg_restore -U ardea_migrator -d ardea --no-owner < ardea.dump`.
+   If the database is not empty, drop and create it first (see [Update](update.md#going-back)): restoring over
+   existing tables fails.
+4. `docker compose up -d`. `migrate` brings the schema to the installed version if the dump is older, writes a dump
+   first, and gives the application role its rights.
+
+[Update](update.md) shows the same path for going back after an update. A test (`PreReleaseRestoreTests`) restores a
+dump of an earlier state, migrates it to the current version, restores again and migrates again.
 
 ## Sources
 
@@ -93,6 +114,64 @@ model on real data; this is not part of the pipeline and has not been run yet fo
 The worker logs each call with provider, calls, tokens, outcome and duration, never a product name or an answer;
 the meter `Ardea.Catalog.Learning` counts calls, retries and keys by outcome.
 
+## Notifications
+
+Organisations decide in their settings who is told what, on which channel and how fast (rules with targets, digests,
+personal muting); the instance provides the channels:
+
+| Channel | What the instance needs |
+|---|---|
+| In the app | nothing; the inbox and the unread counter |
+| E-mail | SMTP ([Configuration](configuration.md); the administration sends a test e-mail). Without SMTP the channel is off and the interface says so. Every message to an external address carries an unsubscribe link, so confirm and unsubscribe links need `ARDEA_PUBLIC_URL` to be right. |
+| Webhook | Outbound HTTPS to the target. Targets in a private network are refused unless their host is in `ARDEA_WEBHOOK_INTERNAL_HOSTS`; loopback, link-local and cloud metadata addresses never work. Requests are signed (`Ardea-Signature`, HMAC-SHA256 with the endpoint's secret) and may arrive twice: receivers drop a repeat by the delivery id. |
+| Web Push | HTTPS (browsers allow it nowhere else) and outbound HTTPS to the browser makers' push services: `fcm.googleapis.com`, `updates.push.services.mozilla.com`, `web.push.apple.com`, `*.push.apple.com` and `*.notify.windows.com`. Other push services only through `ARDEA_PUSH_SERVICE_HOSTS`. Each person turns it on per device in their settings; on iPhone the web app first has to be added to the Home Screen. |
+
+**VAPID key pair.** Web Push needs the instance's own key pair. Without `ARDEA_VAPID__PUBLIC_KEY` and
+`ARDEA_VAPID__PRIVATE_KEY` the first start generates one and keeps it encrypted in the database, so it lives and dies
+with the database backup and the master key. A new pair makes every device subscribe again; devices whose
+subscription the push service rejects are removed after the third rejection in a row.
+
+**Limits.** Immediate messages to one recipient on one channel wait two minutes and are bundled. Above 60 immediate
+messages per channel, organisation and hour, further ones are suppressed (they stay in the digests that cover them).
+A failed delivery is retried with growing pauses for about three and a half hours; then it is `dead`. If a level 5
+message dies and its recipient was reached nowhere else, the owners get a warning in the app. The delivery log of an
+organisation (*Notification rules → Log*) shows state, attempts and the reason for every message. Confirmation mails to
+external addresses are limited against abuse: 50 addresses per organisation, 3 mails per address with 15 minutes
+between them, 20 per organisation a day.
+
+## Repositories
+
+An organisation connects GitHub with a fine-grained read-only token (*Contents: read*, selected repositories, with an
+expiry) that its owners or admins store once; it is kept encrypted and shown only by its last four characters and
+expiry. Public repositories work without a token but GitHub allows only 60 requests an hour per address of the
+instance, which suits trying it out, not many repositories. GitHub Enterprise Server hosts are added by the instance
+administrator in the administration. The worker reads each linked repository about every hour; a conditional request
+that answers «unchanged» does not count against the token's quota. A link whose token expired, whose repository
+vanished or whose dependency graph is switched off shows its reason and since when.
+
+## Warnings and figures
+
+The system warns about itself. Every signed-in person sees the warnings on the overview («data as of 02:10, source
+not reachable»); the instance administrator also sees the operating figures in the administration, card *Operation*.
+Figures are counts and times, never contents.
+
+| Warning | When |
+|---|---|
+| `worker_stalled` | no worker has beaten for two minutes, or none has ever started: nothing is fetched or assessed |
+| `source_stale` | an enabled source has had no success for six hours (or none six hours after it was added) |
+| `notify_events_failed` | events that could not be evaluated after five tries were set aside |
+| `deliveries_failing` | messages of the last 24 hours that every attempt failed to deliver |
+
+Figures: per source the lag, the failure streak and the quarantine; jobs waiting (with the oldest wait), running and
+failed of the last day by kind; workers alive; deliveries by state; repository links by state; per language model
+provider the calls, tokens and twice-refused answers of the last day. A notification to the instance administrator
+about these warnings is not sent yet: check the overview, or scrape the figures with OpenTelemetry
+(`OTEL_EXPORTER_OTLP_ENDPOINT`).
+
+**Image contents.** The image carries `/app/LICENSE` (Ardea's licence) and `/app/THIRD-PARTY-NOTICES.md` (the
+licence of every NuGet and npm package it ships). The bill of materials is produced by `build/sbom.sh` (CycloneDX
+JSON, one file for the .NET host and one for the web app); CI keeps both as a build artefact on `main`.
+
 ## Maintenance commands
 
 Run them in a one-off container: `docker compose run --rm api <command>`. The `org` commands need the owner
@@ -100,10 +179,12 @@ role: `docker compose run --rm migrate org …`.
 
 | Command | Purpose |
 |---|---|
-| `ardea doctor` | Check configuration, database, schema, SMTP and the reachability of the sources |
+| `ardea doctor` | Check configuration, database, schema and the image's runtime; it also tries to connect to the SMTP server, every language model provider and the hosts of each source named in the environment. A service that cannot be reached is a `warn` line (it may be down only for now); a wrong provider setting fails. Settings made in the administration instead of the environment are not seen. |
+| `ardea version` | The installed version |
 | `ardea admin reset-password <email> [--disable-mfa]` | Restore access without e-mail |
 | `ardea intel renormalize --source <key>` | Read a source's stored records again with the current parser |
 | `ardea intel recompute` | Merge every entry again with the current rules |
+| `ardea assess recompute` | Assess every alert again with the current rule set, e.g. after a new rule set version |
 | `ardea intel import --full [--source <key>]` | Load a source's whole inventory instead of the look-back window; for the CVE Program about 10 GB more |
 | `ardea catalog grow` | Let the catalogue learn from the unknown products of the sources now, e.g. after the first load |
 | `ardea org export <slug> [--out file]` | An organisation's data as JSON, without secrets |

@@ -31,6 +31,8 @@ internal static class HelpCommand
               intel renormalize --source <key>   Read a source's stored records again with the current parser
               intel recompute     Merge every entry again with the current rules
               intel import --full [--source <key>] Load a source's whole inventory (about 10 GB more for the CVE Program)
+              assess recompute    Assess every alert again with the current rule set
+              catalog grow        Let the catalogue learn from the unknown products of the sources now
               org export <slug> [--out file]       An organisation's data as JSON (owner role, no secrets)
               org delete <slug> --confirm <slug>   Remove an organisation and all its data
               version             Print the installed version

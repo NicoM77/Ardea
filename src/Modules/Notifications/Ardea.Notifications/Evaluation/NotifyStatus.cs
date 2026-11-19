@@ -8,7 +8,7 @@ namespace Ardea.Notifications.Evaluation;
 /// Events set aside after repeated failures (ADR 038), counted over all organisations through the narrow function
 /// <c>notify.failed_event_count</c>: the status runs without an organisation and sees a count only.
 /// </summary>
-internal sealed class NotifyStatusContributor(NotifyDbContext db) : IInstanceStatusContributor
+internal sealed class NotifyStatusContributor(NotifyDbContext db, TimeProvider time) : IInstanceStatusContributor
 {
     public async Task ContributeAsync(InstanceStatusBuilder status, CancellationToken cancellationToken)
     {
@@ -19,5 +19,25 @@ internal sealed class NotifyStatusContributor(NotifyDbContext db) : IInstanceSta
             status.Warnings.Add(new StatusWarning("notify_events_failed", "warning",
                 $"{failed} notification event(s) could not be evaluated and were set aside; see notify.pending_event."));
         }
+
+        // Deliveries of the last day by state (waiting ones of any age): the figures of the log, over all organisations.
+        var since = time.GetUtcNow().AddDays(-1);
+        var deliveries = await db.Database
+            .SqlQuery<DeliveryCount>($"SELECT state AS \"State\", deliveries AS \"Deliveries\" FROM notify.delivery_counts_since({since})")
+            .ToListAsync(cancellationToken);
+        foreach (var count in deliveries.OrderBy(c => c.State, StringComparer.Ordinal))
+        {
+            status.Metrics.Add(new StatusMetric("deliveries", count.State, count.Deliveries));
+        }
+
+        // Dead: every attempt failed, nobody gets the message. A single one is a wrong address; the warning tells the
+        // administrator to look at the delivery log, where the reason is.
+        if (deliveries.FirstOrDefault(c => c.State == "dead") is { Deliveries: > 0 } dead)
+        {
+            status.Warnings.Add(new StatusWarning("deliveries_failing", "warning",
+                $"{dead.Deliveries} message(s) of the last 24 hours could not be delivered after every attempt; see the delivery log of the organisations concerned."));
+        }
     }
+
+    private sealed record DeliveryCount(string State, long Deliveries);
 }

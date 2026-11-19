@@ -8,6 +8,12 @@ namespace Ardea.Host.Commands;
 /// <summary><c>ardea admin &lt;command&gt;</c>: maintenance commands of the modules (master plan 12.8).</summary>
 internal static class AdminCommand
 {
+    /// <summary>
+    /// The groups whose commands are also called without <c>admin</c>: <c>ardea intel recompute</c> runs the command
+    /// named <c>intel-recompute</c>. A module command named <c>group-verb</c> needs its group here.
+    /// </summary>
+    public static readonly IReadOnlyList<string> GroupPrefixes = ["intel", "assess", "catalog"];
+
     public static async Task<int> RunAsync(string[] args)
     {
         var commands = Modules.All.SelectMany(m => m.Commands).ToDictionary(c => c.Name, StringComparer.Ordinal);

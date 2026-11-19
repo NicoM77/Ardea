@@ -134,6 +134,13 @@
         "failed": "The mail server did not accept the test e-mail."
       }
     },
+    "operations": {
+      "title": "Operation",
+      "asOf": "As of {time}",
+      "healthy": "Nothing to report: sources, worker and deliveries work.",
+      "loading": "Loading the operating figures",
+      "loadFailed": "The operating figures could not be loaded."
+    },
     "jobs": {
       "title": "Failed jobs",
       "count": "{count, plural, =0 {none} one {# job} other {# jobs}}",

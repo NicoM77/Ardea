@@ -52,7 +52,7 @@ jobs:
   dependencies:
     name: Dependencies
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -72,6 +72,24 @@ jobs:
           name: licences
           path: artifacts/nuget-licenses.md
           if-no-files-found: ignore
+      # SBOM (CycloneDX) and third-party notices of what the image ships; the image build writes the
+      # same notices into /app/THIRD-PARTY-NOTICES.md.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: SBOM and notices
+        run: |
+          npm ci --prefix web --no-audit --no-fund
+          build/sbom.sh
+          build/third-party-notices.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: |
+            artifacts/sbom/
+            artifacts/THIRD-PARTY-NOTICES.md
 
   web:
     name: Web

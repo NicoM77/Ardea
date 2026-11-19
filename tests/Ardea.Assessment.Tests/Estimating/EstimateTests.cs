@@ -72,6 +72,19 @@ public sealed class EstimateTests(PostgresServer server)
         Assert.Equal(("not_affected", true, "Billing"), (verdict.Verdict, verdict.Proposal, verdict.Project.Name));
         Assert.Equal(1, answers.Model.Sources[0].Number);
 
+        // The instance status counts the call and its tokens, over all organisations and without content (master plan 12.7).
+        var status = new Platform.Status.InstanceStatusBuilder();
+        await host.InSystemAsync(async services =>
+        {
+            foreach (var contributor in services.GetServices<Platform.Status.IInstanceStatusContributor>())
+            {
+                await contributor.ContributeAsync(status, CancellationToken.None);
+            }
+        });
+        Assert.Equal(
+            ["local.calls=1", "local.refused=0", "local.tokens_in=1800", "local.tokens_out=400"],
+            status.Metrics.Where(m => m.Group == "ai").Select(m => $"{m.Name}={m.Value}").Order(StringComparer.Ordinal));
+
         // The verdicts reached the findings through a reassessment of its own, after the row was stored.
         Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'assess.assess-alert'"));
 

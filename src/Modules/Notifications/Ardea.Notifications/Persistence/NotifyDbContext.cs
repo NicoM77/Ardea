@@ -164,6 +164,8 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             notification.HasIndex(n => new { n.UserId, n.OrganizationId, n.EventId }).IsUnique().HasDatabaseName("ux_notification_event");
             // The member's list and unread counter in one organisation, newest first.
             notification.HasIndex(n => new { n.OrganizationId, n.UserId, n.CreatedAt }).HasDatabaseName("ix_notification_user");
+            // The header's unread counter, asked on every page: it and the unread list read the unread rows only, however old the inbox is.
+            notification.HasIndex(n => new { n.OrganizationId, n.UserId, n.CreatedAt, n.Id }).HasFilter("read_at IS NULL").HasDatabaseName("ix_notification_unread");
         });
 
         modelBuilder.Entity<UserPreference>(preference =>

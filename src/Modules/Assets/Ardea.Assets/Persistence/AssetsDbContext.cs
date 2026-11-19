@@ -14,6 +14,8 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
 
     public DbSet<Component> Components => Set<Component>();
 
+    public DbSet<ComponentKey> ComponentKeys => Set<ComponentKey>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -71,6 +73,24 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
             component.HasIndex(c => new { c.OrganizationId, c.ProductKey }).HasDatabaseName("ix_component_org_product");
             component.HasOne<Project>().WithMany().HasForeignKey(c => c.ProjectId).OnDelete(DeleteBehavior.Cascade);
             component.HasOne<Component>().WithMany().HasForeignKey(c => c.ParentComponentId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ComponentKey>(key =>
+        {
+            key.ToTable("component_key", t =>
+            {
+                t.HasCheckConstraint("ck_component_key_type", "key_type IN ('cpe', 'product', 'purl')");
+                t.HasCheckConstraint("ck_component_key_strength", "strength IN ('strong', 'weak')");
+            });
+            key.HasKey(k => k.Id);
+            key.Property(k => k.Id).HasDefaultValueSql("uuidv7()");
+            key.Property(k => k.KeyType).HasMaxLength(10);
+            key.Property(k => k.KeyValue).HasMaxLength(500);
+            key.Property(k => k.Strength).HasMaxLength(10);
+            key.HasIndex(k => new { k.ComponentId, k.KeyType, k.KeyValue }).IsUnique().HasDatabaseName("ux_component_key");
+            // The forward search asks by key across projects: entry → components (master plan 7.2).
+            key.HasIndex(k => new { k.KeyType, k.KeyValue }).HasDatabaseName("ix_component_key_value");
+            key.HasOne<Component>().WithMany().HasForeignKey(k => k.ComponentId).OnDelete(DeleteBehavior.Cascade);
         });
 
         ApplyTenantFilters(modelBuilder);

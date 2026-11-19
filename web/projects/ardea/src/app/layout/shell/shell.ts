@@ -9,7 +9,7 @@ import { LucideKeyRound } from '@lucide/angular';
 import { filter, firstValueFrom, map } from 'rxjs';
 import { AuthenticationService } from '../../core/api/client';
 import { Session } from '../../core/session/session';
-import { ADMINISTRATION, AREAS } from '../../features/areas/areas';
+import { ADMINISTRATION, AREAS, areaUrl, isInstanceWide } from '../../features/areas/areas';
 import { SearchDialog, SearchDialogData } from '../search/search-dialog';
 import { opensSearch, SearchItem } from '../search/search';
 import { Sidebar } from './sidebar';
@@ -258,15 +258,20 @@ export class Shell {
     const t = (key: string) => this.transloco.translate(key);
     const items: SearchItem[] = [];
     const org = this.organization();
-    if (org) {
-      for (const area of AREAS) {
-        items.push({
-          label: t(area.label),
-          group: org.name,
-          url: `/o/${org.slug}/${area.path}`,
-          icon: area.icon,
-        });
-      }
+    const instance = t('search.groups.instance');
+    // The organization's pages first, then the instance-wide ones, so each group is one block.
+    const ordered = [...AREAS].sort(
+      (a, b) => Number(isInstanceWide(a)) - Number(isInstanceWide(b)),
+    );
+    for (const area of ordered) {
+      const url = areaUrl(area, org?.slug);
+      if (!url) continue;
+      items.push({
+        label: t(area.label),
+        group: isInstanceWide(area) ? instance : (org?.name ?? instance),
+        url,
+        icon: area.icon,
+      });
     }
     const account = t('search.groups.account');
     items.push({

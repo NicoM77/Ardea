@@ -5,7 +5,7 @@ import { LucideDynamicIcon, LucideX } from '@lucide/angular';
 import { UiAvatar, UiButton } from 'ui';
 import type { SessionOrganization } from '../../core/api/client';
 import type { Me } from '../../core/session/session';
-import { ADMINISTRATION, Area, AREAS } from '../../features/areas/areas';
+import { ADMINISTRATION, Area, AREAS, areaUrl } from '../../features/areas/areas';
 import { OrgSwitch } from './org-switch';
 
 interface NavLink {
@@ -216,10 +216,13 @@ export class Sidebar {
   readonly closeMenu = output();
   readonly navigated = output();
 
+  /** Organization areas need an organization; instance-wide ones (entries, sources) are always there. */
   private readonly orgLinks = computed<NavLink[]>(() => {
-    const org = this.organization();
-    if (!org) return [];
-    return AREAS.map((area) => ({ area, url: `/o/${org.slug}/${area.path}` }));
+    const slug = this.organization()?.slug;
+    return AREAS.flatMap((area) => {
+      const url = areaUrl(area, slug);
+      return url ? [{ area, url }] : [];
+    });
   });
   protected readonly mainLinks = computed(() =>
     this.orgLinks().filter((l) => l.area.group === 'main'),

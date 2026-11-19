@@ -50,6 +50,10 @@ internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles,
         var actionIds = findings.Select(f => f.RemediationId).OfType<Guid>().Distinct().ToArray();
         var actions = await db.Remediations.AsNoTracking().Where(r => actionIds.Contains(r.Id)).ToDictionaryAsync(r => r.Id, r => r.Number, cancellationToken);
         var titles = (await entries.FindManyAsync([.. findings.Select(f => f.EntryId).Distinct()], cancellationToken)).ToDictionary(e => e.Id, e => e.Title);
+        var findingIds = findings.Select(f => f.Id).ToArray();
+        var reviews = (await db.Feedback.AsNoTracking().Where(r => findingIds.Contains(r.FindingId)).ToListAsync(cancellationToken))
+            .GroupBy(r => r.FindingId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.CreatedAt).ThenByDescending(r => r.Id).First());
         return [.. findings.Select(f =>
         {
             var (project, component) = Refs(components, f.ComponentId, f.ProjectId);
@@ -59,7 +63,10 @@ internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles,
                 new ActionEntryRef(f.EntryId, alert.EntryKey, titles.GetValueOrDefault(f.EntryId)), project, component,
                 f.Level, Levels.Name(f.Level), f.Status, f.StatusReason, f.StatusNote, f.StatusChangedBy, f.StatusChangedAt, f.MatchType,
                 f.VersionVerdict, f.VersionReason, f.FixedVersion, f.Verdict, f.VerdictSource, f.Exploitation, f.FixAvailable, f.IsBackfill,
-                f.Factors.RootElement.Clone(), f.Evidence.RootElement.Clone());
+                f.Factors.RootElement.Clone(), f.Evidence.RootElement.Clone(),
+                reviews.TryGetValue(f.Id, out var review)
+                    ? new FindingReviewView(review.Kind, review.Actor, review.CreatedAt, review.VerdictSource, review.VerdictBefore, review.Verdict, review.LevelBefore, review.ExpectedLevel, review.Reason)
+                    : null);
         })];
     }
 

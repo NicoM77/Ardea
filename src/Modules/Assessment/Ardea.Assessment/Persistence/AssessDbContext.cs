@@ -24,6 +24,8 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
 
     public DbSet<AlertAssessment> Assessments => Set<AlertAssessment>();
 
+    public DbSet<AssessmentFeedback> Feedback => Set<AssessmentFeedback>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -143,6 +145,31 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             // The quotas: tokens of the day, assessments of an action in seven days (master plan 7.5, 7.8).
             assessment.HasIndex(a => new { a.OrganizationId, a.CreatedAt }).HasDatabaseName("ix_assessment_org_created");
             assessment.HasOne<Alert>().WithMany().HasForeignKey(a => a.AlertId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AssessmentFeedback>(feedback =>
+        {
+            feedback.ToTable("assessment_feedback", t =>
+            {
+                t.HasCheckConstraint("ck_assessment_feedback_kind", "kind IN ('confirmed', 'corrected')");
+                t.HasCheckConstraint("ck_assessment_feedback_source", "verdict_source IN ('rules', 'model', 'human')");
+                t.HasCheckConstraint("ck_assessment_feedback_verdicts", "verdict_before IN ('affected', 'likely', 'uncertain', 'unlikely', 'not_affected') AND (verdict IS NULL OR verdict IN ('affected', 'likely', 'uncertain', 'unlikely', 'not_affected'))");
+                t.HasCheckConstraint("ck_assessment_feedback_levels", "level_before BETWEEN 1 AND 5 AND (expected_level IS NULL OR expected_level BETWEEN 1 AND 5)");
+                // A correction names what is wrong and why (master plan 7.9).
+                t.HasCheckConstraint("ck_assessment_feedback_correction", "kind = 'confirmed' OR ((verdict IS NOT NULL OR expected_level IS NOT NULL) AND reason IS NOT NULL)");
+            });
+            feedback.HasKey(f => f.Id);
+            feedback.Property(f => f.Id).HasDefaultValueSql("uuidv7()");
+            feedback.Property(f => f.Kind).HasMaxLength(20);
+            feedback.Property(f => f.VerdictSource).HasMaxLength(10);
+            feedback.Property(f => f.VerdictBefore).HasMaxLength(20);
+            feedback.Property(f => f.Verdict).HasMaxLength(20);
+            feedback.Property(f => f.Reason).HasMaxLength(2000);
+            feedback.HasIndex(f => new { f.FindingId, f.CreatedAt }).HasDatabaseName("ix_assessment_feedback_finding");
+            // The correction rate per model and prompt version (master plan 7.9).
+            feedback.HasIndex(f => f.AssessmentId).HasDatabaseName("ix_assessment_feedback_assessment");
+            feedback.HasOne<Finding>().WithMany().HasForeignKey(f => f.FindingId).OnDelete(DeleteBehavior.Cascade);
+            feedback.HasOne<AlertAssessment>().WithMany().HasForeignKey(f => f.AssessmentId).OnDelete(DeleteBehavior.Cascade);
         });
 
         ApplyTenantFilters(modelBuilder);

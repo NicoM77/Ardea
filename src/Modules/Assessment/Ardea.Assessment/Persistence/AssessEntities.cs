@@ -296,3 +296,50 @@ internal sealed class AlertAssessment : IOrganizationOwned
 
     public DateTimeOffset CreatedAt { get; set; }
 }
+
+/// <summary>
+/// A person's review of a finding's assessment (master plan 7.7, 7.9 «Rückmeldung im Betrieb»; task 4.7): the
+/// estimate confirmed, or the verdict or the level corrected with a reason. One row per review, never changed; the
+/// rows of the model's verdicts give the correction rate per model and prompt version.
+/// </summary>
+internal sealed class AssessmentFeedback : IOrganizationOwned
+{
+    public const string Confirmed = "confirmed";
+    public const string Corrected = "corrected";
+
+    public Guid Id { get; set; }
+
+    public Guid OrganizationId { get; set; }
+
+    public Guid FindingId { get; set; }
+
+    public Guid AlertId { get; set; }
+
+    /// <summary>The model's assessment whose verdict the person reviewed; <c>null</c> when the verdict came from the rules or a person.</summary>
+    public Guid? AssessmentId { get; set; }
+
+    /// <summary><c>confirmed</c> or <c>corrected</c>.</summary>
+    public required string Kind { get; set; }
+
+    /// <summary>Whose verdict was reviewed: <c>rules</c>, <c>model</c> or <c>human</c>.</summary>
+    public required string VerdictSource { get; set; }
+
+    /// <summary>The verdict the person saw.</summary>
+    public required string VerdictBefore { get; set; }
+
+    /// <summary>The person's verdict; <c>null</c> when only the level was corrected.</summary>
+    public string? Verdict { get; set; }
+
+    /// <summary>The finding's level the person saw.</summary>
+    public int LevelBefore { get; set; }
+
+    /// <summary>The level the person expects instead (master plan 7.9 «falsche Stufe»); <c>null</c> when the level was not questioned.</summary>
+    public int? ExpectedLevel { get; set; }
+
+    /// <summary>Why; required for a correction.</summary>
+    public string? Reason { get; set; }
+
+    public Guid Actor { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}

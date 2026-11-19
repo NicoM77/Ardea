@@ -295,7 +295,7 @@ internal sealed class ActionCommands(
     }
 
     /// <summary>A person's outcome; «not affected» is an exclusion and gives level 1 (master plan 7.6 step 1).</summary>
-    private void Conclude(Finding finding, string outcome, Guid user, string? note, DateTimeOffset now)
+    internal void Conclude(Finding finding, string outcome, Guid user, string? note, DateTimeOffset now)
     {
         if (finding.Status is "open" or "in_review")
         {
@@ -317,6 +317,19 @@ internal sealed class ActionCommands(
         finding.Level = Math.Max(finding.ClosedLevel ?? finding.Level, 2);
         finding.ClosedLevel = null;
         finding.ClosedVersionVerdict = null;
+
+        // A person's «not affected» goes with the closing it came with (task 4.7); the rules give the verdict again.
+        if (finding is { VerdictSource: "human", Verdict: "not_affected" })
+        {
+            finding.Verdict = finding.VersionVerdict switch
+            {
+                "in_range" => "affected",
+                "unknown" => "uncertain",
+                _ => "not_affected",
+            };
+            finding.VerdictSource = "rules";
+        }
+
         SetPersonStatus(finding, status, user, null, now);
     }
 

@@ -37,6 +37,7 @@ public sealed class AssessmentModule : IModule
         services.AddScoped<Remediations>();
         services.AddScoped<Features.ActionReader>();
         services.AddScoped<Features.ActionCommands>();
+        services.AddScoped<Features.VerdictReviews>();
         services.AddScoped<IEntryChangeSubscriber, EntryChangeSubscriber>();
         services.AddScoped<IProfileChangeSubscriber, ProfileChangeSubscriber>();
         services.AddJob<MatchEntry, MatchEntryHandler>(new JobKindOptions { MaxConcurrency = 4, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(2) });
@@ -68,5 +69,6 @@ public sealed class AssessmentModule : IModule
     {
         Features.ActionEndpoints.Map(endpoints);
         Features.LiveEndpoints.Map(endpoints);
+        Features.ModelQualityEndpoints.Map(endpoints);
     }
 }

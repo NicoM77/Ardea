@@ -17,14 +17,14 @@ internal sealed class UnknownProductFeed(IntelDbContext db, IProductCatalog cata
     {
         // Rows a learned entry resolved carry a key of the catalogue; the rest are catalogue keys or raw keys.
         var keys = await db.Database.SqlQuery<KeyRow>($"""
-            SELECT a.product_key AS "Key",
-                   count(DISTINCT a.entry_id)::int AS "Records",
-                   coalesce(bool_or(e.provenance ->> 'exploitation' = 'cisa-kev'), false) AS "InKev",
-                   mode() WITHIN GROUP (ORDER BY a.vendor) AS "Vendor",
-                   mode() WITHIN GROUP (ORDER BY coalesce(a.product, a.purl_name)) AS "Product",
+            SELECT a.product_key AS key,
+                   count(DISTINCT a.entry_id)::int AS records,
+                   coalesce(bool_or(e.provenance ->> 'exploitation' = 'cisa-kev'), false) AS in_kev,
+                   mode() WITHIN GROUP (ORDER BY a.vendor) AS vendor,
+                   mode() WITHIN GROUP (ORDER BY coalesce(a.product, a.purl_name)) AS product,
                    array_remove(array_agg(DISTINCT CASE WHEN a.cpe_vendor IS NOT NULL AND a.cpe_product IS NOT NULL
-                                                        THEN a.cpe_vendor || ':' || a.cpe_product END), NULL) AS "CpePairs",
-                   min(CASE WHEN a.purl_type IS NOT NULL AND a.purl_name IS NOT NULL THEN 'pkg:' || a.purl_type || '/' || a.purl_name END) AS "Purl"
+                                                        THEN a.cpe_vendor || ':' || a.cpe_product END), NULL) AS cpe_pairs,
+                   min(CASE WHEN a.purl_type IS NOT NULL AND a.purl_name IS NOT NULL THEN 'pkg:' || a.purl_type || '/' || a.purl_name END) AS purl
             FROM intel.entry_affected a
             JOIN intel.security_entry e ON e.id = a.entry_id
             WHERE a.product_key IS NOT NULL AND a.learned_from IS NULL AND e.state <> 'merged'

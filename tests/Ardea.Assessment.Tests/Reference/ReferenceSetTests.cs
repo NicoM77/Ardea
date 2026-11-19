@@ -121,6 +121,12 @@ public sealed class ReferenceSetTests(PostgresServer server)
         await host.StoreRecordsAsync(set.Records.Select(r => new RawRecord(r.Key, r.Value, "application/json")).ToList());
         await host.RunJobsAsync();
 
+        // The labels hold for the curated catalogue (master plan 6.9): no learned entry may take part in the run. Learning
+        // runs only by schedule or on request, which this host never does; the check makes it fail loudly if that changes.
+        Assert.Equal(
+            ["0\t0"],
+            await host.RowsAsync("SELECT (SELECT count(*) FROM catalog.product WHERE origin = 'learned'), (SELECT count(*) FROM catalog.unknown_product WHERE outcome IN ('alias', 'new'))"));
+
         var findings = await host.FindingsAsync();
         return [.. set.Pairs.Select(pair =>
         {
@@ -232,6 +238,34 @@ internal sealed class ReferenceHost : IAsyncDisposable
     public Task ProfileChangedAsync(Guid organization, Guid project) =>
         InOrganizationAsync(organization, services => services.GetRequiredService<IJobQueue>()
             .EnqueueAsync(new Assessing.MatchProject(project), Assessing.MatchProject.Options(organization, project)));
+
+    /// <summary>A component as a test describes it, with its keys as the profile endpoints compute them.</summary>
+    public async Task<Guid> AddComponentAsync(Guid organization, Guid project, Action<Component> configure)
+    {
+        var id = Guid.CreateVersion7();
+        await InOrganizationAsync(organization, async services =>
+        {
+            var db = services.GetRequiredService<AssetsDbContext>();
+            var now = _clock.GetUtcNow();
+            var component = new Component { Id = id, ProjectId = project, Kind = "other", Packaging = "upstream", CreatedAt = now, ChangedAt = now };
+            configure(component);
+            db.Components.Add(component);
+            await db.SaveChangesAsync();
+            await ComponentKeys.RefreshAsync(db, services.GetRequiredService<IProductCatalog>(), [component], CancellationToken.None);
+        });
+        return id;
+    }
+
+    /// <summary>The catalogue is read anew, as the administration has the process do after a decision about a learned entry.</summary>
+    public void InvalidateCatalog() => _services.GetRequiredService<Catalog.Products.CatalogCache>().Invalidate();
+
+    /// <summary>Work in a unit of work of its own, without organisation, as a system job or the administration does it.</summary>
+    public async Task InSystemAsync(Func<IServiceProvider, Task> work)
+    {
+        await using var scope = _services.CreateAsyncScope();
+        await work(scope.ServiceProvider);
+        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+    }
 
     public Task AddComponentAsync(Guid organization, Guid project, ReferenceComponent c) =>
         InOrganizationAsync(organization, async services =>

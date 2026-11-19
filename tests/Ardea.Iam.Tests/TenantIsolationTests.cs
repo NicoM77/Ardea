@@ -32,6 +32,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["iam.user_login"] = "user",
         ["iam.user_token"] = "user",
         ["iam.session"] = "user",
+        ["assess.assessment"] = "organization",
     };
 
     /// <summary>Schemas whose every table is global: intelligence and catalogue are the same for all (master plan 4.1).</summary>
@@ -101,6 +102,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["PATCH /api/v1/orgs/{orgId}/findings/{findingId}"] = _ => new { status = "risk_accepted", expectedStatus = "open" },
         ["GET /api/v1/orgs/{orgId}/alerts"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/alerts/{number}"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/alerts/{number}/assessment"] = _ => null,
     };
 
     /// <summary>Bob's object a route parameter names: <c>{id}</c> is the object of the path segment before it.</summary>
@@ -274,6 +276,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         Assert.Equal("open|open|", await host.ScalarAsync<string>(
             $"SELECT r.status || '|' || f.status || '|' || coalesce(r.due_at::text, '') FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id WHERE r.id = '{bobsAction}'"));
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM assess.assess_event"));
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'assess.estimate-alert'"));
     }
 
     private static async Task ExpectHiddenAsync(List<string> problems, string what, HttpResponseMessage response, bool notFoundOnly)

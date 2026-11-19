@@ -44,6 +44,10 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<Guid?>("CurrentAssessmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("current_assessment_id");
+
                     b.Property<Guid>("EntryId")
                         .HasColumnType("uuid")
                         .HasColumnName("entry_id");
@@ -88,6 +92,114 @@ namespace Ardea.Assessment.Persistence.Migrations
                     b.ToTable("alert", "assess", t =>
                         {
                             t.HasCheckConstraint("ck_alert_level", "level BETWEEN 1 AND 5");
+                        });
+                });
+
+            modelBuilder.Entity("Ardea.Assessment.Persistence.AlertAssessment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<Guid>("AlertId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("alert_id");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("DurationMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_ms");
+
+                    b.Property<string>("Engine")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("engine");
+
+                    b.Property<int>("EntryRevision")
+                        .HasColumnType("integer")
+                        .HasColumnName("entry_revision");
+
+                    b.Property<string>("InputFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("input_fingerprint");
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("language");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("model");
+
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<JsonDocument>("Output")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("output");
+
+                    b.Property<string>("PromptVersion")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("prompt_version");
+
+                    b.Property<string>("Provider")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("provider");
+
+                    b.PrimitiveCollection<Guid[]>("RemediationIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("remediation_ids");
+
+                    b.Property<Guid?>("RequestedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requested_by");
+
+                    b.Property<int>("RulesetVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("ruleset_version");
+
+                    b.Property<int>("TokensIn")
+                        .HasColumnType("integer")
+                        .HasColumnName("tokens_in");
+
+                    b.Property<int>("TokensOut")
+                        .HasColumnType("integer")
+                        .HasColumnName("tokens_out");
+
+                    b.HasKey("Id")
+                        .HasName("pk_assessment");
+
+                    b.HasIndex("AlertId")
+                        .HasDatabaseName("ix_assessment_alert");
+
+                    b.HasIndex("OrganizationId", "CreatedAt")
+                        .HasDatabaseName("ix_assessment_org_created");
+
+                    b.ToTable("assessment", "assess", t =>
+                        {
+                            t.HasCheckConstraint("ck_assessment_counts", "attempts BETWEEN 1 AND 2 AND tokens_in >= 0 AND tokens_out >= 0 AND duration_ms >= 0");
+
+                            t.HasCheckConstraint("ck_assessment_engine", "engine IN ('rules', 'rules+model')");
                         });
                 });
 
@@ -489,6 +601,16 @@ namespace Ardea.Assessment.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_remediation_status", "status IN ('open', 'in_review', 'closed')");
                         });
+                });
+
+            modelBuilder.Entity("Ardea.Assessment.Persistence.AlertAssessment", b =>
+                {
+                    b.HasOne("Ardea.Assessment.Persistence.Alert", null)
+                        .WithMany()
+                        .HasForeignKey("AlertId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_assessment_alert_alert_id");
                 });
 
             modelBuilder.Entity("Ardea.Assessment.Persistence.Finding", b =>

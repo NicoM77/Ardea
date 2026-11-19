@@ -25,6 +25,40 @@ quarantine. A failing source backs off up to six hours and recovers on its own; 
 of its records in quarantine is marked degraded. Its review list holds cases that need a person, such as
 two entries with different CVE ids that a shared identifier would join.
 
+## Language model
+
+Ardea works completely without a language model. With one, it adds an assessment to alerts whose findings reach
+*High* or *Critical*, or *Medium* with an unknown version: under which conditions the vulnerability can be
+exploited, whether they probably hold here, and what to do first. The model never sets the priority; its verdict
+can lower it by one level at most, only where the installed version is unknown, and «probably not affected» is a
+proposal a person confirms. At most five calls per action in seven days are made automatically; people can ask
+for more on an alert, up to a daily cap per organisation. The model sees the vulnerability's public texts and, of
+the organisation, only the affected components' version, kind, exposure, criticality and whether a protection is
+in place, under placeholders: no names of components, projects or the organisation, and no free text such as the
+protection note. Configure providers and limits with the `ARDEA_AI__…` variables
+([Configuration](configuration.md)); each organisation chooses in its settings whether nothing, only local
+providers, or also cloud providers may be used. The default is «local only».
+
+**Recommended local setup.** [Ollama](https://ollama.com) on the same host or one in the same network, as
+provider kind `ollama` (it enforces the answer's JSON schema through a grammar), with an instruction model of
+12 to 14 billion parameters under an open licence, for example `qwen3:14b` (Apache-2.0) or `gemma3:12b`. Such a
+model writes German, French, Italian and English, which the organisations' languages need, and fits a GPU with
+12 to 16 GB of memory; the planning expects 10 to 20 seconds per assessment there. On a CPU it works too, but slowly: raise
+`ARDEA_AI__CALL_TIMEOUT_SECONDS` to 300 and keep `ARDEA_AI__PARALLELISM` at 1. Smaller models (7 to 8 billion)
+break the length limits and references more often; such answers are refused and asked again once, then the alert
+carries the note «without AI assessment». The model has not been measured against Ardea's reference set yet; the
+share of corrected assessments per model and prompt version will show its quality in operation.
+
+```
+ARDEA_AI__PROVIDERS__local__KIND=ollama
+ARDEA_AI__PROVIDERS__local__ENDPOINT=http://ollama:11434
+ARDEA_AI__PROVIDERS__local__MODEL=qwen3:14b
+```
+
+The worker logs each assessment with provider, tokens and duration, never the prompt or the answer. With
+`OTEL_EXPORTER_OTLP_ENDPOINT` set, the meter `Ardea.Assessment.Ai` reports calls, tokens, durations, errors,
+retries and assessments by outcome.
+
 ## Maintenance commands
 
 Run them in a one-off container: `docker compose run --rm api <command>`. The `org` commands need the owner

@@ -92,7 +92,24 @@ internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles,
         var all = sets.SelectMany(s => s.Findings).ToList();
         var components = await ComponentsAsync(all.Select(f => f.ComponentId), cancellationToken);
         var texts = (await entries.TextsAsync([.. all.Select(f => f.EntryId).Distinct()], cancellationToken)).ToDictionary(t => t.Id);
-        return [.. sets.Select(s => AnswerTemplates.For(s.Findings, texts, f => Refs(components, f.ComponentId, f.ProjectId), s.TargetVersion))];
+        var assessments = await CurrentAssessmentsAsync(all.Select(f => f.AlertId), cancellationToken);
+        return [.. sets.Select(s => AnswerTemplates.For(s.Findings, texts, f => Refs(components, f.ComponentId, f.ProjectId), s.TargetVersion, assessments))];
+    }
+
+    /// <summary>
+    /// The current assessment per alert, where it was made for the revision of the entry the findings come from; an
+    /// older one no longer speaks for the alert, and the templates answer until the model looks again.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, AlertAssessment>> CurrentAssessmentsAsync(IEnumerable<Guid> alertIds, CancellationToken cancellationToken)
+    {
+        var ids = alertIds.Distinct().ToArray();
+        var current = await (
+                from alert in db.Alerts.AsNoTracking()
+                join assessment in db.Assessments.AsNoTracking() on alert.CurrentAssessmentId equals (Guid?)assessment.Id
+                where ids.Contains(alert.Id) && assessment.EntryRevision == alert.AssessedEntryRevision
+                select assessment)
+            .ToListAsync(cancellationToken);
+        return current.ToDictionary(a => a.AlertId);
     }
 
     public async Task<IReadOnlyList<ActionEventView>> EventsAsync(Guid remediationId, CancellationToken cancellationToken) =>

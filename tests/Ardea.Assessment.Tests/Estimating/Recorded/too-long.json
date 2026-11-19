@@ -1,0 +1,11 @@
+{
+  "verdicts": "{VERDICTS}",
+  "likelihood": { "level": "medium", "reason": "Der Angriff braucht ein Konto." },
+  "confidence": "medium",
+  "what_happened": "Eine fehlende Berechtigungsprüfung erlaubt angemeldeten Benutzern, Daten anderer Benutzer zu lesen. Betroffen sind alle Versionen vor der Korrektur, auf allen Plattformen und in allen Konfigurationen, und zwar unabhängig davon, ob die Funktion genutzt wird oder nicht, wie die Quelle ausführlich darlegt.",
+  "preconditions": [],
+  "impact": "Vertrauliche Daten anderer Benutzer können gelesen werden.",
+  "actions": [ { "step": "Aktualisieren.", "sources": [1], "own": false } ],
+  "unknowns": [],
+  "reasoning": [ { "sentence": "Die Quelle nennt die Versionen.", "sources": [1], "components": [] } ]
+}

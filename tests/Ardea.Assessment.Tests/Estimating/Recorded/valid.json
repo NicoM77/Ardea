@@ -1,0 +1,20 @@
+{
+  "verdicts": "{VERDICTS}",
+  "likelihood": { "level": "medium", "reason": "Der Angriff braucht ein Konto auf dem System, und das System ist nur intern erreichbar." },
+  "confidence": "medium",
+  "what_happened": "Eine fehlende Berechtigungsprüfung erlaubt angemeldeten Benutzern, Daten anderer Benutzer zu lesen.",
+  "preconditions": [
+    { "condition": "Der Angreifer hat ein Konto auf dem System.", "state": "unknown" },
+    { "condition": "Das System ist aus dem Internet erreichbar.", "state": "not_met" }
+  ],
+  "impact": "Vertrauliche Daten anderer Benutzer können gelesen werden.",
+  "actions": [
+    { "step": "Auf die Korrekturversion aus der Quelle aktualisieren.", "sources": [1], "own": false },
+    { "step": "Bis dahin prüfen, welche Konten Zugriff auf das System haben.", "sources": [], "own": true }
+  ],
+  "unknowns": [ "Ob die betroffene Funktion im Einsatz ist." ],
+  "reasoning": [
+    { "sentence": "Die Quelle nennt die betroffenen Versionen und die Korrektur.", "sources": [1], "components": [] },
+    { "sentence": "Das Profil nennt Version und Erreichbarkeit der Komponente.", "sources": [], "components": ["C1"] }
+  ]
+}

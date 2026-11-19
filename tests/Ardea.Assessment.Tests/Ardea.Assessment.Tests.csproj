@@ -3,6 +3,9 @@
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Estimating/Recorded/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../../src/Modules/Assessment/Ardea.Assessment/Ardea.Assessment.csproj" />
     <ProjectReference Include="../../src/Modules/Assets/Ardea.Assets/Ardea.Assets.csproj" />
     <ProjectReference Include="../../src/Modules/Intel/Ardea.Intel/Ardea.Intel.csproj" />

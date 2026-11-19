@@ -89,12 +89,13 @@ internal sealed class AlertAssessor(
             db.Alerts.Add(alert);
         }
 
+        var modelVerdicts = await ModelVerdictsAsync(alert, entry, cancellationToken);
         var byComponent = existing.ToDictionary(f => f.ComponentId);
         var present = components.ToDictionary(c => c.Id);
         foreach (var candidate in candidates)
         {
             byComponent.TryGetValue(candidate.Component.Id, out var known);
-            var outcome = Evaluate(entry, candidate, known);
+            var outcome = Evaluate(entry, candidate, known, modelVerdicts.GetValueOrDefault(candidate.Component.Id));
             if (byComponent.Remove(candidate.Component.Id, out var finding))
             {
                 Apply(finding, outcome, now);
@@ -141,6 +142,24 @@ internal sealed class AlertAssessor(
 
         await db.SaveChangesAsync(cancellationToken);
         return touched;
+    }
+
+    /// <summary>
+    /// The verdicts per component of the alert's current assessment by the model, when it was made for this
+    /// revision of the entry (master plan 7.1 property 2: the stored verdict is an input of the rules). Each verdict
+    /// carries the component's context when asked; <see cref="Evaluate"/> uses it only while that still holds.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, Estimating.StoredVerdict>> ModelVerdictsAsync(Alert alert, EntryFacts entry, CancellationToken cancellationToken)
+    {
+        if (alert.CurrentAssessmentId is not { } id)
+        {
+            return new Dictionary<Guid, Estimating.StoredVerdict>();
+        }
+
+        var current = await db.Assessments.AsNoTracking()
+            .Where(a => a.Id == id && a.Engine == AlertAssessment.ModelEngine && a.EntryRevision == entry.Revision)
+            .Select(a => a.Output).SingleOrDefaultAsync(cancellationToken);
+        return current is null ? new Dictionary<Guid, Estimating.StoredVerdict>() : Estimating.StoredEstimate.VerdictsOf(current);
     }
 
     /// <summary>
@@ -206,7 +225,7 @@ internal sealed class AlertAssessor(
     }
 
     /// <summary>Match, version check and rule set for one candidate (master plan 7.2, 7.3, 7.6).</summary>
-    private Outcome Evaluate(EntryFacts entry, Candidate candidate, Finding? known)
+    private Outcome Evaluate(EntryFacts entry, Candidate candidate, Finding? known, Estimating.StoredVerdict? modelVerdict)
     {
         var evidence = new Dictionary<string, object?>
         {
@@ -221,6 +240,14 @@ internal sealed class AlertAssessor(
 
         var component = candidate.Component;
         var human = known is { VerdictSource: "human" } ? known.Verdict : null;
+
+        // The model's verdict is a factor only where the version check could not decide (master plan 7.5, 7.6;
+        // task 4.5); a person's verdict comes first. A verdict made for another version, exposure, criticality or
+        // protection of the component no longer counts: the rules alone apply until the model is asked again.
+        var model = version?.Verdict == VersionVerdicts.Unknown && human is null
+            && modelVerdict is { } stored && stored.Context == Estimating.EstimateInput.Context(component, version.Verdict)
+            ? Estimating.StoredEstimate.Name(stored.Verdict)
+            : null;
         var input = new RuleInput
         {
             StrongMatch = candidate.IsStrong,
@@ -240,22 +267,30 @@ internal sealed class AlertAssessor(
             Exposure = component.Exposure,
             Protection = component.Protection,
             DevelopmentOnly = component.DependencyScope == "development",
+            ModelVerdict = model,
         };
         var result = RuleEngine.Evaluate(rules, input);
 
         // What the rules say without a person's «not affected»: whether a reassessment reopens it (master plan 6.7).
         var withoutPerson = input.HumanExcluded ? RuleEngine.Evaluate(rules, input with { HumanExcluded = false }) : result;
 
-        // The verdict without a model (master plan 4.9).
+        // The verdict without a model (master plan 4.9); the model's where it counted. Its «not_affected» stays a
+        // proposal on an open finding until a person confirms it (master plan 7.5).
         var verdict = version?.Verdict switch
         {
             VersionVerdicts.InRange => "affected",
             VersionVerdicts.Unknown => "uncertain",
             _ => "not_affected",
         };
+        var source = "rules";
+        if (model is not null && result.Exclusion is null)
+        {
+            (verdict, source) = (model, "model");
+        }
+
         return new Outcome(
             candidate.MatchType, version?.Verdict, version?.Reason, version?.Verdict == VersionVerdicts.InRange ? version.FixedVersion : null,
-            verdict, result.Level, result.Exclusion, Document(evidence), Document(result),
+            verdict, source, result.Level, result.Exclusion, Document(evidence), Document(result),
             entry.Exploitation, entry.FixAvailable, withoutPerson.Level, Document(withoutPerson));
     }
 
@@ -271,6 +306,7 @@ internal sealed class AlertAssessor(
         VersionReason = outcome.VersionReason,
         FixedVersion = outcome.FixedVersion,
         Verdict = outcome.Verdict,
+        VerdictSource = outcome.VerdictSource,
         Level = outcome.Level,
         Evidence = outcome.Evidence,
         Factors = outcome.Factors,
@@ -300,7 +336,7 @@ internal sealed class AlertAssessor(
 
         var changed = finding.MatchType != outcome.MatchType || finding.VersionVerdict != outcome.VersionVerdict
             || finding.VersionReason != outcome.VersionReason || finding.FixedVersion != outcome.FixedVersion
-            || (finding.VerdictSource == "rules" && finding.Verdict != outcome.Verdict) || finding.Level != level
+            || (finding.VerdictSource != "human" && (finding.Verdict != outcome.Verdict || finding.VerdictSource != outcome.VerdictSource)) || finding.Level != level
             || finding.Exploitation != outcome.Exploitation || finding.FixAvailable != outcome.FixAvailable
             || !JsonElement.DeepEquals(finding.Evidence.RootElement, outcome.Evidence.RootElement)
             || !JsonElement.DeepEquals(finding.Factors.RootElement, factors.RootElement);
@@ -310,7 +346,7 @@ internal sealed class AlertAssessor(
             finding.VersionVerdict = outcome.VersionVerdict;
             finding.VersionReason = outcome.VersionReason;
             finding.FixedVersion = outcome.FixedVersion;
-            finding.Verdict = finding.VerdictSource == "rules" ? outcome.Verdict : finding.Verdict;
+            (finding.Verdict, finding.VerdictSource) = finding.VerdictSource == "human" ? (finding.Verdict, finding.VerdictSource) : (outcome.Verdict, outcome.VerdictSource);
             finding.Level = level;
             finding.Evidence = outcome.Evidence;
             finding.Factors = factors;
@@ -384,6 +420,6 @@ internal sealed class AlertAssessor(
 
     /// <summary>The result for one finding.</summary>
     private sealed record Outcome(
-        string MatchType, string? VersionVerdict, string? VersionReason, string? FixedVersion, string Verdict, int Level, string? ExclusionReason,
+        string MatchType, string? VersionVerdict, string? VersionReason, string? FixedVersion, string Verdict, string VerdictSource, int Level, string? ExclusionReason,
         JsonDocument Evidence, JsonDocument Factors, string Exploitation, bool FixAvailable, int ReopenLevel, JsonDocument ReopenFactors);
 }

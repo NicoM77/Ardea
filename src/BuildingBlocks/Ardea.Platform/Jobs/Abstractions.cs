@@ -28,6 +28,10 @@ public sealed record EnqueueOptions
 
     public DateTimeOffset? RunAt { get; init; }
 
+    /// <summary>
+    /// Waiting jobs of one kind are claimed by priority, lowest value first. A kind may rank its own jobs with values
+    /// beyond the named ones, e.g. by level (ADR 037); kinds never compete with each other on it.
+    /// </summary>
     public JobPriority? Priority { get; init; }
 
     /// <summary>The organisation whose tenant context the job runs in.</summary>

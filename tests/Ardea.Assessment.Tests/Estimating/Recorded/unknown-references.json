@@ -1,0 +1,11 @@
+{
+  "verdicts": [ { "component": "C1", "verdict": "not_affected" }, { "component": "C9", "verdict": "not_affected" } ],
+  "likelihood": { "level": "low", "reason": "Nicht betroffen." },
+  "confidence": "high",
+  "what_happened": "Die Lücke betrifft eine andere Komponente.",
+  "preconditions": [],
+  "impact": "Keine.",
+  "actions": [ { "step": "Nichts tun.", "sources": [42], "own": false } ],
+  "unknowns": [],
+  "reasoning": [ { "sentence": "Quelle 42 bestätigt das.", "sources": [42], "components": ["C9"] } ]
+}

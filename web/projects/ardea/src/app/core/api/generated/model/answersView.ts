@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { AffectedAnswer } from './affectedAnswer';
+import type { ModelAnswersView } from './modelAnswersView';
 import type { ToDoAnswer } from './toDoAnswer';
 import type { WhatHappenedAnswer } from './whatHappenedAnswer';
 
@@ -14,4 +15,7 @@ export interface AnswersView {
   whatHappened: WhatHappenedAnswer;
   affected: AffectedAnswer;
   toDo: ToDoAnswer;
+  model?: null | ModelAnswersView;
+  /** @nullable */
+  modelNote?: string | null;
 }

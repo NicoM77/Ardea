@@ -41,7 +41,14 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
     /// <summary>The source every test entry comes from.</summary>
     public Guid SourceId { get; }
 
-    public static async Task<AssessmentTestHost> StartAsync(PostgresServer server)
+    /// <summary>The organisations' language and AI data policy; <c>local_only</c> unless a test sets another.</summary>
+    public Estimating.TestOrganizations Organizations => Services.GetRequiredService<Estimating.TestOrganizations>();
+
+    /// <param name="server">The database server.</param>
+    /// <param name="configure">Replaces services after the modules registered theirs, e.g. the AI providers.</param>
+    /// <param name="settings">Configuration values, e.g. the AI limits.</param>
+    public static async Task<AssessmentTestHost> StartAsync(
+        PostgresServer server, Action<IServiceCollection>? configure = null, IReadOnlyDictionary<string, string?>? settings = null)
     {
         var name = await server.CreateDatabaseAsync("assess");
         var database = new DatabaseOptions
@@ -66,7 +73,7 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
 
         var clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 19, 12, 0, 0, TimeSpan.Zero));
         var services = new ServiceCollection();
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(settings ?? new Dictionary<string, string?>()).Build();
         services.AddSingleton<IConfiguration>(configuration);
         services.AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance);
         services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
@@ -79,6 +86,9 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
         new Assets.AssetsModule().AddServices(services, configuration);
         new Intel.IntelModule().AddServices(services, configuration);
         new AssessmentModule().AddServices(services, configuration);
+        services.AddSingleton<Estimating.TestOrganizations>();
+        services.AddSingleton<Iam.Contracts.IOrganizationProfiles>(sp => sp.GetRequiredService<Estimating.TestOrganizations>());
+        configure?.Invoke(services);
         var built = services.BuildServiceProvider(validateScopes: true);
 
         var sourceId = Guid.CreateVersion7();
@@ -308,6 +318,7 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
             "assess.match-entry" => Run<MatchEntry, MatchEntryHandler>,
             "assess.assess-alert" => Run<AssessAlert, AssessAlertHandler>,
             "assess.match-project" => Run<MatchProject, MatchProjectHandler>,
+            "assess.estimate-alert" => Run<Ardea.Assessment.Estimating.EstimateAlert, Ardea.Assessment.Estimating.EstimateAlertHandler>,
             _ => throw new InvalidOperationException($"No test runner for {kind}."),
         };
         return organization is { } org ? InOrganizationAsync(org, work) : InSystemAsync(work);

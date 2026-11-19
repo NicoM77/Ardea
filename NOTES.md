@@ -1,6 +1,6 @@
 # NOTES: Arbeitsstand und Wissen ausserhalb des Repositorys
 
-Stand: 19.11.2026, ca. 20:40 UTC. Geschrieben von Claude als Kontext-Sicherung: alles, was ich über die
+Stand: 19.11.2026, ca. 23:10 UTC. Geschrieben von Claude als Kontext-Sicherung: alles, was ich über die
 Umsetzung weiss und was nicht schon im Repository steht (README, Masterplan, ADR, Abnahmen, PR-Texte,
 Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 
@@ -12,7 +12,8 @@ Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 | #81 (6.6, ADR 043) | **gemergt**: Selbstcheck alle 5 min in `api` und `worker` (Transaktions-Advisory-Lock), Mail an die Instanz-Admins bei neuer Warnung, Erinnerung nach 24 h, Entwarnung; Zustand in `platform.instance_warning`; `iam.instance_administrators()` gibt nur IDs. Unabhängig geprüft (1 Blocker: OpenAPI-CRLF; behoben) | — |
 | #82 (7.6 `seed-demo`) | **gemergt**: Demo ohne Zuweisung/Frist/«in Prüfung», verweigert DB mit Daten, Worker-Herzschlag oder Jobs; Sammel-Mails an erfundene Personen abgeschaltet; KI-Policy `none`. Unabhängig geprüft (keine Blocker, 3 Should-fix behoben) | 5a passt die Demo an (Reminder, Hinweise) |
 | #83 | gemergt: Stammdaten-Suche ignoriert `Data/` ohne Katalog (Windows) | — |
-| Phase 5a | neu seit #80 (Kapitel 17). **Eigentümer-Entscheid 19.11.: 5a vor Phase 7.** 5a.1 (Versuch, ADR 044) läuft als Agent auf `spike/notices-per-week` | danach 5a.2 … 5a.6 |
+| #84 (5a.1, ADR 044), #86 (7.10 Teil 1), #87 (#85 TOTP einmalig, ADR 045), #88, #89 (5a.2, ADR 046), #90, #91 (Mockups 5a.5) | gemergt; #87 und #89 unabhängig geprüft (je 1 Blocker bzw. 4 Should-fix, behoben); main-Lauf zu #86 grün, zu #89 läuft | — |
+| Phase 5a | neu seit #80 (Kapitel 17). **Eigentümer-Entscheid 19.11.: 5a vor Phase 7.** 5a.1 ✅, 5a.2 ✅; **Release-Sperre: kein Release/Upgrade zwischen 5a.2 und 5a.5** (ADR 046 Entscheid 13). 5a.3 (`feat/notices`, ADR 0047) und 5a.4 (`feat/stack-wizard`) laufen als Agents | dann 5a.5 (Seiten, Mockups in #91), 5a.6 |
 | Phase 6 | 6.1, 6.5, 6.6 ✅; 6.4/6.8 brauchen die eigene Instanz; 6.2, 6.3 brauchen Menschen; 6.7 offen nur wegen `SECURITY.md`-Zuordnung (README-Absatz) | |
 | Phase 7 | 7.6 ✅; 7.4, 7.5, 7.7, 7.8 erst **nach 5a** (5a baut Datenmodell und UI um); 7.10 jederzeit; 7.1/7.2/7.3/7.13 nur nach Rückfrage | |
 
@@ -90,6 +91,7 @@ Die meisten stehen in `docs/acceptance/phase-*.md`; hier alle an einem Ort:
   ausgehende Verbindungen; Grundlage `docs/security/threat-review.md`); 6.3 manueller Zugänglichkeitsdurchgang
   der Kernabläufe mit Tastatur und Screenreader (sinnvoll erst nach 5a, weil 5a die Kernabläufe ändert);
   6.4/6.8 Beobachtungen an der projekteigenen Instanz (braucht Infrastruktur des Eigentümers).
+- **Mockups 5a.5 (#91, E15) prüfen**, offene Fragen: Tasten A/D kollidieren im Deutschen (besser 1/2?); braucht «Remediated» einen Grund (11.5 sagt ja, Mockup nein)?; drei Antworten auf jeder Karte oder hinter Details?; Erinnerungsrhythmus-Diagramm statt Fristen-Laufband ok?; Stack-Eintrag mit exakter Version im Stack lassen oder in ein Projekt verschieben?; Namenskonflikt `ui-notice` (Bibliothek) mit «Notice».
 - Masterplan 9.2 hat durch #81 eine Zeile mehr (neue Systemoperation `iam.instance_administrators`); falls
   der Plan unverändert bleiben soll, sagen.
 - Phase 7 nur nach Rückfrage: 7.1 (Branch-Schutz, Dependabot, CodeQL: Kosten), 7.2/7.3 (Release), 7.13.
@@ -113,6 +115,8 @@ Die meisten stehen in `docs/acceptance/phase-*.md`; hier alle an einem Ort:
 - **Gelernte Katalogeinträge**: eine Komponente, die auf einen gelernten Eintrag umgestellt wurde, bekommt
   die Roh-Schlüssel zum Zeitpunkt der Umstellung; später zugeordnete Roh-Schlüssel erst bei ihrer nächsten
   Änderung (#71).
+- **#85 behoben (#87):** TOTP-Code einmal pro Konto; Spalte `totp_last_step` von EF nie geschrieben, Trigger `iam.keep_totp_last_step`, Zeilensperre pro Konto bei Code-Prüfungen. Per Konto, nicht per Schlüssel (2FA aus/ein innerhalb 30 s: erster Code des neuen Schlüssels wartet einen Schritt).
+- **5a.2-Übergang (ADR 046):** Trigger `assets.component_fill_precision` und `assess.open_instead_of_review` nur für diese Version (4.11), mit `assigned_to`/`due_at`/`due_at_manual` und der `deadlineHours`-Toleranz in der nächsten Version entfernen.
 - `repository.unavailable` ist in Regeln wählbar, wird aber noch nirgends ausgelöst.
 - **Selbstcheck (ADR 043):** ein Worker-Neustart über 2 min ergibt eine Warn- und eine Entwarnungsmail;
   Uhrenversatz zwischen getrennten API- und Worker-Hosts lässt `worker_stalled` flattern (gleicher Host

@@ -13,6 +13,7 @@ Der Masterplan ist seit dem 18.11.2026 freigegeben; damit sind alle Einträge **
 | [0034](0034-rule-set-file.md) | Rule set version 1 as a checked JSON file in the image; severity classes, exclusions, stored explanation; refines 007 |
 | [0035](0035-actions-history-and-first-fill.md) | Actions kept in step once per unit of work, events as history rows, first fill by match scope, numbers, people's decisions, read API; refines 011 and 014 |
 | [0036](0036-reference-set-and-calibration.md) | Reference set of 250 labelled pairs from the spike week, selected by script and run through the real pipeline in the build; spike week as test data; labels by a model for owner review; calibration of the version check; refines 007, 033, 034 |
+| [0037](0037-assessment-by-language-model.md) | Assessment by a language model: versioned prompt and schema, checked answers, two attempts at allowed providers only, immutable `assessment` rows, verdict as a factor for unknown versions, threshold and quotas, `assess.model_tokens_since`; refines 007, 023, 029 and 035 |
 
 | Nr. | Entscheidung | Wichtigste verworfene Alternative | Kapitel | Status |
 |---|---|---|---|---|

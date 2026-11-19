@@ -42,7 +42,14 @@ public sealed record EntryText(
     string? DescriptionSource,
     IReadOnlyList<string> Solutions,
     IReadOnlyList<string> Workarounds,
-    string? AdvisoryUrl);
+    string? AdvisoryUrl)
+{
+    /// <summary>Every reference of the entry in a stable order, for the numbered source list of an assessment (master plan 7.5).</summary>
+    public IReadOnlyList<EntryReference> References { get; init; } = [];
+}
+
+/// <summary>A reference of an entry: its address and the tags its source gave it, e.g. <c>vendor-advisory</c>, <c>patch</c>.</summary>
+public sealed record EntryReference(string Url, IReadOnlyList<string> Tags);
 
 /// <summary>Keys of affected products, in the forms of <c>intel.entry_affected</c>.</summary>
 /// <param name="ProductKeys">Product keys: catalogue keys or raw keys.</param>

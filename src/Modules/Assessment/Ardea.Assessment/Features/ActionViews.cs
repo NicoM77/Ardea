@@ -126,6 +126,10 @@ internal sealed record AddNoteRequest(string? Text);
 /// <summary>Sets the outcome of one finding, or <c>open</c> to take it back; <c>expectedStatus</c> as for actions.</summary>
 internal sealed record SetFindingStatusRequest(string? Status, string? ExpectedStatus, string? Note);
 
+/// <summary>The answer to a request for the model's assessment of an alert.</summary>
+/// <param name="Queued"><c>false</c> when an assessment of the alert was already waiting; it covers this request.</param>
+internal sealed record AssessmentRequestView(bool Queued);
+
 internal static class Levels
 {
     public static string Name(int level) => level switch

@@ -88,6 +88,12 @@ internal sealed record RuleResult
     public IReadOnlyList<BoundRow> Caps { get; init; } = [];
 
     public IReadOnlyList<BoundRow> Floors { get; init; } = [];
+
+    /// <summary>
+    /// The level the rules give without the model's verdict, after the same bounds; set only when a verdict of the
+    /// model counted. The threshold for asking the model again and the floor of 7.6 compare against it.
+    /// </summary>
+    public int? LevelWithoutModel { get; init; }
 }
 
 /// <summary>
@@ -162,16 +168,18 @@ internal static class RuleEngine
         }
 
         // The model lowers by at most one level against the result without it, until a person confirms it.
+        int? reference = null;
         if (input.ModelVerdict is not null && input.HumanVerdict is null)
         {
-            var reference = Bounded(rules, input, rules.LevelOf(withoutModel.Sum(f => f.Points)), confirmed, severity, inRange);
-            Floor("model_max_drop", reference - rules.Floors.ModelMaxDrop);
+            reference = Bounded(rules, input, rules.LevelOf(withoutModel.Sum(f => f.Points)), confirmed, severity, inRange);
+            Floor("model_max_drop", reference.Value - rules.Floors.ModelMaxDrop);
         }
 
         return new RuleResult
         {
             RulesetVersion = rules.Version,
             Level = level,
+            LevelWithoutModel = reference,
             Factors = factors,
             Points = points,
             PointsLevel = pointsLevel,

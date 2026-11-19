@@ -22,6 +22,8 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
 
     public DbSet<MatchScope> MatchScopes => Set<MatchScope>();
 
+    public DbSet<AlertAssessment> Assessments => Set<AlertAssessment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -119,6 +121,28 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             scope.HasKey(s => s.Id);
             scope.Property(s => s.Id).HasDefaultValueSql("uuidv7()");
             scope.HasIndex(s => new { s.ProjectId, s.RepositoryLinkId }).IsUnique().AreNullsDistinct(false).HasDatabaseName("ux_match_scope");
+        });
+
+        modelBuilder.Entity<AlertAssessment>(assessment =>
+        {
+            assessment.ToTable("assessment", t =>
+            {
+                t.HasCheckConstraint("ck_assessment_engine", "engine IN ('rules', 'rules+model')");
+                t.HasCheckConstraint("ck_assessment_counts", "attempts BETWEEN 1 AND 2 AND tokens_in >= 0 AND tokens_out >= 0 AND duration_ms >= 0");
+            });
+            assessment.HasKey(a => a.Id);
+            assessment.Property(a => a.Id).HasDefaultValueSql("uuidv7()");
+            assessment.Property(a => a.InputFingerprint).HasMaxLength(64);
+            assessment.Property(a => a.Engine).HasMaxLength(20);
+            assessment.Property(a => a.Provider).HasMaxLength(40);
+            assessment.Property(a => a.Model).HasMaxLength(200);
+            assessment.Property(a => a.PromptVersion).HasMaxLength(20);
+            assessment.Property(a => a.Language).HasMaxLength(20);
+            assessment.Property(a => a.Output).HasColumnType("jsonb");
+            assessment.HasIndex(a => a.AlertId).HasDatabaseName("ix_assessment_alert");
+            // The quotas: tokens of the day, assessments of an action in seven days (master plan 7.5, 7.8).
+            assessment.HasIndex(a => new { a.OrganizationId, a.CreatedAt }).HasDatabaseName("ix_assessment_org_created");
+            assessment.HasOne<Alert>().WithMany().HasForeignKey(a => a.AlertId).OnDelete(DeleteBehavior.Cascade);
         });
 
         ApplyTenantFilters(modelBuilder);

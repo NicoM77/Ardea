@@ -47,7 +47,10 @@ internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
             var source = e.Provenance.RootElement.TryGetProperty("description", out var key) && key.ValueKind == JsonValueKind.String ? key.GetString() : null;
             return new EntryText(
                 e.Id, e.PrimaryKey, e.Title, e.Description, source is null ? null : sources.GetValueOrDefault(source, source),
-                Strings(details, "solutions"), Strings(details, "workarounds"), advisory?.Url);
+                Strings(details, "solutions"), Strings(details, "workarounds"), advisory?.Url)
+            {
+                References = [.. refs.DistinctBy(r => r.Url, StringComparer.Ordinal).Select(r => new EntryReference(r.Url, r.Tags))],
+            };
         })];
     }
 

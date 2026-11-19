@@ -3,6 +3,7 @@ using System.Text;
 using Ardea.Assessment.Persistence;
 using Ardea.Assets.Contracts;
 using Ardea.Platform.Http;
+using Ardea.Platform.Jobs;
 using Ardea.Platform.Persistence;
 using Ardea.Platform.Tenancy;
 using Microsoft.AspNetCore.Builder;
@@ -59,6 +60,41 @@ internal static class ActionEndpoints
             .Produces<FindingView>().Problems(400, 403, 404, 409);
         org.MapGet("/alerts", AlertsAsync).WithName("listAlerts").Produces<ListPage<AlertSummary>>().Problems(400, 403, 404);
         org.MapGet("/alerts/{number:int}", AlertAsync).WithName("getAlert").Produces<AlertDetailView>().Problems(403, 404);
+        org.MapPost("/alerts/{number:int}/assessment", RequestAssessmentAsync).WithName("requestAlertAssessment").RequireOrganizationRole(OrganizationRole.Member)
+            .Produces<AssessmentRequestView>(StatusCodes.Status202Accepted).Problems(403, 404, 409, 429);
+    }
+
+    /// <summary>
+    /// A person asks for the model's assessment of an alert (master plan 7.5; task 4.3): without threshold and
+    /// without the actions' quota, but within the daily token quotas and the daily cap on requests by people. The job runs
+    /// before every waiting assessment of the system, under a key of its own, so a waiting system job never swallows it.
+    /// </summary>
+    private static async Task<IResult> RequestAssessmentAsync(
+        int number, HttpContext http, AssessDbContext db, Estimating.EstimateTrigger trigger, IJobQueue jobs, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
+    {
+        var alert = await db.Alerts.AsNoTracking().SingleOrDefaultAsync(a => a.Number == number, cancellationToken);
+        if (alert is null)
+        {
+            return ApiProblems.Problem("alert_not_found", StatusCodes.Status404NotFound, "No such alert.");
+        }
+
+        if ((await trigger.AllowedAsync(cancellationToken)).Count == 0)
+        {
+            return ApiProblems.Problem("ai_not_available", StatusCodes.Status409Conflict, "No language model is available under the organisation's AI data policy.");
+        }
+
+        if (!await trigger.PersonRequestsLeftAsync(cancellationToken))
+        {
+            return ApiProblems.Problem("assessment_requests_exhausted", StatusCodes.Status429TooManyRequests, "The organisation has used today's requests for assessments.");
+        }
+
+        var access = http.OrganizationAccess();
+        var queued = await jobs.EnqueueAsync(
+            new Estimating.EstimateAlert(alert.EntryId, access.UserId),
+            Estimating.EstimateAlert.Options(access.OrganizationId, alert.EntryId, alert.Level, person: true),
+            cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
+        return Results.Accepted((string?)null, new AssessmentRequestView(queued));
     }
 
     /// <summary>

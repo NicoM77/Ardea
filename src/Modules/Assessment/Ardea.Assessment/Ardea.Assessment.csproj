@@ -4,6 +4,12 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <!-- The abstraction with structured output (GetResponseAsync<T>); no provider SDK (master plan 7.8). -->
+    <PackageReference Include="Microsoft.Extensions.AI" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The prompt is versioned with the code (task 4.2); its version is stored with every assessment. -->
+    <EmbeddedResource Include="Estimating/Prompts/*.md" LogicalName="Ardea.Assessment.Estimating.Prompts.%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Ardea.Assessment.Tests" />

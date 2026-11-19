@@ -24,6 +24,11 @@ internal static class HostConfiguration
             .RequireAbsoluteUrl(PublicUrlKey, "public address of the instance, used for links and cookies")
             .OneOf("REGISTRATION", "invite", "open", "closed")
             .PositiveInt("DB_PORT")
+            .PositiveInt(Ardea.Platform.Ai.AiLimits.ParallelismKey)
+            .PositiveInt(Ardea.Platform.Ai.AiLimits.CallTimeoutKey)
+            .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyTokensKey)
+            .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyTokensPerOrganizationKey)
+            .PositiveInt(Ardea.Platform.Ai.AiLimits.DailyRequestsPerOrganizationKey)
             .Add(AiErrors(configuration));
 
     /// <summary>A provider that is configured wrongly stops the start instead of failing on its first call (master plan 7.8).</summary>

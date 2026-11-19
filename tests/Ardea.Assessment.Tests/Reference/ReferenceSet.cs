@@ -114,10 +114,13 @@ internal sealed record ReferenceEvaluation(IReadOnlyList<ReferenceOutcome> Outco
             failures.Add($"{Labelled.Count} labelled pairs, at least {MinPairs} needed.");
         }
 
+        // Master plan 7.9: at least 30 above every range, half of them affected, half not: at least 15 of each.
         var above = Labelled.Where(o => o.Pair.AboveRanges).ToList();
-        if (above.Count < MinAboveRanges)
+        var aboveAffected = above.Count(o => o.Pair.Label!.Verdict == ReferenceLabel.Affected);
+        var aboveNot = above.Count(o => o.Pair.Label!.Verdict == ReferenceLabel.NotAffected);
+        if (aboveAffected < MinAboveRanges / 2 || aboveNot < MinAboveRanges / 2)
         {
-            failures.Add($"{above.Count} labelled pairs above every range, at least {MinAboveRanges} needed.");
+            failures.Add($"Above every range: {aboveAffected} affected and {aboveNot} not affected, at least {MinAboveRanges / 2} of each needed.");
         }
 
         if (MissedExact.Count > 0)
@@ -143,7 +146,7 @@ internal sealed record ReferenceEvaluation(IReadOnlyList<ReferenceOutcome> Outco
     {
         var text = new StringBuilder();
         text.AppendLine("# Reference set evaluation").AppendLine();
-        text.AppendLine($"Pairs {Outcomes.Count}, labelled {Labelled.Count} (by a person or reviewed: {Labelled.Count(o => o.Pair.Label!.ByPerson)}), above every range {Labelled.Count(o => o.Pair.AboveRanges)}. Run {duration.TotalSeconds:F0} s.").AppendLine();
+        text.AppendLine($"Pairs {Outcomes.Count}, labelled {Labelled.Count} (by a person or reviewed: {Labelled.Count(o => o.Pair.Label!.ByPerson)}), above every range {Labelled.Count(o => o.Pair.AboveRanges)} ({Labelled.Count(o => o.Pair.AboveRanges && o.Pair.Label!.Verdict == ReferenceLabel.Affected)} affected). Run {duration.TotalSeconds:F0} s.").AppendLine();
         text.AppendLine("| Measure | Value | Threshold |").AppendLine("|---|---:|---:|");
         text.AppendLine($"| missed among exact hits | {MissedExact.Count} | 0 |");
         text.AppendLine($"| missed | {Missed.Count} of {LabelledAffected.Count} ({MissedShare:P1}) | {MaxMissedShare:P0} |");

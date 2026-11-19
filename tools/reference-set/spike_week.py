@@ -6,7 +6,7 @@ included), as the CVE Program published it, keeping only records that mention on
 the three example projects anywhere: in a vendor, product, CPE, package name or text. This is the spike's
 naive keyword match, widened (prototypes/relevance-funnel), and a superset of what the structured search
 can hit for these profiles; a record that names none of the words cannot match them. The full week was
-run once against the same profiles with the same open actions (data/reference/README.md); the filter
+run once against the same profiles with the same open actions (ADR 036); the filter
 keeps the test's run time down.
 
 Usage:

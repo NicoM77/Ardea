@@ -39,6 +39,7 @@ public sealed class NotificationsModule : IModule
         services.AddScoped<IOrganizationCreatedSubscriber, DefaultRules>();
         services.AddScoped<IOrganizationTimeZoneSubscriber, DigestRescheduler>();
         services.AddScoped<Evaluator>();
+        services.AddSingleton<IDemoSeedStep, Features.DemoSeed>();
         services.AddScoped<Platform.Status.IInstanceStatusContributor, NotifyStatusContributor>();
         services.AddScoped<DeliveryReader>();
         services.AddScoped<EmailChannel>();

@@ -13,7 +13,7 @@ yet. Progress follows chapter 14 of the plan (see the roadmap below).
 
 ## Roadmap
 
-The roadmap follows chapter 14 of the master plan: eight phases up to release 1.0, each ending with
+The roadmap follows chapter 14 of the master plan: nine phases up to release 1.0, each ending with
 something that runs and can be checked. Task numbers and dependencies are the plan's; the plan holds
 the full description and the acceptance criteria of each phase. Estimates are for one experienced
 person with AI assistance and are not a commitment.
@@ -142,6 +142,21 @@ Notifications over four channels.
 
 Acceptance: [tested](docs/acceptance/phase-5.md); open: the manual iOS check on an installed web app, a test with a real push service, and the owner's review of the notification mockups.
 
+### Phase 5a · Stack and notices (4–6 weeks)
+
+The profile gets two depths (chapter 17 of the plan): a coarse stack for the organisation without versions, and exact projects with a repository. Entries that touch the stack become notices («might affect you») answered with «affects us» or «doesn't affect us». «Affects us» creates a reminder. Actions become reminders: no assignment, no deadline, no escalation; open reminders remind by level.
+
+| No. | Task | Depends on | Status |
+|---|---|---|---|
+| 5a.1 | **Spike:** notices per week for typical stacks with the spike week's data; set thresholds; ADR | 3.7 | ⬜ |
+| 5a.2 | Data model: `project.kind`, `version_precision`, `notice`; remove assignment, deadline and «in review»; migrate open actions without a version to notices | 5a.1 | ⬜ |
+| 5a.3 | Notices from the stack with a threshold per entry; «affects us» creates a reminder; reappears on active exploitation or KEV | 5a.2 | ⬜ |
+| 5a.4 | Wizard: stack step before projects; projects and repository optional | 5a.2 | ⬜ |
+| 5a.5 | Notices page; shortened reminder detail; overview with new notices | 5a.3 | ⬜ |
+| 5a.6 | Reminders by level; event `notice.raised`; escalation dropped | 5a.3, 5.2 | ⬜ |
+
+Acceptance: a stack of ten entries produces at most the number of notices set in 5a.1 in the spike week; «doesn't affect us» does not come back; no endpoint or page knows assignment or deadline.
+
 ### Phase 6 · Hardening (3–4 weeks)
 
 A hardened, reviewed and documented instance.
@@ -182,7 +197,7 @@ A tidy repository under the name Ardea, release 1.0 built without manual steps, 
 
 Acceptance (planned): every pull request runs the pipeline again and branch protection requires it green (7.13); merging the 1.0.0 release PR produces tag, `CHANGELOG.md`, signed images for both architectures and a GitHub release with notes, SBOM and Compose file without manual steps, within 25 minutes; signature and provenance verify with the documented command; a commit that is not a Conventional Commit fails its PR; `seed-demo` yields an instance with data in under 2 minutes and aborts on a database with data; someone new to the project installs Ardea from the README or website alone in under 15 minutes; the website republishes on a release with no broken link and no accessibility finding; all criteria of phases 0 to 5 and chapter 1.6 hold on both architectures; build and lint run without warnings, the comment check finds nothing outside the exceptions and the OpenAPI document is unchanged; GitHub holds no branch besides main except those of open PRs, and a merged PR deletes its branch (7.14); afterwards no file links to `docs/masterplan/` and every file belongs to the product, its build, tests, documentation or website.
 
-**Total: 38–50 weeks.**
+**Total: 42–56 weeks** (phase 5a added 19.11.2026).
 
 ### After 1.0
 

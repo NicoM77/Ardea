@@ -220,7 +220,6 @@ ASP.NET Core on .NET 10, Angular 22, PostgreSQL 18, one container image with thr
 
 ## Licence
 
-The application is licensed under the [GNU Affero General Public License v3.0](LICENSE). The provider SDK
-(`src/Sources/Ardea.Intel.Sources.Abstractions`) is licensed under the
-[Apache License 2.0](src/Sources/Ardea.Intel.Sources.Abstractions/LICENSE), so that third parties can write
-source adapters under a licence of their choice (decision E2, master plan 13.9).
+Ardea is licensed under the [MIT License](LICENSE), including the provider SDK
+(`src/Sources/Ardea.Intel.Sources.Abstractions`), so third parties can write source adapters under a licence
+of their choice (decision E2, master plan 13.9).

@@ -48,7 +48,8 @@ The product does not forward more security news. It compares every vulnerability
 - The system must stay useful without any AI provider configured.
 - Planning phase only: mockups and prototypes are allowed, production implementation is not.
 - Product name: Ardea, Latin for heron. Chosen by the owner on 2026-11-18; a trademark search is still due before the first public release.
-- Undecided: licence, hosted offering, and any commercial tier. Do not imply any of them.
+- Licence: MIT, chosen by the owner on 2026-11-19.
+- Undecided: hosted offering and any commercial tier. Do not imply either of them.
 
 ## Brand Commitments
 

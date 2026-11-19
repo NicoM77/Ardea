@@ -1,7 +1,7 @@
 # Add a source
 
 A source is an adapter in its own assembly `Ardea.Intel.Sources.<Name>` that references only the SDK
-`Ardea.Intel.Sources.Abstractions` (Apache 2.0) and, if useful, `Ardea.Intel.Sources.Formats`. The host loads
+`Ardea.Intel.Sources.Abstractions` (MIT, like the whole project) and, if useful, `Ardea.Intel.Sources.Formats`. The host loads
 every such assembly in the image; nothing else needs registering. Master plan chapter 5 is the reference.
 
 1. **Check the terms first.** Store, transform, show: note what the source allows in `Terms` and

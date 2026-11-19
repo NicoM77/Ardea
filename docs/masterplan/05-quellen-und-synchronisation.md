@@ -52,7 +52,7 @@ Regeln für Adapter:
 - Ein Adapter entscheidet nichts über Identität, Zusammenführung oder Bedeutung. Das ist Sache des Kerns (Kapitel 6).
 - Der Kern speichert die Rohdatensätze bis zu einem Haltepunkt und den Cursor dieses Haltepunkts in einer Transaktion. Ein abgebrochener Lauf setzt am letzten Haltepunkt an; nichts wird übersprungen.
 
-Adapter werden beim Start über ihre Assembly gefunden und in `intel.source` eingetragen. Eine neue Quelle verlangt keine Änderung am Kern. Im MVP sind alle Adapter Teil des Images; das Nachladen fremder Adapter zur Laufzeit ist eine spätere Frage, die an der Lizenzentscheidung hängt (Kapitel 13.9).
+Adapter werden beim Start über ihre Assembly gefunden und in `intel.source` eingetragen. Eine neue Quelle verlangt keine Änderung am Kern. Im MVP sind alle Adapter Teil des Images; das Nachladen fremder Adapter zur Laufzeit ist eine spätere Frage; die Lizenz (MIT, Kapitel 13.9) steht ihm nicht im Weg.
 
 ## 5.3 Formatfamilien
 

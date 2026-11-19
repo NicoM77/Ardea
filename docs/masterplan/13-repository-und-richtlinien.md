@@ -151,7 +151,9 @@ Vorabstände werden ab Phase 1 als `0.x` markiert, damit sich Updates üben lass
 
 ## 13.9 Lizenz des Projekts
 
-Offen und Sache des Eigentümers. Die beiden üblichen Wege:
+**Entschieden am 19.11.2026 (E2):** MIT für das ganze Projekt, einschliesslich Provider-SDK. Der Eigentümer zieht die geringste Hürde für Nutzung und Beiträge dem Schutz vor proprietären Ablegern vor. Die Empfehlung unten ist damit verworfen; die Abwägung bleibt als Begründung stehen.
+
+Die beiden Wege, die zur Wahl standen:
 
 | | AGPL-3.0 | Apache-2.0 |
 |---|---|---|

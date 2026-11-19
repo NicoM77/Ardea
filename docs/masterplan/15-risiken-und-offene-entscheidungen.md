@@ -32,7 +32,7 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | Nr. | Frage | Empfehlung | Wirkt auf |
 |---|---|---|---|
 | E1 | Produktname | **entschieden:** Ardea (lateinisch für Reiher), Wahl des Eigentümers vom 18.11.2026; Markenrecherche (Swissreg, EUIPO, Klassen 9 und 42) vor dem ersten öffentlichen Release | Namensräume, Image, Domain |
-| E2 | Lizenz | AGPL-3.0 für die Anwendung, Apache-2.0 für das Provider-SDK | Beiträge, Verbreitung |
+| E2 | Lizenz | **entschieden am 19.11.2026:** MIT für das ganze Projekt einschliesslich Provider-SDK; die Empfehlung AGPL-3.0 und Apache-2.0 ist verworfen | Beiträge, Verbreitung |
 | E3 | KEV und EPSS schon im MVP | ja; klein, und sie tragen die Priorisierung jenseits von CVSS | Phase 1 |
 | E4 | Job-Verarbeitung | eigene Tabelle statt Bibliothek | Kapitel 3.4 |
 | E5 | Row-Level Security | als zusätzliche Härtung, wenn der Versuch in Phase 0 gelingt | Kapitel 9.2 |
@@ -67,6 +67,7 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | Abfrage der öffentlichen Schnittstelle des Cyber Security Hub und Speichern der Texte sind erlaubt; keine Anfrage beim BACS (E10) | Bestätigung des Eigentümers vom 18.11.2026 |
 | Ladeanzeige: Variante «Draw», der Reiher zeichnet sich vom Schnabel her; Prototyp in `docs/design/loader/` | Wahl des Eigentümers vom 18.11.2026 |
 | Profil aus GitHub-Repositories im MVP, mit OSV als Paketquelle für npm, NuGet, Packagist, PyPI, Maven und Go und dem Verschmelzen von Einträgen | Vorgabe und Rückfrage vom 18.11.2026 |
+| Lizenz MIT für das ganze Projekt, einschliesslich Provider-SDK (E2) | Wahl des Eigentümers vom 19.11.2026 |
 
 ## 15.4 Unabhängige Durchsicht des Plans
 

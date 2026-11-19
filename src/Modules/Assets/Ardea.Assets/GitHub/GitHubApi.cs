@@ -1,8 +1,6 @@
 using System.Globalization;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -29,14 +27,11 @@ internal sealed class GitHubApi(IHttpClientFactory clients)
     public const string ClientName = "ardea-github";
 
     /// <summary>The REST API version Ardea was checked against.</summary>
-    public const string ApiVersion = "2022-11-28";
+    public const string ApiVersion = GitHubHttp.ApiVersion;
 
     private const int MaxRepositoryPages = 10;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
-
-    private static readonly ProductInfoHeaderValue UserAgent = new(
-        "Ardea", typeof(GitHubApi).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "0");
 
     /// <summary>
     /// Checks a token with <c>GET /user</c>. Fine-grained tokens (<c>github_pat_</c>) report their
@@ -109,17 +104,7 @@ internal sealed class GitHubApi(IHttpClientFactory clients)
 
     private async Task<HttpResponseMessage> SendAsync(GitHubHost host, string path, string? token, CancellationToken cancellationToken)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, new Uri(host.ApiBase, path));
-        // An Enterprise Server is the administrator's choice and may live in the internal network (16.9).
-        request.Options.Set(Platform.Http.OutboundAddresses.AllowInternal, host.Id is not null);
-        request.Headers.UserAgent.Add(UserAgent);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-        request.Headers.Add("X-GitHub-Api-Version", ApiVersion);
-        if (token is not null)
-        {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        }
-
+        using var request = GitHubHttp.Get(host, path, token);
         var response = await clients.CreateClient(ClientName).SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if ((int)response.StatusCode is >= 300 and < 400)
         {

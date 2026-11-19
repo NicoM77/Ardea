@@ -321,7 +321,8 @@ internal sealed partial class IndexRepositoryHandler(
         component.ProductKey = product?.Key;
         component.CustomName = product is null ? Cut(finding.Package.Name, 200) : null;
         component.Kind = product?.Kind.ToString().ToLowerInvariant() ?? "library";
-        component.Version = finding.Version is null ? null : Cut(finding.Version, 100);
+        component.Version = string.IsNullOrWhiteSpace(finding.Version) ? null : Cut(finding.Version.Trim(), 100);
+        component.VersionPrecision = VersionPrecisions.Of(component.Version, finding.Purl, component.Origin);
         component.VersionScheme = product?.VersionScheme ?? schemes.ForEcosystem(finding.Package.Type)?.Name;
         component.Purl = Cut(finding.Purl, 500);
         component.DependencyScope = PackageReconciler.Scope(finding);

@@ -157,7 +157,7 @@ public sealed class RecipientTests(PostgresServer server)
     }
 
     [Fact]
-    public async Task An_assignment_written_by_the_assessment_reaches_the_assignee_through_the_queue_in_its_transaction()
+    public async Task A_status_change_written_through_the_api_reaches_its_rule_through_the_queue_in_its_transaction()
     {
         await using var host = await NotifyTestHost.StartAsync(server);
         var s = await Scenario.StartAsync(host);
@@ -166,24 +166,47 @@ public sealed class RecipientTests(PostgresServer server)
         var memberId = await host.ScalarAsync<Guid>("SELECT id FROM iam.\"user\" WHERE normalized_email = 'MEMBER@EXAMPLE.ORG'");
         await s.ActionAsync(2, level: 3);
 
+        // A reminder has no assignee (master plan 17.5): the team's work reaches people only through a rule that names it,
+        // and in the app only (master plan 8.2).
+        var rule = new
+        {
+            name = "Team work",
+            minLevel = 2,
+            events = new[] { "action.status_changed" },
+            projectIds = Array.Empty<Guid>(),
+            targets = new[] { new { channel = "in_app", recipientKind = "user", recipientRef = memberId.ToString(), mode = "immediate" } },
+        };
+        Assert.Equal(HttpStatusCode.Created, (await s.Owner.PostAsync($"{s.Path}/rules", rule)).StatusCode);
+
         // The API writes the history row; the hand-off queues it for the rules in the same transaction (ADR 038).
-        var assigned = await s.Owner.SendAsync(HttpMethod.Patch, $"{s.Path}/actions/2", new { assignedTo = memberId });
-        Assert.Equal(HttpStatusCode.OK, assigned.StatusCode);
-        Assert.Equal(["action.assigned"], await host.RowsAsync("SELECT kind FROM notify.pending_event"));
+        var changed = await s.Owner.PostAsync($"{s.Path}/actions/2/status", new { status = "risk_accepted", expectedStatus = "open" });
+        Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
+        Assert.Equal(["action.status_changed"], await host.RowsAsync("SELECT kind FROM notify.pending_event"));
         Assert.Equal(1L, await s.CountAsync($"SELECT count(*) FROM platform.job WHERE kind = 'notify.evaluate' AND state = 'pending' AND org_id = '{s.Organization}'"));
 
         Assert.Empty(await host.RunJobsAsync());
         Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.pending_event"));
-        Assert.Equal("Assigned to you.", await host.ScalarAsync<string>($"SELECT body FROM notify.notification WHERE user_id = '{memberId}'"));
+        Assert.Equal("Status: risk accepted.", await host.ScalarAsync<string>($"SELECT body FROM notify.notification WHERE user_id = '{memberId}'"));
         await s.DeliverAsync();
-        Assert.Equal("member@example.org", Assert.Single(Notifications(host)).To);
+        Assert.Empty(Notifications(host));
+    }
 
-        // The team's notes reach the assignee in the app only.
-        Assert.Equal(HttpStatusCode.Created, (await s.Owner.PostAsync($"{s.Path}/actions/2/notes", new { text = "Window on Friday" })).StatusCode);
-        Assert.Empty(await host.RunJobsAsync());
-        Assert.Equal(2L, await s.CountAsync($"SELECT count(*) FROM notify.notification WHERE user_id = '{memberId}'"));
-        await s.DeliverAsync();
-        Assert.Single(Notifications(host));
+    [Fact]
+    public async Task Events_of_assignment_and_review_written_before_the_upgrade_announce_nothing_and_read_cleanly()
+    {
+        await using var host = await NotifyTestHost.StartAsync(server);
+        var s = await Scenario.StartAsync(host);
+        await s.RuleAsync("Team work", 2, ["action.status_changed", "action.note_added"], Scenario.Target("in_app"));
+        var action = await s.ActionAsync(2, level: 3);
+
+        // Waiting in the queue across the upgrade (ADR 046): an assignment, taking into review, closing from review.
+        await s.EventAsync("action.assigned", action, $$"""{"from": null, "to": "{{Guid.CreateVersion7()}}"}""");
+        await s.EventAsync("action.status_changed", action, """{"from": "open", "to": "in_review"}""");
+        await s.EventAsync("action.status_changed", action, """{"from": "in_review", "to": "risk_accepted"}""");
+        await s.EvaluateAsync();
+
+        Assert.Equal(["Status: risk accepted."], await host.RowsAsync("SELECT body FROM notify.notification ORDER BY created_at"));
+        Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.notification WHERE kind = 'action.assigned' OR body ILIKE '%review%' OR body ILIKE '%assign%' OR title ILIKE '%status.%'"));
     }
 
     /// <summary>The notification e-mails, without the account e-mails of registration.</summary>

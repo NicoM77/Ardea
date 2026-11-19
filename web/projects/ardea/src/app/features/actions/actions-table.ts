@@ -1,8 +1,8 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
-import { UiAvatar, UiPill, UiPriority, UiStatus } from 'ui';
-import type { ActionSummary, MemberView } from '../../core/api/client';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { UiPill, UiPriority, UiStatus } from 'ui';
+import type { ActionSummary } from '../../core/api/client';
 import {
   actionName,
   clockStart,
@@ -10,32 +10,26 @@ import {
   num,
   priorityOf,
   statusKindOf,
-  timeLeft,
-  usedShare,
 } from './action-format';
-import { Duration } from './duration';
 
 interface Row {
   action: ActionSummary;
   number: number;
   name: ReturnType<typeof actionName>;
   entries: ReturnType<typeof entriesLine>;
-  owner: { id: string; name: string } | null;
-  left: number | null;
-  used: number;
-  took: number | null;
-  allowed: number | null;
+  /** When it opened or last rose; closed, when it closed. */
+  since: string;
 }
 
 /**
  * The actions as a real table (master plan 11.8): priority, the action with its project, version
- * and entry, the time left with the share used (or, closed, the time it took against the time it
- * had), owner and status. Below 640px the rows become two-line records. The title is the link; the
- * whole row answers the pointer.
+ * and entry, the day it opened or last rose (closed: the day it closed) and status. A reminder has
+ * no owner and no deadline (master plan 17.5). Below 640px the rows become two-line records. The
+ * title is the link; the whole row answers the pointer.
  */
 @Component({
   selector: 'ardea-actions-table',
-  imports: [RouterLink, TranslocoPipe, UiAvatar, UiPill, UiPriority, UiStatus, Duration],
+  imports: [RouterLink, TranslocoPipe, UiPill, UiPriority, UiStatus],
   template: `
     <table>
       <caption class="sr-only">
@@ -48,9 +42,8 @@ interface Row {
           <th scope="col">{{ 'actions.table.priority' | transloco }}</th>
           <th scope="col">{{ 'actions.table.action' | transloco }}</th>
           <th scope="col">
-            {{ (closed() ? 'actions.table.took' : 'actions.table.left') | transloco }}
+            {{ (closed() ? 'actions.table.closedOn' : 'actions.table.since') | transloco }}
           </th>
-          <th scope="col">{{ 'actions.table.owner' | transloco }}</th>
           <th scope="col">{{ 'actions.table.status' | transloco }}</th>
         </tr>
       </thead>
@@ -81,50 +74,7 @@ interface Row {
                 }
               </span>
             </td>
-            <td class="due">
-              @if (closed()) {
-                @if (row.took !== null) {
-                  <span class="line">
-                    <ardea-duration [ms]="row.took" />
-                    @if (row.allowed) {
-                      <span class="of">
-                        {{ 'actions.table.of' | transloco }}
-                        <ardea-duration [ms]="row.allowed" [parts]="1" />
-                      </span>
-                    }
-                  </span>
-                }
-              } @else if (row.left !== null) {
-                <span class="line" [class.over]="row.left < 0">
-                  @if (row.left < 0) {
-                    <span>{{ 'actions.table.overdue' | transloco }}</span>
-                  }
-                  <ardea-duration [ms]="row.left" />
-                  <span class="sr-only">{{ 'actions.table.leftWord' | transloco }}</span>
-                </span>
-                <span
-                  class="meter"
-                  role="img"
-                  [attr.aria-label]="
-                    'actions.table.used' | transloco: { percent: percent(row.used) }
-                  "
-                  ><i [style.transform]="'scaleX(' + row.used + ')'"></i
-                ></span>
-              } @else {
-                <span class="muted">{{ 'actions.table.noDeadline' | transloco }}</span>
-              }
-            </td>
-            <td class="owner">
-              @if (row.owner; as owner) {
-                <span class="who" [title]="owner.name">
-                  <ui-avatar [name]="owner.name" [personId]="owner.id" />
-                  <span class="sr-only">{{ owner.name }}</span>
-                </span>
-              } @else {
-                <span class="muted">–</span>
-                <span class="sr-only">{{ 'actions.table.unassigned' | transloco }}</span>
-              }
-            </td>
+            <td class="since">{{ row.since }}</td>
             <td class="status">
               <ui-status [kind]="status(row.action)" />
             </td>
@@ -151,10 +101,7 @@ interface Row {
       width: 108px;
     }
     th:nth-child(3) {
-      width: 176px;
-    }
-    th:nth-child(4) {
-      width: 56px;
+      width: 136px;
     }
     th:last-child {
       width: 128px;
@@ -208,48 +155,9 @@ interface Row {
       font-size: var(--fs-sub);
       line-height: var(--lh-sub);
     }
-    .line {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 0 var(--space-xs);
-      font-weight: 500;
-    }
-    .of {
-      margin-left: 4px;
-    }
-    .of,
-    .muted {
+    .since {
       color: var(--muted);
-      font-size: var(--fs-sub);
-      font-weight: 400;
-    }
-    .meter {
-      display: block;
-      height: 4px;
-      margin-top: 6px;
-      border-radius: var(--radius-meter);
-      background: var(--rule);
-      overflow: hidden;
-    }
-    .meter i {
-      display: block;
-      height: 100%;
-      border-radius: var(--radius-meter);
-      background: var(--c, var(--muted));
-      transform-origin: left;
-    }
-    tr[data-priority='critical'] {
-      --c: var(--critical);
-    }
-    tr[data-priority='high'] {
-      --c: var(--high);
-    }
-    tr[data-priority='medium'] {
-      --c: var(--medium);
-    }
-    .who {
-      display: inline-flex;
+      white-space: nowrap;
     }
     @media (hover: hover) and (pointer: fine) {
       tbody tr:hover {
@@ -284,12 +192,9 @@ interface Row {
         grid-column: 1 / -1;
         grid-row: 2;
       }
-      .due {
+      .since {
         grid-column: 1;
         grid-row: 3;
-      }
-      .owner {
-        display: none;
       }
       .status {
         grid-column: 2;
@@ -300,44 +205,26 @@ interface Row {
 })
 export class ActionsTable {
   readonly rows = input.required<readonly ActionSummary[]>();
-  readonly members = input<readonly MemberView[]>([]);
   readonly closed = input(false);
-  readonly now = input.required<Date>();
   /** Already translated: what the table lists, for screen readers. */
   readonly caption = input.required<string>();
 
+  private readonly transloco = inject(TranslocoService);
+
   protected readonly shown = computed<Row[]>(() => {
-    const now = this.now();
-    const members = this.members();
-    return this.rows().map((action) => {
-      const member = action.assignedTo
-        ? members.find((m) => m.userId === action.assignedTo)
-        : undefined;
-      const name = member?.displayName ?? null;
-      const start = clockStart(action);
-      return {
-        action,
-        number: num(action.number),
-        name: actionName(action),
-        entries: entriesLine(action),
-        owner: action.assignedTo && name ? { id: action.assignedTo, name } : null,
-        left: action.dueAt ? timeLeft(action.dueAt, now) : null,
-        used: action.dueAt ? usedShare(start, action.dueAt, now) : 0,
-        took: action.closedAt
-          ? new Date(action.closedAt).getTime() - new Date(action.openedAt).getTime()
-          : null,
-        allowed: action.dueAt ? new Date(action.dueAt).getTime() - new Date(start).getTime() : null,
-      };
-    });
+    const day = new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' });
+    return this.rows().map((action) => ({
+      action,
+      number: num(action.number),
+      name: actionName(action),
+      entries: entriesLine(action),
+      since: day.format(new Date(action.closedAt ?? clockStart(action))),
+    }));
   });
 
   protected readonly priority = priorityOf;
 
   protected status(action: ActionSummary) {
     return statusKindOf(action.status, action.closeReason);
-  }
-
-  protected percent(share: number): number {
-    return Math.round(share * 100);
   }
 }

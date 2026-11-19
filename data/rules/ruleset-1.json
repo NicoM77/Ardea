@@ -32,11 +32,5 @@
     "activeInRange": 4,
     "activeInRangeSevere": 5,
     "modelMaxDrop": 1
-  },
-  "deadlineHours": {
-    "5": 48,
-    "4": 168,
-    "3": 720,
-    "2": 2160
   }
 }

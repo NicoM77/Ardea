@@ -47,7 +47,7 @@ public interface IActionFacts
 /// <param name="RemediationId">The action, for <c>action.*</c>.</param>
 /// <param name="ProjectId">The project, for <c>backfill.completed</c>.</param>
 /// <param name="Actor">The person who acted; <c>null</c> for the system.</param>
-/// <param name="Data">What changed, e.g. <c>{"from": 4, "to": 5}</c>; <c>{"to": userId}</c> for an assignment.</param>
+/// <param name="Data">What changed, e.g. <c>{"from": 4, "to": 5}</c>.</param>
 public sealed record ActionEventFacts(Guid Id, string Kind, DateTimeOffset At, Guid? RemediationId, Guid? ProjectId, Guid? Actor, JsonElement Data);
 
 /// <summary>An action as a message describes it (master plan 8.5).</summary>
@@ -60,7 +60,7 @@ public sealed record ActionFacts
     /// <summary>2 to 5 while open; kept when it closes.</summary>
     public required int Level { get; init; }
 
-    /// <summary><c>open</c>, <c>in_review</c> or <c>closed</c>.</summary>
+    /// <summary><c>open</c> or <c>closed</c>.</summary>
     public required string Status { get; init; }
 
     public required Guid ProjectId { get; init; }
@@ -79,8 +79,6 @@ public sealed record ActionFacts
     public required bool FixAvailable { get; init; }
 
     public string? TargetVersion { get; init; }
-
-    public Guid? AssignedTo { get; init; }
 
     public required bool IsBackfill { get; init; }
 

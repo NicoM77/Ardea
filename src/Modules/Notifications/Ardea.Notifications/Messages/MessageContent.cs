@@ -67,9 +67,6 @@ internal sealed record MessageContent
 
     public DateTimeOffset? PeriodEnd { get; init; }
 
-    /// <summary>The member the message goes to, for «assigned to you».</summary>
-    public Guid? RecipientUserId { get; init; }
-
     /// <summary>The highest level among the items.</summary>
     public int? Level => Items.Max(i => i.Level);
 

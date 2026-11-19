@@ -17,7 +17,7 @@ export const EXPECTED_LEVELS = [5, 4, 3, 2, 1] as const;
 
 /** Whether a finding carries the model's verdict that counted, open for a person to review. */
 export function hasModelEstimate(f: Pick<FindingView, 'verdictSource' | 'status'>): boolean {
-  return f.verdictSource === 'model' && (f.status === 'open' || f.status === 'in_review');
+  return f.verdictSource === 'model' && f.status === 'open';
 }
 
 /** The model's «not affected» is a proposal a person confirms (master plan 7.5). */

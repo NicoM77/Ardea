@@ -352,7 +352,7 @@ public sealed class EstimateTests(PostgresServer server)
             var withoutModel = int.Parse(rows.Single(r => r[1] == baseline.ToString())[2], System.Globalization.CultureInfo.InvariantCulture);
             var level = int.Parse(withModel[2], System.Globalization.CultureInfo.InvariantCulture);
             var floor = exploitation != "active" ? 2 : !inRange ? 3 : score >= 7 ? 5 : 4;
-            if (level < 2 || withModel[3] is not ("open" or "in_review"))
+            if (level < 2 || withModel[3] != "open")
             {
                 problems.Add($"{key}: level {level}, status {withModel[3]} without a person");
             }

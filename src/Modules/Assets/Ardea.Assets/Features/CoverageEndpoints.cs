@@ -33,7 +33,10 @@ internal static partial class CoverageEndpoints
 
     private static async Task<IResult> CoverageAsync(Guid? projectId, AssetsDbContext db, IProductCatalog catalog, CancellationToken cancellationToken)
     {
-        var projects = await db.Projects.AsNoTracking().Where(p => p.ArchivedAt == null && (projectId == null || p.Id == projectId))
+        // The stack names technologies without versions on purpose (master plan 17.1): its gaps are no gaps of the profile,
+        // unless it is asked for by its id.
+        var projects = await db.Projects.AsNoTracking()
+            .Where(p => p.ArchivedAt == null && (projectId == null ? p.Kind == Project.ProjectKind : p.Id == projectId))
             .Select(p => p.Id).ToListAsync(cancellationToken);
         if (projectId is not null && projects.Count == 0)
         {

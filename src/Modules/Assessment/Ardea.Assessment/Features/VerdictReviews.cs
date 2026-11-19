@@ -100,7 +100,7 @@ internal sealed class VerdictReviews(
             return Refusal.Conflict("verdict_conflict", $"The verdict is {finding.Verdict} ({finding.VerdictSource}) by now; reload it and decide again.");
         }
 
-        if (finding.Status is not ("open" or "in_review"))
+        if (finding.Status != "open")
         {
             return Refusal.Conflict("finding_closed", "The finding is closed; take the closing back to review it.");
         }

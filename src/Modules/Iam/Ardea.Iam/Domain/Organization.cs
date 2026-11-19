@@ -18,7 +18,7 @@ internal sealed class Organization : IOrganizationOwned
     /// <summary>Language of e-mails and analyses for the organisation, e.g. <c>de</c>.</summary>
     public string Locale { get; set; } = "en";
 
-    /// <summary>IANA time zone for digests and deadlines.</summary>
+    /// <summary>IANA time zone for digests and reminders.</summary>
     public string TimeZone { get; set; } = "Europe/Zurich";
 
     public OrganizationSettings Settings { get; set; } = new();

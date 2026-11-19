@@ -19,8 +19,9 @@ internal sealed class ActionFactsReader(AssessDbContext db, IProfileQueries prof
 
         var ids = eventIds.ToArray();
         var rows = await db.Events.AsNoTracking().Where(e => ids.Contains(e.Id)).ToListAsync(cancellationToken);
-        return [.. rows.Where(e => EventKinds.IsNotifiable(e.Kind))
-            .Select(e => new ActionEventFacts(e.Id, e.Kind, e.At, e.RemediationId, e.ProjectId, e.Actor, e.Data.RootElement.Clone()))];
+        // Rows of the assignment and the review state from before ADR 046 announce nothing.
+        return [.. rows.Where(e => EventKinds.IsNotifiable(e.Kind) && !LegacyHistory.Hidden(e.Kind, e.Data.RootElement))
+            .Select(e => new ActionEventFacts(e.Id, e.Kind, e.At, e.RemediationId, e.ProjectId, e.Actor, LegacyHistory.Shown(e.Data.RootElement)))];
     }
 
     public async Task<IReadOnlyList<ActionFacts>> ActionsAsync(IReadOnlyCollection<Guid> remediationIds, CancellationToken cancellationToken)
@@ -83,7 +84,7 @@ internal sealed class ActionFactsReader(AssessDbContext db, IProfileQueries prof
         {
             var component = components.GetValueOrDefault(a.ComponentId);
             var top = findings[a.Id]
-                .OrderByDescending(f => f.Status is "open" or "in_review").ThenByDescending(f => f.Level)
+                .OrderByDescending(f => f.Status == "open").ThenByDescending(f => f.Level)
                 .Select(f => new ActionEntryFacts(keys.GetValueOrDefault(f.EntryId, string.Empty), titles.GetValueOrDefault(f.EntryId), f.Level, f.Exploitation))
                 .DistinctBy(e => e.Key).Take(3).ToList();
             return new ActionFacts
@@ -100,7 +101,6 @@ internal sealed class ActionFactsReader(AssessDbContext db, IProfileQueries prof
                 Exploitation = a.Exploitation,
                 FixAvailable = a.FixAvailable,
                 TargetVersion = a.TargetVersion,
-                AssignedTo = a.AssignedTo,
                 IsBackfill = a.IsBackfill,
                 CloseReason = a.CloseReason,
                 Entries = top,

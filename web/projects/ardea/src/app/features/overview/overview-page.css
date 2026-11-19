@@ -38,15 +38,6 @@
 .span-4 {
   grid-column: span 4;
 }
-.stack {
-  display: grid;
-  gap: var(--gap);
-  align-content: start;
-}
-.urgent {
-  margin-bottom: var(--gap);
-}
-
 .card-link {
   display: inline-flex;
   align-items: center;
@@ -60,31 +51,6 @@
 }
 .quiet {
   padding: var(--space-sm) 0;
-}
-
-.figure {
-  font-size: var(--fs-figure);
-  line-height: var(--lh-figure);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-}
-.figure .over {
-  margin-right: var(--space-sm);
-  font-size: var(--fs-section);
-  letter-spacing: 0;
-}
-.next-sub {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  min-width: 0;
-  margin: var(--space-sm) 0 var(--space-lg);
-}
-.next-sub span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 500;
 }
 
 .urgent-head {

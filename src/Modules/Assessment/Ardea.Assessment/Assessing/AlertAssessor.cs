@@ -45,6 +45,9 @@ internal sealed class AlertAssessor(
     ITenantContext tenant,
     TimeProvider time)
 {
+    /// <summary>The reason of a finding whose open action the migration of ADR 046 turned into a notice.</summary>
+    internal const string MovedToNotice = "moved_to_notice";
+
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -60,6 +63,11 @@ internal sealed class AlertAssessor(
         var existing = alert is null ? [] : await db.Findings
             .Where(f => f.AlertId == alert.Id && (scope.Project == null || f.ProjectId == scope.Project.Id) && (scope.Component == null || f.ComponentId == scope.Component))
             .ToListAsync(cancellationToken);
+
+        // The components an open notice for this entry names (ADR 046): their findings closed by the system stay closed.
+        HashSet<Guid> noticed = existing.Count == 0 ? [] : (await db.Notices.AsNoTracking()
+                .Where(n => n.EntryId == entry.Id && n.State == Notice.Open).Select(n => n.ComponentIds).ToListAsync(cancellationToken))
+            .SelectMany(ids => ids).ToHashSet();
 
         var relevant = entry.Kind == "vulnerability" && entry.State is "published" or "disputed";
         var keys = relevant ? await EntryKeys.ForAsync(entry, catalog, cancellationToken) : null;
@@ -109,7 +117,7 @@ internal sealed class AlertAssessor(
             var outcome = Evaluate(entry, candidate, known, modelVerdicts.GetValueOrDefault(candidate.Component.Id), keys!.Learned(candidate, learnedProducts));
             if (byComponent.Remove(candidate.Component.Id, out var finding))
             {
-                Apply(finding, outcome, now);
+                Apply(finding, outcome, noticed.Contains(finding.ComponentId), now);
             }
             else
             {
@@ -144,7 +152,7 @@ internal sealed class AlertAssessor(
         }
 
         // The alert gets its number once one of its findings reaches level 2 (master plan 4.6).
-        if (alert.Number is null && findings.Exists(f => f.Status is "open" or "in_review"))
+        if (alert.Number is null && findings.Exists(f => f.Status == "open"))
         {
             alert.Number = await numbers.NextAsync(cancellationToken);
             alert.FirstRaisedAt = now;
@@ -352,7 +360,11 @@ internal sealed class AlertAssessor(
     };
 
     /// <summary>Writes a new result into an existing finding, only where it differs.</summary>
-    private void Apply(Finding finding, Outcome outcome, DateTimeOffset now)
+    /// <param name="finding">The stored finding.</param>
+    /// <param name="outcome">The result of this assessment.</param>
+    /// <param name="noticed">An open notice of the organisation for this entry names the finding's component (ADR 046).</param>
+    /// <param name="now">When.</param>
+    private void Apply(Finding finding, Outcome outcome, bool noticed, DateTimeOffset now)
     {
         var installedBefore = finding.Evidence.RootElement.TryGetProperty("installed", out var before) ? before.GetString() : null;
         var installedNow = outcome.Evidence.RootElement.TryGetProperty("installed", out var after) ? after.GetString() : null;
@@ -363,7 +375,16 @@ internal sealed class AlertAssessor(
             : outcome.ReopenLevel > (finding.ClosedLevel ?? finding.Level) && outcome.ReopenLevel >= 2 ? "level_raised"
             : outcome.VersionVerdict == VersionVerdicts.InRange && finding.ClosedVersionVerdict != VersionVerdicts.InRange && outcome.ReopenLevel >= 2 ? "in_range_again"
             : null;
-        var (level, factors) = reopen is null ? (outcome.Level, outcome.Factors) : (outcome.ReopenLevel, outcome.ReopenFactors);
+
+        // A finding the system closed stays with the open notice that names its component (ADR 046 decision 9), whatever
+        // reason a later closing wrote (archived, no longer matched, withdrawn): while the component has no version and
+        // the entry is not actively exploited (KEV included), as a notice that was answered comes back once on exploitation
+        // (E22). With a version, or exploited, it takes the precise path again. Task 5a.3 routes every coarse component.
+        var withNotice = noticed && finding is { StatusChangedBy: null } && finding.Status != "open"
+            && string.IsNullOrWhiteSpace(installedNow) && outcome.Exploitation != "active";
+        var (level, factors) = withNotice ? (1, Document(new RuleResult { RulesetVersion = rules.Version, Level = 1, Exclusion = MovedToNotice }))
+            : reopen is null ? (outcome.Level, outcome.Factors)
+            : (outcome.ReopenLevel, outcome.ReopenFactors);
 
         var changed = finding.MatchType != outcome.MatchType || finding.VersionVerdict != outcome.VersionVerdict
             || finding.VersionReason != outcome.VersionReason || finding.FixedVersion != outcome.FixedVersion
@@ -386,6 +407,12 @@ internal sealed class AlertAssessor(
             finding.ChangedAt = now;
         }
 
+        if (withNotice)
+        {
+            SetStatus(finding, "not_affected", MovedToNotice, now);
+            return;
+        }
+
         if (personClosed)
         {
             if (reopen is not null)
@@ -397,7 +424,7 @@ internal sealed class AlertAssessor(
             return;
         }
 
-        var open = finding.Status is "open" or "in_review";
+        var open = finding.Status == "open";
         var (status, reason) = outcome.Level >= 2
             ? (open ? finding.Status : "open", (string?)null)
             // A raised version in the profile closes what it fixes, «fixed by update» (master plan 7.4).
@@ -421,7 +448,7 @@ internal sealed class AlertAssessor(
             finding.ChangedAt = now;
         }
 
-        if (finding.StatusChangedBy is null || finding.Status is "open" or "in_review")
+        if (finding.StatusChangedBy is null || finding.Status == "open")
         {
             SetStatus(finding, reason is "component_removed" or "project_archived" ? "remediated" : "not_affected", reason, now);
         }
@@ -435,7 +462,7 @@ internal sealed class AlertAssessor(
             return;
         }
 
-        if (finding.Status is "open" or "in_review" && status is not ("open" or "in_review") && finding.RemediationId is not null)
+        if (finding.Status == "open" && status != "open" && finding.RemediationId is not null)
         {
             history.Add(EventKinds.FindingClosed, new { reason = reason ?? status, status }, finding.RemediationId, finding.Id);
         }

@@ -66,7 +66,7 @@ import {
       <ui-card heading="Confirmation">
         <span uiCardMeta>A dark toast at the bottom, with Undo where there is a way back</span>
         <div class="sc-stack">
-          <div><ui-toast text="In review and assigned to you" [undoable]="true" /></div>
+          <div><ui-toast text="Marked as remediated" [undoable]="true" /></div>
           <div><ui-toast text="Note saved" /></div>
         </div>
       </ui-card>

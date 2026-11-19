@@ -46,7 +46,7 @@ interface Swatch {
             <span class="sc-label">Title · 22 / 600</span><span class="t-title">Actions</span>
           </div>
           <div class="sc-row">
-            <span class="sc-label">Section · 16 / 600</span><span class="t-section">Deadlines</span>
+            <span class="sc-label">Section · 16 / 600</span><span class="t-section">Findings</span>
           </div>
           <div class="sc-row">
             <span class="sc-label">Body · 14 / 400–500</span

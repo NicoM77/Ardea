@@ -23,11 +23,6 @@ export interface ActionSummary {
   openFindings: number | string;
   exploitation: string;
   fixAvailable: boolean;
-  /** @nullable */
-  assignedTo: string | null;
-  /** @nullable */
-  dueAt: string | null;
-  overdue: boolean;
   openedAt: string;
   /** @nullable */
   levelRaisedAt: string | null;

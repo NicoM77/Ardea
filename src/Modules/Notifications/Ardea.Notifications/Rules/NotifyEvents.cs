@@ -9,7 +9,6 @@ internal static class NotifyEvents
     public const string ActionFixAvailable = "action.fix_available";
     public const string ActionLevelLowered = "action.level_lowered";
     public const string ActionWithdrawn = "action.withdrawn";
-    public const string ActionAssigned = "action.assigned";
     public const string ActionStatusChanged = "action.status_changed";
     public const string ActionNoteAdded = "action.note_added";
     public const string WarningPublished = "warning.published";
@@ -24,7 +23,7 @@ internal static class NotifyEvents
     public static readonly IReadOnlyList<string> All =
     [
         ActionRaised, ActionLevelRaised, ActionExploitationEscalated, ActionFixAvailable, ActionLevelLowered, ActionWithdrawn,
-        ActionAssigned, ActionStatusChanged, ActionNoteAdded, WarningPublished, BackfillCompleted, RepositoryUnavailable,
+        ActionStatusChanged, ActionNoteAdded, WarningPublished, BackfillCompleted, RepositoryUnavailable,
     ];
 
     /// <summary>The work of the team reaches people in the app only (master plan 8.2); machines may listen through webhooks.</summary>

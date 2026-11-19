@@ -26,6 +26,8 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
 
     public DbSet<AssessmentFeedback> Feedback => Set<AssessmentFeedback>();
 
+    public DbSet<Notice> Notices => Set<Notice>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -53,7 +55,7 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
                 t.HasCheckConstraint("ck_finding_version_verdict", "version_verdict IS NULL OR version_verdict IN ('in_range', 'out_of_range', 'unknown')");
                 t.HasCheckConstraint("ck_finding_verdict", "verdict IN ('affected', 'likely', 'uncertain', 'unlikely', 'not_affected')");
                 t.HasCheckConstraint("ck_finding_verdict_source", "verdict_source IN ('rules', 'model', 'human')");
-                t.HasCheckConstraint("ck_finding_status", "status IN ('open', 'in_review', 'remediated', 'risk_accepted', 'not_affected')");
+                t.HasCheckConstraint("ck_finding_status", "status IN ('open', 'remediated', 'risk_accepted', 'not_affected')");
             });
             finding.HasKey(f => f.Id);
             finding.Property(f => f.Id).HasDefaultValueSql("uuidv7()");
@@ -86,7 +88,7 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             remediation.ToTable("remediation", t =>
             {
                 t.HasCheckConstraint("ck_remediation_level", "level BETWEEN 1 AND 5");
-                t.HasCheckConstraint("ck_remediation_status", "status IN ('open', 'in_review', 'closed')");
+                t.HasCheckConstraint("ck_remediation_status", "status IN ('open', 'closed')");
                 t.HasCheckConstraint("ck_remediation_exploitation", "exploitation IN ('none', 'poc', 'active')");
             });
             remediation.HasKey(r => r.Id);
@@ -175,6 +177,28 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             feedback.HasIndex(f => f.AssessmentId).HasDatabaseName("ix_assessment_feedback_assessment");
             feedback.HasOne<Finding>().WithMany().HasForeignKey(f => f.FindingId).OnDelete(DeleteBehavior.Cascade);
             feedback.HasOne<AlertAssessment>().WithMany().HasForeignKey(f => f.AssessmentId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Notice>(notice =>
+        {
+            notice.ToTable("notice", t =>
+            {
+                t.HasCheckConstraint("ck_notice_state", "state IN ('open', 'affects_us', 'not_affected')");
+                // An answer names who gave it and when (master plan 17.3).
+                t.HasCheckConstraint("ck_notice_decided", "state = 'open' OR (decided_by IS NOT NULL AND decided_at IS NOT NULL)");
+                t.HasCheckConstraint("ck_notice_reappeared", "reappeared_reason IS NULL OR reappeared_reason IN ('exploited', 'kev')");
+            });
+            notice.HasKey(n => n.Id);
+            notice.Property(n => n.Id).HasDefaultValueSql("uuidv7()");
+            notice.Property(n => n.EntryKey).HasMaxLength(300);
+            notice.Property(n => n.State).HasMaxLength(20);
+            notice.Property(n => n.ReappearedReason).HasMaxLength(20);
+            // One notice per organisation and entry (master plan 17.3).
+            notice.HasIndex(n => new { n.OrganizationId, n.EntryId }).IsUnique().HasDatabaseName("ux_notice_entry");
+            // The inbox: open notices first, newest first (task 5a.5).
+            notice.HasIndex(n => new { n.OrganizationId, n.State, n.RaisedAt }).HasDatabaseName("ix_notice_list");
+            notice.HasIndex(n => n.RemediationId).HasDatabaseName("ix_notice_remediation");
+            notice.HasOne<Remediation>().WithMany().HasForeignKey(n => n.RemediationId).OnDelete(DeleteBehavior.SetNull);
         });
 
         ApplyTenantFilters(modelBuilder);

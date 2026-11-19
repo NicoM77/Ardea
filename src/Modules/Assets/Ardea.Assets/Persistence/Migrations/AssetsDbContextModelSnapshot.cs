@@ -80,6 +80,14 @@ namespace Ardea.Assets.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("kind");
 
+                    b.Property<string>("NoticeThreshold")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("only_important")
+                        .HasColumnName("notice_threshold");
+
                     b.Property<Guid>("OrganizationId")
                         .IsConcurrencyToken()
                         .HasColumnType("uuid")
@@ -135,6 +143,14 @@ namespace Ardea.Assets.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("version");
 
+                    b.Property<string>("VersionPrecision")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("none")
+                        .HasColumnName("version_precision");
+
                     b.Property<string>("VersionScheme")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)")
@@ -163,6 +179,8 @@ namespace Ardea.Assets.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_component_kind", "kind IN ('os', 'runtime', 'framework', 'cms', 'database', 'messaging', 'container', 'network', 'virtualization', 'library', 'plugin', 'service', 'other')");
 
+                            t.HasCheckConstraint("ck_component_notice_threshold", "notice_threshold IN ('only_important', 'everything')");
+
                             t.HasCheckConstraint("ck_component_origin", "origin IN ('manual', 'repository')");
 
                             t.HasCheckConstraint("ck_component_packaging", "packaging IN ('upstream', 'distribution', 'unknown')");
@@ -174,6 +192,8 @@ namespace Ardea.Assets.Persistence.Migrations
                             t.HasCheckConstraint("ck_component_relation", "dependency_relation IS NULL OR dependency_relation IN ('direct', 'transitive', 'unknown')");
 
                             t.HasCheckConstraint("ck_component_scope", "dependency_scope IS NULL OR dependency_scope IN ('runtime', 'development', 'unknown')");
+
+                            t.HasCheckConstraint("ck_component_version_precision", "version_precision IN ('none', 'line', 'exact') AND (version_precision = 'none') = (version IS NULL OR version ~ '^[[:space:]]*$')");
                         });
                 });
 
@@ -355,6 +375,14 @@ namespace Ardea.Assets.Persistence.Migrations
                         .HasColumnType("character varying(10)")
                         .HasColumnName("exposure");
 
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("project")
+                        .HasColumnName("kind");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -369,6 +397,11 @@ namespace Ardea.Assets.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_project");
 
+                    b.HasIndex("OrganizationId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_project_stack")
+                        .HasFilter("kind = 'organization_stack'");
+
                     b.HasIndex("OrganizationId", "Name")
                         .HasDatabaseName("ix_project_org_name");
 
@@ -377,6 +410,8 @@ namespace Ardea.Assets.Persistence.Migrations
                             t.HasCheckConstraint("ck_project_criticality", "criticality IN ('low', 'normal', 'high')");
 
                             t.HasCheckConstraint("ck_project_exposure", "exposure IN ('internet', 'internal', 'isolated')");
+
+                            t.HasCheckConstraint("ck_project_kind", "kind IN ('project', 'organization_stack')");
                         });
                 });
 

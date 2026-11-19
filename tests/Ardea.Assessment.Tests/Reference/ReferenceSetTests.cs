@@ -249,6 +249,7 @@ internal sealed class ReferenceHost : IAsyncDisposable
             var now = _clock.GetUtcNow();
             var component = new Component { Id = id, ProjectId = project, Kind = "other", Packaging = "upstream", CreatedAt = now, ChangedAt = now };
             configure(component);
+            AssessmentTestHost.WithPrecision(component);
             db.Components.Add(component);
             await db.SaveChangesAsync();
             await ComponentKeys.RefreshAsync(db, services.GetRequiredService<IProductCatalog>(), [component], CancellationToken.None);
@@ -264,6 +265,7 @@ internal sealed class ReferenceHost : IAsyncDisposable
             var db = services.GetRequiredService<AssetsDbContext>();
             var row = await db.Components.SingleAsync(c => c.Id == component);
             change(row);
+            AssessmentTestHost.WithPrecision(row);
             await db.SaveChangesAsync();
             await ComponentKeys.RefreshAsync(db, services.GetRequiredService<IProductCatalog>(), [row], CancellationToken.None);
         });
@@ -297,6 +299,7 @@ internal sealed class ReferenceHost : IAsyncDisposable
                 CreatedAt = now,
                 ChangedAt = now,
             };
+            AssessmentTestHost.WithPrecision(component);
             db.Components.Add(component);
             await db.SaveChangesAsync();
             await ComponentKeys.RefreshAsync(db, services.GetRequiredService<IProductCatalog>(), [component], CancellationToken.None);

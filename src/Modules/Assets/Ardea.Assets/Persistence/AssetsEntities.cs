@@ -3,12 +3,24 @@ using Ardea.Platform.Persistence;
 
 namespace Ardea.Assets.Persistence;
 
-/// <summary>A project or system of an organisation (master plan 4.5); the setup wizard creates the first.</summary>
+/// <summary>
+/// A project or system of an organisation (master plan 4.5); the setup wizard creates the first. Every organisation also
+/// has exactly one system project of the kind <c>organization_stack</c>, its stack (master plan 17.2, ADR 046).
+/// </summary>
 internal sealed class Project : IOrganizationOwned
 {
+    public const string ProjectKind = "project";
+    public const string StackKind = "organization_stack";
+
+    /// <summary>The stack's name; the pages name it in the reader's language.</summary>
+    public const string StackName = "Stack";
+
     public Guid Id { get; set; }
 
     public Guid OrganizationId { get; set; }
+
+    /// <summary><c>project</c> or <c>organization_stack</c>; the stack cannot be renamed, archived or listed as a project.</summary>
+    public string Kind { get; set; } = ProjectKind;
 
     public required string Name { get; set; }
 
@@ -48,6 +60,19 @@ internal sealed class Component : IOrganizationOwned
     public required string Kind { get; set; }
 
     public string? Version { get; set; }
+
+    /// <summary>
+    /// How precisely <see cref="Version"/> names what runs (master plan 17.1, ADR 046): <c>none</c> without a version,
+    /// <c>line</c> for a release line such as «17» or «8.x», <c>exact</c> for a release. It decides between the coarse
+    /// path (notice) and the precise one (finding and action).
+    /// </summary>
+    public string VersionPrecision { get; set; } = VersionPrecisions.None;
+
+    /// <summary>
+    /// When a coarse entry raises a notice (ADR 044): <c>only_important</c> (critical, exploited or warned about) or
+    /// <c>everything</c>. Stored here, evaluated by the notice generation (task 5a.3).
+    /// </summary>
+    public string NoticeThreshold { get; set; } = NoticeThresholds.OnlyImportant;
 
     public string? VersionScheme { get; set; }
 

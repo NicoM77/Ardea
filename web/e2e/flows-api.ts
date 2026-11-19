@@ -3,7 +3,7 @@ import { api, ORG_ID, PROJECT_ID, USER_ID } from './mock-api';
 
 /**
  * The organization's actions for the flow tests of phase 3 (overview, actions, action, alert), on
- * top of `api()`. Times are relative to now, so deadlines always lie ahead. The server keeps the
+ * top of `api()`. Times are relative to now. The server keeps the
  * state of the actions per test, checks `expectedStatus` like the API and answers 409
  * `status_conflict` when it does not match. With `ai`, the alert behind action 143 carries the
  * model's assessment (phase 4): its texts, a verdict «unlikely» and a proposal «not affected» on
@@ -26,9 +26,6 @@ interface Row {
   openFindings: number;
   exploitation: string;
   fixAvailable: boolean;
-  assignedTo: string | null;
-  dueAt: string | null;
-  overdue: boolean;
   openedAt: string;
   levelRaisedAt: string | null;
   closedAt: string | null;
@@ -46,9 +43,6 @@ function row(extra: Partial<Row> & Pick<Row, 'number' | 'level' | 'levelName'>):
     openFindings: 1,
     exploitation: 'none',
     fixAvailable: true,
-    assignedTo: null,
-    dueAt: at(7 * DAY),
-    overdue: false,
     openedAt: at(-DAY),
     levelRaisedAt: null,
     closedAt: null,
@@ -68,7 +62,6 @@ function actions(): Row[] {
       component: { id: 'c-141', name: 'Puppet Enterprise', version: '2025.9.0', removed: false },
       targetVersion: '2025.12.1',
       exploitation: 'active',
-      dueAt: at(DAY + 13 * HOUR),
       openedAt: at(-5 * DAY),
       entries: ['CVE-2026-115731'],
     }),
@@ -79,7 +72,6 @@ function actions(): Row[] {
       component: { id: 'c-143', name: 'PostgreSQL', version: '17.9', removed: false },
       targetVersion: '17.12',
       openFindings: 2,
-      dueAt: at(6 * DAY),
       openedAt: at(-DAY),
       entries: ['CVE-2026-116325', 'CVE-2026-118402'],
     }),
@@ -87,12 +79,10 @@ function actions(): Row[] {
       number: 150,
       level: 3,
       levelName: 'medium',
-      status: 'in_review',
+      status: 'open',
       project: PORTAL,
       component: { id: 'c-150', name: 'Umbraco CMS', version: '17.5', removed: false },
       targetVersion: '17.7.1',
-      assignedTo: USER_ID,
-      dueAt: at(28 * DAY),
       openedAt: at(-2 * DAY),
       entries: ['CVE-2026-130068'],
     }),
@@ -102,7 +92,6 @@ function actions(): Row[] {
       levelName: 'low',
       component: { id: 'c-152', name: 'ingress-nginx', version: '1.13.2', removed: false },
       fixAvailable: false,
-      dueAt: at(84 * DAY),
       openedAt: at(-6 * DAY),
       entries: ['CVE-2026-116472'],
     }),
@@ -116,8 +105,6 @@ function actions(): Row[] {
       component: { id: 'c-120', name: '.NET runtime', version: '10.0.3', removed: false },
       targetVersion: '10.0.4',
       openFindings: 0,
-      assignedTo: USER_ID,
-      dueAt: at(-DAY),
       openedAt: at(-8 * DAY),
       closedAt: at(-7 * DAY),
       entries: ['CVE-2026-100001'],
@@ -301,7 +288,7 @@ function finding(
 export interface FlowOptions {
   /** A quiet day: no critical or high action open. */
   calm?: boolean;
-  /** Someone else takes the action into review just before the first status change. */
+  /** Someone else closes the action just before the first status change. */
   conflict?: boolean;
   /** The model assessed alert 142; the organization has used today's requests for assessments. */
   ai?: boolean;
@@ -405,7 +392,6 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
       return route.fulfill({
         json: {
           openByLevel: levels,
-          overdue: 0,
           urgent: urgent.map((action) => ({ action, answers: POSTGRES_ANSWERS })),
           projects: [PLATFORM, PORTAL]
             .map((project) => {
@@ -453,9 +439,11 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
           note: string | null;
         };
         if (conflict) {
+          // Someone else closed it as an accepted risk a moment before.
           conflict = false;
-          action.status = 'in_review';
-          action.assignedTo = '0190a000-0000-7000-8000-000000000004';
+          action.status = 'closed';
+          action.closeReason = 'risk_accepted';
+          action.closedAt = at(0);
         }
         if (action.status !== body.expectedStatus) {
           return route.fulfill({
@@ -483,17 +471,8 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
         return route.fulfill({ json: detail(number) });
       }
       if (one[2] === '/notes') return route.fulfill({ status: 201, json: events[0] });
-      if (request.method() === 'PATCH') {
-        const body = request.postDataJSON() as {
-          assignedTo: string | null;
-          unassign: boolean | null;
-          dueAt: string | null;
-        };
-        if (body.assignedTo) action.assignedTo = body.assignedTo;
-        if (body.unassign) action.assignedTo = null;
-        if (body.dueAt) action.dueAt = body.dueAt;
-        return route.fulfill({ json: detail(number) });
-      }
+      // A reminder has no assignee and no deadline (master plan 17.5): nothing to change by PATCH.
+      if (request.method() !== 'GET') return route.fulfill({ status: 405 });
       return route.fulfill({ json: detail(number) });
     }
     const review = new RegExp(`^${base}/findings/(f[12])/review$`).exec(path);

@@ -279,7 +279,7 @@ export class FindingsList {
   }
 
   protected isOpen(f: FindingView): boolean {
-    return f.status === 'open' || f.status === 'in_review';
+    return f.status === 'open';
   }
 
   protected reason(f: FindingView): string | null {

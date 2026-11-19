@@ -35,8 +35,9 @@ internal readonly record struct CommandResult<T>(T? Value, Refusal? Refusal)
 
 /// <summary>
 /// Actions and alerts (master plan 10.2 «Massnahmen und Meldungen»): the read side the overview, the list
-/// and the details build on (tasks 3.8 to 3.10), status changes with the expected starting status,
-/// assignment, deadline and notes. Every member reads; members and up change.
+/// and the details build on (tasks 3.8 to 3.10), status changes with the expected starting status, and notes.
+/// An action is open or closed; it has no assignee and no deadline (master plan 17.5, ADR 046). Every member
+/// reads; members and up change.
 /// </summary>
 internal static class ActionEndpoints
 {
@@ -48,8 +49,6 @@ internal static class ActionEndpoints
         org.MapGet("/overview", OverviewAsync).WithName("getOverview").Produces<OverviewView>().Problems(403, 404);
         org.MapGet("/actions", ListAsync).WithName("listActions").Produces<ListPage<ActionSummary>>().Problems(400, 403, 404);
         org.MapGet("/actions/{number:int}", GetAsync).WithName("getAction").Produces<ActionDetailView>().Problems(403, 404);
-        org.MapPatch("/actions/{number:int}", UpdateAsync).WithName("updateAction").RequireOrganizationRole(OrganizationRole.Member)
-            .Produces<ActionDetailView>().Problems(400, 403, 404, 409);
         org.MapPost("/actions/{number:int}/status", SetStatusAsync).WithName("setActionStatus").RequireOrganizationRole(OrganizationRole.Member)
             .Produces<ActionDetailView>().Problems(400, 403, 404, 409);
         org.MapGet("/actions/{number:int}/events", EventsAsync).WithName("listActionEvents").Produces<IReadOnlyList<ActionEventView>>().Problems(403, 404);
@@ -100,8 +99,8 @@ internal static class ActionEndpoints
     }
 
     /// <summary>
-    /// Actions, highest level first. <c>status</c>: <c>active</c> (default: open and in review), <c>open</c>,
-    /// <c>in_review</c>, <c>closed</c>, <c>all</c>; <c>level</c> and <c>project</c> take comma-separated values;
+    /// Actions, highest level first. <c>status</c>: <c>active</c> (default, the same as <c>open</c>), <c>open</c>,
+    /// <c>closed</c>, <c>all</c>; <c>level</c> and <c>project</c> take comma-separated values;
     /// <c>q</c> finds a number, an entry key or a component, package or project name.
     /// </summary>
     private static async Task<IResult> ListAsync(
@@ -112,9 +111,9 @@ internal static class ActionEndpoints
         var levels = Ints(level, "level", errors);
         var projects = Guids(project, "project", errors);
         var after = Cursor(cursor, errors);
-        if (status is not (null or "active" or "open" or "in_review" or "closed" or "all"))
+        if (status is not (null or "active" or "open" or "closed" or "all"))
         {
-            errors["status"] = ["Choose active, open, in_review, closed or all."];
+            errors["status"] = ["Choose active, open, closed or all."];
         }
 
         if (errors.Count > 0)
@@ -166,14 +165,6 @@ internal static class ActionEndpoints
             ? Results.Ok(await DetailAsync(action, db, reader, cancellationToken))
             : ActionNotFound();
 
-    private static async Task<IResult> UpdateAsync(
-        int number, UpdateActionRequest request, HttpContext http, ActionCommands commands, IOrganizationMembership members, AssessDbContext db, ActionReader reader,
-        IUnitOfWork unitOfWork, CancellationToken cancellationToken)
-    {
-        var result = await commands.UpdateActionAsync(number, request, http.OrganizationAccess().UserId, members, cancellationToken);
-        return await RespondAsync(result, db, reader, unitOfWork, cancellationToken);
-    }
-
     private static async Task<IResult> SetStatusAsync(
         int number, SetActionStatusRequest request, HttpContext http, ActionCommands commands, AssessDbContext db, ActionReader reader, IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)
@@ -209,9 +200,9 @@ internal static class ActionEndpoints
         var projects = Guids(project, "project", errors);
         var after = GuidCursor(cursor, errors);
         var statuses = status?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
-        if (statuses.Any(s => s is not ("open" or "in_review" or "remediated" or "risk_accepted" or "not_affected")))
+        if (statuses.Any(s => s is not ("open" or "remediated" or "risk_accepted" or "not_affected")))
         {
-            errors["status"] = ["Choose from open, in_review, remediated, risk_accepted, not_affected."];
+            errors["status"] = ["Choose from open, remediated, risk_accepted, not_affected."];
         }
 
         if (errors.Count > 0)
@@ -347,7 +338,8 @@ internal static class ActionEndpoints
         var now = time.GetUtcNow();
         var open = await db.Remediations.AsNoTracking().Where(r => r.Status != "closed").ToListAsync(cancellationToken);
         var byLevel = new[] { 5, 4, 3, 2 }.Select(l => new LevelCountView(l, Levels.Name(l), open.Count(r => r.Level == l))).ToList();
-        var urgent = open.OrderByDescending(r => r.Level).ThenBy(r => r.DueAt ?? DateTimeOffset.MaxValue).ThenBy(r => r.Number).Take(5).ToList();
+        // Highest level first; within a level, what has waited longest at it (master plan 17.5: no deadlines).
+        var urgent = open.OrderByDescending(r => r.Level).ThenBy(r => r.LevelRaisedAt ?? r.OpenedAt).ThenBy(r => r.Number).Take(5).ToList();
 
         var names = (await profiles.FindComponentsAsync([.. open.Select(r => r.ComponentId).Distinct()], cancellationToken))
             .GroupBy(c => c.ProjectId).ToDictionary(g => g.Key, g => g.First().ProjectName);
@@ -356,15 +348,21 @@ internal static class ActionEndpoints
             .OrderByDescending(p => p.Level).ThenBy(p => p.Project.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
 
         var since = now.AddDays(-1);
-        var changes = await db.Events.AsNoTracking().Where(e => e.At >= since && (e.Kind.StartsWith("action.") || e.Kind == "backfill.completed"))
-            .GroupBy(e => e.Kind).Select(g => new ChangeCountView(g.Key, g.Count())).ToListAsync(cancellationToken);
+        // Without the rows the history no longer shows (ADR 046) and without the migration's closings, which are no change
+        // anyone made: the overview shows no burst after the upgrade.
+        var changes = (await db.Events.AsNoTracking()
+                .Where(e => e.At >= since && ((e.Kind.StartsWith("action.") && e.Kind != Assessing.EventKinds.LegacyActionAssigned) || e.Kind == "backfill.completed"))
+                .Select(e => new { e.Kind, e.Data })
+                .ToListAsync(cancellationToken))
+            .Where(e => !Assessing.LegacyHistory.Hidden(e.Kind, e.Data.RootElement) && !Assessing.LegacyHistory.ByMigration(e.Kind, e.Data.RootElement))
+            .GroupBy(e => e.Kind, StringComparer.Ordinal).Select(g => new ChangeCountView(g.Key, g.Count())).ToList();
         // The urgent actions open with their three answers (master plan 11.2, phase 3 acceptance).
         var urgentIds = urgent.Select(r => (Guid?)r.Id).ToArray();
         var urgentFindings = (await db.Findings.AsNoTracking().Where(f => urgentIds.Contains(f.RemediationId)).ToListAsync(cancellationToken)).ToLookup(f => f.RemediationId!.Value);
         var answers = await reader.AnswersAsync([.. urgent.Select(r => ((IReadOnlyList<Finding>)[.. urgentFindings[r.Id]], r.TargetVersion))], cancellationToken);
         var summaries = await reader.SummariesAsync(urgent, cancellationToken);
         return Results.Ok(new OverviewView(
-            byLevel, open.Count(r => r.DueAt < now), [.. summaries.Zip(answers, (s, a) => new UrgentActionView(s, a))], projects,
+            byLevel, [.. summaries.Zip(answers, (s, a) => new UrgentActionView(s, a))], projects,
             [.. changes.OrderBy(c => c.Kind, StringComparer.Ordinal)]));
     }
 
@@ -384,7 +382,7 @@ internal static class ActionEndpoints
     private static async Task<ActionDetailView> DetailAsync(Remediation action, AssessDbContext db, ActionReader reader, CancellationToken cancellationToken)
     {
         var findings = await db.Findings.AsNoTracking().Where(f => f.RemediationId == action.Id)
-            .OrderByDescending(f => f.Status == "open" || f.Status == "in_review").ThenByDescending(f => f.Level).ThenBy(f => f.Id)
+            .OrderByDescending(f => f.Status == "open").ThenByDescending(f => f.Level).ThenBy(f => f.Id)
             .ToListAsync(cancellationToken);
         return new ActionDetailView(
             (await reader.SummariesAsync([action], cancellationToken))[0], await reader.AnswersAsync(findings, action.TargetVersion, cancellationToken),

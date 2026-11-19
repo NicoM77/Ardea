@@ -103,12 +103,13 @@ internal sealed class Finding : IOrganizationOwned
     /// </summary>
     public required JsonDocument Factors { get; set; }
 
-    /// <summary><c>open</c>, <c>in_review</c>, <c>remediated</c>, <c>risk_accepted</c> or <c>not_affected</c>.</summary>
+    /// <summary><c>open</c>, <c>remediated</c>, <c>risk_accepted</c> or <c>not_affected</c>.</summary>
     public required string Status { get; set; }
 
     /// <summary>
     /// Why the system set the status: <c>weak_match</c>, <c>out_of_range</c>, <c>withdrawn</c>, <c>merged</c>,
-    /// <c>no_longer_matched</c>, <c>component_removed</c>, <c>project_archived</c>; <c>null</c> when a person set it.
+    /// <c>no_longer_matched</c>, <c>component_removed</c>, <c>project_archived</c>, <c>moved_to_notice</c> (ADR 046);
+    /// <c>null</c> when a person set it.
     /// </summary>
     public string? StatusReason { get; set; }
 
@@ -156,16 +157,11 @@ internal sealed class Remediation : IOrganizationOwned
 
     public bool FixAvailable { get; set; }
 
-    /// <summary><c>open</c>, <c>in_review</c> or <c>closed</c>.</summary>
+    /// <summary>
+    /// <c>open</c> or <c>closed</c> (master plan 17.5: open and done). The reminder has no assignee and no deadline; the
+    /// columns <c>assigned_to</c>, <c>due_at</c> and <c>due_at_manual</c> stay one version unused (master plan 4.11, ADR 046).
+    /// </summary>
     public required string Status { get; set; }
-
-    public Guid? AssignedTo { get; set; }
-
-    /// <summary>Start plus the deadline of the current level (master plan 4.9); <c>null</c> once closed.</summary>
-    public DateTimeOffset? DueAt { get; set; }
-
-    /// <summary>A person set the deadline; the level no longer moves it.</summary>
-    public bool DueAtManual { get; set; }
 
     public DateTimeOffset OpenedAt { get; set; }
 
@@ -207,6 +203,56 @@ internal sealed class AssessEvent : IOrganizationOwned
     public Guid? Actor { get; set; }
 
     public required JsonDocument Data { get; set; }
+}
+
+/// <summary>
+/// A notice (master plan 17.3, ADR 046): an entry that hits a coarse entry of the organisation, a technology without
+/// an exact version, asked once as «could affect you». One per organisation and entry. People answer it with
+/// <c>affects_us</c>, which opens a reminder, or <c>not_affected</c>, after which it comes back only once, when the entry
+/// is exploited or added to KEV later (E22). Task 5a.3 writes notices; this table and the migration of open actions on
+/// components without a version come first (task 5a.2).
+/// </summary>
+internal sealed class Notice : IOrganizationOwned
+{
+    public const string Open = "open";
+    public const string AffectsUs = "affects_us";
+    public const string NotAffected = "not_affected";
+
+    public Guid Id { get; set; }
+
+    public Guid OrganizationId { get; set; }
+
+    public Guid EntryId { get; set; }
+
+    /// <summary>The entry's primary key, e.g. <c>CVE-2026-115731</c>, kept for lists and search as on the alert.</summary>
+    public required string EntryKey { get; set; }
+
+    /// <summary><c>open</c>, <c>affects_us</c> or <c>not_affected</c>.</summary>
+    public required string State { get; set; }
+
+    /// <summary>The coarse components whose products the entry hits: the reason «Your stack names PostgreSQL».</summary>
+    public Guid[] ComponentIds { get; set; } = [];
+
+    /// <summary>The person who answered; <c>null</c> while open.</summary>
+    public Guid? DecidedBy { get; set; }
+
+    public DateTimeOffset? DecidedAt { get; set; }
+
+    /// <summary>The reminder «affects us» opened; <c>null</c> otherwise.</summary>
+    public Guid? RemediationId { get; set; }
+
+    /// <summary>
+    /// When a notice answered «not affected» came back because the entry became exploited or entered KEV (E22). Set once:
+    /// a notice reappears at most once.
+    /// </summary>
+    public DateTimeOffset? ReappearedAt { get; set; }
+
+    /// <summary>Why it came back: <c>exploited</c> or <c>kev</c>.</summary>
+    public string? ReappearedReason { get; set; }
+
+    public DateTimeOffset RaisedAt { get; set; }
+
+    public DateTimeOffset ChangedAt { get; set; }
 }
 
 /// <summary>The organisation's number range for actions and alerts (master plan 4.9).</summary>

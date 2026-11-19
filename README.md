@@ -149,13 +149,15 @@ The profile gets two depths (chapter 17 of the plan): a coarse stack for the org
 | No. | Task | Depends on | Status |
 |---|---|---|---|
 | 5a.1 | **Spike:** notices per week for typical stacks with the spike week's data; set thresholds; ADR | 3.7 | ✅ [ADR 044](docs/adr/0044-notices-per-week-and-thresholds.md) |
-| 5a.2 | Data model: `project.kind`, `version_precision`, `notice`; remove assignment, deadline and «in review»; migrate open actions without a version to notices | 5a.1 | ⬜ |
+| 5a.2 | Data model: `project.kind`, `version_precision`, `notice`; remove assignment, deadline and «in review»; migrate open actions without a version to notices | 5a.1 | ✅ [ADR 046](docs/adr/0046-stack-notices-and-reminders-without-deadline.md) |
 | 5a.3 | Notices from the stack with a threshold per entry; «affects us» creates a reminder; reappears on active exploitation or KEV | 5a.2 | ⬜ |
 | 5a.4 | Wizard: stack step before projects; projects and repository optional | 5a.2 | ⬜ |
 | 5a.5 | Notices page; shortened reminder detail; overview with new notices | 5a.3 | ⬜ |
 | 5a.6 | Reminders by level; event `notice.raised`; escalation dropped | 5a.3, 5.2 | ⬜ |
 
 Acceptance: a stack of ten entries produces at most the number of notices set in 5a.1 in the spike week; «doesn't affect us» does not come back; no endpoint or page knows assignment or deadline.
+
+**Release gate:** no release, and no upgrade of a running instance, between 5a.2 and 5a.5. From 5a.2 on, open actions on components without a version are moved to notices that nothing shows until the Notices page (5a.5), and new entries on such components still open actions until 5a.3 ([ADR 046](docs/adr/0046-stack-notices-and-reminders-without-deadline.md), decision 13).
 
 ### Phase 6 · Hardening (3–4 weeks)
 

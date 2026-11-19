@@ -31,11 +31,11 @@ public sealed class CoverageTests(PostgresServer server)
             .GetProperty("id").GetGuid();
         await host.ScalarAsync<int>($"""
             WITH c AS (
-                INSERT INTO assets.component (organization_id, project_id, product_key, custom_name, kind, version, packaging, protection, origin, repository_link_id, purl, created_at, changed_at)
-                VALUES ('{orgId}', '{projectId}', NULL, 'lodash', 'library', '4.17.21', 'upstream', 'none', 'repository', '{linkId}', 'pkg:npm/lodash@4.17.21', now(), now()),
-                       ('{orgId}', '{projectId}', NULL, 'express', 'library', NULL, 'upstream', 'none', 'repository', '{linkId}', 'pkg:npm/express', now(), now()),
-                       ('{orgId}', '{projectId}', NULL, 'serde', 'library', '1.0.210', 'upstream', 'none', 'repository', '{linkId}', 'pkg:cargo/serde@1.0.210', now(), now()),
-                       ('{orgId}', '{projectId}', 'dotnet', NULL, 'runtime', '10.0', 'unknown', 'none', 'repository', '{linkId}', NULL, now(), now())
+                INSERT INTO assets.component (organization_id, project_id, product_key, custom_name, kind, version, version_precision, packaging, protection, origin, repository_link_id, purl, created_at, changed_at)
+                VALUES ('{orgId}', '{projectId}', NULL, 'lodash', 'library', '4.17.21', 'exact', 'upstream', 'none', 'repository', '{linkId}', 'pkg:npm/lodash@4.17.21', now(), now()),
+                       ('{orgId}', '{projectId}', NULL, 'express', 'library', NULL, 'none', 'upstream', 'none', 'repository', '{linkId}', 'pkg:npm/express', now(), now()),
+                       ('{orgId}', '{projectId}', NULL, 'serde', 'library', '1.0.210', 'exact', 'upstream', 'none', 'repository', '{linkId}', 'pkg:cargo/serde@1.0.210', now(), now()),
+                       ('{orgId}', '{projectId}', 'dotnet', NULL, 'runtime', '10.0', 'line', 'unknown', 'none', 'repository', '{linkId}', NULL, now(), now())
                 RETURNING 1
             ), s AS (
                 INSERT INTO assets.component_suggestion (organization_id, project_id, repository_link_id, product_key, version, evidence, fingerprint, state, created_at)

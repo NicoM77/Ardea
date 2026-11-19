@@ -22,7 +22,7 @@ internal sealed record CreateOrganizationRequest(string? Name, string? Slug);
 /// <summary>Changes the organisation's settings; a field left out stays as it is.</summary>
 /// <param name="Name">The name.</param>
 /// <param name="Locale">The language of e-mails and analyses.</param>
-/// <param name="TimeZone">The IANA time zone for digests and deadlines.</param>
+/// <param name="TimeZone">The IANA time zone for digests and reminders.</param>
 /// <param name="RequireMfa">Whether members must use two-factor authentication.</param>
 /// <param name="AiPolicy">The data policy for language models: <c>none</c>, <c>local_only</c> (the default) or <c>cloud_allowed</c>.</param>
 /// <param name="EmailContent">How much notification e-mails say: <c>full</c> (the default) or <c>minimal</c> (level, number and link).</param>

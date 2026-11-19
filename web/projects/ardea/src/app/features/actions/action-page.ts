@@ -10,11 +10,9 @@ import {
   getActionResource,
   listMembersResource,
   type ActionDetailView,
-  type UpdateActionRequest,
 } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
 import { reloadOnLiveChange } from '../../core/live/live-events';
-import { Session } from '../../core/session/session';
 import { injectOrganization } from '../organizations/current-organization';
 import { roleRank } from '../organizations/org-format';
 import {
@@ -30,18 +28,14 @@ import { ActionDetails } from './action-details';
 import { ActionHistory } from './action-history';
 import {
   ACTION_PROBLEMS,
-  actionChange,
-  dueAtFor,
   isStale,
   mainMove,
-  ownerChange,
   STATUS_LABELS,
   statusOptions,
   storedStatus,
 } from './action-status';
 import { AiAssessmentCard } from './ai-assessment-card';
 import { Answers } from './answers';
-import { injectNow } from './duration';
 import { FindingsList, type FindingChange } from './findings-list';
 import { historyLines } from './history-format';
 import { isStaleReview, REVIEW_PROBLEMS } from './model-format';
@@ -57,8 +51,9 @@ interface Confirmation {
 
 /**
  * One action (task 3.10, master plan 11.4, mockup remediation.html): the three answers first, then
- * its findings, the details with status, owner, deadline and the closing's reason, and the history
- * with notes. Every change is confirmed by a toast with Undo; a change someone else made meanwhile
+ * its findings, the details with status and the closing's reason, and the history with notes. A
+ * reminder is open or done, without owner or deadline (master plan 17.5); the main move marks it
+ * remediated. Every change is confirmed by a toast with Undo; a change someone else made meanwhile
  * (409) is said in a sentence and the page shows the current state. On phones the main move and the
  * status sit in a bar at the bottom. With the model's assessment (phase 4, mockup
  * remediation.html?ai) the answers carry its texts, each finding its verdict to confirm or
@@ -103,9 +98,6 @@ interface Confirmation {
             @if (a.fixAvailable) {
               <ui-pill tone="done">{{ 'actions.pill.fix' | transloco }}</ui-pill>
             }
-            @if (a.overdue) {
-              <ui-pill>{{ 'actions.pill.overdue' | transloco }}</ui-pill>
-            }
           </p>
         </div>
         @if (canEdit()) {
@@ -146,14 +138,8 @@ interface Confirmation {
         <div class="stack">
           <ardea-action-details
             [action]="a"
-            [members]="members.value() ?? []"
-            [me]="me()"
-            [canEdit]="canEdit()"
             [busy]="busy()"
-            [now]="now()"
             [pending]="pending()"
-            (assign)="assign($event)"
-            (due)="setDue($event)"
             (reason)="close($event)"
             (cancelReason)="pending.set(null)"
           />
@@ -174,14 +160,15 @@ interface Confirmation {
 
       <ng-template #controls let-id="id">
         @switch (move()) {
-          @case ('take') {
-            <button uiButton variant="primary" type="button" [loading]="busy()" (click)="take()">
-              {{ 'actionDetail.take' | transloco }}
-            </button>
-          }
-          @case ('giveBack') {
-            <button uiButton type="button" [loading]="busy()" (click)="giveBack()">
-              {{ 'actionDetail.giveBack' | transloco }}
+          @case ('resolve') {
+            <button
+              uiButton
+              variant="primary"
+              type="button"
+              [loading]="busy()"
+              (click)="choose('remediated')"
+            >
+              {{ 'actionDetail.resolve' | transloco }}
             </button>
           }
           @default {
@@ -319,12 +306,10 @@ export class ActionPage {
   private readonly api = inject(ActionsService);
   private readonly toaster = inject(UiToaster);
   private readonly transloco = inject(TranslocoService);
-  private readonly session = inject(Session);
   private readonly organization = injectOrganization().organization;
   private readonly orgId = computed(() => this.organization()?.id);
   private readonly findingsList = viewChild(FindingsList);
   private readonly history = viewChild(ActionHistory);
-  protected readonly now = injectNow();
 
   protected readonly detail = getActionResource(
     this.orgId,
@@ -336,7 +321,6 @@ export class ActionPage {
     this.detail.hasValue() ? (this.detail.value() ?? null) : null,
   );
   private readonly action = computed(() => this.view()?.action ?? null);
-  protected readonly me = computed(() => this.session.user()?.id ?? null);
   protected readonly canEdit = computed(
     () => roleRank(this.organization()?.role) >= roleRank('member'),
   );
@@ -380,59 +364,6 @@ export class ActionPage {
     reloadOnLiveChange(this.detail);
   }
 
-  /** «Take into review»: in review and, unless it is theirs already, assigned to the person. */
-  protected take(): void {
-    const a = this.action();
-    const me = this.me();
-    if (!a || !me) return;
-    const owner = a.assignedTo;
-    void this.run(
-      async () => {
-        let view = await this.status('in_review', 'open', null);
-        if (owner !== me) view = await this.patch(ownerChange(me));
-        return view;
-      },
-      {
-        key: 'actionDetail.toast.taken',
-        undo: () =>
-          void this.run(
-            async () => {
-              let view = await this.status('open', 'in_review', null);
-              if (owner !== me) view = await this.patch(ownerChange(owner));
-              return view;
-            },
-            { key: 'actionDetail.toast.undone' },
-          ),
-      },
-    );
-  }
-
-  /** «Give back»: from review back to open, without an owner (mockup, master plan 11.5). */
-  protected giveBack(): void {
-    const a = this.action();
-    if (!a) return;
-    const owner = a.assignedTo;
-    void this.run(
-      async () => {
-        let view = await this.status('open', 'in_review', null);
-        if (owner) view = await this.patch(ownerChange(null));
-        return view;
-      },
-      {
-        key: 'actionDetail.toast.givenBack',
-        undo: () =>
-          void this.run(
-            async () => {
-              let view = await this.status('in_review', 'open', null);
-              if (owner) view = await this.patch(ownerChange(owner));
-              return view;
-            },
-            { key: 'actionDetail.toast.undone' },
-          ),
-      },
-    );
-  }
-
   protected chooseFrom(event: Event): void {
     const select = event.target as HTMLSelectElement;
     const value = select.value as ActionStatus;
@@ -441,7 +372,7 @@ export class ActionPage {
     this.choose(value);
   }
 
-  /** A status from the control: open and in review apply at once, an outcome asks for its reason. */
+  /** A status from the control: open applies at once, an outcome asks for its reason. */
   protected choose(to: ActionStatus): void {
     const a = this.action();
     if (!a || to === this.selected()) return;
@@ -466,50 +397,13 @@ export class ActionPage {
     const reopening = expected === 'closed';
     const confirmation: Confirmation = reopening
       ? { key: 'actionDetail.toast.reopened' }
-      : isOutcome(to)
-        ? { key: 'actionDetail.toast.closed', params: { status: to } }
-        : { key: 'actionDetail.toast.status', params: { status: to } };
+      : { key: 'actionDetail.toast.closed', params: { status: to } };
     void this.run(() => this.status(to, expected, note), {
       ...confirmation,
       undo: () =>
         void this.run(() => this.status(before, storedStatus(to), null), {
           key: 'actionDetail.toast.undone',
         }),
-    });
-  }
-
-  protected assign(userId: string | null): void {
-    const a = this.action();
-    if (!a) return;
-    const before = a.assignedTo;
-    const name = this.members.value()?.find((m) => m.userId === userId)?.displayName ?? '';
-    void this.run(() => this.patch(ownerChange(userId)), {
-      key: userId ? 'actionDetail.toast.assigned' : 'actionDetail.toast.unassigned',
-      params: { name },
-      undo: () =>
-        void this.run(() => this.patch(ownerChange(before)), { key: 'actionDetail.toast.undone' }),
-    });
-  }
-
-  protected setDue(day: string): void {
-    const a = this.action();
-    const dueAt = a ? dueAtFor(day, a.dueAt) : null;
-    if (!a || !dueAt) return;
-    const before = a.dueAt;
-    const shown = new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-      dateStyle: 'medium',
-    }).format(new Date(dueAt));
-    void this.run(() => this.patch(actionChange({ dueAt })), {
-      key: 'actionDetail.toast.due',
-      params: { date: shown },
-      undo: () =>
-        void this.run(
-          () =>
-            this.patch(
-              before ? actionChange({ dueAt: before }) : actionChange({ resetDueAt: true }),
-            ),
-          { key: 'actionDetail.toast.undone' },
-        ),
     });
   }
 
@@ -585,10 +479,6 @@ export class ActionPage {
     return firstValueFrom(
       this.api.setActionStatus(this.orgId()!, num(this.number()), { status, expectedStatus, note }),
     );
-  }
-
-  private patch(change: UpdateActionRequest) {
-    return firstValueFrom(this.api.updateAction(this.orgId()!, num(this.number()), change));
   }
 
   /** Runs one change: shows what came back, confirms it, or says why it did not work. */

@@ -124,8 +124,8 @@ public sealed class ProjectApiTests(PostgresServer server)
         var projectId = (await Json(await owner.PostAsync($"/api/v1/orgs/{orgId}/projects", new { name = "API" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
         var repositoryComponent = await host.ScalarAsync<Guid>(
             $"""
-            INSERT INTO assets.component (organization_id, project_id, product_key, kind, version, packaging, protection, origin, purl, created_at, changed_at)
-            VALUES ('{orgId}', '{projectId}', 'newtonsoft-json', 'library', '13.0.1', 'upstream', 'none', 'repository', 'pkg:nuget/Newtonsoft.Json@13.0.1', now(), now())
+            INSERT INTO assets.component (organization_id, project_id, product_key, kind, version, version_precision, packaging, protection, origin, purl, created_at, changed_at)
+            VALUES ('{orgId}', '{projectId}', 'newtonsoft-json', 'library', '13.0.1', 'exact', 'upstream', 'none', 'repository', 'pkg:nuget/Newtonsoft.Json@13.0.1', now(), now())
             RETURNING id
             """);
         var path = $"/api/v1/orgs/{orgId}/projects/{projectId}/components";
@@ -157,8 +157,8 @@ public sealed class ProjectApiTests(PostgresServer server)
         var path = $"/api/v1/orgs/{orgId}/projects/{projectId}/components";
         var repositoryComponent = await host.ScalarAsync<Guid>(
             $"""
-            INSERT INTO assets.component (organization_id, project_id, product_key, kind, version, packaging, protection, origin, purl, created_at, changed_at)
-            VALUES ('{orgId}', '{projectId}', 'newtonsoft-json', 'library', '13.0.1', 'upstream', 'none', 'repository', 'pkg:nuget/Newtonsoft.Json@13.0.1', now(), now())
+            INSERT INTO assets.component (organization_id, project_id, product_key, kind, version, version_precision, packaging, protection, origin, purl, created_at, changed_at)
+            VALUES ('{orgId}', '{projectId}', 'newtonsoft-json', 'library', '13.0.1', 'exact', 'upstream', 'none', 'repository', 'pkg:nuget/Newtonsoft.Json@13.0.1', now(), now())
             RETURNING id
             """);
         Task<int> DecisionAsync() => host.ScalarAsync<int>("INSERT INTO catalog.learning_event (at, kind, raw_key, calls, tokens) VALUES (now(), 'adopted', 'acme/widget', 0, 0) RETURNING 1");

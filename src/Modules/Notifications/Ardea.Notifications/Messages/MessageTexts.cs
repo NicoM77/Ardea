@@ -39,7 +39,7 @@ internal sealed class MessageTexts
     };
 
     /// <summary>One line that says what happened to the subject (master plan 8.5: «Level 5, Critical. Raised from level 4.»).</summary>
-    public string Headline(MessageItem item, Guid? recipientUserId)
+    public string Headline(MessageItem item)
     {
         var level = item.Level;
         return item.Event switch
@@ -50,7 +50,6 @@ internal sealed class MessageTexts
             NotifyEvents.ActionFixAvailable => item.Action?.TargetVersion is { } target ? Format("headline.fix_version", target) : this["headline.fix"],
             NotifyEvents.ActionLevelLowered => Format("headline.lowered", item.DataInt("to"), item.DataInt("from")),
             NotifyEvents.ActionWithdrawn => Format("headline.withdrawn", Reason(item.DataString("reason"))),
-            NotifyEvents.ActionAssigned => recipientUserId is { } user && item.DataString("to") == user.ToString() ? this["headline.assigned_you"] : this["headline.assigned"],
             NotifyEvents.ActionStatusChanged => Format("headline.status", Status(item.DataString("to"))),
             NotifyEvents.ActionNoteAdded => this["headline.note"],
             NotifyEvents.WarningPublished => this["headline.warning"],
@@ -108,8 +107,6 @@ internal sealed class MessageTexts
         ["headline.fix_version"] = "A fix is available: {0}.",
         ["headline.lowered"] = "All clear: lowered to level {0} from {1}.",
         ["headline.withdrawn"] = "All clear: closed ({0}).",
-        ["headline.assigned_you"] = "Assigned to you.",
-        ["headline.assigned"] = "The assignment changed.",
         ["headline.status"] = "Status: {0}.",
         ["headline.note"] = "A note was added.",
         ["headline.warning"] = "New warning without a vulnerability identifier.",
@@ -156,7 +153,6 @@ internal sealed class MessageTexts
         ["reason.risk_accepted"] = "risk accepted",
         ["reason.other"] = "closed",
         ["status.open"] = "open",
-        ["status.in_review"] = "in review",
         ["status.remediated"] = "remediated",
         ["status.risk_accepted"] = "risk accepted",
         ["status.not_affected"] = "not affected",
@@ -185,8 +181,6 @@ internal sealed class MessageTexts
         ["headline.fix_version"] = "Eine Korrektur ist verfügbar: {0}.",
         ["headline.lowered"] = "Entwarnung: gesunken auf Stufe {0} von {1}.",
         ["headline.withdrawn"] = "Entwarnung: geschlossen ({0}).",
-        ["headline.assigned_you"] = "Dir zugewiesen.",
-        ["headline.assigned"] = "Die Zuweisung hat sich geändert.",
         ["headline.status"] = "Status: {0}.",
         ["headline.note"] = "Eine Notiz wurde hinzugefügt.",
         ["headline.warning"] = "Neue Warnung ohne Schwachstellenkennung.",
@@ -231,7 +225,6 @@ internal sealed class MessageTexts
         ["reason.risk_accepted"] = "Risiko akzeptiert",
         ["reason.other"] = "geschlossen",
         ["status.open"] = "offen",
-        ["status.in_review"] = "in Prüfung",
         ["status.remediated"] = "behoben",
         ["status.risk_accepted"] = "Risiko akzeptiert",
         ["status.not_affected"] = "nicht betroffen",

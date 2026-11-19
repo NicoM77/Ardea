@@ -80,6 +80,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["GET /api/v1/orgs/{orgId}/profile/coverage"] = _ => null,
         ["POST /api/v1/orgs/{orgId}/projects"] = _ => new { name = "Planted" },
         ["GET /api/v1/orgs/{orgId}/projects/{projectId}"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/stack"] = _ => null,
         ["PATCH /api/v1/orgs/{orgId}/projects/{projectId}"] = _ => new { name = "Taken over", exposure = "internet" },
         ["DELETE /api/v1/orgs/{orgId}/projects/{projectId}"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/projects/{projectId}/components"] = _ => null,
@@ -106,7 +107,6 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["GET /api/v1/orgs/{orgId}/events"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/actions"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/actions/{number}"] = _ => null,
-        ["PATCH /api/v1/orgs/{orgId}/actions/{number}"] = _ => new { dueAt = "2030-01-01T00:00:00Z" },
         ["POST /api/v1/orgs/{orgId}/actions/{number}/status"] = _ => new { status = "risk_accepted", expectedStatus = "open" },
         ["GET /api/v1/orgs/{orgId}/actions/{number}/events"] = _ => null,
         ["POST /api/v1/orgs/{orgId}/actions/{number}/notes"] = _ => new { text = "Planted" },
@@ -236,8 +236,8 @@ public sealed class TenantIsolationTests(PostgresServer server)
             VALUES ('{bobOrg}', '{bobsEntry}', 'CVE-2026-0001', 1, 4, 1, now(), now()) RETURNING id
             """);
         var bobsAction = await host.ScalarAsync<Guid>($"""
-            INSERT INTO assess.remediation (organization_id, project_id, component_id, number, level, open_findings, exploitation, fix_available, status, due_at_manual, opened_at, is_backfill, changed_at)
-            VALUES ('{bobOrg}', '{bobsProject}', '{bobsComponent}', 2, 4, 1, 'none', false, 'open', false, now(), false, now()) RETURNING id
+            INSERT INTO assess.remediation (organization_id, project_id, component_id, number, level, open_findings, exploitation, fix_available, status, opened_at, is_backfill, changed_at)
+            VALUES ('{bobOrg}', '{bobsProject}', '{bobsComponent}', 2, 4, 1, 'none', false, 'open', now(), false, now()) RETURNING id
             """);
         var bobsFinding = await host.ScalarAsync<Guid>($"""
             INSERT INTO assess.finding (organization_id, alert_id, entry_id, project_id, component_id, remediation_id, match_type, version_verdict, verdict, verdict_source, level, evidence, factors, status, status_changed_at, is_backfill, created_at, changed_at, exploitation, fix_available)
@@ -343,8 +343,9 @@ public sealed class TenantIsolationTests(PostgresServer server)
         Assert.Equal("Bob's GitHub", await host.ScalarAsync<string>($"SELECT name FROM assets.repository_connection WHERE id = '{bobsConnection}'"));
         Assert.Equal("open", await host.ScalarAsync<string>($"SELECT state FROM assets.component_suggestion WHERE id = '{bobsSuggestion}'"));
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.repository_link WHERE organization_id = '{bobOrg}'"));
-        Assert.Equal("open|open|", await host.ScalarAsync<string>(
-            $"SELECT r.status || '|' || f.status || '|' || coalesce(r.due_at::text, '') FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id WHERE r.id = '{bobsAction}'"));
+        Assert.Equal("open|open", await host.ScalarAsync<string>(
+            $"SELECT r.status || '|' || f.status FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id WHERE r.id = '{bobsAction}'"));
+        Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.project WHERE organization_id = '{bobOrg}' AND kind = 'organization_stack'"));
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM assess.assess_event"));
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM assess.assessment_feedback"));
         Assert.Equal("affected|rules", await host.ScalarAsync<string>($"SELECT verdict || '|' || verdict_source FROM assess.finding WHERE id = '{bobsFinding}'"));

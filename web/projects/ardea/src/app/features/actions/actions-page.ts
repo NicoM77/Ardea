@@ -1,11 +1,10 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideListChecks, LucideSearch } from '@lucide/angular';
 import { UiButton, UiEmptyState, UiInput, UiLoader, UiNotice, UiPriority } from 'ui';
 import {
   listActionsResource,
-  listMembersResource,
   listProjectsResource,
   type ActionSummary,
 } from '../../core/api/client';
@@ -13,9 +12,7 @@ import { problemMessageKey } from '../../core/api/problem';
 import { reloadOnLiveChange } from '../../core/live/live-events';
 import { injectOrganization } from '../organizations/current-organization';
 import { ACTION_PRIORITIES, countByPriority, num, type ActionPriority } from './action-format';
-import { CloseSpeedCard, OwnersCard } from './actions-side';
 import { ActionsTable } from './actions-table';
-import { injectNow } from './duration';
 import {
   actionCountParams,
   actionFiltersFrom,
@@ -40,7 +37,8 @@ function mergeActions(
 /**
  * «Actions» (task 3.9, master plan 11.4, mockup actions.html): the organization's actions, open or
  * closed, filtered by priority and project and found by number, entry, component or project. The
- * filters live in the address. Beside the list: who holds the actions and how fast they close.
+ * filters live in the address. A reminder has no owner, no deadline and no time to close (master
+ * plan 17.5), so the list stands alone.
  */
 @Component({
   selector: 'ardea-actions-page',
@@ -56,8 +54,6 @@ function mergeActions(
     UiNotice,
     UiPriority,
     ActionsTable,
-    CloseSpeedCard,
-    OwnersCard,
   ],
   template: `
     <header class="head">
@@ -97,83 +93,74 @@ function mergeActions(
       </form>
     </header>
 
-    <div class="layout">
-      <div class="list">
-        <nav class="tabs" [attr.aria-label]="'actions.filters.view' | transloco">
-          <a
-            routerLink="."
-            [queryParams]="viewQuery('open')"
-            [attr.aria-current]="filters().view === 'open' ? 'page' : null"
-            >{{ 'actions.view.open' | transloco }}</a
-          >
-          <a
-            routerLink="."
-            [queryParams]="viewQuery('closed')"
-            [attr.aria-current]="filters().view === 'closed' ? 'page' : null"
-            >{{ 'actions.view.closed' | transloco }}</a
-          >
-        </nav>
+    <div class="list">
+      <nav class="tabs" [attr.aria-label]="'actions.filters.view' | transloco">
+        <a
+          routerLink="."
+          [queryParams]="viewQuery('open')"
+          [attr.aria-current]="filters().view === 'open' ? 'page' : null"
+          >{{ 'actions.view.open' | transloco }}</a
+        >
+        <a
+          routerLink="."
+          [queryParams]="viewQuery('closed')"
+          [attr.aria-current]="filters().view === 'closed' ? 'page' : null"
+          >{{ 'actions.view.closed' | transloco }}</a
+        >
+      </nav>
 
-        <div class="chips" role="group" [attr.aria-label]="'actions.filters.priority' | transloco">
-          @for (p of priorities; track p) {
-            <button
-              type="button"
-              class="chip"
-              [attr.aria-pressed]="filters().priorities.includes(p)"
-              (click)="toggle(p)"
-            >
-              <ui-priority [level]="p" symbolOnly aria-hidden="true" />
-              {{ priorityLabels[p] | transloco }}
-              @if (chipCounts(); as counts) {
-                <b>{{ counts[p] }}</b>
-              }
-            </button>
-          }
-        </div>
-
-        <section [attr.aria-busy]="page.isLoading()" [attr.aria-label]="caption()">
-          @if (page.error() && !rows().length) {
-            <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
-            <button uiButton type="button" class="gap" (click)="page.reload()">
-              {{ 'actions.tryAgain' | transloco }}
-            </button>
-          } @else if (page.isLoading() && !rows().length) {
-            <div class="wait">
-              <ui-loader size="page" [label]="'actions.loading' | transloco" />
-            </div>
-          } @else if (!rows().length) {
-            <ui-empty-state [heading]="emptyHeading() | transloco">
-              <svg uiEmptyIcon lucideListChecks aria-hidden="true"></svg>
-              {{ emptyText() | transloco }}
-              @if (filtered()) {
-                <button uiEmptyActions uiButton type="button" (click)="clear()">
-                  {{ 'actions.empty.clear' | transloco }}
-                </button>
-              }
-            </ui-empty-state>
-          } @else {
-            <ardea-actions-table
-              [rows]="rows()"
-              [members]="members.value() ?? []"
-              [closed]="filters().view === 'closed'"
-              [now]="now()"
-              [caption]="caption()"
-            />
-            @if (nextCursor()) {
-              <div class="more">
-                <button uiButton type="button" [loading]="page.isLoading()" (click)="loadMore()">
-                  {{ 'actions.more' | transloco }}
-                </button>
-              </div>
+      <div class="chips" role="group" [attr.aria-label]="'actions.filters.priority' | transloco">
+        @for (p of priorities; track p) {
+          <button
+            type="button"
+            class="chip"
+            [attr.aria-pressed]="filters().priorities.includes(p)"
+            (click)="toggle(p)"
+          >
+            <ui-priority [level]="p" symbolOnly aria-hidden="true" />
+            {{ priorityLabels[p] | transloco }}
+            @if (chipCounts(); as counts) {
+              <b>{{ counts[p] }}</b>
             }
-          }
-        </section>
+          </button>
+        }
       </div>
 
-      <div class="side">
-        <ardea-owners-card [rows]="inView()" [members]="members.value() ?? []" />
-        <ardea-close-speed-card [closed]="closedRows()" />
-      </div>
+      <section [attr.aria-busy]="page.isLoading()" [attr.aria-label]="caption()">
+        @if (page.error() && !rows().length) {
+          <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
+          <button uiButton type="button" class="gap" (click)="page.reload()">
+            {{ 'actions.tryAgain' | transloco }}
+          </button>
+        } @else if (page.isLoading() && !rows().length) {
+          <div class="wait">
+            <ui-loader size="page" [label]="'actions.loading' | transloco" />
+          </div>
+        } @else if (!rows().length) {
+          <ui-empty-state [heading]="emptyHeading() | transloco">
+            <svg uiEmptyIcon lucideListChecks aria-hidden="true"></svg>
+            {{ emptyText() | transloco }}
+            @if (filtered()) {
+              <button uiEmptyActions uiButton type="button" (click)="clear()">
+                {{ 'actions.empty.clear' | transloco }}
+              </button>
+            }
+          </ui-empty-state>
+        } @else {
+          <ardea-actions-table
+            [rows]="rows()"
+            [closed]="filters().view === 'closed'"
+            [caption]="caption()"
+          />
+          @if (nextCursor()) {
+            <div class="more">
+              <button uiButton type="button" [loading]="page.isLoading()" (click)="loadMore()">
+                {{ 'actions.more' | transloco }}
+              </button>
+            </div>
+          }
+        }
+      </section>
     </div>
   `,
   styles: `
@@ -214,16 +201,6 @@ function mergeActions(
     }
     .query input {
       padding-left: 32px;
-    }
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 9fr) minmax(0, 3fr);
-      gap: var(--gap);
-      align-items: start;
-    }
-    .side {
-      display: grid;
-      gap: var(--gap);
     }
     .tabs {
       display: flex;
@@ -295,14 +272,6 @@ function mergeActions(
         color: var(--text);
       }
     }
-    @media (max-width: 1100px) {
-      .layout {
-        grid-template-columns: minmax(0, 1fr);
-      }
-      .side {
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      }
-    }
     @media (max-width: 640px) {
       .finders,
       .query,
@@ -323,7 +292,6 @@ export class ActionsPage {
   private readonly transloco = inject(TranslocoService);
   private readonly organization = injectOrganization().organization;
   private readonly orgId = computed(() => this.organization()?.id);
-  protected readonly now = injectNow();
 
   protected readonly priorities = ACTION_PRIORITIES;
   protected readonly priorityLabels: Record<ActionPriority, string> = {
@@ -387,22 +355,13 @@ export class ActionsPage {
     const rows = this.countRows();
     return rows && this.countsComplete() ? countByPriority(rows) : null;
   });
-  /** The rows the filters leave, for the summary and the owners. */
+  /** The rows the filters leave, for the summary. */
   protected readonly inView = computed(() => {
     const wanted = this.filters().priorities as string[];
     const rows = this.countRows() ?? [];
     return wanted.length ? rows.filter((r) => wanted.includes(r.levelName)) : rows;
   });
 
-  private readonly closed = listActionsResource(
-    this.orgId,
-    signal({ status: 'closed', limit: 100 }),
-  );
-  protected readonly closedRows = computed(() =>
-    this.closed.hasValue() ? (this.closed.value()?.items ?? []) : [],
-  );
-
-  protected readonly members = listMembersResource(this.orgId);
   private readonly projects = listProjectsResource(this.orgId);
   protected readonly projectOptions = computed(() =>
     this.projects.hasValue() ? (this.projects.value() ?? []).filter((p) => !p.archived) : [],
@@ -426,7 +385,6 @@ export class ActionsPage {
         count: rows.length,
         more,
         critical: rows.filter((r) => r.levelName === 'critical').length,
-        unassigned: rows.filter((r) => !r.assignedTo).length,
       },
     };
   });
@@ -462,7 +420,6 @@ export class ActionsPage {
         },
       },
       this.counts,
-      this.closed,
     );
   }
 

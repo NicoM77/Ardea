@@ -31,6 +31,8 @@ const view = (extra: Partial<ComponentView>): ComponentView => ({
   purl: null,
   dependencyScope: null,
   dependencyRelation: null,
+  versionPrecision: 'exact',
+  noticeThreshold: 'only_important',
   ...extra,
 });
 

@@ -17,7 +17,7 @@ import { PROJECT_ID } from './mock-api';
  */
 const ORG = '/o/example';
 
-test('overview on a busy day: the finding, deadlines, the urgent answers and the warnings', async ({
+test('overview on a busy day: the finding, the urgent actions with their answers and the warnings', async ({
   page,
 }) => {
   const problems = watchConsole(page);
@@ -25,15 +25,17 @@ test('overview on a busy day: the finding, deadlines, the urgent answers and the
   await page.goto(`${ORG}/overview`);
 
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible();
+  // A reminder has no deadline and no owner (master plan 17.5): the sentence speaks of exploitation and fixes.
   await expect(page.getByRole('status').filter({ hasText: 'critical action is open' })).toHaveText(
-    /1 critical action is open\. 0 due today, 1 without an owner\./,
+    /1 critical action is open\. 1 actively exploited, 1 with a fix\./,
   );
-  const deadlines = page.getByRole('region', { name: 'Deadlines' });
-  await expect(deadlines.getByRole('link')).toHaveCount(5);
-  await expect(deadlines.getByRole('link').nth(1)).toContainText(
-    'Update Puppet Enterprise to 2025.12.1',
-  );
+  await expect(page.getByRole('region', { name: 'Deadlines' })).toHaveCount(0);
+  // The open actions, highest priority first, the first with its three answers.
   const urgent = page.getByRole('region', { name: 'Most urgent' });
+  const actionLinks = urgent.getByRole('link', { name: /^(Update|Mitigate) / });
+  await expect(actionLinks).toHaveCount(4);
+  await expect(actionLinks.first()).toHaveText('Update Puppet Enterprise to 2025.12.1');
+  await expect(urgent.getByRole('link', { name: 'All actions' })).toBeVisible();
   await expect(urgent.getByRole('heading', { name: 'What happened' })).toBeVisible();
   await expect(urgent.getByRole('heading', { name: 'Are we affected?' })).toBeVisible();
   await expect(urgent.getByRole('heading', { name: 'What to do' })).toBeVisible();
@@ -52,9 +54,13 @@ test('overview on a quiet day keeps its cards and says nothing is urgent', async
   await page.goto(`${ORG}/overview`);
 
   await expect(page.getByRole('status').filter({ hasText: 'Nothing urgent.' })).toContainText(
-    'No critical or high action is open; the next deadline is in 28 days.',
+    'No critical or high action is open.',
   );
-  await expect(page.getByRole('region', { name: 'Deadlines' }).getByRole('link')).toHaveCount(3);
+  await expect(
+    page
+      .getByRole('region', { name: 'Most urgent' })
+      .getByRole('link', { name: /^(Update|Mitigate) / }),
+  ).toHaveCount(2);
   await expect(page.getByRole('region', { name: 'By priority' })).toContainText('2open');
   await expect(page.getByRole('region', { name: 'Sources' })).toBeVisible();
   await expectAccessible(page, 'overview calm');
@@ -71,8 +77,16 @@ test('actions list: filter by priority and project, search, and the closed view'
   const table = page.getByRole('table', { name: 'Open actions' });
   await expect(table.getByRole('row')).toHaveCount(5);
   await expect(page.getByRole('status').filter({ hasText: 'open.' })).toHaveText(
-    '4 open. 1 critical, 3 unassigned.',
+    '4 open. 1 critical.',
   );
+  // No owner and no time left: a reminder has neither (master plan 17.5).
+  await expect(table.getByRole('columnheader')).toHaveText([
+    'Priority',
+    'Action',
+    'Since',
+    'Status',
+  ]);
+  await expect(page.getByRole('region', { name: 'Owners' })).toHaveCount(0);
   await expectAccessible(page, 'actions');
 
   const critical = page.getByRole('button', { name: /Critical/ });
@@ -128,17 +142,19 @@ test('action: someone else changed it meanwhile (409), the page says so and show
     page.getByRole('heading', { level: 1, name: 'Update PostgreSQL to 17.12' }),
   ).toBeVisible();
 
-  await page.getByRole('button', { name: 'Take into review' }).click();
+  await page.getByRole('button', { name: 'Mark as remediated' }).click();
+  await page.getByLabel('How was it remediated?').fill('Updated to 17.12.');
+  await page.getByRole('button', { name: 'Close for all findings' }).click();
   await expect(page.getByRole('alert')).toHaveText(
     'Someone changed this action in the meantime. It shows the current state now; decide again.',
   );
-  // Read again: someone else has it in review now.
-  await expect(page.getByRole('button', { name: 'Give back' })).toBeVisible();
-  await expect(page.getByLabel('Owner')).toHaveValue('0190a000-0000-7000-8000-000000000004');
+  // Read again: someone else closed it as an accepted risk; the way back is to take the closing back.
+  await expect(page.getByRole('button', { name: 'Reopen' })).toBeVisible();
+  await expect(page.locator('#action-status')).toHaveValue('risk_accepted');
   expect(problems.filter((p) => !p.includes('status of 409'))).toEqual([]);
 });
 
-test('action: take into review, close with a reason, take the closing back', async ({ page }) => {
+test('action: open or done, closed with a reason, the closing taken back', async ({ page }) => {
   const problems = watchConsole(page);
   await flowsApi(page);
   await page.goto(`${ORG}/actions/143`);
@@ -147,12 +163,19 @@ test('action: take into review, close with a reason, take the closing back', asy
   ).toBeVisible();
   await expectAccessible(page, 'action');
 
-  await page.getByRole('button', { name: 'Take into review' }).click();
-  const toast = page.locator('ui-toast');
-  await expect(toast).toContainText('In review and assigned to you');
-  await expect(page.getByLabel('Owner')).toHaveValue('0190a000-0000-7000-8000-000000000001');
+  // A reminder has no owner, no deadline and no «in review» (master plan 17.5).
+  await expect(page.getByLabel('Owner')).toHaveCount(0);
+  await expect(page.getByLabel('Due')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Take into review' })).toHaveCount(0);
+  await expect(page.locator('#action-status option')).toHaveText([
+    'Open',
+    'Remediated',
+    'Risk accepted',
+    'Not affected',
+  ]);
 
-  await page.locator('#action-status').selectOption('remediated');
+  await page.getByRole('button', { name: 'Mark as remediated' }).click();
+  const toast = page.locator('ui-toast');
   const reason = page.getByLabel('How was it remediated?');
   await expect(reason).toBeFocused();
   await page.getByRole('button', { name: 'Close for all findings' }).click();
@@ -172,7 +195,7 @@ test('action: take into review, close with a reason, take the closing back', asy
   await page.getByRole('button', { name: 'Reopen' }).click();
   expect((await reopen).postDataJSON()).toMatchObject({ status: 'open', expectedStatus: 'closed' });
   await expect(toast).toContainText('Closing taken back: the action is open again');
-  await expect(page.getByRole('button', { name: 'Take into review' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Mark as remediated' })).toBeVisible();
   await expectAccessible(page, 'action after reopening');
   expect(problems).toEqual([]);
 });
@@ -186,7 +209,7 @@ test.describe('at 390 × 844', () => {
     await page.goto(`${ORG}/actions/143`);
     const bar = page.locator('.ui-actionbar');
     await expect(bar).toBeVisible();
-    await expect(bar.getByRole('button', { name: 'Take into review' })).toBeVisible();
+    await expect(bar.getByRole('button', { name: 'Mark as remediated' })).toBeVisible();
     const barTop = (await bar.boundingBox())!.y;
     expect(barTop).toBeGreaterThan(700);
     for (const part of ['happened', 'affected', 'todo']) {

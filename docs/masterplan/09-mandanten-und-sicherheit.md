@@ -97,7 +97,7 @@ Export und Löschen einer Organisation sowie das Aufräumen alter Daten sind kei
 | Sitzung im Browser | Cookie `__Host-ardea`: `HttpOnly`, `Secure`, `SameSite=Lax`, gleitend 12 Stunden, absolut 14 Tage. API-Endpunkte antworten mit 401/403 statt Umleitung. Passwortwechsel, MFA-Änderung und «überall abmelden» entwerten alle Sitzungen über den Sicherheitsstempel. |
 | CSRF | Antiforgery-Token im Header für alle ändernden Anfragen, zusätzlich Prüfung von `Sec-Fetch-Site` und `Origin`. Angular überträgt das Token über seinen eingebauten XSRF-Mechanismus, sobald Cookie- und Headername übereinstimmen. |
 | Passwort | Mindestlänge 12, keine Zusammensetzungsregeln, Abgleich mit einer mitgelieferten Liste häufiger Passwörter. Hashing nach Identity-Vorgabe (PBKDF2), Iterationen konfigurierbar. |
-| MFA | TOTP mit Wiederherstellungscodes im MVP. Eine Organisation kann MFA für ihre Mitglieder verlangen. |
+| MFA | TOTP mit Wiederherstellungscodes im MVP. Eine Organisation kann MFA für ihre Mitglieder verlangen. Jeder Code gilt je Konto nur einmal, auch bei gleichzeitigen Anfragen; Wiederherstellungscodes ebenso ([ADR 045](../adr/0045-single-use-authenticator-codes.md)). |
 | Passkeys | Ausbaustufe 1, über die in .NET 10 eingebauten Passkey-Dienste. |
 | Fremdanmeldung | Ausbaustufe 1: ein generischer OIDC-Anbieter (Authentik, Keycloak, Entra ID) per Konfiguration. |
 | Native App | Später: eigene Token-Endpunkte mit kurzlebigem Zugriffstoken und rotierendem Refresh-Token, gespeichert im sicheren Speicher des Geräts. |

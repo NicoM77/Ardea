@@ -1,0 +1,13 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Postfix",
+  "products": [
+    {
+      "key": "postfix",
+      "name": "Postfix",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["postfix:postfix"]
+    }
+  ]
+}

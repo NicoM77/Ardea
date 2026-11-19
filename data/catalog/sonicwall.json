@@ -1,0 +1,21 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "SonicWall",
+  "products": [
+    {
+      "key": "sonicos",
+      "name": "SonicOS",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["sonicwall:sonicos"],
+      "aliases": [{ "vendor": "SonicWall", "names": ["SonicWall", "SonicWall Firewall", "SonicOS SSLVPN"] }]
+    },
+    {
+      "key": "sonicwall-sma",
+      "name": "SonicWall SMA 100 Series",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "aliases": [{ "vendor": "SonicWall", "names": ["SMA100", "SMA 100", "SMA 100 Series"] }]
+    }
+  ]
+}

@@ -10,6 +10,217 @@
       "cpe": ["apache:log4j"],
       "packages": ["pkg:maven/org.apache.logging.log4j/log4j-core"],
       "aliases": [{ "vendor": "Apache", "names": ["Apache Log4j", "Apache Log4j2", "Log4j2", "Apache Log4j Core"] }]
+    },
+    {
+      "key": "apache-httpd",
+      "name": "Apache HTTP Server",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["apache:http_server"],
+      "aliases": [{ "vendor": "Apache", "names": ["Apache", "Apache httpd", "httpd", "Apache2", "Apache HTTP Server {line}"] }],
+      "images": ["httpd"]
+    },
+    {
+      "key": "tomcat",
+      "name": "Apache Tomcat",
+      "kind": "runtime",
+      "versionScheme": "maven",
+      "cpe": ["apache:tomcat"],
+      "packages": ["pkg:maven/org.apache.tomcat.embed/tomcat-embed-core", "pkg:maven/org.apache.tomcat/tomcat-catalina"],
+      "aliases": [{ "vendor": "Apache", "names": ["Tomcat", "Apache Tomcat {line}"] }],
+      "related": ["openjdk"],
+      "images": ["tomcat"]
+    },
+    {
+      "key": "kafka",
+      "name": "Apache Kafka",
+      "kind": "messaging",
+      "versionScheme": "maven",
+      "cpe": ["apache:kafka"],
+      "packages": ["pkg:maven/org.apache.kafka/kafka-clients", "pkg:maven/org.apache.kafka/kafka_2.13"],
+      "aliases": [{ "vendor": "Apache", "names": ["Kafka"] }],
+      "images": ["apache/kafka"]
+    },
+    {
+      "key": "activemq",
+      "name": "Apache ActiveMQ",
+      "kind": "messaging",
+      "versionScheme": "maven",
+      "cpe": ["apache:activemq"],
+      "packages": ["pkg:maven/org.apache.activemq/activemq-client", "pkg:maven/org.apache.activemq/activemq-broker"],
+      "aliases": [{ "vendor": "Apache", "names": ["ActiveMQ", "ActiveMQ Classic", "Apache ActiveMQ Classic"] }],
+      "images": ["apache/activemq-classic"]
+    },
+    {
+      "key": "activemq-artemis",
+      "name": "Apache ActiveMQ Artemis",
+      "kind": "messaging",
+      "versionScheme": "maven",
+      "cpe": ["apache:activemq_artemis"],
+      "packages": ["pkg:maven/org.apache.activemq/artemis-server"],
+      "aliases": [{ "vendor": "Apache", "names": ["ActiveMQ Artemis"] }],
+      "related": ["activemq"],
+      "images": ["apache/activemq-artemis"]
+    },
+    {
+      "key": "solr",
+      "name": "Apache Solr",
+      "kind": "database",
+      "versionScheme": "maven",
+      "cpe": ["apache:solr"],
+      "packages": ["pkg:maven/org.apache.solr/solr-core"],
+      "aliases": [{ "vendor": "Apache", "names": ["Solr"] }],
+      "images": ["solr"]
+    },
+    {
+      "key": "zookeeper",
+      "name": "Apache ZooKeeper",
+      "kind": "other",
+      "versionScheme": "maven",
+      "cpe": ["apache:zookeeper"],
+      "packages": ["pkg:maven/org.apache.zookeeper/zookeeper"],
+      "aliases": [{ "vendor": "Apache", "names": ["ZooKeeper"] }],
+      "images": ["zookeeper"]
+    },
+    {
+      "key": "cassandra",
+      "name": "Apache Cassandra",
+      "kind": "database",
+      "versionScheme": "maven",
+      "cpe": ["apache:cassandra"],
+      "packages": ["pkg:maven/org.apache.cassandra/cassandra-all"],
+      "aliases": [{ "vendor": "Apache", "names": ["Cassandra"] }],
+      "images": ["cassandra"]
+    },
+    {
+      "key": "couchdb",
+      "name": "Apache CouchDB",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["apache:couchdb"],
+      "aliases": [{ "vendor": "Apache", "names": ["CouchDB"] }],
+      "images": ["couchdb"]
+    },
+    {
+      "key": "commons-text",
+      "name": "Apache Commons Text",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:commons_text"],
+      "packages": ["pkg:maven/org.apache.commons/commons-text"],
+      "aliases": [{ "vendor": "Apache", "names": ["Commons Text"] }]
+    },
+    {
+      "key": "commons-collections",
+      "name": "Apache Commons Collections",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:commons_collections"],
+      "packages": ["pkg:maven/commons-collections/commons-collections", "pkg:maven/org.apache.commons/commons-collections4"],
+      "aliases": [{ "vendor": "Apache", "names": ["Commons Collections"] }]
+    },
+    {
+      "key": "commons-io",
+      "name": "Apache Commons IO",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:commons_io"],
+      "packages": ["pkg:maven/commons-io/commons-io"],
+      "aliases": [{ "vendor": "Apache", "names": ["Commons IO"] }]
+    },
+    {
+      "key": "commons-fileupload",
+      "name": "Apache Commons FileUpload",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:commons_fileupload"],
+      "packages": ["pkg:maven/commons-fileupload/commons-fileupload"],
+      "aliases": [{ "vendor": "Apache", "names": ["Commons FileUpload"] }]
+    },
+    {
+      "key": "struts",
+      "name": "Apache Struts",
+      "kind": "framework",
+      "versionScheme": "maven",
+      "cpe": ["apache:struts"],
+      "packages": ["pkg:maven/org.apache.struts/struts2-core"],
+      "aliases": [{ "vendor": "Apache", "names": ["Struts", "Struts 2", "Apache Struts2"] }],
+      "related": ["openjdk"]
+    },
+    {
+      "key": "shiro",
+      "name": "Apache Shiro",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:shiro"],
+      "packages": ["pkg:maven/org.apache.shiro/shiro-core", "pkg:maven/org.apache.shiro/shiro-web"],
+      "aliases": [{ "vendor": "Apache", "names": ["Shiro"] }]
+    },
+    {
+      "key": "poi",
+      "name": "Apache POI",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:poi"],
+      "packages": ["pkg:maven/org.apache.poi/poi", "pkg:maven/org.apache.poi/poi-ooxml"],
+      "aliases": [{ "vendor": "Apache", "names": ["POI"] }]
+    },
+    {
+      "key": "httpclient",
+      "name": "Apache HttpClient",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:httpclient"],
+      "packages": ["pkg:maven/org.apache.httpcomponents/httpclient", "pkg:maven/org.apache.httpcomponents.client5/httpclient5"],
+      "aliases": [{ "vendor": "Apache", "names": ["HttpClient", "HttpComponents Client"] }]
+    },
+    {
+      "key": "camel",
+      "name": "Apache Camel",
+      "kind": "framework",
+      "versionScheme": "maven",
+      "cpe": ["apache:camel"],
+      "packages": ["pkg:maven/org.apache.camel/camel-core"],
+      "aliases": [{ "vendor": "Apache", "names": ["Camel"] }]
+    },
+    {
+      "key": "cxf",
+      "name": "Apache CXF",
+      "kind": "framework",
+      "versionScheme": "maven",
+      "cpe": ["apache:cxf"],
+      "packages": ["pkg:maven/org.apache.cxf/cxf-core"],
+      "aliases": [{ "vendor": "Apache", "names": ["CXF"] }]
+    },
+    {
+      "key": "tika",
+      "name": "Apache Tika",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:tika"],
+      "packages": ["pkg:maven/org.apache.tika/tika-core"],
+      "aliases": [{ "vendor": "Apache", "names": ["Tika"] }]
+    },
+    {
+      "key": "log4net",
+      "name": "Apache log4net",
+      "kind": "library",
+      "versionScheme": "nuget",
+      "cpe": ["apache:log4net"],
+      "packages": ["pkg:nuget/log4net"],
+      "aliases": [{ "vendor": "Apache", "names": ["log4net"] }],
+      "related": ["dotnet"]
+    },
+    {
+      "key": "airflow",
+      "name": "Apache Airflow",
+      "kind": "other",
+      "versionScheme": "pep440",
+      "cpe": ["apache:airflow"],
+      "packages": ["pkg:pypi/apache-airflow"],
+      "aliases": [{ "vendor": "Apache", "names": ["Airflow"] }],
+      "related": ["python"],
+      "images": ["apache/airflow"]
     }
   ]
 }

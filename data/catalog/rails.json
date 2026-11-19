@@ -1,0 +1,19 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Ruby on Rails",
+  "products": [
+    {
+      "key": "rails",
+      "name": "Ruby on Rails",
+      "kind": "framework",
+      "versionScheme": "numeric",
+      "cpe": ["rubyonrails:rails", "rubyonrails:ruby_on_rails"],
+      "packages": ["pkg:gem/rails", "pkg:gem/actionpack", "pkg:gem/actionview", "pkg:gem/activerecord", "pkg:gem/activesupport"],
+      "aliases": [
+        { "vendor": "Ruby on Rails", "names": ["Rails"] },
+        { "vendor": "Rails", "names": ["Rails"] }
+      ],
+      "related": ["ruby"]
+    }
+  ]
+}

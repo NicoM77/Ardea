@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Nodemailer",
+  "products": [
+    {
+      "key": "nodemailer",
+      "name": "Nodemailer",
+      "kind": "library",
+      "versionScheme": "semver",
+      "cpe": ["nodemailer:nodemailer"],
+      "packages": ["pkg:npm/nodemailer"],
+      "related": ["nodejs"]
+    }
+  ]
+}

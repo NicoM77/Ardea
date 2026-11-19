@@ -1,0 +1,30 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Palo Alto Networks",
+  "products": [
+    {
+      "key": "pan-os",
+      "name": "PAN-OS",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["paloaltonetworks:pan-os"],
+      "aliases": [{ "vendor": "Palo Alto Networks", "names": ["PanOS", "Palo Alto Firewall"] }]
+    },
+    {
+      "key": "globalprotect",
+      "name": "GlobalProtect",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["paloaltonetworks:globalprotect"],
+      "aliases": [{ "vendor": "Palo Alto Networks", "names": ["GlobalProtect App"] }],
+      "related": ["pan-os"]
+    },
+    {
+      "key": "cortex-xdr-agent",
+      "name": "Cortex XDR Agent",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["paloaltonetworks:cortex_xdr_agent"]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "GitLab",
+  "products": [
+    {
+      "key": "gitlab",
+      "name": "GitLab",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["gitlab:gitlab"],
+      "aliases": [
+        { "vendor": "GitLab", "names": ["GitLab CE", "GitLab EE", "GitLab CE/EE", "GitLab Community Edition", "GitLab Enterprise Edition"] }
+      ],
+      "images": ["gitlab/gitlab-ce", "gitlab/gitlab-ee"]
+    },
+    {
+      "key": "gitlab-runner",
+      "name": "GitLab Runner",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "packages": ["pkg:golang/gitlab.com/gitlab-org/gitlab-runner"],
+      "related": ["gitlab"],
+      "images": ["gitlab/gitlab-runner"]
+    }
+  ]
+}

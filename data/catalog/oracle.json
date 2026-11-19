@@ -1,0 +1,54 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Oracle",
+  "products": [
+    {
+      "key": "oracle-linux",
+      "name": "Oracle Linux",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["oracle:linux"],
+      "aliases": [{ "vendor": "Oracle", "names": ["Oracle Linux {line}"] }],
+      "related": ["rhel"],
+      "images": ["oraclelinux"]
+    },
+    {
+      "key": "oracle-java-se",
+      "name": "Oracle Java SE",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["oracle:jdk", "oracle:jre"],
+      "aliases": [{ "vendor": "Oracle", "names": ["Java SE", "Java SE JDK and JRE", "Oracle JDK", "Oracle JRE", "Oracle Java SE {line}"] }],
+      "related": ["openjdk"]
+    },
+    {
+      "key": "mysql",
+      "name": "MySQL",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["oracle:mysql", "oracle:mysql_server", "mysql:mysql"],
+      "aliases": [
+        { "names": ["MySQL Community Server"] },
+        { "vendor": "Oracle", "names": ["MySQL Server", "MySQL Enterprise", "MySQL {line}"] }
+      ],
+      "images": ["mysql", "container-registry.oracle.com/mysql/community-server"]
+    },
+    {
+      "key": "oracle-database",
+      "name": "Oracle Database Server",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["oracle:database_server"],
+      "aliases": [{ "vendor": "Oracle", "names": ["Oracle Database", "Oracle DB", "Oracle Database {line}"] }],
+      "images": ["container-registry.oracle.com/database/enterprise", "container-registry.oracle.com/database/free"]
+    },
+    {
+      "key": "virtualbox",
+      "name": "Oracle VM VirtualBox",
+      "kind": "virtualization",
+      "versionScheme": "numeric",
+      "cpe": ["oracle:vm_virtualbox"],
+      "aliases": [{ "vendor": "Oracle", "names": ["VirtualBox", "VM VirtualBox"] }]
+    }
+  ]
+}

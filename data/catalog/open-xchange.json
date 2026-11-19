@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Open-Xchange",
+  "products": [
+    {
+      // Dovecot Oy belongs to Open-Xchange since 2017.
+      "key": "dovecot",
+      "name": "Dovecot",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["dovecot:dovecot"],
+      "aliases": [{ "names": ["Dovecot"] }]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Drupal",
+  "products": [
+    {
+      "key": "drupal",
+      "name": "Drupal",
+      "kind": "cms",
+      "versionScheme": "numeric",
+      "cpe": ["drupal:drupal"],
+      "packages": ["pkg:composer/drupal/core"],
+      "aliases": [{ "vendor": "Drupal", "names": ["Drupal core", "Drupal {line}"] }],
+      "related": ["php", "symfony"],
+      "images": ["drupal"]
+    }
+  ]
+}

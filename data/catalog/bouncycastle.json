@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Legion of the Bouncy Castle",
+  "products": [
+    {
+      "key": "bouncy-castle-java",
+      "name": "Bouncy Castle for Java",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["bouncycastle:bc-java"],
+      "packages": ["pkg:maven/org.bouncycastle/bcprov-jdk18on", "pkg:maven/org.bouncycastle/bcprov-jdk15on"],
+      "aliases": [{ "vendor": "Bouncy Castle", "names": ["Bouncy Castle", "bc-java", "Bouncy Castle Java"] }]
+    }
+  ]
+}

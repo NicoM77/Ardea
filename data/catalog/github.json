@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "GitHub",
+  "products": [
+    {
+      "key": "github-enterprise-server",
+      "name": "GitHub Enterprise Server",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["github:enterprise_server"],
+      "aliases": [{ "vendor": "GitHub", "names": ["GHES", "Enterprise Server"] }]
+    }
+  ]
+}

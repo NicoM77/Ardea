@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Zyxel",
+  "products": [
+    {
+      // NVD has one CPE per Zyxel model; records name the series, which is what the input needs.
+      "key": "zyxel-firewall",
+      "name": "Zyxel Firewall",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "aliases": [
+        { "vendor": "Zyxel", "names": ["ATP series firmware", "USG FLEX series firmware", "USG FLEX H series firmware", "VPN series firmware", "ZyWALL/USG series firmware", "USG FLEX", "ZLD"] }
+      ]
+    }
+  ]
+}

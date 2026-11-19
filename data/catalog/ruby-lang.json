@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Ruby",
+  "products": [
+    {
+      "key": "ruby",
+      "name": "Ruby",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["ruby-lang:ruby"],
+      "aliases": [{ "vendor": "Ruby", "names": ["CRuby", "Ruby {line}"] }],
+      "images": ["ruby"]
+    }
+  ]
+}

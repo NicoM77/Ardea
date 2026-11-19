@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Memcached",
+  "products": [
+    {
+      "key": "memcached",
+      "name": "Memcached",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["memcached:memcached"],
+      "images": ["memcached"]
+    }
+  ]
+}

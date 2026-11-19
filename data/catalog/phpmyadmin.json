@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "phpMyAdmin",
+  "products": [
+    {
+      "key": "phpmyadmin",
+      "name": "phpMyAdmin",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["phpmyadmin:phpmyadmin"],
+      "packages": ["pkg:composer/phpmyadmin/phpmyadmin"],
+      "related": ["php", "mysql"],
+      "images": ["phpmyadmin", "phpmyadmin/phpmyadmin"]
+    }
+  ]
+}

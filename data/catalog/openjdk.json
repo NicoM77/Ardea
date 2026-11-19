@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "OpenJDK",
+  "products": [
+    {
+      // Builds of OpenJDK (Temurin, Corretto, Microsoft) share the code and its records.
+      "key": "openjdk",
+      "name": "OpenJDK",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["oracle:openjdk"],
+      "aliases": [
+        { "vendor": "OpenJDK", "names": ["Java", "OpenJDK {line}", "Eclipse Temurin", "Temurin", "Amazon Corretto", "Microsoft Build of OpenJDK"] }
+      ],
+      "images": ["eclipse-temurin", "openjdk", "amazoncorretto", "mcr.microsoft.com/openjdk/jdk"]
+    }
+  ]
+}

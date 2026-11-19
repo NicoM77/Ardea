@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "WatchGuard Technologies",
+  "products": [
+    {
+      "key": "fireware",
+      "name": "Fireware OS",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["watchguard:fireware"],
+      "aliases": [{ "vendor": "WatchGuard", "names": ["Fireware", "Firebox", "WatchGuard Firebox"] }]
+    }
+  ]
+}

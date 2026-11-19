@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "NumPy",
+  "products": [
+    {
+      "key": "numpy",
+      "name": "NumPy",
+      "kind": "library",
+      "versionScheme": "pep440",
+      "cpe": ["numpy:numpy"],
+      "packages": ["pkg:pypi/numpy"],
+      "related": ["python"]
+    }
+  ]
+}

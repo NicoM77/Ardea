@@ -1,0 +1,49 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Ivanti",
+  "products": [
+    {
+      // Pulse Secure belongs to Ivanti since 2020.
+      "key": "ivanti-connect-secure",
+      "name": "Ivanti Connect Secure",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["ivanti:connect_secure", "pulsesecure:pulse_connect_secure"],
+      "aliases": [
+        { "names": ["Pulse Connect Secure"] },
+        { "vendor": "Ivanti", "names": ["Connect Secure", "ICS"] },
+        { "vendor": "Pulse Secure", "names": ["Pulse Secure"] }
+      ]
+    },
+    {
+      "key": "ivanti-policy-secure",
+      "name": "Ivanti Policy Secure",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["ivanti:policy_secure", "pulsesecure:pulse_policy_secure"],
+      "aliases": [
+        { "names": ["Pulse Policy Secure"] },
+        { "vendor": "Ivanti", "names": ["Policy Secure"] }
+      ]
+    },
+    {
+      "key": "ivanti-epmm",
+      "name": "Ivanti Endpoint Manager Mobile",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["ivanti:endpoint_manager_mobile"],
+      "aliases": [
+        { "names": ["MobileIron Core"] },
+        { "vendor": "Ivanti", "names": ["EPMM", "Endpoint Manager Mobile"] }
+      ]
+    },
+    {
+      "key": "ivanti-epm",
+      "name": "Ivanti Endpoint Manager",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["ivanti:endpoint_manager"],
+      "aliases": [{ "vendor": "Ivanti", "names": ["EPM", "Endpoint Manager"] }]
+    }
+  ]
+}

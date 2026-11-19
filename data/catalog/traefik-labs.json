@@ -1,0 +1,19 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Traefik Labs",
+  "products": [
+    {
+      "key": "traefik",
+      "name": "Traefik",
+      "kind": "network",
+      "versionScheme": "go",
+      "cpe": ["traefik:traefik"],
+      "packages": ["pkg:golang/github.com/traefik/traefik/v2", "pkg:golang/github.com/traefik/traefik/v3"],
+      "aliases": [
+        { "names": ["Traefik Proxy"] },
+        { "vendor": "Traefik", "names": ["Traefik"] }
+      ],
+      "images": ["traefik"]
+    }
+  ]
+}

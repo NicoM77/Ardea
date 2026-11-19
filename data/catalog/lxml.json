@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "lxml",
+  "products": [
+    {
+      "key": "lxml",
+      "name": "lxml",
+      "kind": "library",
+      "versionScheme": "pep440",
+      "cpe": ["lxml:lxml"],
+      "packages": ["pkg:pypi/lxml"],
+      "related": ["python", "libxml2"]
+    }
+  ]
+}

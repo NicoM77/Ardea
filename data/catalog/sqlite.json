@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "SQLite",
+  "products": [
+    {
+      "key": "sqlite",
+      "name": "SQLite",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["sqlite:sqlite"],
+      "aliases": [{ "vendor": "SQLite", "names": ["SQLite3"] }]
+    }
+  ]
+}

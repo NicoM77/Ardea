@@ -1,0 +1,25 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "GNU Project",
+  "products": [
+    {
+      "key": "glibc",
+      "name": "GNU C Library",
+      "kind": "library",
+      "versionScheme": "numeric",
+      "cpe": ["gnu:glibc"],
+      "aliases": [
+        { "names": ["glibc"] },
+        { "vendor": "GNU", "names": ["GNU C Library (glibc)"] }
+      ]
+    },
+    {
+      "key": "bash",
+      "name": "GNU Bash",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["gnu:bash"],
+      "aliases": [{ "vendor": "GNU", "names": ["Bash"] }]
+    }
+  ]
+}

@@ -187,6 +187,9 @@ public interface IProductCatalog
     /// </summary>
     Task<ProductKey?> ResolveKeyAsync(string? vendor, string product, CpePair? cpe, PackageCoordinate? package, CancellationToken cancellationToken);
 
-    /// <summary>Products whose name, key, vendor or alias contains the text, best matches first; for the input help.</summary>
+    /// <summary>
+    /// Products for what someone types into the input help, best match first: spaces, punctuation, case,
+    /// trailing version numbers and small typos do not matter (<c>Postgre SQL</c>, <c>.net 8</c>, <c>kubernets</c>).
+    /// </summary>
     Task<IReadOnlyList<CatalogProduct>> SearchAsync(string text, int limit, CancellationToken cancellationToken);
 }

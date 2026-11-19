@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "HAProxy Technologies",
+  "products": [
+    {
+      "key": "haproxy",
+      "name": "HAProxy",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["haproxy:haproxy"],
+      "aliases": [{ "names": ["HAProxy"] }],
+      "images": ["haproxy", "haproxytech/haproxy-alpine"]
+    }
+  ]
+}

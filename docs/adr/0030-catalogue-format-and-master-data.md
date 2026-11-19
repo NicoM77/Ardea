@@ -36,6 +36,15 @@ key promotes that row to curated, which is how learned entries return to the pro
 **Lookups** read the entries in effect (every curated one, learned ones only while `active`) into memory
 for five minutes; curated entries win over learned ones on every shared spelling, CPE pair, package or image.
 
+**Search** for the input help (task 2.4) runs over the same in-memory entries, without a search library:
+the typed text is compared without case, accents, spaces and punctuation, and with and without trailing
+version numbers. Tiers from strong to weak: equal to a key, name or alias, then to a CPE product, package or
+image; whole words of a name; a name that starts with the text; whole words including vendor, CPE pair,
+package or image; word prefixes; contained text; finally a bounded edit distance (one typo up to seven
+characters, two beyond). Within a tier the closer length wins, then curated before learned, then the name.
+Fifty inputs fixed in `CatalogSearchTests`, spelling variants and typos included, must find the right
+product first (phase 2 acceptance); a curator who adds a product checks that its usual spellings are aliases.
+
 ## Alternatives
 
 - YAML with YamlDotNet: friendlier to write, but a dependency in the image for a few hundred records.

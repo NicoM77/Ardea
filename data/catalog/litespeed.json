@@ -1,0 +1,23 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "LiteSpeed Technologies",
+  "products": [
+    {
+      "key": "litespeed-cache",
+      "name": "LiteSpeed Cache",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "cpe": ["litespeedtech:litespeed_cache"],
+      "aliases": [{ "names": ["LiteSpeed Cache"] }],
+      "platform": "wordpress"
+    },
+    {
+      "key": "openlitespeed",
+      "name": "OpenLiteSpeed",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["litespeedtech:openlitespeed"],
+      "images": ["litespeedtech/openlitespeed"]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "TYPO3",
+  "products": [
+    {
+      "key": "typo3",
+      "name": "TYPO3",
+      "kind": "cms",
+      "versionScheme": "numeric",
+      "cpe": ["typo3:typo3"],
+      "packages": ["pkg:composer/typo3/cms-core", "pkg:composer/typo3/cms"],
+      "aliases": [{ "vendor": "TYPO3", "names": ["TYPO3 CMS", "TYPO3 Core", "TYPO3 {line}"] }],
+      "related": ["php"]
+    }
+  ]
+}

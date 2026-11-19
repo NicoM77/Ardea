@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Netgate",
+  "products": [
+    {
+      "key": "pfsense",
+      "name": "pfSense",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["netgate:pfsense"],
+      "aliases": [{ "vendor": "Netgate", "names": ["pfSense CE", "pfSense Plus"] }]
+    }
+  ]
+}

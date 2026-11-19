@@ -1,0 +1,22 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "QNAP Systems",
+  "products": [
+    {
+      "key": "qnap-qts",
+      "name": "QTS",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["qnap:qts"],
+      "aliases": [{ "vendor": "QNAP", "names": ["QTS", "QNAP QTS"] }]
+    },
+    {
+      "key": "qnap-quts-hero",
+      "name": "QuTS hero",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["qnap:quts_hero"],
+      "aliases": [{ "vendor": "QNAP", "names": ["QuTS hero"] }]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Linux",
+  "products": [
+    {
+      // Records of the kernel CNA name vendor «Linux» and product «Linux».
+      "key": "linux-kernel",
+      "name": "Linux kernel",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["linux:linux_kernel"],
+      "aliases": [{ "vendor": "Linux", "names": ["Linux", "Kernel"] }]
+    }
+  ]
+}

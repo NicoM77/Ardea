@@ -1,0 +1,24 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Python Packaging Authority",
+  "products": [
+    {
+      "key": "pip",
+      "name": "pip",
+      "kind": "other",
+      "versionScheme": "pep440",
+      "cpe": ["pypa:pip"],
+      "packages": ["pkg:pypi/pip"],
+      "related": ["python"]
+    },
+    {
+      "key": "setuptools",
+      "name": "setuptools",
+      "kind": "library",
+      "versionScheme": "pep440",
+      "cpe": ["python:setuptools"],
+      "packages": ["pkg:pypi/setuptools"],
+      "related": ["python"]
+    }
+  ]
+}

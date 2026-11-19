@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Okta",
+  "products": [
+    {
+      "key": "jsonwebtoken",
+      "name": "jsonwebtoken",
+      "kind": "library",
+      "versionScheme": "semver",
+      "cpe": ["auth0:jsonwebtoken"],
+      "packages": ["pkg:npm/jsonwebtoken"],
+      "aliases": [{ "vendor": "Auth0", "names": ["jsonwebtoken", "node-jsonwebtoken"] }],
+      "related": ["nodejs"]
+    }
+  ]
+}

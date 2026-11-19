@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "PyYAML",
+  "products": [
+    {
+      "key": "pyyaml",
+      "name": "PyYAML",
+      "kind": "library",
+      "versionScheme": "pep440",
+      "cpe": ["pyyaml:pyyaml"],
+      "packages": ["pkg:pypi/pyyaml"],
+      "related": ["python"]
+    }
+  ]
+}

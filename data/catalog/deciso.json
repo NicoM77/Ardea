@@ -1,0 +1,13 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Deciso",
+  "products": [
+    {
+      "key": "opnsense",
+      "name": "OPNsense",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["opnsense:opnsense"]
+    }
+  ]
+}

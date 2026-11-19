@@ -1,0 +1,37 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Docker",
+  "products": [
+    {
+      "key": "docker-engine",
+      "name": "Docker Engine",
+      "kind": "container",
+      "versionScheme": "numeric",
+      "cpe": ["docker:docker", "mobyproject:moby"],
+      "packages": ["pkg:golang/github.com/docker/docker"],
+      "aliases": [
+        { "vendor": "Docker", "names": ["Docker", "Docker CE", "Docker Community Edition", "Moby"] },
+        { "vendor": "Moby Project", "names": ["Moby"] }
+      ],
+      "images": ["docker"]
+    },
+    {
+      "key": "docker-desktop",
+      "name": "Docker Desktop",
+      "kind": "container",
+      "versionScheme": "numeric",
+      "cpe": ["docker:desktop"],
+      "aliases": [{ "vendor": "Docker", "names": ["Docker Desktop for Windows", "Docker Desktop for Mac"] }],
+      "related": ["docker-engine"]
+    },
+    {
+      "key": "docker-compose",
+      "name": "Docker Compose",
+      "kind": "container",
+      "versionScheme": "go",
+      "packages": ["pkg:golang/github.com/docker/compose/v2"],
+      "aliases": [{ "vendor": "Docker", "names": ["Compose"] }],
+      "related": ["docker-engine"]
+    }
+  ]
+}

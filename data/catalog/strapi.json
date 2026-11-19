@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Strapi",
+  "products": [
+    {
+      "key": "strapi",
+      "name": "Strapi",
+      "kind": "cms",
+      "versionScheme": "semver",
+      "cpe": ["strapi:strapi"],
+      "packages": ["pkg:npm/@strapi/strapi"],
+      "aliases": [{ "vendor": "Strapi", "names": ["Strapi CMS"] }],
+      "related": ["nodejs"]
+    }
+  ]
+}

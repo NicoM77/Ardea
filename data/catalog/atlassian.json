@@ -1,0 +1,43 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Atlassian",
+  "products": [
+    {
+      "key": "confluence",
+      "name": "Confluence Data Center",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["atlassian:confluence_data_center", "atlassian:confluence_server"],
+      "aliases": [{ "vendor": "Atlassian", "names": ["Confluence", "Confluence Server", "Confluence Server and Data Center"] }],
+      "images": ["atlassian/confluence", "atlassian/confluence-server"]
+    },
+    {
+      "key": "jira",
+      "name": "Jira Software Data Center",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["atlassian:jira", "atlassian:jira_server", "atlassian:jira_data_center", "atlassian:jira_software_data_center"],
+      "aliases": [{ "vendor": "Atlassian", "names": ["Jira", "Jira Software", "Jira Server", "Jira Data Center", "Jira Software Server"] }],
+      "images": ["atlassian/jira-software"]
+    },
+    {
+      "key": "jira-service-management",
+      "name": "Jira Service Management Data Center",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["atlassian:jira_service_management", "atlassian:jira_service_desk"],
+      "aliases": [{ "vendor": "Atlassian", "names": ["Jira Service Management", "Jira Service Desk", "JSM"] }],
+      "related": ["jira"],
+      "images": ["atlassian/jira-servicemanagement"]
+    },
+    {
+      "key": "bitbucket",
+      "name": "Bitbucket Data Center",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["atlassian:bitbucket_data_center", "atlassian:bitbucket_server"],
+      "aliases": [{ "vendor": "Atlassian", "names": ["Bitbucket", "Bitbucket Server"] }],
+      "images": ["atlassian/bitbucket"]
+    }
+  ]
+}

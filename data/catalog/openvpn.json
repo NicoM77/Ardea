@@ -1,0 +1,30 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "OpenVPN",
+  "products": [
+    {
+      "key": "openvpn",
+      "name": "OpenVPN",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["openvpn:openvpn"],
+      "aliases": [{ "names": ["OpenVPN Community"] }]
+    },
+    {
+      "key": "openvpn-access-server",
+      "name": "OpenVPN Access Server",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["openvpn:openvpn_access_server"],
+      "related": ["openvpn"]
+    },
+    {
+      "key": "openvpn-connect",
+      "name": "OpenVPN Connect",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["openvpn:openvpn_connect"],
+      "related": ["openvpn"]
+    }
+  ]
+}

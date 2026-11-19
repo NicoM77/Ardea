@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "FastAPI",
+  "products": [
+    {
+      "key": "fastapi",
+      "name": "FastAPI",
+      "kind": "framework",
+      "versionScheme": "pep440",
+      "cpe": ["tiangolo:fastapi"],
+      "packages": ["pkg:pypi/fastapi"],
+      "aliases": [{ "vendor": "tiangolo", "names": ["FastAPI"] }],
+      "related": ["python"]
+    }
+  ]
+}

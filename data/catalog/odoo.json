@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Odoo",
+  "products": [
+    {
+      "key": "odoo",
+      "name": "Odoo",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["odoo:odoo"],
+      "aliases": [{ "vendor": "Odoo", "names": ["Odoo Community", "Odoo Enterprise"] }],
+      "related": ["python", "postgresql"],
+      "images": ["odoo"]
+    }
+  ]
+}

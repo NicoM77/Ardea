@@ -1,0 +1,19 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Yoast",
+  "products": [
+    {
+      "key": "yoast-seo",
+      "name": "Yoast SEO",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "cpe": ["yoast:yoast_seo"],
+      "aliases": [
+        { "names": ["Yoast SEO", "WordPress SEO by Yoast"] },
+        { "vendor": "Team Yoast", "names": ["Yoast SEO *"] },
+        { "vendor": "Yoast", "names": ["Yoast SEO *"] }
+      ],
+      "platform": "wordpress"
+    }
+  ]
+}

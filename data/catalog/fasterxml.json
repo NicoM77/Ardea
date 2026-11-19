@@ -1,0 +1,25 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "FasterXML",
+  "products": [
+    {
+      "key": "jackson-databind",
+      "name": "Jackson Databind",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["fasterxml:jackson-databind"],
+      "packages": ["pkg:maven/com.fasterxml.jackson.core/jackson-databind"],
+      "aliases": [{ "vendor": "FasterXML", "names": ["Jackson", "jackson-databind"] }],
+      "related": ["jackson-core"]
+    },
+    {
+      "key": "jackson-core",
+      "name": "Jackson Core",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["fasterxml:jackson-core"],
+      "packages": ["pkg:maven/com.fasterxml.jackson.core/jackson-core"],
+      "aliases": [{ "vendor": "FasterXML", "names": ["jackson-core"] }]
+    }
+  ]
+}

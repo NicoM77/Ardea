@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Netty",
+  "products": [
+    {
+      "key": "netty",
+      "name": "Netty",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["netty:netty"],
+      "packages": ["pkg:maven/io.netty/netty-all", "pkg:maven/io.netty/netty-codec", "pkg:maven/io.netty/netty-codec-http", "pkg:maven/io.netty/netty-codec-http2", "pkg:maven/io.netty/netty-handler", "pkg:maven/io.netty/netty-common", "pkg:maven/io.netty/netty-buffer", "pkg:maven/io.netty/netty-transport"],
+      "related": ["openjdk"]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Eclipse Foundation",
+  "products": [
+    {
+      "key": "mosquitto",
+      "name": "Eclipse Mosquitto",
+      "kind": "messaging",
+      "versionScheme": "numeric",
+      "cpe": ["eclipse:mosquitto"],
+      "aliases": [{ "vendor": "Eclipse", "names": ["Mosquitto"] }],
+      "images": ["eclipse-mosquitto"]
+    },
+    {
+      "key": "jetty",
+      "name": "Eclipse Jetty",
+      "kind": "runtime",
+      "versionScheme": "maven",
+      "cpe": ["eclipse:jetty"],
+      "packages": ["pkg:maven/org.eclipse.jetty/jetty-server", "pkg:maven/org.eclipse.jetty/jetty-http"],
+      "aliases": [{ "vendor": "Eclipse", "names": ["Jetty"] }],
+      "related": ["openjdk"],
+      "images": ["jetty"]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Sonatype",
+  "products": [
+    {
+      "key": "nexus-repository",
+      "name": "Nexus Repository",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["sonatype:nexus_repository_manager"],
+      "aliases": [
+        { "vendor": "Sonatype", "names": ["Nexus", "Nexus Repository Manager", "Nexus Repository Manager 3", "Nexus Repository OSS"] }
+      ],
+      "images": ["sonatype/nexus3"]
+    }
+  ]
+}

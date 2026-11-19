@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Synology",
+  "products": [
+    {
+      "key": "synology-dsm",
+      "name": "DiskStation Manager",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["synology:diskstation_manager"],
+      "aliases": [{ "vendor": "Synology", "names": ["DSM", "Synology DSM", "DiskStation Manager (DSM)"] }]
+    }
+  ]
+}

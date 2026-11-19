@@ -1,0 +1,29 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "OpenSearch Software Foundation",
+  "products": [
+    {
+      // Started by Amazon as a fork of Elasticsearch; under the Linux Foundation since 2024.
+      "key": "opensearch",
+      "name": "OpenSearch",
+      "kind": "database",
+      "versionScheme": "maven",
+      "packages": ["pkg:maven/org.opensearch/opensearch"],
+      "aliases": [
+        { "vendor": "Amazon", "names": ["OpenSearch"] },
+        { "vendor": "OpenSearch", "names": ["OpenSearch"] }
+      ],
+      "related": ["elasticsearch"],
+      "images": ["opensearchproject/opensearch"]
+    },
+    {
+      "key": "opensearch-dashboards",
+      "name": "OpenSearch Dashboards",
+      "kind": "other",
+      "versionScheme": "semver",
+      "aliases": [{ "vendor": "OpenSearch", "names": ["OpenSearch Dashboards"] }],
+      "related": ["opensearch"],
+      "images": ["opensearchproject/opensearch-dashboards"]
+    }
+  ]
+}

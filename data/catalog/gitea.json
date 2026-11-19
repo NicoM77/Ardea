@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Gitea",
+  "products": [
+    {
+      "key": "gitea",
+      "name": "Gitea",
+      "kind": "other",
+      "versionScheme": "go",
+      "cpe": ["gitea:gitea"],
+      "packages": ["pkg:golang/code.gitea.io/gitea"],
+      "images": ["gitea/gitea"]
+    }
+  ]
+}

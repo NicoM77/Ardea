@@ -1,0 +1,17 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Tukaani Project",
+  "products": [
+    {
+      "key": "xz-utils",
+      "name": "XZ Utils",
+      "kind": "library",
+      "versionScheme": "numeric",
+      "cpe": ["tukaani:xz"],
+      "aliases": [
+        { "names": ["liblzma"] },
+        { "vendor": "Tukaani", "names": ["XZ", "xz-utils"] }
+      ]
+    }
+  ]
+}

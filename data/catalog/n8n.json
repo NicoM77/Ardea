@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "n8n",
+  "products": [
+    {
+      "key": "n8n",
+      "name": "n8n",
+      "kind": "other",
+      "versionScheme": "semver",
+      "cpe": ["n8n:n8n"],
+      "packages": ["pkg:npm/n8n"],
+      "related": ["nodejs"],
+      "images": ["n8nio/n8n"]
+    }
+  ]
+}

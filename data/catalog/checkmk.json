@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Checkmk",
+  "products": [
+    {
+      // tribe29 renamed itself Checkmk GmbH in 2022.
+      "key": "checkmk",
+      "name": "Checkmk",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["checkmk:checkmk", "tribe29:checkmk"],
+      "aliases": [{ "vendor": "Checkmk", "names": ["Check_MK", "Checkmk Raw Edition"] }],
+      "images": ["checkmk/check-mk-raw"]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Rock Lobster",
+  "products": [
+    {
+      "key": "contact-form-7",
+      "name": "Contact Form 7",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "cpe": ["rocklobster:contact_form_7"],
+      "aliases": [
+        { "names": ["Contact Form 7"] },
+        { "vendor": "Takayuki Miyoshi", "names": ["Contact Form 7"] }
+      ],
+      "platform": "wordpress"
+    }
+  ]
+}

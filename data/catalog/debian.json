@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Debian",
+  "products": [
+    {
+      "key": "debian",
+      "name": "Debian",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["debian:debian_linux"],
+      "aliases": [
+        { "names": ["Debian GNU/Linux"] },
+        { "vendor": "Debian", "names": ["Debian {line}", "Debian GNU/Linux {line}"] }
+      ],
+      "images": ["debian"]
+    }
+  ]
+}

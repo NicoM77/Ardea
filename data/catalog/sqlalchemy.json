@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "SQLAlchemy",
+  "products": [
+    {
+      "key": "sqlalchemy",
+      "name": "SQLAlchemy",
+      "kind": "library",
+      "versionScheme": "pep440",
+      "cpe": ["sqlalchemy:sqlalchemy"],
+      "packages": ["pkg:pypi/sqlalchemy"],
+      "related": ["python"]
+    }
+  ]
+}

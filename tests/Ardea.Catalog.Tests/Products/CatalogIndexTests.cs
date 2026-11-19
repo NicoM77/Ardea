@@ -23,6 +23,15 @@ public sealed class CatalogIndexTests
     [InlineData("OpenSSL Project", "OpenSSL", "openssl")]
     [InlineData("VMware", "RabbitMQ Server", "rabbitmq")]
     [InlineData("WooCommerce", "WooCommerce", "woocommerce")]
+    [InlineData("nodejs", "node", "nodejs")]
+    [InlineData("Linux", "Linux", "linux-kernel")]
+    [InlineData("Fortinet", "FortiOS", "fortios")]
+    [InlineData("Ivanti", "Connect Secure", "ivanti-connect-secure")]
+    [InlineData("Pulse Secure", "Pulse Connect Secure", "ivanti-connect-secure")]
+    [InlineData("Citrix", "NetScaler ADC", "netscaler-adc")]
+    [InlineData("Cisco", "Cisco Adaptive Security Appliance (ASA) Software", "cisco-asa")]
+    [InlineData("Team Yoast", "Yoast SEO – Advanced SEO with real-time guidance", "yoast-seo")]
+    [InlineData("HashiCorp", "Vault", "vault")]
     public void Spellings_of_vendor_and_product_find_the_product(string? vendor, string product, string key) =>
         Assert.Equal(key, Index.FindByName(vendor, product)?.Product.Key);
 
@@ -31,6 +40,10 @@ public sealed class CatalogIndexTests
     [InlineData("Microsoft", ".NET 8.0", "dotnet", "8.0", null)]
     [InlineData("Microsoft Corporation", "ASP.NET Core 9.0", "aspnetcore", "9.0", null)]
     [InlineData("Red Hat", "Red Hat Enterprise Linux 9", "rhel", "9", null)]
+    [InlineData("Microsoft", "Windows Server 2022 (Server Core installation)", "windows-server", "2022", null)]
+    [InlineData("Microsoft", "Windows 11 Version 23H2", "windows", "11", null)]
+    [InlineData("Microsoft", "Microsoft SQL Server 2022 (GDR)", "sql-server", "2022", null)]
+    [InlineData("Microsoft", "Microsoft Exchange Server 2019 Cumulative Update 14", "exchange-server", "2019", null)]
     public void Name_patterns_give_version_line_and_platform(string vendor, string product, string key, string line, string? platform)
     {
         var match = Index.FindByName(vendor, product);
@@ -59,6 +72,11 @@ public sealed class CatalogIndexTests
     [InlineData("PyPI", "Django", "django")]
     [InlineData("Packagist", "laravel/framework", "laravel")]
     [InlineData("Go", "github.com/grafana/grafana", "grafana")]
+    [InlineData("Go", "stdlib", "go")]
+    [InlineData("NuGet", "Umbraco.Cms", "umbraco")]
+    [InlineData("npm", "next", "nextjs")]
+    [InlineData("Maven", "org.springframework:spring-webmvc", "spring-framework")]
+    [InlineData("PyPI", "Jinja2", "jinja")]
     public void Package_finds_the_product_in_osv_and_purl_spelling(string type, string name, string key) =>
         Assert.Equal(key, Index.FindByPackage(type, name)?.Key);
 
@@ -77,6 +95,9 @@ public sealed class CatalogIndexTests
     [InlineData("mcr.microsoft.com/dotnet/aspnet:10.0", "aspnetcore")]
     [InlineData("php@sha256:0123456789abcdef", "php")]
     [InlineData("grafana/grafana-oss:11.0.0", "grafana")]
+    [InlineData("eclipse-temurin:21-jre", "openjdk")]
+    [InlineData("mcr.microsoft.com/mssql/server:2022-latest", "sql-server")]
+    [InlineData("quay.io/keycloak/keycloak:26.0", "keycloak")]
     public void Container_image_finds_the_product(string image, string key) => Assert.Equal(key, Index.FindByImage(image)?.Key);
 
     [Fact]
@@ -89,6 +110,18 @@ public sealed class CatalogIndexTests
         Assert.Empty(Index.Search("   ", 5));
         Assert.Empty(Index.Search("postgres", 0));
     }
+
+    [Theory]
+    [InlineData("WINDOWS SERVER", "windows-server")]
+    [InlineData("Wíndows Server 2022", "windows-server")]
+    [InlineData("windows-server", "windows-server")]
+    [InlineData("contact form 7", "contact-form-7")]
+    [InlineData("mcr.microsoft.com/dotnet/aspnet", "aspnetcore")]
+    [InlineData("jackson-databind", "jackson-databind")]
+    [InlineData("ivanti connect", "ivanti-connect-secure")]
+    [InlineData("sql", "sql-server")]
+    public void Search_ignores_case_accents_separators_and_trailing_versions(string text, string key) =>
+        Assert.Equal(key, Index.Search(text, 5)[0].Key);
 
     [Fact]
     public void Search_ranks_exact_spellings_before_prefixes_words_and_typos()

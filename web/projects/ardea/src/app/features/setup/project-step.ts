@@ -12,7 +12,8 @@ import { focusFirstInvalid } from '../auth/focus-invalid';
 import { WIZARD_PROBLEMS } from './wizard-problems';
 
 /**
- * Step "Project" (master plan 11.6): the name and the business process it carries. Exposure and
+ * Step "Project" (master plan 11.6): the name and the business process it carries; optional after
+ * the stack in an organization's first run (task 5a.4). Exposure and
  * criticality follow in Operations, while the repository is read. An existing project is renamed,
  * not created again: the wizard never asks twice.
  */
@@ -24,6 +25,9 @@ import { WIZARD_PROBLEMS } from './wizard-problems';
       <ui-card [heading]="'wizard.project.title' | transloco">
         <div class="fields">
           <p class="hint">{{ 'wizard.project.lead' | transloco }}</p>
+          @if (optional()) {
+            <p class="hint">{{ 'wizard.project.optional' | transloco }}</p>
+          }
           @if (problem()) {
             <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
           }
@@ -44,10 +48,23 @@ import { WIZARD_PROBLEMS } from './wizard-problems';
         </div>
       </ui-card>
       <div class="actions">
-        <span></span>
-        <button uiButton variant="primary" type="submit" [loading]="projectForm().submitting()">
-          {{ 'wizard.continue' | transloco }}
-        </button>
+        @if (optional()) {
+          <button uiButton variant="ghost" type="button" (click)="back.emit()">
+            {{ 'wizard.back' | transloco }}
+          </button>
+        } @else {
+          <span></span>
+        }
+        <div class="forward">
+          @if (optional()) {
+            <button uiButton type="button" [loading]="skipping()" (click)="skipped.emit()">
+              {{ 'wizard.project.skip' | transloco }}
+            </button>
+          }
+          <button uiButton variant="primary" type="submit" [loading]="projectForm().submitting()">
+            {{ 'wizard.continue' | transloco }}
+          </button>
+        </div>
       </div>
     </form>
   `,
@@ -69,10 +86,17 @@ import { WIZARD_PROBLEMS } from './wizard-problems';
     }
     .actions {
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       gap: var(--space-md);
       padding-top: var(--space-lg);
       border-top: 1px solid var(--border);
+    }
+    .forward {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: var(--space-sm);
     }
   `,
 })
@@ -80,7 +104,15 @@ export class ProjectStep {
   readonly orgId = input.required<string>();
   /** The project the wizard already created, if it comes back to this step. */
   readonly project = input<ProjectView | null>(null);
+  /**
+   * In the organization's first run the stack is enough to start (master plan 11.6, task 5a.4):
+   * the step goes back to the stack, and can be skipped, which finishes the setup without a project.
+   */
+  readonly optional = input(false);
+  readonly skipping = input(false);
   readonly saved = output<ProjectView>();
+  readonly back = output();
+  readonly skipped = output();
 
   private readonly projects = inject(ProjectsService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;

@@ -3,6 +3,7 @@ import { expectAccessible } from './axe';
 import { watchConsole } from './console';
 import { flowsApi } from './flows-api';
 import { notifyApi } from './notify-api';
+import { stackApi } from './stack-api';
 import { PROJECT_ID } from './mock-api';
 
 /**
@@ -12,7 +13,9 @@ import { PROJECT_ID } from './mock-api';
  * closing back, the three answers above the action bar at 390 × 844, and the alert. Phase 4 adds
  * the model's assessment: its texts as plain text, the proposal confirmed and a verdict corrected
  * (task 4.7), and a request for an assessment refused for today (task 4.3); the catalogue that learns
- * with its review list and the note on a hit through a learned entry (tasks 4.9, 4.10). Every page is checked
+ * with its review list and the note on a hit through a learned entry (tasks 4.9, 4.10). Phase 5a adds
+ * the stack (task 5a.4, e2e/stack-api.ts): the wizard with the stack only, and the stack page, also
+ * at 390 × 844. Every page is checked
  * with axe (WCAG 2.2 AA) and must log no console error.
  */
 const ORG = '/o/example';
@@ -545,4 +548,207 @@ test('catalogue that learns: the note on a hit leads to the review list, where a
   expect((await adopt).method()).toBe('POST');
   await expect(card.getByText('acme/widgetserver is mapped')).toBeVisible();
   expect(problems).toEqual([]);
+});
+
+test('wizard with the stack only: products from the catalogue and the suggestions, a version line, a threshold, projects skipped', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page, { calm: true });
+  const stack = await stackApi(page, { wizard: true });
+  await page.goto(`${ORG}/setup`);
+
+  const step = page.getByRole('region', { name: 'Your stack' });
+  await expect(step).toBeVisible();
+  await expect(step).toContainText('could this affect you?');
+  await expect(page.getByRole('navigation', { name: 'Setup steps' })).toContainText('Stack');
+
+  // Continue needs one product: the step says so and puts the focus in the search.
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(step.getByText('Add at least one product your organization runs.')).toBeVisible();
+  const search = page.getByRole('combobox', { name: 'Add a product' });
+  await expect(search).toBeFocused();
+
+  // Another spelling finds the product; the keyboard picks it.
+  await search.fill('postgres');
+  await expect(page.getByRole('option', { name: /PostgreSQL/ })).toBeVisible();
+  await search.press('ArrowDown');
+  await search.press('Enter');
+  const rows = step.getByRole('list', { name: 'Stack entries' }).getByRole('listitem');
+  await expect(rows).toHaveCount(1);
+  await expect(page.getByRole('status').filter({ hasText: 'Added PostgreSQL.' })).toBeVisible();
+  await expect(search).toHaveValue('');
+  await expect(search).toBeFocused();
+
+  // Azure is not one product of the catalogue (ADR 044): the search says so.
+  await search.fill('azure');
+  await expect(page.getByText('Microsoft Azure is not one product in the catalogue')).toBeVisible();
+
+  // IIS brings Windows Server as its companion (ADR 044), with the reason.
+  await search.fill('iis');
+  await page.getByRole('option', { name: /Internet Information Services/ }).click();
+  const suggested = page.getByRole('region', { name: 'Suggested' });
+  await expect(suggested).toContainText(
+    'Vulnerabilities in Internet Information Services are usually published under Windows Server.',
+  );
+  await suggested.getByRole('button', { name: 'Add Windows Server to the stack' }).click();
+  // A usual entry from the chips of its group.
+  await suggested.getByRole('button', { name: 'Add nginx to the stack' }).click();
+  await expect(rows).toHaveCount(4);
+
+  // A version line for PostgreSQL, and every entry for nginx; each is saved at once.
+  const postgres = rows.filter({ hasText: 'PostgreSQL' });
+  const version = postgres.getByRole('textbox', { name: 'Version of PostgreSQL' });
+  await version.fill('17');
+  await expect(postgres).toContainText('Only entries for this line');
+  await version.press('Enter');
+  await expect(postgres.getByRole('combobox', { name: /How exact/ })).toHaveValue('line');
+  const nginx = rows.filter({ hasText: 'nginx' });
+  await nginx.getByRole('button', { name: 'Everything' }).click();
+  await expect(nginx.getByRole('button', { name: 'Everything' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(stack.writes.filter((w) => w.method === 'PATCH').map((w) => w.body)).toEqual([
+    expect.objectContaining({ version: '17', versionPrecision: 'line' }),
+    expect.objectContaining({ noticeThreshold: 'everything' }),
+  ]);
+  await expectAccessible(page, 'wizard stack step');
+
+  // Continue: the focus moves to the next step's title; the project is optional.
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page).toHaveURL(/\/setup\?step=project$/);
+  await expect(page.getByRole('heading', { name: /Step 3: Project/ })).toBeFocused();
+  await expect(page.getByText('Optional: your stack is enough to start.')).toBeVisible();
+  await expectAccessible(page, 'wizard project step, optional');
+  await page.getByRole('button', { name: 'Skip — the stack is enough to start' }).click();
+  await expect(page).toHaveURL(/\/o\/example\/overview$/);
+  await expect(page.getByRole('status').filter({ hasText: 'Setup finished.' })).toBeVisible();
+  expect(problems).toEqual([]);
+});
+
+test('stack page: suggestions with their reasons, a removal taken back, a version cleared', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  const stack = await stackApi(page);
+  await page.goto(`${ORG}/overview`);
+  await page.getByRole('link', { name: 'Stack' }).click();
+  await expect(page).toHaveURL(/\/o\/example\/stack$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Stack' })).toBeVisible();
+  await expect(page.getByText('2 entries, 1 with a version line.')).toBeVisible();
+
+  const entries = page.getByRole('region', { name: 'Products the organization runs' });
+  const rows = entries.getByRole('list', { name: 'Stack entries' }).getByRole('listitem');
+  await expect(rows).toHaveCount(2);
+  const suggested = page.getByRole('region', { name: 'Suggested' });
+  await expect(suggested).toContainText(
+    'Ubuntu covers the distribution, not the Linux kernel it ships.',
+  );
+  await expect(suggested).toContainText('Named in Platform Ops.');
+  await expect(page.getByRole('region', { name: 'What raises a notice' })).toContainText(
+    'Critical (CVSS 9.0 or more)',
+  );
+  await expectAccessible(page, 'stack page');
+
+  // Removing Ubuntu moves the focus to the next Remove; Undo brings it back as it was.
+  await rows.filter({ hasText: 'Ubuntu' }).getByRole('button', { name: 'Remove Ubuntu' }).click();
+  await expect(rows).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Remove PostgreSQL' })).toBeFocused();
+  await expect(suggested).not.toContainText('Linux kernel');
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(rows).toHaveCount(2);
+  await expect(rows.filter({ hasText: 'Ubuntu' })).toBeVisible();
+
+  // Clearing the version makes it any version again.
+  const postgres = rows.filter({ hasText: 'PostgreSQL' });
+  await postgres.getByRole('textbox', { name: 'Version of PostgreSQL' }).fill('');
+  await postgres.getByRole('textbox', { name: 'Version of PostgreSQL' }).press('Enter');
+  await expect(postgres).toContainText('Any version');
+  await expect(postgres.getByRole('combobox')).toHaveCount(0);
+  expect(stack.writes.map((w) => w.method)).toEqual(['DELETE', 'POST', 'PATCH']);
+  expect(problems).toEqual([]);
+});
+
+test('stack page: a save that fails says so, and the row shows what is stored', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  const stack = await stackApi(page);
+  await page.goto(`${ORG}/stack`);
+  const rows = page.getByRole('list', { name: 'Stack entries' }).getByRole('listitem');
+  await expect(rows).toHaveCount(2);
+
+  stack.failWrites = true;
+  const ubuntu = rows.filter({ hasText: 'Ubuntu' });
+  const version = ubuntu.getByRole('textbox', { name: 'Version of Ubuntu' });
+  await version.fill('24.04');
+  await version.press('Enter');
+  await expect(page.getByText('The change could not be saved. Try again.')).toBeVisible();
+  await expect(version).toHaveValue('');
+  await expect(ubuntu).toContainText('Any version');
+
+  const postgres = rows.filter({ hasText: 'PostgreSQL' });
+  const exactness = postgres.getByRole('combobox', { name: /How exact/ });
+  await exactness.focus();
+  await exactness.selectOption('exact');
+  await expect(exactness).toHaveValue('line');
+  await expect(exactness).toBeFocused();
+
+  // Once writes go through again, the same change is saved.
+  stack.failWrites = false;
+  await version.fill('24.04');
+  await version.press('Enter');
+  await expect(page.getByText('The change could not be saved. Try again.')).toHaveCount(0);
+  await expect(ubuntu.getByRole('combobox', { name: /How exact/ })).toHaveValue('exact');
+  expect(problems.filter((p) => !p.includes('status of 409'))).toEqual([]);
+});
+
+test('wizard: Undo still takes an addition back after Continue left the stack step', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page, { calm: true });
+  const stack = await stackApi(page, { wizard: true });
+  await page.goto(`${ORG}/setup`);
+  const suggested = page.getByRole('region', { name: 'Suggested' });
+  await suggested.getByRole('button', { name: 'Add PostgreSQL to the stack' }).click();
+  await suggested.getByRole('button', { name: 'Add nginx to the stack' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Added nginx.' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page).toHaveURL(/\/setup\?step=project$/);
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect.poll(() => stack.writes.map((w) => w.method)).toEqual(['POST', 'POST', 'DELETE']);
+
+  await page.getByRole('button', { name: 'Back' }).click();
+  const rows = page.getByRole('list', { name: 'Stack entries' }).getByRole('listitem');
+  await expect(rows).toHaveCount(1);
+  await expect(rows).toContainText('PostgreSQL');
+  expect(problems).toEqual([]);
+});
+
+test.describe('the stack at 390 × 844', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test('fits the width and stays usable', async ({ page }) => {
+    const problems = watchConsole(page);
+    await flowsApi(page);
+    await stackApi(page);
+    await page.goto(`${ORG}/stack`);
+    const rows = page.getByRole('list', { name: 'Stack entries' }).getByRole('listitem');
+    await expect(rows).toHaveCount(2);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+    await rows.filter({ hasText: 'Ubuntu' }).getByRole('button', { name: 'Everything' }).click();
+    await expect(
+      rows.filter({ hasText: 'Ubuntu' }).getByRole('button', { name: 'Everything' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expectAccessible(page, 'stack page on a phone');
+    expect(problems).toEqual([]);
+  });
 });

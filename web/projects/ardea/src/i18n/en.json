@@ -43,6 +43,7 @@
     "actions": "Actions",
     "vulnerabilities": "Vulnerabilities",
     "projects": "Projects",
+    "stack": "Stack",
     "sources": "Sources",
     "rules": "Notification rules",
     "team": "Team",
@@ -980,6 +981,88 @@
     "useCatalogEntryNamed": "Record {name} as the catalogue entry {entry}",
     "catalogEntryUsed": "{name} is now recorded as a catalogue entry."
   },
+  "stack": {
+    "lead": "What the organization runs, without projects. A new vulnerability that names one of these products raises a notice.",
+    "summary": "{count, plural, =0 {No entries yet.} one {# entry} other {# entries}}{lines, plural, =0 {} one {, # with a version line} other {, # with a version line}}{count, plural, =0 {} other {. Projects with versions are checked exactly.}}",
+    "loading": "Loading the stack",
+    "entriesTitle": "Products the organization runs",
+    "entriesLabel": "Stack entries",
+    "savedAtOnce": "Changes are saved at once",
+    "empty": "No products yet. Add what the organization runs from the catalogue below, or take a suggestion.",
+    "remove": "Remove {name}",
+    "columns": {
+      "product": "Product",
+      "version": "Version",
+      "threshold": "Notices for"
+    },
+    "version": {
+      "label": "Version of {name}"
+    },
+    "precision": {
+      "label": "How exact the version of {name} is",
+      "anyPlaceholder": "Any",
+      "line": "Line",
+      "exact": "Exact",
+      "noneHint": "Any version",
+      "lineHint": "Only entries for this line",
+      "exactHint": "Checked exactly, like a project"
+    },
+    "threshold": {
+      "label": "Notices for {name}",
+      "onlyImportant": "Only important",
+      "everything": "Everything"
+    },
+    "add": {
+      "label": "Add a product",
+      "placeholder": "Redis, nginx, Exchange …",
+      "hint": "From the catalogue; other spellings and abbreviations work too.",
+      "results": "Products in the catalogue",
+      "searching": "Searching the catalogue",
+      "failed": "The catalogue could not be searched. Try again.",
+      "none": "Nothing in the catalogue matches “{query}”.",
+      "azureHint": "Microsoft Azure is not one product in the catalogue: Microsoft names each Azure service on its own. Add what runs there, such as Windows Server or SQL Server.",
+      "iisHint": "IIS is updated with Windows Server, and its vulnerabilities are published under Windows Server: add Windows Server too.",
+      "exchangeHint": "Exchange vulnerabilities often name Windows Server: add Windows Server too.",
+      "distributionHint": "A distribution covers itself, not the Linux kernel it ships: add the Linux kernel too."
+    },
+    "suggest": {
+      "title": "Suggested",
+      "add": "Add",
+      "addNamed": "Add {name} to the stack",
+      "common": "Often in stacks",
+      "none": "Nothing to suggest: the usual products are in your stack.",
+      "windows": "Vulnerabilities in {basis} are usually published under Windows Server.",
+      "kernel": "{basis} covers the distribution, not the Linux kernel it ships.",
+      "companion": "Goes with {basis}.",
+      "projects": "Named in {projects}."
+    },
+    "explain": {
+      "title": "What raises a notice",
+      "onlyImportant": "Critical (CVSS 9.0 or more), actively exploited, warned about by a national authority, or likely to be exploited soon. Browsers only when exploited or warned about. The default.",
+      "everything": "Every entry that names the product, within the version line.",
+      "productTitle": "The product itself",
+      "product": "An entry covers the product, not what is built on it: .NET says nothing about NuGet packages, WordPress nothing about plugins. Connect a repository to a project for those.",
+      "versionTitle": "Version",
+      "version": "A line such as “17” narrows notices to that line. An exact version such as “17.9” is checked like a project, with findings and actions instead of notices."
+    },
+    "toast": {
+      "added": "Added {name}.",
+      "removed": "Removed {name}. Its open notices stay.",
+      "everything": "{name}: every entry.",
+      "onlyImportant": "{name}: only important entries.",
+      "anyVersion": "{name}: any version.",
+      "line": "{name} {version}: only entries for this line.",
+      "exact": "{name} {version} is checked exactly, like a project."
+    },
+    "errors": {
+      "load": "The stack could not be loaded. Reload the page to try again.",
+      "save": "The change could not be saved. Try again.",
+      "invalid": "This version is not valid. Use at most 100 characters.",
+      "gone": "The entry has changed meanwhile. The stack shows it as it is now.",
+      "undo": "The change could not be taken back. Open the stack to check it.",
+      "undoFree": "{name} is not in the catalogue and cannot be added back here."
+    }
+  },
   "wizard": {
     "title": "Setup",
     "titleNew": "New project",
@@ -993,6 +1076,7 @@
     "stepNumber": "Step {n}",
     "steps": {
       "organization": "Organization",
+      "stack": "Stack",
       "project": "Project",
       "repository": "Repository",
       "operations": "Operations",
@@ -1003,9 +1087,20 @@
     "continue": "Continue",
     "back": "Back",
     "finish": "Finish setup",
+    "finishedWithStack": "Setup finished. Ardea watches your stack; add projects whenever you like.",
+    "stack": {
+      "title": "Your stack",
+      "count": "{count, plural, =0 {No products yet} one {# product} other {# products}}",
+      "lead": "Name the products your organization runs, broadly: Windows Server, PostgreSQL, FortiGate. No versions needed; add a version line where you know it.",
+      "notice": "When a new vulnerability names one of them, Ardea raises a notice: “could this affect you?”, answered with yes or no. Projects and repositories are optional and come next.",
+      "typical": "A typical organization names {min} to {max}.",
+      "empty": "Add at least one product your organization runs. The search knows other spellings too."
+    },
     "project": {
       "title": "Project",
       "lead": "A project is a system you run: a shop, a portal, an internal service. Ardea checks its technologies against every new vulnerability.",
+      "optional": "Optional: your stack is enough to start. A project with a repository is checked exactly, version by version.",
+      "skip": "Skip — the stack is enough to start",
       "name": "Name",
       "nameHint": "As your team calls it.",
       "description": "Business process it carries",

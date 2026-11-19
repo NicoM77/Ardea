@@ -43,6 +43,7 @@ import type {
   ProjectView,
   ReplaceComponentsRequest,
   ReplaceComponentsResponse,
+  StackSuggestionView,
   StackView,
   UpdateProjectRequest
 } from '../../model';
@@ -263,6 +264,18 @@ export function listComponentsResource(orgId: Signal<string | undefined>,
     projectId: Signal<string | undefined>,
   options?: OrvalHttpResourceOptions<ComponentView[], unknown>): HttpResourceRef<ComponentView[] | undefined> {
   return httpResource<ComponentView[]>(() => (orgId() === undefined || projectId() === undefined ? undefined : applyOrvalRequestExtension(`/api/v1/orgs/${orgId()}/projects/${projectId()}/components`, options)), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function listStackSuggestionsResource(orgId: Signal<string | undefined>,
+  options: OrvalHttpResourceOptions<StackSuggestionView[], unknown> & { defaultValue: NoInfer<StackSuggestionView[]> }): HttpResourceRef<StackSuggestionView[]>;
+export function listStackSuggestionsResource(orgId: Signal<string | undefined>,
+  options?: OrvalHttpResourceOptions<StackSuggestionView[], unknown>): HttpResourceRef<StackSuggestionView[] | undefined>;
+export function listStackSuggestionsResource(orgId: Signal<string | undefined>,
+  options?: OrvalHttpResourceOptions<StackSuggestionView[], unknown>): HttpResourceRef<StackSuggestionView[] | undefined> {
+  return httpResource<StackSuggestionView[]>(() => (orgId() === undefined ? undefined : applyOrvalRequestExtension(`/api/v1/orgs/${orgId()}/stack/suggestions`, options)), options);
 }
 
 /**
@@ -612,7 +625,9 @@ export type ListProjectsResourceResult = NonNullable<ProjectView[]>
 export type GetProjectResourceResult = NonNullable<ProjectDetail>
 export type GetStackResourceResult = NonNullable<StackView>
 export type ListComponentsResourceResult = NonNullable<ComponentView[]>
+export type ListStackSuggestionsResourceResult = NonNullable<StackSuggestionView[]>
 export type GetProfileCoverageResourceResult = NonNullable<CoverageView>
+
 
 
 

@@ -46,6 +46,7 @@ public sealed class AssetsModule : IModule
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         ProjectEndpoints.Map(endpoints);
+        StackSuggestions.Map(endpoints);
         ConnectionEndpoints.Map(endpoints);
         LinkEndpoints.Map(endpoints);
         CoverageEndpoints.Map(endpoints);

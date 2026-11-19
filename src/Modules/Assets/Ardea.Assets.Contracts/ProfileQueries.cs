@@ -22,6 +22,12 @@ public interface IProfileQueries
 
     /// <summary>Components of the current organisation with their context; components that no longer exist are left out.</summary>
     Task<IReadOnlyList<ProfileComponent>> FindComponentsAsync(IReadOnlyCollection<Guid> componentIds, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Components of the current organisation whose name, product key, package or project name contains
+    /// the text, ignoring case; for the search in the actions list (master plan 10.2). At most <paramref name="limit"/> ids.
+    /// </summary>
+    Task<IReadOnlyList<Guid>> SearchComponentsAsync(string text, int limit, CancellationToken cancellationToken);
 }
 
 /// <summary>A search key of <c>assets.component_key</c>.</summary>
@@ -45,6 +51,8 @@ public sealed record ProfileComponent
 
     /// <summary>The project is archived: the component takes no part in the matching.</summary>
     public required bool ProjectArchived { get; init; }
+
+    public required string ProjectName { get; init; }
 
     public string? ProductKey { get; init; }
 

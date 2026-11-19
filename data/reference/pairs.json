@@ -6021,7 +6021,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-core via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[0] lists the old org.apache.openejb:openejb-core line 4.0.0-beta-1 through 4.7.5 with no fix in that line; the description names only 10.3.0/11.0.0-M2 as fixes, so 4.7.6 is before any fix. 4.7.6 is probably not a real release (4.7.5 was the last 4.x).",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P232",
@@ -6042,7 +6048,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-core via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[0] lists org.apache.openejb:openejb-core 4.0.0-beta-1 through 4.7.5, unfixed in that line; the fix is only 10.3.0/11.0.0-M2, so 4.7.6 is before it. 4.7.6 is probably not a real release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P233",
@@ -6063,7 +6075,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.openejb:tomee-catalina via package; installed version above every range (highest bound 1.7.5); the text names a fix 10.3.0 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] lists org.apache.openejb:tomee-catalina 1.5.1 through 1.7.5 (the discontinued TomEE 1.x line) with no fix there; the description names only 10.3.0/11.0.0-M2, so 1.7.6 is before any fix. TomEE 1.7.5 was the last 1.x release, so 1.7.6 probably does not exist.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P234",
@@ -6084,7 +6102,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.openejb:tomee-webservices via package; installed version above every range (highest bound 4.0.0); the text names a fix 10.3.0 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] lists org.apache.openejb:tomee-webservices 4.0.0-beta-1 through 4.0.0 and 1.5.0 through 1.7.5, the whole old groupId with no fix; the fix is only 10.3.0/11.0.0-M2, so 4.0.1 is before it. Ambiguous: the artifact went from 4.0.0 to 1.5.0 numbering, so 4.0.1 probably never existed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P235",
@@ -6105,7 +6129,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.openejb:tomee-webservices via package; installed version above every range (highest bound 4.0.0); the text names a fix 10.3.0 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[0] lists org.apache.openejb:tomee-webservices 4.0.0-beta-1 through 4.0.0 and 1.5.0 through 1.7.5 with no fix in the old groupId; the only fix is 10.3.0/11.0.0-M2, so 4.0.1 is before it. Ambiguous: 4.0.1 probably never existed (numbering continued at 1.5.0).",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P236",
@@ -6126,7 +6156,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-bridge via package; installed version above every range (highest bound 1.19.0); the text names a fix 1.20 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] and the description say 'through 1.19' (range <=1.19.0), but 1.20 is named as the fix; per the rule the fix version decides, so 1.19.1 is affected. Batik has no known 1.19.1 release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P237",
@@ -6146,7 +6182,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names n8n via name; installed version above every range (highest bound 2.38.0); the text names a fix 3.0.1 above it",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists n8n 0 to before 2.38.0 with 2.38.0 unaffected, and the description says 'before 2.38.0 and 3.x before 3.0.1'; 2.38.1 is past the 2.x fix. The 3.0.1 fix concerns the 3.x line only.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P238",
@@ -6166,7 +6208,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names n8n via name; installed version above every range (highest bound 1.123.89); the text names a fix 2.45.5 above it",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists n8n 0 to before 1.123.89 with 1.123.89 unaffected; 1.123.90 is past the 1.x fix. The description's 2.45.5/2.46.1/3.0.1 fixes concern later lines.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P239",
@@ -6186,7 +6234,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[2] names n8n via name; installed version above every range (highest bound 2.45.5); the text names a fix 2.46.1 above it",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[2] lists 2.0.0 to before 2.45.5 with 2.45.5 unaffected, and affected[1] starts at 2.46.0; 2.45.6 lies between them. The description ('2.x before 2.45.5, 2.46.x before 2.46.1') agrees.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P240",
@@ -6206,7 +6260,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names n8n via name; installed version above every range (highest bound 2.45.5); the text names a fix 2.46.1 above it",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[1] lists 0 to before 2.45.5 with 2.45.5 unaffected, affected[0] starts at 2.46.0; 2.45.6 lies between them, as the description ('before 2.45.5, 2.46.x before 2.46.1') also says.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P241",
@@ -6227,7 +6287,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:fop-core via package; installed version above every range (highest bound 2.11.0); the text names a fix 2.12 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] and the description say 'through 2.11' (range <=2.11.0), but 2.12 is named as the fix; per the rule 2.11.1 is before the fix and affected. FOP has no known 2.11.1 release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P242",
@@ -6248,7 +6314,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-bridge via package; installed version above every range (highest bound 1.19.0); the text names a fix 1.20 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] and the description say 'through 1.19' (range <=1.19.0), but 1.20 is named as the fix; per the rule 1.19.1 is affected. Batik has no known 1.19.1 release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P243",
@@ -6269,7 +6341,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:fop-core via package; installed version above every range (highest bound 2.11.0); the text names a fix 2.12 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[0] and the description say 'through 2.11' (range <=2.11.0), but 2.12 is named as the fix; per the rule 2.11.1 is affected. FOP has no known 2.11.1 release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P244",
@@ -6289,7 +6367,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names airflow via package; installed version above every range (highest bound 3.0.0); the text names a fix 3.4.0 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[1] lists apache-airflow-core 0 to before 3.4.0 and the description says to upgrade to 3.4.0 or later; Airflow 3.0.1 is inside. affected[0] (apache-airflow before 3.0.0) covers only the 2.x packaging, which is why the range looked exceeded.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P245",
@@ -6310,7 +6394,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-core via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[0] lists org.apache.openejb:openejb-core 4.0.0-beta-1 through 4.7.5, unfixed in that line; the fix is only 10.3.0/11.0.0-M2, so 4.7.6 is before it. 4.7.6 is probably not a real release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P246",
@@ -6331,7 +6421,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-core via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[0] lists org.apache.openejb:openejb-core 4.5.1 through 4.7.5, unfixed in that line; the fix is only 10.3.0/11.0.0-M2, so 4.7.6 is before it. 4.7.6 is probably not a real release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P247",
@@ -6352,7 +6448,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-client via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] lists org.apache.openejb:openejb-client 4.0.0-beta-1 through 4.7.5, unfixed in that line; the fix is only 10.3.0/11.0.0-M2, so 4.7.6 is before it. 4.7.6 is probably not a real release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P248",
@@ -6373,7 +6475,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-bridge via package; installed version above every range (highest bound 1.19.0); the text names a fix 1.20 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[0] and the description say 'through 1.19' (range <=1.19.0), but 1.20 is named as the fix; per the rule 1.19.1 is affected. Batik has no known 1.19.1 release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P249",
@@ -6394,7 +6502,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-dom via package; installed version above every range (highest bound 1.19.0); the text names a fix 1.20 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[0] (batik-dom) and the description say 'through 1.19', but 1.20 is named as the fix; per the rule 1.19.1 is affected. Batik has no known 1.19.1 release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P250",
@@ -6415,7 +6529,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-ejbd via package; installed version above every range (highest bound 4.7.5); the text names a fix 10.3.0 above it",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[0] lists org.apache.openejb:openejb-ejbd 4.0.0-beta-1 through 4.7.5, unfixed in that line; the fix is only 10.3.0/11.0.0-M2, so 4.7.6 is before it. 4.7.6 is probably not a real release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     }
   ]
 }

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Modules/Assessment/Ardea.Assessment/Ardea.Assessment.csproj" />
+    <ProjectReference Include="../../src/Modules/Assets/Ardea.Assets/Ardea.Assets.csproj" />
+    <ProjectReference Include="../../src/Modules/Intel/Ardea.Intel/Ardea.Intel.csproj" />
+    <ProjectReference Include="../../src/Modules/Catalog/Ardea.Catalog/Ardea.Catalog.csproj" />
+    <ProjectReference Include="../Ardea.TestSupport/Ardea.TestSupport.csproj" />
+  </ItemGroup>
+</Project>

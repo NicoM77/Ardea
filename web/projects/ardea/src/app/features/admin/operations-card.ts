@@ -18,6 +18,8 @@ import { groupMetrics, notifiedAt } from './operations';
         <span uiCardMeta>
           {{ 'admin.operations.asOf' | transloco: { time: when(view.at) } }}
         </span>
+      }
+      @if (status(); as view) {
         <div class="warnings" role="status">
           @for (warning of view.warnings; track warning.code + (warning.subject ?? '')) {
             <ui-notice tone="error">

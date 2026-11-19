@@ -156,6 +156,33 @@ public sealed class VersionCheckTests
     }
 
     [Fact]
+    public void Unreadable_fix_leaves_the_version_unknown_even_with_a_default_of_unaffected()
+    {
+        var range = new VersionRange { Introduced = "1.0", Fixed = "the next release" };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.RangeNotReadable), Check("1.5", VersionStatus.Unaffected, range));
+    }
+
+    [Fact]
+    public void Inverted_range_says_nothing_about_the_versions_between_its_bounds()
+    {
+        // Lower bound above the fix: a typo in the record, not an empty set of versions.
+        var inverted = new VersionRange { Introduced = "2.0", Fixed = "1.0" };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.RangeNotReadable), Check("1.5", VersionStatus.Unaffected, inverted));
+    }
+
+    [Fact]
+    public void Unreadable_unaffected_range_keeps_an_affected_default_from_deciding()
+    {
+        // The version may lie inside the unaffected statement; the default only applies to versions in no range.
+        var unreadable = VersionRange.ExactVersion("the patched build", VersionStatus.Unaffected);
+
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.RangeNotReadable), Check("3.0", VersionStatus.Affected, unreadable));
+        Assert.Equal(new VersionCheck(VersionVerdict.InRange, VersionCheckReason.DefaultAffected), Check("3.0", VersionStatus.Affected));
+    }
+
+    [Fact]
     public void Readable_affected_range_still_decides_next_to_an_unreadable_one()
     {
         var unreadable = VersionRange.ExactVersion("build 4711 of the old line");

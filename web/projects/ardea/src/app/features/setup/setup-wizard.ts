@@ -40,7 +40,7 @@ import { isReading, pollWhile } from '../projects/link-format';
 import { canManage } from '../organizations/org-format';
 import { WIZARD_PROBLEMS } from './wizard-problems';
 
-/** `organization`: the first project of a new organization; `new`: another project; `project`: an existing one. */
+/** `organization`: the stack and the first project of a new organization; `new`: another project; `project`: an existing one. */
 export type WizardMode = 'organization' | 'new' | 'project';
 
 export type WizardStep =

@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="phase3.css">
+<link rel="stylesheet" href="notices.css">
 </head>
 <body data-page="overview">
 <main class="sheet" id="main">
@@ -27,23 +28,26 @@
     </header>
 
     <div class="grid">
-      <section class="card span-8 rise" aria-labelledby="h-deadlines">
+      <section class="card span-8 rise" aria-labelledby="h-reminders">
         <header>
-          <h2 id="h-deadlines">Deadlines</h2>
-          <a class="card-link" href="actions.html">All actions<svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+          <h2 id="h-reminders">Open reminders</h2>
+          <a class="card-link" href="reminders.html">All reminders<svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
         </header>
-        <div class="runway" id="runway"></div>
+        <div class="rhythm" id="rhythm"></div>
+        <p class="rhythm-key" aria-hidden="true"><span><i class="k-bar"></i>open since</span><span><i class="k-tick"></i>reminded</span><span><i class="k-next"></i>next reminder</span></p>
       </section>
 
       <div class="stack span-4 unstack">
-        <section class="card rise lead" aria-labelledby="h-next">
+        <!-- «n new notices» (master plan 17.7) leads the side column; on a phone it moves to the top -->
+        <section class="card rise lead notice-lead" aria-labelledby="h-notices">
           <header>
-            <h2 id="h-next">Next deadline</h2>
-            <span class="meta" id="next-when"></span>
+            <h2 id="h-notices">Notices</h2>
+            <span class="meta" id="n-period"></span>
           </header>
-          <p class="figure" id="next-figure"></p>
-          <p class="next-sub" id="next-sub"></p>
-          <a class="btn primary" id="next-open" href="action.html">Open action</a>
+          <p class="figure-row"><span class="figure" id="n-new"></span><span id="n-word"></span></p>
+          <p class="next-sub" id="n-sub"></p>
+          <div class="notice-peek" id="n-peek"></div>
+          <a class="btn primary" id="n-open" href="notices.html"></a>
         </section>
         <section class="card fill rise" aria-labelledby="h-priority">
           <header><h2 id="h-priority">By priority</h2></header>
@@ -67,15 +71,15 @@
         <div class="sieve-field"><canvas aria-hidden="true"></canvas></div>
         <div class="stages">
           <button class="stage" type="button" data-stage-btn="published" aria-pressed="false"><b data-n="published"></b><span><i></i>published</span></button>
-          <button class="stage" type="button" data-stage-btn="candidates" aria-pressed="false"><b data-n="candidates"></b><span><i style="background:var(--accent)"></i>name your stack</span></button>
+          <button class="stage" type="button" data-stage-btn="candidates" aria-pressed="false"><b data-n="candidates"></b><span><i style="background:var(--accent)"></i>name your projects</span></button>
           <button class="stage" type="button" data-stage-btn="matched" aria-pressed="true"><b data-n="matched"></b><span><i style="background:var(--critical)"></i>hit your versions</span></button>
-          <a class="stage" href="actions.html"><b data-n="actions"></b><span>actions to take</span></a>
+          <a class="stage" href="reminders.html"><b data-n="actions"></b><span>reminders in projects</span></a>
         </div>
       </section>
 
       <section class="card span-4 rise" aria-labelledby="h-trend">
         <header>
-          <h2 id="h-trend">Open actions</h2>
+          <h2 id="h-trend">Open reminders</h2>
           <span class="meta">30 days</span>
         </header>
         <p class="kpi" id="trend-now"></p>
@@ -86,7 +90,7 @@
 
     <div class="grid">
       <section class="card span-7 rise" aria-labelledby="h-projects">
-        <header><h2 id="h-projects">Projects</h2></header>
+        <header><h2 id="h-projects">Projects and stack</h2></header>
         <div class="rows" id="projects"></div>
       </section>
       <section class="card span-5 rise" aria-labelledby="h-latest">
@@ -101,7 +105,7 @@
           <h2 id="h-warnings">Warnings without an identifier</h2>
           <span class="meta">National centres, 7 days</span>
         </header>
-        <p class="kpi-note" style="margin-top:-8px">Campaigns and advisories with no CVE yet. They name no product of yours, so they raise no action.</p>
+        <p class="kpi-note" style="margin-top:-8px">Campaigns and advisories with no CVE yet. They name no product of yours, so they raise no reminder.</p>
         <div class="rows" id="warnings"></div>
       </section>
       <section class="card span-5 rise" aria-labelledby="h-sources">
@@ -113,7 +117,7 @@
       </section>
     </div>
 
-    <p class="footnote">Switch between a busy and a quiet day at the top right (sample data only; the app has no such switch). On a quiet day the same cards stay in place and say that nothing is urgent, so the page never changes shape. Mockup with sample data. The CVE identifiers and the first two figures of the week (records published, records naming a profiled technology; 11–17 Nov 2026) are real. The organization, people, projects, installed versions, dates, closed actions and the national warning are invented. Every action opens the same example.</p>
+    <p class="footnote">Switch between a busy and a quiet day at the top right (sample data only; the app has no such switch). On a quiet day the same cards stay in place and say that nothing waits, so the page never changes shape. Master plan 17: reminders have no owner and no deadline, so the deadline runway is gone; each open reminder shows how long it has been open and when it reminds next. Mockup with sample data. The CVE identifiers, the first two figures of the week (records published, records naming a project’s technology; 11–17 Nov 2026) and the notice counts of the stack (ADR 044) are real. The organization, people, projects, installed versions, dates, done reminders and the national warning are invented. Every reminder opens the same example.</p>
   </div>
 </main>
 <script src="data.js"></script>
@@ -124,35 +128,81 @@
   'use strict';
   var D = window.ARDEA, A = window.A, C = window.C, F = D.fmt;
   var byId = function (id) { return document.getElementById(id); };
-
-  /* The finding: what most needs attention, from the rows */
-  var critical = D.ACTIONS.filter(function (a) { return a.priority === 'critical'; });
-  var dueToday = D.count(critical, function (a) { return a.due.toDateString() === D.NOW.toDateString(); });
-  var unowned = D.count(critical, function (a) { return !a.assignee; });
-  var urgent = D.count(D.ACTIONS, function (a) { return a.priority === 'critical' || a.priority === 'high'; });
-  byId('finding').innerHTML = critical.length
-    ? '<strong>' + critical.length + ' critical ' + (critical.length === 1 ? 'action is' : 'actions are') + ' open.</strong> ' + dueToday + ' due today, ' + unowned + ' without an owner.'
-    : urgent
-      ? '<strong>No critical action is open.</strong> ' + urgent + ' high, the next due ' + F.when(D.ACTIONS[0].due).toLowerCase() + '.'
-      : '<strong>Nothing urgent.</strong> No critical or high action is open; the next deadline is in ' + F.left(D.ACTIONS[0].due).d + ' days.';
+  var R = D.REMINDERS, LEVELS = ['critical', 'high', 'medium', 'low'];
+  var newNotices = D.NOTICES.filter(function (n) { return n.state === 'new'; })
+    .sort(function (a, b) { return (!!b.exploited - !!a.exploited) || (b.cvss - a.cvss) || (b.raised - a.raised); });
   byId(D.CALM ? 'sample-calm' : 'sample-busy').setAttribute('aria-current', 'page');
 
-  C.runway(byId('runway'), D.ACTIONS);
+  /* The finding: what waits, in one sentence */
+  var critical = D.count(R, function (r) { return r.priority === 'critical'; });
+  var nNew = newNotices.length;
+  byId('finding').innerHTML = nNew
+    ? '<strong>' + nNew + ' new ' + (nNew === 1 ? 'notice' : 'notices') + '</strong> to answer' + (critical ? ' and ' + critical + ' critical ' + (critical === 1 ? 'reminder' : 'reminders') + ' open.' : '.')
+    : critical
+      ? '<strong>No new notices.</strong> ' + critical + ' critical ' + (critical === 1 ? 'reminder is' : 'reminders are') + ' open and remind every day.'
+      : '<strong>Nothing waits.</strong> No notice to answer and no critical reminder; ' + R.length + ' open ' + (R.length === 1 ? 'reminder reminds' : 'reminders remind') + ' on their own rhythm.';
 
-  /* Next deadline: the first row of the runway, as a countdown */
-  var next = D.ACTIONS[0];
-  byId('next-when').textContent = F.when(next.due);
-  byId('next-figure').setAttribute('data-countdown', next.id);
-  byId('next-sub').innerHTML = A.sym(D.PRIORITIES[next.priority].sym) + '<span>' + A.esc(next.title) + '</span>';
-  byId('next-sub').className = 'next-sub c-' + next.priority;
-  byId('next-open').href = next.href;
-  C.clock();
+  /* ---------- Open reminders: how long each has been open and when it reminds next ---------- */
+  (function rhythm(el) {
+    var start = new Date(D.NOW); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - 8);
+    var end = new Date(D.NOW); end.setHours(0, 0, 0, 0); end.setDate(end.getDate() + 8);
+    var span = end - start;
+    function pos(t) { return Math.max(0, Math.min(1, (t - start) / span)) * 100; }
+    var axis = '', days = Math.round(span / D.DAY);
+    for (var i = 0; i <= days; i++) {
+      var d = new Date(start); d.setDate(start.getDate() + i);
+      var x = pos(d);
+      if (i < days && (d.getDay() === 0 || d.getDay() === 6)) axis += '<span class="weekend" style="left:' + x + '%;width:' + (100 / days) + '%"></span>';
+      axis += '<span class="day" style="left:' + x + '%"></span>';
+      if (i % 3 === 1 && Math.abs(d - D.NOW) > D.DAY) axis += '<span class="tick" style="left:' + x + '%">' + F.day(d) + '</span>';
+    }
+    axis += '<span class="rhythm-now" style="left:' + pos(D.NOW) + '%"><span>Now</span></span>';
+    var rows = R.map(function (r) {
+      var plan = D.schedule(r), cad = D.CADENCE[r.priority];
+      var from = Math.max(r.created, start), clipped = r.created < start;
+      var ticks = plan.sent.filter(function (t) { return t >= start; }).map(function (t) { return '<span class="rhythm-tick" style="left:' + pos(t) + '%"></span>'; }).join('');
+      var next = plan.next && plan.next < end ? '<span class="rhythm-next" style="left:' + pos(plan.next) + '%"></span>' : '';
+      var nextText = plan.next ? (plan.next - D.NOW < 2 * D.DAY ? F.when(plan.next) : F.day(plan.next)) : 'Digest only';
+      var label = r.title + ', ' + D.PRIORITIES[r.priority].label + ', ' + D.project(r.project).name + '. Open since ' + F.day(r.created) + ', reminded ' + plan.sent.length + ' times. ' + cad.label + (plan.next ? ', next ' + F.when(plan.next) : '') + '.';
+      return '<a class="rhythm-row c-' + r.priority + '" href="' + r.href + '" data-priority="' + r.priority + '" aria-label="' + A.esc(label) + '">' +
+        '<span class="rhythm-label">' + A.sym(D.PRIORITIES[r.priority].sym) + '<span>' + A.esc(r.title) + '</span></span>' +
+        '<span class="rhythm-track" aria-hidden="true"><span class="rhythm-bar' + (clipped ? ' clipped' : '') + '" style="left:' + pos(from) + '%;width:' + (pos(D.NOW) - pos(from)) + '%"></span>' + ticks + next + '</span>' +
+        '<span class="rhythm-end" aria-hidden="true"><b>' + nextText + '</b><small>' + cad.label + '</small></span></a>';
+    }).join('');
+    el.innerHTML = '<div class="rhythm-axis" aria-hidden="true">' + axis + '</div><div class="rhythm-rows">' + rows + '</div><div class="rhythm-foot"></div>';
+    A.$$('.rhythm-bar', el).forEach(function (bar, k) { A.grow(bar, 120 + k * 50, 700); });
+    A.$$('.rhythm-tick, .rhythm-next', el).forEach(function (t, k) { A.fadeIn(t, 600 + k * 20, 200); });
+    document.addEventListener('ardea:focus', function (e) {
+      if (e.detail) el.setAttribute('data-focus', ''); else el.removeAttribute('data-focus');
+      A.$$('.rhythm-row', el).forEach(function (row) { row.classList.toggle('is-focus', row.getAttribute('data-priority') === e.detail); });
+    });
+  })(byId('rhythm'));
 
-  /* Priority split: the ring, and its legend as the list of counts */
-  C.ring(byId('ring'), D.byPriority, D.ACTIONS.length);
+  /* ---------- Notices: «n new notices», the first three, the week as blocks ---------- */
+  var answered = D.NOTICES.length - nNew;
+  byId('n-period').textContent = 'This week';
+  A.countUp(byId('n-new'), nNew, { duration: 600 });
+  byId('n-word').textContent = nNew === 1 ? 'new notice' : 'new notices';
+  byId('n-sub').textContent = nNew
+    ? 'might affect you. ' + answered + ' of ' + D.NOTICES.length + ' this week are answered.'
+    : 'All ' + answered + ' notices of this week are answered.';
+  byId('n-peek').innerHTML = newNotices.slice(0, 3).map(function (n) {
+    var e = D.entry(n.entry);
+    return '<a href="notices.html#' + n.id + '"><span class="row-main"><b>' + A.esc(n.title) + '</b><small>Your stack names ' + A.esc(e.name) + ' · CVSS ' + n.cvss.toFixed(1) + (n.exploited ? ' · exploited' : '') + '</small></span></a>';
+  }).join('');
+  byId('n-peek').hidden = !nNew;
+  byId('n-open').textContent = nNew ? 'Answer notices' : 'Answered notices';
+  byId('n-open').href = nNew ? 'notices.html' : 'notices.html#answered';
+  if (!nNew) byId('n-open').classList.remove('primary');
+
+  /* Priority split of the open reminders: the ring, and its legend as the list of counts */
+  var parts = LEVELS.map(function (p) { return { priority: p, count: D.count(R, function (r) { return r.priority === p; }) }; });
+  C.ring(byId('ring'), parts, R.length);
+  var ringSvg = A.$('#ring svg'); if (ringSvg) ringSvg.setAttribute('aria-label', R.length + ' open reminders by priority');
+  var ringLabel = A.$('#ring .ring-total span'); if (ringLabel) ringLabel.textContent = 'open';
   var legend = byId('legend');
-  legend.innerHTML = D.byPriority.map(function (p) {
-    return '<a href="actions.html#' + p.priority + '" data-priority="' + p.priority + '">' + A.prio(p.priority) + '<b>' + p.count + '</b></a>';
+  legend.innerHTML = parts.map(function (p) {
+    return '<a href="reminders.html#' + p.priority + '" data-priority="' + p.priority + '">' + A.prio(p.priority) + '<b>' + p.count + '</b></a>';
   }).join('');
   A.$$('a', legend).forEach(function (row) {
     var focus = function (p) { document.dispatchEvent(new CustomEvent('ardea:focus', { detail: p })); };
@@ -162,45 +212,57 @@
     row.addEventListener('blur', function () { focus(null); });
   });
 
-  /* The week's records */
+  /* The week's records (projects with versions; the stack's coarse path is the Notices card) */
   byId('sieve-period').textContent = F.day(D.FUNNEL.from) + ' to ' + F.day(D.FUNNEL.to);
   C.sieve(byId('sieve'), D.FUNNEL, D.ACTIONS);
 
-  /* Open actions, 31 day ends */
-  var points = D.trend(31), first = points[0], last = points[points.length - 1];
+  /* Open reminders, 31 day ends: the project reminders plus those that started as a notice */
+  var fromNotices = R.filter(function (r) { return r.fromNotice; });
+  var points = D.trend(31).map(function (p, i, all) {
+    var at = i === all.length - 1 ? D.NOW : p.date;
+    return { date: p.date, open: p.open + D.count(fromNotices, function (r) { return r.created <= at; }) };
+  });
+  var first = points[0], last = points[points.length - 1];
   var peak = Math.max.apply(null, points.map(function (p) { return p.open; }));
   A.countUp(byId('trend-now'), last.open, { duration: 700 });
-  byId('trend-note').textContent = (last.open === peak ? 'The most in 30 days. ' : '') + first.open + ' on ' + F.day(first.date) + '.';
+  byId('trend-note').textContent = (last.open === peak ? 'The most in 30 days. ' : '') + first.open + ' on ' + F.day(first.date) + (fromNotices.length ? '; ' + fromNotices.length + ' started as a notice.' : '.');
   C.line(byId('trend'), points);
 
-  /* Projects: one block per open action, in its priority's colour */
-  var most = Math.max.apply(null, D.PROJECTS.map(function (p) { return D.count(D.ACTIONS, function (a) { return a.project === p.id; }); }));
-  byId('projects').innerHTML = D.PROJECTS.map(function (p) {
-    var mine = D.ACTIONS.filter(function (a) { return a.project === p.id; })
-      .sort(function (a, b) { return D.PRIORITIES[a.priority].rank - D.PRIORITIES[b.priority].rank; });
-    var words = D.byPriority.map(function (bp) {
-      var n = D.count(mine, function (a) { return a.priority === bp.priority; });
-      return n ? n + ' ' + D.PRIORITIES[bp.priority].label : '';
-    }).filter(Boolean).join(' · ');
-    return '<a href="actions.html#' + p.id + '">' +
-      '<span class="row-main"><b>' + A.esc(p.name) + '</b><small>' + p.stack.map(A.esc).join(' · ') + '</small></span>' +
-      '<span class="blocks" style="--n:' + most + '" data-tip="' + A.esc(words) + '">' + mine.map(function (a) { return '<i class="c-' + a.priority + '"></i>'; }).join('') + '</span>' +
+  /* Projects and the stack: one block per open reminder, in its priority's colour */
+  var places = D.PROJECTS.concat([D.project('stack')]);
+  var most = Math.max.apply(null, places.map(function (p) { return D.count(R, function (r) { return r.project === p.id; }); }).concat([1]));
+  byId('projects').innerHTML = places.map(function (p) {
+    var mine = R.filter(function (r) { return r.project === p.id; });
+    var words = LEVELS.map(function (l) { var n = D.count(mine, function (r) { return r.priority === l; }); return n ? n + ' ' + D.PRIORITIES[l].label : ''; }).filter(Boolean).join(' · ') || 'none open';
+    var sub = p.id === 'stack' ? D.STACK.length + ' entries, coarse · ' + nNew + ' new ' + (nNew === 1 ? 'notice' : 'notices') : p.stack.map(A.esc).join(' · ');
+    return '<a href="' + (p.id === 'stack' ? 'stack.html' : 'reminders.html#' + p.id) + '">' +
+      '<span class="row-icon">' + A.icon(p.id === 'stack' ? 'layers' : 'projects') + '</span>' +
+      '<span class="row-main"><b>' + A.esc(p.name) + '</b><small>' + sub + '</small></span>' +
+      '<span class="blocks" style="--n:' + most + '" data-tip="' + A.esc(words) + '">' + mine.map(function (r) { return '<i class="c-' + r.priority + '"></i>'; }).join('') + '</span>' +
       '<span class="count">' + mine.length + '<span class="sr-only"> open: ' + A.esc(words) + '</span></span>' +
     '</a>';
   }).join('');
   A.$$('#projects .blocks i').forEach(function (b, k) { A.grow(b, 200 + k * 60, 500); });
 
-  /* Since yesterday: what changed in the last 24 hours, newest first */
+  /* Since yesterday: notices grouped into one line, then reminders, warnings and closures */
   var since = new Date(D.NOW.getTime() - D.DAY);
-  var recent = D.FEED.filter(function (f) { return new Date(f.at) >= since; });
-  byId('since').textContent = recent.length + (recent.length === 1 ? ' change' : ' changes');
-  byId('feed').innerHTML = recent.map(function (f) {
-    var a = f.action && D.action(f.action), when = '<span class="row-end">' + F.when(f.at) + '</span>';
+  var fresh = newNotices.filter(function (n) { return n.raised >= since; });
+  var items = D.FEED.filter(function (f) { return new Date(f.at) >= since; }).map(function (f) { return { at: new Date(f.at), f: f }; });
+  if (fresh.length) items.push({ at: fresh.reduce(function (a, b) { return b.raised > a ? b.raised : a; }, fresh[0].raised), notices: fresh });
+  items.sort(function (a, b) { return b.at - a.at; });
+  byId('since').textContent = items.length + (items.length === 1 ? ' change' : ' changes');
+  byId('feed').innerHTML = items.map(function (it) {
+    var when = '<span class="row-end">' + F.when(it.at) + '</span>';
+    if (it.notices) {
+      var names = it.notices.map(function (n) { return D.entry(n.entry).name; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
+      return '<a href="notices.html"><span class="row-icon">' + A.icon('notice-in') + '</span><span class="row-main"><b>' + it.notices.length + ' new notices</b><small>' + A.esc(names.join(', ')) + '</small></span>' + when + '</a>';
+    }
+    var f = it.f, a = f.action && D.reminder(f.action);
     if (f.kind === 'warning') return '<a href="#h-warnings"><span class="row-icon">' + A.icon('megaphone') + '</span><span class="row-main"><b>' + A.esc(f.title) + '</b><small>' + A.esc(f.source) + ' warning, no project linked</small></span>' + when + '</a>';
-    if (f.kind === 'closed') return '<a href="actions.html"><span class="row-icon status--remediated">' + A.sym('s-done') + '</span><span class="row-main"><b>Closed: ' + A.esc(f.title) + '</b><small>' +
+    if (f.kind === 'closed') return '<a href="reminders.html"><span class="row-icon status--remediated">' + A.sym('s-done') + '</span><span class="row-main"><b>Done: ' + A.esc(f.title) + '</b><small>' +
       D.STATUSES[f.status].label + ' by ' + A.esc(D.PEOPLE[f.by].name) + ' · ' + A.esc(D.project(f.project).name) + '</small></span>' + when + '</a>';
-    var title = f.kind === 'raised' ? 'Raised to ' + D.PRIORITIES[f.to].label + ': ' + a.component : 'New: ' + a.title;
-    var sub = f.kind === 'raised' ? f.why : D.PRIORITIES[a.priority].label + ' · ' + D.project(a.project).name;
+    var title = f.kind === 'raised' ? 'Raised to ' + D.PRIORITIES[f.to].label + ': ' + a.component : 'New reminder: ' + a.title;
+    var sub = f.kind === 'raised' ? f.why + '; reminds ' + D.CADENCE[f.to].label.toLowerCase() : D.PRIORITIES[a.priority].label + ' · ' + D.project(a.project).name;
     var mark = f.kind === 'raised' ? A.icon('arrow-up') : A.sym(D.PRIORITIES[a.priority].sym);
     return '<a href="' + a.href + '"><span class="row-icon c-' + (f.to || a.priority) + '">' + mark + '</span>' +
       '<span class="row-main"><b>' + A.esc(title) + '</b><small>' + A.esc(sub) + '</small></span>' + when + '</a>';

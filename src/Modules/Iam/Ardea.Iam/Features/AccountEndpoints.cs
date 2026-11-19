@@ -105,6 +105,8 @@ internal static class AccountEndpoints
         EnableMfaRequest request, HttpContext http, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, ArdeaSignInManager signIn,
         IamDbContext db, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
     {
+        // One code check per account at a time, on the account as the previous one committed it (ADR 045).
+        await AccountLookup.LockAsync(unitOfWork, UserId(http), cancellationToken);
         var user = await CurrentUserAsync(http, users);
         var code = Normalize(request.Code);
         if (code.Length == 0 || !await users.VerifyTwoFactorTokenAsync(user, users.Options.Tokens.AuthenticatorTokenProvider, code))
@@ -126,6 +128,8 @@ internal static class AccountEndpoints
         [Microsoft.AspNetCore.Mvc.FromBody] DisableMfaRequest request, HttpContext http, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, ArdeaSignInManager signIn,
         IamDbContext db, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
     {
+        // One code check per account at a time, on the account as the previous one committed it (ADR 045).
+        await AccountLookup.LockAsync(unitOfWork, UserId(http), cancellationToken);
         var user = await CurrentUserAsync(http, users);
         if (!await CheckPasswordAsync(users, user, request.Password, unitOfWork, cancellationToken))
         {

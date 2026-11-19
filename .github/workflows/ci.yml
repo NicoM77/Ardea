@@ -1,7 +1,7 @@
 name: CI
 
-# GitHub Actions minutes are limited (owner's decision of 19.11.2026): CI runs only on main, never on pull
-# requests. A pull request is verified locally before it is merged; changes to documentation alone run nothing.
+# TEMPORARY (owner's decision of 19.11.2026, Actions minutes used up): CI runs only on main, never on pull
+# requests. Task 7.13 of the roadmap turns pull request runs back on. A pull request is verified locally before it is merged; changes to documentation alone run nothing.
 # The visual comparison and the arm64 image run on demand (Actions → CI → Run workflow on main).
 on:
   push:

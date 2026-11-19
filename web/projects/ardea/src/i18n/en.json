@@ -61,10 +61,6 @@
     "sources": {
       "emptyHeading": "No source has reported yet",
       "emptyText": "Each source shows here when it last synced and whether it is healthy."
-    },
-    "rules": {
-      "emptyHeading": "No notification rules yet",
-      "emptyText": "Rules decide who hears about which actions, by email, push or webhook."
     }
   },
   "admin": {
@@ -415,7 +411,8 @@
       "label": "Account: {name}",
       "twoFactor": "Two-factor authentication",
       "signOut": "Sign out"
-    }
+    },
+    "bell": "{count, plural, =0 {Notifications} other {Notifications, # unread}}"
   },
   "search": {
     "trigger": "Search pages",
@@ -1190,6 +1187,10 @@
       "leaves": "What leaves Ardea: the public entry with its sources, and of the hit components only fixed values such as product, version and exposure. No project, component or organization names, no notes.",
       "saved": "The AI data policy is saved.",
       "loadFailed": "The AI data policy could not be loaded."
+    },
+    "notifications": {
+      "text": "Which channels you hear on, the language of messages, and push on your devices. Only you see these settings.",
+      "open": "Your notification settings"
     }
   },
   "time": {
@@ -1635,6 +1636,345 @@
       "notAvailable": "No language model is available under the organization’s AI data policy. Owners and admins set the policy in the settings.",
       "exhausted": "The organization has used today’s requests for AI assessments. Try again tomorrow.",
       "forbidden": "Only members can request an AI assessment."
+    }
+  },
+  "notify": {
+    "loading": "Loading…",
+    "loadFailed": "This could not be loaded. Reload the page to try again.",
+    "saveFailed": "That did not work. Try again.",
+    "adminsOnly": {
+      "heading": "Owners and admins manage the rules",
+      "text": "You decide for yourself which channels you hear on.",
+      "link": "Your notification settings"
+    },
+    "tabs": {
+      "rules": "Rules",
+      "recipients": "Recipients",
+      "log": "Delivery log"
+    },
+    "channels": {
+      "inApp": "In-app",
+      "email": "E-mail",
+      "push": "Push",
+      "webhook": "Webhook"
+    },
+    "mode": {
+      "immediate": "At once",
+      "digest": "Digest"
+    },
+    "schedule": {
+      "weekdays": "Weekdays at 08:00",
+      "mondays": "Mondays at 08:00",
+      "daily": "Every day at 08:00",
+      "custom": "Custom schedule"
+    },
+    "recipients": {
+      "gone": "No longer there",
+      "roles": {
+        "admin": "Owners and admins",
+        "owner": "Owners",
+        "member": "Members and above",
+        "viewer": "Everyone"
+      }
+    },
+    "events": {
+      "groups": {
+        "actions": "Actions",
+        "team": "Team work",
+        "other": "Other"
+      },
+      "raised": "New action",
+      "raisedHint": "From the rule's priority up",
+      "levelRaised": "Priority raised",
+      "levelRaisedHint": "Also when reported before",
+      "exploitation": "Exploitation known",
+      "exploitationHint": "Without a higher priority",
+      "fix": "Fix available",
+      "fixHint": "The first time only",
+      "levelLowered": "Priority lowered",
+      "withdrawn": "Withdrawn",
+      "allClearHint": "Only where it was reported before",
+      "assigned": "Assigned",
+      "statusChanged": "Status changed",
+      "noteAdded": "Note added",
+      "teamHint": "In-app and webhooks only",
+      "warning": "Warning without an identifier",
+      "backfill": "First assessment done",
+      "backfillHint": "One message per project",
+      "repository": "Repository unavailable"
+    },
+    "rules": {
+      "new": "New rule",
+      "summary": "{count, plural, one {# rule} other {# rules}}{off, plural, =0 {} other {, # off}}. Who hears about which actions, on which channel, and when.",
+      "matrix": "Who hears what",
+      "timeZone": "Times in the organization's time zone",
+      "rule": "Rule",
+      "on": "On",
+      "andAbove": "and above",
+      "allProjects": "All projects",
+      "projects": "{count, plural, one {# project} other {# projects}}",
+      "events": "{count, plural, one {# event} other {# events}}",
+      "sendEmpty": "Also when nothing happened",
+      "notOn": "Not on this channel",
+      "toggle": "Rule {name}",
+      "overlap": "Rules overlap on purpose: nobody hears the same thing twice on one channel. A member can mute a channel for themselves; Critical still gets through unless the organization allows muting it.",
+      "emptyHeading": "No notification rules",
+      "emptyText": "Rules decide who hears about which actions, in the app, by e-mail, push or webhook.",
+      "emailOff": {
+        "heading": "E-mail is off",
+        "text": "No mail server is configured on this instance. Rules reach nobody by e-mail until the instance administrator sets one up."
+      },
+      "emailOffPill": "E-mail is off",
+      "saveFailed": "The rule could not be saved. Try again."
+    },
+    "editor": {
+      "breadcrumb": "Breadcrumb",
+      "titleNew": "New rule",
+      "titleEdit": "Rule",
+      "preset": "A default rule. Change it like any other.",
+      "notFound": "This rule does not exist any more.",
+      "when": "When",
+      "name": "Name",
+      "level": "Report actions from",
+      "levelHint": "Warnings without an identifier have no priority and come with every rule that names them.",
+      "events": "Events",
+      "projects": "Projects",
+      "allProjectsHint": "Also the ones added later",
+      "selectedProjects": "Selected projects",
+      "who": "Who hears it",
+      "targetCount": "{count} of 20",
+      "recipient": "Recipient",
+      "roles": "Roles",
+      "members": "Members",
+      "addresses": "External addresses",
+      "webhooks": "Webhooks",
+      "channel": "Channel",
+      "mode": "When",
+      "schedule": "Schedule",
+      "cron": "Cron expression",
+      "sendEmpty": "Also when nothing happened",
+      "remove": "Remove recipient {number}",
+      "addTarget": "Add recipient",
+      "summary": "In one sentence",
+      "sentence": "{level} actions and above in {projects} reach {targets}.",
+      "sentenceTop": "{level} actions in {projects} reach {targets}.",
+      "sentenceAll": "all projects",
+      "sentenceTarget": "{who} {via}, {when}",
+      "via": {
+        "inApp": "in the app",
+        "email": "by e-mail",
+        "push": "by push",
+        "webhook": "by webhook"
+      },
+      "save": "Save rule",
+      "cancel": "Cancel",
+      "delete": "Delete rule",
+      "saved": "Rule {name} saved",
+      "deleted": "Rule {name} deleted",
+      "errors": {
+        "name": "Enter a name of at most 200 characters.",
+        "events": "Choose at least one event.",
+        "targets": "Add at least one recipient.",
+        "target": "Check this recipient: it cannot be reached on this channel, or it no longer exists.",
+        "cron": "Enter a schedule of five fields, e.g. 0 8 * * 1-5.",
+        "invalid": "The rule is not valid. Check the marked fields."
+      },
+      "atOnce": "at once"
+    },
+    "webhooks": {
+      "title": "Webhooks",
+      "meta": "Signed with a shared secret",
+      "off": "off",
+      "neverCalled": "Not called yet",
+      "none": "No webhook yet.",
+      "test": "Send test",
+      "rotate": "New secret",
+      "rotateLabel": "New secret for {name}",
+      "delete": "Delete",
+      "deleteLabel": "Delete {name}",
+      "name": "Name",
+      "url": "Address",
+      "add": "Add webhook",
+      "added": "Webhook {name} added.",
+      "rotated": "{name} has a new secret. The old one no longer works.",
+      "deleted": "Webhook {name} deleted.",
+      "testOk": "{name} answered {status}. The test message arrived.",
+      "testFailed": "{name} did not take the test message: {status}.",
+      "secretOnce": "Copy the secret now. It is shown only once.",
+      "copySecret": "Copy secret",
+      "errors": {
+        "required": "Enter a name and the address the messages go to.",
+        "invalid": "This address cannot be used: it must be http or https, and an address in the private network needs the instance administrator's release.",
+        "inUse": "A rule still sends to this webhook. Remove it from the rule first."
+      }
+    },
+    "addresses": {
+      "title": "External e-mail addresses",
+      "meta": "{count} of 50",
+      "none": "No external address yet.",
+      "address": "Address",
+      "add": "Add address",
+      "added": "A confirmation mail goes to {address}.",
+      "resend": "Send again",
+      "resendLabel": "Send the confirmation to {address} again",
+      "resent": "The confirmation goes to {address} again.",
+      "remove": "Remove",
+      "removeLabel": "Remove {address}",
+      "removed": "{address} removed.",
+      "addedAt": "Added {date}",
+      "confirmedAt": "Confirmed {date}",
+      "foot": "An address receives messages only after its owner confirmed it with the link we mail. Every message carries a link to unsubscribe.",
+      "states": {
+        "pending": "Waiting for confirmation",
+        "confirmed": "Confirmed",
+        "unsubscribed": "Unsubscribed",
+        "expired": "Link expired"
+      },
+      "errors": {
+        "invalid": "Enter one e-mail address.",
+        "exists": "This address is already on the list.",
+        "limit": "An organization can have at most 50 external addresses.",
+        "confirmed": "This address is already confirmed.",
+        "confirmationLimit": "Too many confirmation mails to this address for now. Try again later.",
+        "smtp": "E-mail is off on this instance, so the address cannot be confirmed.",
+        "inUse": "A rule still sends to this address. Remove it from the rule first."
+      }
+    },
+    "log": {
+      "filters": "Filter the log",
+      "state": "State",
+      "channel": "Channel",
+      "allStates": "All states",
+      "allChannels": "All channels",
+      "summary": "Latest {count, plural, one {# message} other {# messages}}. {failed} retrying, {dead} given up.",
+      "when": "When",
+      "recipient": "Recipient",
+      "message": "Message",
+      "detail": "Detail",
+      "events": "{count, plural, one {# event} other {# events}}",
+      "attempt": "Attempt {count} of 12",
+      "more": "Show older",
+      "none": "No message matches.",
+      "states": {
+        "pending": "Waiting",
+        "sending": "Sending",
+        "sent": "Sent",
+        "failed": "Retrying",
+        "dead": "Given up",
+        "suppressed": "Not sent"
+      }
+    },
+    "inbox": {
+      "title": "Notifications",
+      "sub": "{count, plural, =0 {Nothing unread} other {# unread}} in {name}",
+      "settings": "Settings",
+      "show": "Show",
+      "all": "All",
+      "unread": "Unread",
+      "markAll": "Mark all as read",
+      "markFailed": "The notifications could not be marked as read. Try again.",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "isUnread": ", unread",
+      "more": "Show older",
+      "empty": "No notifications yet",
+      "caughtUp": "You are up to date",
+      "emptyText": "New actions, rises and the team's work on your actions appear here as they happen."
+    },
+    "settings": {
+      "title": "Your notifications",
+      "lead": "In {name}. Only you see these settings.",
+      "channels": "Channels",
+      "saved": "Saved.",
+      "hints": {
+        "inApp": "The bell at the top and the list of notifications",
+        "email": "Your account's address",
+        "push": "{count, plural, =0 {No device yet} one {On # device} other {On # devices}}"
+      },
+      "criticalHeading": "Critical gets through",
+      "criticalAlways": "A channel you turn off stays quiet, except for Critical: {name} does not allow muting it.",
+      "criticalMutable": "{name} allows muting Critical too: a channel you turn off stays quiet.",
+      "language": "Language of messages",
+      "languageLabel": "E-mails and push messages",
+      "languageOrganization": "Like the organization"
+    },
+    "push": {
+      "title": "Push on this device",
+      "on": "On for this device",
+      "off": "Off on this device",
+      "onText": "Messages carry priority, number and title; a click opens the action. Their content is end-to-end encrypted.",
+      "offText": "Get alerts on this device even when Ardea is closed. Your browser asks for permission once.",
+      "turnOn": "Turn on push",
+      "turnOff": "Turn off on this device",
+      "blocked": "Blocked in the browser",
+      "blockedText": "Notifications for this site are blocked. Allow them in the browser's site settings, then come back here.",
+      "install": "Add Ardea to your Home Screen first",
+      "installText": "On iPhone and iPad, push works only for apps on the Home Screen (iOS 16.4 or later).",
+      "step1": "Tap Share",
+      "step1Hint": "In Safari's toolbar",
+      "step2": "Choose “Add to Home Screen”",
+      "step2Hint": "Scroll down if you don't see it",
+      "step3": "Open Ardea from the Home Screen",
+      "step3Hint": "Sign in, come back here and turn on push",
+      "unsupported": "This browser cannot receive push",
+      "unsupportedText": "Use a current version of Chrome, Edge, Firefox or Safari, or rely on e-mail.",
+      "failed": "Push could not be turned on here. Try again."
+    },
+    "devices": {
+      "title": "Devices with push",
+      "meta": "For all your organizations",
+      "none": "No device receives push yet.",
+      "test": "Send test",
+      "testLabel": "Send a test to {name}",
+      "testOk": "The push service took the test for {name}. It should appear in a moment.",
+      "testGone": "{name} no longer receives push; it was removed.",
+      "testFailed": "The test to {name} did not go through: {status}.",
+      "remove": "Remove",
+      "removeLabel": "Remove {name}",
+      "removed": "{name} no longer receives push.",
+      "added": "Added {date}",
+      "lastMessage": "last message {date}",
+      "failed": "{count, plural, one {# failed delivery} other {# failed deliveries}}"
+    },
+    "link": {
+      "title": "E-mail alerts",
+      "failed": "That did not work. Try again in a moment.",
+      "confirm": {
+        "title": "Confirm your address",
+        "question": "{organization} wants to send security alerts to {address}.",
+        "action": "Confirm address",
+        "ignore": "Not expecting this? Ignore the e-mail. Nothing is sent until you confirm."
+      },
+      "confirmed": {
+        "title": "Address confirmed",
+        "heading": "You will receive alerts from {organization}.",
+        "text": "Every message has a link to unsubscribe."
+      },
+      "unsubscribe": {
+        "title": "Unsubscribe",
+        "question": "Stop security alerts from {organization} to {address}?",
+        "action": "Unsubscribe"
+      },
+      "unsubscribed": {
+        "title": "Unsubscribed",
+        "heading": "No more alerts go to {address}.",
+        "text": "{organization} cannot subscribe this address again. Only you can."
+      },
+      "resubscribe": {
+        "title": "Subscribe again",
+        "question": "Receive security alerts from {organization} at {address} again?",
+        "action": "Subscribe again"
+      },
+      "resubscribed": {
+        "title": "Subscribed again",
+        "heading": "Alerts from {organization} come to {address} again.",
+        "text": "The link in every message still unsubscribes."
+      },
+      "invalid": {
+        "title": "Link not valid",
+        "heading": "This link has expired or was already used.",
+        "text": "Ask the organization to send a new confirmation."
+      }
     }
   }
 }

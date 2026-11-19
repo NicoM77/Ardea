@@ -54,6 +54,7 @@ const SLUG = /^\/o\/([^/?#]+)/;
     <ardea-topbar
       class="topbar"
       [user]="session.user()"
+      [organization]="organization()"
       [menuOpen]="menuOpen()"
       (openMenu)="openMenu()"
       (openSearch)="openSearch($event)"

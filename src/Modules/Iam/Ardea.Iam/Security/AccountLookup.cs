@@ -1,3 +1,4 @@
+using Ardea.Platform.Persistence;
 using Ardea.Platform.Tenancy;
 using Npgsql;
 
@@ -32,5 +33,18 @@ internal static class AccountLookup
 
         tenant.SetUser(userId);
         return true;
+    }
+
+    /// <summary>
+    /// Locks the account row for the rest of the unit of work, before the account is loaded. Every flow that
+    /// checks an authenticator or recovery code takes it first, so two of them for one account run one after
+    /// the other and each loads what the previous one committed: a code claimed or redeemed by the first is
+    /// seen as used by the second, and no stale account or recovery-code list is written back (ADR 045).
+    /// </summary>
+    public static async Task LockAsync(IUnitOfWork unitOfWork, Guid userId, CancellationToken cancellationToken)
+    {
+        await using var command = new NpgsqlCommand("SELECT 1 FROM iam.\"user\" WHERE id = $1 FOR UPDATE", await unitOfWork.GetConnectionAsync(cancellationToken));
+        command.Parameters.Add(new NpgsqlParameter { Value = userId });
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 }

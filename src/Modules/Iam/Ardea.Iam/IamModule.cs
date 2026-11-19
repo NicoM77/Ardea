@@ -49,7 +49,9 @@ public sealed class IamModule : IModule
             .AddSignInManager<ArdeaSignInManager>()
             .AddPasswordValidator<CommonPasswordValidator>()
             .AddClaimsPrincipalFactory<ArdeaClaimsFactory>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            // Replaces Identity's authenticator provider: each code works once per account (issue #85).
+            .AddTokenProvider<SingleUseAuthenticatorTokenProvider>(TokenOptions.DefaultAuthenticatorProvider);
         // Reset and confirmation links work for two hours.
         services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromHours(2));
         services.AddJob<SendPasswordResetEmail, AccountEmailHandlers>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });

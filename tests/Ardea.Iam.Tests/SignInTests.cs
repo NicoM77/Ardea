@@ -29,9 +29,33 @@ public sealed class SignInTests(PostgresServer server)
         Assert.Equal("twoFactorRequired", (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("status").GetString());
         await Expect(HttpStatusCode.Unauthorized, await browser.SessionAsync());
 
-        await Expect(HttpStatusCode.NoContent, await browser.PostAsync("/api/v1/auth/login/two-factor", new { code = Totp.Code(key), isRecoveryCode = false }));
+        // The next step's code: the one that turned two-factor on is used up (issue #85).
+        var code = Totp.Code(key, DateTimeOffset.UtcNow.AddSeconds(30));
+        await Expect(HttpStatusCode.NoContent, await browser.PostAsync("/api/v1/auth/login/two-factor", new { code, isRecoveryCode = false }));
         Assert.True((await SessionAsync(browser)).GetProperty("user").GetProperty("twoFactorEnabled").GetBoolean());
         Assert.False((await (await browser.GetAsync("/api/v1/setup/status")).Content.ReadFromJsonAsync<JsonElement>()).GetProperty("setupRequired").GetBoolean());
+    }
+
+    [Fact]
+    public async Task An_authenticator_code_signs_in_only_once()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var owner = host.Client();
+        await SetupAsync(owner);
+        var key = await EnableTotpAsync(owner);
+        // The code of the next time step: still accepted, and not the one that turned two-factor on.
+        var code = Totp.Code(key, DateTimeOffset.UtcNow.AddSeconds(30));
+        using var laptop = host.Client();
+        await laptop.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
+        await Expect(HttpStatusCode.NoContent, await laptop.PostAsync("/api/v1/auth/login/two-factor", new { code, isRecoveryCode = false }));
+
+        // Someone who watched the code being typed and knows the password.
+        using var onlooker = host.Client();
+        await onlooker.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
+        var replay = await onlooker.PostAsync("/api/v1/auth/login/two-factor", new { code, isRecoveryCode = false });
+
+        await ExpectProblem(replay, HttpStatusCode.BadRequest, "invalid_code");
+        await Expect(HttpStatusCode.Unauthorized, await onlooker.SessionAsync());
     }
 
     [Fact]
@@ -266,7 +290,7 @@ public sealed class SignInTests(PostgresServer server)
 
         using var tablet = host.Client();
         await tablet.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
-        await tablet.PostAsync("/api/v1/auth/login/two-factor", new { code = await CurrentCodeAsync(host), isRecoveryCode = false });
+        await tablet.PostAsync("/api/v1/auth/login/two-factor", new { code = await NextCodeAsync(host), isRecoveryCode = false });
         await Expect(HttpStatusCode.OK, await tablet.SessionAsync());
         await Expect(HttpStatusCode.NoContent, await laptop.SendAsync(HttpMethod.Delete, "/api/v1/account/sessions"));
         await Expect(HttpStatusCode.Unauthorized, await tablet.SessionAsync());
@@ -451,8 +475,11 @@ public sealed class SignInTests(PostgresServer server)
         return (await settings.GetAsync(Security.SetupToken.Setting, CancellationToken.None)).Value;
     }
 
-    /// <summary>The current code of the stored authenticator key, as the user's app shows it.</summary>
-    private static async Task<string> CurrentCodeAsync(ApiTestHost host) => Totp.Code(await StoredKeyAsync(host));
+    /// <summary>
+    /// The code of the stored authenticator key for the next time step, as the user's app shows it 30 seconds
+    /// on: the current step's code turned two-factor on and is used up.
+    /// </summary>
+    private static async Task<string> NextCodeAsync(ApiTestHost host) => Totp.Code(await StoredKeyAsync(host), DateTimeOffset.UtcNow.AddSeconds(30));
 
     /// <summary>The stored authenticator key of the account.</summary>
     private static async Task<string> StoredKeyAsync(ApiTestHost host)

@@ -123,6 +123,8 @@ AI assessment as an optional step; a catalogue that grows by itself.
 | 4.9 | Catalogue learning (plan 6.9): collect unknown products, rule-based mapping without a model, `GrowCatalog` job with the model, validation, auto-apply by confidence, review list, recompute | 4.2, 1.11, 2.4 | ✅ |
 | 4.10 | Withdraw learned entries; note on the match; suggestions for organisations' free entries; export in the catalogue file format; metrics in administration | 4.9, 3.10 | ✅ |
 
+Acceptance: [tested](docs/acceptance/phase-4.md) against recorded model answers; open: the observation with a local model at 50 unknown keys, and the owner's review of the AI mockups.
+
 ### Phase 5 · Notifications (3–4 weeks)
 
 Notifications over four channels.
@@ -137,6 +139,8 @@ Notifications over four channels.
 | 5.6 | Webhook channel with signature and protection against internal targets | 5.2 | ✅ [ADR 038](docs/adr/0038-notifications.md) |
 | 5.7 | Default rules; scheduled digests; personal mute | 5.2, 5.4 | ✅ [ADR 038](docs/adr/0038-notifications.md) |
 | 5.8 | Mockup and pages for rules, targets, delivery log, personal settings; owner reviews afterwards | 5.1 | ✅ [mockups](docs/design/mockups/notification-rules.html) |
+
+Acceptance: [tested](docs/acceptance/phase-5.md); open: the manual iOS check on an installed web app, a test with a real push service, and the owner's review of the notification mockups.
 
 ### Phase 6 · Hardening (3–4 weeks)
 

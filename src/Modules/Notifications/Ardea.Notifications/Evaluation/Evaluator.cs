@@ -79,7 +79,9 @@ internal sealed class Evaluator(
                 ? null
                 : new MessageItem
                 {
-                    EventId = pending.EventId, Event = pending.Kind, At = pending.At,
+                    EventId = pending.EventId,
+                    Event = pending.Kind,
+                    At = pending.At,
                     Warning = new WarningFacts(entry.Id, entry.Key, entry.Title, entry.PublishedAt),
                 };
         }
@@ -184,8 +186,12 @@ internal sealed class Evaluator(
                     {
                         db.States.Add(new RecipientState
                         {
-                            RemediationId = action.Id, RecipientKey = key, Channel = channel, LastLevel = action.Level,
-                            LastExploitation = action.Exploitation, FixNotified = action.FixAvailable,
+                            RemediationId = action.Id,
+                            RecipientKey = key,
+                            Channel = channel,
+                            LastLevel = action.Level,
+                            LastExploitation = action.Exploitation,
+                            FixNotified = action.FixAvailable,
                         });
                     }
                     else

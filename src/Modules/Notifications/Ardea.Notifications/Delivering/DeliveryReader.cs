@@ -201,7 +201,9 @@ internal sealed class DeliveryReader(
                 {
                     items.Add(new MessageItem
                     {
-                        EventId = row.EventId, Event = row.Event, At = row.At,
+                        EventId = row.EventId,
+                        Event = row.Event,
+                        At = row.At,
                         Warning = new WarningFacts(entry.Id, entry.Key, entry.Title, entry.PublishedAt),
                     });
                 }

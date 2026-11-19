@@ -62,7 +62,14 @@ internal sealed class DefaultRules(NotifyDbContext db, IOrganizationProfiles org
 
             return new NotificationRule
             {
-                Id = id, Name = name, Preset = preset, MinLevel = minLevel, Events = events, Targets = [.. targets], CreatedAt = now, ChangedAt = now,
+                Id = id,
+                Name = name,
+                Preset = preset,
+                MinLevel = minLevel,
+                Events = events,
+                Targets = [.. targets],
+                CreatedAt = now,
+                ChangedAt = now,
             };
         }
 

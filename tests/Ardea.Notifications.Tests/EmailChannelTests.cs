@@ -28,7 +28,10 @@ public sealed class EmailChannelTests(PostgresServer server)
         var closed = ClosedPort();
         var smtp = await s.Owner.SendAsync(HttpMethod.Patch, "/api/v1/instance/settings", new
         {
-            smtpHost = mailpit.Hostname, smtpPort = closed.ToString(System.Globalization.CultureInfo.InvariantCulture), smtpFrom = "ardea@example.org", smtpSecurity = "none",
+            smtpHost = mailpit.Hostname,
+            smtpPort = closed.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            smtpFrom = "ardea@example.org",
+            smtpSecurity = "none",
         });
         Assert.Equal(HttpStatusCode.OK, smtp.StatusCode);
         await s.RuleAsync("High", 4, ["action.raised"], Scenario.Target("email"));

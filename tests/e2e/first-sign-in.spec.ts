@@ -147,6 +147,9 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
     .getByLabel('Version', { exact: true })
     .fill('18.1');
   await expectAccessible(page, 'wizard technologies');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { name: 'Coverage' })).toBeVisible();
+  await expectAccessible(page, 'wizard coverage');
   await page.getByRole('button', { name: 'Finish setup' }).click();
 
   await expect(page).toHaveURL(/\/o\/heron-works\/projects\/[0-9a-f-]+$/);

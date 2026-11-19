@@ -152,6 +152,32 @@ describe('SetupWizard', () => {
     ]);
     put.flush({ created: 0, updated: 0, removed: 0, unchanged: 1, components: [manual] });
     await settle(fixture);
+    const technologies = http.expectOne((r) => r.method === 'PATCH');
+    expect(technologies.request.body).toEqual({ stepDone: 'technologies', firstProjectId: null });
+    technologies.flush({ stepsDone: [], firstProjectId: PROJECT, completedAt: null });
+    await settle(fixture);
+    http
+      .expectOne(`/api/v1/orgs/${ORG}/setup`)
+      .flush({ stepsDone: [], firstProjectId: PROJECT, completedAt: null });
+    http
+      .expectOne(`/api/v1/orgs/${ORG}/projects/${PROJECT}`)
+      .flush({ project, components: [manual] });
+    await settle(fixture);
+    expect(navigate).toHaveBeenCalledWith([], {
+      queryParams: { step: 'coverage' },
+      queryParamsHandling: 'merge',
+    });
+
+    // Step 6: what can be checked; finishing completes the setup and opens the project.
+    fixture.componentRef.setInput('step', 'coverage');
+    await settle(fixture);
+    http
+      .expectOne((r) => r.url === `/api/v1/orgs/${ORG}/profile/coverage`)
+      .flush({ components: 1, fullyCheckable: 1, hints: [] });
+    await settle(fixture);
+    expect(element.querySelector('ardea-coverage-card')).not.toBeNull();
+    [...element.querySelectorAll<HTMLButtonElement>('.coverage .actions button')].at(-1)!.click();
+    await settle(fixture);
     http
       .expectOne((r) => r.method === 'PATCH')
       .flush({ stepsDone: [], firstProjectId: PROJECT, completedAt: null });

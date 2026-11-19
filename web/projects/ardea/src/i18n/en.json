@@ -896,7 +896,9 @@
       "shrinkText": "More than half would go, and their actions with them. Often a lock file was removed or the dependency graph was switched off. Ardea keeps the current state until the new one is confirmed.",
       "none": "No repository feeds this project. Add one and Ardea keeps its packages up to date.",
       "loading": "Loading repositories",
-      "loadFailed": "The repositories could not be loaded."
+      "loadFailed": "The repositories could not be loaded.",
+      "applyShrink": "Apply the new state",
+      "shrinkApplied": "The new state of {name} is applied."
     },
     "suggestions": {
       "title": "Suggestions to confirm",
@@ -912,6 +914,25 @@
       "none": "Nothing to confirm.",
       "loading": "Loading suggestions",
       "loadFailed": "The suggestions could not be loaded."
+    },
+    "coverage": {
+      "title": "Coverage",
+      "figure": "of {total} components fully checkable",
+      "none": "Everything in this profile can be checked.",
+      "loading": "Loading the coverage",
+      "loadFailed": "The coverage could not be loaded.",
+      "kinds": {
+        "missingVersion": "{count, plural, one {Platform without a version} other {Platforms without a version}}: checks treat the version as unknown.",
+        "versionLineOnly": "{count, plural, one {Version line} other {Version lines}} from an image tag, not an exact version.",
+        "platformWithoutPlugins": "{count, plural, one {Platform} other {Platforms}} without plugins: are none installed?",
+        "distributionPackages": "From a distribution: the distribution’s advisories decide, not the vendor’s.",
+        "packagesWithoutLockfile": "{count, plural, one {Package} other {Packages}} without an exact version: check in the lock file.",
+        "ecosystemNotCheckable": "{name}: no source in this version reports on this ecosystem.",
+        "notInCatalog": "{count, plural, one {Entry} other {Entries}} not in the catalogue: no source can match them.",
+        "openSuggestions": "{count, plural, one {Suggestion} other {Suggestions}} to confirm.",
+        "repositoriesPartial": "{count, plural, one {Repository} other {Repositories}} read partly.",
+        "repositoriesFailing": "{count, plural, one {Repository} other {Repositories}} failing; the last good state counts."
+      }
     }
   },
   "wizard": {
@@ -930,13 +951,13 @@
       "project": "Project",
       "repository": "Repository",
       "operations": "Operations",
-      "technologies": "Technologies"
+      "technologies": "Technologies",
+      "coverage": "Coverage"
     },
     "loading": "Loading the setup",
     "continue": "Continue",
     "back": "Back",
     "finish": "Finish setup",
-    "save": "Save technologies",
     "project": {
       "title": "Project",
       "lead": "A project is a system you run: a shop, a portal, an internal service. Ardea checks its technologies against every new vulnerability.",
@@ -1004,7 +1025,8 @@
       "linkExists": "This repository already feeds the project.",
       "linkNotFound": "This repository is no longer linked.",
       "suggestionNotFound": "This suggestion no longer exists.",
-      "suggestionDecided": "This suggestion was decided in the meantime."
+      "suggestionDecided": "This suggestion was decided in the meantime.",
+      "noShrinkPending": "There is no held-back state any more; the repository was read again."
     },
     "repository": {
       "accessTitle": "Where Ardea reads from",
@@ -1027,6 +1049,10 @@
       "connect": "Connect and continue",
       "pathInvalid": "{name}: enter a subfolder of the repository, such as services/api.",
       "failed": "{name} could not be connected. Try again."
+    },
+    "done": "Done",
+    "coverage": {
+      "lead": "What Ardea can check of this project, and what not yet. These are hints, not locks: everything works with the gaps open, and each can be closed later from the project page."
     }
   },
   "settings": {

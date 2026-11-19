@@ -152,6 +152,18 @@ import { isReading, LINK_STATE_LABELS, repositoryName } from './link-format';
                   <ui-notice class="reason" [heading]="'projects.links.shrinkHeading' | transloco">
                     {{ 'projects.links.shrinkText' | transloco }}
                   </ui-notice>
+                  @if (canEdit() && !compact()) {
+                    <div class="buttons start">
+                      <button
+                        uiButton
+                        type="button"
+                        [loading]="busy() === link.id"
+                        (click)="confirmShrink(link)"
+                      >
+                        {{ 'projects.links.applyShrink' | transloco }}
+                      </button>
+                    </div>
+                  }
                 }
                 @if (confirming() === link.id) {
                   <div class="confirm" role="group" [attr.aria-labelledby]="'rm-' + link.id">
@@ -289,7 +301,8 @@ import { isReading, LINK_STATE_LABELS, repositoryName } from './link-format';
       border-radius: var(--radius-card);
       background: var(--raised);
     }
-    .confirm .buttons {
+    .confirm .buttons,
+    .buttons.start {
       justify-content: flex-start;
     }
     @media (max-width: 640px) {
@@ -343,6 +356,16 @@ export class LinksCard {
     await this.run(link, async () => {
       await firstValueFrom(this.api.syncRepositoryLink(this.orgId(), this.projectId(), link.id));
       return { key: 'projects.links.queued', params: { name: repositoryName(link) } };
+    });
+  }
+
+  /** Takes the much smaller new state after all; until then the current one stays (master plan 16.5). */
+  protected async confirmShrink(link: LinkView): Promise<void> {
+    await this.run(link, async () => {
+      await firstValueFrom(
+        this.api.confirmRepositoryShrink(this.orgId(), this.projectId(), link.id),
+      );
+      return { key: 'projects.links.shrinkApplied', params: { name: repositoryName(link) } };
     });
   }
 

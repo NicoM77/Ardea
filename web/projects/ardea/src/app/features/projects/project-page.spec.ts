@@ -139,6 +139,21 @@ describe('ProjectPage', () => {
     });
     http.expectOne(`${BASE}/repositories`).flush(links);
     http.expectOne((r) => r.url === `${BASE}/suggestions`).flush([suggestion]);
+    http
+      .expectOne((r) => r.url === `/api/v1/orgs/${ORG}/profile/coverage`)
+      .flush({
+        components: 3,
+        fullyCheckable: 2,
+        hints: [
+          {
+            kind: 'missing_version',
+            severity: 'warning',
+            count: 1,
+            projectIds: [PROJECT],
+            examples: [],
+          },
+        ],
+      });
     await settle(fixture);
     return { fixture, http, element: fixture.nativeElement as HTMLElement };
   }
@@ -150,6 +165,9 @@ describe('ProjectPage', () => {
 
   it('groups platforms and services apart from packages, with their origin', async () => {
     const { element } = await render([link({})]);
+    expect(element.querySelector('ardea-coverage-card')?.textContent).toContain(
+      'en.projects.coverage.kinds.missingVersion',
+    );
     const platforms = element.querySelector('table[aria-label="en.projects.platforms"]')!;
     expect(platforms.textContent).toContain('Umbraco CMS');
     expect(platforms.textContent).toContain('en.projects.noVersion');
@@ -169,6 +187,7 @@ describe('ProjectPage', () => {
     detach.flush(component({ id: 'p1', origin: 'manual' }));
     await settle(fixture);
     http.expectOne(BASE).flush({ project: null, components: [] });
+    http.expectOne((r) => r.url === `/api/v1/orgs/${ORG}/profile/coverage`);
     expect(element.textContent).toContain('en.projects.detached');
   });
 
@@ -200,6 +219,7 @@ describe('ProjectPage', () => {
       // Done reading: the project and its suggestions are loaded again.
       http.expectOne(BASE);
       http.expectOne((r) => r.url === `${BASE}/suggestions`);
+      http.expectOne((r) => r.url === `/api/v1/orgs/${ORG}/profile/coverage`);
     } finally {
       vi.useRealTimers();
     }

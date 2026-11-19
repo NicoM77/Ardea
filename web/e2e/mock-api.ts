@@ -271,6 +271,43 @@ export async function api(page: Page, signedIn: boolean): Promise<void> {
         return route.fulfill({ json: [LINK] });
       case `/api/v1/orgs/${ORG_ID}/projects/${PROJECT.id}/suggestions`:
         return route.fulfill({ json: [SUGGESTION] });
+      case `/api/v1/orgs/${ORG_ID}/profile/coverage`:
+        return route.fulfill({
+          json: {
+            components: 3,
+            fullyCheckable: 1,
+            hints: [
+              {
+                kind: 'version_line_only',
+                severity: 'info',
+                count: 1,
+                projectIds: [PROJECT.id],
+                examples: [
+                  {
+                    projectId: PROJECT.id,
+                    componentId: COMPONENT.id,
+                    name: 'ASP.NET Core',
+                    detail: '10.0',
+                  },
+                ],
+              },
+              {
+                kind: 'repositories_partial',
+                severity: 'warning',
+                count: 1,
+                projectIds: [PROJECT.id],
+                examples: [
+                  {
+                    projectId: PROJECT.id,
+                    componentId: null,
+                    name: 'example/portal',
+                    detail: null,
+                  },
+                ],
+              },
+            ],
+          },
+        });
       case `/api/v1/orgs/${ORG_ID}/repository-connections`:
         return route.fulfill({ json: [CONNECTION] });
       case `/api/v1/orgs/${ORG_ID}/repository-connections/${CONNECTION.id}/repositories`:

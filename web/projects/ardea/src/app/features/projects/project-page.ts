@@ -22,6 +22,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { UiButton, UiCard, UiField, UiInput, UiLoader, UiNotice, UiPageHeader, UiPill } from 'ui';
 import {
+  getProfileCoverageResource,
   getProjectResource,
   listRepositoryLinksResource,
   listSuggestionsResource,
@@ -45,6 +46,7 @@ import {
   platforms,
 } from './component-format';
 import { PackagesView } from './packages-view';
+import { CoverageCard } from './coverage-card';
 import { LinksCard } from './links-card';
 import { isReading, pollWhile } from './link-format';
 import { SuggestionsList } from './suggestions-list';
@@ -75,6 +77,7 @@ import { SuggestionsList } from './suggestions-list';
     PackagesView,
     LinksCard,
     SuggestionsList,
+    CoverageCard,
     LucideFolderGit2,
   ],
   template: `
@@ -177,15 +180,16 @@ import { SuggestionsList } from './suggestions-list';
             [projectId]="projectId()"
             [links]="links"
             [canEdit]="canEdit()"
-            (changed)="detail.reload()"
+            (changed)="refresh()"
           />
+          <ardea-coverage-card [coverage]="coverage" />
           @if (openSuggestions()) {
             <ardea-suggestions-list
               [orgId]="org"
               [projectId]="projectId()"
               [suggestions]="suggestions"
               [canEdit]="canEdit()"
-              (decided)="detail.reload()"
+              (decided)="refresh()"
             />
           }
         </div>
@@ -444,6 +448,10 @@ export class ProjectPage {
     computed(() => this.projectId()),
     computed(() => ({ state: 'open' })),
   );
+  protected readonly coverage = getProfileCoverageResource(
+    this.orgId,
+    computed(() => ({ projectId: this.projectId() })),
+  );
   protected readonly openSuggestions = computed(
     () =>
       this.suggestions.hasValue() &&
@@ -523,10 +531,17 @@ export class ProjectPage {
         untracked(() => {
           this.detail.reload();
           this.suggestions.reload();
+          this.coverage.reload();
         });
       }
       before = now;
     });
+  }
+
+  /** After a change to the profile: the components and what can be checked of them. */
+  protected refresh(): void {
+    this.detail.reload();
+    this.coverage.reload();
   }
 
   protected async toggleArchive(): Promise<void> {
@@ -563,7 +578,7 @@ export class ProjectPage {
     this.done.set(null);
     try {
       this.done.set(await work());
-      this.detail.reload();
+      this.refresh();
     } catch (error) {
       this.problem.set(
         problemMessageKey(error, { codes: WIZARD_PROBLEMS, fallback: 'wizard.errors.save' }),

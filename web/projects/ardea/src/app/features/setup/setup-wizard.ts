@@ -11,8 +11,9 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { UiLoader, UiNotice, UiPageHeader } from 'ui';
+import { UiButton, UiLoader, UiNotice, UiPageHeader } from 'ui';
 import {
+  getProfileCoverageResource,
   getProjectResource,
   getWizardStateResource,
   listRepositoryLinksResource,
@@ -29,6 +30,7 @@ import { ProjectStep } from './project-step';
 import { TechnologiesStep } from './technologies-step';
 import { RepositoryStep } from './repository-step';
 import { LinksCard } from '../projects/links-card';
+import { CoverageCard } from '../projects/coverage-card';
 import { SuggestionsList } from '../projects/suggestions-list';
 import { isReading, pollWhile } from '../projects/link-format';
 import { canManage } from '../organizations/org-format';
@@ -37,13 +39,14 @@ import { WIZARD_PROBLEMS } from './wizard-problems';
 /** `organization`: the first project of a new organization; `new`: another project; `project`: an existing one. */
 export type WizardMode = 'organization' | 'new' | 'project';
 
-export type WizardStep = 'project' | 'repository' | 'operations' | 'technologies';
+export type WizardStep = 'project' | 'repository' | 'operations' | 'technologies' | 'coverage';
 
 const STEP_LABELS: Record<WizardStep, string> = {
   project: 'wizard.steps.project',
   repository: 'wizard.steps.repository',
   operations: 'wizard.steps.operations',
   technologies: 'wizard.steps.technologies',
+  coverage: 'wizard.steps.coverage',
 };
 
 /**
@@ -63,6 +66,8 @@ const STEP_LABELS: Record<WizardStep, string> = {
     ProjectStep,
     TechnologiesStep,
     RepositoryStep,
+    CoverageCard,
+    UiButton,
     LinksCard,
     SuggestionsList,
   ],
@@ -148,7 +153,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
                 [(drafts)]="drafts"
                 [saving]="saving()"
                 [problem]="problem()"
-                [finishLabel]="mode() === 'project' ? 'wizard.save' : 'wizard.finish'"
+                [finishLabel]="'wizard.continue'"
                 (back)="go(previous())"
                 (continued)="saveTechnologies()"
               >
@@ -162,6 +167,29 @@ const STEP_LABELS: Record<WizardStep, string> = {
                   />
                 }
               </ardea-technologies-step>
+            }
+            @case ('coverage') {
+              <div class="coverage">
+                <p class="hint">{{ 'wizard.coverage.lead' | transloco }}</p>
+                <ardea-coverage-card [coverage]="coverage" />
+                @if (problem()) {
+                  <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
+                }
+                <div class="actions">
+                  <button uiButton variant="ghost" type="button" (click)="go(previous())">
+                    {{ 'wizard.back' | transloco }}
+                  </button>
+                  <button
+                    uiButton
+                    variant="primary"
+                    type="button"
+                    [loading]="saving()"
+                    (click)="finish()"
+                  >
+                    {{ (mode() === 'organization' ? 'wizard.finish' : 'wizard.done') | transloco }}
+                  </button>
+                </div>
+              </div>
             }
           }
           @if (showSide() && currentProjectId(); as id) {
@@ -250,6 +278,21 @@ const STEP_LABELS: Record<WizardStep, string> = {
       display: block;
       margin-bottom: var(--space-lg);
     }
+    .coverage {
+      display: grid;
+      gap: var(--gap);
+    }
+    .coverage .hint {
+      color: var(--muted);
+      max-width: 72ch;
+    }
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-md);
+      padding-top: var(--space-lg);
+      border-top: 1px solid var(--border);
+    }
     @media (max-width: 640px) {
       .stepper {
         grid-auto-flow: row;
@@ -319,6 +362,14 @@ export class SetupWizard {
   protected readonly showSide = computed(
     () => this.hasLinks() && (this.current() === 'operations' || this.current() === 'technologies'),
   );
+  /** What can be checked of the profile, for step 6 (task 2.8). */
+  protected readonly coverage = getProfileCoverageResource(
+    this.orgId,
+    computed(() => {
+      const projectId = this.currentProjectId();
+      return projectId && this.current() === 'coverage' ? { projectId } : undefined;
+    }),
+  );
   protected readonly manage = computed(() => canManage(this.current$.organization()?.role));
 
   protected readonly drafts = linkedSignal<DraftComponent[]>(() =>
@@ -329,8 +380,8 @@ export class SetupWizard {
 
   protected readonly steps = computed<WizardStep[]>(() =>
     this.mode() === 'project'
-      ? ['repository', 'operations', 'technologies']
-      : ['project', 'repository', 'operations', 'technologies'],
+      ? ['repository', 'operations', 'technologies', 'coverage']
+      : ['project', 'repository', 'operations', 'technologies', 'coverage'],
   );
   protected readonly offset = computed(() => (this.mode() === 'organization' ? 2 : 1));
   protected readonly current = computed<WizardStep>(() => {
@@ -458,8 +509,16 @@ export class SetupWizard {
   protected async saveTechnologies(): Promise<void> {
     await this.save(async (org, id) => {
       await this.saveDrafts(org, id);
+      await this.record({ stepDone: 'technologies', firstProjectId: null });
+      this.detail.reload();
+      this.go('coverage');
+    });
+  }
+
+  protected async finish(): Promise<void> {
+    await this.save(async (org, id) => {
       if (this.mode() === 'organization') {
-        await this.record({ stepDone: 'technologies', firstProjectId: null });
+        await this.record({ stepDone: 'coverage', firstProjectId: null });
         await firstValueFrom(this.organizations.completeWizard(org));
       }
       await this.router.navigate(['/o', this.current$.slug(), 'projects', id]);

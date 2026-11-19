@@ -11,6 +11,7 @@ export const WIZARD_PROBLEMS: Readonly<Record<string, string>> = {
   repository_link_not_found: 'wizard.errors.linkNotFound',
   suggestion_not_found: 'wizard.errors.suggestionNotFound',
   suggestion_decided: 'wizard.errors.suggestionDecided',
+  no_shrink_pending: 'wizard.errors.noShrinkPending',
   connection_unusable: 'settings.accesses.errors.unusable',
   github_unavailable: 'settings.accesses.errors.github',
   repository_connection_not_found: 'settings.accesses.errors.notFound',

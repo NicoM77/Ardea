@@ -36,6 +36,7 @@ role: `docker compose run --rm migrate org …`.
 | `ardea admin reset-password <email> [--disable-mfa]` | Restore access without e-mail |
 | `ardea intel renormalize --source <key>` | Read a source's stored records again with the current parser |
 | `ardea intel recompute` | Merge every entry again with the current rules |
+| `ardea intel import --full [--source <key>]` | Load a source's whole inventory instead of the look-back window; for the CVE Program about 10 GB more |
 | `ardea org export <slug> [--out file]` | An organisation's data as JSON, without secrets |
 | `ardea org delete <slug> --confirm <slug>` | Remove an organisation and all its data |
 

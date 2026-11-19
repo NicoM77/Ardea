@@ -136,7 +136,7 @@ Das System liest fremde Inhalte und ruft fremde Adressen auf. Beides ist Angriff
 - **Header:** Content Security Policy, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors 'none'`. HSTS setzt der vorgeschaltete Proxy; die Dokumentation liefert Beispiele.
 - **Container:** läuft als nicht privilegierter Benutzer auf einem Image ohne Shell und Paketmanager, Dateisystem schreibgeschützt, keine zusätzlichen Capabilities.
 - **Datenbank:** nur im Compose-Netz erreichbar, kein veröffentlichter Port in der Vorgabe.
-- **Lieferkette:** Lockfiles für NuGet und npm; automatische Abhängigkeits-Updates; Lizenzprüfung im Build gegen eine Positivliste (Kapitel 13); SBOM je Release; signierte Images sind eine Ausbaustufe.
+- **Lieferkette:** Lockfiles für NuGet und npm; automatische Abhängigkeits-Updates; Lizenzprüfung im Build gegen eine Positivliste (Kapitel 13); SBOM je Release; signierte Images mit Herkunftsnachweis (Aufgabe 7.3).
 - **Selbstanwendung:** Das Projekt verbindet sein eigenes Repository mit einer eigenen Instanz und meldet sich Lücken in seinen Abhängigkeiten selbst.
 - **Meldeweg:** `SECURITY.md` mit Kontakt und Frist für die Antwort; koordinierte Offenlegung.
 

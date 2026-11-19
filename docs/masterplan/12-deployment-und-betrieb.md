@@ -68,7 +68,7 @@ volumes: { db: {}, scratch: {} }
 | Architekturen | `linux/amd64` und `linux/arm64`. |
 | Einstieg | Ein Programm `ardea` mit den Rollen `api`, `worker` und `migrate`, den Hilfsbefehlen `healthcheck`, `init-env` und `doctor`, dazu Wartungsbefehle (12.8). |
 | Tags | `1.4.2`, `1.4`, `1`, `latest`. Die Compose-Vorgabe nutzt die Hauptversion. |
-| Nachweis | SBOM je Release. Signierte Images sind eine Ausbaustufe. |
+| Nachweis | SBOM je Release; Images mit cosign signiert und mit Herkunftsnachweis (Aufgabe 7.3). |
 
 Health Checks rufen das Programm selbst auf, weil das Image weder `curl` noch eine Shell enthält. Für die API prüft `healthcheck` den Endpunkt `/health/ready`, für den Worker einen Herzschlag in der Datenbank, der nicht älter als zwei Minuten sein darf.
 

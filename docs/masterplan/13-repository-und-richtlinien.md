@@ -120,7 +120,7 @@ Ein neuer Ende-zu-Ende-Test braucht eine Begründung im Pull Request und ersetzt
 - Strukturänderungen einer Quelle zeigt der Betrieb selbst: steigende Quarantäne oder leere Abrufe setzen die Quelle auf `degraded` (Kapitel 6.8).
 - Die Güte eines Sprachmodells zeigt die Quote der Korrekturen im Betrieb (Kapitel 7.9).
 
-Von Hand bleiben vor einem Release genau zwei kurze Durchgänge: die Kernabläufe mit Tastatur und Screenreader, und Web Push an einer installierten Web-App auf iOS, das sich nicht automatisieren lässt.
+Von Hand bleiben vor einem Release genau zwei kurze Durchgänge: die Kernabläufe mit Tastatur und Screenreader, und Web Push an einer installierten Web-App auf iOS, das sich nicht automatisieren lässt. Vor 1.0 kommt einmalig die Abnahme aller Phasen auf einer frischen Installation dazu (Aufgabe 7.11).
 
 ## 13.7 Automatisierung
 

@@ -1,6 +1,6 @@
 # 14 · Umsetzungsphasen
 
-Sieben Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen lässt. Enthalten ist nur, was in Kapitel 1.5 in der Spalte MVP steht. Abnahmekriterien werden als schnelle Tests in der Pipeline geprüft; wo das nicht geht, einmal in der Entwicklung beobachtet. Langläufer und zeitgesteuerte Tests gibt es nicht, und jede Pipeline bleibt unter 25 Minuten (Kapitel 13.6 und 13.7).
+Acht Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen lässt. Enthalten ist nur, was in Kapitel 1.5 in der Spalte MVP steht. Abnahmekriterien werden als schnelle Tests in der Pipeline geprüft; wo das nicht geht, einmal in der Entwicklung beobachtet. Langläufer und zeitgesteuerte Tests gibt es nicht, und jede Pipeline bleibt unter 25 Minuten (Kapitel 13.6 und 13.7).
 
 ## 14.1 Aufwand
 
@@ -12,12 +12,13 @@ Sieben Phasen bis Version 1.0. Jede endet mit etwas, das läuft und sich prüfen
 | 3 | Befunde, Massnahmen und Meldungen mit Stufe und Begründung; Übersicht, Liste, Detail | 6–8 Wochen |
 | 4 | KI-Einschätzung als zuschaltbarer Schritt; Katalog, der selbst wächst | 3–4 Wochen |
 | 5 | Benachrichtigungen über vier Kanäle | 3–4 Wochen |
-| 6 | Geprüftes, dokumentiertes Release 1.0 | 3–4 Wochen |
-| | **Summe** | **34–45 Wochen** |
+| 6 | Gehärtete, geprüfte und dokumentierte Instanz | 3–4 Wochen |
+| 7 | Aufgeräumtes Repository unter dem Namen Ardea; Release 1.0 mit automatisch gebauten, signierten Images; Demo-Befehl; englisches README und Website mit Dokumentation auf GitHub Pages; Abnahme aller Phasen; Masterplan gelöscht | 4–5 Wochen |
+| | **Summe** | **38–50 Wochen** |
 
 Die Zahlen gelten für eine erfahrene Person mit KI-Unterstützung und sind Schätzungen, keine Zusage. Drei Posten treiben sie und sind schwer zu verkürzen, weil sie Handarbeit an Daten sind: der Katalog mit rund 300 Produkten samt Aliassen, der Referenzsatz mit 200 von Hand beschrifteten Paaren und die 15 bis 20 Oberflächenkomponenten mit allen Zuständen. Nicht enthalten sind Wartezeiten auf Dritte (eine externe Sicherheitsprüfung). Die Mockups halten nichts auf: Die Umsetzung entwirft sie selbst, der Eigentümer prüft sie im Nachhinein (Kapitel 15, E15).
 
-Eine erste Fassung dieses Plans nannte 16 bis 23 Wochen. Die unabhängige Durchsicht hat das als unrealistisch beanstandet; der Umfang wurde daraufhin gekürzt und der Rest neu geschätzt. Die zweite Durchsicht fand die Oberfläche für den Instanz-Administrator in keiner Aufgabe; sie ist jetzt Aufgabe 0.13 und mit einer Woche in Phase 0 eingerechnet. Am 18.11.2026 kamen das Profil aus GitHub-Repositories und mit ihm OSV, zwei weitere Versionsschemata und das Verschmelzen von Einträgen ins MVP (Kapitel 16); das sind 5 bis 7 Wochen mehr, 2 bis 3 in Phase 1 und 3 bis 4 in Phase 2.
+Eine erste Fassung dieses Plans nannte 16 bis 23 Wochen. Die unabhängige Durchsicht hat das als unrealistisch beanstandet; der Umfang wurde daraufhin gekürzt und der Rest neu geschätzt. Die zweite Durchsicht fand die Oberfläche für den Instanz-Administrator in keiner Aufgabe; sie ist jetzt Aufgabe 0.13 und mit einer Woche in Phase 0 eingerechnet. Am 18.11.2026 kamen das Profil aus GitHub-Repositories und mit ihm OSV, zwei weitere Versionsschemata und das Verschmelzen von Einträgen ins MVP (Kapitel 16); das sind 5 bis 7 Wochen mehr, 2 bis 3 in Phase 1 und 3 bis 4 in Phase 2. Am 19.11.2026 kam Phase 7 dazu: Aufräumen und Release, getrennt von der Härtung in Phase 6, mit signierten Images, die bisher eine Ausbaustufe waren, einem Demo-Befehl und einer Website; das sind 4 bis 5 Wochen mehr.
 
 ```mermaid
 flowchart LR
@@ -28,8 +29,9 @@ flowchart LR
   P2 --> P3
   P3 --> P4[4 KI-Einschätzung]
   P3 --> P5[5 Benachrichtigungen]
-  P4 --> P6[6 Härtung, Release]
+  P4 --> P6[6 Härtung]
   P5 --> P6
+  P6 --> P7[7 Aufräumen, Release]
 ```
 
 Phase 2 braucht aus Phase 1 nur die Aufgabe 1.1; danach laufen beide unabhängig. Phase 4 und 5 sind voneinander unabhängig.
@@ -195,7 +197,7 @@ Abnahme:
 
 Abnahme: die Kriterien aus Kapitel 8.8.
 
-## Phase 6 · Härtung und Release 1.0
+## Phase 6 · Härtung
 
 Keine neuen Funktionen für Benutzer. Hinzu kommen nur Werkzeuge für den Betrieb.
 
@@ -208,9 +210,40 @@ Keine neuen Funktionen für Benutzer. Hinzu kommen nur Werkzeuge für den Betrie
 | 6.5 | Ein schneller Integrationstest spielt einen kleinen Dump des Vorabstands ein, migriert auf 1.0 und stellt wieder her |
 | 6.6 | Wartungsbefehle: Zugang wiederherstellen, Gesamtbestand einspielen, Organisation exportieren und löschen; Warnungen des Systems über sich selbst; Kennzahlen des Betriebs in der Administration |
 | 6.7 | Dokumentation: Installation, Konfiguration, Betrieb, Update, «Eine Quelle hinzufügen»; `SECURITY.md` mit Meldeweg und Hinweis, wie Betreiber von Sicherheitsupdates des Projekts erfahren |
-| 6.8 | SBOM, Lizenzdatei, Images für beide Architekturen; eigene Instanz des Projekts, gespeist aus dem eigenen Repository |
+| 6.8 | SBOM und Lizenzdatei im Build; eigene Instanz des Projekts, gespeist aus dem eigenen Repository. Die Images des Release baut 7.3. |
 
-Abnahme: alle Kriterien aus Kapitel 1.6, nachgewiesen auf einer frischen Installation für `amd64` und `arm64`; jede Pipeline läuft mit dem vollen Umfang in höchstens 25 Minuten; keine offenen Feststellungen mit hohem Schweregrad aus 6.1 und 6.2.
+Abnahme: jede Pipeline läuft mit dem vollen Umfang in höchstens 25 Minuten; keine offenen Feststellungen mit hohem Schweregrad aus 6.1 und 6.2. Den Nachweis der Kriterien aus Kapitel 1.6 auf einer frischen Installation erbringt Phase 7 mit den Images des Release.
+
+## Phase 7 · Aufräumen und Release 1.0
+
+Keine neuen Funktionen für Benutzer. Hinzu kommen nur der Demo-Befehl, die Werkzeuge für das Release und die Website. Das Repository wird so aufgeräumt, dass eine fremde Person es versteht, und Version 1.0 entsteht ohne Handarbeit aus dem Zusammenführen eines Release-Pull-Requests. Am Ende wird dieser Masterplan gelöscht (E20).
+
+| Nr. | Aufgabe | Abhängig von |
+|---|---|---|
+| 7.1 | Öffentlicher Auftritt: Repository von `CSH-Alert` in `ardea` umbenennen, nach der Markenrecherche aus E1 und vor dem ersten Image, damit der Pfad `ghcr.io/<owner>/ardea` und die Adresse der Website von Anfang an stimmen; Beschreibung, Themen, Social-Preview-Bild aus dem Logo; Vorlagen für Issues und Pull Requests; Schutz des Hauptzweigs mit den Pflicht-Checks; Dependabot für NuGet, npm, GitHub Actions und Basis-Images; CodeQL für C# und TypeScript als eigener Job, der nebenher läuft und die Obergrenze aus Kapitel 13.7 einhält | |
+| 7.2 | Versionierung mit release-please: Aus den Conventional Commits entsteht laufend ein Release-Pull-Request mit Versionsnummer und `CHANGELOG.md`; sein Zusammenführen setzt das Tag und erstellt das GitHub Release mit den Notizen. Eine Prüfung im Pull Request lässt nur Commits nach Conventional Commits zu. Version in Image, `doctor` und Administration (0.13); Stände `0.x` als Vorabversion markiert | 7.1 |
+| 7.3 | Release-Pipeline nach Kapitel 13.7, im selben Workflow wie 7.2, weil ein mit dem `GITHUB_TOKEN` gesetztes Tag keinen weiteren Workflow auslöst: Images für `amd64` und `arm64` aus dem geprüften Stand in die Registry des Repositories mit den Tags aus Kapitel 12; Signatur mit cosign ohne eigenen Schlüssel (über die OIDC-Identität des Workflows) und Herkunftsnachweis (Build Provenance); SBOM, `compose.yaml` und Beispielkonfiguration als Anhang des Release; Befehl zum Prüfen von Signatur und Herkunft in der Installationsanleitung | 6.8, 7.2 |
+| 7.4 | Repository aufräumen: Inventar aller Dateien ausserhalb von `src`, `tests`, `web`, `deploy` und `build`; Arbeitsstände aus Planung und Design (`.impeccable/`, `prototypes/`, Mockups, Review-Bilder, Recherchen) löschen, mit der Entscheidung je Datei als Liste im Pull Request; verwaiste Skripte, Konfigurationen und Fixtures löschen; Git-Verlauf auf Geheimnisse und grosse Dateien prüfen | 6.7 |
+| 7.5 | Code aufräumen: Kommentare entfernen. Es bleiben nur die, ohne die etwas nicht funktioniert oder geprüft wird: XML-Dokumentation, aus der das OpenAPI-Dokument seine Beschreibungen bezieht; Begründungen an unterdrückten Analyzer- und Lint-Warnungen; Direktiven für Werkzeuge. Ein Prüfskript im Build verhindert neue. Dazu ungenutzter Code, Pakete, Übersetzungsschlüssel, Einstellungen und Testhilfen entfernen (Analyzer, `knip` für die Web-App); offene `TODO` gelöst oder als Issue erfasst | 6.1 |
+| 7.6 | Befehl `seed-demo`: spielt die Beispieldaten (Organisation, drei Projekte, Einträge, Befunde, Massnahmen, Benachrichtigungen) in eine leere Instanz ein, ohne GitHub-Token, ohne Erstbefüllung und ohne Abruf der Quellen; verweigert die Arbeit auf einer Datenbank mit Daten. Anleitung «Try it» für Interessierte | 6.6 |
+| 7.7 | Screenshots automatisch: Ein Playwright-Lauf gegen eine Instanz aus `seed-demo` erzeugt die Bilder für README und Website (Übersicht, Massnahme, Meldung, Wizard, Telefonbreite), damit sie mit der Oberfläche aktuell bleiben | 7.5, 7.6 |
+| 7.8 | README auf Englisch: Logo aus `docs/design/brand/` in heller und dunkler Fassung; Zweck in zwei Sätzen; Screenshots aus 7.7; Funktionen; Schnellstart in drei Befehlen und «Try it» mit `seed-demo`; Systemanforderungen; Quellen mit ihren Nutzungsbedingungen; Verweise auf Website und Dokumentation; Mitwirken, Sicherheit, Lizenz. Die Roadmap schrumpft auf die Ausbaustufen nach 1.0 | 7.4, 7.7 |
+| 7.9 | Website auf GitHub Pages mit Produktseite und Dokumentation: Startseite im Designsystem aus `DESIGN.md` mit Logo, Zweck, Screenshots aus 7.7, Funktionen, Schnellstart und Verweis auf das neueste Release; darunter die Dokumentation (Installation, Konfiguration, Betrieb, Update, «Add a source», Architektur, API aus dem OpenAPI-Dokument, ADR), gelesen aus den Markdown-Dateien in `docs/` als einziger Quelle. Gebaut mit einem statischen Generator (Empfehlung: Astro mit Starlight, MIT), Lizenzprüfung wie für die Web-App; Bau und Veröffentlichung bei jedem Release und bei Änderungen an `docs/` im Hauptzweig; Linkprüfung und Zugänglichkeitsprüfung im Build | 7.1, 7.7, 7.8 |
+| 7.10 | Abdeckung messen, ohne Quote; Lücken in Anmeldung, Mandantentrennung, Versionsprüfung, Regelwerk und Benachrichtigung mit schnellen Tests schliessen, innerhalb des Zeitbudgets aus Kapitel 13.7 | 7.5 |
+| 7.11 | Abnahme aller Phasen: Die Kriterien der Phasen 0 bis 5 und aus Kapitel 1.6 auf einer frischen Installation aus den Release-Images für `amd64` und `arm64` durchgehen; Update vom letzten Stand `0.x` auf 1.0; die zwei Handdurchgänge aus Kapitel 13.6; Ergebnis als `docs/acceptance/release-1.0.md` | 7.3, 7.10 |
+| 7.12 | Masterplan löschen (E20): Was nach 1.0 noch gilt, vorher auf Englisch in die Dokumentation übernehmen: Architektur und Modulgrenzen, Datenmodell in Kürze, Regelwerk und Stufen, Sicherheitsmodell, Richtlinien aus Kapitel 13 in `CONTRIBUTING.md`, Ausbaustufen nach 1.0 als Roadmap; dann `docs/masterplan/` löschen und alle Verweise darauf in ADR, Abnahmen, README, `CONTRIBUTING.md` und Code anpassen | 7.9, 7.11 |
+
+Abnahme:
+
+- Das Zusammenführen des Release-Pull-Requests für 1.0.0 erzeugt ohne Handarbeit Tag, `CHANGELOG.md`, signierte Images für beide Architekturen in der Registry und ein GitHub Release mit Notizen, SBOM und Compose-Datei, in höchstens 25 Minuten.
+- Signatur und Herkunftsnachweis lassen sich mit dem dokumentierten Befehl für beide Architekturen prüfen.
+- Ein Commit, der nicht Conventional Commits folgt, lässt den Pull Request scheitern.
+- `seed-demo` auf einer frischen Instanz ergibt in unter 2 Minuten eine Instanz mit Daten, ohne Zugang zu GitHub oder den Quellen; auf einer Datenbank mit Daten bricht der Befehl ohne Änderung ab.
+- Eine Person, die das Projekt nicht kennt, installiert Ardea nur mit dem README oder der Website in unter 15 Minuten und meldet sich an.
+- Die Website wird bei einem Release ohne Handarbeit neu veröffentlicht; Linkprüfung und Zugänglichkeitsprüfung finden nichts.
+- Alle Kriterien aus Kapitel 1.6 und der Phasen 0 bis 5 sind auf der frischen Installation für beide Architekturen nachgewiesen; `docs/acceptance/release-1.0.md` hat keinen offenen Punkt.
+- Build und Lint laufen ohne Warnung; das Prüfskript findet keinen Kommentar ausserhalb der Ausnahmen aus 7.5; das OpenAPI-Dokument ist unverändert.
+- Nach 7.12 verweist keine Datei mehr auf `docs/masterplan/`, und jede Datei im Repository ist Teil des Produkts, seines Builds, seiner Tests, seiner Dokumentation oder der Website.
 
 ## Nach 1.0
 
@@ -223,4 +256,4 @@ In dieser Reihenfolge, weil sie in dieser Reihenfolge Nutzen bringen:
 5. **Passkeys und OIDC-Anmeldung;** API-Tokens.
 6. **Produkte aus Freitext** durch ein Sprachmodell; Korrekturen als Kontext; Gewichte je Organisation.
 7. **Capacitor-App,** nach Entscheidung über das Push-Relay.
-8. **Ausbau auf 30 bis 50 Quellen;** Berichte und Export; Rechte je Projekt; signierte Images; Wechsel des Hauptschlüssels; Anhalten bei auffälligen Massenänderungen einer Quelle.
+8. **Ausbau auf 30 bis 50 Quellen;** Berichte und Export; Rechte je Projekt; Wechsel des Hauptschlüssels; Anhalten bei auffälligen Massenänderungen einer Quelle.

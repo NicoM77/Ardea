@@ -47,9 +47,10 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | E14 | Rückblick beim Erststart | 180 Tage; Gesamtbestand als Befehl | Kapitel 4.10 |
 | E15 | Weitere Mockups | **entschieden am 18.11.2026:** Die bisher gezeigten Mockups sind freigegeben. Die weiteren (Wizard und Projektprofil vor Phase 2, ruhige Übersicht, Massnahme mit mehreren Befunden und Fassung mit KI-Einschätzung vor Phase 3, Regeln vor Phase 5) entwirft die Umsetzung selbst nach `DESIGN.md`, ohne auf eine Freigabe zu warten; der Eigentümer korrigiert im Nachhinein | Phasen 1, 2, 3, 5 |
 | E16 | Arbeitseinheit | die Massnahme (Komponente in einem Projekt) statt der einzelnen CVE | Kapitel 7.4, 8 |
-| E17 | Umfang und Dauer | MVP wie in Kapitel 1.5 gekürzt und um das Profil aus Repositories erweitert; 34 bis 45 Wochen für eine Person; nach Phase 3 neu beurteilen | Kapitel 14 |
+| E17 | Umfang und Dauer | MVP wie in Kapitel 1.5 gekürzt und um das Profil aus Repositories erweitert; 38 bis 50 Wochen für eine Person, einschliesslich Phase 7 (Aufräumen und Release, 19.11.2026); nach Phase 3 neu beurteilen | Kapitel 14 |
 | E18 | Zugang zu privaten Repositories im MVP | feingranulares Token je Organisation, nur lesend; GitHub App mit Webhooks als Ausbaustufe | Kapitel 16.4 |
 | E19 | Entwicklungsabhängigkeiten | eingelesen, aber auf Stufe 2 begrenzt, solange keine Untergrenze greift; transitive Pakete je Komponente, Bündeln erst nach Messung | Kapitel 7.6, 16.5, 16.8 |
+| E20 | Masterplan im öffentlichen, englischen Repository | **entschieden am 19.11.2026:** wird nach der Abnahme von 1.0 gelöscht; was dann noch gilt, steht vorher auf Englisch in der Dokumentation. Der Plan bleibt im Git-Verlauf | Aufgaben 7.4, 7.12 |
 
 ## 15.3 Bereits entschieden
 
@@ -67,6 +68,7 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | Abfrage der öffentlichen Schnittstelle des Cyber Security Hub und Speichern der Texte sind erlaubt; keine Anfrage beim BACS (E10) | Bestätigung des Eigentümers vom 18.11.2026 |
 | Ladeanzeige: Variante «Draw», der Reiher zeichnet sich vom Schnabel her; Prototyp in `docs/design/loader/` | Wahl des Eigentümers vom 18.11.2026 |
 | Profil aus GitHub-Repositories im MVP, mit OSV als Paketquelle für npm, NuGet, Packagist, PyPI, Maven und Go und dem Verschmelzen von Einträgen | Vorgabe und Rückfrage vom 18.11.2026 |
+| Phase 7 «Aufräumen und Release 1.0» mit Umbenennung des Repositories, release-please, signierten Images, Dependabot, CodeQL, Demo-Befehl und Website auf GitHub Pages; Masterplan nach der Abnahme gelöscht (E20) | Vorgabe des Eigentümers vom 19.11.2026 |
 
 ## 15.4 Unabhängige Durchsicht des Plans
 

@@ -117,6 +117,11 @@ public sealed class IamModule : IModule
             options.AddPolicy(AuthEndpoints.RateLimitPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
                 ClientKey(http.Connection.RemoteIpAddress),
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = perMinute, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+            // Read-only lookups the web app makes on every load (setup state, invitation preview): looser,
+            // so reloading a page does not end in "too many attempts", but still bounded per client.
+            options.AddPolicy(AuthEndpoints.ReadRateLimitPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+                ClientKey(http.Connection.RemoteIpAddress),
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = perMinute * 6, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
             options.OnRejected = async (context, cancellationToken) =>
             {
                 if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))

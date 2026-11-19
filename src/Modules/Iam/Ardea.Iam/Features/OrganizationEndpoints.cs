@@ -70,7 +70,7 @@ internal static class OrganizationEndpoints
 
         var invitations = api.MapGroup("/invitations").WithTags("Organizations");
         invitations.MapGet("/{token}", PreviewAsync).WithName("previewInvitation").Produces<InvitationPreview>().Problems(404)
-            .RequireRateLimiting(AuthEndpoints.RateLimitPolicy);
+            .RequireRateLimiting(AuthEndpoints.ReadRateLimitPolicy);
         invitations.MapPost("/{token}/accept", AcceptAsync).WithName("acceptInvitation").RequireAuthorization()
             .Produces<AcceptInvitationResponse>().Problems(403, 404).RequireRateLimiting(AuthEndpoints.RateLimitPolicy);
     }

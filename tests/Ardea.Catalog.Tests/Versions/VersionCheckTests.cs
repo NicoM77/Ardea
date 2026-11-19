@@ -134,7 +134,22 @@ public sealed class VersionCheckTests
     {
         var unreadable = new VersionRange { Introduced = "before the rewrite", Fixed = "2.0" };
 
-        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.RangeNotReadable), Check("9.0", VersionStatus.Unaffected, unreadable));
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.RangeNotReadable), Check("1.5", VersionStatus.Unaffected, unreadable));
+    }
+
+    [Fact]
+    public void Unreadable_lower_bound_does_not_matter_at_or_above_a_readable_fix()
+    {
+        // Microsoft, System.Text.Json (CVE-2026-120796): {"version": "NOT_YET_AVAILABLE", "lessThan": "11.0.0"}.
+        var range = new VersionRange { Introduced = "NOT_YET_AVAILABLE", Fixed = "11.0.0" };
+        var upTo = new VersionRange { Introduced = "NOT_YET_AVAILABLE", LastAffected = "10.0.4" };
+
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges), Check("11.0.1", VersionStatus.Unknown, range));
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges), Check("11.0.0", VersionStatus.Unknown, range));
+        Assert.Equal(new VersionCheck(VersionVerdict.OutOfRange, VersionCheckReason.AboveAllRanges), Check("10.0.5", VersionStatus.Unknown, upTo));
+
+        // Below the fix the unreadable lower bound decides whether the version is inside: unknown.
+        Assert.Equal(new VersionCheck(VersionVerdict.Unknown, VersionCheckReason.RangeNotReadable), Check("10.0.9", VersionStatus.Unknown, range));
     }
 
     [Fact]

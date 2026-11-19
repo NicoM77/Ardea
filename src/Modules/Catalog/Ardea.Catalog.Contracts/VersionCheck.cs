@@ -167,15 +167,21 @@ public readonly record struct VersionCheck(VersionVerdict Verdict, VersionCheckR
         }
 
         ParsedVersion? introduced = null, fixedVersion = null, lastAffected = null;
-        if ((range.Introduced is not null && !scheme.TryParse(range.Introduced, out introduced))
-            || (range.Fixed is not null && !scheme.TryParse(range.Fixed, out fixedVersion))
-            || (range.LastAffected is not null && !scheme.TryParse(range.LastAffected, out lastAffected)))
+        var upperReadable = (range.Fixed is null || scheme.TryParse(range.Fixed, out fixedVersion))
+            && (range.LastAffected is null || scheme.TryParse(range.LastAffected, out lastAffected));
+        var aboveUpper = (fixedVersion is not null && version >= fixedVersion) || (lastAffected is not null && version > lastAffected);
+        if (range.Introduced is not null && !scheme.TryParse(range.Introduced, out introduced))
+        {
+            // Whatever an unreadable lower bound says («NOT_YET_AVAILABLE»), a version at or past a readable fix is above the range.
+            return upperReadable && aboveUpper ? Position.Above : Position.Unreadable;
+        }
+
+        if (!upperReadable)
         {
             return Position.Unreadable;
         }
 
         var belowLower = introduced is not null && version < introduced;
-        var aboveUpper = (fixedVersion is not null && version >= fixedVersion) || (lastAffected is not null && version > lastAffected);
         return (belowLower, aboveUpper) switch
         {
             (false, false) => Position.Inside,

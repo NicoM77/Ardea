@@ -64,6 +64,9 @@ internal sealed class ProductCatalog(CatalogDbContext context, CatalogCache cach
         return ProductKey.TryCreate(vendor, product, out var raw) ? raw : null;
     }
 
+    public async Task<bool> HasPluginsAsync(string platformKey, CancellationToken cancellationToken) =>
+        (await IndexAsync(cancellationToken)).Products.Any(p => string.Equals(p.PlatformKey, platformKey, StringComparison.Ordinal));
+
     public async Task<IReadOnlyList<CatalogProduct>> SearchAsync(string text, int limit, CancellationToken cancellationToken) =>
         (await IndexAsync(cancellationToken)).Search(text, limit);
 

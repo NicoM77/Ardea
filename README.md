@@ -73,7 +73,7 @@ Organisations with projects and technology profile; profile from GitHub reposito
 | 2.5 | Search index `component_key` with match strength | 2.3, 2.4 | ✅ |
 | 2.6 | Mockups for the setup wizard and the project profile; owner reviews afterwards | | ✅ |
 | 2.7 | Setup wizard (repository, operations, technologies); project pages with links, packages and suggestions; organisation settings with access and audit log | 2.3, 2.4, 2.6, 2.13 | ⬜ |
-| 2.8 | Coverage hints: missing versions, platforms without components, distro packages, packages without lock file, ecosystems not yet checkable | 2.5 | ⬜ |
+| 2.8 | Coverage hints: missing versions, platforms without components, distro packages, packages without lock file, ecosystems not yet checkable | 2.5 | ✅ |
 | 2.9 | **Spike:** asynchronous SBOM export with a public and a private repository and a fine-grained token; ADR | | ✅ [ADR 032](docs/adr/0032-github-sbom-export.md) |
 | 2.10 | GitHub access with encrypted token, check, expiry, list of readable repositories; GitHub Enterprise Server hosts in administration | 2.3, 2.9 | ✅ |
 | 2.11 | Connection via `IRepositoryHost`: branch head with ETag, SBOM request, file tree, files with limits; readers for SPDX, `packages.lock.json`, `package-lock.json` | 2.10 | ✅ |

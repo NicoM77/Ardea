@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Cure53",
+  "products": [
+    {
+      "key": "dompurify",
+      "name": "DOMPurify",
+      "kind": "library",
+      "versionScheme": "semver",
+      "cpe": ["cure53:dompurify"],
+      "packages": ["pkg:npm/dompurify"]
+    }
+  ]
+}

@@ -100,6 +100,127 @@
       "cpe": ["apache:couchdb"],
       "aliases": [{ "vendor": "Apache", "names": ["CouchDB"] }],
       "images": ["couchdb"]
+    },
+    {
+      "key": "commons-text",
+      "name": "Apache Commons Text",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:commons_text"],
+      "packages": ["pkg:maven/org.apache.commons/commons-text"],
+      "aliases": [{ "vendor": "Apache", "names": ["Commons Text"] }]
+    },
+    {
+      "key": "commons-collections",
+      "name": "Apache Commons Collections",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:commons_collections"],
+      "packages": ["pkg:maven/commons-collections/commons-collections", "pkg:maven/org.apache.commons/commons-collections4"],
+      "aliases": [{ "vendor": "Apache", "names": ["Commons Collections"] }]
+    },
+    {
+      "key": "commons-io",
+      "name": "Apache Commons IO",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:commons_io"],
+      "packages": ["pkg:maven/commons-io/commons-io"],
+      "aliases": [{ "vendor": "Apache", "names": ["Commons IO"] }]
+    },
+    {
+      "key": "commons-fileupload",
+      "name": "Apache Commons FileUpload",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:commons_fileupload"],
+      "packages": ["pkg:maven/commons-fileupload/commons-fileupload"],
+      "aliases": [{ "vendor": "Apache", "names": ["Commons FileUpload"] }]
+    },
+    {
+      "key": "struts",
+      "name": "Apache Struts",
+      "kind": "framework",
+      "versionScheme": "maven",
+      "cpe": ["apache:struts"],
+      "packages": ["pkg:maven/org.apache.struts/struts2-core"],
+      "aliases": [{ "vendor": "Apache", "names": ["Struts", "Struts 2", "Apache Struts2"] }],
+      "related": ["openjdk"]
+    },
+    {
+      "key": "shiro",
+      "name": "Apache Shiro",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:shiro"],
+      "packages": ["pkg:maven/org.apache.shiro/shiro-core", "pkg:maven/org.apache.shiro/shiro-web"],
+      "aliases": [{ "vendor": "Apache", "names": ["Shiro"] }]
+    },
+    {
+      "key": "poi",
+      "name": "Apache POI",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:poi"],
+      "packages": ["pkg:maven/org.apache.poi/poi", "pkg:maven/org.apache.poi/poi-ooxml"],
+      "aliases": [{ "vendor": "Apache", "names": ["POI"] }]
+    },
+    {
+      "key": "httpclient",
+      "name": "Apache HttpClient",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:httpclient"],
+      "packages": ["pkg:maven/org.apache.httpcomponents/httpclient", "pkg:maven/org.apache.httpcomponents.client5/httpclient5"],
+      "aliases": [{ "vendor": "Apache", "names": ["HttpClient", "HttpComponents Client"] }]
+    },
+    {
+      "key": "camel",
+      "name": "Apache Camel",
+      "kind": "framework",
+      "versionScheme": "maven",
+      "cpe": ["apache:camel"],
+      "packages": ["pkg:maven/org.apache.camel/camel-core"],
+      "aliases": [{ "vendor": "Apache", "names": ["Camel"] }]
+    },
+    {
+      "key": "cxf",
+      "name": "Apache CXF",
+      "kind": "framework",
+      "versionScheme": "maven",
+      "cpe": ["apache:cxf"],
+      "packages": ["pkg:maven/org.apache.cxf/cxf-core"],
+      "aliases": [{ "vendor": "Apache", "names": ["CXF"] }]
+    },
+    {
+      "key": "tika",
+      "name": "Apache Tika",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["apache:tika"],
+      "packages": ["pkg:maven/org.apache.tika/tika-core"],
+      "aliases": [{ "vendor": "Apache", "names": ["Tika"] }]
+    },
+    {
+      "key": "log4net",
+      "name": "Apache log4net",
+      "kind": "library",
+      "versionScheme": "nuget",
+      "cpe": ["apache:log4net"],
+      "packages": ["pkg:nuget/log4net"],
+      "aliases": [{ "vendor": "Apache", "names": ["log4net"] }],
+      "related": ["dotnet"]
+    },
+    {
+      "key": "airflow",
+      "name": "Apache Airflow",
+      "kind": "other",
+      "versionScheme": "pep440",
+      "cpe": ["apache:airflow"],
+      "packages": ["pkg:pypi/apache-airflow"],
+      "aliases": [{ "vendor": "Apache", "names": ["Airflow"] }],
+      "related": ["python"],
+      "images": ["apache/airflow"]
     }
   ]
 }

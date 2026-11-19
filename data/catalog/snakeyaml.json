@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "SnakeYAML",
+  "products": [
+    {
+      "key": "snakeyaml",
+      "name": "SnakeYAML",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["snakeyaml_project:snakeyaml"],
+      "packages": ["pkg:maven/org.yaml/snakeyaml"]
+    }
+  ]
+}

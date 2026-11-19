@@ -107,6 +107,22 @@
       "versionScheme": "numeric",
       "aliases": [{ "vendor": "Microsoft", "names": ["Windows Hyper-V", "Microsoft Hyper-V", "Hyper-V Server"] }],
       "related": ["windows-server"]
+    },
+    {
+      "key": "typescript",
+      "name": "TypeScript",
+      "kind": "library",
+      "versionScheme": "semver",
+      "packages": ["pkg:npm/typescript"],
+      "related": ["nodejs"]
+    },
+    {
+      "key": "system-text-json",
+      "name": "System.Text.Json",
+      "kind": "library",
+      "versionScheme": "nuget",
+      "packages": ["pkg:nuget/System.Text.Json"],
+      "related": ["dotnet"]
     }
   ]
 }

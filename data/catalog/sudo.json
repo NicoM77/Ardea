@@ -1,0 +1,13 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Sudo Project",
+  "products": [
+    {
+      "key": "sudo",
+      "name": "Sudo",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["sudo_project:sudo"]
+    }
+  ]
+}

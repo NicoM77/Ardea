@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "H2 Group",
+  "products": [
+    {
+      "key": "h2",
+      "name": "H2 Database Engine",
+      "kind": "database",
+      "versionScheme": "maven",
+      "cpe": ["h2database:h2"],
+      "packages": ["pkg:maven/com.h2database/h2"],
+      "aliases": [{ "vendor": "H2", "names": ["H2", "H2 Database"] }]
+    }
+  ]
+}

@@ -21,6 +21,50 @@
       "packages": ["pkg:npm/express"],
       "aliases": [{ "vendor": "expressjs", "names": ["Express", "Express.js"] }],
       "related": ["nodejs"]
+    },
+    {
+      "key": "lodash",
+      "name": "Lodash",
+      "kind": "library",
+      "versionScheme": "semver",
+      "cpe": ["lodash:lodash"],
+      "packages": ["pkg:npm/lodash", "pkg:npm/lodash-es"],
+      "related": ["nodejs"]
+    },
+    {
+      "key": "jquery",
+      "name": "jQuery",
+      "kind": "library",
+      "versionScheme": "semver",
+      "cpe": ["jquery:jquery"],
+      "packages": ["pkg:npm/jquery", "pkg:nuget/jQuery"],
+      "aliases": [{ "vendor": "jQuery", "names": ["jQuery"] }]
+    },
+    {
+      "key": "jquery-ui",
+      "name": "jQuery UI",
+      "kind": "library",
+      "versionScheme": "semver",
+      "cpe": ["jqueryui:jquery_ui"],
+      "packages": ["pkg:npm/jquery-ui"],
+      "related": ["jquery"]
+    },
+    {
+      "key": "webpack",
+      "name": "webpack",
+      "kind": "library",
+      "versionScheme": "semver",
+      "packages": ["pkg:npm/webpack"],
+      "related": ["nodejs"]
+    },
+    {
+      "key": "electron",
+      "name": "Electron",
+      "kind": "framework",
+      "versionScheme": "semver",
+      "cpe": ["electronjs:electron"],
+      "packages": ["pkg:npm/electron"],
+      "related": ["nodejs"]
     }
   ]
 }

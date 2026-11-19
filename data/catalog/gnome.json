@@ -1,0 +1,23 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "GNOME",
+  "products": [
+    {
+      "key": "libxml2",
+      "name": "libxml2",
+      "kind": "library",
+      "versionScheme": "numeric",
+      "cpe": ["xmlsoft:libxml2"],
+      "aliases": [{ "names": ["libxml2"] }]
+    },
+    {
+      "key": "libxslt",
+      "name": "libxslt",
+      "kind": "library",
+      "versionScheme": "numeric",
+      "cpe": ["xmlsoft:libxslt"],
+      "aliases": [{ "names": ["libxslt"] }],
+      "related": ["libxml2"]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Axios",
+  "products": [
+    {
+      "key": "axios",
+      "name": "Axios",
+      "kind": "library",
+      "versionScheme": "semver",
+      "cpe": ["axios:axios"],
+      "packages": ["pkg:npm/axios"],
+      "related": ["nodejs"]
+    }
+  ]
+}

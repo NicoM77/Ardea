@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Python Cryptographic Authority",
+  "products": [
+    {
+      "key": "cryptography",
+      "name": "cryptography",
+      "kind": "library",
+      "versionScheme": "pep440",
+      "packages": ["pkg:pypi/cryptography"],
+      "aliases": [{ "vendor": "pyca", "names": ["cryptography"] }],
+      "related": ["python", "openssl"]
+    }
+  ]
+}

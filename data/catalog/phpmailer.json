@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "PHPMailer",
+  "products": [
+    {
+      "key": "phpmailer",
+      "name": "PHPMailer",
+      "kind": "library",
+      "versionScheme": "packagist",
+      "cpe": ["phpmailer_project:phpmailer"],
+      "packages": ["pkg:composer/phpmailer/phpmailer"],
+      "related": ["php"]
+    }
+  ]
+}

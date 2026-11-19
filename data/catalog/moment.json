@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Moment.js",
+  "products": [
+    {
+      "key": "moment",
+      "name": "Moment.js",
+      "kind": "library",
+      "versionScheme": "semver",
+      "cpe": ["momentjs:moment"],
+      "packages": ["pkg:npm/moment"],
+      "aliases": [{ "vendor": "Moment.js", "names": ["Moment"] }]
+    }
+  ]
+}

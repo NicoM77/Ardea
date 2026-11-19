@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Git",
+  "products": [
+    {
+      "key": "git",
+      "name": "Git",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["git-scm:git"],
+      "aliases": [{ "vendor": "git-scm", "names": ["Git"] }]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Pillow",
+  "products": [
+    {
+      "key": "pillow",
+      "name": "Pillow",
+      "kind": "library",
+      "versionScheme": "pep440",
+      "cpe": ["python:pillow"],
+      "packages": ["pkg:pypi/pillow"],
+      "aliases": [{ "vendor": "python-pillow", "names": ["Pillow"] }],
+      "related": ["python"]
+    }
+  ]
+}

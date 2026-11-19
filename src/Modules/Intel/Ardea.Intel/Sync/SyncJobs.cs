@@ -19,9 +19,10 @@ internal sealed record ScheduleDueSources : IJob
 /// <summary>
 /// One run of one source. A single attempt: the source's own back-off decides the next run (master
 /// plan 3.4). With <see cref="SingleIds"/> it fetches just those records, e.g. what the completeness
-/// check found missing, and leaves cursor and schedule alone.
+/// check found missing, and leaves cursor and schedule alone. <see cref="Full"/> reads the source's whole
+/// inventory regardless of cursor and look-back (<c>ardea intel import --full</c>, master plan 12.8).
 /// </summary>
-internal sealed record SyncSource(string SourceKey, IReadOnlyList<string>? SingleIds = null) : IJob
+internal sealed record SyncSource(string SourceKey, IReadOnlyList<string>? SingleIds = null, bool Full = false) : IJob
 {
     public static string Kind => "intel.sync-source";
 
@@ -90,7 +91,7 @@ internal sealed partial class SyncSourceHandler(
 
         var (sourceId, cursor, interval, settings) = await ReadStateAsync(job.SourceKey, cancellationToken);
         var startedAt = time.GetUtcNow();
-        var mode = cursor is null ? SyncMode.Backfill : SyncMode.Incremental;
+        var mode = cursor is null || job.Full ? SyncMode.Backfill : SyncMode.Incremental;
         var runId = await StartRunAsync(sourceId, mode, startedAt, cancellationToken);
         var work = Path.Combine(configuration["SCRATCH_DIR"] ?? Path.Combine(Path.GetTempPath(), "ardea"), job.SourceKey, runId.ToString("N"));
         Directory.CreateDirectory(work);
@@ -103,10 +104,10 @@ internal sealed partial class SyncSourceHandler(
             sync = new SyncContext
             {
                 SourceKey = job.SourceKey,
-                Cursor = cursor,
+                Cursor = job.Full ? null : cursor,
                 Http = client,
                 Mode = mode,
-                BackfillFrom = mode == SyncMode.Backfill ? startedAt - BackfillWindow() : null,
+                BackfillFrom = job.Full ? FullInventoryFrom : mode == SyncMode.Backfill ? startedAt - BackfillWindow() : null,
                 Clock = time,
                 Limits = new SyncLimits(mode == SyncMode.Backfill ? provider.Descriptor.MaxBackfillBytes : provider.Descriptor.MaxResponseBytes, SyncSource.Timeout, int.MaxValue),
                 WorkDirectory = work,
@@ -412,6 +413,9 @@ internal sealed partial class SyncSourceHandler(
         var delay = hint is { } h && h > doubled ? h : doubled;
         return delay + SourceRegistrar.Spread(TimeSpan.FromTicks(Math.Min(delay.Ticks / 10, TimeSpan.FromMinutes(10).Ticks)));
     }
+
+    /// <summary>Before the first CVE record (1999): the whole inventory.</summary>
+    internal static readonly DateTimeOffset FullInventoryFrom = new(1999, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     private TimeSpan BackfillWindow() =>
         TimeSpan.FromDays(int.TryParse(configuration["INTEL:BACKFILL_DAYS"], out var days) && days > 0 ? days : 180);

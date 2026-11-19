@@ -76,6 +76,18 @@ internal sealed class ProfileQueries(AssetsDbContext db, IProductCatalog catalog
         return await ProfilesAsync(components, projects, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Guid>> SearchComponentsAsync(string text, int limit, CancellationToken cancellationToken)
+    {
+        var pattern = "%" + text.Trim().Replace("\\", "\\\\", StringComparison.Ordinal).Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal) + "%";
+        return await (
+            from component in db.Components.AsNoTracking()
+            join project in db.Projects.AsNoTracking() on component.ProjectId equals project.Id
+            where EF.Functions.ILike(component.CustomName ?? string.Empty, pattern) || EF.Functions.ILike(component.ProductKey ?? string.Empty, pattern)
+                || EF.Functions.ILike(component.Purl ?? string.Empty, pattern) || EF.Functions.ILike(project.Name, pattern)
+            orderby component.Id
+            select component.Id).Take(limit).ToListAsync(cancellationToken);
+    }
+
     private async Task<IReadOnlyList<ProfileComponent>> ProfilesAsync(List<Component> components, IReadOnlyDictionary<Guid, Project> projects, CancellationToken cancellationToken)
     {
         var ids = components.Select(c => c.Id).ToArray();
@@ -92,6 +104,7 @@ internal sealed class ProfileQueries(AssetsDbContext db, IProductCatalog catalog
                 Id = c.Id,
                 ProjectId = c.ProjectId,
                 ProjectArchived = project.ArchivedAt is not null,
+                ProjectName = project.Name,
                 ProductKey = c.ProductKey,
                 CustomVendor = c.CustomVendor,
                 CustomName = c.CustomName,

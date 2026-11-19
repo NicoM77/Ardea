@@ -76,19 +76,27 @@ internal sealed class MatchEntryHandler(IEntryQueries entries, IProfileQueries p
     }
 }
 
-internal sealed class AssessAlertHandler(IEntryQueries entries, AlertAssessor assessor) : IJobHandler<AssessAlert>
+internal sealed class AssessAlertHandler(IEntryQueries entries, AlertAssessor assessor, Remediations remediations) : IJobHandler<AssessAlert>
 {
     public async Task HandleAsync(AssessAlert job, JobContext context, CancellationToken cancellationToken)
     {
         if (await entries.FindAsync(job.EntryId, cancellationToken) is { } entry)
         {
-            await assessor.AssessAsync(entry, AssessmentScope.Organization, cancellationToken);
+            var touched = await assessor.AssessAsync(entry, AssessmentScope.Organization, cancellationToken);
+            await remediations.SyncAsync(touched, actor: null, cancellationToken);
         }
     }
 }
 
 internal sealed class MatchProjectHandler(
-    IProfileQueries profiles, IEntryQueries entries, IProductCatalog catalog, AssessDbContext db, AlertAssessor assessor, TimeProvider time)
+    IProfileQueries profiles,
+    IEntryQueries entries,
+    IProductCatalog catalog,
+    AssessDbContext db,
+    AlertAssessor assessor,
+    Remediations remediations,
+    History history,
+    TimeProvider time)
     : IJobHandler<MatchProject>
 {
     private const int Batch = 100;
@@ -106,14 +114,54 @@ internal sealed class MatchProjectHandler(
             ids.UnionWith(await entries.FindAffectingAsync(keys, time.GetUtcNow() - MatchProject.Lookback, cancellationToken));
         }
 
-        var scope = AssessmentScope.ForProject(project);
+        // A first look at the project, or at a newly connected repository, is a first fill (master plan 7.7).
+        var seen = await db.MatchScopes.Where(s => s.ProjectId == project.Id).ToListAsync(cancellationToken);
+        var projectSeen = seen.Exists(s => s.RepositoryLinkId == null);
+        var active = project.Archived ? [] : project.Components;
+        var newLinks = active.Select(c => c.RepositoryLinkId).OfType<Guid>().Distinct()
+            .Where(l => !seen.Exists(s => s.RepositoryLinkId == l)).ToHashSet();
+        var backfill = active.Where(c => !projectSeen || (c.RepositoryLinkId is { } link && newLinks.Contains(link))).Select(c => c.Id).ToHashSet();
+
+        var scope = AssessmentScope.ForProject(project, backfill);
+        var touched = new HashSet<Guid>();
         foreach (var chunk in ids.Chunk(Batch))
         {
             foreach (var entry in await entries.FindManyAsync(chunk, cancellationToken))
             {
-                await assessor.AssessAsync(entry, scope, cancellationToken);
+                touched.UnionWith(await assessor.AssessAsync(entry, scope, cancellationToken));
             }
         }
+
+        await remediations.SyncAsync(touched, actor: null, cancellationToken);
+        if (backfill.Count == 0)
+        {
+            return;
+        }
+
+        var now = time.GetUtcNow();
+        if (!projectSeen)
+        {
+            db.MatchScopes.Add(new MatchScope { Id = Guid.CreateVersion7(), ProjectId = project.Id, MatchedAt = now });
+        }
+
+        foreach (var link in newLinks)
+        {
+            db.MatchScopes.Add(new MatchScope { Id = Guid.CreateVersion7(), ProjectId = project.Id, RepositoryLinkId = link, MatchedAt = now });
+        }
+
+        // One summary instead of single alarms: «first assessment for project X: 3 actions, highest level 4».
+        var actions = await db.Remediations.Where(r => backfill.Contains(r.ComponentId) && r.Status != "closed")
+            .Select(r => r.Level).ToListAsync(cancellationToken);
+        var findings = await db.Findings.CountAsync(f => backfill.Contains(f.ComponentId) && f.IsBackfill, cancellationToken);
+        history.Add(EventKinds.BackfillCompleted, new
+        {
+            scope = projectSeen ? "repository" : "project",
+            repositoryLinks = newLinks.Order().ToList(),
+            actions = actions.Count,
+            highestLevel = actions.Count == 0 ? (int?)null : actions.Max(),
+            findings,
+        }, project: project.Id);
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>

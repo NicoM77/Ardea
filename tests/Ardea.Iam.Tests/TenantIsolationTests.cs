@@ -41,7 +41,8 @@ public sealed class TenantIsolationTests(PostgresServer server)
     private static readonly string[] OrganizationSchemas = ["assets", "assess"];
 
     /// <summary>Bob's objects that Alice tries to reach.</summary>
-    private sealed record Foreign(Guid User, Guid Invitation, Guid Project, Guid Component, Guid Connection, Guid Link, Guid Suggestion);
+    private sealed record Foreign(
+        Guid User, Guid Invitation, Guid Project, Guid Component, Guid Connection, Guid Link, Guid Suggestion, int Action, int Alert, Guid Finding);
 
     /// <summary>
     /// Every organisation endpoint with a request body that passes validation, so a foreign id is what
@@ -88,18 +89,32 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["POST /api/v1/orgs/{orgId}/projects/{projectId}/repositories/{linkId}/confirm-shrink"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/projects/{projectId}/suggestions"] = _ => null,
         ["PATCH /api/v1/orgs/{orgId}/projects/{projectId}/suggestions/{id}"] = _ => new { decision = "accept" },
+        ["GET /api/v1/orgs/{orgId}/overview"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/actions"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/actions/{number}"] = _ => null,
+        ["PATCH /api/v1/orgs/{orgId}/actions/{number}"] = _ => new { dueAt = "2030-01-01T00:00:00Z" },
+        ["POST /api/v1/orgs/{orgId}/actions/{number}/status"] = _ => new { status = "risk_accepted", expectedStatus = "open" },
+        ["GET /api/v1/orgs/{orgId}/actions/{number}/events"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/actions/{number}/notes"] = _ => new { text = "Planted" },
+        ["GET /api/v1/orgs/{orgId}/findings"] = _ => null,
+        ["PATCH /api/v1/orgs/{orgId}/findings/{findingId}"] = _ => new { status = "risk_accepted", expectedStatus = "open" },
+        ["GET /api/v1/orgs/{orgId}/alerts"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/alerts/{number}"] = _ => null,
     };
 
     /// <summary>Bob's object a route parameter names: <c>{id}</c> is the object of the path segment before it.</summary>
-    private static Guid? ForeignId(string route, string parameter, Foreign foreign) => parameter switch
+    private static string? ForeignId(string route, string parameter, Foreign foreign) => parameter switch
     {
-        "userId" => foreign.User,
-        "projectId" => foreign.Project,
-        "id" when route.Contains("/components/{id}", StringComparison.Ordinal) => foreign.Component,
-        "id" when route.Contains("/invitations/{id}", StringComparison.Ordinal) => foreign.Invitation,
-        "id" when route.Contains("/repository-connections/{id}", StringComparison.Ordinal) => foreign.Connection,
-        "id" when route.Contains("/suggestions/{id}", StringComparison.Ordinal) => foreign.Suggestion,
-        "linkId" => foreign.Link,
+        "number" when route.Contains("/actions/{number}", StringComparison.Ordinal) => foreign.Action.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        "number" when route.Contains("/alerts/{number}", StringComparison.Ordinal) => foreign.Alert.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        "findingId" => foreign.Finding.ToString(),
+        "userId" => foreign.User.ToString(),
+        "projectId" => foreign.Project.ToString(),
+        "id" when route.Contains("/components/{id}", StringComparison.Ordinal) => foreign.Component.ToString(),
+        "id" when route.Contains("/invitations/{id}", StringComparison.Ordinal) => foreign.Invitation.ToString(),
+        "id" when route.Contains("/repository-connections/{id}", StringComparison.Ordinal) => foreign.Connection.ToString(),
+        "id" when route.Contains("/suggestions/{id}", StringComparison.Ordinal) => foreign.Suggestion.ToString(),
+        "linkId" => foreign.Link.ToString(),
         _ => null,
     };
 
@@ -171,7 +186,24 @@ public sealed class TenantIsolationTests(PostgresServer server)
             INSERT INTO assets.component_suggestion (organization_id, project_id, repository_link_id, product_key, version, evidence, fingerprint, state, created_at)
             VALUES ('{bobOrg}', '{bobsProject}', '{bobsLink}', 'nginx', '1.27', '[]', 'f', 'open', now()) RETURNING id
             """);
-        var foreign = new Foreign(bobId, bobsInvitation, bobsProject, bobsComponent, bobsConnection, bobsLink, bobsSuggestion);
+        // An action of Bob's with its alert and finding, as the assessment writes them (task 3.5).
+        var bobsEntry = await host.ScalarAsync<Guid>("""
+            INSERT INTO intel.security_entry (kind, primary_key, state, changed_at, revision, material_fingerprint, remediation_fingerprint, exploitation, fix_available, cwe_ids, authority_warning, provenance)
+            VALUES ('vulnerability', 'CVE-2026-0001', 'published', now(), 1, 'm', 'r', 'none', false, '{}', false, '{}') RETURNING id
+            """);
+        var bobsAlert = await host.ScalarAsync<Guid>($"""
+            INSERT INTO assess.alert (organization_id, entry_id, entry_key, number, level, assessed_entry_revision, created_at, changed_at)
+            VALUES ('{bobOrg}', '{bobsEntry}', 'CVE-2026-0001', 1, 4, 1, now(), now()) RETURNING id
+            """);
+        var bobsAction = await host.ScalarAsync<Guid>($"""
+            INSERT INTO assess.remediation (organization_id, project_id, component_id, number, level, open_findings, exploitation, fix_available, status, due_at_manual, opened_at, is_backfill, changed_at)
+            VALUES ('{bobOrg}', '{bobsProject}', '{bobsComponent}', 2, 4, 1, 'none', false, 'open', false, now(), false, now()) RETURNING id
+            """);
+        var bobsFinding = await host.ScalarAsync<Guid>($"""
+            INSERT INTO assess.finding (organization_id, alert_id, entry_id, project_id, component_id, remediation_id, match_type, version_verdict, verdict, verdict_source, level, evidence, factors, status, status_changed_at, is_backfill, created_at, changed_at, exploitation, fix_available)
+            VALUES ('{bobOrg}', '{bobsAlert}', '{bobsEntry}', '{bobsProject}', '{bobsComponent}', '{bobsAction}', 'product', 'in_range', 'affected', 'rules', 4, jsonb_build_object(), jsonb_build_object(), 'open', now(), false, now(), now(), 'none', false) RETURNING id
+            """);
+        var foreign = new Foreign(bobId, bobsInvitation, bobsProject, bobsComponent, bobsConnection, bobsLink, bobsSuggestion, 2, 1, bobsFinding);
 
         var endpoints = host.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText?.Contains("/orgs/{orgId", StringComparison.Ordinal) == true)
@@ -199,7 +231,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
                 continue;
             }
 
-            var bobs = parameters.ToDictionary(p => p, p => ForeignId(route, p, foreign)!.Value);
+            var bobs = parameters.ToDictionary(p => p, p => ForeignId(route, p, foreign)!);
 
             // 1. Bob's organisation in the path: it does not exist for Alice.
             await ExpectHiddenAsync(problems, $"{key} with Bob's organisation", await alice.SendAsync(new HttpMethod(method), Fill(route, bobOrg, bobs), body), notFoundOnly: true);
@@ -213,7 +245,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
             // 3. Alice's own project with Bob's other objects, in the path or in the body.
             if (route.Contains("{projectId}", StringComparison.Ordinal))
             {
-                var mixed = new Dictionary<string, Guid>(bobs) { ["projectId"] = aliceProject };
+                var mixed = new Dictionary<string, string>(bobs) { ["projectId"] = aliceProject.ToString() };
                 var foreignInBody = body is not null && (JsonSerializer.Serialize(body).Contains(foreign.Component.ToString(), StringComparison.Ordinal)
                     || JsonSerializer.Serialize(body).Contains(foreign.Connection.ToString(), StringComparison.Ordinal));
                 var response = await alice.SendAsync(new HttpMethod(method), Fill(route, aliceOrg, mixed), body);
@@ -238,6 +270,9 @@ public sealed class TenantIsolationTests(PostgresServer server)
         Assert.Equal("Bob's GitHub", await host.ScalarAsync<string>($"SELECT name FROM assets.repository_connection WHERE id = '{bobsConnection}'"));
         Assert.Equal("open", await host.ScalarAsync<string>($"SELECT state FROM assets.component_suggestion WHERE id = '{bobsSuggestion}'"));
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.repository_link WHERE organization_id = '{bobOrg}'"));
+        Assert.Equal("open|open|", await host.ScalarAsync<string>(
+            $"SELECT r.status || '|' || f.status || '|' || coalesce(r.due_at::text, '') FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id WHERE r.id = '{bobsAction}'"));
+        Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM assess.assess_event"));
     }
 
     private static async Task ExpectHiddenAsync(List<string> problems, string what, HttpResponseMessage response, bool notFoundOnly)
@@ -308,12 +343,12 @@ public sealed class TenantIsolationTests(PostgresServer server)
     private static string Normalize(string raw) =>
         System.Text.RegularExpressions.Regex.Replace(raw.StartsWith('/') ? raw : "/" + raw, @"\{(\w+)(:[^}]*)?\}", "{$1}");
 
-    private static string Fill(string route, Guid organization, IReadOnlyDictionary<string, Guid> foreign)
+    private static string Fill(string route, Guid organization, IReadOnlyDictionary<string, string> foreign)
     {
         var path = route.Replace("{orgId}", organization.ToString(), StringComparison.Ordinal);
         foreach (var (name, id) in foreign)
         {
-            path = path.Replace("{" + name + "}", id.ToString(), StringComparison.Ordinal);
+            path = path.Replace("{" + name + "}", id, StringComparison.Ordinal);
         }
 
         return path;

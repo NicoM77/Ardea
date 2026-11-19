@@ -17,6 +17,7 @@ return command switch
     // `assess-recompute` and `ardea catalog grow` is `catalog-grow` (master plan 12.8 names them so).
     _ when rest.Length > 0 && AdminCommand.GroupPrefixes.Contains(command) => await AdminCommand.RunAsync([command + "-" + rest[0], .. rest[1..]]),
     "org" => await OrgCommand.RunAsync(rest),
+    "seed-demo" => await SeedDemoCommand.RunAsync(rest),
     "version" or "--version" => VersionCommand.Run(),
     _ => HelpCommand.Run(command),
 };

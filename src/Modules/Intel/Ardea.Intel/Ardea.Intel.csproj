@@ -13,6 +13,9 @@
     <ProjectReference Include="../../../Sources/Ardea.Intel.Sources.Abstractions/Ardea.Intel.Sources.Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Demo/demo-records.jsonl" LogicalName="Ardea.Intel.Demo.records.jsonl" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="Ardea.Intel.Tests" />
     <InternalsVisibleTo Include="Ardea.Assessment.Tests" />
   </ItemGroup>

@@ -187,7 +187,8 @@ JSON, one file for the .NET host and one for the web app); CI keeps both as a bu
 ## Maintenance commands
 
 Run them in a one-off container: `docker compose run --rm api <command>`. The `org` commands need the owner
-role: `docker compose run --rm migrate org …`.
+role: `docker compose run --rm migrate org …`. `seed-demo` needs the owner password and the settings of
+`.env.app`: see [Try it](try-it.md).
 
 | Command | Purpose |
 |---|---|
@@ -201,6 +202,7 @@ role: `docker compose run --rm migrate org …`.
 | `ardea catalog grow` | Let the catalogue learn from the unknown products of the sources now, e.g. after the first load |
 | `ardea org export <slug> [--out file]` | An organisation's data as JSON, without secrets |
 | `ardea org delete <slug> --confirm <slug>` | Remove an organisation and all its data |
+| `ardea seed-demo` | Load the sample data into an empty instance ([Try it](try-it.md)); needs the owner role, refuses a database with data |
 
 ## Size
 

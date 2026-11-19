@@ -35,6 +35,7 @@ internal static class HelpCommand
               catalog grow        Let the catalogue learn from the unknown products of the sources now
               org export <slug> [--out file]       An organisation's data as JSON (owner role, no secrets)
               org delete <slug> --confirm <slug>   Remove an organisation and all its data
+              seed-demo           Fill an empty instance with the sample data (organisation, three projects, findings, actions); refuses a database with data
               version             Print the installed version
             """);
         return known ? 0 : 64;

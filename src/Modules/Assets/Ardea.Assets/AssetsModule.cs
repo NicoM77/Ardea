@@ -23,6 +23,8 @@ public sealed class AssetsModule : IModule
         services.AddModuleDbContext<AssetsDbContext>(AssetsDbContext.Schema);
         services.AddScoped<Platform.Status.IInstanceStatusContributor, AssetsStatusContributor>();
         services.AddScoped<Contracts.IProfileQueries, ProfileQueries>();
+        services.AddSingleton<IDemoSeedStep, DemoSeed>();
+        services.AddSingleton<IDemoSeedStep, DemoUpdate>();
         services.AddJob<ProjectProfileChanged, ProjectProfileChangedHandler>(new JobKindOptions { MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(1) });
         // One reading at a time per worker slot of four; a reading talks to GitHub and may wait for the SBOM.
         services.AddJob<Repositories.Indexing.IndexRepository, Repositories.Indexing.IndexRepositoryHandler>(

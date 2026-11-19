@@ -1,8 +1,3 @@
-using Ardea.Platform.Hosting;
-using Ardea.Platform.Jobs;
-using Ardea.Platform.Persistence;
-using Ardea.Platform.Secrets;
-
 namespace Ardea.Host.Commands;
 
 /// <summary><c>ardea admin &lt;command&gt;</c>: maintenance commands of the modules (master plan 12.8).</summary>
@@ -36,20 +31,7 @@ internal static class AdminCommand
             return HostConfiguration.Fail(check);
         }
 
-        var services = new ServiceCollection();
-        services.AddLogging(HostConfiguration.AddJsonLogging);
-        services.AddSingleton<IConfiguration>(configuration);
-        services.AddArdeaPlatform(configuration, "admin");
-        services.AddUnitOfWork();
-        services.AddJobQueue();
-        services.AddSourceAdapters();
-        services.AddArdeaSecrets(MasterKey.FromBase64(configuration[HostConfiguration.MasterKeyKey]!));
-        foreach (var module in Modules.All)
-        {
-            module.AddServices(services, configuration);
-        }
-
-        await using var provider = services.BuildServiceProvider(validateScopes: true);
+        await using var provider = CommandServices.Build(configuration, "admin");
         await using var scope = provider.CreateAsyncScope();
         using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(30));
         return await command.RunAsync(scope.ServiceProvider, args[1..], cancellation.Token);

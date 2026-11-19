@@ -11,17 +11,17 @@ Was der Daten-Spike für eine Organisation mit den drei Beispielprojekten in ein
 | Publizierte Records, neu oder geändert | 6 432 |
 | Kandidaten nach strukturiertem Abgleich | 173 (2,7 %) |
 | davon neu publiziert, der Rest sind Änderungen an älteren Records | 82 |
-| Massnahmen: Paare aus Projekt und Technologie | 8 |
+| Reminders: Paare aus Projekt und Technologie | 8 |
 | Befunde ab Stufe 3, je nach Version und Erreichbarkeit | 6 bis 170 |
 
 Die letzte Zeile ist die wichtigste Erkenntnis der Planung. Der Vorfilter allein genügt nicht: Trifft eine Organisation ein Sammelupdate, entstehen über hundert Befunde in einer Woche. Daraus folgen zwei Festlegungen:
 
-- **Die Arbeitseinheit ist die Massnahme, nicht die CVE** (7.4). «PostgreSQL in Projekt C auf 17.12 aktualisieren» ist eine Aufgabe mit 52 Einträgen dahinter. Benachrichtigt, zugewiesen und abgeschlossen wird je Massnahme.
-- **Das Sprachmodell läuft nur ab einer Schwelle** und begrenzt je Massnahme (7.5).
+- **Die Arbeitseinheit ist der Reminder, nicht die CVE** (7.4). «PostgreSQL in Projekt C auf 17.12 aktualisieren» ist eine Aufgabe mit 52 Einträgen dahinter. Benachrichtigt, zugewiesen und abgeschlossen wird je Reminder.
+- **Das Sprachmodell läuft nur ab einer Schwelle** und begrenzt je Reminder (7.5).
 
 Drei Eigenschaften gelten in jeder Ausbaustufe:
 
-1. **Ohne KI vollständig.** Abgleich, Versionsprüfung und Regelwerk liefern Stufe, Begründung und Massnahme aus strukturierten Daten und Vorlagen.
+1. **Ohne KI vollständig.** Abgleich, Versionsprüfung und Regelwerk liefern Stufe, Begründung und Reminder aus strukturierten Daten und Vorlagen.
 2. **Nachvollziehbar.** Jede Stufe lässt sich aus gespeicherten Eingaben neu berechnen: Eintrag, Profil, Regelversion und, wo vorhanden, das gespeicherte Urteil des Modells.
 3. **Überprüfbar.** Jede Aussage verweist auf eine Quelle des Eintrags oder eine Angabe im Profil. Was unbekannt ist, steht ausdrücklich da.
 
@@ -41,33 +41,33 @@ Abgeglichen werden die Schlüssel der betroffenen Produkte (`entry_affected`) mi
 | Freier Eintrag ohne Vendor | nur der Produktname stimmt | schwach |
 | Text | Produktname nur im Freitext | zählt nicht |
 
-Ein schwacher Treffer erzeugt Stufe 1 mit Grund («verwandtes Produkt, nicht als betroffen genannt», «Plattform im Einsatz, Komponente nicht im Profil») und keine Benachrichtigung. Er wird als Befund mit dem Status `not_affected` gespeichert, gehört zu keiner Massnahme und erhält keine Nummer. Die Zahl der schwachen Treffer je Projekt ist eine Kennzahl für Lücken im Profil.
+Ein schwacher Treffer erzeugt Stufe 1 mit Grund («verwandtes Produkt, nicht als betroffen genannt», «Plattform im Einsatz, Komponente nicht im Profil») und keine Benachrichtigung. Er wird als Befund mit dem Status `not_affected` gespeichert, gehört zu keiner Reminder und erhält keine Nummer. Die Zahl der schwachen Treffer je Projekt ist eine Kennzahl für Lücken im Profil.
 
 ## 7.3 Versionsprüfung und Kontext
 
 Für jeden starken Treffer:
 
-- Versionsvergleich nach Kapitel 6.6 mit dem Ergebnis *im Bereich*, *ausserhalb* oder *unbekannt*. Ein Befund gehört zu genau einer Komponente; *ausserhalb* ergibt für diesen Befund Stufe 1, ohne weiteren Aufwand. Führt ein Projekt dasselbe Produkt in zwei Versionen, sind das zwei Komponenten, zwei Befunde und zwei Massnahmen.
+- Versionsvergleich nach Kapitel 6.6 mit dem Ergebnis *im Bereich*, *ausserhalb* oder *unbekannt*. Ein Befund gehört zu genau einer Komponente; *ausserhalb* ergibt für diesen Befund Stufe 1, ohne weiteren Aufwand. Führt ein Projekt dasselbe Produkt in zwei Versionen, sind das zwei Komponenten, zwei Befunde und zwei Reminders.
 - **Pakete aus einer Distribution** sind ein Sonderfall: Distributionen portieren Korrekturen zurück, ohne die Versionsnummer des Originals zu ändern. Eine Komponente mit der Herkunft «aus Distribution» wird deshalb nicht gegen die Bereiche des Originals geprüft; ihr Ergebnis ist *unbekannt*, bis Daten der Distribution vorliegen (erste Quellenwelle). Das gilt auch für den Kernel.
 - Kontext aus dem Profil: Erreichbarkeit (Internet, intern, isoliert) und Kritikalität (hoch, normal, tief) von der Komponente oder ersatzweise vom Projekt. Dazu optional eine **Schutzmassnahme** (keine Angabe, wirksam) an der Komponente, etwa eine vorgeschaltete Filterung oder eine abgeschaltete Funktion, mit Freitext zur Begründung.
 
-## 7.4 Die Massnahme als Arbeitseinheit
+## 7.4 Der Reminder als Arbeitseinheit
 
-Eine Massnahme fasst alle offenen Befunde einer Komponente in einem Projekt zusammen.
+Ein Reminder fasst alle offenen Befunde einer Komponente in einem Projekt zusammen.
 
 | Eigenschaft | Regel |
 |---|---|
 | Schlüssel | Organisation, Projekt, Komponente |
 | Stufe | das Maximum über ihre offenen Befunde |
-| Ziel | Jeder Befund kennt die Korrekturversion des Bereichs, in dem die installierte Version liegt; dieser Bereich steht für den eigenen Versionszweig. Das Ziel der Massnahme ist die höchste dieser Versionen. Nennt ein Befund keine Korrekturversion: Lösungs- und Umgehungstexte der Quelle, sonst «keine Korrektur angegeben». Ist die installierte Version unbekannt, nennt die Massnahme alle Korrekturversionen der Quelle. |
+| Ziel | Jeder Befund kennt die Korrekturversion des Bereichs, in dem die installierte Version liegt; dieser Bereich steht für den eigenen Versionszweig. Das Ziel der Reminder ist die höchste dieser Versionen. Nennt ein Befund keine Korrekturversion: Lösungs- und Umgehungstexte der Quelle, sonst «keine Korrektur angegeben». Ist die installierte Version unbekannt, nennt der Reminder alle Korrekturversionen der Quelle. |
 | Inhalt | die Befunde, sortiert nach Stufe; jeder führt zu seiner Schwachstelle mit Einschätzung und Quellen |
-| Status | `open` und `in_review` werden an der Massnahme gesetzt und gelten für alle ihre nicht abgeschlossenen Befunde, auch für später hinzukommende. Das Ergebnis (behoben, Risiko akzeptiert, nicht betroffen) steht je Befund und lässt sich für alle auf einmal setzen. Geschlossen ist die Massnahme, sobald kein Befund mehr offen oder in Prüfung ist. |
-| Zuwachs | ein neuer Befund ab Stufe 2 tritt der offenen Massnahme seiner Komponente bei; benachrichtigt wird nur, wenn dadurch ihre Stufe oder ihr Ausnutzungsstand steigt (Kapitel 8.2) |
+| Status | `open` und `in_review` werden an der Reminder gesetzt und gelten für alle ihre nicht abgeschlossenen Befunde, auch für später hinzukommende. Das Ergebnis (behoben, Risiko akzeptiert, nicht betroffen) steht je Befund und lässt sich für alle auf einmal setzen. Geschlossen ist der Reminder, sobald kein Befund mehr offen oder in Prüfung ist. |
+| Zuwachs | ein neuer Befund ab Stufe 2 tritt der offenen Reminder seiner Komponente bei; benachrichtigt wird nur, wenn dadurch ihre Stufe oder ihr Ausnutzungsstand steigt (Kapitel 8.2) |
 | Abschluss von selbst | wird im Profil die Version angehoben, schliessen sich alle Befunde, deren Bereich die neue Version nicht mehr enthält, mit dem Vermerk «behoben durch Update» |
 
-Eine Massnahme mit einem einzigen Befund sieht aus wie die Meldung in den Mockups. Die Liste der Oberfläche zeigt Massnahmen; die einzelne Schwachstelle bleibt als Detailansicht erhalten.
+Ein Reminder mit einem einzigen Befund sieht aus wie die Meldung in den Mockups. Die Liste der Oberfläche zeigt Reminders; die einzelne Schwachstelle bleibt als Detailansicht erhalten.
 
-Die Schwachstelle aus Sicht der Organisation (`alert`) bleibt als Datensatz bestehen: An ihr hängen die Einschätzung und eine Nummer, die sie erhält, sobald einer ihrer Befunde Stufe 2 erreicht. Der Verlauf hängt an Befund und Massnahme. Eine Meldung kann mehrere Komponenten und Projekte betreffen und damit zu mehreren Massnahmen gehören.
+Die Schwachstelle aus Sicht der Organisation (`alert`) bleibt als Datensatz bestehen: An ihr hängen die Einschätzung und eine Nummer, die sie erhält, sobald einer ihrer Befunde Stufe 2 erreicht. Der Verlauf hängt an Befund und Reminder. Eine Meldung kann mehrere Komponenten und Projekte betreffen und damit zu mehreren Reminders gehören.
 
 ## 7.5 Einschätzung mit dem Sprachmodell (optional)
 
@@ -78,11 +78,11 @@ Die Schwachstelle aus Sicht der Organisation (`alert`) bleibt als Datensatz best
 **Wann es läuft.** Die Regeln rechnen zuerst (`AssessAlert`). Danach wird die Einschätzung als eigener Job eingereiht (`EstimateAlert`), wenn
 
 - mindestens ein Befund der Meldung nach den Regeln Stufe 4 oder 5 hat, oder Stufe 3 bei unbekannter Version;
-- und das Kontingent jeder betroffenen Massnahme noch frei ist: höchstens fünf selbst ausgelöste Einschätzungen je Massnahme in sieben Tagen. Wartende Aufträge sind nach Stufe geordnet, die höchsten zuerst.
+- und das Kontingent jeder betroffenen Reminder noch frei ist: höchstens fünf selbst ausgelöste Einschätzungen je Reminder in sieben Tagen. Wartende Aufträge sind nach Stufe geordnet, die höchsten zuerst.
 
 Was darüber liegt, bleibt bei Regeln und Vorlagen, bis jemand die Einschätzung in der Oberfläche anfordert. Während der Erstbefüllung läuft das Modell nie.
 
-Im Spike entspricht das je nach Profil 6 bis höchstens 40 Aufrufen pro Woche (8 Massnahmen mal 5) statt 173.
+Im Spike entspricht das je nach Profil 6 bis höchstens 40 Aufrufen pro Woche (8 Reminders mal 5) statt 173.
 
 **Eingabe, bewusst knapp:** vom Eintrag Titel, Beschreibung, betroffene Produkte und Bereiche, Schweregrad mit Vektor, Ausnutzungsstand, Abhilfen und eine nummerierte Quellenliste; vom Profil nur die getroffenen Komponenten mit Version, Erreichbarkeit, Kritikalität und Schutzmassnahme. Projektnamen werden durch Platzhalter ersetzt. Der Rest des Profils verlässt das System nicht.
 
@@ -96,7 +96,7 @@ Im Spike entspricht das je nach Profil 6 bis höchstens 40 Aufrufen pro Woche (8
 | `what_happened` | ein bis zwei Sätze in der Sprache der Organisation |
 | `preconditions` | Voraussetzungen für einen Angriff, je «erfüllt», «nicht erfüllt», «unbekannt» |
 | `impact` | mögliche Auswirkung in einem Satz |
-| `actions` | geordnete Massnahmen, jede mit Verweis auf ihre Quelle oder als eigene Empfehlung gekennzeichnet |
+| `actions` | geordnete Reminders, jede mit Verweis auf ihre Quelle oder als eigene Empfehlung gekennzeichnet |
 | `unknowns` | was das Profil nicht hergibt und die Einschätzung ändern würde |
 | `reasoning` | Begründungssätze mit Verweisnummern |
 
@@ -119,7 +119,7 @@ Jede Einschätzung speichert Modell, Prompt-Version, Regelversion, einen Hash de
 |---|---|
 | Was ist passiert | Titel des Eintrags und die ersten Sätze der Beschreibung im Original der Quelle, als solche gekennzeichnet |
 | Sind wir betroffen | aus dem Treffer: «Projekt X setzt Produkt 1.2.3 ein; betroffen sind 1.0 bis vor 1.2.5», oder «Version nicht erfasst, Betroffenheit unbekannt» |
-| Was ist zu tun | das Ziel der Massnahme nach 7.4: die Korrekturversion des Bereichs, in dem die installierte Version liegt; sonst Lösungs- und Umgehungstexte der Quelle; sonst «keine Korrektur angegeben» mit Verweis auf das Advisory |
+| Was ist zu tun | das Ziel der Reminder nach 7.4: die Korrekturversion des Bereichs, in dem die installierte Version liegt; sonst Lösungs- und Umgehungstexte der Quelle; sonst «keine Korrektur angegeben» mit Verweis auf das Advisory |
 
 Diese Fassung ist die Vorgabe einer frischen Installation und erhält vor Phase 3 ein eigenes Mockup.
 
@@ -127,13 +127,13 @@ Diese Fassung ist die Vorgabe einer frischen Installation und erhält vor Phase 
 
 Fünf Stufen, in der Oberfläche als Priorität: das Wort mit einem eigenen Symbol, ohne Ziffer (Kapitel 11.3). Die Zahl ordnet die Stufen intern.
 
-| Stufe | Name | Typische Fälle | Vorgabe für die Frist |
+| Stufe | Name | Typische Fälle | Erinnerung |
 |---|---|---|---|
-| 5 | Critical | aktiv ausgenutzt bei betroffener Version, hohem oder kritischem Schweregrad und erreichbarem System; kritischer Schweregrad mit öffentlichem Exploit bei betroffener Version auf einem exponierten oder geschäftskritischen System | 48 Stunden |
-| 4 | High | kritischer Schweregrad bei betroffener Version; hoher Schweregrad bei betroffener Version auf einem exponierten oder geschäftskritischen System; jede aktiv ausgenutzte Lücke bei betroffener Version; aktiv ausgenutzt bei unbekannter Version ab mittlerem Schweregrad | 7 Tage |
-| 3 | Medium | hoher Schweregrad bei betroffener Version auf einem internen System normaler Kritikalität; mittlerer bei betroffener Version auf einem exponierten; kritischer bei unbekannter Version; aktiv ausgenutzt bei unbekannter Version und niedrigem Schweregrad | 30 Tage |
-| 2 | Low | alle übrigen starken Treffer | 90 Tage |
-| 1 | Not relevant | geprüft, betrifft die Organisation nicht; kein offener Befund, keine Massnahme | keine |
+| 5 | Critical | aktiv ausgenutzt bei betroffener Version, hohem oder kritischem Schweregrad und erreichbarem System; kritischer Schweregrad mit öffentlichem Exploit bei betroffener Version auf einem exponierten oder geschäftskritischen System | täglich |
+| 4 | High | kritischer Schweregrad bei betroffener Version; hoher Schweregrad bei betroffener Version auf einem exponierten oder geschäftskritischen System; jede aktiv ausgenutzte Lücke bei betroffener Version; aktiv ausgenutzt bei unbekannter Version ab mittlerem Schweregrad | wöchentlich |
+| 3 | Medium | hoher Schweregrad bei betroffener Version auf einem internen System normaler Kritikalität; mittlerer bei betroffener Version auf einem exponierten; kritischer bei unbekannter Version; aktiv ausgenutzt bei unbekannter Version und niedrigem Schweregrad | monatlich |
+| 2 | Low | alle übrigen starken Treffer | nur Sammelnachricht |
+| 1 | Not relevant | geprüft, betrifft die Organisation nicht; kein offener Befund, kein Reminder | keine |
 
 Regelwerk Version 1 addiert ganzzahlige Punkte. Jeder Faktor erscheint in der Oberfläche als Zeile mit Beleg und Wirkung.
 
@@ -168,7 +168,7 @@ Die Rechnung läuft für jeden Befund in fester Reihenfolge:
    - 5, wenn dazu der Schweregrad hoch oder kritisch und das System nicht isoliert ist;
    - höchstens eine Stufe unter dem Ergebnis ohne Modell, solange kein Mensch das Urteil des Modells bestätigt hat.
 
-Die Stufe gilt je Befund, also je Komponente. Die Stufe der Massnahme ist das Maximum über ihre offenen Befunde, die der Meldung das Maximum über ihre Befunde.
+Die Stufe gilt je Befund, also je Komponente. Die Stufe der Reminder ist das Maximum über ihre offenen Befunde, die der Meldung das Maximum über ihre Befunde.
 
 Probe an den Beispieldaten der Mockups (Reihenfolge der Summanden: Schweregrad, Ausnutzung, Betroffenheit, Kritikalität, Erreichbarkeit; die übrigen Faktoren sind hier 0):
 
@@ -196,9 +196,9 @@ Die Gewichte sind eine erste Fassung. Sie werden in Phase 3 am Referenzsatz kali
 | Mensch bestätigt, verwirft oder korrigiert eine Einschätzung | dieser Befund |
 | Regelwerk in neuer Version | alle offenen Befunde, gedrosselt |
 
-Eine Neubewertung ändert den Befund nur, wenn sich Stufe, Urteil, Ausnutzungsstand, verfügbare Korrektur, Massnahme oder betroffene Projekte ändern. Ändert sich an einem Eintrag nur der Text der Abhilfe (etwa eine neue Umgehung), wird die Antwort «Was ist zu tun» aktualisiert, ohne die Stufe neu zu rechnen; dafür führt der Eintrag einen eigenen Fingerabdruck über seine Abhilfetexte.
+Eine Neubewertung ändert den Befund nur, wenn sich Stufe, Urteil, Ausnutzungsstand, verfügbare Korrektur, Reminder oder betroffene Projekte ändern. Ändert sich an einem Eintrag nur der Text der Abhilfe (etwa eine neue Umgehung), wird die Antwort «Was ist zu tun» aktualisiert, ohne die Stufe neu zu rechnen; dafür führt der Eintrag einen eigenen Fingerabdruck über seine Abhilfetexte.
 
-**Erstbefüllung.** Wer ein Projekt neu anlegt, bekommt nicht hunderte Alarme. Die Rückwärtssuche rechnet nur mit dem Regelwerk, markiert ihre Befunde als Erstbefüllung und löst eine einzige Sammelnachricht aus: «Ersteinschätzung für Projekt X: 3 Massnahmen, höchste Stufe 4». Dasselbe gilt für das erste Einlesen eines neu verbundenen Repositorys, auch an einem bestehenden Projekt (Kapitel 16.5).
+**Erstbefüllung.** Wer ein Projekt neu anlegt, bekommt nicht hunderte Alarme. Die Rückwärtssuche rechnet nur mit dem Regelwerk, markiert ihre Befunde als Erstbefüllung und löst eine einzige Sammelnachricht aus: «Ersteinschätzung für Projekt X: 3 Reminders, höchste Stufe 4». Dasselbe gilt für das erste Einlesen eines neu verbundenen Repositorys, auch an einem bestehenden Projekt (Kapitel 16.5).
 
 ## 7.8 Anbindung der KI
 
@@ -223,4 +223,4 @@ Ein zweiter Einsatz des Modells gehört zum MVP: Der Katalog lernt neue Produkte
 
 ## 7.10 Aufwand
 
-Pro Einschätzung fallen geschätzt 1 500 bis 3 000 Tokens Eingabe und 300 bis 600 Tokens Ausgabe an (aus der mittleren Record-Grösse von 3,6 kB). Bei höchstens 40 Aufrufen pro Woche sind das für die Beispielorganisation rund 150 000 Tokens, auf einem lokalen Modell mit 10 bis 20 Sekunden pro Aufruf unter einer Viertelstunde Rechenzeit. Der Aufwand wächst mit der Zahl der Organisationen und Massnahmen, nicht mit der Zahl der Quellen.
+Pro Einschätzung fallen geschätzt 1 500 bis 3 000 Tokens Eingabe und 300 bis 600 Tokens Ausgabe an (aus der mittleren Record-Grösse von 3,6 kB). Bei höchstens 40 Aufrufen pro Woche sind das für die Beispielorganisation rund 150 000 Tokens, auf einem lokalen Modell mit 10 bis 20 Sekunden pro Aufruf unter einer Viertelstunde Rechenzeit. Der Aufwand wächst mit der Zahl der Organisationen und Reminders, nicht mit der Zahl der Quellen.

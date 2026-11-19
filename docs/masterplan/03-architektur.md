@@ -47,7 +47,7 @@ Die acht geforderten Bereiche verteilen sich auf sieben Module und einen Host mi
 |---|---|---|
 | **Intel.Sources.\*** | Je Quelle ein Adapter: abrufen, in Beobachtungen übersetzen. Kennt nur das Provider-SDK, weder Datenbank noch andere Module. | 1 Source Providers |
 | **Intel** | Abrufsteuerung, Rohdatenablage, Normalisierung, Identitätsauflösung, Zusammenführung, Änderungshistorie, konsolidierte Einträge | 2 Ingestion & Normalization, 3 Correlation & Deduplication |
-| **Assessment** | Kandidatensuche gegen Profile, Regelwerk für die Stufe, KI-Einschätzung, Befunde, Massnahmen und Meldungen mit Status | 4 Risk Assessment & AI Analysis |
+| **Assessment** | Kandidatensuche gegen Profile, Regelwerk für die Stufe, KI-Einschätzung, Befunde, Reminders und Meldungen mit Status | 4 Risk Assessment & AI Analysis |
 | **Iam** | Benutzer, Anmeldung, MFA, Organisationen, Mitgliedschaften, Einladungen, Rollen | 5 Organization … |
 | **Assets** | Projekte, Komponenten, Setup-Wizard-Zustand; Zugänge zu GitHub, Verknüpfung von Repositories, Einlesen und Abgleich der Abhängigkeiten, Vorschläge (Kapitel 16) | 5 … & Asset Management |
 | **Catalog** | Technologie-Katalog: Produkte, Aliasse, Produktschlüssel, Versionsschemata | Grundlage für 3, 4 und 5 |
@@ -121,8 +121,8 @@ sequenceDiagram
   I->>I: Identität auflösen, Eintrag neu zusammenführen, Änderung bestimmen
   I-->>A: Folgejob (nur bei wesentlicher Änderung)
   A->>A: Kandidaten suchen: welche Organisationen und Projekte?
-  A->>A: je Organisation: Stufe berechnen, Massnahmen bilden, KI ab Schwelle
-  A-->>N: Ereignis an einer Massnahme (Kapitel 8.2)
+  A->>A: je Organisation: Stufe berechnen, Reminders bilden, KI ab Schwelle
+  A-->>N: Ereignis an einer Reminder (Kapitel 8.2)
   N->>N: Regeln auswerten, Empfänger bestimmen, Doppelte verwerfen
   N->>U: In-App, E-Mail, Push, Webhook
 ```
@@ -135,8 +135,8 @@ sequenceDiagram
 | Kandidatensuche | `MatchEntry(entryId)` | Eintrag wesentlich geändert | arbeitet immer auf dem aktuellen Stand; ein wartender Job je Eintrag |
 | Repository einlesen | `IndexRepository(linkId)` | Verknüpfung fällig, neu verbunden oder «Jetzt einlesen» (Kapitel 16.2) | Commit-SHA; Abgleich über die Identität der Komponenten; ein wartender Job je Verknüpfung |
 | Rückwärtssuche | `MatchProject(projectId)` | Profil geändert, von Hand oder durch ein Einlesen | arbeitet auf dem aktuellen Profil; ein wartender Job je Projekt |
-| Bewertung | `AssessAlert(orgId, entryId)` | Kandidat gefunden | rechnet Regeln und Massnahmen aus dem aktuellen Stand; gleiche Eingabe ändert nichts |
-| KI-Einschätzung | `EstimateAlert(orgId, alertId)` | Regelstufe ab Schwelle und Kontingent der Massnahme frei (Kapitel 7.5) | Fingerabdruck der Eingabe; gleiche Eingabe erzeugt keine neue Einschätzung |
+| Bewertung | `AssessAlert(orgId, entryId)` | Kandidat gefunden | rechnet Regeln und Reminders aus dem aktuellen Stand; gleiche Eingabe ändert nichts |
+| KI-Einschätzung | `EstimateAlert(orgId, alertId)` | Regelstufe ab Schwelle und Kontingent der Reminder frei (Kapitel 7.5) | Fingerabdruck der Eingabe; gleiche Eingabe erzeugt keine neue Einschätzung |
 | Benachrichtigung | `EvaluateRules(event)` → `Deliver(deliveryId)` | Ereignisse nach Kapitel 8.2 | Benachrichtigungsstand; Empfänger, Kanal und Ereignis zusammen eindeutig (Kapitel 8.4) |
 | Sammelnachricht | `SendDigest(targetId, periodEnd)` | Zeitplan des Ziels | Ziel, Empfänger und Periodenende zusammen eindeutig |
 
@@ -183,7 +183,7 @@ Der Baustein bleibt hinter `IJobQueue` und `IScheduler`. Sollte er sich als zu k
 | Thema | Entscheidung |
 |---|---|
 | Mandantenkontext | `ITenantContext` wird pro Anfrage aus Route und Mitgliedschaft, pro Job aus `org_id` gesetzt. Ohne Kontext sind mandantenbezogene Daten nicht lesbar. Eine Arbeitseinheit ist genau eine Transaktion über alle beteiligten Module; Jobs mit Aussenkontakt bestehen aus mehreren Arbeitseinheiten (Kapitel 9.2). |
-| IDs | UUID Version 7: zeitlich sortierbar, ohne zentrale Vergabe. Zusätzlich je Organisation eine kurze, fortlaufende Nummer für Massnahmen und Meldungen als Griff für Menschen. |
+| IDs | UUID Version 7: zeitlich sortierbar, ohne zentrale Vergabe. Zusätzlich je Organisation eine kurze, fortlaufende Nummer für Reminders und Meldungen als Griff für Menschen. |
 | Zeit | Durchgehend UTC in der Datenbank, `TimeProvider` im Code; Zeitzonen nur in Darstellung und Zeitplänen. |
 | Fehler | Erwartbare Fehler als Ergebnis-Typ bis zum Endpunkt, dort Problem Details nach RFC 9457. Ausnahmen nur für Unerwartetes. |
 | Validierung | An der API-Grenze; Fachregeln zusätzlich in der Domäne. |

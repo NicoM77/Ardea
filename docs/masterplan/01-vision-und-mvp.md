@@ -11,7 +11,7 @@ Der Massstab für jede Entscheidung in diesem Plan: Ein Benutzer beantwortet inn
 | Rolle | Situation | Was sie braucht |
 |---|---|---|
 | Verantwortliche Person (IT- oder Security-Verantwortliche, Tech Lead) | Sichtet regelmässig die Lage über alle Projekte, entscheidet und weist zu. Technisch versiert, selten Vollzeit-Analystin. | Rangfolge statt Feed, Begründung zum Nachprüfen, Status über alle Projekte. |
-| Entwickler, DevOps | Kommt über eine Benachrichtigung oder Zuweisung, oft am Telefon und mitten in anderer Arbeit. | Die Antwort vor dem Detail, eine konkrete Massnahme, ein Klick zum Quittieren. |
+| Entwickler, DevOps | Kommt über eine Benachrichtigung oder einen Reminder, oft am Telefon und mitten in anderer Arbeit. | Die Antwort vor dem Detail, eine konkrete Reminder, ein Klick zum Quittieren. |
 | Instanz-Administrator | Betreibt die Installation. | Start mit einem Befehl, sichtbarer Quellenstatus, Updates ohne Handarbeit. |
 
 Organisationen reichen von kleinen Firmen und Agenturen bis zu grösseren Organisationen mit vielen Projekten und unterschiedlichen Technologie-Stacks.
@@ -29,7 +29,7 @@ Produkt:
 Architektur:
 
 6. **Deterministischer Kern, KI als Verstärker.** Abgleich und Stufenberechnung sind Regeln, die sich testen und nachrechnen lassen. Die KI erklärt, ergänzt und schätzt ein, wo die Regeln «unbekannt» sagen; ohne KI-Anbieter bleibt das System nützlich.
-7. **Die Arbeitseinheit ist die Massnahme.** Was ein Mensch tun muss, ist «Komponente X in Projekt Y aktualisieren», nicht «52 CVEs lesen». Benachrichtigung, Zuweisung und Abschluss hängen an der Massnahme; die einzelne Schwachstelle ist ihr Beleg.
+7. **Die Arbeitseinheit ist der Reminder.** Was ein Mensch tun muss, ist «Komponente X in Projekt Y aktualisieren», nicht «52 CVEs lesen». Benachrichtigung, Zuweisung und Abschluss hängen an der Reminder; die einzelne Schwachstelle ist ihr Beleg.
 8. **Herkunft geht nie verloren.** Jede Angabe im konsolidierten Eintrag lässt sich auf Quelle und Abrufzeitpunkt zurückführen; der Eintrag ist aus den Rohdaten neu berechenbar.
 9. **Jeder Verarbeitungsschritt ist wiederholbar.** Jobs sind idempotent; ein Absturz oder doppelter Lauf erzeugt weder Lücken noch doppelte Meldungen.
 10. **Mandantentrennung ist Grundzustand,** kein Feature. Daten einer Organisation sind ohne ausdrücklichen Kontext nicht erreichbar.
@@ -38,7 +38,7 @@ Architektur:
 ## 1.4 Was das System nicht ist
 
 - Kein Schwachstellen-Scanner: Es prüft keine Systeme, sondern gleicht Einträge mit einem deklarierten Profil ab. Repositories liest es nur; es baut, installiert und analysiert keinen Code.
-- Kein SIEM, SOAR oder Ticketsystem: Es erzeugt Massnahmen und führt deren Status; Abarbeitung in Fremdsystemen läuft über Webhooks.
+- Kein SIEM, SOAR oder Ticketsystem: Es erinnert und führt den Stand; Ardea plant keine Arbeit und verteilt keine Aufgaben; Abarbeitung in Fremdsystemen läuft über Webhooks.
 - Keine Threat-Intelligence-Plattform: keine Indikatoren, kein STIX/TAXII im MVP.
 - Kein gehosteter Dienst: Ein SaaS-Angebot, Lizenzmodell und kommerzielle Angebote sind offen und nicht Teil dieses Plans.
 
@@ -49,11 +49,11 @@ Das MVP beweist den Kern von der Quelle bis zur Benachrichtigung mit fünf Quell
 | Bereich | MVP (Version 1.0) | Ausbaustufe 1 | Später |
 |---|---|---|---|
 | Quellen | CVE Program inkl. eingebetteter CISA-Daten (SSVC, KEV), NCSC.ch, OSV für die Paket-Ökosysteme npm, NuGet, Packagist, PyPI, Maven und Go, dazu CISA KEV und FIRST EPSS als Anreicherung | die erste Welle mit elf Quellen (Kapitel 5.6): OSV für Distributionen und weitere Ökosysteme, GitHub Advisories, NVD, CISA-Advisories, CERT-Bund, Microsoft, Red Hat, Ubuntu, Kubernetes, CERT-FR, ENISA EUVD | Ausbau auf 30–50, generischer CSAF-Adapter für Herstellerfeeds |
-| Profil | Projekte mit Komponenten aus einem kuratierten Katalog, freie Einträge, Version, Erreichbarkeit, Kritikalität; GitHub-Repositories je Projekt mit automatischem Einlesen aller Abhängigkeiten und Vorschlägen für Plattformen (Kapitel 16); geführter Setup-Wizard, der ergänzt, was das Repository nicht zeigt | Hochladen von SBOM-Dateien (CycloneDX, SPDX), weitere Lockdateien, GitHub App mit Webhooks | GitLab, Azure DevOps, Bitbucket; Agent für installierte Pakete |
+| Profil | **Stack der Organisation** ohne Versionen mit «Hinweisen» und Ja/Nein (Kapitel 17); Projekte optional und genau: Projekte mit Komponenten aus einem kuratierten Katalog, freie Einträge, Version, Erreichbarkeit, Kritikalität; GitHub-Repositories je Projekt mit automatischem Einlesen aller Abhängigkeiten und Vorschlägen für Plattformen (Kapitel 16); geführter Setup-Wizard, der ergänzt, was das Repository nicht zeigt | Hochladen von SBOM-Dateien (CycloneDX, SPDX), weitere Lockdateien, GitHub App mit Webhooks | GitLab, Azure DevOps, Bitbucket; Agent für installierte Pakete |
 | Abgleich | Vendor/Produkt mit Aliassen, CPE, Paketkoordinaten aus CVE-Records und OSV, Versionsbereiche; Zustände «Version unbekannt», «aus Distribution» und «nur Entwicklung»; verwandte Produkte und Plattform-Treffer als schwach; ein Katalog, der aus den Quellen selbst wächst, mit Sprachmodell und Prüfliste (Kapitel 6.9) | Daten der Distributionen | Lernende Zuordnung freier Einträge über Organisationen hinweg |
 | Bewertung | Regelwerk für Stufe 1–5 mit nachvollziehbaren Faktoren, darunter Schutzmassnahmen; Antworten aus Vorlagen ohne KI; KI-Einschätzung optional und ab einer Schwelle; Korrektur durch Benutzer mit Neubewertung | Korrekturen fliessen als Kontext in spätere Einschätzungen ein; Produkte aus Freitext durch ein Modell; Gewichte je Organisation | Mehrere Modelle im Vergleich |
-| Massnahmen und Meldungen | Übersicht, Liste der Massnahmen, Detail der Schwachstelle; Status je Befund und je Massnahme; Zuweisung; Frist sichtbar; Notizen; Verlauf | Sammelaktionen, Export, Eskalation bei Fristablauf | Berichte für Kunden und Management |
-| Benachrichtigung | In-App, E-Mail (SMTP), Web Push, generischer Webhook; Regeln nach Stufe und Projekt; Sammelnachrichten nach Zeitplan; je Massnahme, erneut nur bei wesentlicher Änderung | Eskalation in Schritten, Teams- und Slack-Vorlagen, Ruhezeiten | Native Push über Relay, ntfy |
+| Reminders und Meldungen | Übersicht, Liste der Reminders, Detail der Schwachstelle; Status je Befund und je Reminder (offen, erledigt); Erinnerung nach Stufe; Notizen; Verlauf | Sammelaktionen, Export | Berichte für Kunden und Management |
+| Benachrichtigung | In-App, E-Mail (SMTP), Web Push, generischer Webhook; Regeln nach Stufe und Projekt; Sammelnachrichten nach Zeitplan; je Reminder, erneut nur bei wesentlicher Änderung | Eskalation in Schritten, Teams- und Slack-Vorlagen, Ruhezeiten | Native Push über Relay, ntfy |
 | Benutzer | Registrierung, Organisationen, Einladungen, Rollen Owner/Admin/Member/Viewer, Passwort mit TOTP, MFA-Pflicht je Organisation | Passkeys, OIDC-Anmeldung, API-Tokens, Export und Löschen einer Organisation über die Oberfläche | Rechte je Projekt, SCIM |
 | Oberfläche | Web, responsiv, Englisch; installierbar als PWA | Deutsch; Capacitor-App | Französisch, Italienisch |
 | Betrieb | Docker Compose mit Datenbank, API und Worker; automatische Migrationen; Health Checks; strukturierte Logs; OpenTelemetry auf Wunsch | Helm-Chart, Backup-Hilfen | Hochverfügbarkeit |
@@ -69,8 +69,8 @@ Bewusst nicht im MVP, obwohl in den Anforderungen genannt: die native Mobile-App
 | Vollständigkeit | Nach einem Ausfall holt das System ohne Handarbeit lückenlos auf: bis 30 Tage über das Änderungsprotokoll der Quelle, darüber über ihr Gesamtarchiv. Geprüft mit einem simulierten Ausfall von 48 Stunden und einem eigenen Test für den Weg über das Archiv. |
 | Deduplizierung | Dieselbe CVE-ID aus mehreren Quellen ergibt genau einen Eintrag mit allen Quellen im Nachweis. |
 | Treffergüte | Am Referenzsatz aus Kapitel 7.9: kein übersehenes Paar unter den exakten Produkt- und Versionstreffern, höchstens 2 % übersehene insgesamt, höchstens 20 % unbegründete ab Stufe 3. |
-| Alarmdisziplin | Ein dreifach verarbeitetes Ereignis erzeugt pro Empfänger und Kanal eine Zustellung; eine unveränderte Massnahme löst keine zweite aus. |
-| Bedienung | Mit den Beispieldaten der Mockups sind bei 390 × 844 Punkten nach dem Öffnen einer Massnahme Stufe, Betroffenheit und erster Schritt ohne Scrollen sichtbar. Für Texte gelten Längenvorgaben, die das auch im Betrieb sichern (Kapitel 7.5). |
+| Alarmdisziplin | Ein dreifach verarbeitetes Ereignis erzeugt pro Empfänger und Kanal eine Zustellung; eine unveränderte Reminder löst keine zweite aus. |
+| Bedienung | Mit den Beispieldaten der Mockups sind bei 390 × 844 Punkten nach dem Öffnen einer Reminder Stufe, Betroffenheit und erster Schritt ohne Scrollen sichtbar. Für Texte gelten Längenvorgaben, die das auch im Betrieb sichern (Kapitel 7.5). |
 | Zugänglichkeit | WCAG 2.2 AA: automatisierte Prüfung ohne Befund, manuelle Tastatur- und Screenreader-Prüfung der Kernabläufe bestanden. |
 | Ohne KI | Alle Kriterien ausser der KI-Einschätzung sind ohne konfigurierten KI-Anbieter erfüllt. |
 

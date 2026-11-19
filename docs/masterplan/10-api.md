@@ -9,14 +9,14 @@ Die API ist der einzige Zugang zu den Daten: Die Web-App, die spätere Mobile-Ap
 | Basis | `/api/v1`, JSON, `camelCase`, UTF-8. Zeitstempel ISO 8601 in UTC. |
 | Stil | Ressourcenorientiert mit Minimal APIs, gruppiert je Modul. Verben nur, wo eine Aktion keine Ressource ist (`…/sync`, `…/reassess`). |
 | Mandant | Im Pfad: `/api/v1/orgs/{orgId}/…`. Die Mitgliedschaft wird vor jedem Handler geprüft. Instanzweite Verwaltung liegt unter `/api/v1/instance/…`. |
-| Kennungen | UUID Version 7. Massnahmen und Meldungen zusätzlich über ihre Nummer je Organisation (`/actions/143`, `/alerts/142`; beide teilen einen Nummernkreis), Einträge über ihren Schlüssel (`/entries/CVE-2026-115731`). |
+| Kennungen | UUID Version 7. Reminders und Meldungen zusätzlich über ihre Nummer je Organisation (`/reminders/143`, `/alerts/142`; beide teilen einen Nummernkreis), Einträge über ihren Schlüssel (`/entries/CVE-2026-115731`). |
 | Fehler | Problem Details nach RFC 9457 mit `type`, `title`, `status`, `detail`, `traceId`; Validierungsfehler je Feld unter `errors`. |
 | Listen | Cursor-Paginierung: `?limit=50&cursor=…` liefert `{ items, nextCursor }`. Filter als Query-Parameter, Sortierung nur über freigegebene Felder. |
 | Gleichzeitigkeit | Im MVP gewinnt der letzte Schreibvorgang; Statuswechsel prüfen den erwarteten Ausgangszustand. `ETag` mit `If-Match` und `Idempotency-Key` sind eine Ausbaustufe. |
 | Sicherheit | Sitzungs-Cookie, CSRF-Token im Header für ändernde Aufrufe, 401 und 403 ohne Umleitung, 429 mit `Retry-After`. |
 | Vertrag | OpenAPI 3.1 wird beim Build erzeugt und im Repository abgelegt. Der Build scheitert, wenn Code und abgelegtes Dokument auseinanderlaufen; der TypeScript-Client entsteht daraus. |
 | Version | Innerhalb `v1` nur ergänzende Änderungen. Entfernen oder Umdeuten verlangt `v2`; Abkündigungen werden per `Deprecation`-Header angekündigt. |
-| Live | `GET /api/v1/orgs/{orgId}/events` als Server-Sent Events: neue Benachrichtigungen, geänderte Massnahmen, Zähler. |
+| Live | `GET /api/v1/orgs/{orgId}/events` als Server-Sent Events: neue Benachrichtigungen, geänderte Reminders, Zähler. |
 
 ## 10.2 Ressourcen
 
@@ -60,18 +60,19 @@ Die API ist der einzige Zugang zu den Daten: Die Web-App, die spätere Mobile-Ap
 | `POST /instance/sources/{sourceKey}/sync` · `GET …/runs` | Abruf anstossen, Abrufprotokoll |
 | `GET /instance/quality` | Quarantäne und Messgrössen je Quelle |
 
-### Massnahmen und Meldungen (`Assessment`)
+### Reminders und Meldungen (`Assessment`)
 
 | Methode und Pfad | Zweck |
 |---|---|
-| `GET /orgs/{orgId}/overview` | Alles für die Übersicht in einem Aufruf: Zähler je Stufe, die dringendsten Massnahmen, Stufe je Projekt, Änderungen seit gestern, jüngste Warnungen, Stand der Quellen |
-| `GET /orgs/{orgId}/actions?level=&status=&project=&q=` | Liste der Massnahmen mit Filtern |
-| `GET /orgs/{orgId}/actions/{number}` | Massnahme mit Ziel, Befunden und Verlauf |
-| `PATCH …/actions/{number}` | Zuweisen, Frist ändern |
-| `POST …/actions/{number}/status` | Status für alle Befunde der Massnahme setzen, mit Begründung |
+| `GET /orgs/{orgId}/overview` | Alles für die Übersicht in einem Aufruf: Zähler je Stufe, die dringendsten Reminders, Stufe je Projekt, Änderungen seit gestern, jüngste Warnungen, Stand der Quellen |
+| `GET /orgs/{orgId}/reminders?level=&status=&project=&q=` | Liste der Reminders mit Filtern |
+| `GET /orgs/{orgId}/reminders/{number}` | Reminder mit Ziel, Befunden und Verlauf |
+| `GET /orgs/{orgId}/notices` · `POST …/notices/{id}/decision` | Hinweise ansehen und mit «betrifft uns» (erzeugt einen Reminder) oder «betrifft uns nicht» entscheiden |
+| `GET, PUT /orgs/{orgId}/stack` | Stack der Organisation: breite Einträge ohne Version, je Eintrag Schwelle «nur Wichtiges» oder «alles» |
+| `POST …/reminders/{number}/status` | Status für alle Befunde der Reminder setzen, mit Begründung |
 | `GET /orgs/{orgId}/findings?level=&project=` | Befunde, auch die der Stufe 1 für die Ansicht «Not relevant» |
 | `PATCH …/findings/{findingId}` | Status eines einzelnen Befunds; Vorschlag des Modells bestätigen oder verwerfen |
-| `GET …/actions/{number}/events` · `POST …/notes` | Verlauf, Notiz |
+| `GET …/reminders/{number}/events` · `POST …/notes` | Verlauf, Notiz |
 | `GET /orgs/{orgId}/alerts/{number}` | Schwachstelle aus Sicht der Organisation: Einschätzung, Befunde mit Faktoren je Komponente, Quellen |
 | `POST …/alerts/{number}/assess` | Einschätzung durch das Modell anfordern, wo sie nicht von selbst lief |
 | `POST …/alerts/{number}/feedback` | Einschätzung korrigieren; löst eine Neubewertung aus |
@@ -107,7 +108,7 @@ Gekürzt; die Felder entsprechen dem, was die Detailansicht zeigt.
   "number": 142,
   "level": 5,
   "levelName": "critical",
-  "actions": [ { "number": 143, "project": "Platform Ops", "component": "Puppet Enterprise 2025.9.0", "level": 5, "status": "open", "dueAt": "2026-11-19T21:05:00Z" } ],
+  "reminders": [ { "number": 143, "project": "Platform Ops", "component": "Puppet Enterprise 2025.9.0", "level": 5, "status": "open" } ],
   "entry": {
     "key": "CVE-2026-115731",
     "title": "Puppet Enterprise: code execution through crafted reports",
@@ -131,7 +132,7 @@ Gekürzt; die Felder entsprechen dem, was die Detailansicht zeigt.
   },
   "findings": [
     { "id": "…", "project": { "id": "…", "name": "Platform Ops" }, "component": "Puppet Enterprise 2025.9.0",
-      "action": 143, "versionVerdict": "in_range", "verdict": "affected", "level": 5, "status": "open",
+      "reminder": 143, "versionVerdict": "in_range", "verdict": "affected", "level": 5, "status": "open",
       "factors": [
         { "factor": "exploitation", "value": "active", "evidence": "CISA KEV since 2026-11-17", "points": 3 },
         { "factor": "severity", "value": "critical", "evidence": "CVSS 4.0: 9.4", "points": 4 },
@@ -149,6 +150,6 @@ Gekürzt; die Felder entsprechen dem, was die Detailansicht zeigt.
 
 ## 10.4 Ausgehende Schnittstellen
 
-- **Webhook:** `POST` an das Ziel der Organisation mit `X-Ardea-Event`, `X-Ardea-Delivery`, `X-Ardea-Timestamp` und `X-Ardea-Signature` (HMAC-SHA256 über Zeitstempel und Inhalt). Der Inhalt ist die Massnahme mit ihren wichtigsten Befunden und dem auslösenden Ereignis; das Schema trägt eine Versionsnummer.
+- **Webhook:** `POST` an das Ziel der Organisation mit `X-Ardea-Event`, `X-Ardea-Delivery`, `X-Ardea-Timestamp` und `X-Ardea-Signature` (HMAC-SHA256 über Zeitstempel und Inhalt). Der Inhalt ist der Reminder mit ihren wichtigsten Befunden und dem auslösenden Ereignis; das Schema trägt eine Versionsnummer.
 - **Code-Plattformen:** Einlesen ausschliesslich vom Worker aus. Die API spricht GitHub nur für zwei kurze, vom Benutzer ausgelöste Abfragen an: Zugang prüfen und Repositories zur Auswahl auflisten. Beide über denselben benannten Client mit festen Hosts (Kapitel 16.9) und mit kurzem Zeitlimit; wie bei Jobs mit Aussenkontakt bleibt dabei keine Transaktion offen (Kapitel 9.2).
 - **Quellen und KI-Anbieter:** ausschliesslich vom Worker aus, über benannte HTTP-Clients mit Zeitlimit, Wiederholung, Ratenbegrenzung und kennzeichnendem `User-Agent` (Kapitel 5).

@@ -144,7 +144,7 @@ Folgen für den Adapter:
 
 | Fall | Wirkung |
 |---|---|
-| Warnung nennt eine CVE | Sie wird Beleg dieses Eintrags. Der Eintrag erhält das Merkmal «Warnung einer nationalen Stelle»; das Regelwerk zählt dafür einen Punkt (Kapitel 7.6), und Massnahme und Meldung zeigen das Etikett «NCSC warning» mit Verweis. |
+| Warnung nennt eine CVE | Sie wird Beleg dieses Eintrags. Der Eintrag erhält das Merkmal «Warnung einer nationalen Stelle»; das Regelwerk zählt dafür einen Punkt (Kapitel 7.6), und Reminder und Meldung zeigen das Etikett «NCSC warning» mit Verweis. |
 | Warnung ohne CVE | Sie wird ein Eintrag der Art Warnung ohne Projektbezug. Die Übersicht zeigt die jüngsten in einem eigenen Abschnitt; sie stehen in der wöchentlichen Sammelnachricht und lösen das Ereignis `warning.published` aus (Kapitel 8.2). |
 | Advisory erhält nachträglich eine CVE | Der Beitrag wird Beleg des CVE-Eintrags; die Warnung ohne Kennung wird zurückgezogen und verweist auf ihn. |
 

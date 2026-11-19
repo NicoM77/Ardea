@@ -12,7 +12,7 @@ Instanz
      ├─ Mitgliedschaften mit Rolle
      ├─ Projekte → Komponenten
      ├─ Meldungen → Befunde, Einschätzungen, Verlauf
-     ├─ Massnahmen (Komponente in einem Projekt) mit Status und Zuweisung
+     ├─ Reminders (Komponente in einem Projekt) mit Status
      └─ Regeln, Benachrichtigungsstand, Zustellungen, Webhook-Ziele
 ```
 
@@ -21,13 +21,13 @@ Instanz
 
 | Recht | Owner | Admin | Member | Viewer |
 |---|:-:|:-:|:-:|:-:|
-| Massnahmen, Meldungen, Projekte, Übersicht lesen | ● | ● | ● | ● |
-| Status setzen, zuweisen, Notiz, Einschätzung korrigieren | ● | ● | ● | |
+| Reminders, Meldungen, Projekte, Übersicht lesen | ● | ● | ● | ● |
+| Status setzen, Notiz, Einschätzung korrigieren | ● | ● | ● | |
 | Projekte und Komponenten pflegen, Repositories mit einem Projekt verbinden, Vorschläge bestätigen | ● | ● | ● | |
 | Zugänge zu GitHub anlegen und löschen | ● | ● | | |
 | Benachrichtigungsregeln, Webhook-Ziele | ● | ● | | |
 | Mitglieder einladen und Rollen ändern | ● | ● | | |
-| KI-Datenrichtlinie, MFA-Pflicht, Fristen | ● | ● | | |
+| KI-Datenrichtlinie, MFA-Pflicht, Erinnerungsrhythmus | ● | ● | | |
 | Owner übertragen | ● | | | |
 
 Eine Organisation zu exportieren oder zu löschen ist im MVP ein Wartungsbefehl des Betreibers (Kapitel 12.8); über die Oberfläche kommt es mit Ausbaustufe 1.
@@ -109,7 +109,7 @@ Export und Löschen einer Organisation sowie das Aufräumen alter Daten sind kei
 | Geheimnisse: SMTP-Passwort, KI-Schlüssel, Webhook-URLs und -Geheimnisse, VAPID-Privatschlüssel, Tokens für GitHub | kritisch | In der Datenbank verschlüsselt über ASP.NET Data Protection. Deren Schlüssel liegen in der Datenbank und sind mit einem Hauptschlüssel aus `ARDEA_MASTER_KEY` oder einer Secret-Datei geschützt. Nie im Klartext in API-Antworten oder Logs. |
 | Technologieprofile einschliesslich eingelesener Abhängigkeiten und gespeicherter SBOMs, Meldungen, Einschätzungen | hoch | Mandantentrennung (9.2), Verschlüsselung des Datenträgers durch den Betreiber, keine Inhalte in Logs oder Telemetrie. Quellcode wird nicht gespeichert (Kapitel 16.9). |
 | Konten: E-Mail, Passwort-Hash, MFA-Schlüssel | hoch | Identity-Standard; MFA-Schlüssel zusätzlich verschlüsselt. |
-| Quellen, Einträge, Katalog | öffentlich | keine besonderen Massnahmen |
+| Quellen, Einträge, Katalog | öffentlich | keine besonderen Reminders |
 
 Dazu:
 
@@ -149,7 +149,7 @@ Das System liest fremde Inhalte und ruft fremde Adressen auf. Beides ist Angriff
 | Frische Instanz wird gekapert | vollständige Kontrolle | Einrichtungstoken |
 | Datenbank-Dump gerät in falsche Hände | Profile lesbar, Geheimnisse nicht | Spaltenverschlüsselung der Geheimnisse, Hauptschlüssel ausserhalb der Datenbank, Empfehlung zur Datenträgerverschlüsselung |
 | Unterdrückung einer Warnung über manipulierten Quelltext | übersehene Lücke | das Modell kann Stufe 1 nicht allein setzen; Untergrenzen im Regelwerk; Schema-Prüfung |
-| Alarmflut durch fehlerhafte oder böswillige Quelle | Abstumpfung, Ausfall | Benachrichtigung je Massnahme statt je CVE, Wesentlichkeitsprüfung, Obergrenzen je Kanal |
+| Alarmflut durch fehlerhafte oder böswillige Quelle | Abstumpfung, Ausfall | Benachrichtigung je Reminder statt je CVE, Wesentlichkeitsprüfung, Obergrenzen je Kanal |
 | Missbrauch als Proxy ins interne Netz | Zugriff auf interne Dienste | SSRF-Schutz für Webhooks, Quellen und Code-Plattformen |
 | Abgezogenes Token für GitHub | Lesezugriff auf Quellcode der Organisation | feingranular, nur lesend, nur ausgewählte Repositories, mit Ablauf; verschlüsselt, nie angezeigt, nie geloggt |
 | Abgezogene Sitzung oder Token | Handeln im Namen des Benutzers | `HttpOnly`-Cookie, CSP, kurze Laufzeit, CSRF-Schutz |

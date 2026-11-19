@@ -99,10 +99,10 @@ Findings, actions and alerts with level and reasoning; overview, list, detail.
 | 3.5 | Findings, actions, alerts, history; events from 8.2 as history lines; closing by raising the version in the profile; initial load without single events | 3.4 | ✅ |
 | 3.6 | Answers from templates without a language model | 3.5 | ✅ |
 | 3.7 | Reference set with at least 200 labelled pairs; spike week as test data; evaluation run in the build; weight calibration | 3.4 | ✅ |
-| 3.8 | Overview with warnings without identifier and calm state | 3.5, 3.1 | ⬜ |
-| 3.9 | Actions list with filters for priority and project, search, open and closed | 3.5, 3.1 | ⬜ |
-| 3.10 | Action and vulnerability detail; status, assignment, deadline, note, revert | 3.5, 3.1 | ⬜ |
-| 3.11 | Live updates via Server-Sent Events; command to recompute levels | 3.8 | ⬜ |
+| 3.8 | Overview with warnings without identifier and calm state | 3.5, 3.1 | ✅ |
+| 3.9 | Actions list with filters for priority and project, search, open and closed | 3.5, 3.1 | ✅ |
+| 3.10 | Action and vulnerability detail; status, assignment, deadline, note, revert | 3.5, 3.1 | ✅ |
+| 3.11 | Live updates via Server-Sent Events; command to recompute levels | 3.8 | ✅ |
 
 ### Phase 4 · AI assessment (3–4 weeks)
 

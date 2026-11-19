@@ -1,0 +1,121 @@
+<header class="head">
+  <h1>{{ 'nav.overview' | transloco }}</h1>
+  <p class="finding" role="status">
+    @if (finding(); as f) {
+      <strong>{{ f.lead.key | transloco: f.lead.params }}</strong>
+      @if (f.detail; as d) {
+        {{ d.key | transloco: d.params }}
+      }
+    }
+  </p>
+</header>
+
+@if (offerSetup()) {
+  <ui-notice class="notice" [heading]="'wizard.prompt.heading' | transloco">
+    {{ 'wizard.prompt.text' | transloco }}
+    <a class="link" routerLink="../setup">{{ 'wizard.prompt.action' | transloco }}</a>
+  </ui-notice>
+}
+@for (w of statusWarnings(); track w.code + (w.subject ?? '')) {
+  <ui-notice class="notice">{{ w.message }}</ui-notice>
+}
+
+@if (data(); as d) {
+  <div class="grid">
+    <ui-card class="span-8" [heading]="'overview.runway.title' | transloco">
+      <a uiCardMeta class="card-link" routerLink="../actions"
+        >{{ 'overview.runway.all' | transloco }}<svg lucideChevronRight aria-hidden="true"></svg
+      ></a>
+      @if (runway().rows.length) {
+        <ardea-deadline-runway
+          [axis]="runway().axis"
+          [rows]="runway().rows"
+          [now]="now()"
+          [focus]="focus()"
+        />
+      } @else if (total()) {
+        <p class="quiet">{{ 'overview.runway.none' | transloco }}</p>
+      } @else {
+        <ui-empty-state [heading]="'areas.overview.emptyHeading' | transloco">
+          <svg uiEmptyIcon lucideLayoutGrid aria-hidden="true"></svg>
+          {{ 'areas.overview.emptyText' | transloco }}
+        </ui-empty-state>
+      }
+    </ui-card>
+
+    <div class="stack span-4">
+      <ui-card [heading]="'overview.next.title' | transloco">
+        @if (next(); as n) {
+          <p class="figure">
+            @if (left(n) < 0) {
+              <span class="over">{{ 'overview.runway.overdue' | transloco }}</span>
+            }
+            <ardea-duration [ms]="left(n)" [parts]="3" [seconds]="left(n) < 86400000" />
+          </p>
+          <p class="next-sub" [attr.data-p]="n.levelName">
+            <ui-priority [level]="priority(n.levelName)" symbolOnly />
+            <span>{{ name(n).key | transloco: name(n).params }}</span>
+          </p>
+          <a uiButton variant="primary" [routerLink]="['../actions', number(n.number)]">
+            {{ 'overview.next.open' | transloco }}
+          </a>
+        } @else {
+          <p class="quiet">{{ 'overview.next.none' | transloco }}</p>
+        }
+      </ui-card>
+      <ui-card [heading]="'overview.ring.title' | transloco">
+        <ardea-priority-ring [counts]="counts()" [focus]="focus()" (focused)="focus.set($event)" />
+      </ui-card>
+    </div>
+  </div>
+
+  <ui-card class="urgent" [heading]="'overview.urgent.title' | transloco">
+    @if (urgent().length) {
+      <span uiCardMeta>{{ 'overview.urgent.meta' | transloco: { count: urgent().length } }}</span>
+    }
+    @if (urgent()[0]; as top) {
+      <p class="urgent-head">
+        <ui-priority [level]="priority(top.action.levelName)" />
+        <a class="link" [routerLink]="['../actions', number(top.action.number)]">{{
+          name(top.action).key | transloco: name(top.action).params
+        }}</a>
+        <span class="muted">{{ top.action.project.name }}</span>
+      </p>
+      <div class="answers-box">
+        <ardea-answers [answers]="top.answers" [component]="top.action.component.name" />
+      </div>
+      @if (urgent().length > 1) {
+        <ul class="then">
+          @for (u of urgent().slice(1); track u.action.number) {
+            <li>
+              <ui-priority [level]="priority(u.action.levelName)" />
+              <a class="link" [routerLink]="['../actions', number(u.action.number)]">{{
+                name(u.action).key | transloco: name(u.action).params
+              }}</a>
+              <span class="muted">{{ u.action.project.name }}</span>
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <p class="quiet">{{ 'overview.urgent.none' | transloco }}</p>
+    }
+  </ui-card>
+
+  <div class="grid">
+    <ardea-projects-card class="span-7" [projects]="projects()" />
+    <ardea-changes-card class="span-5" [changes]="d.last24Hours" />
+  </div>
+} @else if (overview.error()) {
+  <ui-notice class="notice" tone="error">{{ problem() | transloco }}</ui-notice>
+  <button uiButton type="button" (click)="overview.reload()">
+    {{ 'overview.tryAgain' | transloco }}
+  </button>
+} @else {
+  <div class="wait"><ui-loader size="page" [label]="'overview.loading' | transloco" /></div>
+}
+
+<div class="grid">
+  <ardea-warnings-card class="span-7" [warnings]="warnings()" [sources]="sources()" />
+  <ardea-sources-card class="span-5" [sources]="sources()" />
+</div>

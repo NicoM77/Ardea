@@ -41,7 +41,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
     private static readonly string[] OrganizationSchemas = ["assets"];
 
     /// <summary>Bob's objects that Alice tries to reach.</summary>
-    private sealed record Foreign(Guid User, Guid Invitation, Guid Project, Guid Component, Guid Connection);
+    private sealed record Foreign(Guid User, Guid Invitation, Guid Project, Guid Component, Guid Connection, Guid Link, Guid Suggestion);
 
     /// <summary>
     /// Every organisation endpoint with a request body that passes validation, so a foreign id is what
@@ -75,6 +75,13 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["DELETE /api/v1/orgs/{orgId}/repository-connections/{id}"] = _ => null,
         ["POST /api/v1/orgs/{orgId}/repository-connections/{id}/test"] = _ => null,
         ["GET /api/v1/orgs/{orgId}/repository-connections/{id}/repositories"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/projects/{projectId}/repositories"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/projects/{projectId}/repositories"] = f => new { connectionId = f.Connection, owner = "acme", name = "planted" },
+        ["PATCH /api/v1/orgs/{orgId}/projects/{projectId}/repositories/{linkId}"] = _ => new { @ref = "main" },
+        ["DELETE /api/v1/orgs/{orgId}/projects/{projectId}/repositories/{linkId}"] = _ => null,
+        ["POST /api/v1/orgs/{orgId}/projects/{projectId}/repositories/{linkId}/sync"] = _ => null,
+        ["GET /api/v1/orgs/{orgId}/projects/{projectId}/suggestions"] = _ => null,
+        ["PATCH /api/v1/orgs/{orgId}/projects/{projectId}/suggestions/{id}"] = _ => new { decision = "accept" },
     };
 
     /// <summary>Bob's object a route parameter names: <c>{id}</c> is the object of the path segment before it.</summary>
@@ -85,6 +92,8 @@ public sealed class TenantIsolationTests(PostgresServer server)
         "id" when route.Contains("/components/{id}", StringComparison.Ordinal) => foreign.Component,
         "id" when route.Contains("/invitations/{id}", StringComparison.Ordinal) => foreign.Invitation,
         "id" when route.Contains("/repository-connections/{id}", StringComparison.Ordinal) => foreign.Connection,
+        "id" when route.Contains("/suggestions/{id}", StringComparison.Ordinal) => foreign.Suggestion,
+        "linkId" => foreign.Link,
         _ => null,
     };
 
@@ -150,7 +159,13 @@ public sealed class TenantIsolationTests(PostgresServer server)
         var aliceProject = (await Json(await alice.PostAsync($"/api/v1/orgs/{aliceOrg}/projects", new { name = "Alice's shop" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
         var bobsConnection = (await Json(await bob.PostAsync($"/api/v1/orgs/{bobOrg}/repository-connections", new { name = "Bob's GitHub" }), HttpStatusCode.Created))
             .GetProperty("id").GetGuid();
-        var foreign = new Foreign(bobId, bobsInvitation, bobsProject, bobsComponent, bobsConnection);
+        var bobsLink = (await Json(await bob.PostAsync($"/api/v1/orgs/{bobOrg}/projects/{bobsProject}/repositories", new { connectionId = bobsConnection, owner = "bob", name = "shop" }), HttpStatusCode.Created))
+            .GetProperty("id").GetGuid();
+        var bobsSuggestion = await host.ScalarAsync<Guid>($"""
+            INSERT INTO assets.component_suggestion (organization_id, project_id, repository_link_id, product_key, version, evidence, fingerprint, state, created_at)
+            VALUES ('{bobOrg}', '{bobsProject}', '{bobsLink}', 'nginx', '1.27', '[]', 'f', 'open', now()) RETURNING id
+            """);
+        var foreign = new Foreign(bobId, bobsInvitation, bobsProject, bobsComponent, bobsConnection, bobsLink, bobsSuggestion);
 
         var endpoints = host.Services.GetRequiredService<EndpointDataSource>().Endpoints.OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText?.Contains("/orgs/{orgId", StringComparison.Ordinal) == true)
@@ -193,7 +208,8 @@ public sealed class TenantIsolationTests(PostgresServer server)
             if (route.Contains("{projectId}", StringComparison.Ordinal))
             {
                 var mixed = new Dictionary<string, Guid>(bobs) { ["projectId"] = aliceProject };
-                var foreignInBody = body is not null && JsonSerializer.Serialize(body).Contains(foreign.Component.ToString(), StringComparison.Ordinal);
+                var foreignInBody = body is not null && (JsonSerializer.Serialize(body).Contains(foreign.Component.ToString(), StringComparison.Ordinal)
+                    || JsonSerializer.Serialize(body).Contains(foreign.Connection.ToString(), StringComparison.Ordinal));
                 var response = await alice.SendAsync(new HttpMethod(method), Fill(route, aliceOrg, mixed), body);
                 if (parameters.Count > 1 || foreignInBody)
                 {
@@ -213,6 +229,8 @@ public sealed class TenantIsolationTests(PostgresServer server)
         Assert.Equal("6.7.1|manual", await host.ScalarAsync<string>($"SELECT version || '|' || origin FROM assets.component WHERE id = '{bobsComponent}'"));
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.component WHERE organization_id = '{bobOrg}'"));
         Assert.Equal("Bob's GitHub", await host.ScalarAsync<string>($"SELECT name FROM assets.repository_connection WHERE id = '{bobsConnection}'"));
+        Assert.Equal("open", await host.ScalarAsync<string>($"SELECT state FROM assets.component_suggestion WHERE id = '{bobsSuggestion}'"));
+        Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.repository_link WHERE organization_id = '{bobOrg}'"));
     }
 
     private static async Task ExpectHiddenAsync(List<string> problems, string what, HttpResponseMessage response, bool notFoundOnly)

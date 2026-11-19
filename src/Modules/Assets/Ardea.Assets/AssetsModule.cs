@@ -33,5 +33,6 @@ public sealed class AssetsModule : IModule
     {
         ProjectEndpoints.Map(endpoints);
         ConnectionEndpoints.Map(endpoints);
+        LinkEndpoints.Map(endpoints);
     }
 }

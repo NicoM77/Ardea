@@ -18,6 +18,10 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
 
     public DbSet<RepositoryConnection> RepositoryConnections => Set<RepositoryConnection>();
 
+    public DbSet<RepositoryLink> RepositoryLinks => Set<RepositoryLink>();
+
+    public DbSet<ComponentSuggestion> ComponentSuggestions => Set<ComponentSuggestion>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -109,6 +113,46 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
             connection.Property(c => c.LastError).HasMaxLength(500);
             connection.HasIndex(c => c.OrganizationId).HasDatabaseName("ix_repository_connection_org");
         });
+
+        modelBuilder.Entity<RepositoryLink>(link =>
+        {
+            link.ToTable("repository_link", t => t.HasCheckConstraint("ck_repository_link_state", "state IN ('pending', 'ok', 'partial', 'failing')"));
+            link.HasKey(l => l.Id);
+            link.Property(l => l.Id).HasDefaultValueSql("uuidv7()");
+            link.Property(l => l.Owner).HasMaxLength(100);
+            link.Property(l => l.Name).HasMaxLength(100);
+            link.Property(l => l.Ref).HasMaxLength(250);
+            link.Property(l => l.Path).HasMaxLength(500);
+            link.Property(l => l.State).HasMaxLength(10);
+            link.Property(l => l.StateReason).HasMaxLength(500);
+            link.Property(l => l.LastCommitSha).HasMaxLength(64);
+            link.Property(l => l.PendingShrinkCommit).HasMaxLength(64);
+            link.Property(l => l.HeadEtag).HasMaxLength(200);
+            link.HasIndex(l => new { l.ProjectId, l.ConnectionId, l.Owner, l.Name, l.Path }).IsUnique().AreNullsDistinct(false).HasDatabaseName("ux_repository_link");
+            // The schedule's question across organisations (master plan 9.2): which links are due.
+            link.HasIndex(l => l.NextCheckAt).HasDatabaseName("ix_repository_link_due");
+            link.HasOne<Project>().WithMany().HasForeignKey(l => l.ProjectId).OnDelete(DeleteBehavior.Cascade);
+            link.HasOne<RepositoryConnection>().WithMany().HasForeignKey(l => l.ConnectionId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ComponentSuggestion>(suggestion =>
+        {
+            suggestion.ToTable("component_suggestion", t => t.HasCheckConstraint("ck_component_suggestion_state", "state IN ('open', 'accepted', 'dismissed')"));
+            suggestion.HasKey(s => s.Id);
+            suggestion.Property(s => s.Id).HasDefaultValueSql("uuidv7()");
+            suggestion.Property(s => s.ProductKey).HasMaxLength(200);
+            suggestion.Property(s => s.Version).HasMaxLength(100);
+            suggestion.Property(s => s.Evidence).HasColumnType("jsonb");
+            suggestion.Property(s => s.Fingerprint).HasMaxLength(64);
+            suggestion.Property(s => s.State).HasMaxLength(10);
+            suggestion.HasIndex(s => new { s.RepositoryLinkId, s.Fingerprint }).IsUnique().HasDatabaseName("ux_component_suggestion");
+            suggestion.HasIndex(s => new { s.ProjectId, s.State }).HasDatabaseName("ix_component_suggestion_project");
+            suggestion.HasOne<RepositoryLink>().WithMany().HasForeignKey(s => s.RepositoryLinkId).OnDelete(DeleteBehavior.Cascade);
+            suggestion.HasOne<Component>().WithMany().HasForeignKey(s => s.ComponentId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // A repository component belongs to its link: removing the link removes it (master plan 10.2).
+        modelBuilder.Entity<Component>().HasOne<RepositoryLink>().WithMany().HasForeignKey(c => c.RepositoryLinkId).OnDelete(DeleteBehavior.Cascade);
 
         ApplyTenantFilters(modelBuilder);
     }

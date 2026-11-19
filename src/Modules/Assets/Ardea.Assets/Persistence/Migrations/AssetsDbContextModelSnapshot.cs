@@ -149,6 +149,9 @@ namespace Ardea.Assets.Persistence.Migrations
                     b.HasIndex("ProjectId")
                         .HasDatabaseName("ix_component_project");
 
+                    b.HasIndex("RepositoryLinkId")
+                        .HasDatabaseName("ix_component_repository_link_id");
+
                     b.HasIndex("OrganizationId", "ProductKey")
                         .HasDatabaseName("ix_component_org_product");
 
@@ -228,6 +231,90 @@ namespace Ardea.Assets.Persistence.Migrations
                             t.HasCheckConstraint("ck_component_key_strength", "strength IN ('strong', 'weak')");
 
                             t.HasCheckConstraint("ck_component_key_type", "key_type IN ('cpe', 'product', 'purl')");
+                        });
+                });
+
+            modelBuilder.Entity("Ardea.Assets.Persistence.ComponentSuggestion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<Guid?>("ComponentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("component_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DecidedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("decided_at");
+
+                    b.Property<Guid?>("DecidedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("decided_by");
+
+                    b.Property<JsonDocument>("Evidence")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("evidence");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("fingerprint");
+
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("ProductKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("product_key");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<Guid>("RepositoryLinkId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("repository_link_id");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("state");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_component_suggestion");
+
+                    b.HasIndex("ComponentId")
+                        .HasDatabaseName("ix_component_suggestion_component_id");
+
+                    b.HasIndex("ProjectId", "State")
+                        .HasDatabaseName("ix_component_suggestion_project");
+
+                    b.HasIndex("RepositoryLinkId", "Fingerprint")
+                        .IsUnique()
+                        .HasDatabaseName("ux_component_suggestion");
+
+                    b.ToTable("component_suggestion", "assets", t =>
+                        {
+                            t.HasCheckConstraint("ck_component_suggestion_state", "state IN ('open', 'accepted', 'dismissed')");
                         });
                 });
 
@@ -379,6 +466,128 @@ namespace Ardea.Assets.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Ardea.Assets.Persistence.RepositoryLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuidv7()");
+
+                    b.Property<Guid>("ConnectionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("connection_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("FailingSince")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("failing_since");
+
+                    b.Property<string>("HeadEtag")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("head_etag");
+
+                    b.Property<string>("LastCommitSha")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("last_commit_sha");
+
+                    b.Property<DateTimeOffset?>("LastIndexedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_indexed_at");
+
+                    b.Property<byte[]>("LastSbom")
+                        .HasColumnType("bytea")
+                        .HasColumnName("last_sbom");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTimeOffset>("NextCheckAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_check_at");
+
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("Owner")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("owner");
+
+                    b.Property<string>("Path")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("path");
+
+                    b.Property<byte[]>("PendingShrink")
+                        .HasColumnType("bytea")
+                        .HasColumnName("pending_shrink");
+
+                    b.Property<string>("PendingShrinkCommit")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("pending_shrink_commit");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<string>("Ref")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("ref");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("state");
+
+                    b.Property<string>("StateReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("state_reason");
+
+                    b.Property<DateTimeOffset?>("UnavailableRaisedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("unavailable_raised_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_repository_link");
+
+                    b.HasIndex("ConnectionId")
+                        .HasDatabaseName("ix_repository_link_connection_id");
+
+                    b.HasIndex("NextCheckAt")
+                        .HasDatabaseName("ix_repository_link_due");
+
+                    b.HasIndex("ProjectId", "ConnectionId", "Owner", "Name", "Path")
+                        .IsUnique()
+                        .HasDatabaseName("ux_repository_link");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("ProjectId", "ConnectionId", "Owner", "Name", "Path"), false);
+
+                    b.ToTable("repository_link", "assets", t =>
+                        {
+                            t.HasCheckConstraint("ck_repository_link_state", "state IN ('pending', 'ok', 'partial', 'failing')");
+                        });
+                });
+
             modelBuilder.Entity("Ardea.Assets.Persistence.Component", b =>
                 {
                     b.HasOne("Ardea.Assets.Persistence.Component", null)
@@ -393,6 +602,12 @@ namespace Ardea.Assets.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_component_project_project_id");
+
+                    b.HasOne("Ardea.Assets.Persistence.RepositoryLink", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryLinkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_component_repository_link_repository_link_id");
                 });
 
             modelBuilder.Entity("Ardea.Assets.Persistence.ComponentKey", b =>
@@ -403,6 +618,39 @@ namespace Ardea.Assets.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_component_key_component_component_id");
+                });
+
+            modelBuilder.Entity("Ardea.Assets.Persistence.ComponentSuggestion", b =>
+                {
+                    b.HasOne("Ardea.Assets.Persistence.Component", null)
+                        .WithMany()
+                        .HasForeignKey("ComponentId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_component_suggestion_component_component_id");
+
+                    b.HasOne("Ardea.Assets.Persistence.RepositoryLink", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryLinkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_component_suggestion_repository_link_repository_link_id");
+                });
+
+            modelBuilder.Entity("Ardea.Assets.Persistence.RepositoryLink", b =>
+                {
+                    b.HasOne("Ardea.Assets.Persistence.RepositoryConnection", null)
+                        .WithMany()
+                        .HasForeignKey("ConnectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_repository_link_repository_connection_connection_id");
+
+                    b.HasOne("Ardea.Assets.Persistence.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_repository_link_project_project_id");
                 });
 #pragma warning restore 612, 618
         }

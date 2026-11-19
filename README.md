@@ -148,7 +148,7 @@ The profile gets two depths (chapter 17 of the plan): a coarse stack for the org
 
 | No. | Task | Depends on | Status |
 |---|---|---|---|
-| 5a.1 | **Spike:** notices per week for typical stacks with the spike week's data; set thresholds; ADR | 3.7 | ⬜ |
+| 5a.1 | **Spike:** notices per week for typical stacks with the spike week's data; set thresholds; ADR | 3.7 | ✅ [ADR 044](docs/adr/0044-notices-per-week-and-thresholds.md) |
 | 5a.2 | Data model: `project.kind`, `version_precision`, `notice`; remove assignment, deadline and «in review»; migrate open actions without a version to notices | 5a.1 | ⬜ |
 | 5a.3 | Notices from the stack with a threshold per entry; «affects us» creates a reminder; reappears on active exploitation or KEV | 5a.2 | ⬜ |
 | 5a.4 | Wizard: stack step before projects; projects and repository optional | 5a.2 | ⬜ |

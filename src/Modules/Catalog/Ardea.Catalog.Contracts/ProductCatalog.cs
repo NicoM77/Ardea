@@ -187,6 +187,9 @@ public interface IProductCatalog
     /// </summary>
     Task<ProductKey?> ResolveKeyAsync(string? vendor, string product, CpePair? cpe, PackageCoordinate? package, CancellationToken cancellationToken);
 
+    /// <summary>Whether some product in effect names <paramref name="platformKey"/> as its platform, i.e. the platform has plugins.</summary>
+    Task<bool> HasPluginsAsync(string platformKey, CancellationToken cancellationToken);
+
     /// <summary>
     /// Products for what someone types into the input help, best match first: spaces, punctuation, case,
     /// trailing version numbers and small typos do not matter (<c>Postgre SQL</c>, <c>.net 8</c>, <c>kubernets</c>).

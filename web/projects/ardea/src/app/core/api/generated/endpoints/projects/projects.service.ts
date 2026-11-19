@@ -35,7 +35,9 @@ import type {
 import type {
   ComponentInput,
   ComponentView,
+  CoverageView,
   CreateProjectRequest,
+  GetProfileCoverageParams,
   ListProjectsParams,
   ProjectDetail,
   ProjectView,
@@ -248,6 +250,29 @@ export function listComponentsResource(orgId: Signal<string | undefined>,
     projectId: Signal<string | undefined>,
   options?: OrvalHttpResourceOptions<ComponentView[], unknown>): HttpResourceRef<ComponentView[] | undefined> {
   return httpResource<ComponentView[]>(() => (orgId() === undefined || projectId() === undefined ? undefined : applyOrvalRequestExtension(`/api/v1/orgs/${orgId()}/projects/${projectId()}/components`, options)), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function getProfileCoverageResource(orgId: Signal<string | undefined>,
+    params: Signal<GetProfileCoverageParams | undefined> | undefined,
+  options: OrvalHttpResourceOptions<CoverageView, unknown> & { defaultValue: NoInfer<CoverageView> }): HttpResourceRef<CoverageView>;
+export function getProfileCoverageResource(orgId: Signal<string | undefined>,
+    params?: Signal<GetProfileCoverageParams | undefined>,
+  options?: OrvalHttpResourceOptions<CoverageView, unknown>): HttpResourceRef<CoverageView | undefined>;
+export function getProfileCoverageResource(orgId: Signal<string | undefined>,
+    params?: Signal<GetProfileCoverageParams | undefined>,
+  options?: OrvalHttpResourceOptions<CoverageView, unknown>): HttpResourceRef<CoverageView | undefined> {
+  return httpResource<CoverageView>(() => {
+    if (orgId() === undefined) return undefined;
+    if (params && params() === undefined) return undefined;
+    const request = ({
+      url: `/api/v1/orgs/${orgId()}/profile/coverage`,
+      params: filterParams(params?.() ?? {}, new Set<string>([]))
+    });
+    return applyOrvalRequestExtension(request, options);
+  }, options);
 }
 
 
@@ -573,6 +598,8 @@ export class ProjectsService {
 export type ListProjectsResourceResult = NonNullable<ProjectView[]>
 export type GetProjectResourceResult = NonNullable<ProjectDetail>
 export type ListComponentsResourceResult = NonNullable<ComponentView[]>
+export type GetProfileCoverageResourceResult = NonNullable<CoverageView>
+
 
 
 

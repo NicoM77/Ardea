@@ -8,7 +8,7 @@ namespace Ardea.Platform.Tests.Jobs;
 
 public sealed class ScheduleLeaderTests(PostgresServer server)
 {
-    [Fact]
+    [Fact(Timeout = JobTestHost.TestTimeout)]
     public async Task Due_schedule_enqueues_one_run_and_moves_its_next_time()
     {
         var clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 18, 10, 0, 30, TimeSpan.Zero));

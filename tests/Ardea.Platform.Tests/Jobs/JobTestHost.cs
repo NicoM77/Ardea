@@ -21,6 +21,12 @@ internal sealed class JobTestHost : IAsyncDisposable
         Services = services;
     }
 
+    /// <summary>
+    /// Upper bound for a job-system test (ms). A hang in worker shutdown or a lock wait then fails the one
+    /// test by name instead of stalling the whole run (seen twice on CI runners, never locally).
+    /// </summary>
+    public const int TestTimeout = 120_000;
+
     public MigrationDatabase Database { get; }
 
     public ServiceProvider Services { get; }
@@ -101,7 +107,7 @@ internal sealed class JobTestHost : IAsyncDisposable
     }
 
     /// <summary>Waits until <paramref name="sql"/> counts at least <paramref name="expected"/>.</summary>
-    public async Task WaitForAsync(string sql, long expected, TimeSpan timeout)
+    public async Task WaitForAsync(string sql, long expected, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
         var deadline = DateTime.UtcNow + timeout;
         long last = -1;
@@ -113,7 +119,7 @@ internal sealed class JobTestHost : IAsyncDisposable
                 return;
             }
 
-            await Task.Delay(50);
+            await Task.Delay(50, cancellationToken);
         }
 
         Assert.Fail($"Timed out after {timeout}: `{sql}` reached {last}, expected {expected}.");

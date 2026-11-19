@@ -165,6 +165,20 @@ public sealed class VersionRangesTests
     }
 
     [Fact]
+    public void Line_start_equal_to_the_fix_stays_as_written()
+    {
+        // Microsoft, «Visual Studio 2026 version 18.12» (CVE-2026-114147): the 18.12 line ships with the fix. Read as
+        // «before 18.12.0» it would put 18.11.9 in range, though the record's 18.11 entry ends at 18.11.4.
+        var stored = new VersionRange { Introduced = "18.12.0", Fixed = "18.12.0", Scheme = "custom" };
+
+        var range = VersionRanges.Normalize(stored);
+
+        Assert.Equal(stored, range);
+        var numeric = VersionSchemeRegistry.Instance.Find("numeric");
+        Assert.Equal(VersionVerdict.OutOfRange, VersionCheck.Evaluate(numeric, "18.11.9", [range], VersionStatus.Unknown).Verdict);
+    }
+
+    [Fact]
     public void Lower_bound_below_the_fix_stays()
     {
         var range = VersionRanges.Normalize(new VersionRange { Introduced = "157.0", Fixed = "157.0.8103.50" });

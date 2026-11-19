@@ -183,7 +183,10 @@ public static class VersionRanges
     /// <item>an upper bound with a placeholder (<c>lessThan 6.12.*</c>, <c>lessThanOrEqual 6.12.*</c>) ends before or after
     /// that line; any other upper bound with a wildcard (<c>*</c>, <c>log4j-core*</c>) names no end;</item>
     /// <item>a lower bound equal to the fix is no lower bound: Google's CNA writes «before 157.0.8103.50» as
-    /// <c>{"version": "157.0.8103.50", "lessThan": "157.0.8103.50"}</c>, which read literally contains no version at all.</item>
+    /// <c>{"version": "157.0.8103.50", "lessThan": "157.0.8103.50"}</c>, which read literally contains no version at all.
+    /// Not so when the bound starts a release line (<c>18.12.0</c>, last part <c>0</c>): Microsoft writes the entry
+    /// «Visual Studio 2026 version 18.12» as <c>18.12.0</c> to before <c>18.12.0</c>, a line that ships with the fix;
+    /// read as «before 18.12.0» it would claim every older line, so it stays as written and contains nothing.</item>
     /// </list>
     /// Applying it twice gives the same range.
     /// </summary>
@@ -217,7 +220,8 @@ public static class VersionRanges
             }
         }
 
-        if (introduced is not null && fixedVersion is not null && string.Equals(introduced, fixedVersion, StringComparison.Ordinal))
+        if (introduced is not null && fixedVersion is not null && string.Equals(introduced, fixedVersion, StringComparison.Ordinal)
+            && !introduced.EndsWith(".0", StringComparison.Ordinal))
         {
             introduced = null;
         }

@@ -82,6 +82,8 @@ Organisations with projects and technology profile; profile from GitHub reposito
 | 2.12 | Detection rules for Dockerfile, Compose, `global.json`, project files, `engines` and `.nvmrc`, `composer.json`, `go.mod`; image names in the catalogue; suggestions with evidence | 2.4, 2.11 | ✅ |
 | 2.13 | `IndexRepository` job with due time and system operation; reconcile per 16.5 holding back much smaller states; `repository.unavailable`; audit with commit as origin | 2.5, 2.11, 2.12 | ✅ |
 
+Acceptance: [observed and tested](docs/acceptance/phase-2.md); open: the timed wizard run with a test person and reading Ardea's own repository with a token.
+
 ### Phase 3 · Findings, actions and their UI (6–8 weeks)
 
 Findings, actions and alerts with level and reasoning; overview, list, detail.

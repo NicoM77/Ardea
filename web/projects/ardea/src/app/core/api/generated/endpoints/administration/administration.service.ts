@@ -36,6 +36,8 @@ import type {
   AbandonedJobResponse,
   InstanceResponse,
   InstanceSettingsResponse,
+  InstanceStatusView,
+  StatusWarning,
   TestEmailRequest,
   UpdateInstanceSettingsRequest
 } from '../../model';
@@ -123,6 +125,15 @@ export function applyOrvalRequestExtension(
 /**
  * @remarks httpResource is available in Angular 19.2 and later.
  */
+export function getStatusWarningsResource(options: OrvalHttpResourceOptions<StatusWarning[], unknown> & { defaultValue: NoInfer<StatusWarning[]> }): HttpResourceRef<StatusWarning[]>;
+export function getStatusWarningsResource(options?: OrvalHttpResourceOptions<StatusWarning[], unknown>): HttpResourceRef<StatusWarning[] | undefined>;
+export function getStatusWarningsResource(options?: OrvalHttpResourceOptions<StatusWarning[], unknown>): HttpResourceRef<StatusWarning[] | undefined> {
+  return httpResource<StatusWarning[]>(() => applyOrvalRequestExtension(`/api/v1/status`, options), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
 export function getInstanceResource(options: OrvalHttpResourceOptions<InstanceResponse, unknown> & { defaultValue: NoInfer<InstanceResponse> }): HttpResourceRef<InstanceResponse>;
 export function getInstanceResource(options?: OrvalHttpResourceOptions<InstanceResponse, unknown>): HttpResourceRef<InstanceResponse | undefined>;
 export function getInstanceResource(options?: OrvalHttpResourceOptions<InstanceResponse, unknown>): HttpResourceRef<InstanceResponse | undefined> {
@@ -145,6 +156,15 @@ export function listAbandonedJobsResource(options: OrvalHttpResourceOptions<Aban
 export function listAbandonedJobsResource(options?: OrvalHttpResourceOptions<AbandonedJobResponse[], unknown>): HttpResourceRef<AbandonedJobResponse[] | undefined>;
 export function listAbandonedJobsResource(options?: OrvalHttpResourceOptions<AbandonedJobResponse[], unknown>): HttpResourceRef<AbandonedJobResponse[] | undefined> {
   return httpResource<AbandonedJobResponse[]>(() => applyOrvalRequestExtension(`/api/v1/instance/jobs`, options), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function getInstanceStatusResource(options: OrvalHttpResourceOptions<InstanceStatusView, unknown> & { defaultValue: NoInfer<InstanceStatusView> }): HttpResourceRef<InstanceStatusView>;
+export function getInstanceStatusResource(options?: OrvalHttpResourceOptions<InstanceStatusView, unknown>): HttpResourceRef<InstanceStatusView | undefined>;
+export function getInstanceStatusResource(options?: OrvalHttpResourceOptions<InstanceStatusView, unknown>): HttpResourceRef<InstanceStatusView | undefined> {
+  return httpResource<InstanceStatusView>(() => applyOrvalRequestExtension(`/api/v1/instance/status`, options), options);
 }
 
 
@@ -283,9 +303,13 @@ export class AdministrationService {
 
 };
 
+export type GetStatusWarningsResourceResult = NonNullable<StatusWarning[]>
 export type GetInstanceResourceResult = NonNullable<InstanceResponse>
 export type GetInstanceSettingsResourceResult = NonNullable<InstanceSettingsResponse>
 export type ListAbandonedJobsResourceResult = NonNullable<AbandonedJobResponse[]>
+export type GetInstanceStatusResourceResult = NonNullable<InstanceStatusView>
+
+
 
 
 

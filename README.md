@@ -62,6 +62,8 @@ Consolidated entries from five sources, including OSV for packages, with merging
 | 1.12 | OSV adapter for npm, NuGet, Packagist, PyPI, Maven and Go: `modified_id.csv`, initial load from the ecosystem archive; terms checked first | 1.3, 1.5 | ✅ [ADR 031](docs/adr/0031-osv-source.md) |
 | 1.13 | Merging entries via a shared identifier that appears later, with redirect and review list for two CVE IDs | 1.6, 1.12 | ✅ |
 
+Acceptance: [observed and tested](docs/acceptance/phase-1.md), first load in 51 minutes on 2 vCPU and 4 GB.
+
 ### Phase 2 · Organisations, projects and profile (7–9 weeks)
 
 Organisations with projects and technology profile; profile from GitHub repositories; setup wizard.
@@ -81,6 +83,8 @@ Organisations with projects and technology profile; profile from GitHub reposito
 | 2.11 | Connection via `IRepositoryHost`: branch head with ETag, SBOM request, file tree, files with limits; readers for SPDX, `packages.lock.json`, `package-lock.json` | 2.10 | ✅ |
 | 2.12 | Detection rules for Dockerfile, Compose, `global.json`, project files, `engines` and `.nvmrc`, `composer.json`, `go.mod`; image names in the catalogue; suggestions with evidence | 2.4, 2.11 | ✅ |
 | 2.13 | `IndexRepository` job with due time and system operation; reconcile per 16.5 holding back much smaller states; `repository.unavailable`; audit with commit as origin | 2.5, 2.11, 2.12 | ✅ |
+
+Acceptance: [observed and tested](docs/acceptance/phase-2.md); open: the timed wizard run with a test person and reading Ardea's own repository with a token.
 
 ### Phase 3 · Findings, actions and their UI (6–8 weeks)
 

@@ -11,6 +11,13 @@ internal sealed class ArdeaUser : IdentityUser<Guid>
     public bool IsInstanceAdmin { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// The RFC 6238 time step of the last authenticator code accepted for this account. A code whose
+    /// step is the same or earlier is refused, so each code works once (RFC 6238 §5.2, ASVS 2.8.4).
+    /// Written only by the compare-and-set in <c>SingleUseAuthenticatorTokenProvider</c>.
+    /// </summary>
+    public long? TotpLastStep { get; set; }
 }
 
 /// <summary>

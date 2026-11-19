@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reminders · Ardea (mockup, sample data)</title>
+<link rel="icon" href="../brand/ardea-favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="notices.css">
+</head>
+<body data-page="reminders">
+<main class="sheet" id="main">
+  <div class="content">
+
+    <header class="title-row">
+      <div>
+        <h1>Reminders</h1>
+        <p class="title-sub" id="summary" role="status"></p>
+      </div>
+      <div class="title-actions">
+        <label>
+          <span class="sr-only">Project</span>
+          <select class="select" id="project"></select>
+        </label>
+        <label class="search">
+          <span class="sr-only">Search reminders</span>
+          <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+          <input class="input" type="search" id="q" placeholder="Component, CVE or project" autocomplete="off">
+        </label>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="span-9">
+        <div class="tabs" role="tablist" aria-label="Show">
+          <button type="button" role="tab" data-view="open" aria-selected="true">Open <span class="count" data-count="open"></span></button>
+          <button type="button" role="tab" data-view="done" aria-selected="false">Done <span class="count" data-count="done"></span></button>
+          <span class="tabs-ink" aria-hidden="true"></span>
+        </div>
+
+        <div class="toolbar">
+          <div class="chips" role="group" aria-label="Filter by priority" id="chips"></div>
+        </div>
+
+        <div class="atable rtable">
+          <div class="atable-head" aria-hidden="true">
+            <span>Priority</span><span>Reminder</span><span id="head-time">Reminds</span><span>Status</span>
+          </div>
+          <div id="rows"></div>
+        </div>
+
+        <div class="empty" id="empty" hidden>
+          <p id="empty-text"></p>
+          <button class="btn" type="button" id="clear">Clear filters</button>
+        </div>
+
+        <p class="footnote" id="dismissed"></p>
+      </div>
+
+      <div class="stack span-3">
+        <section class="card rise" aria-labelledby="h-cadence">
+          <header><h2 id="h-cadence">How they remind</h2></header>
+          <div class="rows cadence-rows" id="cadence"></div>
+          <p class="cadence-note">At 08:00, by priority. Set per organization in Settings.</p>
+        </section>
+        <section class="card rise" aria-labelledby="h-from-notices">
+          <header><h2 id="h-from-notices">From notices</h2></header>
+          <p class="kpi" id="from-notices"></p>
+          <p class="kpi-note" id="from-notices-note"></p>
+          <a class="card-link" href="notices.html">Notices<svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+        </section>
+      </div>
+    </div>
+
+    <p class="footnote">Mockup with sample data. The CVE identifiers are real; the organization, projects, installed versions and every done reminder are invented. Successor of <a class="link" href="actions.html">Actions</a>: no owner column, no time left, no “Unassigned” filter. Every row opens the same example reminder.</p>
+  </div>
+</main>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = window.ARDEA, A = window.A, F = D.fmt;
+  var byId = function (id) { return document.getElementById(id); };
+  var DONE_LABEL = { remediated: 'Remediated', not_affected: 'Not affected', risk_accepted: 'Risk accepted' };
+
+  function title(r, extra) {
+    return '<span class="arow-title"><span class="prio prio--' + r.priority + ' phone-prio">' + A.sym(D.PRIORITIES[r.priority].sym) + '</span><b data-title>' + A.esc(r.title) + '</b>' + (extra || '') + '</span>';
+  }
+  function head(r, kind, text) {
+    return ' style="view-transition-name:row-' + r.id + '" data-kind="' + kind + '" data-project="' + r.project + '" data-priority="' + r.priority + '" data-text="' + A.esc(text.toLowerCase()) + '">' + A.prio(r.priority);
+  }
+
+  function openRow(r) {
+    var project = D.project(r.project).name, plan = D.schedule(r), cad = D.CADENCE[r.priority];
+    var sub = r.fromNotice
+      ? project + ' · from ' + r.findings + (r.findings === 1 ? ' notice' : ' notices') + ', no version'
+      : project + ' · ' + r.installed + ' · <span class="id">' + r.cve + '</span>' + (r.findings > 1 ? ' +' + (r.findings - 1) : '');
+    var next = plan.next ? (plan.next - D.NOW < 2 * D.DAY ? F.when(plan.next).toLowerCase() : F.day(plan.next)) : '';
+    return '<a class="arow c-' + r.priority + '" href="' + r.href + '"' + (r.id === 'puppet' ? ' data-morph' : '') + head(r, 'open', r.title + ' ' + (r.cve || '') + ' ' + r.component + ' ' + project) +
+      '<span class="arow-main">' + title(r, (r.exploited ? '<span class="pill pill--alert">Exploited</span>' : '') + (r.noFix ? '<span class="pill">No fix yet</span>' : '')) +
+        '<span class="arow-sub">' + sub + '</span></span>' +
+      '<span class="arow-due"><span class="meter-line"><b>' + cad.label + '</b><span>' + (plan.next ? 'next ' + next : '') + '</span></span></span>' +
+      '<span class="arow-meta">' + A.status('open') + '</span></a>';
+  }
+  function doneRow(a) {
+    var project = D.project(a.project).name;
+    return '<div class="arow c-' + a.priority + '"' + head(a, 'done', a.title + ' ' + project) +
+      '<span class="arow-main">' + title(a) + '<span class="arow-sub">' + A.esc(project) + ' · done ' + F.day(a.closed) + '</span></span>' +
+      '<span class="arow-due"><span class="meter-line"><b>' + F.duration(a.days) + '</b><span>open</span></span></span>' +
+      '<span class="arow-meta">' + A.status(a.status) + '</span></div>';
+  }
+
+  byId('rows').innerHTML = D.REMINDERS.map(openRow).join('') + D.CLOSED.map(doneRow).join('');
+  var rows = A.$$('#rows .arow');
+
+  var view = 'open', priorities = {};
+  var project = byId('project'), search = byId('q');
+  project.innerHTML = '<option value="">All projects</option><option value="stack">Stack</option>' + D.PROJECTS.map(function (p) { return '<option value="' + p.id + '">' + A.esc(p.name) + '</option>'; }).join('');
+  var LEVELS = ['critical', 'high', 'medium', 'low'];
+  byId('chips').innerHTML = LEVELS.map(function (p) {
+    return '<button class="chip c-' + p + '" type="button" data-chip="' + p + '" aria-pressed="false">' + A.sym(D.PRIORITIES[p].sym) + D.PRIORITIES[p].label + ' <b></b></button>';
+  }).join('');
+  var chips = A.$$('[data-chip]');
+  var preset = location.hash.replace('#', '');
+  if (D.PRIORITIES[preset]) priorities[preset] = true; else if (preset === 'stack' || D.project(preset)) project.value = preset;
+
+  var tabs = A.$$('[data-view]');
+  var slide = A.slider(A.$('.tabs'), A.$('.tabs-ink'), '[aria-selected="true"]');
+
+  function matches(row, ignore) {
+    var q = search.value.trim().toLowerCase();
+    var any = Object.keys(priorities).some(function (k) { return priorities[k]; });
+    return row.getAttribute('data-kind') === view &&
+      (!project.value || row.getAttribute('data-project') === project.value) &&
+      (ignore === 'priority' || !any || priorities[row.getAttribute('data-priority')]) &&
+      (!q || row.getAttribute('data-text').indexOf(q) !== -1);
+  }
+
+  function apply() {
+    var shown = rows.filter(function (row) { var ok = matches(row); row.hidden = !ok; return ok; });
+    chips.forEach(function (chip) {
+      var key = chip.getAttribute('data-chip');
+      A.$('b', chip).textContent = D.count(rows, function (row) { return matches(row, 'priority') && row.getAttribute('data-priority') === key; });
+      chip.setAttribute('aria-pressed', String(!!priorities[key]));
+    });
+    A.$('[data-count="open"]').textContent = D.REMINDERS.length;
+    A.$('[data-count="done"]').textContent = D.CLOSED.length;
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.getAttribute('data-view') === view)); });
+    byId('head-time').textContent = view === 'open' ? 'Reminds' : 'Was open';
+
+    var total = view === 'open' ? D.REMINDERS.length : D.CLOSED.length, summary;
+    var critical = D.count(D.REMINDERS, function (r) { return r.priority === 'critical'; });
+    if (shown.length !== total) summary = '<strong>' + shown.length + ' of ' + total + '</strong> ' + view + ' reminders match.';
+    else if (view === 'open') summary = '<strong>' + total + ' open.</strong> ' + (critical ? critical + ' critical remind every day.' : 'None critical.');
+    else summary = '<strong>' + total + ' done since ' + F.day(D.CLOSED[D.CLOSED.length - 1].created) + '.</strong> ' + D.remediated.length + ' remediated, ' + (total - D.remediated.length) + ' not affected.';
+    byId('summary').innerHTML = summary;
+
+    A.$('.atable').hidden = shown.length === 0;
+    byId('empty').hidden = shown.length !== 0;
+    byId('empty-text').textContent = 'No ' + view + ' reminders match these filters.';
+    byId('dismissed').hidden = view !== 'open' || shown.length === 0;
+  }
+  function change(fn, animate) { if (animate === false) { fn(); apply(); return; } A.transition(function () { fn(); apply(); }); }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function (e) { change(function () { view = tab.getAttribute('data-view'); }, e.detail > 0); slide(e.detail > 0); });
+  });
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function (e) { var k = chip.getAttribute('data-chip'); change(function () { priorities[k] = !priorities[k]; }, e.detail > 0); });
+  });
+  project.addEventListener('change', function () { change(function () {}); });
+  search.addEventListener('input', function () { change(function () {}, false); });
+  byId('clear').addEventListener('click', function () { change(function () { priorities = {}; project.value = ''; search.value = ''; }); });
+
+  byId('dismissed').textContent = F.int(D.FUNNEL.dismissed) + ' more records named a technology in your projects this week and were dismissed: the installed version is outside the affected range, or the product is a variant that is not affected.';
+
+  /* How they remind: one row per priority, with how many open reminders follow that rhythm */
+  byId('cadence').innerHTML = LEVELS.map(function (p) {
+    var n = D.count(D.REMINDERS, function (r) { return r.priority === p; });
+    return '<div>' + A.prio(p) + '<span class="row-main"><small>' + D.CADENCE[p].label + '</small></span><span class="count">' + n + '</span></div>';
+  }).join('');
+
+  var fromNotices = D.REMINDERS.filter(function (r) { return r.fromNotice; });
+  byId('from-notices').textContent = fromNotices.length;
+  byId('from-notices-note').textContent = fromNotices.length
+    ? 'Open reminders that started as a notice answered “Affects us”. They hold ' + D.sum(fromNotices, function (r) { return r.findings; }) + ' entries.'
+    : 'No open reminder started as a notice.';
+
+  apply();
+})();
+</script>
+</body>
+</html>

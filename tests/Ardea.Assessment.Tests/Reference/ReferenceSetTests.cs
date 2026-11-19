@@ -78,7 +78,9 @@ public sealed class ReferenceSetTests(PostgresServer server)
             FROM assess.remediation r JOIN assets.component c ON c.id = r.component_id JOIN assets.project p ON p.id = r.project_id
             WHERE r.status <> 'closed' ORDER BY r.level DESC, p.name, 2
             """);
-        TestContext.Current.SendDiagnosticMessage($"Spike week: {actions.Count} open actions in {watch.Elapsed.TotalSeconds:F0} s{Environment.NewLine}{string.Join(Environment.NewLine, actions)}");
+        var summary = $"Spike week: {actions.Count} open actions in {watch.Elapsed.TotalSeconds:F0} s{Environment.NewLine}{string.Join(Environment.NewLine, actions)}";
+        await File.WriteAllTextAsync(Path.Combine(AppContext.BaseDirectory, "spike-week-report.txt"), summary, TestContext.Current.CancellationToken);
+        TestContext.Current.SendDiagnosticMessage(summary);
         Assert.True(actions.Count <= 8, $"{actions.Count} open actions, at most 8:{Environment.NewLine}{string.Join(Environment.NewLine, actions)}");
         Assert.NotEmpty(actions);
     }

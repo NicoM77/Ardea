@@ -1,6 +1,6 @@
 # Installation
 
-> Images are published to `ghcr.io/nicom77/ardea` from the first release on (task 6.8). Until then, build
+> Images are published to `ghcr.io/nicom77/ardea` from the first release on (task 7.3). Until then, build
 > one from source: `docker build -f deploy/Dockerfile -t ardea:dev .` and set `ARDEA_IMAGE=ardea:dev`.
 
 Ardea runs as one image in three roles (`migrate`, `api`, `worker`) next to PostgreSQL 18, described in

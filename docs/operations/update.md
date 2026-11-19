@@ -14,7 +14,23 @@ then stay stopped, on the old schema state of the dump.
 
 ## Going back
 
+The dump `migrate` wrote before the update holds the state before it. Restore it into an empty database: restoring
+over the migrated tables fails, because the newer schemas depend on the older ones.
+
 1. Stop API and worker: `docker compose stop api worker`.
-2. Restore the dump `migrate` wrote before the update (its path is in the `migrate` log):
-   `docker compose exec db pg_restore -U ardea_migrator -d ardea --clean --if-exists /var/lib/postgresql/backup/<file>`.
-3. Pin the previous image (`ARDEA_IMAGE=ghcr.io/nicom77/ardea:<previous>`) and `docker compose up -d`.
+2. Find the dump (its path is in the `migrate` log, `docker compose logs migrate`) and recreate the database empty:
+
+   ```bash
+   docker compose exec db psql -U ardea_migrator -d postgres -c 'DROP DATABASE ardea WITH (FORCE)'
+   docker compose exec db psql -U ardea_migrator -d postgres -c 'CREATE DATABASE ardea'
+   ```
+
+3. Restore: `docker compose exec db pg_restore -U ardea_migrator -d ardea --no-owner /var/lib/postgresql/backup/<file>`.
+4. Pin the previous image (`ARDEA_IMAGE=ghcr.io/nicom77/ardea:<previous>`) and `docker compose up -d`. `migrate`
+   gives the application role its rights on the restored database again.
+
+Only the newest three dumps are kept. The integration test `PreReleaseRestoreTests` runs this path on every build:
+a dump of an earlier state is restored, migrated to the current version, restored from the dump `migrate` wrote,
+and migrated again.
+
+A dump of a restored or newer database taken with `pg_dump` (see [Operation](operations.md)) is restored the same way.

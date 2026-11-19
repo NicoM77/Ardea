@@ -1,0 +1,46 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Adobe",
+  "products": [
+    {
+      // Magento belongs to Adobe since 2018; the open-source edition shares the records.
+      "key": "adobe-commerce",
+      "name": "Adobe Commerce",
+      "kind": "cms",
+      "versionScheme": "packagist",
+      "cpe": ["adobe:commerce", "adobe:magento_open_source", "magento:magento"],
+      "packages": ["pkg:composer/magento/product-community-edition", "pkg:composer/magento/product-enterprise-edition", "pkg:composer/magento/magento2-base"],
+      "aliases": [
+        { "names": ["Magento Open Source"] },
+        { "vendor": "Adobe", "names": ["Magento", "Magento Commerce", "Adobe Commerce B2B"] },
+        { "vendor": "Magento", "names": ["Magento", "Magento 2"] }
+      ],
+      "related": ["php"]
+    },
+    {
+      "key": "adobe-experience-manager",
+      "name": "Adobe Experience Manager",
+      "kind": "cms",
+      "versionScheme": "numeric",
+      "cpe": ["adobe:experience_manager"],
+      "aliases": [{ "vendor": "Adobe", "names": ["AEM", "Experience Manager", "Adobe Experience Manager (AEM)"] }],
+      "related": ["openjdk"]
+    },
+    {
+      "key": "coldfusion",
+      "name": "Adobe ColdFusion",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["adobe:coldfusion"],
+      "aliases": [{ "vendor": "Adobe", "names": ["ColdFusion", "ColdFusion {line}"] }]
+    },
+    {
+      "key": "acrobat-reader",
+      "name": "Adobe Acrobat Reader",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["adobe:acrobat_reader_dc", "adobe:acrobat_reader"],
+      "aliases": [{ "vendor": "Adobe", "names": ["Acrobat Reader", "Acrobat Reader DC", "Adobe Reader"] }]
+    }
+  ]
+}

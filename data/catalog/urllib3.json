@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "urllib3",
+  "products": [
+    {
+      "key": "urllib3",
+      "name": "urllib3",
+      "kind": "library",
+      "versionScheme": "pep440",
+      "cpe": ["python:urllib3"],
+      "packages": ["pkg:pypi/urllib3"],
+      "related": ["python"]
+    }
+  ]
+}

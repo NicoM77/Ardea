@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Zabbix",
+  "products": [
+    {
+      "key": "zabbix",
+      "name": "Zabbix",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["zabbix:zabbix"],
+      "aliases": [{ "vendor": "Zabbix", "names": ["Zabbix Server", "Zabbix Agent", "Zabbix Agent 2", "Zabbix Frontend"] }],
+      "images": ["zabbix/zabbix-server-pgsql", "zabbix/zabbix-server-mysql", "zabbix/zabbix-web-nginx-pgsql", "zabbix/zabbix-agent2"]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Icinga",
+  "products": [
+    {
+      "key": "icinga",
+      "name": "Icinga 2",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["icinga:icinga"],
+      "aliases": [{ "vendor": "Icinga", "names": ["Icinga", "icinga2"] }],
+      "images": ["icinga/icinga2"]
+    }
+  ]
+}

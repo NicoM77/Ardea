@@ -1,0 +1,13 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Samba",
+  "products": [
+    {
+      "key": "samba",
+      "name": "Samba",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["samba:samba"]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "IBM",
+  "products": [
+    {
+      // HashiCorp belongs to IBM since 2025.
+      "key": "vault",
+      "name": "HashiCorp Vault",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["hashicorp:vault"],
+      "packages": ["pkg:golang/github.com/hashicorp/vault"],
+      "aliases": [{ "vendor": "HashiCorp", "names": ["Vault", "Vault Enterprise"] }],
+      "images": ["hashicorp/vault"]
+    },
+    {
+      "key": "terraform",
+      "name": "HashiCorp Terraform",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["hashicorp:terraform"],
+      "packages": ["pkg:golang/github.com/hashicorp/terraform"],
+      "aliases": [{ "vendor": "HashiCorp", "names": ["Terraform"] }],
+      "images": ["hashicorp/terraform"]
+    },
+    {
+      "key": "consul",
+      "name": "HashiCorp Consul",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["hashicorp:consul"],
+      "packages": ["pkg:golang/github.com/hashicorp/consul"],
+      "aliases": [{ "vendor": "HashiCorp", "names": ["Consul", "Consul Enterprise"] }],
+      "images": ["hashicorp/consul"]
+    },
+    {
+      "key": "websphere",
+      "name": "IBM WebSphere Application Server",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["ibm:websphere_application_server"],
+      "aliases": [{ "vendor": "IBM", "names": ["WebSphere", "WebSphere Application Server", "WebSphere Application Server Liberty"] }]
+    },
+    {
+      "key": "db2",
+      "name": "IBM Db2",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["ibm:db2"],
+      "aliases": [{ "vendor": "IBM", "names": ["Db2", "DB2", "Db2 for Linux, UNIX and Windows"] }]
+    }
+  ]
+}

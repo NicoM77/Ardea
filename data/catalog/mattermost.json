@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Mattermost",
+  "products": [
+    {
+      "key": "mattermost",
+      "name": "Mattermost Server",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["mattermost:mattermost_server"],
+      "aliases": [{ "vendor": "Mattermost", "names": ["Mattermost"] }],
+      "images": ["mattermost/mattermost-team-edition", "mattermost/mattermost-enterprise-edition"]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Veeam Software",
+  "products": [
+    {
+      "key": "veeam-backup",
+      "name": "Veeam Backup & Replication",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["veeam:backup_\\&_replication"],
+      "aliases": [{ "vendor": "Veeam", "names": ["Backup & Replication", "Veeam Backup and Replication", "VBR"] }]
+    }
+  ]
+}

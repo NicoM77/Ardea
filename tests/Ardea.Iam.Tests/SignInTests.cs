@@ -176,6 +176,28 @@ public sealed class SignInTests(PostgresServer server)
     }
 
     [Fact]
+    public async Task Read_only_lookups_before_sign_in_get_a_looser_limit_than_attempts()
+    {
+        await using var host = await ApiTestHost.StartAsync(server, new() { ["RATE_LIMIT:AUTH_PER_MINUTE"] = "3" });
+        using var browser = host.Client();
+
+        // The web app reads the setup state on every load; a few reloads must not end in 429.
+        for (var i = 0; i < 10; i++)
+        {
+            Assert.Equal(HttpStatusCode.OK, (await browser.GetAsync("/api/v1/setup/status")).StatusCode);
+        }
+
+        // Still bounded: six times the attempt limit.
+        var statuses = new List<HttpStatusCode>();
+        for (var i = 0; i < 10; i++)
+        {
+            statuses.Add((await browser.GetAsync("/api/v1/setup/status")).StatusCode);
+        }
+
+        Assert.Contains(HttpStatusCode.TooManyRequests, statuses);
+    }
+
+    [Fact]
     public async Task Authenticator_key_is_stored_encrypted()
     {
         await using var host = await ApiTestHost.StartAsync(server);

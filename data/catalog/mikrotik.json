@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "MikroTik",
+  "products": [
+    {
+      "key": "routeros",
+      "name": "RouterOS",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["mikrotik:routeros"],
+      "aliases": [{ "vendor": "MikroTik", "names": ["MikroTik RouterOS"] }]
+    }
+  ]
+}

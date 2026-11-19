@@ -1,0 +1,19 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Joomla!",
+  "products": [
+    {
+      "key": "joomla",
+      "name": "Joomla!",
+      "kind": "cms",
+      "versionScheme": "numeric",
+      "cpe": ["joomla:joomla\\!"],
+      "aliases": [
+        { "names": ["Joomla! CMS"] },
+        { "vendor": "Joomla", "names": ["Joomla", "Joomla! {line}"] }
+      ],
+      "related": ["php"],
+      "images": ["joomla"]
+    }
+  ]
+}

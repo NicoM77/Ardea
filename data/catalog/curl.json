@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "curl",
+  "products": [
+    {
+      "key": "curl",
+      "name": "curl",
+      "kind": "library",
+      "versionScheme": "numeric",
+      "cpe": ["haxx:curl", "haxx:libcurl"],
+      "aliases": [
+        { "names": ["libcurl"] },
+        { "vendor": "haxx", "names": ["curl"] }
+      ],
+      "images": ["curlimages/curl"]
+    }
+  ]
+}

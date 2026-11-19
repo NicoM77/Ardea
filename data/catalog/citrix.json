@@ -1,0 +1,39 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Citrix",
+  "products": [
+    {
+      // Citrix belongs to Cloud Software Group; records keep naming the vendor Citrix.
+      "key": "netscaler-adc",
+      "name": "NetScaler ADC",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["citrix:netscaler_application_delivery_controller", "citrix:application_delivery_controller_firmware"],
+      "aliases": [
+        { "vendor": "Citrix", "names": ["NetScaler", "Citrix ADC", "Citrix NetScaler", "Citrix NetScaler ADC", "NetScaler ADC {line}", "NetScaler ADC *"] },
+        { "vendor": "NetScaler", "names": ["NetScaler ADC"] }
+      ],
+      "related": ["netscaler-gateway"]
+    },
+    {
+      "key": "netscaler-gateway",
+      "name": "NetScaler Gateway",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["citrix:netscaler_gateway", "citrix:gateway_firmware"],
+      "aliases": [
+        { "vendor": "Citrix", "names": ["Citrix Gateway", "NetScaler Gateway *"] },
+        { "vendor": "NetScaler", "names": ["NetScaler Gateway"] }
+      ],
+      "related": ["netscaler-adc"]
+    },
+    {
+      "key": "citrix-virtual-apps",
+      "name": "Citrix Virtual Apps and Desktops",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["citrix:virtual_apps_and_desktops"],
+      "aliases": [{ "vendor": "Citrix", "names": ["Virtual Apps and Desktops", "XenApp", "XenDesktop", "CVAD"] }]
+    }
+  ]
+}

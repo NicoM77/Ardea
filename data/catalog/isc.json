@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Internet Systems Consortium",
+  "products": [
+    {
+      "key": "bind",
+      "name": "BIND 9",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["isc:bind"],
+      "aliases": [{ "vendor": "ISC", "names": ["BIND", "bind9"] }],
+      "images": ["internetsystemsconsortium/bind9"]
+    }
+  ]
+}

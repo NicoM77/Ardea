@@ -1,0 +1,46 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "SUSE",
+  "products": [
+    {
+      "key": "sles",
+      "name": "SUSE Linux Enterprise Server",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["suse:linux_enterprise_server"],
+      "aliases": [{ "vendor": "SUSE", "names": ["SLES", "SUSE Linux Enterprise Server {line}", "SUSE Linux Enterprise Server {line} *"] }],
+      "images": ["registry.suse.com/suse/sle15", "registry.suse.com/bci/bci-base"]
+    },
+    {
+      "key": "opensuse-leap",
+      "name": "openSUSE Leap",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["opensuse:leap"],
+      "aliases": [{ "vendor": "openSUSE", "names": ["Leap", "openSUSE Leap {line}"] }],
+      "related": ["sles"],
+      "images": ["opensuse/leap"]
+    },
+    {
+      "key": "rancher",
+      "name": "Rancher",
+      "kind": "container",
+      "versionScheme": "numeric",
+      "cpe": ["suse:rancher"],
+      "packages": ["pkg:golang/github.com/rancher/rancher"],
+      "aliases": [{ "vendor": "Rancher", "names": ["Rancher"] }],
+      "related": ["kubernetes"],
+      "images": ["rancher/rancher"]
+    },
+    {
+      "key": "k3s",
+      "name": "K3s",
+      "kind": "container",
+      "versionScheme": "numeric",
+      "packages": ["pkg:golang/github.com/k3s-io/k3s"],
+      "aliases": [{ "vendor": "Rancher", "names": ["K3s"] }],
+      "related": ["kubernetes"],
+      "images": ["rancher/k3s"]
+    }
+  ]
+}

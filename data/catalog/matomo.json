@@ -1,0 +1,19 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Matomo",
+  "products": [
+    {
+      "key": "matomo",
+      "name": "Matomo",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["matomo:matomo"],
+      "aliases": [
+        { "vendor": "Matomo", "names": ["Matomo Analytics", "Piwik"] },
+        { "vendor": "InnoCraft", "names": ["Matomo"] }
+      ],
+      "related": ["php"],
+      "images": ["matomo"]
+    }
+  ]
+}

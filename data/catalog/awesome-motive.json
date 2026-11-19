@@ -1,0 +1,28 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Awesome Motive",
+  "products": [
+    {
+      "key": "wpforms",
+      "name": "WPForms",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "aliases": [
+        { "names": ["WPForms", "WPForms Lite"] },
+        { "vendor": "WPForms", "names": ["Contact Form by WPForms *"] }
+      ],
+      "platform": "wordpress"
+    },
+    {
+      "key": "all-in-one-seo",
+      "name": "All in One SEO",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "aliases": [
+        { "names": ["All in One SEO Pack", "AIOSEO"] },
+        { "vendor": "All in One SEO", "names": ["All in One SEO *"] }
+      ],
+      "platform": "wordpress"
+    }
+  ]
+}

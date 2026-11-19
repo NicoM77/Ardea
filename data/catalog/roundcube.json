@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Roundcube",
+  "products": [
+    {
+      "key": "roundcube",
+      "name": "Roundcube Webmail",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["roundcube:webmail"],
+      "aliases": [{ "vendor": "Roundcube", "names": ["Roundcube"] }],
+      "related": ["php"],
+      "images": ["roundcube/roundcubemail"]
+    }
+  ]
+}

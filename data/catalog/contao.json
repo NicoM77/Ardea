@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Contao",
+  "products": [
+    {
+      "key": "contao",
+      "name": "Contao",
+      "kind": "cms",
+      "versionScheme": "packagist",
+      "cpe": ["contao:contao"],
+      "packages": ["pkg:composer/contao/core-bundle"],
+      "aliases": [{ "vendor": "Contao", "names": ["Contao Open Source CMS"] }],
+      "related": ["php", "symfony"]
+    }
+  ]
+}

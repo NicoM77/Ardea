@@ -1,0 +1,44 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Linux Foundation",
+  "products": [
+    {
+      // The open fork of Redis 7.2 under the Linux Foundation.
+      "key": "valkey",
+      "name": "Valkey",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "aliases": [{ "vendor": "Valkey", "names": ["Valkey"] }],
+      "related": ["redis"],
+      "images": ["valkey/valkey"]
+    },
+    {
+      "key": "containerd",
+      "name": "containerd",
+      "kind": "container",
+      "versionScheme": "go",
+      "cpe": ["linuxfoundation:containerd"],
+      "packages": ["pkg:golang/github.com/containerd/containerd", "pkg:golang/github.com/containerd/containerd/v2"],
+      "aliases": [{ "vendor": "containerd", "names": ["containerd"] }]
+    },
+    {
+      "key": "runc",
+      "name": "runc",
+      "kind": "container",
+      "versionScheme": "go",
+      "cpe": ["linuxfoundation:runc"],
+      "packages": ["pkg:golang/github.com/opencontainers/runc"],
+      "aliases": [{ "vendor": "opencontainers", "names": ["runc"] }]
+    },
+    {
+      "key": "harbor",
+      "name": "Harbor",
+      "kind": "container",
+      "versionScheme": "go",
+      "cpe": ["linuxfoundation:harbor"],
+      "packages": ["pkg:golang/github.com/goharbor/harbor"],
+      "aliases": [{ "vendor": "goharbor", "names": ["Harbor"] }],
+      "images": ["goharbor/harbor-core"]
+    }
+  ]
+}

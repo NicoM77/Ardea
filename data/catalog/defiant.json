@@ -1,0 +1,18 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Defiant",
+  "products": [
+    {
+      "key": "wordfence",
+      "name": "Wordfence Security",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "aliases": [
+        { "names": ["Wordfence Security"] },
+        { "vendor": "Wordfence", "names": ["Wordfence", "Wordfence Security *"] },
+        { "vendor": "Defiant", "names": ["Wordfence", "Wordfence Security *"] }
+      ],
+      "platform": "wordpress"
+    }
+  ]
+}

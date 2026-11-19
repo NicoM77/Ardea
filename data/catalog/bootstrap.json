@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Bootstrap",
+  "products": [
+    {
+      "key": "bootstrap",
+      "name": "Bootstrap",
+      "kind": "library",
+      "versionScheme": "semver",
+      "cpe": ["getbootstrap:bootstrap"],
+      "packages": ["pkg:npm/bootstrap", "pkg:nuget/bootstrap"],
+      "aliases": [{ "vendor": "twbs", "names": ["Bootstrap"] }]
+    }
+  ]
+}

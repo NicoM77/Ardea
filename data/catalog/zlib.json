@@ -1,0 +1,13 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "zlib",
+  "products": [
+    {
+      "key": "zlib",
+      "name": "zlib",
+      "kind": "library",
+      "versionScheme": "numeric",
+      "cpe": ["zlib:zlib"]
+    }
+  ]
+}

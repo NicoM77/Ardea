@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Guzzle",
+  "products": [
+    {
+      "key": "guzzle",
+      "name": "Guzzle",
+      "kind": "library",
+      "versionScheme": "packagist",
+      "cpe": ["guzzlephp:guzzle"],
+      "packages": ["pkg:composer/guzzlehttp/guzzle"],
+      "aliases": [{ "vendor": "guzzlehttp", "names": ["Guzzle"] }],
+      "related": ["php"]
+    }
+  ]
+}

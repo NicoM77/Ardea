@@ -1,0 +1,23 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Proxmox Server Solutions",
+  "products": [
+    {
+      "key": "proxmox-ve",
+      "name": "Proxmox Virtual Environment",
+      "kind": "virtualization",
+      "versionScheme": "numeric",
+      "cpe": ["proxmox:virtual_environment"],
+      "aliases": [{ "vendor": "Proxmox", "names": ["Proxmox", "Proxmox VE", "PVE", "Proxmox VE {line}"] }],
+      "related": ["qemu"]
+    },
+    {
+      "key": "proxmox-backup-server",
+      "name": "Proxmox Backup Server",
+      "kind": "virtualization",
+      "versionScheme": "numeric",
+      "cpe": ["proxmox:backup_server"],
+      "related": ["proxmox-ve"]
+    }
+  ]
+}

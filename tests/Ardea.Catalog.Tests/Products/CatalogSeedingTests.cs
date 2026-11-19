@@ -1,11 +1,8 @@
 using Ardea.Catalog.Contracts;
-using Ardea.Catalog.Persistence;
 using Ardea.Catalog.Products;
 using Ardea.Platform.Persistence;
-using Ardea.Platform.Tenancy;
 using Ardea.TestSupport;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 
 namespace Ardea.Catalog.Tests.Products;
@@ -16,7 +13,7 @@ namespace Ardea.Catalog.Tests.Products;
 /// </summary>
 public sealed class CatalogSeedingTests(PostgresServer server)
 {
-    private static readonly IModuleDatabase Catalog = new CatalogModule().Database!;
+    private static readonly IModuleDatabase Catalog = CatalogDatabase.Module;
 
     [Fact]
     public async Task Repository_catalogue_is_loaded_once_and_readable_by_the_application()
@@ -115,12 +112,9 @@ public sealed class CatalogSeedingTests(PostgresServer server)
         return new MasterDataOptions(root);
     }
 
-    private static ProductCatalog Lookup(NpgsqlConnection connection) =>
-        new(
-            new CatalogDbContext(new DbContextOptionsBuilder<CatalogDbContext>().UseArdeaNpgsql(connection, CatalogDbContext.Schema).Options, new TenantContext()),
-            new CatalogCache(TimeProvider.System));
+    private static ProductCatalog Lookup(NpgsqlConnection connection) => CatalogDatabase.Lookup(connection, new CatalogCache(TimeProvider.System));
 
-    private async Task<Database> CreateAsync() => new(server, await server.CreateDatabaseAsync("catalog"));
+    private Task<CatalogDatabase> CreateAsync() => CatalogDatabase.CreateAsync(server);
 
     private static async Task Execute(NpgsqlConnection connection, string sql)
     {
@@ -145,40 +139,5 @@ public sealed class CatalogSeedingTests(PostgresServer server)
         }
 
         return rows;
-    }
-
-    private sealed class Database(PostgresServer server, string name)
-    {
-        private readonly DatabaseOptions _options = new()
-        {
-            Host = server.Host,
-            Port = server.Port,
-            Database = name,
-            OwnerUser = PostgresServer.OwnerUser,
-            OwnerPassword = PostgresServer.OwnerPassword,
-            AppPassword = "app-test-password",
-        };
-
-        public DatabaseMigrator Migrator(MasterDataOptions masterData) =>
-            new(_options, [PlatformDatabase.Instance, Catalog], new NoBackup(), NullLogger<DatabaseMigrator>.Instance, masterData);
-
-        public async Task<NpgsqlConnection> OpenOwnerAsync()
-        {
-            var connection = new NpgsqlConnection(_options.OwnerConnectionString("tests"));
-            await connection.OpenAsync(Ct);
-            return connection;
-        }
-
-        public async Task<NpgsqlConnection> OpenAppAsync()
-        {
-            var connection = new NpgsqlConnection(_options.AppConnectionString("tests"));
-            await connection.OpenAsync(Ct);
-            return connection;
-        }
-    }
-
-    private sealed class NoBackup : IBackupWriter
-    {
-        public Task<string?> WriteAsync(NpgsqlConnection owner, CancellationToken cancellationToken) => Task.FromResult<string?>(null);
     }
 }

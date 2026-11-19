@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Npgsql",
+  "products": [
+    {
+      "key": "npgsql",
+      "name": "Npgsql",
+      "kind": "library",
+      "versionScheme": "nuget",
+      "cpe": ["npgsql:npgsql"],
+      "packages": ["pkg:nuget/Npgsql"],
+      "related": ["dotnet", "postgresql"]
+    }
+  ]
+}

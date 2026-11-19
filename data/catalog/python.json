@@ -1,0 +1,31 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Python Software Foundation",
+  "products": [
+    {
+      "key": "python",
+      "name": "Python",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["python:python"],
+      "aliases": [
+        { "names": ["CPython"] },
+        { "vendor": "Python Software Foundation", "names": ["Python 3", "Python {line}", "CPython {line}"] }
+      ],
+      "images": ["python"]
+    },
+    {
+      "key": "requests",
+      "name": "Requests",
+      "kind": "library",
+      "versionScheme": "pep440",
+      "cpe": ["python:requests"],
+      "packages": ["pkg:pypi/requests"],
+      "aliases": [
+        { "vendor": "psf", "names": ["requests"] },
+        { "vendor": "Python Software Foundation", "names": ["python-requests"] }
+      ],
+      "related": ["python"]
+    }
+  ]
+}

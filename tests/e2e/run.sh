@@ -44,6 +44,9 @@ if [ -n "${E2E_WEB_DIST:-}" ]; then
 fi
 # The public address must be the one the browser uses: the API checks the origin of every write.
 docker run --rm --user "$(id -u):$(id -g)" -v "$work:/out" "$image" init-env --dir /out --public-url "$base_url" >/dev/null
+# One browser sets up, signs in and out, and registers a second person within a minute, all from
+# one address; the default of 10 sign-in requests per minute and address is meant for real clients.
+echo "ARDEA_RATE_LIMIT__AUTH_PER_MINUTE=120" >> "$work/.env.app"
 setup_token="$(sed -n 's/^ARDEA_SETUP_TOKEN=//p' "$work/.env.app")"
 [ -n "$setup_token" ] || { echo "::error::No setup token in .env.app"; exit 1; }
 

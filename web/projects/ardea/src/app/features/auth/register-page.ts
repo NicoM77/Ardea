@@ -1,10 +1,10 @@
-import { Component, ElementRef, inject, input, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, input, OnInit, signal } from '@angular/core';
 import { form, FormField, FormRoot } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiField, UiInput, UiNotice, UiPasswordToggle } from 'ui';
 import { firstValueFrom } from 'rxjs';
-import { AuthenticationService } from '../../core/api/client';
+import { AuthenticationService, OrganizationsService } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { Session } from '../../core/session/session';
 import {
@@ -19,7 +19,10 @@ import {
 } from './auth-forms';
 import { focusFirstInvalid } from './focus-invalid';
 
-/** Creating an account from an invitation link (`/register?invitation=...`). */
+/**
+ * Creating an account, usually from an invitation (`/register?invitation=...&email=...`). With
+ * an invitation the address comes filled in, and the new account accepts it right away.
+ */
 @Component({
   selector: 'ardea-register-page',
   imports: [
@@ -90,15 +93,20 @@ import { focusFirstInvalid } from './focus-invalid';
 
     <p class="auth-foot">
       <span>{{ 'auth.register.haveAccount' | transloco }}</span>
-      <a class="link" routerLink="/sign-in">{{ 'auth.signIn.title' | transloco }}</a>
+      <a class="link" routerLink="/sign-in" [queryParams]="signInParams()">{{
+        'auth.signIn.title' | transloco
+      }}</a>
     </p>
   `,
 })
-export class RegisterPage {
+export class RegisterPage implements OnInit {
   /** The token from the invitation link. */
   readonly invitation = input<string | null>(null);
+  /** The invited address, handed over by the invitation page. */
+  readonly email = input<string | null>(null);
 
   private readonly auth = inject(AuthenticationService);
+  private readonly organizations = inject(OrganizationsService);
   private readonly session = inject(Session);
   private readonly router = inject(Router);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
@@ -108,6 +116,11 @@ export class RegisterPage {
   protected readonly nameErrors = NAME_ERRORS;
   protected readonly passwordErrors = NEW_PASSWORD_ERRORS;
   protected readonly problem = signal<string | null>(null);
+  /** Signing in instead comes back to the invitation. */
+  protected readonly signInParams = computed(() => {
+    const invitation = this.invitation();
+    return invitation ? { returnUrl: `/invitations/${invitation}` } : {};
+  });
 
   private readonly model = signal({ email: '', displayName: '', password: '' });
   protected readonly register = form(
@@ -127,10 +140,18 @@ export class RegisterPage {
             );
             // The API may sign the new account in right away; if it does not, sign-in says why.
             await this.session.refresh();
-            if (this.session.state() === 'signedIn') {
-              await this.router.navigateByUrl('/');
+            const invitation = this.invitation();
+            if (this.session.state() !== 'signedIn') {
+              // An address that has an account already: sign in with it, then accept.
+              await this.router.navigate(['/sign-in'], {
+                queryParams: invitation
+                  ? { notice: 'registered', returnUrl: `/invitations/${invitation}` }
+                  : { notice: 'registered' },
+              });
+            } else if (invitation) {
+              await this.join(invitation);
             } else {
-              await this.router.navigate(['/sign-in'], { queryParams: { notice: 'registered' } });
+              await this.router.navigateByUrl('/');
             }
           } catch (error) {
             const weak = weakPasswordError(error, this.register.password);
@@ -146,6 +167,7 @@ export class RegisterPage {
                     ? 'auth.register.errors.invitation'
                     : 'auth.register.errors.invitationRequired',
                   registration_closed: 'auth.register.errors.closed',
+                  signed_in: 'auth.register.errors.signedIn',
                 },
                 fallback: 'auth.register.errors.rejected',
               }),
@@ -157,4 +179,23 @@ export class RegisterPage {
       },
     },
   );
+
+  ngOnInit(): void {
+    const email = this.email();
+    if (email) this.model.update((model) => ({ ...model, email }));
+  }
+
+  /**
+   * Accepts the invitation the account was created for. If that fails, the invitation page
+   * explains why and offers what is left to do.
+   */
+  private async join(token: string): Promise<void> {
+    try {
+      const joined = await firstValueFrom(this.organizations.acceptInvitation(token));
+      await this.session.refresh();
+      await this.router.navigate(['/o', joined.slug, 'overview']);
+    } catch {
+      await this.router.navigate(['/invitations', token]);
+    }
+  }
 }

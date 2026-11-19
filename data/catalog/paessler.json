@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Paessler",
+  "products": [
+    {
+      "key": "prtg",
+      "name": "PRTG Network Monitor",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["paessler:prtg_network_monitor"],
+      "aliases": [{ "vendor": "Paessler", "names": ["PRTG"] }]
+    }
+  ]
+}

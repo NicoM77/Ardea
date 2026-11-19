@@ -23,6 +23,66 @@
       "packages": ["pkg:rpm/redhat/openssl"],
       "platform": "rhel",
       "related": ["openssl"]
+    },
+    {
+      "key": "centos",
+      "name": "CentOS",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["centos:centos"],
+      "aliases": [
+        { "names": ["CentOS Linux", "CentOS Stream"] },
+        { "vendor": "CentOS", "names": ["CentOS {line}"] }
+      ],
+      "related": ["rhel"],
+      "images": ["centos", "quay.io/centos/centos"]
+    },
+    {
+      "key": "fedora",
+      "name": "Fedora",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["fedoraproject:fedora"],
+      "aliases": [
+        { "names": ["Fedora Linux"] },
+        { "vendor": "Fedora Project", "names": ["Fedora {line}"] }
+      ],
+      "images": ["fedora"]
+    },
+    {
+      "key": "openshift",
+      "name": "Red Hat OpenShift Container Platform",
+      "kind": "container",
+      "versionScheme": "numeric",
+      "cpe": ["redhat:openshift_container_platform", "redhat:openshift"],
+      "aliases": [
+        { "vendor": "Red Hat", "names": ["OpenShift", "OpenShift Container Platform", "Red Hat OpenShift Container Platform {line}"] }
+      ],
+      "related": ["kubernetes"]
+    },
+    {
+      "key": "podman",
+      "name": "Podman",
+      "kind": "container",
+      "versionScheme": "go",
+      "packages": ["pkg:golang/github.com/containers/podman/v4", "pkg:golang/github.com/containers/podman/v5"],
+      "aliases": [{ "vendor": "containers", "names": ["Podman"] }],
+      "images": ["quay.io/podman/stable"]
+    },
+    {
+      // A CNCF project; the records come from Red Hat.
+      "key": "keycloak",
+      "name": "Keycloak",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["redhat:keycloak"],
+      "packages": ["pkg:maven/org.keycloak/keycloak-core", "pkg:maven/org.keycloak/keycloak-services"],
+      "aliases": [
+        { "names": ["Keycloak"] },
+        { "vendor": "Red Hat", "names": ["Red Hat build of Keycloak"] }
+      ],
+      "related": ["openjdk"],
+      "images": ["quay.io/keycloak/keycloak"]
     }
   ]
 }

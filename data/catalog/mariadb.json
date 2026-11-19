@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "MariaDB",
+  "products": [
+    {
+      "key": "mariadb",
+      "name": "MariaDB",
+      "kind": "database",
+      "versionScheme": "numeric",
+      "cpe": ["mariadb:mariadb"],
+      "aliases": [{ "vendor": "MariaDB", "names": ["MariaDB Server", "MariaDB {line}"] }],
+      "related": ["mysql"],
+      "images": ["mariadb"]
+    }
+  ]
+}

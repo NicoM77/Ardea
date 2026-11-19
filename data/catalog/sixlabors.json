@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Six Labors",
+  "products": [
+    {
+      "key": "imagesharp",
+      "name": "ImageSharp",
+      "kind": "library",
+      "versionScheme": "nuget",
+      "cpe": ["sixlabors:imagesharp"],
+      "packages": ["pkg:nuget/SixLabors.ImageSharp"],
+      "aliases": [{ "vendor": "Six Labors", "names": ["SixLabors.ImageSharp"] }],
+      "related": ["dotnet"]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Team Updraft",
+  "products": [
+    {
+      "key": "updraftplus",
+      "name": "UpdraftPlus",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "aliases": [
+        { "names": ["UpdraftPlus", "UpdraftPlus WordPress Backup Plugin"] },
+        { "vendor": "UpdraftPlus", "names": ["UpdraftPlus *"] }
+      ],
+      "platform": "wordpress"
+    }
+  ]
+}

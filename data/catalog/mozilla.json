@@ -1,0 +1,22 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Mozilla",
+  "products": [
+    {
+      "key": "firefox",
+      "name": "Firefox",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["mozilla:firefox", "mozilla:firefox_esr"],
+      "aliases": [{ "vendor": "Mozilla", "names": ["Firefox ESR", "Mozilla Firefox"] }]
+    },
+    {
+      "key": "thunderbird",
+      "name": "Thunderbird",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["mozilla:thunderbird"],
+      "aliases": [{ "vendor": "Mozilla", "names": ["Mozilla Thunderbird"] }]
+    }
+  ]
+}

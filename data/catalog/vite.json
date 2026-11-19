@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "VoidZero",
+  "products": [
+    {
+      "key": "vite",
+      "name": "Vite",
+      "kind": "library",
+      "versionScheme": "semver",
+      "cpe": ["vitejs:vite"],
+      "packages": ["pkg:npm/vite"],
+      "aliases": [{ "vendor": "vitejs", "names": ["Vite"] }],
+      "related": ["nodejs"]
+    }
+  ]
+}

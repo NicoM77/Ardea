@@ -1,0 +1,13 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "OpenLDAP Foundation",
+  "products": [
+    {
+      "key": "openldap",
+      "name": "OpenLDAP",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["openldap:openldap"]
+    }
+  ]
+}

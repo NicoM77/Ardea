@@ -1,0 +1,17 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Elementor",
+  "products": [
+    {
+      "key": "elementor",
+      "name": "Elementor Website Builder",
+      "kind": "plugin",
+      "versionScheme": "numeric",
+      "aliases": [
+        { "names": ["Elementor Page Builder"] },
+        { "vendor": "Elementor", "names": ["Elementor", "Elementor Website Builder *", "Elementor Pro"] }
+      ],
+      "platform": "wordpress"
+    }
+  ]
+}

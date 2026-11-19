@@ -1,0 +1,14 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Juniper Networks",
+  "products": [
+    {
+      "key": "junos",
+      "name": "Junos OS",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["juniper:junos"],
+      "aliases": [{ "vendor": "Juniper Networks", "names": ["Junos"] }]
+    }
+  ]
+}

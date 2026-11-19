@@ -1,0 +1,29 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Symfony",
+  "products": [
+    {
+      "key": "symfony",
+      "name": "Symfony",
+      "kind": "framework",
+      "versionScheme": "packagist",
+      "cpe": ["sensiolabs:symfony"],
+      "packages": ["pkg:composer/symfony/symfony", "pkg:composer/symfony/http-kernel", "pkg:composer/symfony/http-foundation", "pkg:composer/symfony/security-http", "pkg:composer/symfony/security-core"],
+      "aliases": [
+        { "vendor": "Symfony", "names": ["Symfony Framework"] },
+        { "vendor": "SensioLabs", "names": ["Symfony"] }
+      ],
+      "related": ["php"]
+    },
+    {
+      "key": "twig",
+      "name": "Twig",
+      "kind": "library",
+      "versionScheme": "packagist",
+      "cpe": ["symfony:twig"],
+      "packages": ["pkg:composer/twig/twig"],
+      "aliases": [{ "vendor": "twigphp", "names": ["Twig"] }],
+      "related": ["php"]
+    }
+  ]
+}

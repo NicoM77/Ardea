@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Alpine Linux",
+  "products": [
+    {
+      "key": "alpine-linux",
+      "name": "Alpine Linux",
+      "kind": "os",
+      "versionScheme": "numeric",
+      "cpe": ["alpinelinux:alpine_linux"],
+      "aliases": [{ "vendor": "Alpine", "names": ["Alpine", "Alpine Linux {line}"] }],
+      "images": ["alpine"]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "QEMU",
+  "products": [
+    {
+      "key": "qemu",
+      "name": "QEMU",
+      "kind": "virtualization",
+      "versionScheme": "numeric",
+      "cpe": ["qemu:qemu"]
+    }
+  ]
+}

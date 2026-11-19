@@ -1,0 +1,17 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "OpenBSD",
+  "products": [
+    {
+      "key": "openssh",
+      "name": "OpenSSH",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["openbsd:openssh"],
+      "aliases": [
+        { "names": ["OpenSSH"] },
+        { "vendor": "OpenBSD", "names": ["OpenSSH Portable"] }
+      ]
+    }
+  ]
+}

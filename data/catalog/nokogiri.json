@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Nokogiri",
+  "products": [
+    {
+      "key": "nokogiri",
+      "name": "Nokogiri",
+      "kind": "library",
+      "versionScheme": "numeric",
+      "cpe": ["nokogiri:nokogiri"],
+      "packages": ["pkg:gem/nokogiri"],
+      "related": ["ruby", "libxml2"]
+    }
+  ]
+}

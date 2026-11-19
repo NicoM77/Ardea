@@ -1,0 +1,65 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Fortinet",
+  "products": [
+    {
+      // FortiGate is the appliance, FortiOS its operating system; records name FortiOS.
+      "key": "fortios",
+      "name": "FortiOS",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["fortinet:fortios"],
+      "aliases": [{ "vendor": "Fortinet", "names": ["FortiGate", "FortiOS SSL-VPN", "FortiOS {line}"] }]
+    },
+    {
+      "key": "fortiproxy",
+      "name": "FortiProxy",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["fortinet:fortiproxy"]
+    },
+    {
+      "key": "fortimanager",
+      "name": "FortiManager",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["fortinet:fortimanager"]
+    },
+    {
+      "key": "fortianalyzer",
+      "name": "FortiAnalyzer",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["fortinet:fortianalyzer"]
+    },
+    {
+      "key": "fortiweb",
+      "name": "FortiWeb",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["fortinet:fortiweb"]
+    },
+    {
+      "key": "fortimail",
+      "name": "FortiMail",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["fortinet:fortimail"]
+    },
+    {
+      "key": "fortiswitch",
+      "name": "FortiSwitch",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["fortinet:fortiswitch"]
+    },
+    {
+      "key": "forticlient",
+      "name": "FortiClient",
+      "kind": "network",
+      "versionScheme": "numeric",
+      "cpe": ["fortinet:forticlient"],
+      "aliases": [{ "vendor": "Fortinet", "names": ["FortiClientWindows", "FortiClientMac", "FortiClientLinux", "FortiClient VPN"] }]
+    }
+  ]
+}

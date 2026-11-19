@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Umbraco",
+  "products": [
+    {
+      "key": "umbraco",
+      "name": "Umbraco CMS",
+      "kind": "cms",
+      "versionScheme": "nuget",
+      "cpe": ["umbraco:umbraco_cms"],
+      "packages": ["pkg:nuget/Umbraco.Cms", "pkg:nuget/Umbraco.Cms.Core", "pkg:nuget/UmbracoCms.Core"],
+      "aliases": [{ "vendor": "Umbraco", "names": ["Umbraco", "Umbraco CMS {line}"] }],
+      "related": ["aspnetcore"]
+    }
+  ]
+}

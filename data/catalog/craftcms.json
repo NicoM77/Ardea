@@ -1,0 +1,19 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Craft CMS",
+  "products": [
+    {
+      "key": "craft-cms",
+      "name": "Craft CMS",
+      "kind": "cms",
+      "versionScheme": "packagist",
+      "cpe": ["craftcms:craft_cms"],
+      "packages": ["pkg:composer/craftcms/cms"],
+      "aliases": [
+        { "vendor": "Craft CMS", "names": ["Craft", "Craft CMS {line}"] },
+        { "vendor": "Pixel & Tonic", "names": ["Craft CMS"] }
+      ],
+      "related": ["php"]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Portainer",
+  "products": [
+    {
+      "key": "portainer",
+      "name": "Portainer",
+      "kind": "container",
+      "versionScheme": "numeric",
+      "cpe": ["portainer:portainer"],
+      "aliases": [{ "vendor": "Portainer", "names": ["Portainer CE", "Portainer BE"] }],
+      "images": ["portainer/portainer-ce", "portainer/portainer-ee"]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "Gunicorn",
+  "products": [
+    {
+      "key": "gunicorn",
+      "name": "Gunicorn",
+      "kind": "runtime",
+      "versionScheme": "pep440",
+      "cpe": ["gunicorn:gunicorn"],
+      "packages": ["pkg:pypi/gunicorn"],
+      "related": ["python"]
+    }
+  ]
+}

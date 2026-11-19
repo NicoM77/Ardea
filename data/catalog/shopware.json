@@ -1,0 +1,16 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "shopware AG",
+  "products": [
+    {
+      "key": "shopware",
+      "name": "Shopware",
+      "kind": "cms",
+      "versionScheme": "packagist",
+      "cpe": ["shopware:shopware"],
+      "packages": ["pkg:composer/shopware/core", "pkg:composer/shopware/platform"],
+      "aliases": [{ "vendor": "shopware", "names": ["Shopware {line}", "Shopware Platform"] }],
+      "related": ["php", "symfony"]
+    }
+  ]
+}

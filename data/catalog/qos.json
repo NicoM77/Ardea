@@ -1,0 +1,24 @@
+{
+  "$schema": "../catalog.schema.json",
+  "vendor": "QOS.ch",
+  "products": [
+    {
+      "key": "logback",
+      "name": "Logback",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["qos:logback"],
+      "packages": ["pkg:maven/ch.qos.logback/logback-classic", "pkg:maven/ch.qos.logback/logback-core"],
+      "aliases": [{ "vendor": "QOS.ch", "names": ["logback-classic", "logback-core"] }],
+      "related": ["slf4j"]
+    },
+    {
+      "key": "slf4j",
+      "name": "SLF4J",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["qos:slf4j"],
+      "packages": ["pkg:maven/org.slf4j/slf4j-api", "pkg:maven/org.slf4j/slf4j-ext"]
+    }
+  ]
+}

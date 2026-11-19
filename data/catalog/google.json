@@ -11,6 +11,70 @@
       "packages": ["pkg:npm/@angular/core"],
       "aliases": [{ "vendor": "angular", "names": ["Angular", "@angular/core"] }],
       "related": ["nodejs"]
+    },
+    {
+      // The Go vulnerability database lists the standard library and the toolchain as packages «stdlib» and «toolchain».
+      "key": "go",
+      "name": "Go",
+      "kind": "runtime",
+      "versionScheme": "numeric",
+      "cpe": ["golang:go"],
+      "packages": ["pkg:golang/stdlib", "pkg:golang/toolchain"],
+      "aliases": [
+        { "names": ["Golang"] },
+        { "vendor": "Go", "names": ["Go {line}", "Go standard library"] }
+      ],
+      "images": ["golang"]
+    },
+    {
+      "key": "guava",
+      "name": "Guava",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["google:guava"],
+      "packages": ["pkg:maven/com.google.guava/guava"],
+      "aliases": [{ "vendor": "Google", "names": ["Guava: Google Core Libraries for Java"] }]
+    },
+    {
+      "key": "gson",
+      "name": "Gson",
+      "kind": "library",
+      "versionScheme": "maven",
+      "cpe": ["google:gson"],
+      "packages": ["pkg:maven/com.google.code.gson/gson"]
+    },
+    {
+      "key": "protobuf",
+      "name": "Protocol Buffers",
+      "kind": "library",
+      "versionScheme": "numeric",
+      "cpe": ["google:protobuf"],
+      "packages": ["pkg:maven/com.google.protobuf/protobuf-java", "pkg:pypi/protobuf"],
+      "aliases": [{ "vendor": "Google", "names": ["protobuf", "protobuf-java"] }]
+    },
+    {
+      "key": "golang-x-net",
+      "name": "golang.org/x/net",
+      "kind": "library",
+      "versionScheme": "go",
+      "packages": ["pkg:golang/golang.org/x/net"],
+      "related": ["go"]
+    },
+    {
+      "key": "golang-x-crypto",
+      "name": "golang.org/x/crypto",
+      "kind": "library",
+      "versionScheme": "go",
+      "packages": ["pkg:golang/golang.org/x/crypto"],
+      "related": ["go"]
+    },
+    {
+      "key": "chrome",
+      "name": "Google Chrome",
+      "kind": "other",
+      "versionScheme": "numeric",
+      "cpe": ["google:chrome"],
+      "aliases": [{ "vendor": "Google", "names": ["Chrome"] }]
     }
   ]
 }

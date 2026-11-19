@@ -7,6 +7,7 @@ export * from './catalog/catalog.service';
 export * from './entries/entries.service';
 export * from './organizations/organizations.service';
 export * from './projects/projects.service';
+export * from './repositories/repositories.service';
 export * from './repository-connections/repository-connections.service';
 export * from './setup/setup.service';
 export * from './sources/sources.service';

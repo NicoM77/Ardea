@@ -7,10 +7,8 @@
  */
 
 export interface EvidenceView {
-  source: string;
-  state: string;
-  /** @nullable */
-  evidence: string | null;
-  /** @nullable */
-  since: string | null;
+  file: string;
+  /** @pattern ^-?(?:0|[1-9]\d*)$ */
+  line: number | string;
+  value: string;
 }

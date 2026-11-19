@@ -153,3 +153,89 @@ internal sealed class RepositoryConnection : IOrganizationOwned
 
     public string? LastError { get; set; }
 }
+
+/// <summary>A repository that feeds a project (master plan 4.5, 16.2, 16.6).</summary>
+internal sealed class RepositoryLink : IOrganizationOwned
+{
+    public Guid Id { get; set; }
+
+    public Guid OrganizationId { get; set; }
+
+    public Guid ProjectId { get; set; }
+
+    public Guid ConnectionId { get; set; }
+
+    public required string Owner { get; set; }
+
+    public required string Name { get; set; }
+
+    /// <summary>The branch, tag or commit; <c>null</c> for the default branch.</summary>
+    public string? Ref { get; set; }
+
+    /// <summary>A subfolder of a monorepo that alone counts; <c>null</c> for the whole repository.</summary>
+    public string? Path { get; set; }
+
+    /// <summary><c>pending</c> (never read), <c>ok</c>, <c>partial</c> (no SBOM, own readers only) or <c>failing</c>.</summary>
+    public string State { get; set; } = "pending";
+
+    public string? StateReason { get; set; }
+
+    public DateTimeOffset? FailingSince { get; set; }
+
+    public string? LastCommitSha { get; set; }
+
+    public DateTimeOffset? LastIndexedAt { get; set; }
+
+    public DateTimeOffset NextCheckAt { get; set; }
+
+    public string? HeadEtag { get; set; }
+
+    /// <summary>The last SBOM, gzip-compressed (master plan 4.10: usually under 200 kB).</summary>
+    public byte[]? LastSbom { get; set; }
+
+    /// <summary>A much smaller state held back for confirmation (16.5), gzip-compressed JSON of the findings.</summary>
+    public byte[]? PendingShrink { get; set; }
+
+    public string? PendingShrinkCommit { get; set; }
+
+    /// <summary>When <c>repository.unavailable</c> was raised for the current failure, so it is raised once.</summary>
+    public DateTimeOffset? UnavailableRaisedAt { get; set; }
+
+    public Guid CreatedBy { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>A platform a detection rule suggests for a project (master plan 4.5, 16.3, 16.5).</summary>
+internal sealed class ComponentSuggestion : IOrganizationOwned
+{
+    public Guid Id { get; set; }
+
+    public Guid OrganizationId { get; set; }
+
+    public Guid ProjectId { get; set; }
+
+    public Guid RepositoryLinkId { get; set; }
+
+    public required string ProductKey { get; set; }
+
+    /// <summary>The version line read, e.g. <c>10.0</c>.</summary>
+    public string? Version { get; set; }
+
+    /// <summary>File, line and value read; a dismissed suggestion returns only when this changes.</summary>
+    public required JsonDocument Evidence { get; set; }
+
+    /// <summary>Hash of product, version and the values read: the identity of a suggestion.</summary>
+    public required string Fingerprint { get; set; }
+
+    /// <summary><c>open</c>, <c>accepted</c> or <c>dismissed</c>.</summary>
+    public string State { get; set; } = "open";
+
+    public Guid? ComponentId { get; set; }
+
+    public Guid? DecidedBy { get; set; }
+
+    public DateTimeOffset? DecidedAt { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+}

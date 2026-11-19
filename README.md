@@ -220,8 +220,9 @@ initial load, no access to any source. With Docker Compose and an image (built w
 `docker build -f deploy/Dockerfile -t ardea:dev .` until the first release):
 
 ```bash
-docker compose up -d --wait api        # database, migration, API; no worker
+docker compose up -d --wait api        # database, migration, API; the worker comes after the data
 docker compose run --rm -e ARDEA_DB_OWNER_PASSWORD="$(sed -n 's/^ARDEA_DB_OWNER_PASSWORD=//p' .env)" api seed-demo
+docker compose up -d --wait            # the worker; with the sources switched off it fetches nothing
 ```
 
 `seed-demo` prints the demo owner's e-mail address and a generated password once; it refuses a database that

@@ -5145,6 +5145,69 @@
         }
       }
     },
+    "/api/v1/instance/ai/providers": {
+      "get": {
+        "tags": [
+          "Administration"
+        ],
+        "operationId": "listAiProviders",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AiProviderInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instance/ai/providers/{name}/test": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "operationId": "testAiProvider",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiConnectionResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/instance/jobs": {
       "get": {
         "tags": [
@@ -5779,6 +5842,68 @@
             "type": "string"
           }
         }
+      },
+      "AiConnectionResult": {
+        "required": [
+          "ok",
+          "durationMs",
+          "error"
+        ],
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "The provider answered."
+          },
+          "durationMs": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "How long the answer took.",
+            "format": "int64"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What went wrong, in words safe to show an administrator: no key, no prompt."
+          }
+        },
+        "description": "The outcome of a connection test (master plan 14, task 4.1)."
+      },
+      "AiProviderInfo": {
+        "required": [
+          "name",
+          "kind",
+          "model",
+          "local",
+          "host"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "local": {
+            "type": "boolean"
+          },
+          "host": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "What the administration shows of a provider: never its key, and of the endpoint only the host."
       },
       "AlertDetailView": {
         "required": [

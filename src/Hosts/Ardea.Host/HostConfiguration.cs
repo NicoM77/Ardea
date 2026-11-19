@@ -23,7 +23,15 @@ internal static class HostConfiguration
             .RequireBase64Key(MasterKeyKey, 32, "master key that protects stored secrets; generate one with `ardea init-env`")
             .RequireAbsoluteUrl(PublicUrlKey, "public address of the instance, used for links and cookies")
             .OneOf("REGISTRATION", "invite", "open", "closed")
-            .PositiveInt("DB_PORT");
+            .PositiveInt("DB_PORT")
+            .Add(AiErrors(configuration));
+
+    /// <summary>A provider that is configured wrongly stops the start instead of failing on its first call (master plan 7.8).</summary>
+    private static IReadOnlyList<string> AiErrors(IConfiguration configuration)
+    {
+        Ardea.Platform.Ai.AiProviderOptions.FromConfiguration(configuration, out var errors);
+        return errors;
+    }
 
     /// <summary>What <c>migrate</c> needs.</summary>
     public static ConfigurationCheck CheckMigration(IConfiguration configuration) =>

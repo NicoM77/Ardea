@@ -4,6 +4,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/BuildingBlocks/Ardea.Platform/Ardea.Platform.csproj" />
+    <ProjectReference Include="../../src/BuildingBlocks/Ardea.Ai/Ardea.Ai.csproj" />
     <ProjectReference Include="../Ardea.TestSupport/Ardea.TestSupport.csproj" />
   </ItemGroup>
 </Project>

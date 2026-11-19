@@ -20,7 +20,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names activemq via name; installed version above every range (highest bound 6.3.3); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists 6.3.0 to before 6.3.3 and 5.19.0 to before 5.19.12; the description names 6.3.3 as a fix release, so 6.3.4 is past the fix in its line.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P002",
@@ -40,7 +46,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names mattermost via name; installed version above every range (highest bound 6.3.2); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is about the Mattermost Desktop App (description and title), not Mattermost Server; the affected entry's generic product name 'Mattermost' and its versions (<=6.3.2) are Desktop App versions.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P003",
@@ -61,7 +73,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-cxf via package; installed version above every range (highest bound 4.7.5); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[0] lists the old org.apache.openejb:openejb-cxf line 4.0.0-beta-1 through 4.7.5 with no fix in that line; the description names 10.3.0/11.0.0-M2 as the only fixes, so 4.7.6 is before the fix. Ranges stop at 4.7.5 (probably the last real 4.x release; 4.7.6 may not exist), prose decides.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P004",
@@ -82,7 +100,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.tomee:tomee-catalina via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists 10.0.0-M1 to before 10.3.0 for tomee-catalina; the description names 10.3.0 as the fix, so 10.3.1 is fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P005",
@@ -103,7 +127,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.openejb:openejb-server via package; installed version above every range (highest bound 4.7.5); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[0] lists org.apache.openejb:openejb-server 4.0.0-beta-1 through 4.7.5 with no fix in the 4.x line; the description names 10.3.0/11.0.0-M2 as the fixes, so 4.7.6 is before any fix. Ranges stop at the last 4.x release (4.7.6 may not exist), prose decides.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P006",
@@ -124,7 +154,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[1] names pkg:maven/org.apache.tomee:tomee-catalina via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[1] lists org.apache.tomee:tomee-catalina 10.0.0-M1 to before 10.3.0; the description names 10.3.0 as the fix, so 10.3.1 is fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P007",
@@ -145,7 +181,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.tomee:tomee-embedded via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists tomee-embedded 10.0.0-M1 to before 10.3.0; the description names 10.3.0 as the fix, so 10.3.1 is fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P008",
@@ -166,7 +208,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.tomee:tomee-security via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists tomee-security 10.0.0-M1 to before 10.3.0; fix 10.3.0 per the description, so 10.3.1 is fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P009",
@@ -187,7 +235,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.tomee:tomee-security via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists tomee-security 10.0.0-M1 to before 10.3.0; fix 10.3.0 per the description, so 10.3.1 is fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P010",
@@ -207,7 +261,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names mattermost via name; installed version above every range (highest bound 6.3.2); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is about the Mattermost Desktop App (description), not Mattermost Server; the generic product name 'Mattermost' and the versions <=6.3.2 are Desktop App versions.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P011",
@@ -228,7 +288,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.datasketches:datasketches-java via package; installed version above every range (highest bound 9.0.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[0] and the description say 'through 9.0.0', but the description also says 9.1.0 fixes the issue; per the rule the fix version decides, so 9.0.1 is affected. Ambiguous: a 9.0.1 release, if it exists, is not mentioned by the record.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P012",
@@ -248,7 +314,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names glibc via name; installed version above every range (highest bound 0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Description says glibc 2.3.3 and later are affected (the range '2.3.3 < 0' is malformed, meaning open-ended); the installed 0.0.1 is below the explicit lower bound 2.3.3. The profile version 0.0.1 is not a real glibc version, so the pair is of doubtful value.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P013",
@@ -268,7 +340,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names fortimanager via cpe; installed version above every range (highest bound 8.0.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "For FortiManager affected[0] lists only 8.0.0 at 8.0 (plus 7.6.0-7.6.7, 7.4.0-7.4.11, 7.2.0-7.2.12); 8.0.1 is affected only for FortiManager Cloud (affected[1]), a different product.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P014",
@@ -288,7 +366,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names n8n via name; installed version above every range (highest bound 2.44.1); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists 2.44.0 to before 2.44.1 with 2.44.1 unaffected; description 'before 2.43.5, 2.44.x before 2.44.1, 3.x before 3.0.1', so 2.44.2 is fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P015",
@@ -308,7 +392,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names n8n via name; installed version above every range (highest bound 2.45.5); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[1] lists 0 to before 2.45.5 with 2.45.5 unaffected (backport fix), so 2.45.6 is fixed. The title/prose 'before 2.46.1' is the coarser summary; the ranges with the 2.45.5 backport are more specific.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P016",
@@ -328,7 +418,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names virtualbox via name; installed version above every range (highest bound 7.2.22); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Oracle states the only supported affected version is 7.2.22; 7.2.23 is above it (the fix comes with the following release). Note VirtualBox releases use even patch numbers, so 7.2.23 is likely not a real release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P017",
@@ -348,7 +444,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names virtualbox via name; installed version above every range (highest bound 7.2.22); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Oracle states the only supported affected version is 7.2.22; 7.2.23 is above it. VirtualBox releases use even patch numbers, so 7.2.23 is likely not a real release.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P018",
@@ -368,7 +470,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names jira via name; installed version above every range (highest bound 10.3.26); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[1] (Jira Software Data Center) lists only 10.3.26 affected and 10.3.27 explicitly unaffected; the description says upgrade to >= 10.3.27.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P019",
@@ -388,7 +496,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names jira via name; installed version above every range (highest bound 11.3.12); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists 11.3.12 and 10.3.26 affected and 11.3.13 explicitly unaffected; the description names 11.3.13 as the fix.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P020",
@@ -408,7 +522,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names jira via name; installed version above every range (highest bound 11.3.12); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists 11.3.12 and 10.3.26 affected and 11.3.13 explicitly unaffected; the description names 11.3.13 as the fix.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P021",
@@ -429,7 +549,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-svggen via package; installed version above every range (highest bound 1.19.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] and the description say 'through 1.19' (range <=1.19.0), but the description names 1.20 as the fixing release; per the rule the fix version decides, so 1.19.1 is affected. Ambiguous: Batik has no known 1.19.1 release, the profile version may be guessed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P022",
@@ -450,7 +576,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/org.apache.xmlgraphics:batik-util via package; installed version above every range (highest bound 1.19.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] and the description say 'through 1.19' (range <=1.19.0), but 1.20 is named as the fix; per the rule 1.19.1 is before the fix and affected. Ambiguous: a Batik 1.19.1 release is not mentioned anywhere and may not exist.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P023",
@@ -470,7 +602,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names mattermost via name; installed version above every range (highest bound 6.3.2); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is about the Mattermost Desktop App (title and description), not Mattermost Server; the generic product name 'Mattermost' and the versions <=6.3.2 are Desktop App versions.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P024",
@@ -491,7 +629,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[1] names pkg:maven/org.apache.tomee:openejb-core via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[1] lists org.apache.tomee:openejb-core 10.0.0-M1 to before 10.3.0, and the description names 10.3.0 as the fix, so 10.3.1 is fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P025",
@@ -512,7 +656,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[1] names pkg:maven/org.apache.tomee:openejb-core via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[1] lists org.apache.tomee:openejb-core 10.0.0-M1 to before 10.3.0, fix 10.3.0 per the description, so 10.3.1 is fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P026",
@@ -533,7 +683,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[1] names pkg:maven/org.apache.tomee:openejb-derbynet via package; installed version above every range (highest bound 10.3.0); the description names a higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[1] lists org.apache.tomee:openejb-derbynet 10.0.0-M1 to before 10.3.0, fix 10.3.0 per the description, so 10.3.1 is fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P027",
@@ -553,7 +709,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names vscode via name; installed version above every range (highest bound 1.145.3); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists Visual Studio Code 1.0.0 to before 1.145.3, i.e. fixed in 1.145.3; 1.145.4 is later.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P028",
@@ -573,7 +735,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names consul via name; installed version above every range (highest bound 2.1.0); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Consul (Community) is affected from 2.0.4 to before 2.1.0, and the description says it is fixed in 2.1.0; 2.1.1 is fixed. affected[1] concerns Consul Enterprise only.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P029",
@@ -593,7 +761,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names gitlab via cpe; installed version above every range (highest bound 19.5.6); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Description and affected[0]: 19.5 before 19.5.6 is affected; 19.5.7 is past the fix.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P030",
@@ -613,7 +787,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names airflow via name; installed version above every range (highest bound 3.4.0); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists apache-airflow-core 0 to before 3.4.0 and the description says upgrade to 3.4.0 or later; 3.4.1 is fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P031",
@@ -633,7 +813,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names dotnet via name; installed version above every range (highest bound 11.0.0); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[1] lists .NET 11.0 from 11.0.0-preview.1 to before 11.0.0, so the 11.0.0 release is fixed; 11.0.1 is later. Other entries are other .NET lines and Visual Studio.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P032",
@@ -653,7 +839,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[6] names sql-server via name; installed version above every range (highest bound 17.0.5045.3); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[6] lists SQL Server 2025 CU line 17.0.4006.0 to before 17.0.5045.3 and affected[7] the GDR line to before 17.0.1155.3; 17.0.5045.4 is past the CU fix (the build number looks guessed).",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P033",
@@ -673,7 +865,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names dotnet via name; installed version above every range (highest bound 11.0.0); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": ".NET 11.0 entries list 11.0.0-preview.1 to before 11.0.0, so the 11.0.0 release is fixed; 11.0.1 is later.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P034",
@@ -693,7 +891,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names gitlab via cpe; installed version above every range (highest bound 19.5.6); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Description and affected[0]: 19.5 before 19.5.6 is affected; 19.5.7 is past the fix.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P035",
@@ -713,7 +917,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names postgresql via name; installed version above every range (highest bound 18.7); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Description: versions before 18.7 (and 17.12, 16.16, ...) are affected; affected[0] 18 to before 18.7. 18.7.1 is past the fix; note PostgreSQL has no three-part 18.x versions, so the profile version looks guessed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P036",
@@ -733,7 +943,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names postgresql via name; installed version above every range (highest bound 18.7); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Description: versions before 18.7 are affected in the 18 line; 18.7.1 is past the fix. PostgreSQL uses two-part versions, so 18.7.1 looks guessed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P037",
@@ -753,7 +969,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[3] names system-text-json via name; installed version above every range (highest bound 11.0.0); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[3] lists System.Text.Json up to before 11.0.0 (lower bound 'NOT_YET_AVAILABLE'), so 11.0.0 is fixed; 11.0.1 is later.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P038",
@@ -774,7 +996,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:pypi/nanobot-ai via package; installed version above every range (highest bound 0.4.1); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] and description: nanobot-ai from 0.3.5 before 0.4.1; 0.4.2 is past the fix.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P039",
@@ -794,7 +1022,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names nodejs via name; installed version above every range (highest bound 26.13.1); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists 25.0.0 to before 26.13.1 for the 26.x line, so 26.13.1 is fixed; 26.13.2 is later.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P040",
@@ -814,7 +1048,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names typo3 via name; installed version above every range (highest bound 14.3.12); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists TYPO3 14.0.0 to before 14.3.12; 14.3.13 is past the fix. The description says the flaw is actively exploited, which does not matter for a fixed version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P041",
@@ -834,7 +1074,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names fortimail via cpe; installed version above every range (highest bound 8.0.2); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Description and affected[0]: FortiMail 8.0.0 through 8.0.2 affected; 8.0.3 is above the 8.0 range.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P042",
@@ -854,7 +1100,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names fortianalyzer via cpe; installed version above every range (highest bound 8.0.1); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[1] and the description: FortiAnalyzer 8.0.0 through 8.0.1 affected; 8.0.2 is above the 8.0 range.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P043",
@@ -874,7 +1126,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names openssl via name; installed version above every range (highest bound 4.1.1); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists 4.1.0 to before 4.1.1 (patch commit named '4.1.1'); 4.1.2 is past the fix.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P044",
@@ -894,7 +1152,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[3] names shiro via name; installed version above every range (highest bound 3.0.2); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Description: all versions through 3.0.1 affected, fixed in 3.0.2; all four module entries end before 3.0.2. 3.0.3 is fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P045",
@@ -915,7 +1179,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:golang/cmd/go via package; installed version above every range (highest bound 1.27.4); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists cmd/go 1.27.0-0 to before 1.27.4 (and before 1.26.11); 1.27.5 is past the 1.27.4 fix.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P046",
@@ -935,7 +1205,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names linux-kernel via name; installed version above every range (highest bound 6.9); the description names no higher version",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[1] has defaultStatus affected, lists 6.9 affected and only 0-6.9, 6.12.117+, 6.18.61+, 7.3.2+ and 7.4-rc1+ as unaffected; 6.9.1 falls in none of the unaffected ranges, so it is affected (the 6.9 stable line got no fix). The range is not 'above every range' once the default status is read.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P047",
@@ -955,7 +1231,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[5] names dotnet via name; installed version inside lessThan 8.0.34",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[4]/[5] list .NET 8.0 from 8.0.0 to before 8.0.34; 8.0.0 is inside. The record names only Linux and macOS installs, not Windows; the profile gives no platform, so the version decides.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P048",
@@ -975,7 +1257,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[3] names dotnet via name; installed version inside lessThan 11.0.0",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The .NET 10.0 entries end before 10.0.15 and the .NET 11.0 entries start at 11.0.0-preview.1; 10.9.9 lies in neither range. .NET 10.9.9 does not exist (the 10 line is 10.0.x), so the pair rests on a made-up version; the selection compared it with '<11.0.0' and ignored the preview lower bound.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P049",
@@ -995,7 +1283,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names grafana via name; installed version inside lessThanOrEqual 13.0.12",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[0] (Grafana OSS) lists 13.0.0 through 13.0.12; 13.0.0 is inside. The prose adds that host files were reachable before 13.0.4 with a local filesystem repository, which also covers 13.0.0.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P050",
@@ -1015,7 +1309,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names office via name; installed version inside lessThan 16.0.14334.21048",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[1] (Office LTSC 2021) lists 16.0.1 to before 16.0.14334.21048, affected[0] (Microsoft 365 Apps) and affected[2] (LTSC 2024) also start at 16.0.0/16.0.1; 16.0.1 is in range for every edition. The profile version 16.0.1 is only the generic Office 16 version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P051",
@@ -1035,7 +1335,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names airflow via name; installed version inside lessThan 3.4.0",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[1] lists apache-airflow-core 0 to before 3.4.0 and the description says upgrade to 3.4.0 or later; 3.3.9 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P052",
@@ -1055,7 +1361,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[12] names windows-server via name; installed version inside lessThan 10.0.26100.33822",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[12] lists Windows Server 2025 10.0.26100.0 to before 10.0.26100.33822; build 10.0.26100.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P053",
@@ -1075,7 +1387,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[9] names windows-server via name; installed version inside lessThan 10.0.17763.9487",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[9]/[10] list Windows Server 2019 10.0.17763.0 to before 10.0.17763.9487; build 10.0.17763.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P054",
@@ -1095,7 +1413,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[13] names visual-studio via name; installed version inside lessThan 18.11.4",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[13] lists Visual Studio 2026 version 18.11 from 18.11.0 to before 18.11.4; 18.11.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P055",
@@ -1115,7 +1439,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[14] names visual-studio via name; installed version inside lessThan 18.12.0",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Visual Studio 18.11.9 belongs to the 18.11 line, which affected[13] lists as 18.11.0 to before 18.11.4, so it is past the fix. affected[14] is the 18.12 line with an empty range (18.12.0 to before 18.12.0); the selection read only its upper bound.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P056",
@@ -1135,7 +1465,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[4] names visual-studio via name; installed version inside lessThan 18.11.4",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[4] lists Visual Studio 2026 version 18.11 from 18.11.0 to before 18.11.4; 18.11.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P057",
@@ -1155,7 +1491,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names git via name; installed version inside exact 2.50.1",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[0] lists Git 2.50.1 (and 2.51.2 to 2.56.0) as affected versions; 2.50.1 is named exactly.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P058",
@@ -1175,7 +1517,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names mysql via name; installed version inside exact 26.10",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] (MySQL Server) and the description name 26.10 as an affected supported version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P059",
@@ -1195,7 +1543,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names python via name; installed version inside lessThan 3.16.0",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] lists CPython 0 to before 3.16.0 (tarfile/zipfile/gzip CLI); 3.15.9 is inside. The bound <3.16.0 may hide 3.15.x backports, but the record names none.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P060",
@@ -1215,7 +1569,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names postgresql via name; installed version inside lessThan 18.7",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] and the description: within major 18, minor versions before 18.7 are affected; the profile version '18' read as 18.0 is inside. Ambiguous: '18' may only name the major version, whose later minors (18.7+) are fixed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P061",
@@ -1235,7 +1595,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[4] names windows via name; installed version inside lessThan 10.0.22631.7652",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[4] lists Windows 11 Version 23H2 (x64) 10.0.22631.0 to before 10.0.22631.7652; build 10.0.22631.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P062",
@@ -1255,7 +1621,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[5] names office via name; installed version inside lessThan 16.115.26110837",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[3] (Office LTSC 2024) lists 16.0.0 to before 16.0.17932.21140 and affected[5] (LTSC for Mac 2024) 16.0.0 to before 16.115.26110837; 16.0.0 is inside. The profile does not say which Office edition.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P063",
@@ -1275,7 +1647,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names apache-httpd via name; installed version inside lessThanOrEqual 2.4.70",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[0] and the description: Apache HTTP Server 2.4.55 through 2.4.70 (mod_http2); 2.4.55 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P064",
@@ -1295,7 +1673,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[4] names windows via name; installed version inside lessThan 10.0.22631.7711",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[4]/[5] list Windows 11 Version 23H2 10.0.22631.0 to before 10.0.22631.7711; build 10.0.22631.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P065",
@@ -1315,7 +1699,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names windows via name; installed version inside lessThan 10.0.17763.9487",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[1] lists Windows 10 Version 1809 10.0.17763.0 to before 10.0.17763.9487; build 10.0.17763.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P066",
@@ -1335,7 +1725,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names gitlab via cpe; installed version inside lessThan 19.3.9",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "Description and affected[0]: all versions from 13.8 before 19.3.9; 13.8 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P067",
@@ -1355,7 +1751,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names office via name; installed version inside lessThan 16.115.26110837",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[1] (Microsoft Office 365 for Mac) lists 1.0.0 to before 16.115.26110837; 1.0.0 is inside. Ambiguous: 1.0.0 is only the record's placeholder lower bound and lies below every Windows edition's range, so the verdict holds only if the installed Office is the Mac edition.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P068",
@@ -1375,7 +1777,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names sharepoint-server via name; installed version inside lessThan 16.0.20326.20278",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] lists SharePoint Server Subscription Edition 16.0.0 to before 16.0.20326.20278; 16.0.0 is inside. SharePoint Server 2016/2019 are not listed; the profile does not name the edition.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P069",
@@ -1395,7 +1803,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names chrome via name; installed version inside lessThan 157.0.8103.50",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "Description: Chrome prior to 157.0.8103.50 is affected; 157.0.8102.50 is earlier. The structured range is degenerate (157.0.8103.50 to before 157.0.8103.50), so the prose decides.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P070",
@@ -1415,7 +1829,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names fortimanager via cpe; installed version inside exact 8.0.0",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[0] and the description name FortiManager 8.0.0 as affected; 8.0.0 is named exactly.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P071",
@@ -1435,7 +1855,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names fortimanager via cpe; installed version inside lessThanOrEqual 8.0.1",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[0] and the description: FortiManager 8.0.0 through 8.0.1 affected; 8.0.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P072",
@@ -1455,7 +1881,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names fortianalyzer via cpe; installed version inside exact 8.0.0",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[1] and the description name FortiAnalyzer 8.0.0 as affected; 8.0.0 is named exactly.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P073",
@@ -1475,7 +1907,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names fortimanager via cpe; installed version inside lessThanOrEqual 8.0.1",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[0] and the description: FortiManager 8.0.0 through 8.0.1 affected; 8.0.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P074",
@@ -1495,7 +1933,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names n8n via name; installed version inside lessThan 1.123.89",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] lists n8n 0 to before 1.123.89 and the description says 'before 1.123.89'; 1.123.88 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P075",
@@ -1515,7 +1959,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names n8n via name; installed version inside lessThan 1.123.89",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] lists n8n 0 to before 1.123.89 and the description says 'before 1.123.89'; 1.123.88 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P076",
@@ -1535,7 +1985,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[4] names office via name; installed version inside lessThan 16.115.26110837",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] (Microsoft 365 Apps) and affected[2] (Office LTSC 2021) start at 16.0.1, affected[3] (LTSC 2024) at 16.0.0; 16.0.1 is inside every Windows edition's range.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P077",
@@ -1556,7 +2012,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:pypi/pretix via package; installed version inside lessThan 2026.7.5",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[0] lists pretix 0 to before 2026.7.5; 2026.7.4 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P078",
@@ -1576,7 +2038,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names shiro via name; installed version inside lessThan 3.0.2",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "Description: all Apache Shiro versions through 3.0.1 are affected when the principal tag is used, fixed in 3.0.2; affected[0] shiro-web 0 to before 3.0.2. 3.0.1 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P079",
@@ -1596,7 +2064,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names gitlab via cpe; installed version inside lessThan 19.3.9",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "Description and affected[0]: all versions from 17.8 before 19.3.9; 17.8 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P080",
@@ -1616,7 +2090,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names chrome via name; installed version inside lessThan 158.0.8127.36",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "Description: Google Chrome on iOS prior to 158.0.8127.36; 158.0.8126.36 is earlier (structured range is degenerate, prose decides). Ambiguous: the flaw is in Chrome on iOS only, and the profile does not name the platform.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P081",
@@ -1636,7 +2116,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names chrome via name; installed version inside lessThan 158.0.8127.36",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "Description: Chrome prior to 158.0.8127.36 is affected; 158.0.8126.36 is earlier. The structured range is degenerate, the prose decides.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P082",
@@ -1656,7 +2142,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names chrome via name; installed version inside lessThan 158.0.8127.36",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "Description: Chrome prior to 158.0.8127.36 is affected; 158.0.8126.36 is earlier. The structured range is degenerate, the prose decides.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P083",
@@ -1676,7 +2168,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[6] names sql-server via name; installed version inside lessThan 17.0.5045.3",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[6] lists SQL Server 2025 CU line 17.0.4006.0 to before 17.0.5045.3; build 17.0.4006.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P084",
@@ -1696,7 +2194,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names camel via name; installed version inside lessThan 4.18.5",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 5,
+        "reason": "Description: Apache Camel from 4.0.0 before 4.18.5 is affected; affected[0] names the camel-hazelcast module, 4.0.0 to before 4.18.5. 4.0.0 is inside; only applications using camel-hazelcast are exposed.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P085",
@@ -1716,7 +2220,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[6] names windows-server via name; installed version inside lessThan 10.0.26100.33822",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[6]/[7] list Windows Server 2025 10.0.26100.0 to before 10.0.26100.33822; build 10.0.26100.0 is inside (the flaw is in the Remote Desktop Client).",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P086",
@@ -1736,7 +2246,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[15] names windows-server via name; installed version inside lessThan 10.0.26100.33822",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[15]/[16] list Windows Server 2025 10.0.26100.0 to before 10.0.26100.33822; build 10.0.26100.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P087",
@@ -1756,7 +2272,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[3] names windows via name; installed version inside lessThan 10.0.26200.9974",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[3] lists Windows 11 Version 25H2 10.0.26200.0 to before 10.0.26200.9974; build 10.0.26200.0 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P088",
@@ -1777,7 +2299,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[2] names pkg:golang/cmd/link via package; installed version inside lessThan 1.26.11",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[2] lists cmd/link 0 to before 1.26.11; 1.26.10 is inside. Part of the flaw (PE DLL names) concerns Windows builds only.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P089",
@@ -1797,7 +2325,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names linux-kernel via name; installed version inside exact 7.2",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 3,
+        "reason": "affected[1] has defaultStatus affected and lists 7.2 as affected, with only <7.2, 7.3.2+ (7.3 line) and 7.4-rc1+ unaffected; 7.2 is named exactly.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P090",
@@ -1817,7 +2351,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names linux-kernel via name; installed version inside exact 6.12",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 4,
+        "reason": "affected[1] has defaultStatus affected, lists 6.12 as affected and 6.12.117 and later in the 6.12 line as fixed; 6.12 is inside.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P091",
@@ -1837,7 +2377,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names git via cpe; a distribution package of a version inside lessThan 2.49.1",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 4,
+        "reason": "Distribution package of Git 2.49.0; upstream ranges (0 to before 2.49.1) would include it, but distributions backport fixes, so the upstream version does not decide.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P092",
@@ -1857,7 +2403,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names apache-httpd via name; a distribution package of a version inside lessThanOrEqual 2.4.70",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "Distribution package of httpd 2.4.30; upstream it would be inside (description 2.4.30 through 2.4.69, range up to 2.4.70, a small conflict), but distributions backport fixes.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P093",
@@ -1877,7 +2429,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names openssl via name; a distribution package of a version inside lessThan 4.1.1",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "Distribution package of OpenSSL 4.1.0; upstream 4.1.0 to before 4.1.1 is affected, but distributions backport fixes, so the upstream version does not decide.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P094",
@@ -1897,7 +2455,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names php via name; a distribution package of a version inside lessThan 8.2.35",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 4,
+        "reason": "Distribution package of PHP 8.2.34; upstream 8.2 before 8.2.35 is affected, but distributions backport fixes. The record carries a CISA KEV entry (actively exploited, critical).",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P095",
@@ -1917,7 +2481,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names git via name; a distribution package of a version inside exact 2.50.1",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "Distribution package of Git 2.50.1; upstream lists 2.50.1 as affected, but distributions backport fixes, so the upstream version does not decide.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P096",
@@ -1937,7 +2507,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names git via name; a distribution package of a version inside exact 2.50.1",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution package of Git 2.50.1; upstream lists 2.50.1 as affected, but distributions backport fixes.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P097",
@@ -1957,7 +2533,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names mysql via name; a distribution package of a version inside exact 26.10",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "Distribution package of MySQL 26.10; Oracle lists MySQL Server 26.10 as affected, but a distribution build may carry the fix, so the upstream version does not decide.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P098",
@@ -1977,7 +2559,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names mysql via name; a distribution package of a version inside exact 26.10",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution package of MySQL 26.10; Oracle lists 26.10 as affected, but a distribution build may carry the fix.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P099",
@@ -1997,7 +2585,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names glibc via name; a distribution package of a version inside lessThanOrEqual 2.44",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution package of glibc 2.2; upstream says 2.2 to 2.44 are affected, but distributions backport fixes, so the upstream version does not decide.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P100",
@@ -2017,7 +2611,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names postgresql via name; a distribution package of a version inside lessThan 18.7",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution package of PostgreSQL '18' (major only); upstream minors before 18.7 are affected, but distributions backport fixes and the minor version is not given.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P101",
@@ -2037,7 +2637,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names apache-httpd via name; a distribution package of a version inside lessThanOrEqual 2.4.70",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution package of httpd 2.4.55; upstream 2.4.55 through 2.4.70 are affected (mod_http2), but distributions backport fixes.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P102",
@@ -2057,7 +2663,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names postgresql via name; a distribution package of a version inside lessThan 18.7",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "Distribution package of PostgreSQL '18' (major only); upstream minors before 18.7 are affected, but distributions backport fixes and the minor is unknown.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P103",
@@ -2077,7 +2689,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names postgresql via name; a distribution package of a version inside lessThan 18.7",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution package of PostgreSQL '18' (major only); upstream minors before 18.7 are affected, but distributions backport fixes and the minor is unknown.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P104",
@@ -2097,7 +2715,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names nodejs via name; a distribution package of a version inside lessThan 22.23.5",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution package of Node.js 22.23.4; upstream before 22.23.5 is affected (macOS/Windows recursive fs.watch), but distributions backport fixes.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P105",
@@ -2117,7 +2741,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names nodejs via name; a distribution package of a version inside lessThan 22.23.5",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution package of Node.js 22.23.4; upstream before 22.23.5 is affected, but distributions backport fixes.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P106",
@@ -2137,7 +2767,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names openssl via name; a distribution package of a version inside lessThan 4.1.1",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution package of OpenSSL 4.1.0; upstream 4.1.0 to before 4.1.1 is affected (QUIC server), but distributions backport fixes.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P107",
@@ -2157,7 +2793,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names mysql via name; a distribution package of a version inside exact 26.10",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "Distribution package of MySQL 26.10; Oracle lists MySQL Server 26.10 as affected, but a distribution build may carry the fix.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P108",
@@ -2177,7 +2819,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names python via name; a distribution package of a version inside lessThan 3.10.21",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution package of Python 3.10.20; upstream CPython before 3.10.21 is affected (http.client), but distributions backport fixes.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P109",
@@ -2197,7 +2845,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[0] names openssl via name; a distribution package of a version inside lessThan 4.1.1",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution package of OpenSSL 4.1.0; upstream 4.1.0 to before 4.1.1 is affected (AES-GCM-SIV), but distributions backport fixes.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P110",
@@ -2217,7 +2871,13 @@
         "packaging": "distribution"
       },
       "selection": "affected[1] names linux-kernel via name; a distribution package of a version inside exact 6.9",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Distribution kernel 6.9; upstream affected[1] has default affected and lists 6.9 as affected, but distribution kernels carry backported fixes.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P111",
@@ -2237,7 +2897,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names linux-kernel via name; Git commits only",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "Besides Git commits, affected[1] gives versions: default affected from 4.5, with 6.12.116 and later in the 6.12 line unaffected; 6.12.1 is before that fix, so affected.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P112",
@@ -2257,7 +2923,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names symfony via name; Git commits only",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "affected[0] (symfony/serializer) and the description: versions prior to 5.4.56 are affected (range tagged 'git' but written as version numbers); 1.0.0 is inside. Ambiguous: Symfony 1.0.0 is an unrelated old codebase without the Serializer component, the profile version looks like a placeholder.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P113",
@@ -2277,7 +2949,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names symfony via name; Git commits only",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Description and affected entries: FrameworkBundle from 7.1 and HttpFoundation from 7.2 before 7.4.23, and 8.x before 8.1.11; Symfony 1.0.0 is below the stated lower bounds.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P114",
@@ -2297,7 +2975,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names log4net via package; Git commits only",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists log4net 1.2.9 to before 3.6.0, an explicit lower bound; 1.0.0 is below it (and is probably a placeholder version). affected[1] gives only Git commits.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P115",
@@ -2317,7 +3001,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[2] names log4net via package; Git commits only",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "affected[0] lists log4net 1.2.9 to before 3.6.0 (explicit lower bound) and affected[1] log4net.Ext.Mail from 3.4.0; 1.0.0 is below both. affected[2] gives only Git commits.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P116",
@@ -2337,7 +3027,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names log4net via package; Git commits only",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "Description and affected[0]: log4net from 1.2.9 before 3.6.0; 1.0.0 is below the explicit lower bound. affected[1] gives only Git commits.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P117",
@@ -2357,7 +3053,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names linux-kernel via name; Git commits only",
-      "label": null
+      "label": {
+        "verdict": "affected",
+        "level": 2,
+        "reason": "Besides Git commits, affected[1] has default affected from 4.8, with 6.12.117 and later in the 6.12 line unaffected; 6.12.1 is before that fix.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P118",
@@ -2377,7 +3079,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names pan-os via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "affected[1] lists PAN-OS 11.1 to 12.2 trains before specific hotfixes; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P119",
@@ -2397,7 +3105,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[7] names rhel via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The record lists libsoup packages in RHEL 6 to 10 (default affected until fixed package builds); the profile has RHEL without a version, and the fixed state depends on the libsoup package.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P120",
@@ -2417,7 +3131,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names grafana via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "affected[1] lists Grafana OSS 10.1.0 up to 12.4.15 in several lines; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P121",
@@ -2437,7 +3157,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[7] names dotnet via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The .NET 8.0, 9.0, 10.0 and 11.0 entries each list versions before a fix (8.0.34, 9.0.23, 10.0.15, 11.0.0); the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P122",
@@ -2458,7 +3184,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[1] names pkg:maven/org.apache.tomee:openejb-ssh via package; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "affected[1] lists org.apache.tomee:openejb-ssh 7.0.0-M1 through 10.2.0 and 11.0.0-M1 (no fix named, mitigation only); the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P123",
@@ -2478,7 +3210,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names netscaler-gateway via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 4,
+        "reason": "affected[1] lists NetScaler Gateway before 14.1-73.57 and before 13.1-64.39; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P124",
@@ -2498,7 +3236,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[9] names dotnet via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "The .NET entries list each line before its fix (8.0.34, 9.0.23, 10.0.15, 11.0.0); the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P125",
@@ -2518,7 +3262,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[2] names dotnet via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "The .NET entries list each line before its fix (8.0.34, 9.0.23, 10.0.15, 11.0.0); the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P126",
@@ -2538,7 +3288,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[16] names openshift via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The record lists Red Hat OpenShift Container Platform 4.12 to 4.22 and 5 (ca-certificates / RHCOS builds, default affected until fixed builds); the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P127",
@@ -2558,7 +3314,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names oracle-java-se via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Oracle lists Java SE 8u511, 11.0.33, 17.0.21, 21.0.13, 25.0.5 and 27.0.1 as affected supported versions; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P128",
@@ -2578,7 +3340,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[5] names sql-server via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "The record lists SQL Server 2017 to 2025 build ranges before their fixes; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P129",
@@ -2598,7 +3366,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[4] names office via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 4,
+        "reason": "The record lists Microsoft 365 Apps, Office LTSC 2021/2024 and the Mac editions before their fix builds; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P130",
@@ -2618,7 +3392,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[3] names office via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The record lists Microsoft 365 Apps, Office LTSC 2021/2024 and the Mac editions before their fix builds; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P131",
@@ -2639,7 +3419,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:maven/commons-codec:commons-codec via package; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 4,
+        "reason": "affected[0] lists commons-codec 1.16.0 to before 1.23.0; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P132",
@@ -2659,7 +3445,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names contact-form-7 via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The record is the Contact Form 7 WordPress plugin, affected before 6.2.5, which is the profile's component; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P133",
@@ -2679,7 +3471,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names fortios via cpe; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "affected[0] lists FortiOS 7.6.0 through 7.6.6 only; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P134",
@@ -2699,7 +3497,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names windows via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The only affected entry is 'Windows App Client for Windows Desktop' (the separately distributed Remote Desktop client app, 1.00 to before 2.0.1489.0), not the Windows operating system itself. Ambiguous only in that the app name contains 'Windows'.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P135",
@@ -2719,7 +3523,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[15] names windows-server via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "The record lists Windows Server 2016 to 2025 build ranges before their fixes; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P136",
@@ -2739,7 +3549,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names gitlab via cpe; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "affected[0] lists GitLab EE 18.8 to before 19.3.9, 19.4 before 19.4.8, 19.5 before 19.5.6; the profile has no version (nor edition).",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P137",
@@ -2759,7 +3575,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names office via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The record lists Microsoft 365 Apps and Office LTSC 2021/2024 before their fix builds; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P138",
@@ -2779,7 +3601,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names firefox via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 4,
+        "reason": "affected[0] marks Firefox 160+, ESR 153.7+ and ESR 115.45+ as unaffected (earlier versions affected per the prose); the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P139",
@@ -2799,7 +3627,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names thunderbird via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "affected[1] marks Thunderbird 160+ and 153.7+ as unaffected (earlier affected per the prose); the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P140",
@@ -2819,7 +3653,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names thunderbird via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "affected[0] marks Thunderbird 160+ and 153.7+ as unaffected (earlier affected per the prose); the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P141",
@@ -2839,7 +3679,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names fortimanager via cpe; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "affected[0] lists FortiManager 7.2.0 through 8.0.1 in four lines; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P142",
@@ -2859,7 +3705,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names fortianalyzer via cpe; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "affected[1] lists FortiAnalyzer 8.0.0 only; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P143",
@@ -2879,7 +3731,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names fortianalyzer via cpe; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "affected[0] lists FortiAnalyzer 7.2.0 through 8.0.1 in four lines; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P144",
@@ -2899,7 +3757,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[2] names n8n via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The n8n entries list before 1.123.89, 2.0.0 to before 2.45.5, 2.46.x before 2.46.1 and 3.x before 3.0.1; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P145",
@@ -2919,7 +3783,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names chrome via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Description: Chrome prior to 157.0.8103.78 is affected; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P146",
@@ -2939,7 +3809,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names virtualbox via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Oracle names VirtualBox 7.2.22 as the affected supported version; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P147",
@@ -2959,7 +3835,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names gitlab via cpe; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "affected[0] lists GitLab EE 19.5 to before 19.5.6; the profile has no version (nor edition).",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P148",
@@ -2979,7 +3861,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names directus via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "affected[0] and the description: Directus prior to 12.3.1; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P149",
@@ -3000,7 +3888,13 @@
         "dependencyScope": "runtime"
       },
       "selection": "affected[0] names pkg:npm/%40tensei/rest via package; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "affected[0] lists @tensei/rest 0 through 0.11.5 (no fix named); the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P150",
@@ -3020,7 +3914,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names chrome via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Description: Chrome prior to 158.0.8127.36 is affected; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P151",
@@ -3040,7 +3940,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names chrome via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Description: Chrome prior to 158.0.8127.36 is affected; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P152",
@@ -3060,7 +3966,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[6] names openshift via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "The record lists the oauth-server image of OpenShift Container Platform 4.13 to 4.22 (default affected until fixed builds; OCP 5 unaffected); the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P153",
@@ -3080,7 +3992,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[60] names openshift via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The OpenShift Container Platform 4 and 5 entries (RHCOS openssh) have default status unknown and no versions; the profile has no version either.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P154",
@@ -3100,7 +4018,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] names windows via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 4,
+        "reason": "The record lists Windows 11 23H2 to 26H2 build ranges before their fixes; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P155",
@@ -3120,7 +4044,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] names litespeed-cache via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The record is the LiteSpeed Cache WordPress plugin, the profile's component, affected through 7.9 (7.9.1 fixed); the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P156",
@@ -3140,7 +4070,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[5] names rhel via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "The record marks libsoup3 in RHEL 10 as affected until fixed builds, while RHEL 6, 7, 8 and 9 are listed unaffected; the profile has RHEL without a version, so it cannot be decided.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P157",
@@ -3160,7 +4096,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[15] names rhel via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 3,
+        "reason": "The record lists python-jwcrypto in RHEL 9 and RHEL 10 as affected until fixed builds; the profile has RHEL without a version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P158",
@@ -3180,7 +4122,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[2] names windows via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The record lists Windows 10 and 11 build ranges before their fixes; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P159",
@@ -3200,7 +4148,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[14] names windows-server via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The record lists Windows Server build ranges before their fixes among its 21 entries; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P160",
@@ -3220,7 +4174,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[11] names windows-server via name; no version in the profile",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The record lists Windows Server 2019 to 2025 build ranges before their fixes; the profile has no version.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P161",
@@ -3240,7 +4200,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Devolutions / PowerShell Universal, which the catalogue does not know; contains «PowerShell» with powershell",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Devolutions PowerShell Universal (before 2026.3.5), a separate commercial product, not Microsoft PowerShell.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P162",
@@ -3260,7 +4226,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[2] is Grafana / Prometheus Datasource, which the catalogue does not know; contains «Prometheus» with prometheus",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record concerns Grafana and its Prometheus data source plugin (affected[2]), not the Prometheus server; Grafana passes paths to the Prometheus server, the server itself is not at fault.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P163",
@@ -3280,7 +4252,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is FUJI ELECTRIC CO., LTD. / Hakko Electronics Co., Ltd. / TELLUS, which the catalogue does not know; contains «Electron» with electron",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is FUJI ELECTRIC / Hakko Electronics TELLUS and TELLUS Lite (HMI software), unrelated to the Electron framework.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P164",
@@ -3300,7 +4278,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[3] is Microsoft / Windows Server 2019 (Server Core installation), which the catalogue does not know; contains «Windows» with windows",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record lists only Windows Server 2016, 2019, 2022 and 2025 (DNS server); no Windows client edition is named, and the profile's component is Windows, not Windows Server.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P165",
@@ -3320,7 +4304,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Adobe / Adobe Experience Manager as a Cloud Service, which the catalogue does not know; contains «Adobe Experience Manager» with adobe-experience-manager",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "Besides AEM as a Cloud Service, affected[1]/[2] list Adobe Experience Manager 6.5 (through 6.5.25) and 6.5 LTS (through SP3), i.e. the on-premise product itself; the profile has no version. The selection only looked at the Cloud Service entry.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P166",
@@ -3340,7 +4330,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Red Hat / streams for Apache Kafka 2, which the catalogue does not know; contains «Apache Kafka» with kafka",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the Kroxylicious ACL authorizer (kroxylicious-authorizer-acl) shipped in Red Hat streams for Apache Kafka, a proxy component, not Apache Kafka itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P167",
@@ -3360,7 +4356,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Unknown / Advanced Product Fields (Product Addons) for WooCommerce, which the catalogue does not know; contains «WooCommerce» with woocommerce",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the third-party WordPress plugin 'Advanced Product Fields (Product Addons) for WooCommerce' (1.6.22 to 1.7.3), an add-on, not WooCommerce itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P168",
@@ -3380,7 +4382,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[6] is Microsoft / Windows Server 2025 (Server Core installation), which the catalogue does not know; contains «Windows» with windows",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record lists only Windows Server 2016, 2019, 2022 and 2025 (DNS server); no Windows client edition is named, and the profile's component is Windows, not Windows Server.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P169",
@@ -3400,7 +4408,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is SAP_SE / SAP Cloud SDK for Python, which the catalogue does not know; contains «Python» with python",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the SAP Cloud SDK for Python (before 0.50.0), a library written in Python, not the Python runtime.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P170",
@@ -3420,7 +4434,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is saadiqbal / CF7 Apps – Addons for Contact Form 7 (Honeypot, Database, Redirection, Webhook, etc.), which the catalogue does not know; contains «Contact Form 7» with contact-form-7",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the add-on plugin 'CF7 Apps – Addons for Contact Form 7' by saadiqbal (through 3.8.0), not the Contact Form 7 plugin itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P171",
@@ -3440,7 +4460,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Mozilla / Firefox for iOS, which the catalogue does not know; contains «Firefox» with firefox",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Firefox for iOS (fixed in 160.0), a separate mobile app, not the Firefox desktop browser.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P172",
@@ -3460,7 +4486,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Unknown / Redirection for Contact Form 7, which the catalogue does not know; contains «Contact Form 7» with contact-form-7",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the add-on plugin 'Redirection for Contact Form 7' (2.6.0 to before 3.2.16), not the Contact Form 7 plugin itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P173",
@@ -3480,7 +4512,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is WP Extended / The Ultimate WordPress Toolkit – WP Extended, which the catalogue does not know; contains «WordPress» with wordpress",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the WordPress plugin 'The Ultimate WordPress Toolkit – WP Extended' (through 3.4.2), not WordPress core.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P174",
@@ -3500,7 +4538,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Unknown / Security For WooCommerce, which the catalogue does not know; contains «WooCommerce» with woocommerce",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the third-party plugin 'Security For WooCommerce' (through 1.0.16), not WooCommerce itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P175",
@@ -3520,7 +4564,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is theupdateframework / python-tuf, which the catalogue does not know; contains «Python» with python",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is python-tuf (before 7.0.0), a Python library, not the Python runtime.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P176",
@@ -3540,7 +4590,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Progress Software / Kendo UI for jQuery, which the catalogue does not know; contains «jQuery» with jquery",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Progress Kendo UI for jQuery (2016.2.607 through 2026.3.1015), a commercial UI library built on jQuery, not jQuery itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P177",
@@ -3560,7 +4616,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Justin Kruit / Advanced Custom Fields: Font Awesome Field, which the catalogue does not know; contains «Advanced Custom Fields» with advanced-custom-fields",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the add-on plugin 'Advanced Custom Fields: Font Awesome Field' by Justin Kruit (through 6.1.4), not Advanced Custom Fields itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P178",
@@ -3580,7 +4642,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Elextensions / ELEX WordPress HelpDesk & Customer Ticketing System, which the catalogue does not know; contains «WordPress» with wordpress",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the plugin 'ELEX WordPress HelpDesk & Customer Ticketing System' (through 3.3.9), not WordPress core.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P179",
@@ -3600,7 +4668,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is MongoDB / Atlas SQL JDBC Driver, which the catalogue does not know; contains «MongoDB» with mongodb",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the MongoDB Atlas SQL JDBC Driver (2.2.1 through 4.0.1), a client driver, not the MongoDB server.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P180",
@@ -3620,7 +4694,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is MongoDB / Rust Driver, which the catalogue does not know; contains «MongoDB» with mongodb",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the MongoDB Rust Driver (several 2.x/3.x versions), a client library, not the MongoDB server.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P181",
@@ -3640,7 +4720,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is WPKoi WordPress Themes / WPKoi Templates for Elementor, which the catalogue does not know; contains «WordPress» with wordpress",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the WordPress plugin 'WPKoi Templates for Elementor' (through 3.7.4), not WordPress core.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P182",
@@ -3660,7 +4746,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is izhaorui / Zr.Admin.NET, which the catalogue does not know; contains «.NET» with dotnet",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Zr.Admin.NET, a third-party admin application (Git commit range), not the .NET runtime.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P183",
@@ -3680,7 +4772,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is django-tenants / django-tenants, which the catalogue does not know; contains «Django» with django",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the third-party package django-tenants (3.4.8 before 4.0.1), not the Django framework.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P184",
@@ -3700,7 +4798,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Hanshow Technology / Nebular Pro Electronic Shelf Labels, which the catalogue does not know; contains «Electron» with electron",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Hanshow Nebular Pro Electronic Shelf Labels (device firmware), unrelated to the Electron framework.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P185",
@@ -3720,7 +4824,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Ruby Central / cfp-app, which the catalogue does not know; contains «Ruby» with ruby",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Ruby Central's cfp-app (a Rails application, through 2.0), not the Ruby language runtime.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P186",
@@ -3740,7 +4850,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[9] is Red Hat / Red Hat build of Keycloak 26.6.6, which the catalogue does not know; contains «Keycloak» with keycloak",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 4,
+        "reason": "The record lists only Red Hat build of Keycloak 26.4/26.6 images, but the flaw is in keycloak-services, Keycloak's own core code, so upstream Keycloak is very likely affected too; no upstream version is stated and the profile has no version. Ambiguous: strictly read the record names only the Red Hat rebuild.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P187",
@@ -3760,7 +4876,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[3] is Helmholz / myREX24V2.virtual, which the catalogue does not know; contains «Helm» with helm",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is MB connect line mbCONNECT24 and Helmholz myREX24V2 remote-access products, unrelated to Helm (Kubernetes package manager).",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P188",
@@ -3780,7 +4902,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[2] is Helmholz / myREX24V2, which the catalogue does not know; contains «Helm» with helm",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is MB connect line mbCONNECT24 and Helmholz myREX24V2 remote-access products, unrelated to Helm.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P189",
@@ -3800,7 +4928,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Red Hat / Multicluster Engine for Kubernetes, which the catalogue does not know; contains «Kubernetes» with kubernetes",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the maestro component of Red Hat Multicluster Engine for Kubernetes, not Kubernetes itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P190",
@@ -3820,7 +4954,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[14] is Red Hat / Red Hat build of Apache Camel 4 for Quarkus 3, which the catalogue does not know; contains «Apache Camel» with camel",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The flaw is in RESTEasy (resteasy-core IIOImageProvider); the record lists products bundling it, including Red Hat build of Apache Camel for Quarkus, but not Apache Camel itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P191",
@@ -3840,7 +4980,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Unknown / Eupago Gateway For Woocommerce, which the catalogue does not know; contains «WooCommerce» with woocommerce",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the third-party plugin 'Eupago Gateway For Woocommerce' (4.5.0 before 4.7.6), not WooCommerce itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P192",
@@ -3860,7 +5006,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[2] is Red Hat / Red Hat Advanced Cluster Security for Kubernetes for IBM Power, little endian 4.10, which the catalogue does not know; contains «Kubernetes» with kubernetes",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Red Hat Advanced Cluster Security for Kubernetes (StackRox Central), not Kubernetes itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P193",
@@ -3880,7 +5032,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] is Microsoft / Windows Server 2016 (Server Core installation), which the catalogue does not know; contains «Windows» with windows",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record lists only Windows Server 2016 to 2025 (AD Certificate Services); no Windows client edition is named, and the profile's component is Windows, not Windows Server.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P194",
@@ -3900,7 +5058,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is the WordPress plugin or theme Elementor Website Builder; the profile has WordPress itself",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the Elementor Website Builder WordPress plugin (before 4.3.6); the profile has WordPress core 6.8.3.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P195",
@@ -3920,7 +5084,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is the WordPress plugin or theme Product Filter for WooCommerce by WBW; the profile has WordPress itself",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the 'Product Filter for WooCommerce by WBW' plugin (through 3.4.5); the profile has WordPress core 6.8.3.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P196",
@@ -3940,7 +5110,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is the WordPress plugin or theme Dokan; the profile has WordPress itself",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the Dokan WordPress plugin (before 5.3.3); the profile has WordPress core 6.8.3.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P197",
@@ -3960,7 +5136,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is the WordPress plugin or theme Defender Security; the profile has WordPress itself",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the Defender Security WordPress plugin (before 6.4.1); the profile has WordPress core 6.8.3.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P198",
@@ -3980,7 +5162,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is the WordPress plugin or theme Gravity Forms; the profile has WordPress itself",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the Gravity Forms WordPress plugin (before 3.2.2); the profile has WordPress core 6.8.3.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P199",
@@ -4000,7 +5188,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is the WordPress plugin or theme Security For WooCommerce; the profile has WordPress itself",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the 'Security For WooCommerce' WordPress plugin (through 1.0.16); the profile has WordPress core 6.8.3.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P200",
@@ -4020,7 +5214,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is the WordPress plugin or theme Security For WooCommerce; the profile has WordPress itself",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the 'Security For WooCommerce' WordPress plugin (through 1.0.16); the profile has WordPress core 6.8.3.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P201",
@@ -4040,7 +5240,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] is the WordPress plugin or theme WP Ultimate CSV Importer Pro; the profile has WordPress itself",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the WP Ultimate CSV Importer (Free and Pro) WordPress plugins; the profile has WordPress core 6.8.3.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P202",
@@ -4060,7 +5266,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is the WordPress plugin or theme VibeBP; the profile has WordPress itself",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the VibeBP WordPress plugin (through 1.9.9.8.1); the profile has WordPress core 6.8.3.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P203",
@@ -4080,7 +5292,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is the WordPress plugin or theme ARMember Premium – Membership Plugin, Content Restriction, Member Levels, User Profile & User signup; the profile has WordPress itself",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the ARMember Premium WordPress plugin (through 7.8.1); the profile has WordPress core 6.8.3.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P204",
@@ -4100,7 +5318,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Shenzhen Aitemi E Commerce Co. Ltd. / M300 Wi-Fi Repeater, which the catalogue does not know; shares «commerce» with adobe-commerce",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the Shenzhen Aitemi M300 Wi-Fi Repeater (vendor name contains 'E Commerce'), unrelated to Adobe Commerce.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P205",
@@ -4120,7 +5344,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is AMD / Versal™ AI Edge Series Gen 2 Adaptive SoCs, which the catalogue does not know; shares «adaptive» with cisco-asa",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is AMD Versal Gen 2 Adaptive SoCs (hardware/firmware), unrelated to Cisco Adaptive Security Appliance Software.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P206",
@@ -4140,7 +5370,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Microsoft / Entra Device Registration, which the catalogue does not know; shares «entra» with entra-id",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The record concerns Entra Device Registration, the device registration service that is part of Microsoft Entra ID; no version is given (affected '-') and the profile has none. Ambiguous: it may be a separate cloud service already fixed by Microsoft, but the record does not say so.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P207",
@@ -4160,7 +5396,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] is @libp2p / crypto, which the catalogue does not know; shares «crypto» with golang-x-crypto",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is js-libp2p and @libp2p/crypto (JavaScript), unrelated to golang.org/x/crypto.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P208",
@@ -4180,7 +5422,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[2] is Hyper Teknoloji Ltd. Şti. / Hyper E-Commerce Infrastructure - Storefront application and management panel, which the catalogue does not know; shares «hyper» with hyper-v",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Hyper Teknoloji's Hyper E-Commerce Infrastructure, unrelated to Microsoft Hyper-V.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P209",
@@ -4200,7 +5448,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] is Barracuda Networks / Barracuda Load Balancer Application Delivery Controller (ADC), which the catalogue does not know; shares «controller» with ingress-nginx",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record lists Barracuda appliances (ESG, Load Balancer ADC, WAF, WSG, BMA, WCC), unrelated to the Kubernetes Ingress NGINX Controller.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P210",
@@ -4220,7 +5474,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Novanet / Novanet's Website, which the catalogue does not know; shares «website» with elementor",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Novanet's own website, unrelated to the Elementor Website Builder plugin.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P211",
@@ -4240,7 +5500,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Microsoft / Azure Privileged Identity Management (PIM), which the catalogue does not know; shares «identity» with cisco-ise",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Microsoft Azure Privileged Identity Management / Microsoft Graph, unrelated to Cisco Identity Services Engine.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P212",
@@ -4260,7 +5526,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Oracle Corporation / Oracle E-Business Suite Secure Enterprise Search, which the catalogue does not know; shares «search» with elasticsearch",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Oracle E-Business Suite Secure Enterprise Search (12.2.3 to 12.2.15), unrelated to Elasticsearch.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P213",
@@ -4280,7 +5552,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Unknown / WP Directory Kit, which the catalogue does not know; shares «directory» with entra-id",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the WP Directory Kit WordPress plugin (before 1.6.3), unrelated to Microsoft Entra ID.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P214",
@@ -4300,7 +5578,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is FrodoBots / FrodoBots EarthRover Mini+ firmware, which the catalogue does not know; shares «firmware» with zyxel-firewall",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is FrodoBots EarthRover Mini+ robot firmware, unrelated to Zyxel firewalls.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P215",
@@ -4320,7 +5604,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Amazon / amazon-braket-schemas, which the catalogue does not know; shares «amazon» with openjdk",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the Python package amazon-braket-schemas (before 1.32.2), unrelated to OpenJDK.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P216",
@@ -4340,7 +5630,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is codepeople / Calculated Fields Form, which the catalogue does not know; shares «fields» with advanced-custom-fields",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the Calculated Fields Form WordPress plugin by codepeople (through 5.5.2.8), not Advanced Custom Fields.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P217",
@@ -4360,7 +5656,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is CDAC-Noida / e-Sushrut, Hospital Management Information System (HMIS), which the catalogue does not know; shares «information» with iis",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is CDAC e-Sushrut Hospital Management Information System, unrelated to Microsoft IIS.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P218",
@@ -4380,7 +5682,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is tmatens / compose-lint, which the catalogue does not know; shares «compose» with docker-compose",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is compose-lint 0.31.0, a third-party linter for Compose files, not Docker Compose.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P219",
@@ -4400,7 +5708,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is pgEdge / pgedge-postgres-mcp, which the catalogue does not know; shares «postgres» with postgresql",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the pgEdge Postgres MCP Server (before 1.1.0), a separate tool that queries PostgreSQL, not the PostgreSQL server.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P220",
@@ -4420,7 +5734,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is krayin / laravel-crm, which the catalogue does not know; shares «laravel» with laravel",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Krayin CRM (laravel-crm, before 2.2.8), an application built on Laravel, not the Laravel framework.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P221",
@@ -4440,7 +5760,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Roundcube / Webmail, which the catalogue does not know; shares «roundcube, webmail» with roundcube",
-      "label": null
+      "label": {
+        "verdict": "undecidable",
+        "level": 2,
+        "reason": "The record is Roundcube Webmail itself (before 1.6.21, 1.7.x before 1.7.6), i.e. the profile's product, not a similarly named one; the profile has no version. The selection treated it as a name-only match.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P222",
@@ -4460,7 +5786,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is rails / rails-html-sanitizer, which the catalogue does not know; shares «rails» with rails",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the rails-html-sanitizer gem (1.0.3 through 1.7.1), a separate package with its own versions that Rails applications depend on, not the Rails framework. Ambiguous: a Rails application usually pulls this gem in, but it would be its own component.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P223",
@@ -4480,7 +5812,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[1] is DJI / AeroScope Mobile (TP703) 1300 communications board firmware, which the catalogue does not know; shares «firmware» with zyxel-firewall",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is DJI AeroScope Mobile (TP703) and its communications board firmware, unrelated to Zyxel firewalls.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P224",
@@ -4500,7 +5838,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is saturnremote / Saturn Remote Mouse Server, which the catalogue does not know; shares «remote» with teamviewer",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Saturn Remote Mouse Server, unrelated to TeamViewer.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P225",
@@ -4520,7 +5864,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Dell / Terraform Provider for Dell PowerFlex, which the catalogue does not know; shares «terraform» with terraform",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Dell's Terraform Provider for PowerFlex (before 1.9.0), a provider plugin, not Terraform itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P226",
@@ -4540,7 +5890,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Zyxel / DX3301-T0 firmware, which the catalogue does not know; shares «firmware, zyxel» with zyxel-firewall",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Zyxel DX3301-T0/EX3301-T0 DSL/Ethernet gateway firmware, not Zyxel firewall products.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P227",
@@ -4560,7 +5916,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Ping Identity / PingAuthorize, which the catalogue does not know; shares «identity» with cisco-ise",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Ping Identity PingAuthorize, unrelated to Cisco Identity Services Engine.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P228",
@@ -4580,7 +5942,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Microsoft / GitHub Copilot Plugin for JetBrains IDEs, which the catalogue does not know; shares «github» with github-enterprise-server",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is the GitHub Copilot plugin for JetBrains IDEs, not GitHub Enterprise Server.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P229",
@@ -4600,7 +5968,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Oracle Corporation / Oracle Identity Manager Connector, which the catalogue does not know; shares «identity» with cisco-ise",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Oracle Identity Manager Connector (12.2.1.4.0, 14.1.2.1.0), unrelated to Cisco Identity Services Engine.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     },
     {
       "id": "P230",
@@ -4620,7 +5994,13 @@
         "packaging": "upstream"
       },
       "selection": "affected[0] is Dell / Terraform Provider for ObjectScale, which the catalogue does not know; shares «terraform» with terraform",
-      "label": null
+      "label": {
+        "verdict": "not_affected",
+        "level": 1,
+        "reason": "The record is Dell's Terraform Providers for ObjectScale and PowerStore, provider plugins, not Terraform itself.",
+        "by": "model: claude-opus",
+        "reviewed": false
+      }
     }
   ]
 }

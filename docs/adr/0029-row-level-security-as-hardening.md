@@ -85,6 +85,10 @@ Every query bypasses the EF filter, so only the database separates tenants.
   | `notify.address_confirmations_since(address, since)` | limit on confirmation mails: how many organisations asked an address since a point in time, a count only (ADR 038) |
   | `assess.model_feedback_counts()` | quality of the model: per provider, model and prompt version, assessments, verdicts and the reviews that confirmed or corrected them, counts only (ADR 039) |
   | `iam.instance_administrators()` | self-check: the accounts with the instance role, to mail an instance warning to, ids only; each account's row is then read acting as that account (ADR 043) |
+  | `assets.claim_due_repository_links(limit, hold)` | read repositories: claims the links that are due by moving their due time, organisation and link ids only; the reading runs as a job in the link's organisation (task 2.13) |
+  | `assess.model_usage_since(since)` | instance status: calls to language models and their tokens per provider since a point in time, counts only (task 6.6) |
+  | `notify.delivery_counts_since(since)` | instance status: deliveries per state since a point in time, counts only (task 6.6) |
 
 - `TenantIsolationTests` checks that every table has exactly one kind and the matching policy, and calls
-  every organisation endpoint with foreign organisations and foreign object ids.
+  every organisation endpoint with foreign organisations and foreign object ids. It also checks that every
+  `SECURITY DEFINER` function is in the list above, owned by the migrator, with a pinned `search_path` (task 7.10).

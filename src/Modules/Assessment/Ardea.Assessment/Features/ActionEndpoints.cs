@@ -281,7 +281,7 @@ internal static class ActionEndpoints
                 entry.Id, entry.Key, entry.Title, entry.State, entry.PublishedAt, entry.ChangedAt, entry.CvssScore, entry.CvssVersion, entry.CvssVector,
                 entry.Exploitation, entry.ExploitationSource, entry.ExploitationSince, entry.FixAvailable, entry.EpssClass, entry.AuthorityWarning);
         return Results.Ok(new AlertDetailView(
-            (await reader.AlertSummariesAsync([alert], cancellationToken))[0], entryView,
+            (await reader.AlertSummariesAsync([alert], cancellationToken))[0], entryView, await reader.AnswersAsync(findings, null, cancellationToken),
             await reader.SummariesAsync(actions, cancellationToken), await reader.FindingsAsync(findings, cancellationToken)));
     }
 
@@ -301,8 +301,13 @@ internal static class ActionEndpoints
         var since = now.AddDays(-1);
         var changes = await db.Events.AsNoTracking().Where(e => e.At >= since && (e.Kind.StartsWith("action.") || e.Kind == "backfill.completed"))
             .GroupBy(e => e.Kind).Select(g => new ChangeCountView(g.Key, g.Count())).ToListAsync(cancellationToken);
+        // The urgent actions open with their three answers (master plan 11.2, phase 3 acceptance).
+        var urgentIds = urgent.Select(r => (Guid?)r.Id).ToArray();
+        var urgentFindings = (await db.Findings.AsNoTracking().Where(f => urgentIds.Contains(f.RemediationId)).ToListAsync(cancellationToken)).ToLookup(f => f.RemediationId!.Value);
+        var answers = await reader.AnswersAsync([.. urgent.Select(r => ((IReadOnlyList<Finding>)[.. urgentFindings[r.Id]], r.TargetVersion))], cancellationToken);
+        var summaries = await reader.SummariesAsync(urgent, cancellationToken);
         return Results.Ok(new OverviewView(
-            byLevel, open.Count(r => r.DueAt < now), await reader.SummariesAsync(urgent, cancellationToken), projects,
+            byLevel, open.Count(r => r.DueAt < now), [.. summaries.Zip(answers, (s, a) => new UrgentActionView(s, a))], projects,
             [.. changes.OrderBy(c => c.Kind, StringComparer.Ordinal)]));
     }
 
@@ -325,7 +330,8 @@ internal static class ActionEndpoints
             .OrderByDescending(f => f.Status == "open" || f.Status == "in_review").ThenByDescending(f => f.Level).ThenBy(f => f.Id)
             .ToListAsync(cancellationToken);
         return new ActionDetailView(
-            (await reader.SummariesAsync([action], cancellationToken))[0], await reader.FindingsAsync(findings, cancellationToken), await reader.EventsAsync(action.Id, cancellationToken));
+            (await reader.SummariesAsync([action], cancellationToken))[0], await reader.AnswersAsync(findings, action.TargetVersion, cancellationToken),
+            await reader.FindingsAsync(findings, cancellationToken), await reader.EventsAsync(action.Id, cancellationToken));
     }
 
     private static IResult ActionNotFound() => ApiProblems.Problem("action_not_found", StatusCodes.Status404NotFound, "No such action.");

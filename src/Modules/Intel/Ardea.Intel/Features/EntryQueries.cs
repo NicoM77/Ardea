@@ -26,6 +26,36 @@ internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
         return [.. entries.Select(e => Facts(e, affected[e.Id]))];
     }
 
+    public async Task<IReadOnlyList<EntryText>> TextsAsync(IReadOnlyCollection<Guid> entryIds, CancellationToken cancellationToken)
+    {
+        if (entryIds.Count == 0)
+        {
+            return [];
+        }
+
+        var ids = entryIds.Distinct().ToArray();
+        var entries = await db.Entries.AsNoTracking().Where(e => ids.Contains(e.Id))
+            .Select(e => new { e.Id, e.PrimaryKey, e.Title, e.Description, e.Details, e.Provenance }).ToListAsync(cancellationToken);
+        var references = (await db.EntryReferences.AsNoTracking().Where(r => ids.Contains(r.EntryId)).OrderBy(r => r.Id).ToListAsync(cancellationToken))
+            .ToLookup(r => r.EntryId);
+        var sources = await db.Sources.AsNoTracking().ToDictionaryAsync(s => s.Key, s => s.Name, StringComparer.Ordinal, cancellationToken);
+        return [.. entries.Select(e =>
+        {
+            var details = e.Details?.RootElement;
+            var refs = references[e.Id].ToList();
+            var advisory = refs.Find(r => r.Tags.Contains("vendor-advisory")) ?? refs.Find(r => r.Tags.Contains("patch")) ?? refs.FirstOrDefault();
+            var source = e.Provenance.RootElement.TryGetProperty("description", out var key) && key.ValueKind == JsonValueKind.String ? key.GetString() : null;
+            return new EntryText(
+                e.Id, e.PrimaryKey, e.Title, e.Description, source is null ? null : sources.GetValueOrDefault(source, source),
+                Strings(details, "solutions"), Strings(details, "workarounds"), advisory?.Url);
+        })];
+    }
+
+    private static IReadOnlyList<string> Strings(JsonElement? details, string name) =>
+        details is { ValueKind: JsonValueKind.Object } d && d.TryGetProperty(name, out var list) && list.ValueKind == JsonValueKind.Array
+            ? [.. list.EnumerateArray().Where(i => i.ValueKind == JsonValueKind.String).Select(i => i.GetString()!).Where(t => t.Length > 0)]
+            : [];
+
     public async Task<IReadOnlyList<Guid>> FindAffectingAsync(AffectedKeys keys, DateTimeOffset since, CancellationToken cancellationToken)
     {
         if (keys.IsEmpty)

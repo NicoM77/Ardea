@@ -8,11 +8,13 @@
 import type { ActionSummary } from './actionSummary';
 import type { AlertEntryView } from './alertEntryView';
 import type { AlertSummary } from './alertSummary';
+import type { AnswersView } from './answersView';
 import type { FindingView } from './findingView';
 
 export interface AlertDetailView {
   alert: AlertSummary;
   entry: AlertEntryView;
+  answers: null | AnswersView;
   actions: ActionSummary[];
   findings: FindingView[];
 }

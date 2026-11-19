@@ -5246,6 +5246,7 @@
       "ActionDetailView": {
         "required": [
           "action",
+          "answers",
           "findings",
           "events"
         ],
@@ -5253,6 +5254,16 @@
         "properties": {
           "action": {
             "$ref": "#/components/schemas/ActionSummary"
+          },
+          "answers": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AnswersView"
+              }
+            ]
           },
           "findings": {
             "type": "array",
@@ -5486,6 +5497,113 @@
           }
         }
       },
+      "AffectedAnswer": {
+        "required": [
+          "verdict",
+          "items",
+          "moreItems"
+        ],
+        "type": "object",
+        "properties": {
+          "verdict": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AffectedItem"
+            }
+          },
+          "moreItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "AffectedItem": {
+        "required": [
+          "project",
+          "component",
+          "level",
+          "versionVerdict",
+          "versionReason",
+          "ranges"
+        ],
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/ActionProjectRef"
+          },
+          "component": {
+            "$ref": "#/components/schemas/ActionComponentRef"
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "versionVerdict": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "versionReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ranges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AffectedRange"
+            }
+          }
+        }
+      },
+      "AffectedRange": {
+        "required": [
+          "introduced",
+          "fixed",
+          "lastAffected",
+          "exact"
+        ],
+        "type": "object",
+        "properties": {
+          "introduced": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fixed": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lastAffected": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exact": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "AffectedView": {
         "required": [
           "vendor",
@@ -5579,6 +5697,7 @@
         "required": [
           "alert",
           "entry",
+          "answers",
           "actions",
           "findings"
         ],
@@ -5589,6 +5708,16 @@
           },
           "entry": {
             "$ref": "#/components/schemas/AlertEntryView"
+          },
+          "answers": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AnswersView"
+              }
+            ]
           },
           "actions": {
             "type": "array",
@@ -5763,6 +5892,29 @@
           "changedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "AnswersView": {
+        "required": [
+          "origin",
+          "whatHappened",
+          "affected",
+          "toDo"
+        ],
+        "type": "object",
+        "properties": {
+          "origin": {
+            "type": "string"
+          },
+          "whatHappened": {
+            "$ref": "#/components/schemas/WhatHappenedAnswer"
+          },
+          "affected": {
+            "$ref": "#/components/schemas/AffectedAnswer"
+          },
+          "toDo": {
+            "$ref": "#/components/schemas/ToDoAnswer"
           }
         }
       },
@@ -7620,7 +7772,7 @@
           "urgent": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ActionSummary"
+              "$ref": "#/components/schemas/UrgentActionView"
             }
           },
           "projects": {
@@ -8671,6 +8823,45 @@
           }
         }
       },
+      "ToDoAnswer": {
+        "required": [
+          "kind",
+          "targetVersion",
+          "installedVersion",
+          "steps",
+          "advisoryUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "targetVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "installedVersion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "advisoryUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "TwoFactorRequest": {
         "required": [
           "code",
@@ -8971,6 +9162,62 @@
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "UrgentActionView": {
+        "required": [
+          "action",
+          "answers"
+        ],
+        "type": "object",
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/ActionSummary"
+          },
+          "answers": {
+            "$ref": "#/components/schemas/AnswersView"
+          }
+        }
+      },
+      "WhatHappenedAnswer": {
+        "required": [
+          "entryKey",
+          "title",
+          "excerpt",
+          "source",
+          "moreEntries"
+        ],
+        "type": "object",
+        "properties": {
+          "entryKey": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "excerpt": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "source": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "moreEntries": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
               "integer",
               "string"
             ],

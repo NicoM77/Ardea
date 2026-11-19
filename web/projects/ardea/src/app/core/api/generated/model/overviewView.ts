@@ -5,16 +5,16 @@
  * Self-hosted early warning for security vulnerabilities. Errors are RFC 9457 problem details with a stable `code`.
  * OpenAPI spec version: v1
  */
-import type { ActionSummary } from './actionSummary';
 import type { ChangeCountView } from './changeCountView';
 import type { LevelCountView } from './levelCountView';
 import type { ProjectLevelView } from './projectLevelView';
+import type { UrgentActionView } from './urgentActionView';
 
 export interface OverviewView {
   openByLevel: LevelCountView[];
   /** @pattern ^-?(?:0|[1-9]\d*)$ */
   overdue: number | string;
-  urgent: ActionSummary[];
+  urgent: UrgentActionView[];
   projects: ProjectLevelView[];
   last24Hours: ChangeCountView[];
 }

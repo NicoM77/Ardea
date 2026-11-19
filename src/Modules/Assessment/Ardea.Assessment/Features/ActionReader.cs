@@ -81,6 +81,20 @@ internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles,
             counts[a.Id].Count(), a.FirstRaisedAt, a.ChangedAt))];
     }
 
+    /// <summary>The three answers for an action's or an alert's findings (master plan 7.5; task 3.6).</summary>
+    public async Task<AnswersView?> AnswersAsync(IReadOnlyList<Finding> findings, string? targetVersion, CancellationToken cancellationToken) =>
+        findings.Count == 0 ? null : (await AnswersAsync([(findings, targetVersion)], cancellationToken))[0];
+
+    /// <summary>The answers for several actions at once: one query per kind of data, not per action.</summary>
+    public async Task<IReadOnlyList<AnswersView>> AnswersAsync(
+        IReadOnlyList<(IReadOnlyList<Finding> Findings, string? TargetVersion)> sets, CancellationToken cancellationToken)
+    {
+        var all = sets.SelectMany(s => s.Findings).ToList();
+        var components = await ComponentsAsync(all.Select(f => f.ComponentId), cancellationToken);
+        var texts = (await entries.TextsAsync([.. all.Select(f => f.EntryId).Distinct()], cancellationToken)).ToDictionary(t => t.Id);
+        return [.. sets.Select(s => AnswerTemplates.For(s.Findings, texts, f => Refs(components, f.ComponentId, f.ProjectId), s.TargetVersion))];
+    }
+
     public async Task<IReadOnlyList<ActionEventView>> EventsAsync(Guid remediationId, CancellationToken cancellationToken) =>
         (await db.Events.AsNoTracking().Where(e => e.RemediationId == remediationId).OrderBy(e => e.At).ThenBy(e => e.Id).ToListAsync(cancellationToken))
         .Select(View).ToList();

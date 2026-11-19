@@ -40,6 +40,18 @@ public sealed class ActionApiTests(PostgresServer server)
 
         var detail = await Json(await client.GetAsync($"{path}/actions/2"));
         Assert.Equal(finding, detail.GetProperty("findings")[0].GetProperty("id").GetGuid());
+
+        // The three answers come first, from templates without a language model (task 3.6).
+        var answers = detail.GetProperty("answers");
+        Assert.Equal("template", answers.GetProperty("origin").GetString());
+        Assert.Equal("CVE-2026-0001", answers.GetProperty("whatHappened").GetProperty("entryKey").GetString());
+        Assert.Equal("affected", answers.GetProperty("affected").GetProperty("verdict").GetString());
+        Assert.Equal("update", answers.GetProperty("toDo").GetProperty("kind").GetString());
+        Assert.Equal("16.4", answers.GetProperty("toDo").GetProperty("targetVersion").GetString());
+        var urgent = (await Json(await client.GetAsync($"{path}/overview"))).GetProperty("urgent")[0];
+        Assert.Equal(2, urgent.GetProperty("action").GetProperty("number").GetInt32());
+        Assert.Equal("16.4", urgent.GetProperty("answers").GetProperty("toDo").GetProperty("targetVersion").GetString());
+        Assert.Equal("CVE-2026-0001", (await Json(await client.GetAsync($"{path}/alerts/1"))).GetProperty("answers").GetProperty("whatHappened").GetProperty("entryKey").GetString());
         Assert.Equal(1, detail.GetProperty("findings")[0].GetProperty("alertNumber").GetInt32());
 
         // The status the caller saw must still hold.

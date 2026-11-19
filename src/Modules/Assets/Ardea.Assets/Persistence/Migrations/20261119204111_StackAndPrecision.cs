@@ -37,30 +37,41 @@ namespace Ardea.Assets.Persistence.Migrations
                 nullable: false,
                 defaultValue: "none");
 
-            // The precision of the components there are, by the rule of VersionPrecisions.Of (ADR 046).
+            // The rule of VersionPrecisions.Of (ADR 046) in SQL: the backfill of the components there are, and, for this version
+            // only, a trigger that fills the precision when a writer leaves it unfitting. The API and worker of the previous
+            // version write components without it during the upgrade (master plan 4.11); the next version drops the trigger.
+            // Blank and trimmed mean what C# trims ([[:space:]]: spaces, tabs, line breaks), as in the check constraint.
             migrationBuilder.Sql("""
-                UPDATE assets.component SET version_precision = CASE
-                    WHEN version IS NULL OR btrim(version) = '' THEN 'none'
-                    WHEN purl IS NOT NULL THEN 'exact'
-                    WHEN origin = 'repository' AND version ~ '^\d+(\.\d+)?$' THEN 'line'
-                    WHEN version ~ '^(\d+|\d+(\.\d+)*\.[xX*])$' THEN 'line'
-                    ELSE 'exact'
-                END;
+                CREATE FUNCTION assets.version_precision_of(version text, purl text, origin text)
+                    RETURNS text LANGUAGE sql IMMUTABLE SET search_path = pg_catalog, pg_temp
+                    AS $$
+                        SELECT CASE
+                            WHEN version IS NULL OR version ~ '^[[:space:]]*$' THEN 'none'
+                            WHEN purl IS NOT NULL THEN 'exact'
+                            WHEN origin = 'repository' AND version ~ '^[[:space:]]*\d+(\.\d+)?[[:space:]]*$' THEN 'line'
+                            WHEN version ~ '^[[:space:]]*(\d+|\d+(\.\d+)*\.[xX*])[[:space:]]*$' THEN 'line'
+                            ELSE 'exact'
+                        END
+                    $$;
+
+                UPDATE assets.component SET version_precision = assets.version_precision_of(version, purl, origin);
+
+                CREATE FUNCTION assets.component_fill_precision()
+                    RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+                    AS $$
+                    BEGIN
+                        IF (NEW.version_precision = 'none') <> (NEW.version IS NULL OR NEW.version ~ '^[[:space:]]*$') THEN
+                            NEW.version_precision := assets.version_precision_of(NEW.version, NEW.purl, NEW.origin);
+                        END IF;
+                        RETURN NEW;
+                    END
+                    $$;
+                CREATE TRIGGER component_fill_precision BEFORE INSERT OR UPDATE ON assets.component
+                    FOR EACH ROW EXECUTE FUNCTION assets.component_fill_precision();
                 """);
 
-            // Every organisation has its stack (master plan 17.2); new ones get it when they are created. Iam migrates
-            // before Assets (master plan 4.11); a test database with the Assets schema alone has no organisations.
-            migrationBuilder.Sql("""
-                DO $$
-                BEGIN
-                    IF to_regclass('iam.organization') IS NOT NULL THEN
-                        INSERT INTO assets.project (organization_id, kind, name, description, criticality, exposure, created_at, changed_at)
-                        SELECT o.id, 'organization_stack', 'Stack', 'The technologies the organisation runs, without projects.', 'normal', 'internal', now(), now()
-                        FROM iam.organization o
-                        WHERE NOT EXISTS (SELECT 1 FROM assets.project p WHERE p.organization_id = o.id AND p.kind = 'organization_stack');
-                    END IF;
-                END $$;
-                """);
+            // Every organisation's stack (master plan 17.2) comes from the module's master-data step, which runs after every
+            // migrate (AssetsModule): organisations the previous API creates during the upgrade get theirs on the next one.
 
             migrationBuilder.CreateIndex(
                 name: "ux_project_stack",
@@ -86,13 +97,18 @@ namespace Ardea.Assets.Persistence.Migrations
                 name: "ck_component_version_precision",
                 schema: "assets",
                 table: "component",
-                sql: "version_precision IN ('none', 'line', 'exact') AND (version_precision = 'none') = (version IS NULL OR btrim(version) = '')");
+                sql: "version_precision IN ('none', 'line', 'exact') AND (version_precision = 'none') = (version IS NULL OR version ~ '^[[:space:]]*$')");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("DELETE FROM assets.project WHERE kind = 'organization_stack';");
+            migrationBuilder.Sql("""
+                DROP TRIGGER component_fill_precision ON assets.component;
+                DROP FUNCTION assets.component_fill_precision();
+                DROP FUNCTION assets.version_precision_of(text, text, text);
+                DELETE FROM assets.project WHERE kind = 'organization_stack';
+                """);
 
             migrationBuilder.DropIndex(
                 name: "ux_project_stack",

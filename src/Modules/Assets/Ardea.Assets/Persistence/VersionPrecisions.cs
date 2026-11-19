@@ -26,13 +26,14 @@ internal static partial class VersionPrecisions
     /// <item>anything else: <c>exact</c>. «8.3» typed by hand stays exact, because many products count releases with
     /// two numbers (PostgreSQL 17.11); whoever means the line says so.</item>
     /// </list>
-    /// The migration <c>StackAndPrecision</c> applies the same rule in SQL.
+    /// The migration <c>StackAndPrecision</c> applies the same rule in SQL (<c>assets.version_precision_of</c>); both judge
+    /// the version without surrounding blanks.
     /// </summary>
     public static string Of(string? version, string? purl, string origin) =>
         string.IsNullOrWhiteSpace(version) ? None
         : purl is not null ? Exact
-        : origin == "repository" && RepositoryLine().IsMatch(version) ? Line
-        : ManualLine().IsMatch(version) ? Line
+        : origin == "repository" && RepositoryLine().IsMatch(version.Trim()) ? Line
+        : ManualLine().IsMatch(version.Trim()) ? Line
         : Exact;
 
     /// <summary>A stated precision must fit the version: <c>none</c> exactly when there is none.</summary>

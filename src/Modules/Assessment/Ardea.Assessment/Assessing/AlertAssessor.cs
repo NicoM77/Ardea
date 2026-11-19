@@ -64,6 +64,11 @@ internal sealed class AlertAssessor(
             .Where(f => f.AlertId == alert.Id && (scope.Project == null || f.ProjectId == scope.Project.Id) && (scope.Component == null || f.ComponentId == scope.Component))
             .ToListAsync(cancellationToken);
 
+        // The components an open notice for this entry names (ADR 046): their findings closed by the system stay closed.
+        HashSet<Guid> noticed = existing.Count == 0 ? [] : (await db.Notices.AsNoTracking()
+                .Where(n => n.EntryId == entry.Id && n.State == Notice.Open).Select(n => n.ComponentIds).ToListAsync(cancellationToken))
+            .SelectMany(ids => ids).ToHashSet();
+
         var relevant = entry.Kind == "vulnerability" && entry.State is "published" or "disputed";
         var keys = relevant ? await EntryKeys.ForAsync(entry, catalog, cancellationToken) : null;
         var components = await ComponentsAsync(keys, existing, scope, cancellationToken);
@@ -112,7 +117,7 @@ internal sealed class AlertAssessor(
             var outcome = Evaluate(entry, candidate, known, modelVerdicts.GetValueOrDefault(candidate.Component.Id), keys!.Learned(candidate, learnedProducts));
             if (byComponent.Remove(candidate.Component.Id, out var finding))
             {
-                Apply(finding, outcome, now);
+                Apply(finding, outcome, noticed.Contains(finding.ComponentId), now);
             }
             else
             {
@@ -355,7 +360,11 @@ internal sealed class AlertAssessor(
     };
 
     /// <summary>Writes a new result into an existing finding, only where it differs.</summary>
-    private void Apply(Finding finding, Outcome outcome, DateTimeOffset now)
+    /// <param name="finding">The stored finding.</param>
+    /// <param name="outcome">The result of this assessment.</param>
+    /// <param name="noticed">An open notice of the organisation for this entry names the finding's component (ADR 046).</param>
+    /// <param name="now">When.</param>
+    private void Apply(Finding finding, Outcome outcome, bool noticed, DateTimeOffset now)
     {
         var installedBefore = finding.Evidence.RootElement.TryGetProperty("installed", out var before) ? before.GetString() : null;
         var installedNow = outcome.Evidence.RootElement.TryGetProperty("installed", out var after) ? after.GetString() : null;
@@ -367,9 +376,12 @@ internal sealed class AlertAssessor(
             : outcome.VersionVerdict == VersionVerdicts.InRange && finding.ClosedVersionVerdict != VersionVerdicts.InRange && outcome.ReopenLevel >= 2 ? "in_range_again"
             : null;
 
-        // A finding the migration of ADR 046 moved to a notice stays with the notice while its component has no version;
-        // once a version is entered it takes the precise path again. Task 5a.3 routes every coarse component to notices.
-        var withNotice = finding is { StatusReason: MovedToNotice, StatusChangedBy: null } && string.IsNullOrWhiteSpace(installedNow);
+        // A finding the system closed stays with the open notice that names its component (ADR 046 decision 9), whatever
+        // reason a later closing wrote (archived, no longer matched, withdrawn): while the component has no version and
+        // the entry is not actively exploited (KEV included), as a notice that was answered comes back once on exploitation
+        // (E22). With a version, or exploited, it takes the precise path again. Task 5a.3 routes every coarse component.
+        var withNotice = noticed && finding is { StatusChangedBy: null } && finding.Status != "open"
+            && string.IsNullOrWhiteSpace(installedNow) && outcome.Exploitation != "active";
         var (level, factors) = withNotice ? (1, Document(new RuleResult { RulesetVersion = rules.Version, Level = 1, Exclusion = MovedToNotice }))
             : reopen is null ? (outcome.Level, outcome.Factors)
             : (outcome.ReopenLevel, outcome.ReopenFactors);
@@ -397,6 +409,7 @@ internal sealed class AlertAssessor(
 
         if (withNotice)
         {
+            SetStatus(finding, "not_affected", MovedToNotice, now);
             return;
         }
 

@@ -62,7 +62,7 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
                 t.HasCheckConstraint("ck_component_relation", "dependency_relation IS NULL OR dependency_relation IN ('direct', 'transitive', 'unknown')");
                 // «none» exactly when there is no version (ADR 046).
                 t.HasCheckConstraint("ck_component_version_precision",
-                    "version_precision IN ('none', 'line', 'exact') AND (version_precision = 'none') = (version IS NULL OR btrim(version) = '')");
+                    "version_precision IN ('none', 'line', 'exact') AND (version_precision = 'none') = (version IS NULL OR version ~ '^[[:space:]]*$')");
                 t.HasCheckConstraint("ck_component_notice_threshold", "notice_threshold IN ('only_important', 'everything')");
             });
             component.HasKey(c => c.Id);

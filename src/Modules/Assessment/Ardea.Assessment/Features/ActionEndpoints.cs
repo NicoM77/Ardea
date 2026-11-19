@@ -348,9 +348,14 @@ internal static class ActionEndpoints
             .OrderByDescending(p => p.Level).ThenBy(p => p.Project.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
 
         var since = now.AddDays(-1);
-        var changes = await db.Events.AsNoTracking()
-            .Where(e => e.At >= since && ((e.Kind.StartsWith("action.") && e.Kind != Assessing.EventKinds.LegacyActionAssigned) || e.Kind == "backfill.completed"))
-            .GroupBy(e => e.Kind).Select(g => new ChangeCountView(g.Key, g.Count())).ToListAsync(cancellationToken);
+        // Without the rows the history no longer shows (ADR 046) and without the migration's closings, which are no change
+        // anyone made: the overview shows no burst after the upgrade.
+        var changes = (await db.Events.AsNoTracking()
+                .Where(e => e.At >= since && ((e.Kind.StartsWith("action.") && e.Kind != Assessing.EventKinds.LegacyActionAssigned) || e.Kind == "backfill.completed"))
+                .Select(e => new { e.Kind, e.Data })
+                .ToListAsync(cancellationToken))
+            .Where(e => !Assessing.LegacyHistory.Hidden(e.Kind, e.Data.RootElement) && !Assessing.LegacyHistory.ByMigration(e.Kind, e.Data.RootElement))
+            .GroupBy(e => e.Kind, StringComparer.Ordinal).Select(g => new ChangeCountView(g.Key, g.Count())).ToList();
         // The urgent actions open with their three answers (master plan 11.2, phase 3 acceptance).
         var urgentIds = urgent.Select(r => (Guid?)r.Id).ToArray();
         var urgentFindings = (await db.Findings.AsNoTracking().Where(f => urgentIds.Contains(f.RemediationId)).ToListAsync(cancellationToken)).ToLookup(f => f.RemediationId!.Value);

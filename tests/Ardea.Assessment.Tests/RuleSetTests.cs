@@ -145,13 +145,15 @@ public sealed class RuleSetTests
     }
 
     [Fact]
-    public void A_rule_set_names_no_deadlines()
+    public void A_rule_set_names_no_deadlines_and_an_old_file_with_them_still_loads()
     {
-        // Reminders have no deadline (master plan 17.5, ADR 046): a rule set that still names some is refused, not half read.
+        // Reminders have no deadline (master plan 17.5, ADR 046). A data folder of the previous version still names them:
+        // for one version they are read and ignored, and the levels stay the same.
         var text = File.ReadAllText(Path.Combine(MasterDataOptions.FindDefault(), RuleSet.Folder, "ruleset-1.json"));
         Assert.DoesNotContain("deadline", text, StringComparison.OrdinalIgnoreCase);
-        var withDeadlines = text.TrimEnd().TrimEnd('}') + ", \"deadlineHours\": { \"5\": 48 } }";
-        Assert.ThrowsAny<JsonException>(() => RuleSet.Parse(withDeadlines));
+        var withDeadlines = RuleSet.Parse(text.TrimEnd().TrimEnd('}') + ", \"deadlineHours\": { \"5\": 48, \"4\": 168, \"3\": 720, \"2\": 2160 } }");
+        Assert.Equal(Rules.Levels, withDeadlines.Levels);
+        Assert.Equal(Rules.Version, withDeadlines.Version);
     }
 
     [Theory]

@@ -159,7 +159,7 @@ components:
 
 **Creative North Star: "The answer is drawn"**
 
-Every screen answers its one question with a picture before it uses a sentence: deadlines are bars on a shared time axis, the week's CVE records are a field of dots, "are we affected" is a pin inside a version range, and a priority is a bar of points. Words are short labels around those pictures. The chrome is quiet so the data can carry the colour: a grey-blue frame holds the sidebar and the top bar, and the work sits on a white sheet inset 8px, with no shadow.
+Every screen answers its one question with a picture before it uses a sentence: the open actions are a ring by priority, the week's CVE records are a field of dots, "are we affected" is a pin inside a version range, and a priority is a bar of points. Words are short labels around those pictures. The chrome is quiet so the data can carry the colour: a grey-blue frame holds the sidebar and the top bar, and the work sits on a white sheet inset 8px, with no shadow.
 
 Owner decision, 18 Nov 2026: this direction replaces "The Well-Made System App". The owner found that version too wordy and too plain and asked for charts, little text and smooth motion, with freedom to restructure. Three earlier rules are withdrawn with it: "no charts", "nothing moves on load" and "system font only". What stays: light only, calm surfaces, priority as symbol plus word plus colour, WCAG 2.2 AA, and nothing from the rejected "Hazard Bulletin".
 
@@ -231,7 +231,7 @@ One 12-column grid with one 24px gutter. Blocks pair as 8 + 4, 7 + 5 or 9 + 3; a
 Breakpoints:
 - **Up to 1100px:** every block spans the grid. A side column dissolves into it, and the card with the next step moves to the top.
 - **Up to 900px:** the frame folds. The sidebar becomes a full-screen menu behind a button; the top bar keeps the mark, the search and the account.
-- **Up to 640px:** 16px padding, 40 to 44px controls. Table rows become two-line records. The deadline chart puts each bar under its action. An action page gets a fixed bar with its primary button and status.
+- **Up to 640px:** 16px padding, 40 to 44px controls. Table rows become two-line records. An action page gets a fixed bar with its primary button and status.
 
 ## Elevation and Depth
 
@@ -239,14 +239,14 @@ Flat. Depth is one tone step (ground to sheet) and 1px edges. Shadows belong onl
 
 ## Shapes
 
-Sheet 16px, cards 8px, controls 6px, pills and chips fully round. The search dialog has 12px corners, the toast 10px, key caps and the score bar 4px. Chart bars are 12px tall with 3px corners; meters are 4px tall with 2px corners; deadline ticks 1px. The focus ring is 2px Accent, offset 2px. Icons are 1.6px line drawings on a 24px grid at 16px.
+Sheet 16px, cards 8px, controls 6px, pills and chips fully round. The search dialog has 12px corners, the toast 10px, key caps and the score bar 4px. Chart bars are 12px tall with 3px corners; meters are 4px tall with 2px corners. The focus ring is 2px Accent, offset 2px. Icons are 1.6px line drawings on a 24px grid at 16px.
 
 ## Charts
 
 Each chart answers one question and is drawn from the dataset.
 
-- **Deadline runway.** Fourteen days on one axis, today near the middle, weekends one tone darker. A bar runs from the day an action was created to its deadline: the solid part is time used, the pale part time left. A 2px tick marks the deadline. A bar that ends beyond the axis runs to its edge.
-- **Priority ring.** A thin ring, one segment per priority, the total in the middle. Its legend is the list of counts and filters the action list. Hovering a legend row dims the other priorities in the runway.
+- **No deadline runway.** Reminders have no deadline (master plan 17.5, ADR 046); the overview shows the most urgent actions with the first one's three answers beside the priority ring instead. The runway and its countdown are withdrawn.
+- **Priority ring.** A thin ring, one segment per priority, the total in the middle. Its legend is the list of counts and filters the action list. Hovering a legend row dims the other priorities in the ring.
 - **The week's records.** One dot per published CVE record. Three steps, each a button: all records, the ones naming a profiled technology, the ones that hit an installed version. The last are coloured by priority and link to their action.
 - **Open actions.** A stepped line over 30 days, the last value labelled.
 - **Priority score.** One block per point on a scale that ends at the highest possible sum, with the level bands underneath. The factor that changed last sits at the end, so an earlier state is the same bar without it.
@@ -292,7 +292,7 @@ White, 1px Border, 8px corners, 20px padding, a 16px title and optional meta on 
 
 ### Priority and status (signature)
 - **Priority:** a shaped symbol plus a 500 word, both in the priority colour: filled octagon (Critical), filled triangle (High), filled diamond (Medium), outlined circle with a down arrow (Low), outlined circle with a dash (Not relevant).
-- **Status:** a neutral symbol plus the word: empty ring (Open), half-filled ring (In review), green check disc (Remediated), flag (Risk accepted), struck ring (Not affected).
+- **Status:** a neutral symbol plus the word: empty ring (Open), green check disc (Remediated), flag (Risk accepted), struck ring (Not affected).
 - **Pills:** "Exploited" is a pale red pill with a red dot; "Fix available" pale green; anything else Raised.
 
 ### Navigation

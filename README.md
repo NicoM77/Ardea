@@ -157,6 +157,8 @@ The profile gets two depths (chapter 17 of the plan): a coarse stack for the org
 
 Acceptance: a stack of ten entries produces at most the number of notices set in 5a.1 in the spike week; «doesn't affect us» does not come back; no endpoint or page knows assignment or deadline.
 
+**Release gate:** no release, and no upgrade of a running instance, between 5a.2 and 5a.5. From 5a.2 on, open actions on components without a version are moved to notices that nothing shows until the Notices page (5a.5), and new entries on such components still open actions until 5a.3 ([ADR 046](docs/adr/0046-stack-notices-and-reminders-without-deadline.md), decision 13).
+
 ### Phase 6 · Hardening (3–4 weeks)
 
 A hardened, reviewed and documented instance.

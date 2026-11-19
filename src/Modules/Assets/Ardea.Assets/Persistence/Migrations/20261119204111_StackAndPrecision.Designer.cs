@@ -196,7 +196,7 @@ namespace Ardea.Assets.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_component_scope", "dependency_scope IS NULL OR dependency_scope IN ('runtime', 'development', 'unknown')");
 
-                            t.HasCheckConstraint("ck_component_version_precision", "version_precision IN ('none', 'line', 'exact') AND (version_precision = 'none') = (version IS NULL OR btrim(version) = '')");
+                            t.HasCheckConstraint("ck_component_version_precision", "version_precision IN ('none', 'line', 'exact') AND (version_precision = 'none') = (version IS NULL OR version ~ '^[[:space:]]*$')");
                         });
                 });
 

@@ -33,6 +33,23 @@ namespace Ardea.Assessment.Persistence.Migrations
 
                 -- Unused from now on; inserts no longer name it (master plan 4.11: dropped one version later).
                 ALTER TABLE assess.remediation ALTER COLUMN due_at_manual SET DEFAULT false;
+
+                -- For this version only (master plan 4.11): the API of the previous version may still take an action into
+                -- review during the upgrade; what it writes as «in review» is stored as open. The next version drops it.
+                CREATE FUNCTION assess.open_instead_of_review()
+                    RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
+                    AS $$
+                    BEGIN
+                        IF NEW.status = 'in_review' THEN
+                            NEW.status := 'open';
+                        END IF;
+                        RETURN NEW;
+                    END
+                    $$;
+                CREATE TRIGGER remediation_open_instead_of_review BEFORE INSERT OR UPDATE OF status ON assess.remediation
+                    FOR EACH ROW EXECUTE FUNCTION assess.open_instead_of_review();
+                CREATE TRIGGER finding_open_instead_of_review BEFORE INSERT OR UPDATE OF status ON assess.finding
+                    FOR EACH ROW EXECUTE FUNCTION assess.open_instead_of_review();
                 """);
 
             migrationBuilder.CreateTable(
@@ -189,7 +206,12 @@ namespace Ardea.Assessment.Persistence.Migrations
                 schema: "assess",
                 table: "finding");
 
-            migrationBuilder.Sql("ALTER TABLE assess.remediation ALTER COLUMN due_at_manual DROP DEFAULT;");
+            migrationBuilder.Sql("""
+                DROP TRIGGER remediation_open_instead_of_review ON assess.remediation;
+                DROP TRIGGER finding_open_instead_of_review ON assess.finding;
+                DROP FUNCTION assess.open_instead_of_review();
+                ALTER TABLE assess.remediation ALTER COLUMN due_at_manual DROP DEFAULT;
+                """);
 
             migrationBuilder.AddCheckConstraint(
                 name: "ck_remediation_status",

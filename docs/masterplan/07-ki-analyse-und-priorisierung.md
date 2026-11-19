@@ -61,7 +61,7 @@ Ein Reminder fasst alle offenen Befunde einer Komponente in einem Projekt zusamm
 | Stufe | das Maximum über ihre offenen Befunde |
 | Ziel | Jeder Befund kennt die Korrekturversion des Bereichs, in dem die installierte Version liegt; dieser Bereich steht für den eigenen Versionszweig. Das Ziel der Reminder ist die höchste dieser Versionen. Nennt ein Befund keine Korrekturversion: Lösungs- und Umgehungstexte der Quelle, sonst «keine Korrektur angegeben». Ist die installierte Version unbekannt, nennt der Reminder alle Korrekturversionen der Quelle. |
 | Inhalt | die Befunde, sortiert nach Stufe; jeder führt zu seiner Schwachstelle mit Einschätzung und Quellen |
-| Status | `open` und `in_review` werden an der Reminder gesetzt und gelten für alle ihre nicht abgeschlossenen Befunde, auch für später hinzukommende. Das Ergebnis (behoben, Risiko akzeptiert, nicht betroffen) steht je Befund und lässt sich für alle auf einmal setzen. Geschlossen ist der Reminder, sobald kein Befund mehr offen oder in Prüfung ist. |
+| Status | `open` oder erledigt (`closed`), ohne Zuweisung, Frist und «in Prüfung» (Kapitel 17.5, [ADR 046](../adr/0046-stack-notices-and-reminders-without-deadline.md)). Das Ergebnis (behoben, Risiko akzeptiert, nicht betroffen) steht je Befund und lässt sich für alle auf einmal setzen. Erledigt ist der Reminder, sobald kein Befund mehr offen ist. |
 | Zuwachs | ein neuer Befund ab Stufe 2 tritt der offenen Reminder seiner Komponente bei; benachrichtigt wird nur, wenn dadurch ihre Stufe oder ihr Ausnutzungsstand steigt (Kapitel 8.2) |
 | Abschluss von selbst | wird im Profil die Version angehoben, schliessen sich alle Befunde, deren Bereich die neue Version nicht mehr enthält, mit dem Vermerk «behoben durch Update» |
 
@@ -185,7 +185,7 @@ Probe an den Beispieldaten der Mockups (Reihenfolge der Summanden: Schweregrad, 
 
 Das Beispiel Puppet zeigt, warum EPSS allein nicht genügt: Die Lücke steht seit dem 17.11.2026 im KEV-Katalog, ihr EPSS-Wert lag am selben Tag bei 0,4 %.
 
-Die Gewichte sind eine erste Fassung. Sie werden in Phase 3 am Referenzsatz kalibriert (7.9). Das Regelwerk liegt als versionierte Datei vor; eine neue Version berechnet offene Befunde neu und nennt bei geänderter Stufe den Grund «Regelwerk aktualisiert». Gewichte je Organisation sind eine Ausbaustufe; im MVP sind die Fristen je Organisation einstellbar.
+Die Gewichte sind eine erste Fassung. Sie werden in Phase 3 am Referenzsatz kalibriert (7.9). Das Regelwerk liegt als versionierte Datei vor; eine neue Version berechnet offene Befunde neu und nennt bei geänderter Stufe den Grund «Regelwerk aktualisiert». Gewichte je Organisation sind eine Ausbaustufe; Fristen gibt es keine mehr (Kapitel 17.5).
 
 ## 7.7 Wann neu bewertet wird
 

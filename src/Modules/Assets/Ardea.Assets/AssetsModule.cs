@@ -16,7 +16,10 @@ public sealed class AssetsModule : IModule
     public string Name => AssetsDbContext.Schema;
 
     public IModuleDatabase? Database { get; } =
-        new ModuleDatabase<AssetsDbContext>(AssetsDbContext.Schema, options => new AssetsDbContext(options, new TenantContext()));
+        new ModuleDatabase<AssetsDbContext>(
+            AssetsDbContext.Schema,
+            options => new AssetsDbContext(options, new TenantContext()),
+            seed: (db, _, cancellationToken) => StackProject.EnsureForEveryOrganizationAsync(db, cancellationToken));
 
     public void AddServices(IServiceCollection services, IConfiguration configuration)
     {

@@ -119,6 +119,27 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
         // A rule that named only the assignment would match nothing and could not be saved again: it is gone (ADR 046).
         Assert.Equal(0L, await ScalarAsync<long>(owner, "SELECT count(*) FROM notify.rule WHERE name = 'Assignments only'", ct));
         Assert.Equal("{action.note_added}", await ScalarAsync<string>(owner, "SELECT events::text FROM notify.rule WHERE name = 'Team'", ct));
+
+        // During the upgrade the previous API and worker still run (master plan 4.11): what they write is accepted. A
+        // component with a version but without a precision gets the one that follows from it, «in review» is stored as open.
+        await ExecuteAsync(owner, """
+            INSERT INTO assets.component (id, organization_id, project_id, product_key, custom_name, kind, version, packaging, protection, origin, purl, created_at, changed_at) VALUES
+                ('01900000-0000-7000-8000-000000000027', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000010', 'nginx', NULL, 'network', '1.27', 'unknown', 'none', 'manual', NULL, now(), now()),
+                ('01900000-0000-7000-8000-000000000028', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000010', NULL, 'express', 'library', E'4.21.2\t', 'upstream', 'none', 'repository', 'pkg:npm/express', now(), now());
+            UPDATE assets.component SET version = NULL WHERE id = '01900000-0000-7000-8000-000000000023';
+            UPDATE assess.remediation SET status = 'in_review' WHERE number = 7;
+            UPDATE assess.finding SET status = 'in_review' WHERE id = '01900000-0000-7000-8000-000000000064';
+            """, ct);
+        Assert.Equal("23 none, 27 exact, 28 exact", await ScalarAsync<string>(owner,
+            "SELECT string_agg(right(id::text, 2) || ' ' || version_precision, ', ' ORDER BY id) FROM assets.component WHERE right(id::text, 2) IN ('23', '27', '28')", ct));
+        Assert.Equal("open open", await ScalarAsync<string>(owner,
+            "SELECT r.status || ' ' || f.status FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id WHERE r.number = 7", ct));
+
+        // An organisation the previous API creates during the upgrade gets its stack from the next migrate (ADR 046).
+        await ExecuteAsync(owner, "INSERT INTO iam.organization (id, name, slug, locale, time_zone, settings, created_at) VALUES ('01900000-0000-7000-8000-000000000003', 'Late', 'late', 'en', 'UTC', '{}', now())", ct);
+        Assert.Equal(0, (await migrator.MigrateAsync(owner, ct)).Applied);
+        Assert.Equal(1L, await ScalarAsync<long>(owner, "SELECT count(*) FROM assets.project WHERE organization_id = '01900000-0000-7000-8000-000000000003' AND kind = 'organization_stack'", ct));
+        Assert.Equal(3L, await ScalarAsync<long>(owner, "SELECT count(*) FROM assets.project WHERE kind = 'organization_stack'", ct));
     }
 
     private DatabaseOptions Options(string database) => new()

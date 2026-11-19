@@ -62,6 +62,10 @@ internal static class LegacyHistory
         || (kind is EventKinds.ActionStatusChanged or EventKinds.FindingStatusChanged
             && ((Text(data, "to") == InReview && Text(data, "from") != "closed") || (Text(data, "from") == InReview && Text(data, "to") == "open")));
 
+    /// <summary>A closing the migration of ADR 046 wrote when it turned an action into notices: history, not a change of the day.</summary>
+    public static bool ByMigration(string kind, JsonElement data) =>
+        kind is EventKinds.ActionWithdrawn or EventKinds.FindingClosed && Text(data, "reason") == AlertAssessor.MovedToNotice;
+
     /// <summary>The row's data as it reads today: «in review» in <c>from</c> or <c>to</c> is «open».</summary>
     public static JsonElement Shown(JsonElement data)
     {

@@ -19,8 +19,10 @@ notice table holds, what happens to open actions on components without a version
 
 1. **The stack is a system project.** `assets.project.kind` is `project` (default) or `organization_stack`; a partial
    unique index allows one stack per organisation. Assets subscribes to «organisation created» (the hook the notification
-   rules use) and creates the stack, named «Stack», in the same unit of work; the migration `StackAndPrecision` creates it
-   for every existing organisation. Its entries are ordinary components: same endpoints
+   rules use) and creates the stack, named «Stack», in the same unit of work. The module's master-data step, which runs
+   after every `migrate`, gives every organisation without one its stack (idempotent): the organisations from before,
+   and those the previous API creates during the upgrade, before the hook exists, get theirs on the next migrate. Its
+   entries are ordinary components: same endpoints
    (`/projects/{stackId}/components`), same search keys, same candidate search (17.2).
 2. **How the stack is exposed.** `GET /orgs/{orgId}/stack` returns the stack's project id and its entries. The project
    list leaves the stack out (also with `archived=true`), the org-wide coverage hints leave it out (its missing versions
@@ -35,7 +37,8 @@ notice table holds, what happens to open actions on components without a version
    wildcard («8.x», «8.3.*») → `line`; anything else → `exact`. A hand-typed «8.3» stays `exact` because many products
    count releases with two numbers (PostgreSQL 17.11) and today's components keep their precise path; whoever means the
    line says so. A new version without a stated precision gets the derived one; a repository component's precision
-   follows its repository like its version.
+   follows its repository like its version. Versions are judged and stored without surrounding blanks; SQL
+   (`assets.version_precision_of`, the check constraint) calls blank what C# trims (`[[:space:]]`).
 4. **The threshold is stored per component.** `assets.component.notice_threshold` is `only_important` (default) or
    `everything` (ADR 044 decisions 2 to 4), set with `noticeThreshold` on the component endpoints. It is stored on every
    component because the depth hangs on the component (17.1); 5a.3 evaluates it for coarse ones.
@@ -55,14 +58,22 @@ notice table holds, what happens to open actions on components without a version
    `WithoutAssignment`), a rule that named nothing else is deleted with its targets (it would match nothing and its
    empty event list could not be saved again; disabling it would leave the same unsaveable rule listed), and its in-app
    notifications leave the inbox. The rule set file drops `deadlineHours`; its
-   levels do not change, so its version stays 1. The web pages lose the owner, the deadline, the runway, the countdown,
+   levels do not change, so its version stays 1, and a data folder of the previous version that still names them loads
+   for one version with them ignored. The web pages lose the owner, the deadline, the runway, the countdown,
    «Take into review», «Give back», the owners card and the time to close (17.5 drops «Dauer bis Abschluss» too).
-7. **Retired columns stay one version (4.11).** `assess.remediation.assigned_to`, `due_at` and `due_at_manual` are no
-   longer mapped, written or read; `due_at_manual` gets the default `false` so inserts need not name it. A migration of
-   the next version drops the three columns.
+7. **The previous version keeps running against this schema during the upgrade (4.11).** `assess.remediation.assigned_to`,
+   `due_at` and `due_at_manual` are no longer mapped, written or read; `due_at_manual` gets the default `false` so
+   inserts need not name it. The narrowed rules stay valid for the old writers through two triggers of this version
+   only: `assets.component_fill_precision` derives `version_precision` when a writer leaves it unfitting its version (the
+   old API and worker insert versioned components without it), and `assess.open_instead_of_review` stores a status
+   `in_review` the old API writes as `open`. The check constraints (`none` exactly without a version; status `open` or
+   `closed`, findings without `in_review`) therefore hold from this version on. The next version's cleanup migration
+   drops the two triggers and their functions together with `assigned_to`, `due_at` and `due_at_manual`, and the rule
+   set's tolerance of `deadlineHours` (decision 6).
 8. **History written before stays, but reads like today.** History is never deleted (4.10). Reads (the action's history
    and the events handed to the notifications) leave out `action.assigned` rows and the taking into review or giving
-   back; elsewhere «in review» reads as «open».
+   back; elsewhere «in review» reads as «open». The overview's «last 24 hours» counts leave out the same rows and the
+   migration's own closings (`moved_to_notice`), so the upgrade shows no burst.
 9. **Open actions without a version become notices (E25).** The migration `NoticesAndOpenOrDone` takes every action that
    is not closed and whose component has precision `none`: each entry of its open findings becomes an open notice (one
    per organisation and entry, naming every such component, raised when the oldest of those actions opened). The
@@ -70,21 +81,31 @@ notice table holds, what happens to open actions on components without a version
    `moved_to_notice`), the action closes with the close reason `moved_to_notice`, both histories say so
    (`finding.closed`, `action.withdrawn`; rows written by a migration reach no notification), and alert levels are
    recomputed. Closing rather than deleting keeps numbers, history and the answer to «what happened to #143». Closed
-   actions and actions on components with a line or an exact version stay unchanged. Until 5a.3 routes coarse
-   components to notices, a reassessment leaves a moved finding closed while its component has no version; with a
-   version entered it takes the precise path again.
-10. **Cross-schema migrations and their order.** Two migrations read another module's schema in SQL: `StackAndPrecision`
-    (Assets) inserts from `iam.organization`, `NoticesAndOpenOrDone` (Assess) reads `assets.component.version_precision`.
-    Both depend on the fixed module order of `migrate` (`src/Hosts/Ardea.Host/Modules.cs`, master plan 4.11: platform,
-    iam, catalog, assets, intel, assess, notify). A test database that holds a schema without the other one skips the
-    step (`to_regclass`); when `assets.component` exists without `version_precision`, the Assess migration raises an
-    error instead of skipping E25 silently. Changing the module order must keep Iam before Assets before Assess.
+   actions and actions on components with a line or an exact version stay unchanged.
+   **Until 5a.3 routes coarse components to notices,** the assessment keeps a finding the system closed with the open
+   notice that names its component: whatever reason a later closing wrote (archived and unarchived, no longer matched,
+   withdrawn and republished, a catalogue change), it returns to `not_affected` / `moved_to_notice` at level 1 instead of
+   opening an action, as long as the component has no version and the entry is not actively exploited. With a version
+   entered it takes the precise path again; with active exploitation (KEV included, `exploitation = active`) it opens an
+   action again, the analogue of E22, because a moved finding is otherwise invisible until the Notices page exists. A
+   finding a person reopened or closed follows the person's rules as before.
+10. **Cross-schema reads and their order.** Two steps read another module's schema in SQL: the Assets master-data step
+    inserts stacks for the ids of `iam.organization`, and the Assess migration `NoticesAndOpenOrDone` reads
+    `assets.component.version_precision`. Both depend on the fixed module order of `migrate`
+    (`src/Hosts/Ardea.Host/Modules.cs`, master plan 4.11: platform, iam, catalog, assets, intel, assess, notify; master
+    data after every schema). A test database that holds a schema without the other one skips the step (`to_regclass`);
+    when `assets.component` exists without `version_precision`, the Assess migration raises an error instead of
+    skipping E25 silently. Changing the module order must keep Iam before Assets before Assess.
 11. **Naming churn stays low.** Code, tables and API keep «action» (`assess.remediation`, `/actions`,
     `ActionSummary`) and the status value `closed`; the UI wording «Reminder» and the Notices page come with 5a.5.
 12. **Phase 5a acceptance, «no endpoint knows assignment or deadline».** A test walks the committed OpenAPI document
     (which another test keeps equal to the code) and fails on any schema property, parameter, enumeration value, path or
     schema name that names an assignment, a due date, a deadline, «overdue», «remaining» or «in review» («assigner», who
     scored a CVSS vector, is not one).
+13. **Release gate: no release between 5a.2 and 5a.5.** After this migration, notices exist but nothing shows them
+    until the Notices page (5a.5), and new entries on components without a version still open actions until 5a.3. An
+    instance must therefore not be released or upgraded to a build of this phase before 5a.3 and 5a.5 are merged; the
+    README's phase 5a section says so.
 
 ## Alternatives
 
@@ -99,6 +120,11 @@ notice table holds, what happens to open actions on components without a version
   in 5a.5.
 - **Dropping `assigned_to` and `due_at` now.** Breaks the compatibility rule of 4.11 for an API of the previous version
   running against the new schema.
+- **Narrowing the checks without triggers, or keeping them wide for a version.** The old build's writes would fail
+  (23514) or leave versioned components at `none` and actions in review; the triggers keep the data in the new shape
+  from the first day.
+- **Basing the guard on the reason `moved_to_notice`.** Any later closing overwrites the reason, and archiving and
+  unarchiving a project, a withdrawn and republished entry or a catalogue change would reopen the finding.
 
 ## Consequences
 
@@ -107,6 +133,8 @@ notice table holds, what happens to open actions on components without a version
   findings on coarse components that the precise path still opens until then.
 - 5a.4 lets the wizard state precision and threshold; 5a.5 renames the action to «Reminder» in the UI, adds the Notices
   page and its read API, and may expose the project kind.
-- The next version's first Assess migration drops `assigned_to`, `due_at` and `due_at_manual`.
-- Raw inserts into `assets.component` with a version must name `version_precision` (the check constraint refuses
-  `none` with a version).
+- The next version's cleanup drops `assigned_to`, `due_at` and `due_at_manual`, the triggers
+  `component_fill_precision` and `*_open_instead_of_review` with their functions, and the tolerance of `deadlineHours`.
+- An open notice is not withdrawn when its component later gets a version: the finding then opens an action and the
+  notice still asks. Withdrawing or answering such notices is 5a.3's job, as is the guard of decision 9, which 5a.3
+  replaces by routing coarse components to notices.

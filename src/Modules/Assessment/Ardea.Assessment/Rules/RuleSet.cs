@@ -38,6 +38,14 @@ internal sealed record RuleSet
 
     public required FloorRules Floors { get; init; }
 
+    /// <summary>
+    /// The deadlines per level of rule sets written before the reminder lost its deadline (master plan 17.5, ADR 046). An
+    /// <c>ARDEA_DATA_DIR</c> of the previous version may still carry them; they are read and ignored for one version, then
+    /// refused like any unknown member.
+    /// </summary>
+    [JsonPropertyName("deadlineHours")]
+    public JsonElement? RetiredDeadlineHours { get; init; }
+
     /// <summary>The factors of version 1, in the order they are shown.</summary>
     public static readonly IReadOnlyList<string> Factors =
         ["severity", "exploitation", "affectedness", "criticality", "exposure", "protection", "authorityWarning", "epss"];

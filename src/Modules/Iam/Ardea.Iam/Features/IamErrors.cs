@@ -25,6 +25,9 @@ internal static class IamErrors
     public static IResult InvalidInvitation() =>
         ApiProblems.Problem("invalid_invitation", StatusCodes.Status400BadRequest, "The invitation is not valid or has expired.");
 
+    public static IResult SignedIn() =>
+        ApiProblems.Problem("signed_in", StatusCodes.Status409Conflict, "Another account is signed in in this browser. Sign out first.");
+
     public static IResult RegistrationClosed() =>
         ApiProblems.Problem("registration_closed", StatusCodes.Status403Forbidden, "Registration is closed on this instance.");
 

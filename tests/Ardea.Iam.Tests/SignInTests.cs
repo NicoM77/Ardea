@@ -311,8 +311,11 @@ public sealed class SignInTests(PostgresServer server)
     private static async Task<string> CurrentCodeAsync(ApiTestHost host)
     {
         await using var scope = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.CreateAsyncScope(host.Services);
+        // User data is visible only to its own account (row-level security), so the lookup acts for it.
+        var userId = await host.ScalarAsync<Guid>($"SELECT id FROM iam.\"user\" WHERE normalized_email = '{Email.ToUpperInvariant()}'");
+        Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Platform.Tenancy.TenantContext>(scope.ServiceProvider).SetUser(userId);
         var users = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<Domain.ArdeaUser>>(scope.ServiceProvider);
-        var user = await users.FindByEmailAsync(Email);
+        var user = await users.FindByIdAsync(userId.ToString());
         return Totp.Code((await users.GetAuthenticatorKeyAsync(user!))!);
     }
 

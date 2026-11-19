@@ -33,7 +33,7 @@ internal static class SetupToken
 
     public static async Task<bool> AnyUserAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
     {
-        await using var command = new NpgsqlCommand("SELECT EXISTS (SELECT 1 FROM iam.\"user\")", connection);
+        await using var command = new NpgsqlCommand("SELECT iam.any_user()", connection);
         return (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
     }
 }

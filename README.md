@@ -67,7 +67,7 @@ Organisations with projects and technology profile; profile from GitHub reposito
 | No. | Task | Depends on | Status |
 |---|---|---|---|
 | 2.1 | Organisations, memberships, roles, invitations, MFA requirement per organisation; «Team» page | 0.8, 0.9 | ⬜ |
-| 2.2 | Tenant isolation per the result of 0.6; member directory; database functions for system operations; cross-tenant test for all endpoints | 2.1 | ⬜ |
+| 2.2 | Tenant isolation per the result of 0.6; member directory; database functions for system operations; cross-tenant test for all endpoints | 2.1 | ✅ |
 | 2.3 | Projects and components with version, origin, exposure, criticality, mitigation; profile replacement as an ID-preserving reconcile | 2.1 | ⬜ |
 | 2.4 | Fill the catalogue: about 300 products with aliases, CPE mapping, related products; search | 1.1 | ⬜ |
 | 2.5 | Search index `component_key` with match strength | 2.3, 2.4 | ⬜ |

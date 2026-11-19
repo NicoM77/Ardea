@@ -8,7 +8,9 @@ using Ardea.Platform.Http;
 using Ardea.Platform.Jobs;
 using Ardea.Platform.Persistence;
 using Ardea.Platform.Settings;
+using Ardea.Platform.Tenancy;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -58,7 +60,7 @@ internal static class AuthEndpoints
 
     private static async Task<IResult> SetupAsync(
         SetupRequest request, IUnitOfWork unitOfWork, IInstanceSettings settings, UserManager<ArdeaUser> users,
-        ArdeaSignInManager signIn, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
+        ArdeaSignInManager signIn, IAuditLog audit, TimeProvider time, TenantContext tenant, CancellationToken cancellationToken)
     {
         var errors = new FieldErrors()
             .Required("setupToken", request.SetupToken, "Enter the setup token.")
@@ -69,6 +71,13 @@ internal static class AuthEndpoints
         if (errors.Any)
         {
             return IamErrors.Validation(errors.Errors);
+        }
+
+        // The first account is the user of this unit of work from its first statement on.
+        var userId = Guid.CreateVersion7();
+        if (!AccountLookup.TryActAs(tenant, userId))
+        {
+            return IamErrors.SignedIn();
         }
 
         // Two requests at once must not both create a first user.
@@ -89,7 +98,7 @@ internal static class AuthEndpoints
             return IamErrors.InvalidSetupToken();
         }
 
-        var user = NewUser(request.Email!, request.DisplayName!, time);
+        var user = NewUser(request.Email!, request.DisplayName!, time, userId);
         user.IsInstanceAdmin = true;
         user.EmailConfirmed = true;
         var created = await users.CreateAsync(user, request.Password!);
@@ -127,14 +136,20 @@ internal static class AuthEndpoints
 
     private static async Task<IResult> LoginAsync(
         LoginRequest request, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, ArdeaSignInManager signIn,
-        IAuditLog audit, CancellationToken cancellationToken)
+        IAuditLog audit, TenantContext tenant, NpgsqlDataSource dataSource, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrEmpty(request.Password))
         {
             return IamErrors.InvalidCredentials();
         }
 
-        var user = await users.FindByEmailAsync(request.Email.Trim());
+        var userId = await AccountLookup.UserIdByEmailAsync(dataSource, users.NormalizeEmail(request.Email.Trim()), cancellationToken);
+        if (userId is { } id && !AccountLookup.TryActAs(tenant, id))
+        {
+            return IamErrors.SignedIn();
+        }
+
+        var user = userId is null ? null : await users.FindByIdAsync(userId.Value.ToString());
         if (user is null)
         {
             // Same work and the same answer as for a wrong password: nothing tells whether the account exists.
@@ -170,8 +185,21 @@ internal static class AuthEndpoints
     }
 
     private static async Task<IResult> TwoFactorAsync(
-        TwoFactorRequest request, IUnitOfWork unitOfWork, ArdeaSignInManager signIn, IAuditLog audit, CancellationToken cancellationToken)
+        TwoFactorRequest request, HttpContext http, IUnitOfWork unitOfWork, ArdeaSignInManager signIn, IAuditLog audit, TenantContext tenant,
+        CancellationToken cancellationToken)
     {
+        // The account of the first step, from its short-lived cookie, is the user of this unit of work.
+        var pending = await http.AuthenticateAsync(IdentityConstants.TwoFactorUserIdScheme);
+        if (!Guid.TryParse(pending.Principal?.FindFirstValue(ClaimTypes.Name), out var pendingId))
+        {
+            return IamErrors.TwoFactorExpired();
+        }
+
+        if (!AccountLookup.TryActAs(tenant, pendingId))
+        {
+            return IamErrors.SignedIn();
+        }
+
         var user = await signIn.GetTwoFactorAuthenticationUserAsync();
         if (user is null)
         {
@@ -216,8 +244,18 @@ internal static class AuthEndpoints
     private static async Task<IResult> RegisterAsync(
         RegisterRequest request, IUnitOfWork unitOfWork, IInstanceSettings settings, UserManager<ArdeaUser> users,
         ArdeaSignInManager signIn, IEmailSender email, IJobQueue jobs, IAuditLog audit, TimeProvider time, NpgsqlDataSource dataSource,
-        CancellationToken cancellationToken)
+        TenantContext tenant, CancellationToken cancellationToken)
     {
+        // Who this unit of work acts for is settled before it begins: the existing account of the
+        // address, or the one about to be created.
+        var existingId = string.IsNullOrWhiteSpace(request.Email) ? null
+            : await AccountLookup.UserIdByEmailAsync(dataSource, users.NormalizeEmail(request.Email.Trim()), cancellationToken);
+        var userId = existingId ?? Guid.CreateVersion7();
+        if (!AccountLookup.TryActAs(tenant, userId))
+        {
+            return IamErrors.SignedIn();
+        }
+
         var mode = ((await settings.GetAsync(InstanceSettingDefinitions.Registration, cancellationToken)).Value ?? "invite").ToLowerInvariant();
         if (mode == "closed")
         {
@@ -243,7 +281,7 @@ internal static class AuthEndpoints
             return IamErrors.InvalidInvitation();
         }
 
-        if (await users.FindByEmailAsync(request.Email!.Trim()) is { } existing)
+        if (existingId is not null && await users.FindByIdAsync(userId.ToString()) is { } existing)
         {
             // The same answer as a new registration, without signing in: the web app then shows the
             // sign-in page. Nothing tells a stranger that the address has an account (master plan 9.3);
@@ -258,11 +296,20 @@ internal static class AuthEndpoints
             return Results.NoContent();
         }
 
-        var user = NewUser(request.Email!, request.DisplayName!, time);
+        var user = NewUser(request.Email!, request.DisplayName!, time, userId);
         // Without SMTP addresses count as confirmed (master plan 12.4); with it, a mail confirms them.
         var withMail = await email.IsConfiguredAsync(cancellationToken) && !invited;
         user.EmailConfirmed = !withMail;
-        var created = await users.CreateAsync(user, request.Password!);
+        IdentityResult created;
+        try
+        {
+            created = await users.CreateAsync(user, request.Password!);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            // Registered at the same moment by another request: the same answer as for any existing account.
+            return Results.NoContent();
+        }
         if (!created.Succeeded)
         {
             return created.Errors.Any(e => e.Code is "DuplicateEmail" or "DuplicateUserName") ? Results.NoContent() : IamErrors.WeakPassword(created);
@@ -285,11 +332,13 @@ internal static class AuthEndpoints
     /// </summary>
     private static async Task<IResult> ForgotPasswordAsync(
         ForgotPasswordRequest request, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, IEmailSender email, IJobQueue jobs,
-        IAuditLog audit, CancellationToken cancellationToken)
+        IAuditLog audit, TenantContext tenant, NpgsqlDataSource dataSource, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(request.Email)
+        var userId = string.IsNullOrWhiteSpace(request.Email) ? null
+            : await AccountLookup.UserIdByEmailAsync(dataSource, users.NormalizeEmail(request.Email.Trim()), cancellationToken);
+        if (userId is { } id && AccountLookup.TryActAs(tenant, id)
             && await email.IsConfiguredAsync(cancellationToken)
-            && await users.FindByEmailAsync(request.Email.Trim()) is { } user)
+            && await users.FindByIdAsync(id.ToString()) is { } user)
         {
             // At most one waiting mail per account, however often the form is sent.
             await jobs.EnqueueAsync(new SendPasswordResetEmail(user.Id), new EnqueueOptions { CoalesceKey = $"iam.password-reset:{user.Id}" }, cancellationToken);
@@ -301,9 +350,11 @@ internal static class AuthEndpoints
     }
 
     private static async Task<IResult> ConfirmEmailAsync(
-        ConfirmEmailRequest request, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, IAuditLog audit, CancellationToken cancellationToken)
+        ConfirmEmailRequest request, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, IAuditLog audit, TenantContext tenant,
+        CancellationToken cancellationToken)
     {
         if (request.UserId is not { } userId || string.IsNullOrWhiteSpace(request.Token)
+            || !AccountLookup.TryActAs(tenant, userId)
             || await users.FindByIdAsync(userId.ToString()) is not { } user)
         {
             return IamErrors.InvalidToken();
@@ -322,14 +373,15 @@ internal static class AuthEndpoints
 
     private static async Task<IResult> ResetPasswordAsync(
         ResetPasswordRequest request, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, IamDbContext db, IAuditLog audit,
-        TimeProvider time, CancellationToken cancellationToken)
+        TimeProvider time, TenantContext tenant, NpgsqlDataSource dataSource, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrEmpty(request.NewPassword))
         {
             return IamErrors.InvalidToken();
         }
 
-        var user = await users.FindByEmailAsync(request.Email.Trim());
+        var userId = await AccountLookup.UserIdByEmailAsync(dataSource, users.NormalizeEmail(request.Email.Trim()), cancellationToken);
+        var user = userId is { } id && AccountLookup.TryActAs(tenant, id) ? await users.FindByIdAsync(id.ToString()) : null;
         if (user is null)
         {
             return IamErrors.InvalidToken();
@@ -347,9 +399,9 @@ internal static class AuthEndpoints
         return Results.NoContent();
     }
 
-    internal static ArdeaUser NewUser(string email, string displayName, TimeProvider time) => new()
+    internal static ArdeaUser NewUser(string email, string displayName, TimeProvider time, Guid id) => new()
     {
-        Id = Guid.CreateVersion7(),
+        Id = id,
         UserName = email.Trim(),
         Email = email.Trim(),
         DisplayName = displayName.Trim(),

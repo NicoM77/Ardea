@@ -99,6 +99,8 @@ internal sealed class AccountEmailHandlers(IUnitOfWorkFactory units, IEmailSende
     private async Task<(ArdeaUser? User, string? Token)> ReadAsync(Guid userId, Func<UserManager<ArdeaUser>, ArdeaUser, Task<string>> token)
     {
         await using var scope = units.CreateScope();
+        // The job acts for the account it writes to (row-level security on user data, ADR 029).
+        scope.ServiceProvider.GetRequiredService<Platform.Tenancy.TenantContext>().SetUser(userId);
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ArdeaUser>>();
         var user = await users.FindByIdAsync(userId.ToString());
         return user is null ? (null, null) : (user, await token(users, user));

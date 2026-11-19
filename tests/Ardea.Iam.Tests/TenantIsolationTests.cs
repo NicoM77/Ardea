@@ -79,9 +79,9 @@ public sealed class TenantIsolationTests(PostgresServer server)
             {
                 problems.Add($"{table}: no kind; add it to TableKinds (master plan 4.1)");
             }
-            else if (kind == "organization" && (!rls || policies == 0))
+            else if (kind is "organization" or "user" && (!rls || policies == 0))
             {
-                problems.Add($"{table}: organisation data without row-level security and a policy (ADR 029)");
+                problems.Add($"{table}: {kind} data without row-level security and a policy (ADR 029)");
             }
             else if (kind == "organization" && !hasOrganization && table != "iam.organization")
             {
@@ -164,7 +164,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
     }
 
     [Fact]
-    public async Task Without_an_organisation_the_application_role_sees_no_organisation_rows()
+    public async Task Without_a_tenant_the_application_role_sees_no_organisation_or_user_rows()
     {
         await using var host = await ApiTestHost.StartAsync(server);
         using var alice = await SignedInAsync(host, "alice@example.org", setup: true);
@@ -173,11 +173,50 @@ public sealed class TenantIsolationTests(PostgresServer server)
 
         // Plain SQL as the application role, with no tenant set: the third layer hides everything.
         await using var dataSource = NpgsqlDataSource.Create(host.Database.AppConnectionString("tests"));
-        foreach (var table in new[] { "iam.organization", "iam.membership", "iam.invitation", "platform.audit_event" })
+        foreach (var table in new[] { "iam.organization", "iam.membership", "iam.invitation", "platform.audit_event", "iam.\"user\"", "iam.session", "iam.user_token" })
         {
             await using var command = dataSource.CreateCommand($"SELECT count(*) FROM {table}");
             Assert.Equal(0L, (long)(await command.ExecuteScalarAsync())!);
         }
+    }
+
+    [Fact]
+    public async Task A_user_context_sees_only_its_own_account_and_sessions()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var alice = await SignedInAsync(host, "alice@example.org", setup: true);
+        using var bob = await SignedInAsync(host, "bob@example.org", setup: false);
+        var aliceId = await host.ScalarAsync<Guid>("SELECT id FROM iam.\"user\" WHERE normalized_email = 'ALICE@EXAMPLE.ORG'");
+
+        await using var dataSource = NpgsqlDataSource.Create(host.Database.AppConnectionString("tests"));
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        await using (var set = new NpgsqlCommand($"SELECT set_config('ardea.user_id', '{aliceId}', true)", connection, transaction))
+        {
+            await set.ExecuteNonQueryAsync();
+        }
+
+        await using var users = new NpgsqlCommand("SELECT string_agg(email, ',') FROM iam.\"user\"", connection, transaction);
+        Assert.Equal("alice@example.org", await users.ExecuteScalarAsync());
+        await using var sessions = new NpgsqlCommand($"SELECT count(*) FILTER (WHERE user_id <> '{aliceId}') FROM iam.session", connection, transaction);
+        Assert.Equal(0L, await sessions.ExecuteScalarAsync());
+
+        // Writing another account is refused by the policy.
+        await using var write = new NpgsqlCommand("UPDATE iam.\"user\" SET display_name = 'x' WHERE normalized_email = 'BOB@EXAMPLE.ORG'", connection, transaction);
+        Assert.Equal(0, await write.ExecuteNonQueryAsync());
+    }
+
+    [Fact]
+    public async Task Signing_in_as_another_account_in_a_signed_in_browser_is_refused()
+    {
+        await using var host = await ApiTestHost.StartAsync(server);
+        using var alice = await SignedInAsync(host, "alice@example.org", setup: true);
+        using var bob = await SignedInAsync(host, "bob@example.org", setup: false);
+
+        var response = await alice.PostAsync("/api/v1/auth/login", new { email = "bob@example.org", password = ApiTestHost.Password });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal("signed_in", (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
 
     private static string Normalize(string raw) =>

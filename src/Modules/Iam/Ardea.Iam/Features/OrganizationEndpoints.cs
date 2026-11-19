@@ -44,6 +44,9 @@ internal static class OrganizationEndpoints
     /// <summary>Languages the web app and the e-mails speak.</summary>
     private static readonly string[] Locales = ["en", "de", "fr", "it"];
 
+    /// <summary>Shown for an inviter who has left the organisation.</summary>
+    internal const string FormerMember = "A former member";
+
     public static void Map(IEndpointRouteBuilder api)
     {
         var orgs = api.MapGroup("/orgs").WithTags("Organizations").RequireAuthorization();
@@ -254,11 +257,12 @@ internal static class OrganizationEndpoints
     private static async Task<IReadOnlyList<InvitationView>> InvitationsAsync(IamDbContext db, TimeProvider time, CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
+        // An inviter who has left is no longer visible to the organisation (row-level security).
         var rows = await db.Invitations
-            .Join(db.Users, i => i.InvitedBy, u => u.Id, (i, u) => new { Invitation = i, u.DisplayName })
+            .Select(i => new { Invitation = i, DisplayName = db.Users.Where(u => u.Id == i.InvitedBy).Select(u => u.DisplayName).FirstOrDefault() })
             .OrderByDescending(x => x.Invitation.CreatedAt)
             .ToListAsync(cancellationToken);
-        return [.. rows.Select(x => View(x.Invitation, x.DisplayName, now))];
+        return [.. rows.Select(x => View(x.Invitation, x.DisplayName ?? FormerMember, now))];
     }
 
     /// <summary>
@@ -343,12 +347,12 @@ internal static class OrganizationEndpoints
         tenant.SetOrganization(organizationId);
         var hash = OrganizationDirectory.HashToken(token);
         var preview = await db.Invitations.Where(i => i.TokenHash == hash)
-            .Join(db.Users, i => i.InvitedBy, u => u.Id, (i, u) => new { i.Email, i.Role, i.ExpiresAt, Inviter = u.DisplayName })
+            .Select(i => new { i.Email, i.Role, i.ExpiresAt, Inviter = db.Users.Where(u => u.Id == i.InvitedBy).Select(u => u.DisplayName).FirstOrDefault() })
             .SingleOrDefaultAsync(cancellationToken);
         var name = await db.Organizations.Select(o => o.Name).SingleAsync(cancellationToken);
         return preview is null
             ? IamErrors.NotFound("invalid_invitation", "The invitation is not valid or has expired.")
-            : Results.Ok(new InvitationPreview(name, preview.Email, preview.Role, preview.Inviter, preview.ExpiresAt));
+            : Results.Ok(new InvitationPreview(name, preview.Email, preview.Role, preview.Inviter ?? FormerMember, preview.ExpiresAt));
     }
 
     /// <summary>The signed-in user joins with the invited role; the invitation is for their address only.</summary>

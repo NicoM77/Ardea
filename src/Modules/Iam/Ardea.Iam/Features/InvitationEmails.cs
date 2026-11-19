@@ -41,7 +41,8 @@ internal sealed class InvitationEmailHandler(IUnitOfWorkFactory units, IEmailSen
             await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
             (address, role, expires) = (invitation.Email, invitation.Role, invitation.ExpiresAt);
             organization = await db.Organizations.Select(o => o.Name).SingleAsync(cancellationToken);
-            inviter = await db.Users.Where(u => u.Id == invitation.InvitedBy).Select(u => u.DisplayName).SingleAsync(cancellationToken);
+            inviter = await db.Users.Where(u => u.Id == invitation.InvitedBy).Select(u => u.DisplayName).FirstOrDefaultAsync(cancellationToken)
+                ?? OrganizationEndpoints.FormerMember;
         }
 
         var link = OrganizationEndpoints.InvitationLink(configuration, token);

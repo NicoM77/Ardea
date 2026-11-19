@@ -38,7 +38,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
     private static readonly string[] GlobalSchemas = ["intel", "catalog"];
 
     /// <summary>Schemas whose every table is organisation data (master plan 4.1).</summary>
-    private static readonly string[] OrganizationSchemas = ["assets"];
+    private static readonly string[] OrganizationSchemas = ["assets", "assess"];
 
     /// <summary>Bob's objects that Alice tries to reach.</summary>
     private sealed record Foreign(Guid User, Guid Invitation, Guid Project, Guid Component, Guid Connection, Guid Link, Guid Suggestion);

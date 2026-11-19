@@ -87,8 +87,8 @@ Findings, actions and alerts with level and reasoning; overview, list, detail.
 | No. | Task | Depends on | Status |
 |---|---|---|---|
 | 3.1 | Mockups: calm overview, action with several findings, version with AI assessment; owner reviews afterwards | | ⬜ |
-| 3.2 | Candidate search forward and backward, including OSV package coordinates; match strength; weak matches as level 1 | 1.7, 1.12, 2.5 | ⬜ |
-| 3.3 | Version check with three outcomes including the records' default status; distro packages as unknown | 3.2, 1.1 | ⬜ |
+| 3.2 | Candidate search forward and backward, including OSV package coordinates; match strength; weak matches as level 1 | 1.7, 1.12, 2.5 | ✅ |
+| 3.3 | Version check with three outcomes including the records' default status; distro packages as unknown | 3.2, 1.1 | ✅ |
 | 3.4 | Rule set version 1 as a file; factors, upper and lower bounds, deadlines | 3.3 | ⬜ |
 | 3.5 | Findings, actions, alerts, history; events from 8.2 as history lines; closing by raising the version in the profile; initial load without single events | 3.4 | ⬜ |
 | 3.6 | Answers from templates without a language model | 3.5 | ⬜ |

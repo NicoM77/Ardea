@@ -73,6 +73,8 @@ Every query bypasses the EF filter, so only the database separates tenants.
   | `iam.validate_session(session, user, stamp, idle)` | sign-in: the session check in front of every request |
   | `iam.any_user()` | instance figure: whether setup is still open |
   | `iam.invitation_organization(token_hash, email)` | accept an invitation: the organisation of a token |
+  | `assets.organizations_with_component_keys(types, values)` | candidate search: the organisations whose components carry these keys (ADR 033) |
+  | `assess.organizations_with_alert(entry)` | reassessment, withdrawal of an entry: the organisations with an alert for it (ADR 033) |
 
 - `TenantIsolationTests` checks that every table has exactly one kind and the matching policy, and calls
   every organisation endpoint with foreign organisations and foreign object ids.

@@ -82,6 +82,8 @@ internal sealed record StoredEstimate(
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         RespectNullableAnnotations = true,
         RespectRequiredConstructorParameters = true,
+        // GetResponseAsync<T> makes the options read-only, which needs an explicit resolver.
+        TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver(),
     };
 
     public JsonDocument ToDocument() => JsonSerializer.SerializeToDocument(this, Json);

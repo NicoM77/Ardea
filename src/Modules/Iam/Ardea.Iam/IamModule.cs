@@ -59,6 +59,7 @@ public sealed class IamModule : IModule
         services.AddScoped<IOrganizationMembership, MembershipCheck>();
         services.AddScoped<Contracts.IOrganizationProfiles, Features.OrganizationProfiles>();
         services.AddScoped<Contracts.IOrganizationMembers, Features.OrganizationMembers>();
+        services.AddScoped<Contracts.IInstanceAdministrators, Features.InstanceAdministrators>();
         if (int.TryParse(configuration["PASSWORD_HASH_ITERATIONS"], CultureInfo.InvariantCulture, out var iterations) && iterations > 0)
         {
             services.Configure<PasswordHasherOptions>(o => o.IterationCount = iterations);

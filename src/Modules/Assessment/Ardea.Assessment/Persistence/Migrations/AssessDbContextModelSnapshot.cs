@@ -106,6 +106,11 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("evidence");
 
+                    b.Property<JsonDocument>("Factors")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("factors");
+
                     b.Property<string>("FixedVersion")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")

@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Ardea.Assessment.Matching;
 using Ardea.Assessment.Persistence;
+using Ardea.Assessment.Rules;
 using Ardea.Assets.Contracts;
 using Ardea.Catalog.Contracts;
 using Ardea.Intel.Contracts;
@@ -24,7 +25,8 @@ internal sealed record AssessmentScope(ProjectProfile? Project)
 /// written only where something changed. The same input changes nothing. Runs in the tenant context
 /// of the job or request; a transaction-level advisory lock serialises work on the same alert.
 /// </summary>
-internal sealed class AlertAssessor(AssessDbContext db, IProfileQueries profiles, IProductCatalog catalog, IVersionSchemes schemes, ITenantContext tenant, TimeProvider time)
+internal sealed class AlertAssessor(
+    AssessDbContext db, IProfileQueries profiles, IProductCatalog catalog, IVersionSchemes schemes, RuleSet rules, ITenantContext tenant, TimeProvider time)
 {
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
@@ -71,7 +73,8 @@ internal sealed class AlertAssessor(AssessDbContext db, IProfileQueries profiles
         var present = components.ToDictionary(c => c.Id);
         foreach (var candidate in candidates)
         {
-            var outcome = Evaluate(candidate);
+            byComponent.TryGetValue(candidate.Component.Id, out var known);
+            var outcome = Evaluate(entry, candidate, known);
             if (byComponent.Remove(candidate.Component.Id, out var finding))
             {
                 Apply(finding, outcome, now);
@@ -89,7 +92,7 @@ internal sealed class AlertAssessor(AssessDbContext db, IProfileQueries profiles
                 : !present.TryGetValue(finding.ComponentId, out var component) ? "component_removed"
                 : component.ProjectArchived ? "project_archived"
                 : "no_longer_matched";
-            Close(finding, reason, now);
+            Close(finding, reason, Document(new RuleResult { RulesetVersion = rules.Version, Level = 1, Exclusion = reason }), now);
         }
 
         await db.SaveChangesAsync(cancellationToken);
@@ -125,27 +128,53 @@ internal sealed class AlertAssessor(AssessDbContext db, IProfileQueries profiles
         return await profiles.FindComponentsAsync(ids, cancellationToken);
     }
 
-    private Outcome Evaluate(Candidate candidate)
+    /// <summary>Match, version check and rule set for one candidate (master plan 7.2, 7.3, 7.6).</summary>
+    private Outcome Evaluate(EntryFacts entry, Candidate candidate, Finding? known)
     {
         var evidence = new Dictionary<string, object?>
         {
             ["match"] = new { type = candidate.MatchType, keys = candidate.Keys.Select(k => $"{k.Type} {k.Value}").ToList() },
             ["installed"] = candidate.Component.Version,
         };
-        if (!candidate.IsStrong)
+        var version = candidate.IsStrong ? VersionMatch.Check(candidate.Component, candidate.MatchType, candidate.Affected, schemes) : null;
+        if (version is not null)
         {
-            return new Outcome(candidate.MatchType, null, null, null, "not_affected", 1, "weak_match", Document(evidence));
+            evidence["version"] = version;
         }
 
-        var version = VersionMatch.Check(candidate.Component, candidate.MatchType, candidate.Affected, schemes);
-        evidence["version"] = version;
-        var document = Document(evidence);
-        return version.Verdict switch
+        var component = candidate.Component;
+        var human = known is { VerdictSource: "human" } ? known.Verdict : null;
+        var result = RuleEngine.Evaluate(rules, new RuleInput
         {
-            VersionVerdicts.OutOfRange => new Outcome(candidate.MatchType, version.Verdict, version.Reason, null, "not_affected", 1, "out_of_range", document),
-            VersionVerdicts.InRange => new Outcome(candidate.MatchType, version.Verdict, version.Reason, version.FixedVersion, "affected", 2, null, document),
-            _ => new Outcome(candidate.MatchType, version.Verdict, version.Reason, null, "uncertain", 2, null, document),
+            StrongMatch = candidate.IsStrong,
+            VersionVerdict = version?.Verdict,
+            VersionReason = version?.Reason,
+            InstalledVersion = component.Version,
+            HumanExcluded = known is { StatusChangedBy: not null, Status: "not_affected" },
+            HumanVerdict = human is "affected" or "likely" or "unlikely" ? human : null,
+            CvssScore = entry.CvssScore,
+            CvssVersion = entry.CvssVersion,
+            Exploitation = entry.Exploitation,
+            ExploitationSource = entry.ExploitationSource,
+            ExploitationSince = entry.ExploitationSince,
+            AuthorityWarning = entry.AuthorityWarning,
+            EpssClass = entry.EpssClass,
+            Criticality = component.Criticality,
+            Exposure = component.Exposure,
+            Protection = component.Protection,
+            DevelopmentOnly = component.DependencyScope == "development",
+        });
+
+        // The verdict without a model (master plan 4.9).
+        var verdict = version?.Verdict switch
+        {
+            VersionVerdicts.InRange => "affected",
+            VersionVerdicts.Unknown => "uncertain",
+            _ => "not_affected",
         };
+        return new Outcome(
+            candidate.MatchType, version?.Verdict, version?.Reason, version?.Verdict == VersionVerdicts.InRange ? version.FixedVersion : null,
+            verdict, result.Level, result.Exclusion, Document(evidence), Document(result));
     }
 
     private static Finding Create(Alert alert, EntryFacts entry, Candidate candidate, Outcome outcome, DateTimeOffset now) => new()
@@ -162,6 +191,7 @@ internal sealed class AlertAssessor(AssessDbContext db, IProfileQueries profiles
         Verdict = outcome.Verdict,
         Level = outcome.Level,
         Evidence = outcome.Evidence,
+        Factors = outcome.Factors,
         Status = outcome.Level >= 2 ? "open" : "not_affected",
         StatusReason = outcome.Level >= 2 ? null : outcome.ExclusionReason,
         StatusChangedAt = now,
@@ -176,17 +206,19 @@ internal sealed class AlertAssessor(AssessDbContext db, IProfileQueries profiles
         var installedNow = outcome.Evidence.RootElement.TryGetProperty("installed", out var after) ? after.GetString() : null;
         var changed = finding.MatchType != outcome.MatchType || finding.VersionVerdict != outcome.VersionVerdict
             || finding.VersionReason != outcome.VersionReason || finding.FixedVersion != outcome.FixedVersion
-            || finding.Verdict != outcome.Verdict || finding.Level != outcome.Level
-            || !JsonElement.DeepEquals(finding.Evidence.RootElement, outcome.Evidence.RootElement);
+            || (finding.VerdictSource == "rules" && finding.Verdict != outcome.Verdict) || finding.Level != outcome.Level
+            || !JsonElement.DeepEquals(finding.Evidence.RootElement, outcome.Evidence.RootElement)
+            || !JsonElement.DeepEquals(finding.Factors.RootElement, outcome.Factors.RootElement);
         if (changed)
         {
             finding.MatchType = outcome.MatchType;
             finding.VersionVerdict = outcome.VersionVerdict;
             finding.VersionReason = outcome.VersionReason;
             finding.FixedVersion = outcome.FixedVersion;
-            finding.Verdict = outcome.Verdict;
+            finding.Verdict = finding.VerdictSource == "rules" ? outcome.Verdict : finding.Verdict;
             finding.Level = outcome.Level;
             finding.Evidence = outcome.Evidence;
+            finding.Factors = outcome.Factors;
             finding.ChangedAt = now;
         }
 
@@ -206,11 +238,12 @@ internal sealed class AlertAssessor(AssessDbContext db, IProfileQueries profiles
         SetStatus(finding, status, reason, now);
     }
 
-    private static void Close(Finding finding, string reason, DateTimeOffset now)
+    private static void Close(Finding finding, string reason, JsonDocument factors, DateTimeOffset now)
     {
-        if (finding.Level != 1)
+        if (finding.Level != 1 || !JsonElement.DeepEquals(finding.Factors.RootElement, factors.RootElement))
         {
             finding.Level = 1;
+            finding.Factors = factors;
             finding.ChangedAt = now;
         }
 
@@ -237,5 +270,6 @@ internal sealed class AlertAssessor(AssessDbContext db, IProfileQueries profiles
 
     /// <summary>The result for one finding.</summary>
     private sealed record Outcome(
-        string MatchType, string? VersionVerdict, string? VersionReason, string? FixedVersion, string Verdict, int Level, string? ExclusionReason, JsonDocument Evidence);
+        string MatchType, string? VersionVerdict, string? VersionReason, string? FixedVersion, string Verdict, int Level, string? ExclusionReason,
+        JsonDocument Evidence, JsonDocument Factors);
 }

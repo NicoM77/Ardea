@@ -138,6 +138,28 @@ export const routes: Routes = [
           { path: 'vulnerabilities', redirectTo: '/entries' },
           { path: 'sources', redirectTo: '/sources' },
           {
+            path: 'overview',
+            title: 'nav.overview',
+            loadComponent: () =>
+              import('./features/overview/overview-page').then((m) => m.OverviewPage),
+          },
+          {
+            path: 'actions',
+            title: 'nav.actions',
+            loadComponent: () =>
+              import('./features/actions/actions-page').then((m) => m.ActionsPage),
+          },
+          {
+            path: 'actions/:number',
+            title: 'actionDetail.title',
+            loadComponent: () => import('./features/actions/action-page').then((m) => m.ActionPage),
+          },
+          {
+            path: 'alerts/:number',
+            title: 'alert.title',
+            loadComponent: () => import('./features/actions/alert-page').then((m) => m.AlertPage),
+          },
+          {
             path: 'setup',
             title: 'wizard.title',
             data: { mode: 'organization' },

@@ -61,7 +61,7 @@ internal static class PushEndpoints
             .Produces<PushSubscriptionView>().Produces<PushSubscriptionView>(StatusCodes.Status201Created).Problems(400);
         me.MapDelete("/", UnsubscribeAsync).WithName("deletePushSubscriptionByEndpoint").NoContent();
         me.MapDelete("/{id:guid}", DeleteAsync).WithName("deletePushSubscription").NoContent().Problems(404);
-        me.MapPost("/{id:guid}/test", TestAsync).WithName("testPushSubscription").Produces<PushTestView>().Problems(404);
+        me.MapPost("/{id:guid}/test", TestAsync).WithName("testPushSubscription").RequireRateLimiting(RateLimits.Outbound).Produces<PushTestView>().Problems(404);
     }
 
     private static async Task<IResult> PublicKeyAsync(VapidKeyStore vapid, CancellationToken cancellationToken) =>

@@ -112,6 +112,26 @@ public sealed class CveProgramProviderTests : IDisposable
     }
 
     [Fact]
+    public async Task Unpacking_the_archive_is_bounded_a_large_record_is_skipped_and_a_large_inner_archive_ends_the_run()
+    {
+        static string Record(string id, int padding) =>
+            $$"""{"cveMetadata":{"cveId":"{{id}}","datePublished":"2026-11-10T00:00:00Z"},"padding":"{{new string('x', padding)}}"}""";
+        var archive = ZipOfZip(("cves/2026/0xxx/CVE-2026-0001.json", Record("CVE-2026-0001", 100)), ("cves/2026/0xxx/CVE-2026-0002.json", Record("CVE-2026-0002", 50_000)));
+        var releases = """[{"assets":[{"name":"2026-11-18_all_CVEs_at_midnight.zip.zip","browser_download_url":"https://github.com/CVEProject/cvelistV5/releases/download/x/2026-11-18_all_CVEs_at_midnight.zip.zip"}]}]""";
+        SyncContext NewContext() => Context(
+            new RecordedHttp()
+                .On("api.github.com", () => Json(releases))
+                .On("all_CVEs_at_midnight", () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(archive) }),
+            cursor: null, backfillFrom: new DateTimeOffset(2025, 11, 1, 0, 0, 0, TimeSpan.Zero), mode: SyncMode.Backfill);
+
+        var items = await Collect(new CveProgramProvider { ArchiveLimits = new ArchiveLimits(1_000_000, 10_000, 100) }, NewContext());
+
+        Assert.Equal(["CVE-2026-0001"], items.OfType<RawRecord>().Select(r => r.ExternalId));
+        await Assert.ThrowsAsync<InvalidDataException>(() => Collect(new CveProgramProvider { ArchiveLimits = new ArchiveLimits(100, 10_000, 100) }, NewContext()));
+        await Assert.ThrowsAsync<InvalidDataException>(() => Collect(new CveProgramProvider { ArchiveLimits = new ArchiveLimits(1_000_000, 10_000, 1) }, NewContext()));
+    }
+
+    [Fact]
     public async Task Pause_longer_than_the_log_falls_back_to_the_archive()
     {
         var archive = ZipOfZip(("cves/2026/119xxx/CVE-2026-119725.json", TestData.Read("cve-program", "CVE-2026-119725.json")));

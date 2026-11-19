@@ -302,7 +302,8 @@ namespace Ardea.Catalog.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_unknown_product_raw_key");
 
-                    b.HasIndex("Outcome", "RecordCount")
+                    b.HasIndex("Outcome", "InKev", "RecordCount", "RawKey")
+                        .IsDescending(false, true, true, false)
                         .HasDatabaseName("ix_unknown_product_outcome_count");
 
                     b.ToTable("unknown_product", "catalog", t =>

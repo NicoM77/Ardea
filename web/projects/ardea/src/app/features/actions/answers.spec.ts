@@ -71,6 +71,20 @@ describe('the three answers', () => {
     expect(text(todo)).toContain('From 17.9, the version installed now');
   });
 
+  it('links the advisory only when source data gives a web address', () => {
+    const link = (advisoryUrl: string) =>
+      render({ ...ANSWERS, toDo: { ...ANSWERS.toDo, advisoryUrl } }).querySelector(
+        '[data-answer="todo"] a',
+      );
+    expect(link('https://www.postgresql.org/support/security/')?.getAttribute('href')).toBe(
+      'https://www.postgresql.org/support/security/',
+    );
+    TestBed.resetTestingModule();
+    expect(link('javascript:alert(document.cookie)')).toBeNull();
+    TestBed.resetTestingModule();
+    expect(link('data:text/html,<script>alert(1)</script>')).toBeNull();
+  });
+
   it('quotes the source’s own words as a quotation and names the source', () => {
     const element = render(ANSWERS);
     const happened = element.querySelector('[data-answer="happened"]');

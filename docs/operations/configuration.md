@@ -28,7 +28,8 @@ environment wins and is shown there as locked.
 | `ARDEA_AI__DAILY_REQUESTS_PER_ORGANIZATION` | `20` | Assessments the people of one organisation may ask for per UTC day. Their requests run before the system's, so the cap keeps one organisation from holding the others back. Beyond it the request is refused with 429. |
 | `ARDEA_AI__CATALOG_PROVIDER` | first local provider | The provider the catalogue asks when it learns unknown products (master plan 6.9, ADR 040): a provider's name, or `none` for none. The catalogue sends only public data of the sources, so the organisations' data policies do not apply; a provider that is not local is used only when it is named here or in *Sources → Catalogue*. Set here, the field in the administration is locked. |
 | `ARDEA_AI__CATALOG_DAILY_CALLS` | `200` | Calls per UTC day for the catalogue, retries included; the rest waits for the next day. |
-| `ARDEA_RATE_LIMIT__AUTH_PER_MINUTE` | `10` | Sign-in, registration and reset attempts per client network and minute; read-only lookups get six times as many. |
+| `ARDEA_RATE_LIMIT__AUTH_PER_MINUTE` | `10` | Sign-in, registration and reset attempts per client network and minute; read-only lookups and the confirmation and unsubscribe links of external addresses get six times as many. |
+| `ARDEA_RATE_LIMIT__OUTBOUND_PER_MINUTE` | `10` | Requests per account and minute that call out of the instance while they wait or build a large answer: connection tests (SMTP, AI providers, GitHub, webhooks, push devices), the repository search at GitHub, invitations and confirmation e-mails, the catalogue export. |
 | `ARDEA_PASSWORD_HASH_ITERATIONS` | Identity's default | PBKDF2 iterations for new password hashes. |
 | `ARDEA_INTEL__BACKFILL_DAYS` | `180` | Look-back of the first load. |
 | `ARDEA_SCRATCH_DIR` | `/scratch` | Working space for large archives (a volume in Compose). |

@@ -4,6 +4,7 @@ import { LucideExternalLink } from '@lucide/angular';
 import { UiCopyButton } from 'ui';
 import type { AffectedItem, AnswersView, ModelVerdictView } from '../../core/api/client';
 import { num } from './action-format';
+import { webUrl } from '../entries/entry-detail-format';
 import { refs } from './model-format';
 import {
   affectedLabel,
@@ -155,9 +156,9 @@ import {
           }
         </ol>
       }
-      @if (a.toDo.advisoryUrl) {
+      @if (web(a.toDo.advisoryUrl); as advisory) {
         <p class="source">
-          <a class="link" [href]="a.toDo.advisoryUrl" target="_blank" rel="noopener noreferrer">
+          <a class="link" [href]="advisory" target="_blank" rel="noopener noreferrer">
             {{ 'answers.todo.advisory' | transloco }}
             <svg lucideExternalLink aria-hidden="true"></svg>
           </a>
@@ -340,6 +341,8 @@ import {
 export class Answers {
   private static next = 0;
   protected readonly uid = `answers-${Answers.next++}`;
+  /** The advisory comes from source data: it opens only when it is a web address. */
+  protected readonly web = webUrl;
   readonly answers = input.required<AnswersView>();
   /** The component the target version belongs to, written before it («PostgreSQL 17.12»). */
   readonly component = input<string | null>(null);

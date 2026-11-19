@@ -26,7 +26,7 @@ internal static class AuthEndpoints
     public const string RateLimitPolicy = "ardea-auth";
 
     /// <summary>For read-only lookups before sign-in; six times the limit of <see cref="RateLimitPolicy"/>.</summary>
-    public const string ReadRateLimitPolicy = "ardea-auth-read";
+    public const string ReadRateLimitPolicy = RateLimits.Lookup;
 
     private static readonly ArdeaUser Nobody = new() { DisplayName = "-" };
     private static string? _dummyHash;

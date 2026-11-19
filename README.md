@@ -13,7 +13,7 @@ yet. Progress follows chapter 14 of the plan (see the roadmap below).
 
 ## Roadmap
 
-The roadmap follows chapter 14 of the master plan: eight phases up to release 1.0, each ending with
+The roadmap follows chapter 14 of the master plan: nine phases up to release 1.0, each ending with
 something that runs and can be checked. Task numbers and dependencies are the plan's; the plan holds
 the full description and the acceptance criteria of each phase. Estimates are for one experienced
 person with AI assistance and are not a commitment.
@@ -24,7 +24,7 @@ Status: ✅ done · 🔄 in progress · ⬜ open
 
 A startable instance with sign-in, job system, build chain and a first administration; technical risks resolved.
 
-The phase 0 acceptance (healthy within 3 minutes of loading the images, then sign-in over HTTPS with setup token, password and TOTP) is checked on every pull request by the end-to-end test in [`tests/e2e/`](tests/e2e/) (`tests/e2e/run.sh <image>`).
+The phase 0 acceptance (healthy within 3 minutes of loading the images, then sign-in over HTTPS with setup token, password and TOTP) is checked by the end-to-end test in [`tests/e2e/`](tests/e2e/) (`tests/e2e/run.sh <image>`); CI runs it on `main` for now, pull requests are verified locally until task 7.13.
 
 | No. | Task | Depends on | Status |
 |---|---|---|---|
@@ -142,20 +142,37 @@ Notifications over four channels.
 
 Acceptance: [tested](docs/acceptance/phase-5.md); open: the manual iOS check on an installed web app, a test with a real push service, and the owner's review of the notification mockups.
 
+### Phase 5a · Stack and notices (4–6 weeks)
+
+The profile gets two depths (chapter 17 of the plan): a coarse stack for the organisation without versions, and exact projects with a repository. Entries that touch the stack become notices («might affect you») answered with «affects us» or «doesn't affect us». «Affects us» creates a reminder. Actions become reminders: no assignment, no deadline, no escalation; open reminders remind by level.
+
+| No. | Task | Depends on | Status |
+|---|---|---|---|
+| 5a.1 | **Spike:** notices per week for typical stacks with the spike week's data; set thresholds; ADR | 3.7 | ⬜ |
+| 5a.2 | Data model: `project.kind`, `version_precision`, `notice`; remove assignment, deadline and «in review»; migrate open actions without a version to notices | 5a.1 | ⬜ |
+| 5a.3 | Notices from the stack with a threshold per entry; «affects us» creates a reminder; reappears on active exploitation or KEV | 5a.2 | ⬜ |
+| 5a.4 | Wizard: stack step before projects; projects and repository optional | 5a.2 | ⬜ |
+| 5a.5 | Notices page; shortened reminder detail; overview with new notices | 5a.3 | ⬜ |
+| 5a.6 | Reminders by level; event `notice.raised`; escalation dropped | 5a.3, 5.2 | ⬜ |
+
+Acceptance: a stack of ten entries produces at most the number of notices set in 5a.1 in the spike week; «doesn't affect us» does not come back; no endpoint or page knows assignment or deadline.
+
 ### Phase 6 · Hardening (3–4 weeks)
 
 A hardened, reviewed and documented instance.
 
 | No. | Task | Status |
 |---|---|---|
-| 6.1 | Security pass along the threat table in 9.7; headers, rate limiting, tests against internal targets and injected content | ⬜ |
+| 6.1 | Security pass along the threat table in 9.7; headers, rate limiting, tests against internal targets and injected content | ✅ [threat review](docs/security/threat-review.md) |
 | 6.2 | Independent security review by someone outside development: sign-in, tenant isolation, outbound connections | ⬜ |
 | 6.3 | Manual accessibility pass of the core flows with keyboard and screen reader | ⬜ |
 | 6.4 | Indexes checked against query plans; memory and response times observed on the project's own instance | ⬜ |
-| 6.5 | Fast integration test: restore a small pre-release dump, migrate to 1.0, restore again | ⬜ |
+| 6.5 | Fast integration test: restore a small pre-release dump, migrate to 1.0, restore again | ✅ |
 | 6.6 | Maintenance commands: recover access, load full dataset, export and delete an organisation; self-warnings; operations metrics | ⬜ |
 | 6.7 | Documentation: install, configure, operate, update, «Add a source»; `SECURITY.md` | ⬜ |
 | 6.8 | SBOM and licence file in the build; the project's own instance, fed from its own repository | ⬜ |
+
+Rows stay ⬜ where a part is open: **6.4** the indexes are checked (plan tests for every list and search query of phases 3 to 5, three new indexes), memory and response times on the project's own instance are not observed yet; **6.6** commands, figures in the administration and the warnings exist, a notification to the instance administrator about a warning is not sent yet; **6.7** the guides are complete, `SECURITY.md` belongs to task 6.1; **6.8** SBOM and licence file are in the build and the image ([ADR 042](docs/adr/0042-sbom-and-third-party-notices.md)), the project's own instance needs the owner's infrastructure.
 
 ### Phase 7 · Clean-up and release 1.0 (4–5 weeks)
 
@@ -180,7 +197,7 @@ A tidy repository under the name Ardea, release 1.0 built without manual steps, 
 
 Acceptance (planned): every pull request runs the pipeline again and branch protection requires it green (7.13); merging the 1.0.0 release PR produces tag, `CHANGELOG.md`, signed images for both architectures and a GitHub release with notes, SBOM and Compose file without manual steps, within 25 minutes; signature and provenance verify with the documented command; a commit that is not a Conventional Commit fails its PR; `seed-demo` yields an instance with data in under 2 minutes and aborts on a database with data; someone new to the project installs Ardea from the README or website alone in under 15 minutes; the website republishes on a release with no broken link and no accessibility finding; all criteria of phases 0 to 5 and chapter 1.6 hold on both architectures; build and lint run without warnings, the comment check finds nothing outside the exceptions and the OpenAPI document is unchanged; GitHub holds no branch besides main except those of open PRs, and a merged PR deletes its branch (7.14); afterwards no file links to `docs/masterplan/` and every file belongs to the product, its build, tests, documentation or website.
 
-**Total: 38–50 weeks.**
+**Total: 42–56 weeks** (phase 5a added 19.11.2026).
 
 ### After 1.0
 

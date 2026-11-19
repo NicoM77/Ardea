@@ -18,7 +18,7 @@ Versionen und Lizenzen sind am 18.11.2026 gegen Primärquellen geprüft. Die vol
 | HTTP nach aussen | `HttpClientFactory` mit Microsoft.Extensions.Http.Resilience und `System.Threading.RateLimiting` | 11.0.0 | Wiederholung, Zeitlimit, Ratenbegrenzung je Quelle ohne Eigenbau. |
 | Telemetrie | OpenTelemetry .NET, JSON-Logs der Plattform | 1.21.0 | Alle drei Signale stabil; Serilog ist dafür nicht mehr nötig. |
 | Frontend | Angular 22, eigenständige Komponenten, Signale, zonenlos | 22.2 | Einziger aktiv gepflegter Hauptzweig, LTS bis Juni 2028 (2.4). |
-| Komponenten | eigene Bibliothek auf Angular CDK und Angular Aria, TanStack Table für die Liste der Massnahmen | 22.3 / 9.3 | Das Design ist eigenständig; kopflose Bausteine liefern Tastatur, Rollen und Fokus (2.4). |
+| Komponenten | eigene Bibliothek auf Angular CDK und Angular Aria, TanStack Table für die Liste der Reminders | 22.3 / 9.3 | Das Design ist eigenständig; kopflose Bausteine liefern Tastatur, Rollen und Fokus (2.4). |
 | Styling | CSS Custom Properties, komponentenweise Stylesheets | | Kleines, geschlossenes System; kein Tailwind nötig. |
 | API-Client | orval, aus dem OpenAPI-Dokument erzeugt | 8.48 | Sehr aktiv gepflegt, erzeugt `httpResource` für Lesen und `HttpClient` für Schreiben; OpenAPI Generator ist die Alternative. |
 | Übersetzung | Transloco, zur Laufzeit umschaltbar | 8.4 | Ein Image und später eine App für alle Sprachen. |

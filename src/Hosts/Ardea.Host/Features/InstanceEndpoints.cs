@@ -49,9 +49,9 @@ internal static class InstanceEndpoints
         instance.MapGet("", GetAsync).WithName("getInstance");
         instance.MapGet("/settings", GetSettingsAsync).WithName("getInstanceSettings");
         instance.MapPatch("/settings", UpdateSettingsAsync).WithName("updateInstanceSettings").Produces<InstanceSettingsResponse>().Problems(400, 409);
-        instance.MapPost("/smtp/test", TestSmtpAsync).WithName("sendTestEmail").NoContent().Problems(400, 409, 502);
+        instance.MapPost("/smtp/test", TestSmtpAsync).WithName("sendTestEmail").RequireRateLimiting(RateLimits.Outbound).NoContent().Problems(400, 409, 502);
         instance.MapGet("/ai/providers", (IAiProviders providers) => providers.All).WithName("listAiProviders");
-        instance.MapPost("/ai/providers/{name}/test", TestAiProviderAsync).WithName("testAiProvider").Produces<AiConnectionResult>().Problems(404);
+        instance.MapPost("/ai/providers/{name}/test", TestAiProviderAsync).WithName("testAiProvider").RequireRateLimiting(RateLimits.Outbound).Produces<AiConnectionResult>().Problems(404);
         instance.MapGet("/jobs", ListJobsAsync).WithName("listAbandonedJobs");
         instance.MapGet("/status", StatusAsync).WithName("getInstanceStatus").Produces<InstanceStatusView>();
 

@@ -75,7 +75,7 @@ internal static class OrganizationEndpoints
         org.MapDelete("/members/{userId:guid}", RemoveMemberAsync).WithName("removeMember").NoContent().Problems(403, 404, 409);
         org.MapGet("/invitations", InvitationsAsync).WithName("listInvitations").RequireOrganizationRole(OrganizationRole.Admin)
             .Produces<IReadOnlyList<InvitationView>>().Problems(403, 404);
-        org.MapPost("/invitations", InviteAsync).WithName("createInvitation").RequireOrganizationRole(OrganizationRole.Admin)
+        org.MapPost("/invitations", InviteAsync).WithName("createInvitation").RequireRateLimiting(RateLimits.Outbound).RequireOrganizationRole(OrganizationRole.Admin)
             .Produces<InvitationView>(StatusCodes.Status201Created).Problems(400, 403, 404, 409);
         org.MapDelete("/invitations/{id:guid}", RevokeInvitationAsync).WithName("revokeInvitation").RequireOrganizationRole(OrganizationRole.Admin)
             .NoContent().Problems(403, 404);

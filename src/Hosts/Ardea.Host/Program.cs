@@ -13,8 +13,9 @@ return command switch
     "init-env" => InitEnvCommand.Run(rest),
     "doctor" => await DoctorCommand.RunAsync(rest),
     "admin" => await AdminCommand.RunAsync(rest),
-    // `ardea intel renormalize …` is the admin command `intel-renormalize` (master plan 12.8 names it so).
-    "intel" when rest.Length > 0 => await AdminCommand.RunAsync(["intel-" + rest[0], .. rest[1..]]),
+    // `ardea intel renormalize …` is the admin command `intel-renormalize`, `ardea assess recompute` is
+    // `assess-recompute` and `ardea catalog grow` is `catalog-grow` (master plan 12.8 names them so).
+    _ when rest.Length > 0 && AdminCommand.GroupPrefixes.Contains(command) => await AdminCommand.RunAsync([command + "-" + rest[0], .. rest[1..]]),
     "org" => await OrgCommand.RunAsync(rest),
     "seed-demo" => await SeedDemoCommand.RunAsync(rest),
     "version" or "--version" => VersionCommand.Run(),

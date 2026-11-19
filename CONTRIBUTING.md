@@ -5,6 +5,10 @@ The rules below summarise chapter 13 of the [master plan](docs/masterplan/13-rep
 ## Workflow
 
 - One main branch, short-lived branches. Every change goes through a pull request with green checks.
+  **Temporary exception (owner's decision of 19 November 2026, Actions minutes used up):** CI runs only on `main`,
+  never on pull requests (task 7.13 turns it back on). A pull request is verified locally before it is merged: the
+  test projects it touches and `dotnet format Ardea.slnx --verify-no-changes`; the pull request lists what passed.
+  Changes to documentation alone run nothing.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`).
 - Decisions with lasting impact get an ADR in `docs/adr/`: context, decision, alternatives, consequences.
 - Vertical slices: a feature is finished through every layer before the next one starts. Nothing is built in advance.

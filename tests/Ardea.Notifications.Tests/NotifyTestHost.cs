@@ -92,6 +92,7 @@ internal sealed class NotifyTestHost : IAsyncDisposable
             ["REGISTRATION"] = "open",
             ["PASSWORD_HASH_ITERATIONS"] = "1000",
             ["RATE_LIMIT:AUTH_PER_MINUTE"] = "1000",
+            ["RATE_LIMIT:OUTBOUND_PER_MINUTE"] = "1000",
         };
         foreach (var (key, value) in settings ?? [])
         {

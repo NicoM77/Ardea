@@ -89,6 +89,9 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_alert_number");
 
+                    b.HasIndex("OrganizationId", "Level", "Number")
+                        .HasDatabaseName("ix_alert_list");
+
                     b.ToTable("alert", "assess", t =>
                         {
                             t.HasCheckConstraint("ck_alert_level", "level BETWEEN 1 AND 5");
@@ -502,11 +505,11 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_finding_component");
 
-                    b.HasIndex("OrganizationId", "Level")
-                        .HasDatabaseName("ix_finding_org_level");
-
                     b.HasIndex("ProjectId", "EntryId")
                         .HasDatabaseName("ix_finding_project_entry");
+
+                    b.HasIndex("OrganizationId", "Level", "Id")
+                        .HasDatabaseName("ix_finding_org_level");
 
                     b.ToTable("finding", "assess", t =>
                         {
@@ -681,6 +684,9 @@ namespace Ardea.Assessment.Persistence.Migrations
                     b.HasIndex("OrganizationId", "Number")
                         .IsUnique()
                         .HasDatabaseName("ux_remediation_number");
+
+                    b.HasIndex("OrganizationId", "Level", "Number")
+                        .HasDatabaseName("ix_remediation_level");
 
                     b.HasIndex("OrganizationId", "Status", "Level", "Number")
                         .HasDatabaseName("ix_remediation_list");

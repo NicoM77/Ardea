@@ -58,11 +58,11 @@ internal static class AddressEndpoints
     {
         var addresses = api.MapOrganization().WithTags("Notifications").MapGroup("/external-addresses").RequireOrganizationRole(OrganizationRole.Admin);
         addresses.MapGet("/", ListAsync).WithName("listExternalAddresses").Produces<IReadOnlyList<ExternalAddressView>>().Problems(403, 404);
-        addresses.MapPost("/", AddAsync).WithName("addExternalAddress").Produces<ExternalAddressView>(StatusCodes.Status201Created).Problems(400, 403, 404, 409);
-        addresses.MapPost("/{id:guid}/resend", ResendAsync).WithName("resendAddressConfirmation").Produces<ExternalAddressView>().Problems(403, 404, 409);
+        addresses.MapPost("/", AddAsync).WithName("addExternalAddress").RequireRateLimiting(RateLimits.Outbound).Produces<ExternalAddressView>(StatusCodes.Status201Created).Problems(400, 403, 404, 409);
+        addresses.MapPost("/{id:guid}/resend", ResendAsync).WithName("resendAddressConfirmation").RequireRateLimiting(RateLimits.Outbound).Produces<ExternalAddressView>().Problems(403, 404, 409);
         addresses.MapDelete("/{id:guid}", DeleteAsync).WithName("deleteExternalAddress").NoContent().Problems(403, 404, 409);
 
-        var links = api.MapGroup("/notify/addresses").WithTags("Notifications");
+        var links = api.MapGroup("/notify/addresses").WithTags("Notifications").RequireRateLimiting(RateLimits.Lookup);
         // The token travels in the body: a query string ends up in the logs of every proxy on the way. Only the RFC 8058
         // one-click address in the mail header carries it in the query, because mail clients post a fixed form there.
         links.MapPost("/preview", PreviewAsync).WithName("previewAddressLink").AuthenticatedByToken().Produces<AddressSubscriptionView>().Problems(404);

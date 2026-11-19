@@ -8,15 +8,15 @@ Die visuelle Richtung ist gewählt und als Mockups ausgearbeitet.
 |---|---|
 | Produktgrundlage (Nutzer, Zweck, Prinzipien, bindende Vorgaben) | [`PRODUCT.md`](../../PRODUCT.md) |
 | Designsystem als verbindliche Referenz: Tokens, Komponenten, benannte Regeln | [`DESIGN.md`](../../DESIGN.md), maschinenlesbar in `.impeccable/design.json` |
-| Mockups des Kernflusses: Übersicht, Massnahmen, Massnahme, Schwachstelle, Designsystem-Seite | [`docs/design/mockups/`](../design/mockups/) (statisches HTML, CSS und JavaScript; `overview.html` im Browser öffnen) |
+| Mockups des Kernflusses: Übersicht, Reminders, Reminder, Schwachstelle, Designsystem-Seite | [`docs/design/mockups/`](../design/mockups/) (statisches HTML, CSS und JavaScript; `overview.html` im Browser öffnen) |
 
-**Wie die Richtung entstand.** Eine erste Richtung, das «Gefahrenbulletin» mit nummerierten Stufen und einer Gefahrenleiter, hat der Eigentümer am 18.11.2026 verworfen: zu wenig schlicht und nicht intuitiv genug. Die Mockups wurden gelöscht und neu gebaut, nach seiner Vorgabe: einfach, intuitiv, gestaltet wie eine professionelle Arbeitsanwendung nach den Gestaltungsrichtlinien von Apple, ohne eigene Bildsprache. Zwei weitere Festlegungen vom selben Tag: Die Priorität erscheint als Wort mit eigenem Symbol, ohne Ziffer; die Liste zeigt Massnahmen, die Schwachstelle ist die Detailansicht dahinter.
+**Wie die Richtung entstand.** Eine erste Richtung, das «Gefahrenbulletin» mit nummerierten Stufen und einer Gefahrenleiter, hat der Eigentümer am 18.11.2026 verworfen: zu wenig schlicht und nicht intuitiv genug. Die Mockups wurden gelöscht und neu gebaut, nach seiner Vorgabe: einfach, intuitiv, gestaltet wie eine professionelle Arbeitsanwendung nach den Gestaltungsrichtlinien von Apple, ohne eigene Bildsprache. Zwei weitere Festlegungen vom selben Tag: Die Priorität erscheint als Wort mit eigenem Symbol, ohne Ziffer; die Liste zeigt Reminders, die Schwachstelle ist die Detailansicht dahinter.
 
 Auch diese zweite Fassung hat der Eigentümer am selben Tag zurückgewiesen: zu viel Text, zu nüchtern. Seine Vorgabe für die dritte, jetzt gültige Fassung: Diagramme, wenig Text, flüssige Bewegung, intuitive Bedienung; der Aufbau durfte neu gedacht werden. Damit entfallen drei Regeln der zweiten Fassung: keine Diagramme, keine Bewegung beim Laden, nur die Systemschrift.
 
 Englisch ist die Leitsprache der Oberfläche, Deutsch folgt als Übersetzung. Der Produktname ist Ardea, lateinisch für Reiher.
 
-**Was die Mockups zeigen.** Die Fassung ohne Sprachmodell, die Vorgabe einer frischen Installation (Kapitel 7.5): Die drei Antworten entstehen aus den Quelldaten, die Begründung der Priorität ist die Punkterechnung des Regelwerks (Kapitel 7.6). Alle Zahlen in den Mockups werden aus einem Beispieldatensatz berechnet (`data.js`): sechs offene und acht abgeschlossene Massnahmen. Echt sind die CVE-Kennungen der offenen Massnahmen und zwei Zahlen der Woche aus dem Spike (6 432 publizierte Records, 173 Kandidaten); alles Übrige ist erfunden.
+**Was die Mockups zeigen.** Die Fassung ohne Sprachmodell, die Vorgabe einer frischen Installation (Kapitel 7.5): Die drei Antworten entstehen aus den Quelldaten, die Begründung der Priorität ist die Punkterechnung des Regelwerks (Kapitel 7.6). Alle Zahlen in den Mockups werden aus einem Beispieldatensatz berechnet (`data.js`): sechs offene und acht abgeschlossene Reminders. Echt sind die CVE-Kennungen der offenen Reminders und zwei Zahlen der Woche aus dem Spike (6 432 publizierte Records, 173 Kandidaten); alles Übrige ist erfunden.
 
 ## 11.2 Die Idee in drei Sätzen
 
@@ -24,8 +24,8 @@ Jeder Bildschirm beantwortet seine eine Frage zuerst mit einem Bild und erst dan
 
 | Vorgabe aus den Anforderungen | Umsetzung |
 |---|---|
-| In fünf Sekunden: was, betroffen, was tun | Die Massnahme beginnt mit genau diesen drei Antworten; am Telefon liegen sie im ersten Bildschirm über der Aktionsleiste (geprüft bei 390 × 844). |
-| Kritisches im Vordergrund | Die Übersicht nennt in einem Satz, wie viele kritische Massnahmen offen sind, zeigt die nächste Frist als laufende Restzeit mit dem Weg zur Massnahme und ordnet alle offenen Massnahmen auf einer Zeitachse nach ihrer Frist. |
+| In fünf Sekunden: was, betroffen, was tun | Der Reminder beginnt mit genau diesen drei Antworten; am Telefon liegen sie im ersten Bildschirm über der Aktionsleiste (geprüft bei 390 × 844). |
+| Kritisches im Vordergrund | Die Übersicht nennt in einem Satz, wie viele kritische Reminders offen sind, zeigt die nächste Frist als laufende Restzeit mit dem Weg zur Reminder und ordnet alle offenen Reminders auf einer Zeitachse nach ihrer Frist. |
 | Nie nur Farbe | Jede Priorität hat eine eigene Form (Achteck, Dreieck, Raute, Kreis mit Pfeil, Kreis mit Strich) und ihr Wort. Arbeitszustände sind neutral und ebenfalls an der Form zu erkennen. |
 | Hell, ruhig, dezente Akzente | Graublauer Rahmen, weisses Blatt, Karten mit feinem Rand. Farbe nur auf Daten, Priorität und Ergebnis; die Hauptaktion ist fast schwarz. |
 | Keine überladenen Dashboards | Jedes Diagramm beantwortet eine Frage und nennt seine Zahl. Keine Kennzahlenkacheln mit Symbolen, keine Sparklines, eine Farbe je Diagramm. |
@@ -41,7 +41,7 @@ Massgeblich ist `DESIGN.md`; die Tokens stehen in `docs/design/mockups/app.css`.
 | Kontraste | Text 18,4 : 1, Nebentext 7,1 : 1, Datenfarbe 6,0 : 1, Prioritätsfarben zwischen 5,2 : 1 und 7,1 : 1, Feldrahmen 3,7 : 1, jeweils auf Weiss. |
 | Schrift | IBM Plex Sans für die Oberfläche, IBM Plex Mono für Kennungen, Versionen und den CVSS-Vektor; die Systemschrift ist der Rückfall. In den Mockups kommt die Schrift von Google Fonts, das Produkt liefert sie selbst aus. Leitzahl 36 px, Zahl 28 px, Titel 22 px, Abschnitt 16 px, Oberfläche 14 px, Nebentext 13 und 12 px. |
 | Form | Blatt mit 16 px Radius, Karten mit 8 px und feinem Rand, Bedienelemente mit 6 px, Etiketten und Filter rund. Schatten nur an dem, was schwebt: Tooltip, Bestätigung, Suchdialog. |
-| Diagramme | Fristen auf einer Zeitachse, Ring nach Priorität, Punktefeld der Wochen-Records, Verlauf der offenen Massnahmen, Punktebalken der Priorität, Versionsbereich mit installierter Version, CVSS als Bogen. Beschreibung und Regeln in `DESIGN.md`. |
+| Diagramme | Fristen auf einer Zeitachse, Ring nach Priorität, Punktefeld der Wochen-Records, Verlauf der offenen Reminders, Punktebalken der Priorität, Versionsbereich mit installierter Version, CVSS als Bogen. Beschreibung und Regeln in `DESIGN.md`. |
 | Priorität | Symbol und Wort, das Wort immer sichtbar. Ein Wechsel ist zwei Prioritäten mit Pfeil. |
 | Arbeitszustände | Form und Wort (Kreis, halber Kreis, Haken, Fahne, durchgestrichener Kreis), neutral; nur der Haken für «Remediated» ist grün. |
 | Signale | Kleine Etiketten: «Exploited» hellrot mit rotem Punkt, «Fix available» hellgrün. |
@@ -53,9 +53,10 @@ Massgeblich ist `DESIGN.md`; die Tokens stehen in `docs/design/mockups/app.css`.
 
 | Bereich | Zweck | Wichtigste Zustände |
 |---|---|---|
-| **Overview** | Lage des Tages: Fristen aller offenen Massnahmen auf einer Zeitachse, die nächste Frist als Restzeit, offene Massnahmen je Priorität, die CVE-Records der Woche vom Eingang bis zur Massnahme, Verlauf über 30 Tage, Massnahmen je Projekt, Änderungen und jüngste Warnungen ohne Kennung, Stand der Quellen | ruhig (keine offene Massnahme), Erstbefüllung läuft, Quelle veraltet |
-| **Actions** | Liste der Massnahmen mit Umschalter offen und abgeschlossen, Suche, Filter nach Projekt, Priorität und fehlender Zuweisung; jede Zeile nennt Ziel, Projekt, installierte Version, Kennung, Restzeit mit verbrauchtem Anteil, Zuständige und Status; daneben die Verteilung auf Zuständige und die Dauer bis zum Abschluss je Priorität | leer nach Filter, keine abgeschlossenen, lädt; eine Zeile unter der Liste nennt, wie viele Befunde der Stufe 1 in der Woche geprüft und verworfen wurden |
-| **Action** | Eine Massnahme: die drei Antworten, Schwachstellen nach Priorität, Status, Zuweisung, Frist, Notiz, Verlauf | ein Befund, viele Befunde, keine Korrektur verfügbar |
+| **Overview** | Lage des Tages: offene Reminders je Priorität, die CVE-Records der Woche vom Eingang bis zur Reminder, Verlauf über 30 Tage, Reminders je Projekt, Änderungen und jüngste Warnungen ohne Kennung, Stand der Quellen | ruhig (keine offene Reminder), Erstbefüllung läuft, Quelle veraltet |
+| **Reminders** | Liste der Reminders mit Umschalter offen und abgeschlossen, Suche, Filter nach Projekt und Priorität; jede Zeile nennt Ziel, Projekt, installierte Version, Kennung, Stand der Erinnerung und Status | leer nach Filter, keine abgeschlossenen, lädt; eine Zeile unter der Liste nennt, wie viele Befunde der Stufe 1 in der Woche geprüft und verworfen wurden |
+| **Reminder** | Ein Reminder: die drei Antworten, Schwachstellen nach Priorität, Status (offen, erledigt), Notiz, Verlauf | ein Befund, viele Befunde, keine Korrektur verfügbar |
+| **Notices** | Posteingang der Hinweise «könnte euch betreffen»: eine Karte je Hinweis mit den drei Antworten, dem Grund («euer Stack nennt PostgreSQL») und den Knöpfen «Affects us» und «Doesn't affect us»; per Tastatur bedienbar (Kapitel 17.7) | leer, viele neue, entschieden |
 | **Vulnerability** | Eine Schwachstelle aus Sicht der Organisation: betroffene Projekte, Begründung der Priorität als Punkterechnung, Beschreibung, Details, Quellen mit Betreiber und Trägerschaft, Verlauf | ohne KI-Einschätzung (Vorlagen), Vorschlag des Modells zu bestätigen, zurückgezogen |
 | **Vulnerabilities** | Suche über alle konsolidierten Einträge, unabhängig vom eigenen Profil | kein Treffer |
 | **Projects** | Projekte und ihr Technologieprofil; verbundene Repositories mit Commit und Zeitpunkt des letzten Einlesens; Pakete je Ökosystem; offene Vorschläge; Hinweise auf Lücken im Profil | ohne Komponenten, Version fehlt, Repository wird eingelesen, Repository nicht lesbar, Stand zur Bestätigung zurückgehalten, Token läuft ab |
@@ -66,17 +67,17 @@ Massgeblich ist `DESIGN.md`; die Tokens stehen in `docs/design/mockups/app.css`.
 | **Administration** | Nur für den Instanz-Administrator: Registrierung, SMTP und KI-Anbieter mit Verbindungstest, Grenzen, aufgegebene Jobs mit Wiederholen, Kennzahlen des Betriebs, installierte Version | Wert durch Umgebungsvariable gesperrt, Verbindungstest fehlgeschlagen |
 | **Setup** | Geführte Ersteinrichtung (11.6) | abgebrochen und fortsetzbar |
 
-Am Desktop liegt die Navigation in einer Seitenleiste mit Organisationswechsel, darüber eine Kopfzeile mit der Suche (öffnet mit «/» oder Ctrl K). Unter 900 px wird die Seitenleiste zum Menü hinter einer Schaltfläche in der Kopfzeile. In der Massnahme liegt am Telefon eine Aktionsleiste am unteren Rand: Hauptaktion und Status.
+Am Desktop liegt die Navigation in einer Seitenleiste mit Organisationswechsel, darüber eine Kopfzeile mit der Suche (öffnet mit «/» oder Ctrl K). Unter 900 px wird die Seitenleiste zum Menü hinter einer Schaltfläche in der Kopfzeile. In der Reminder liegt am Telefon eine Aktionsleiste am unteren Rand: Hauptaktion und Status.
 
 ## 11.5 Kernabläufe
 
-**Ankunft aus einer Benachrichtigung (Entwickler, Telefon).** Push öffnet die Massnahme. Ohne Scrollen sichtbar: Priorität, Titel, Projekt und Frist, was passiert ist, ob das Projekt betroffen ist, was zu tun ist. Ein Tipp auf «Take into review» setzt den Status, weist zu und bestätigt an Ort und Stelle mit «Undo». Kein Dialog, kein Seitenwechsel.
+**Ankunft aus einer Benachrichtigung (Entwickler, Telefon).** Push öffnet der Reminder. Ohne Scrollen sichtbar: Priorität, Titel, Projekt und Frist, was passiert ist, ob das Projekt betroffen ist, was zu tun ist. Ein Tipp auf «Mark as done» setzt den Status, weist zu und bestätigt an Ort und Stelle mit «Undo». Kein Dialog, kein Seitenwechsel.
 
-**Sichtung (verantwortliche Person, Desktop).** Die Übersicht zeigt, wie viele Massnahmen je Priorität offen sind, welche als Nächstes dran sind und was sich geändert hat. Der Ring nach Priorität führt in die gefilterte Liste; von dort in die Massnahme, Zuweisung oder Abschluss mit Ergebnis, zurück in die Liste an dieselbe Stelle.
+**Sichtung (verantwortliche Person, Desktop).** Die Übersicht zeigt, wie viele Reminders je Priorität offen sind, welche als Nächstes dran sind und was sich geändert hat. Der Ring nach Priorität führt in die gefilterte Liste; von dort in der Reminder, Zuweisung oder Abschluss mit Ergebnis, zurück in die Liste an dieselbe Stelle.
 
-**Abschluss.** «Remediated», «Risk accepted» und «Not affected» verlangen eine kurze Begründung. Der Status wird an der Massnahme gesetzt und gilt für ihre Befunde; einzelne Befunde lassen sich abweichend setzen. Wer im Profil die Version anhebt, schliesst damit die Befunde, die die neue Version nicht mehr betreffen.
+**Abschluss.** «Remediated», «Risk accepted» und «Not affected» verlangen eine kurze Begründung. Der Status wird an der Reminder gesetzt und gilt für ihre Befunde; einzelne Befunde lassen sich abweichend setzen. Wer im Profil die Version anhebt, schliesst damit die Befunde, die die neue Version nicht mehr betreffen.
 
-**Korrektur.** «Correct this assessment» erfasst, was falsch war: Urteil, Stufe oder Massnahme. Die Meldung wird neu bewertet; die Korrektur bleibt im Verlauf sichtbar.
+**Korrektur.** «Correct this assessment» erfasst, was falsch war: Urteil, Stufe oder Reminder. Die Meldung wird neu bewertet; die Korrektur bleibt im Verlauf sichtbar.
 
 ## 11.6 Setup-Wizard
 
@@ -85,6 +86,7 @@ Mockup: [`docs/design/mockups/setup-wizard.html`](../design/mockups/setup-wizard
 | Schritt | Inhalt | Regel |
 |---|---|---|
 | 1 Organisation | Name, Sprache, Zeitzone | Vorgaben aus dem Browser |
+| 1b Stack | Einträge aus dem Katalog wählen (Chips nach Gruppen), ohne Versionen; Version je Eintrag optional (weiss nicht, Linie, exakt; Kapitel 17.2) | Einziger Pflichtschritt für den Nutzen; Projekte und Repositories sind danach optional |
 | 2 Erstes Projekt | Name und getragener Geschäftsprozess | Erreichbarkeit und Kritikalität folgen in Schritt 4, während das Repository eingelesen wird |
 | 3 Repository | Optional, empfohlen. Zugang wählen oder anlegen (öffentlich ohne Token, oder feingranulares Token mit Anleitung und vorbelegten Rechten), ein oder mehrere Repositories aus der Liste des Zugangs wählen, Zweig und bei Monorepos Unterordner. Das Einlesen startet sofort im Hintergrund (Kapitel 16.2). | Überspringbar; wer kein Repository hat oder es nicht verbinden will, erfasst alles im nächsten Schritt von Hand. Fehlt der Dependency Graph, sagt der Wizard, wie man ihn einschaltet, und fährt mit dem fort, was die eigenen Leser finden. |
 | 4 Betrieb | Fragen, die das Repository nicht beantwortet und die der Wizard bis zum Ende des Einlesens stellt: Erreichbarkeit und Kritikalität des Projekts (je drei Wahlmöglichkeiten mit einem Satz Erklärung), wo läuft das Projekt (eigener Server, Container-Plattform, verwalteter Dienst), welches Betriebssystem hat der Host, was steht davor | je eine Frage mit wenigen Wahlmöglichkeiten; «weiss nicht» ist gültig |
@@ -155,6 +157,6 @@ Der Server sendet für die Web-App wie für die native App nur Web Push. Die nat
 - Mockups für Setup-Wizard mit Repository und Vorschlägen, Projektprofil mit Verknüpfungen und Paketen je Ökosystem, Benachrichtigungsregeln und Quellenstatus. Die Umsetzung entwirft sie selbst nach `DESIGN.md` und wartet nicht auf eine Freigabe; der Eigentümer korrigiert im Nachhinein (Kapitel 15, E15).
 - Darstellung von über tausend Paketen je Projekt: Zusammenfassung je Ökosystem, Filter nach direkt, transitiv und «nur Entwicklung», Suche; welche Spalten die Liste braucht, klärt das Mockup.
 - Eine eigene Seite für die ruhige Übersicht. Heute existiert der Zustand nur als Muster im Designsystem.
-- Die Massnahme mit mehreren Befunden und die Fassung mit KI-Einschätzung als eigene Mockups.
+- Der Reminder mit mehreren Befunden und die Fassung mit KI-Einschätzung als eigene Mockups.
 - Deutsche Texte in allen Komponenten; die Layouts sind für längere Wörter ausgelegt, geprüft ist es noch nicht.
 - Ein dunkles Design ist ausdrücklich nicht vorgesehen; die Tokens lassen es später zu.

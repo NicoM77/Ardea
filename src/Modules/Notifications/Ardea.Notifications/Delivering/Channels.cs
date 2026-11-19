@@ -99,8 +99,9 @@ internal sealed class EmailChannel(IEmailSender email) : INotificationChannel
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
             // Every other failure (connection, TLS handshake, authentication, a reply the client cannot parse) may
-            // pass: try again. The job system's back-off and last attempt decide when to give up.
-            return new SendResult(SendOutcome.Transient, $"{ex.GetType().Name}: {ex.Message}");
+            // pass: try again. The job system's back-off and last attempt decide when to give up. The organisation's
+            // administrators read the delivery log, so it names the kind of failure, not the instance's SMTP replies.
+            return new SendResult(SendOutcome.Transient, $"{ex.GetType().Name}: the mail server could not be reached or did not take the message; the instance administrator can check SMTP with a test e-mail.");
         }
     }
 }
@@ -170,7 +171,7 @@ internal sealed class WebhookChannel(IHttpClientFactory http, TimeProvider time)
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            return new SendResult(SendOutcome.Transient, $"{ex.GetType().Name}: {ex.Message}", "error");
+            return new SendResult(SendOutcome.Transient, $"{ex.GetType().Name}: the call failed.", "error");
         }
     }
 

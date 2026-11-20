@@ -27,7 +27,7 @@ import { NoticeCount } from '../../features/notices/notice-count';
 import { countText } from '../../features/notices/notice-format';
 import { PushDevice } from '../../features/notifications/push-device';
 import { SearchDialog, SearchDialogData } from '../search/search-dialog';
-import { opensSearch, SearchItem } from '../search/search';
+import { opensSearch, SearchItem, VulnerabilitySearch } from '../search/search';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 
@@ -241,7 +241,7 @@ export class Shell {
   protected openSearch(byPointer: boolean): void {
     if (this.dialog.openDialogs.length > 0) return;
     this.dialog.open<void, SearchDialogData>(SearchDialog, {
-      data: { items: this.searchItems(), byPointer },
+      data: { items: this.searchItems(), vulnerabilities: this.vulnerabilitySearch(), byPointer },
       ariaLabel: this.transloco.translate('search.label'),
       backdropClass: 'ui-scrim',
       panelClass: 'ui-dialog-pane',
@@ -262,6 +262,17 @@ export class Shell {
   protected skipToContent(event: Event): void {
     event.preventDefault();
     this.main().nativeElement.focus();
+  }
+
+  private vulnerabilitySearch(): VulnerabilitySearch {
+    const t = (key: string, params?: Record<string, string>) =>
+      this.transloco.translate(key, params);
+    return {
+      group: t('nav.vulnerabilities'),
+      icon: AREA_ICONS.vulnerabilities,
+      open: (key) => t('search.openEntry', { key }),
+      search: (query) => t('search.vulnerabilities', { query }),
+    };
   }
 
   private searchItems(): SearchItem[] {

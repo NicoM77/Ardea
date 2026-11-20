@@ -57,7 +57,7 @@ import { UnreadCount } from '../../features/notifications/unread-count';
       (click)="openSearch.emit($event.detail > 0)"
     >
       <svg lucideSearch aria-hidden="true"></svg>
-      <span class="search-text">{{ 'search.trigger' | transloco }}</span>
+      <span class="search-text">{{ 'search.label' | transloco }}</span>
       <span class="keys" aria-hidden="true">
         <ui-kbd>/</ui-kbd>
         <ui-kbd>{{ 'search.ctrlK' | transloco }}</ui-kbd>

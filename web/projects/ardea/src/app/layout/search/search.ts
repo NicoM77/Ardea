@@ -17,6 +17,48 @@ export function filterSearchItems(items: readonly SearchItem[], query: string): 
   });
 }
 
+const ENTRY_KEY = /^(?:CVE-\d{4}-\d{4,}|GHSA(?:-[a-z0-9]{4}){3})$/i;
+
+export function entryKey(query: string): string | null {
+  const value = query.trim();
+  if (!ENTRY_KEY.test(value)) return null;
+  const prefix = value.slice(0, 4).toUpperCase();
+  return prefix === 'GHSA' ? `GHSA${value.slice(4).toLowerCase()}` : value.toUpperCase();
+}
+
+export interface VulnerabilitySearch {
+  group: string;
+  icon: LucideIconData;
+  open: (key: string) => string;
+  search: (query: string) => string;
+}
+
+export function withVulnerabilities(
+  pages: readonly SearchItem[],
+  query: string,
+  vulnerabilities: VulnerabilitySearch,
+): SearchItem[] {
+  const value = query.trim();
+  if (!value) return [...pages];
+  const { group, icon } = vulnerabilities;
+  const key = entryKey(value);
+  if (key) {
+    return [
+      { label: vulnerabilities.open(key), group, icon, url: `/entries/${encodeURIComponent(key)}` },
+      ...pages,
+    ];
+  }
+  return [
+    ...pages,
+    {
+      label: vulnerabilities.search(value),
+      group,
+      icon,
+      url: `/entries?q=${encodeURIComponent(value)}`,
+    },
+  ];
+}
+
 export function moveActive(index: number, delta: 1 | -1, length: number): number {
   if (length === 0) return -1;
   if (index < 0) return delta === 1 ? 0 : length - 1;

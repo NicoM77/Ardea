@@ -426,11 +426,11 @@
     "bell": "{count, plural, =0 {Notifications} other {Notifications, # unread}}"
   },
   "search": {
-    "trigger": "Search pages",
     "label": "Search",
-    "placeholder": "Search pages",
+    "placeholder": "Search pages and vulnerabilities",
     "results": "Results",
-    "empty": "Nothing matches “{query}”.",
+    "openEntry": "Open {key}",
+    "vulnerabilities": "Search vulnerabilities for “{query}”",
     "escKey": "Esc",
     "ctrlK": "Ctrl K",
     "hintMove": "to move",

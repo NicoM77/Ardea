@@ -212,7 +212,7 @@ role: `docker compose run --rm migrate org …`. `seed-demo` needs the owner pas
 | Command | Purpose |
 |---|---|
 | `ardea doctor` | Check configuration, database, schema and the image's runtime; it also tries to connect to the SMTP server, every language model provider and the hosts of each source named in the environment. A service that cannot be reached is a `warn` line (it may be down only for now); a wrong provider setting fails. Settings made in the administration instead of the environment are not seen. |
-| `ardea version` | The installed version |
+| `ardea version` | The installed version; `dev` for an image built without a release version (also the first line of `ardea doctor`) |
 | `ardea admin reset-password <email> [--disable-mfa]` | Restore access without e-mail |
 | `ardea intel renormalize --source <key>` | Read a source's stored records again with the current parser |
 | `ardea intel recompute` | Merge every entry again with the current rules |

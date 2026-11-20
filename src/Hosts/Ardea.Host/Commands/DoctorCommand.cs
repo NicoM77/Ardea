@@ -9,7 +9,7 @@ internal static class DoctorCommand
     public static async Task<int> RunAsync()
     {
         var configuration = HostConfiguration.Load();
-        var results = new List<(string Check, bool Ok, string Detail)>();
+        var results = new List<(string Check, bool Ok, string Detail)> { VersionResult() };
 
         var config = HostConfiguration.CheckApplication(configuration);
         results.Add(("configuration", config.IsValid, config.IsValid ? "complete" : string.Join(" ", config.Errors)));
@@ -23,9 +23,9 @@ internal static class DoctorCommand
         var services = await DoctorServiceChecks.RunAsync(configuration, DoctorServiceChecks.TryConnectAsync, SourceHosts(), CancellationToken.None);
         results.AddRange(services.Where(r => r.Level != DoctorLevel.Warn).Select(r => (r.Check, r.Level == DoctorLevel.Ok, r.Detail)));
 
-        foreach (var (check, ok, detail) in results)
+        foreach (var result in results)
         {
-            Console.WriteLine($"{(ok ? "ok  " : "FAIL")} {check,-14} {detail}");
+            Console.WriteLine(Line(result));
         }
 
         foreach (var warning in services.Where(r => r.Level == DoctorLevel.Warn))
@@ -35,6 +35,11 @@ internal static class DoctorCommand
 
         return results.All(r => r.Ok) ? 0 : 1;
     }
+
+    internal static (string Check, bool Ok, string Detail) VersionResult() => ("version", true, AppVersion.Current);
+
+    internal static string Line((string Check, bool Ok, string Detail) result) =>
+        $"{(result.Ok ? "ok  " : "FAIL")} {result.Check,-14} {result.Detail}";
 
     private static IReadOnlyDictionary<string, IReadOnlyList<string>> SourceHosts()
     {

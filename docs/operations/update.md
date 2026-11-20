@@ -3,7 +3,14 @@
 Versions follow Semantic Versioning; within a major version (`ghcr.io/nicom77/ardea:0`, published from the
 first release on) an update needs nothing but a pull and a restart. Read the release notes first. A new major version
 never arrives under this tag: change the tag yourself and read its notes. Ardea does not ask anywhere for new
-versions; the installed version is shown in the administration (and by `ardea version`).
+versions; the installed version is shown in the administration (and by `ardea version` and `ardea doctor`).
+
+Before 1.0, a change that breaks something raises the minor version (0.4 to 0.5) and is listed under «⚠ BREAKING
+CHANGES» in the release notes; it still arrives under `:0`. To take those deliberately, pin the minor version
+(`ARDEA_IMAGE=ghcr.io/nicom77/ardea:0.4` in `.env`), which brings only its patches. The
+[releases](https://github.com/NicoM77/Ardea/releases) carry the `compose.yaml` of each version, and
+[Installation](installation.md#verify-the-image) shows how to check the signature and provenance of the new image
+before `docker compose up -d`.
 
 ```bash
 docker compose pull

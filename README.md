@@ -156,9 +156,9 @@ The profile gets two depths (chapter 17 of the plan): a coarse stack for the org
 | 5a.5 | Notices page; shortened reminder detail; overview with new notices | 5a.3 | ✅ |
 | 5a.6 | Reminders by level; event `notice.raised`; escalation dropped | 5a.3, 5.2 | ✅ [ADR 048](docs/adr/0048-notice-raised-and-reminders-by-level.md) |
 
-Acceptance: a stack of ten entries produces at most the number of notices set in 5a.1 in the spike week; «doesn't affect us» does not come back; no endpoint or page knows assignment or deadline.
+Acceptance: [tested](docs/acceptance/phase-5a.md); open: the owner's confirmation of the reminder rhythm (E26) and of the master plan changes of 5a.6, the 80 to 500 «Earlier» notices of a stack entry added later, the review of the notice mockups, and an observation on a real instance. Nothing was observed on an instance; the ten-entry stacks (14, 4, 19 and 3 notices in the spike week, at most 25) are measured on the opt-in spike only.
 
-**Release gate:** no release, and no upgrade of a running instance, between 5a.2 and 5a.5. From 5a.2 on, open actions on components without a version are moved to notices that nothing shows until the Notices page (5a.5), and since 5a.3 new entries raise notices that nothing shows either ([ADR 046](docs/adr/0046-stack-notices-and-reminders-without-deadline.md), decision 13; [ADR 047](docs/adr/0047-notice-generation-and-answers.md)).
+**Release gate (over since 5a.5 was merged):** no release, and no upgrade of a running instance, was allowed between 5a.2 and 5a.5. From 5a.2 on, open actions on components without a version were moved to notices that nothing showed until the Notices page (5a.5), and from 5a.3 new entries raised notices that nothing showed either ([ADR 046](docs/adr/0046-stack-notices-and-reminders-without-deadline.md), decision 13; [ADR 047](docs/adr/0047-notice-generation-and-answers.md)).
 
 ### Phase 6 · Hardening (3–4 weeks)
 

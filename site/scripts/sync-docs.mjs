@@ -23,9 +23,12 @@ const pages = [
   { source: 'docs/operations/update.md', slug: 'operations/update' },
   { source: 'docs/operations/add-a-source.md', slug: 'operations/add-a-source' },
   { source: 'docs/architecture.md', slug: 'architecture' },
+  { source: 'docs/architecture/data-model.md', slug: 'architecture/data-model' },
+  { source: 'docs/architecture/rule-set.md', slug: 'architecture/rule-set' },
   { source: 'docs/adr/README.md', slug: 'adr' },
   ...adrs,
   { source: 'SECURITY.md', slug: 'security' },
+  { source: 'docs/security/security-model.md', slug: 'security/security-model' },
   { source: 'docs/security/threat-review.md', slug: 'security/threat-review' },
   { source: 'CONTRIBUTING.md', slug: 'contributing' },
 ];

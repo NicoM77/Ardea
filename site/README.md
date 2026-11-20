@@ -21,9 +21,9 @@ pages into `src/content/docs/` (ignored by Git) from their single source:
 | Source | Page |
 | --- | --- |
 | `docs/operations/*.md` | Run Ardea: overview, try it, installation, configuration, operation, update, add a source |
-| `docs/architecture.md` | Architecture |
+| `docs/architecture.md`, `docs/architecture/*.md` | Architecture: overview, data model, rule set and levels |
 | `docs/adr/README.md`, `docs/adr/0*.md` | Decision records |
-| `SECURITY.md`, `docs/security/threat-review.md` | Security |
+| `SECURITY.md`, `docs/security/security-model.md`, `docs/security/threat-review.md` | Security: policy, model, threat review |
 | `CONTRIBUTING.md` | Contributing |
 | `openapi/ardea.v1.json` | API reference ([starlight-openapi](https://github.com/HiDeoo/starlight-openapi), MIT) |
 | `README.md` | Purpose, features and quick start on the landing page (`src/readme.ts`) |

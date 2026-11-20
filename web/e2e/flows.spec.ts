@@ -735,6 +735,12 @@ test('reminders by level: the rhythm per level is changed with the keyboard and 
   // The rule editor offers notices among its events.
   await page.getByRole('link', { name: 'New rule' }).click();
   await expect(page.getByRole('checkbox', { name: /New notice/ })).toBeChecked();
+
+  // The delivery log names a run of the reminders, with how many it held.
+  await page.goto(`${ORG}/notification-rules/log`);
+  const run = page.getByRole('row', { name: /Reminders by level/ });
+  await expect(run).toContainText('3 reminders');
+  await expectAccessible(page, 'delivery log with a reminder run');
   expect(problems).toEqual([]);
 });
 

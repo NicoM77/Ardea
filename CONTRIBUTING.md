@@ -5,10 +5,8 @@ The rules below summarise chapter 13 of the [master plan](docs/masterplan/13-rep
 ## Workflow
 
 - One main branch, short-lived branches. Every change goes through a pull request with green checks.
-  **Temporary exception (owner's decision of 19 November 2026, Actions minutes used up):** CI runs only on `main`,
-  never on pull requests (task 7.13 turns it back on). A pull request is verified locally before it is merged: the
-  test projects it touches and `dotnet format Ardea.slnx --verify-no-changes`; the pull request lists what passed.
-  Changes to documentation alone run nothing.
+  CI runs on every pull request and on every push to `main`, cancelling superseded runs of a pull request; changes
+  to documentation alone (`docs/**`, `*.md`) run nothing. A pull request merges only with a green run.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `<type>(<optional scope>)!: <description>`
   with the type `feat`, `fix`, `perf`, `revert`, `docs`, `style`, `refactor`, `test`, `build`, `ci` or `chore`, and
   `!` or a `BREAKING CHANGE:` footer for a breaking change. Changes to the catalogue data are `feat(catalog):` or

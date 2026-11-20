@@ -109,7 +109,12 @@ public sealed class DeliveryEdgeTests(PostgresServer server)
         mail.Configured = () => false;
         var target = rule.GetProperty("targets").EnumerateArray().Single(t => t.GetProperty("mode").GetString() == "digest").GetProperty("id").GetGuid();
         var due = await host.ScalarAsync<DateTime>($"SELECT next_digest_at FROM notify.rule_target WHERE id = '{target}'");
-        host.Time.SetUtcNow(new DateTimeOffset(DateTime.SpecifyKind(due, DateTimeKind.Utc)));
+        // The real clock may already be past the digest time (the test host starts at UtcNow): only move forward.
+        var dueAt = new DateTimeOffset(DateTime.SpecifyKind(due, DateTimeKind.Utc));
+        if (dueAt > host.Time.GetUtcNow())
+        {
+            host.Time.SetUtcNow(dueAt);
+        }
         await host.RunAsync(new FindDueDigests(), organization: null);
         Assert.Empty(await host.RunJobsAsync());
         Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.delivery WHERE kind = 'digest'"));
@@ -136,7 +141,12 @@ public sealed class DeliveryEdgeTests(PostgresServer server)
 
         var target = digest.GetProperty("targets")[0].GetProperty("id").GetGuid();
         var due = await host.ScalarAsync<DateTime>($"SELECT next_digest_at FROM notify.rule_target WHERE id = '{target}'");
-        host.Time.SetUtcNow(new DateTimeOffset(DateTime.SpecifyKind(due, DateTimeKind.Utc)));
+        // The real clock may already be past the digest time (the test host starts at UtcNow): only move forward.
+        var dueAt = new DateTimeOffset(DateTime.SpecifyKind(due, DateTimeKind.Utc));
+        if (dueAt > host.Time.GetUtcNow())
+        {
+            host.Time.SetUtcNow(dueAt);
+        }
         await host.RunAsync(new FindDueDigests(), organization: null);
         Assert.Empty(await host.RunJobsAsync());
         Assert.Equal("dead", await host.ScalarAsync<string>("SELECT state FROM notify.delivery WHERE kind = 'digest'"));

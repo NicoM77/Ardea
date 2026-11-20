@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1](https://github.com/NicoM77/Ardea/compare/v0.1.0...v0.1.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* **build:** the two image platforms no longer race on the NuGet cache ([288f76e](https://github.com/NicoM77/Ardea/commit/288f76e62d2f11f97f239751285dd7fa038123ba))
+* **build:** the two image platforms no longer race on the NuGet cache ([#156](https://github.com/NicoM77/Ardea/issues/156)) ([7598c78](https://github.com/NicoM77/Ardea/commit/7598c78459dde2b1d665d2de5feae1e3c62808a2))
+
 ## 0.1.0 (2026-11-20)
 
 

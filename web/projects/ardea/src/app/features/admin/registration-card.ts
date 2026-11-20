@@ -10,9 +10,9 @@ import {
 } from '@angular/core';
 import { disabled, form, FormField, FormRoot } from '@angular/forms/signals';
 import type { TreeValidationResult } from '@angular/forms/signals';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiField, UiInput, UiNotice } from 'ui';
+import { UiButton, UiCard, UiField, UiInput, UiNotice, UiToaster } from 'ui';
 import { AdministrationService, type InstanceSettingsResponse } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { fieldErrorKey } from '../auth/auth-forms';
@@ -20,6 +20,10 @@ import { focusFirstInvalid } from '../auth/focus-invalid';
 import { fieldProblems } from './admin-errors';
 import { NO_CHANGES, REGISTRATION_MODES } from './settings-patch';
 
+const SAVE_MESSAGES = {
+  codes: { setting_locked: 'admin.errors.locked' },
+  fallback: 'admin.errors.saveFailed',
+};
 const MODE_LABELS: Record<string, string> = {
   invite: 'admin.registration.invite',
   open: 'admin.registration.open',
@@ -39,8 +43,6 @@ const MODE_HINTS: Record<string, string> = {
       <form class="form" [formRoot]="registration">
         @if (problem()) {
           <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
-        } @else if (saved()) {
-          <ui-notice tone="success">{{ 'admin.registration.saved' | transloco }}</ui-notice>
         }
         <ui-field
           [label]="'admin.registration.mode' | transloco"
@@ -85,13 +87,14 @@ export class RegistrationCard {
 
   private readonly admin = inject(AdministrationService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
 
   protected readonly fieldErrorKey = fieldErrorKey;
   protected readonly modes = REGISTRATION_MODES;
   protected readonly labels = MODE_LABELS;
   protected readonly errors = { server: 'admin.registration.errors.mode' };
   protected readonly problem = signal<string | null>(null);
-  protected readonly saved = signal(false);
   protected readonly locked = computed(() => this.settings().registration.locked);
 
   private readonly model = linkedSignal(() => ({
@@ -105,14 +108,13 @@ export class RegistrationCard {
     submission: {
       action: async (): Promise<TreeValidationResult> => {
         this.problem.set(null);
-        this.saved.set(false);
+        const before = this.settings().registration.value ?? 'invite';
         try {
-          this.changed.emit(
-            await firstValueFrom(
-              this.admin.updateInstanceSettings({ ...NO_CHANGES, registration: this.model().mode }),
-            ),
-          );
-          this.saved.set(true);
+          await this.apply(this.model().mode);
+          this.toaster.show({
+            text: this.transloco.translate('admin.registration.saved'),
+            undo: before === this.model().mode ? undefined : () => void this.restore(before),
+          });
           return undefined;
         } catch (error) {
           const onField = fieldProblems(error, { registration: this.registration.mode });
@@ -120,15 +122,27 @@ export class RegistrationCard {
             focusFirstInvalid(this.host);
             return onField;
           }
-          this.problem.set(
-            problemMessageKey(error, {
-              codes: { setting_locked: 'admin.errors.locked' },
-              fallback: 'admin.errors.saveFailed',
-            }),
-          );
+          this.problem.set(problemMessageKey(error, SAVE_MESSAGES));
           return undefined;
         }
       },
     },
   });
+
+  private async apply(mode: string): Promise<void> {
+    this.changed.emit(
+      await firstValueFrom(
+        this.admin.updateInstanceSettings({ ...NO_CHANGES, registration: mode }),
+      ),
+    );
+  }
+
+  private async restore(mode: string): Promise<void> {
+    this.problem.set(null);
+    try {
+      await this.apply(mode);
+    } catch (error) {
+      this.problem.set(problemMessageKey(error, SAVE_MESSAGES));
+    }
+  }
 }

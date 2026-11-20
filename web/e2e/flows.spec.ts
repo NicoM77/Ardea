@@ -914,6 +914,18 @@ test('push is turned on and off on this device in Chromium', async ({ page }) =>
     'aria-checked',
     'false',
   );
+  const toast = page.locator('ui-toast');
+  await expect(toast).toContainText('Saved.');
+  await toast.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByRole('switch', { name: 'E-mail' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  expect(
+    api.requests
+      .filter((r) => r.method === 'PUT' && r.path.endsWith('/notification-preferences'))
+      .at(-1)?.body,
+  ).toMatchObject({ mutedChannels: [] });
 
   await page.getByRole('button', { name: 'Turn on push' }).click();
   await expect(page.getByText('On for this device')).toBeVisible();
@@ -958,7 +970,7 @@ test('catalogue that learns: the note on a hit leads to the review list, where a
   );
   await card.getByRole('button', { name: 'Confirm' }).click();
   expect((await adopt).method()).toBe('POST');
-  await expect(card.getByText('acme/widgetserver is mapped')).toBeVisible();
+  await expect(page.locator('ui-toast')).toContainText('acme/widgetserver is mapped');
   expect(problems).toEqual([]);
 });
 

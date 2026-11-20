@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideBell } from '@lucide/angular';
-import { UiBackLink, UiButton, UiCard, UiInput, UiLoader, UiNotice, UiStatus } from 'ui';
+import { UiBackLink, UiButton, UiCard, UiInput, UiLoader, UiNotice, UiStatus, UiToaster } from 'ui';
 import { firstValueFrom } from 'rxjs';
 import {
   getNotificationPreferencesResource,
@@ -49,9 +49,6 @@ const CHANNEL_HINTS: Readonly<Record<string, string>> = {
         <div class="col-7">
           <ui-card [heading]="'notify.settings.channels' | transloco">
             <div class="live" role="status">
-              @if (saved()) {
-                <ui-notice tone="success">{{ 'notify.settings.saved' | transloco }}</ui-notice>
-              }
               @if (problem()) {
                 <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
               }
@@ -460,6 +457,7 @@ export class NotificationSettingsPage implements OnInit {
   private readonly transloco = inject(TranslocoService);
   private readonly dates = inject(Dates);
   private readonly session = inject(Session);
+  private readonly toaster = inject(UiToaster);
   protected readonly push = inject(PushDevice);
   protected readonly organization = injectOrganization().organization;
   private readonly orgId = computed(() => this.organization()?.id);
@@ -471,7 +469,6 @@ export class NotificationSettingsPage implements OnInit {
   protected readonly channelLabels = CHANNEL_LABELS;
   protected readonly locales = LOCALES;
   protected readonly saving = signal(false);
-  protected readonly saved = signal(false);
   protected readonly problem = signal<string | null>(null);
   protected readonly pushBusy = signal(false);
   protected readonly pushProblem = signal<string | null>(null);
@@ -572,10 +569,8 @@ export class NotificationSettingsPage implements OnInit {
     this.deviceNotice.set(null);
     try {
       await firstValueFrom(this.api.deletePushSubscription(device.id));
-      this.deviceNotice.set({
-        tone: 'success',
-        key: 'notify.devices.removed',
-        params: { name: device.label },
+      this.toaster.show({
+        text: this.transloco.translate('notify.devices.removed', { name: device.label }),
       });
       this.devices.reload();
       await this.push.check();
@@ -603,18 +598,26 @@ export class NotificationSettingsPage implements OnInit {
     }
   }
 
-  private async savePreferences(mutedChannels: string[], locale: string | null): Promise<void> {
+  private async savePreferences(
+    mutedChannels: string[],
+    locale: string | null,
+    announce = true,
+  ): Promise<void> {
     const org = this.orgId();
     if (!org) return;
+    const before = { muted: [...this.muted()], locale: this.locale() };
     this.saving.set(true);
-    this.saved.set(false);
     this.problem.set(null);
     try {
       const result = await firstValueFrom(
         this.api.setNotificationPreferences(org, { mutedChannels, locale }),
       );
       this.preferences.set(result);
-      this.saved.set(true);
+      if (announce)
+        this.toaster.show({
+          text: this.transloco.translate('notify.settings.saved'),
+          undo: () => void this.savePreferences(before.muted, before.locale, false),
+        });
     } catch (error) {
       this.problem.set(problemMessageKey(error, { fallback: 'notify.saveFailed' }));
     } finally {

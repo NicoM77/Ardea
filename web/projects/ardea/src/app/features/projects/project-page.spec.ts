@@ -191,7 +191,8 @@ describe('ProjectPage', () => {
     await settle(fixture);
     http.expectOne(BASE).flush({ project: null, components: [] });
     http.expectOne((r) => r.url === `/api/v1/orgs/${ORG}/profile/coverage`);
-    expect(element.textContent).toContain('en.projects.detached');
+    expect(TestBed.inject(UiToaster).current()?.text).toBe('en.projects.detached');
+    expect(element.querySelector('ui-notice[tone="success"]')).toBeNull();
   });
 
   it('confirms a suggestion with a corrected version', async () => {
@@ -275,5 +276,48 @@ describe('ProjectPage', () => {
     expect(
       http.expectOne((r) => r.url === BASE && r.method === 'PATCH').request.body,
     ).toMatchObject({ archived: false });
+  });
+
+  it('saves an edit with a toast whose Undo puts the old values back, and says so if Undo fails', async () => {
+    const { fixture, http, element } = await render([link({})]);
+    element.querySelector<HTMLButtonElement>('ui-page-header ui-overflow-menu button')!.click();
+    await settle(fixture);
+    document.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click();
+    await settle(fixture);
+    const name = element.querySelector<HTMLInputElement>('.form input')!;
+    name.value = 'Portal';
+    name.dispatchEvent(new Event('input'));
+    element.querySelector<HTMLButtonElement>('.form button[type=submit]')!.click();
+    await settle(fixture);
+    const save = http.expectOne((r) => r.url === BASE && r.method === 'PATCH');
+    expect(save.request.body).toEqual({
+      name: 'Portal',
+      description: 'Self-service',
+      exposure: 'internet',
+      criticality: 'high',
+      archived: null,
+    });
+    save.flush({});
+    await settle(fixture);
+    http.expectOne((r) => r.url === BASE && r.method === 'GET');
+    const toaster = TestBed.inject(UiToaster);
+    expect(toaster.current()?.text).toBe('en.projects.saved');
+    expect(element.querySelector('ui-notice[tone="success"]')).toBeNull();
+
+    toaster.undo();
+    await settle(fixture);
+    const undo = http.expectOne((r) => r.url === BASE && r.method === 'PATCH');
+    expect(undo.request.body).toEqual({
+      name: 'Customer Portal',
+      description: 'Self-service',
+      exposure: 'internet',
+      criticality: 'high',
+      archived: null,
+    });
+    undo.flush(null, { status: 500, statusText: 'Server Error' });
+    await settle(fixture);
+    expect(element.querySelector('ui-notice[tone="error"]')?.textContent).toContain(
+      'en.errors.server',
+    );
   });
 });

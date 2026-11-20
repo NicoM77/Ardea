@@ -70,6 +70,13 @@ import { LinksCard } from './links-card';
 import { isReading, pollWhile } from './link-format';
 import { SuggestionsList } from './suggestions-list';
 
+interface ProjectValues {
+  name: string;
+  description: string;
+  exposure: string;
+  criticality: string;
+}
+
 @Component({
   selector: 'ardea-project-page',
   imports: [
@@ -154,11 +161,6 @@ import { SuggestionsList } from './suggestions-list';
         }
       </div>
 
-      <div class="live" role="status">
-        @if (done()) {
-          <ui-notice tone="success">{{ done()!.key | transloco: done()!.params }}</ui-notice>
-        }
-      </div>
       @if (problem()) {
         <ui-notice class="gap" tone="error">{{ problem() | transloco }}</ui-notice>
       }
@@ -346,10 +348,6 @@ import { SuggestionsList } from './suggestions-list';
       gap: 4px;
       margin-left: var(--space-xs);
     }
-    .live:empty {
-      display: none;
-    }
-    .live,
     .gap {
       display: block;
       margin-bottom: var(--space-lg);
@@ -545,7 +543,6 @@ export class ProjectPage {
   protected readonly editing = signal(false);
   protected readonly busy = signal<string | null>(null);
   protected readonly problem = signal<string | null>(null);
-  protected readonly done = signal<{ key: string; params: Record<string, string> } | null>(null);
 
   private readonly model = linkedSignal(() => {
     const p = this.detail.hasValue() ? this.detail.value()?.project : undefined;
@@ -568,19 +565,27 @@ export class ProjectPage {
         action: async (): Promise<TreeValidationResult> => {
           this.problem.set(null);
           const m = this.model();
+          const stored = this.detail.hasValue() ? this.detail.value()?.project : undefined;
+          const before = stored
+            ? {
+                name: stored.name,
+                description: stored.description ?? '',
+                exposure: stored.exposure,
+                criticality: stored.criticality,
+              }
+            : null;
           try {
-            await firstValueFrom(
-              this.projects.updateProject(this.orgId()!, this.projectId(), {
-                name: m.name.trim(),
-                description: m.description.trim(),
-                exposure: m.exposure,
-                criticality: m.criticality,
-                archived: null,
-              }),
-            );
+            await this.saveProject({
+              name: m.name.trim(),
+              description: m.description.trim(),
+              exposure: m.exposure,
+              criticality: m.criticality,
+            });
             this.stopEditing();
-            this.done.set({ key: 'projects.saved', params: {} });
-            this.detail.reload();
+            this.toaster.show({
+              text: this.transloco.translate('projects.saved'),
+              undo: before ? () => void this.restoreProject(before) : undefined,
+            });
             return undefined;
           } catch (error) {
             const onField = fieldProblems(error, { name: this.editForm.name });
@@ -635,6 +640,24 @@ export class ProjectPage {
     this.more()?.focus();
   }
 
+  private async saveProject(values: ProjectValues): Promise<void> {
+    await firstValueFrom(
+      this.projects.updateProject(this.orgId()!, this.projectId(), { ...values, archived: null }),
+    );
+    this.detail.reload();
+  }
+
+  private async restoreProject(values: ProjectValues): Promise<void> {
+    this.problem.set(null);
+    try {
+      await this.saveProject(values);
+    } catch (error) {
+      this.problem.set(
+        problemMessageKey(error, { codes: WIZARD_PROBLEMS, fallback: 'wizard.errors.save' }),
+      );
+    }
+  }
+
   protected async toggleArchive(): Promise<void> {
     const archived = !(this.detail.value()?.project.archived ?? false);
     if (!(await this.setArchived(archived))) return;
@@ -647,7 +670,6 @@ export class ProjectPage {
   private async setArchived(archived: boolean): Promise<boolean> {
     this.busy.set('archive');
     this.problem.set(null);
-    this.done.set(null);
     try {
       await firstValueFrom(
         this.projects.updateProject(this.orgId()!, this.projectId(), {
@@ -709,9 +731,9 @@ export class ProjectPage {
   ): Promise<void> {
     this.busy.set(id);
     this.problem.set(null);
-    this.done.set(null);
     try {
-      this.done.set(await work());
+      const done = await work();
+      this.toaster.show({ text: this.transloco.translate(done.key, done.params) });
       this.refresh();
     } catch (error) {
       this.problem.set(

@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiNotice } from 'ui';
+import { UiButton, UiCard, UiNotice, UiToaster } from 'ui';
 import { OrganizationsService, type SessionOrganization } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
 import { Session } from '../../core/session/session';
@@ -13,13 +13,6 @@ import { TEAM_PROBLEMS } from './team-problems';
   imports: [RouterLink, TranslocoPipe, UiButton, UiCard, UiNotice],
   template: `
     <ui-card [heading]="'team.mfa.title' | transloco">
-      <div class="live" role="status">
-        @if (saved()) {
-          <ui-notice tone="success">{{
-            (required() ? 'team.mfa.savedOn' : 'team.mfa.savedOff') | transloco
-          }}</ui-notice>
-        }
-      </div>
       @if (problem(); as key) {
         <ui-notice class="gap" tone="error">
           {{ key | transloco }}
@@ -64,10 +57,6 @@ import { TEAM_PROBLEMS } from './team-problems';
       display: block;
       min-width: 0;
     }
-    .live:empty {
-      display: none;
-    }
-    .live,
     .gap {
       margin-bottom: var(--space-md);
     }
@@ -115,6 +104,8 @@ export class MfaSettingCard {
 
   private readonly api = inject(OrganizationsService);
   private readonly session = inject(Session);
+  private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
 
   protected readonly required = linkedSignal(() => this.organization().mfaRequired);
   protected readonly changed = computed(() => this.required() !== this.organization().mfaRequired);
@@ -122,13 +113,20 @@ export class MfaSettingCard {
     () => !this.organization().mfaRequired && this.session.user()?.twoFactorEnabled !== true,
   );
   protected readonly busy = signal(false);
-  protected readonly saved = signal(false);
   protected readonly problem = signal<string | null>(null);
   protected readonly needsOwnMfa = signal(false);
 
   protected async save(): Promise<void> {
+    const required = this.required();
+    if (!(await this.apply(required))) return;
+    this.toaster.show({
+      text: this.transloco.translate(required ? 'team.mfa.savedOn' : 'team.mfa.savedOff'),
+      undo: () => void this.apply(!required),
+    });
+  }
+
+  private async apply(requireMfa: boolean): Promise<boolean> {
     this.busy.set(true);
-    this.saved.set(false);
     this.problem.set(null);
     this.needsOwnMfa.set(false);
     try {
@@ -137,17 +135,18 @@ export class MfaSettingCard {
           name: null,
           locale: null,
           timeZone: null,
-          requireMfa: this.required(),
+          requireMfa,
           aiPolicy: null,
         }),
       );
       await this.session.refresh();
-      this.saved.set(true);
+      return true;
     } catch (error) {
       this.needsOwnMfa.set(problemOf(error)?.code === 'mfa_required_for_you');
       this.problem.set(
         problemMessageKey(error, { codes: TEAM_PROBLEMS, fallback: 'team.errors.failed' }),
       );
+      return false;
     } finally {
       this.busy.set(false);
     }

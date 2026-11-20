@@ -13,6 +13,7 @@ import {
   UiMenuItem,
   UiNotice,
   UiOverflowMenu,
+  UiToaster,
 } from 'ui';
 import {
   OrganizationsService,
@@ -61,11 +62,6 @@ const CONFIRM_LABELS: Record<Pending['kind'], string> = {
           'team.members.count' | transloco: { count: rows.length }
         }}</span>
       }
-      <div class="live" role="status">
-        @if (done(); as message) {
-          <ui-notice tone="success">{{ message.key | transloco: message.params }}</ui-notice>
-        }
-      </div>
       @if (problem()) {
         <ui-notice class="gap" tone="error">{{ problem() | transloco }}</ui-notice>
       }
@@ -202,10 +198,6 @@ const CONFIRM_LABELS: Record<Pending['kind'], string> = {
       color: var(--muted);
       font-size: var(--fs-sub);
     }
-    .live:empty {
-      display: none;
-    }
-    .live,
     .gap {
       margin-bottom: var(--space-md);
     }
@@ -297,6 +289,7 @@ export class MembersCard {
   private readonly session = inject(Session);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
   protected readonly roles = ASSIGNABLE_ROLES;
@@ -306,7 +299,6 @@ export class MembersCard {
 
   protected readonly pending = signal<Pending | null>(null);
   protected readonly busy = signal<string | null>(null);
-  protected readonly done = signal<{ key: string; params: Record<string, string> } | null>(null);
   protected readonly problem = signal<string | null>(null);
 
   protected readonly meId = computed(() => this.session.user()?.id ?? '');
@@ -369,27 +361,37 @@ export class MembersCard {
   protected async changeRole(member: MemberView, event: Event): Promise<void> {
     const select = event.target as HTMLSelectElement;
     const role = select.value;
+    const before = member.role;
     this.pending.set(null);
-    const changed = await this.run(member, async () => {
-      await firstValueFrom(this.api.updateMember(this.organization().id, member.userId, { role }));
-      this.members().reload();
-      this.finish('team.members.roleChanged', {
+    const changed = await this.setRole(member, role);
+    if (!changed) {
+      select.value = before;
+      return;
+    }
+    this.toaster.show({
+      text: this.transloco.translate('team.members.roleChanged', {
         name: member.displayName,
         role: this.transloco.translate(ROLE_LABELS[role] ?? role),
-      });
+      }),
+      undo: () => void this.setRole(member, before),
     });
-    if (!changed) select.value = member.role;
+  }
+
+  private setRole(member: MemberView, role: string): Promise<boolean> {
+    return this.run(member, async () => {
+      await firstValueFrom(this.api.updateMember(this.organization().id, member.userId, { role }));
+      this.members().reload();
+    });
   }
 
   private finish(key: string, params: Record<string, string>): void {
-    this.done.set({ key, params });
+    this.toaster.show({ text: this.transloco.translate(key, params) });
     this.opener = null;
   }
 
   private async run(member: MemberView, work: () => Promise<void>): Promise<boolean> {
     this.busy.set(member.userId);
     this.problem.set(null);
-    this.done.set(null);
     try {
       await work();
       return true;

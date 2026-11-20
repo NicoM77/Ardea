@@ -1,10 +1,10 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideCircleCheck } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiLoader, UiNotice } from 'ui';
+import { UiButton, UiCard, UiLoader, UiNotice, UiToaster } from 'ui';
 import {
   listReviewItemsResource,
   SourcesService,
@@ -37,13 +37,6 @@ import { Dates } from '../../core/format/dates';
       </label>
       <p class="intro">{{ 'review.intro' | transloco }}</p>
 
-      <div class="live" role="status">
-        @if (decided()) {
-          <ui-notice tone="success">{{
-            'review.keptSeparate' | transloco: { keys: decided() }
-          }}</ui-notice>
-        }
-      </div>
       @if (problem()) {
         <ui-notice class="gap" tone="error">{{ problem() | transloco }}</ui-notice>
       }
@@ -181,12 +174,6 @@ import { Dates } from '../../core/format/dates';
       color: var(--muted);
       max-width: 72ch;
     }
-    .live:empty {
-      display: none;
-    }
-    .live {
-      margin-bottom: var(--space-md);
-    }
     .gap {
       display: block;
       margin: var(--space-md) 0;
@@ -256,6 +243,8 @@ import { Dates } from '../../core/format/dates';
 })
 export class ReviewList {
   private readonly api = inject(SourcesService);
+  private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
 
   protected readonly showDecided = signal(false);
   protected readonly open = listReviewItemsResource(signal({ state: 'open' }));
@@ -264,16 +253,18 @@ export class ReviewList {
   );
 
   protected readonly busy = signal<string | null>(null);
-  protected readonly decided = signal<string | null>(null);
   protected readonly problem = signal<string | null>(null);
 
   protected async keepSeparate(item: ReviewItemView): Promise<void> {
     this.busy.set(item.id);
-    this.decided.set(null);
     this.problem.set(null);
     try {
       await firstValueFrom(this.api.keepReviewItemSeparate(item.id));
-      this.decided.set(item.entries.map((entry) => entry.primaryKey).join(', '));
+      this.toaster.show({
+        text: this.transloco.translate('review.keptSeparate', {
+          keys: item.entries.map((entry) => entry.primaryKey).join(', '),
+        }),
+      });
     } catch (error) {
       this.problem.set(
         problemMessageKey(error, {

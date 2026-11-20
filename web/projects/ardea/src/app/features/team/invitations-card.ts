@@ -2,7 +2,7 @@ import { HttpResourceRef } from '@angular/common/http';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiLoader, UiNotice, UiPill } from 'ui';
+import { UiButton, UiCard, UiLoader, UiNotice, UiPill, UiToaster } from 'ui';
 import {
   OrganizationsService,
   type InvitationView,
@@ -21,13 +21,6 @@ import { TEAM_PROBLEMS } from './team-problems';
       [heading]="'team.invitations.title' | transloco"
       [attr.aria-busy]="invitations().isLoading()"
     >
-      <div class="live" role="status">
-        @if (revoked()) {
-          <ui-notice tone="success">{{
-            'team.invitations.revoked' | transloco: { email: revoked() }
-          }}</ui-notice>
-        }
-      </div>
       @if (problem()) {
         <ui-notice class="gap" tone="error">{{ problem() | transloco }}</ui-notice>
       }
@@ -96,10 +89,6 @@ import { TEAM_PROBLEMS } from './team-problems';
       display: block;
       min-width: 0;
     }
-    .live:empty {
-      display: none;
-    }
-    .live,
     .gap {
       margin-bottom: var(--space-md);
     }
@@ -149,11 +138,11 @@ export class InvitationsCard {
 
   private readonly api = inject(OrganizationsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
   private readonly dates = inject(Dates);
 
   protected readonly roleLabels = ROLE_LABELS;
   protected readonly busy = signal<string | null>(null);
-  protected readonly revoked = signal<string | null>(null);
   protected readonly problem = signal<string | null>(null);
   protected readonly list = computed(() => {
     const invitations = this.invitations();
@@ -163,10 +152,11 @@ export class InvitationsCard {
   protected async revoke(invitation: InvitationView): Promise<void> {
     this.busy.set(invitation.id);
     this.problem.set(null);
-    this.revoked.set(null);
     try {
       await firstValueFrom(this.api.revokeInvitation(this.organization().id, invitation.id));
-      this.revoked.set(invitation.email);
+      this.toaster.show({
+        text: this.transloco.translate('team.invitations.revoked', { email: invitation.email }),
+      });
       this.invitations().reload();
     } catch (error) {
       if (problemOf(error)?.code === 'invitation_not_found') this.invitations().reload();

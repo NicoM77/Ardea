@@ -18,9 +18,9 @@ import {
   required,
 } from '@angular/forms/signals';
 import type { TreeValidationResult } from '@angular/forms/signals';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiField, UiInput, UiNotice, UiPasswordToggle } from 'ui';
+import { UiButton, UiCard, UiField, UiInput, UiNotice, UiPasswordToggle, UiToaster } from 'ui';
 import {
   AdministrationService,
   type InstanceSettingsResponse,
@@ -52,8 +52,6 @@ import { hasChanges, NO_CHANGES, SMTP_SECURITY, smtpFormOf, smtpPatch } from './
       <form class="grid" [formRoot]="smtp">
         @if (saveProblem()) {
           <ui-notice class="wide" tone="error">{{ saveProblem() | transloco }}</ui-notice>
-        } @else if (saved()) {
-          <ui-notice class="wide" tone="success">{{ 'admin.smtp.saved' | transloco }}</ui-notice>
         }
 
         <ui-field
@@ -260,6 +258,8 @@ export class SmtpCard {
 
   private readonly admin = inject(AdministrationService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
 
   protected readonly fieldErrorKey = fieldErrorKey;
   protected readonly securityModes = SMTP_SECURITY;
@@ -281,7 +281,6 @@ export class SmtpCard {
   };
 
   protected readonly saveProblem = signal<string | null>(null);
-  protected readonly saved = signal(false);
   protected readonly removing = signal(false);
 
   private readonly model = linkedSignal(() => smtpFormOf(this.settings()));
@@ -301,15 +300,14 @@ export class SmtpCard {
       submission: {
         action: async (): Promise<TreeValidationResult> => {
           this.saveProblem.set(null);
-          this.saved.set(false);
           const patch = smtpPatch(this.settings(), this.model());
           if (!hasChanges(patch)) {
-            this.saved.set(true);
+            this.announceSaved();
             return undefined;
           }
           try {
             this.changed.emit(await firstValueFrom(this.admin.updateInstanceSettings(patch)));
-            this.saved.set(true);
+            this.announceSaved();
             return undefined;
           } catch (error) {
             const onFields = fieldProblems(error, {
@@ -342,13 +340,16 @@ export class SmtpCard {
     return password.isSet ? 'admin.smtp.passwordSet' : 'admin.smtp.passwordNotSet';
   });
 
+  private announceSaved(): void {
+    this.toaster.show({ text: this.transloco.translate('admin.smtp.saved') });
+  }
+
   protected lockHint(setting: SettingView): string | null {
     return setting.locked ? 'admin.locked' : null;
   }
 
   protected async removePassword(): Promise<void> {
     this.saveProblem.set(null);
-    this.saved.set(false);
     this.removing.set(true);
     try {
       this.changed.emit(
@@ -356,7 +357,7 @@ export class SmtpCard {
           this.admin.updateInstanceSettings({ ...NO_CHANGES, smtpPassword: '' }),
         ),
       );
-      this.saved.set(true);
+      this.announceSaved();
     } catch (error) {
       this.saveProblem.set(problemMessageKey(error, SAVE_MESSAGES));
     } finally {

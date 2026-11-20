@@ -1,6 +1,6 @@
 # NOTES: Arbeitsstand und Wissen ausserhalb des Repositorys
 
-Stand: 19.11.2026, ca. 23:10 UTC. Geschrieben von Claude als Kontext-Sicherung: alles, was ich über die
+Stand: 20.11.2026, ca. 01:30 UTC.
 Umsetzung weiss und was nicht schon im Repository steht (README, Masterplan, ADR, Abnahmen, PR-Texte,
 Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 
@@ -13,6 +13,8 @@ Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 | #82 (7.6 `seed-demo`) | **gemergt**: Demo ohne Zuweisung/Frist/«in Prüfung», verweigert DB mit Daten, Worker-Herzschlag oder Jobs; Sammel-Mails an erfundene Personen abgeschaltet; KI-Policy `none`. Unabhängig geprüft (keine Blocker, 3 Should-fix behoben) | 5a passt die Demo an (Reminder, Hinweise) |
 | #83 | gemergt: Stammdaten-Suche ignoriert `Data/` ohne Katalog (Windows) | — |
 | #84 (5a.1, ADR 044), #86 (7.10 Teil 1), #87 (#85 TOTP einmalig, ADR 045), #88, #89 (5a.2, ADR 046), #90, #91 (Mockups 5a.5) | gemergt; #87 und #89 unabhängig geprüft (je 1 Blocker bzw. 4 Should-fix, behoben); main-Lauf zu #86 grün, zu #89 läuft | — |
+| #92 (5a.4), #93 (5a.3, ADR 047), #94 (5a.5), #95 (Doku 5a, 6.7 ✅), #97 (7.10 Teil 2), #98 (7.4, Tag `archive/planning-and-design`) | gemergt, jeweils unabhängig geprüft (ausser Doku/Tests) und lokal kombiniert geprüft; **CI gesperrt (Billing)** | — |
+| #96 (5a.6, ADR 048) | Review-Funde in Arbeit beim Autor | dann lokal prüfen, mergen; danach 7.5, 7.10 Teil 3 (Benachrichtigungen), 7.7, 7.8 |
 | Phase 5a | neu seit #80 (Kapitel 17). **Eigentümer-Entscheid 19.11.: 5a vor Phase 7.** 5a.1 ✅, 5a.2 ✅; **Release-Sperre: kein Release/Upgrade zwischen 5a.2 und 5a.5** (ADR 046 Entscheid 13). 5a.3 (`feat/notices`, ADR 0047) und 5a.4 (`feat/stack-wizard`) laufen als Agents | dann 5a.5 (Seiten, Mockups in #91), 5a.6 |
 | Phase 6 | 6.1, 6.5, 6.6 ✅; 6.4/6.8 brauchen die eigene Instanz; 6.2, 6.3 brauchen Menschen; 6.7 offen nur wegen `SECURITY.md`-Zuordnung (README-Absatz) | |
 | Phase 7 | 7.6 ✅; 7.4, 7.5, 7.7, 7.8 erst **nach 5a** (5a baut Datenmodell und UI um); 7.10 jederzeit; 7.1/7.2/7.3/7.13 nur nach Rückfrage | |
@@ -93,6 +95,9 @@ Die meisten stehen in `docs/acceptance/phase-*.md`; hier alle an einem Ort:
   ausgehende Verbindungen; Grundlage `docs/security/threat-review.md`); 6.3 manueller Zugänglichkeitsdurchgang
   der Kernabläufe mit Tastatur und Screenreader (sinnvoll erst nach 5a, weil 5a die Kernabläufe ändert);
   6.4/6.8 Beobachtungen an der projekteigenen Instanz (braucht Infrastruktur des Eigentümers).
+- **5a.6 / E26 bestätigen:** Erinnerungsrhythmus Stufe 5 täglich, 4 wöchentlich, 3 monatlich, Läufe werktags 08:00 Ortszeit (08:00 vom Agent gewählt); Masterplan-Änderungen in #96 (8.7 eine Runde je Organisation statt Job je Reminder; Kap. 1, 9, 14, 15) zur Abnahme.
+- **Mockups (alle Phasen) liegen nur noch am Tag `archive/planning-and-design`** (7.4, #98).
+- **5a.3-Entscheide zur Abnahme:** «Betrifft uns» mit Version ohne Projekt macht den Stack-Eintrag exakt (17.1); später ergänzte Stack-Einträge bringen 80–500 «Earlier»-Hinweise aus 180 Tagen (ADR 047).
 - **Mockups 5a.5 (#91, E15) prüfen**, offene Fragen: Tasten A/D kollidieren im Deutschen (besser 1/2?); braucht «Remediated» einen Grund (11.5 sagt ja, Mockup nein)?; drei Antworten auf jeder Karte oder hinter Details?; Erinnerungsrhythmus-Diagramm statt Fristen-Laufband ok?; Stack-Eintrag mit exakter Version im Stack lassen oder in ein Projekt verschieben?; Namenskonflikt `ui-notice` (Bibliothek) mit «Notice».
 - Masterplan 9.2 hat durch #81 eine Zeile mehr (neue Systemoperation `iam.instance_administrators`); falls
   der Plan unverändert bleiben soll, sagen.

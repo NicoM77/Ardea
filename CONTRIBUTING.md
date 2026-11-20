@@ -9,7 +9,12 @@ The rules below summarise chapter 13 of the [master plan](docs/masterplan/13-rep
   never on pull requests (task 7.13 turns it back on). A pull request is verified locally before it is merged: the
   test projects it touches and `dotnet format Ardea.slnx --verify-no-changes`; the pull request lists what passed.
   Changes to documentation alone run nothing.
-- Commits follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`).
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `<type>(<optional scope>)!: <description>`
+  with the type `feat`, `fix`, `perf`, `revert`, `docs`, `style`, `refactor`, `test`, `build`, `ci` or `chore`, and
+  `!` or a `BREAKING CHANGE:` footer for a breaking change. Changes to the catalogue data are `feat(catalog):` or
+  `fix(catalog):`. The *Commits* check (`.github/workflows/commits.yml`) fails a pull request with a commit that
+  does not follow them; merge commits and GitHub's `Revert "…"` commits pass. Check a branch before pushing with
+  `node build/check-commits.mjs` (range `origin/main..HEAD`, or base and head as arguments).
 - Decisions with lasting impact get an ADR in `docs/adr/`: context, decision, alternatives, consequences.
 - Vertical slices: a feature is finished through every layer before the next one starts. Nothing is built in advance.
 
@@ -78,11 +83,35 @@ build/coverage.sh Ardea.Iam.Tests        # every Ardea assembly the tests load
 The report for the uncovered lines is `artifacts/coverage/<TestProject>.cobertura.xml`, which IDEs and report
 tools read. Migrations and generated code are left out. Tests against the database need Docker, as for `dotnet test`.
 
+## Releases
+
+Releases are made by [release-please](https://github.com/googleapis/release-please) in
+`.github/workflows/release.yml` ([ADR 050](docs/adr/0050-releases-with-release-please-and-signed-images.md)):
+
+1. Every push to `main` updates the **release pull request** (`chore(main): release X.Y.Z`): the next version from the
+   commits since the last release (`fix` a patch, `feat` a minor version, a breaking change the major version, before
+   1.0 the minor version) and its section in `CHANGELOG.md`. Only `feat`, `fix`, `perf` and `revert` appear there and
+   open a release pull request; the other types do not. Never edit `CHANGELOG.md` or `.release-please-manifest.json`
+   by hand; a commit with a `Release-As: X.Y.Z` footer sets the next version.
+2. **The owner merges it** when a release is due; nobody else does. The pull request is opened by the workflow's
+   token, so no check starts on it by itself: close and reopen it once to run them.
+3. The merge creates the tag `vX.Y.Z` and a draft release. The same workflow builds the image with the version,
+   requires `ardea version` to print it and the smoke test to pass, pushes `linux/amd64` and `linux/arm64` to
+   `ghcr.io/nicom77/ardea` (`X.Y.Z`, `X.Y`, `X`; `latest` from 1.0 on), signs them with cosign (keyless), attests
+   provenance and SBOM, attaches SBOMs, notices, `compose.yaml`, `compose.caddy.yaml` and `Caddyfile`, and publishes
+   the release, as a pre-release while the version is 0.x. About 18 minutes, at most 25.
+4. If a job fails, the release stays a draft and nothing is announced. A passing cause (a registry or network error):
+   *Re-run failed jobs* on the run. A defect: delete the draft release and its tag and release the fix as the next
+   version.
+
+Local builds report the version `dev`; `docker build --build-arg VERSION=X.Y.Z` gives an image a version.
+
 ## Scripts
 
 | Script | What it does |
 | --- | --- |
 | `build/check-comments.sh [--fix]` | Comments outside the exceptions (see «Comments»): the C# tool, then the web part. |
+| `node build/check-commits.mjs [base] [head]` | Every commit in `base..head` (default `origin/main..HEAD`) follows Conventional Commits; merge commits pass. The *Commits* check of a pull request runs it. |
 | `npm run build` (in `site/`) | The website: copies the pages from `docs/`, `SECURITY.md`, `CONTRIBUTING.md` and the API reference from `openapi/ardea.v1.json` into Astro with Starlight and builds `site/dist/`; a link from those pages to a file that does not exist fails it. Sources and publishing in [`site/README.md`](site/README.md). |
 | `npm run check:links` (in `site/`) | Every internal link and anchor of the built site, landing page and API reference included. |
 | `npm run check:a11y` (in `site/`) | axe (WCAG 2.2 AA tags) with Playwright on the landing page, every documentation page and a sample of API operations; runs in the Playwright image like the web app's checks (command in `site/README.md`). |

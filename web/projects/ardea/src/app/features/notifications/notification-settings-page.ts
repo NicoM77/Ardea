@@ -10,6 +10,7 @@ import {
   type PushSubscriptionView,
 } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { Session } from '../../core/session/session';
 import { num } from '../actions/action-format';
 import { injectOrganization } from '../organizations/current-organization';
@@ -457,6 +458,7 @@ const CHANNEL_HINTS: Readonly<Record<string, string>> = {
 export class NotificationSettingsPage implements OnInit {
   private readonly api = inject(NotificationsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   private readonly session = inject(Session);
   protected readonly push = inject(PushDevice);
   protected readonly organization = injectOrganization().organization;
@@ -507,10 +509,7 @@ export class NotificationSettingsPage implements OnInit {
   }
 
   protected deviceLine(d: PushSubscriptionView): string {
-    const date = (v: string) =>
-      new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' }).format(
-        new Date(v),
-      );
+    const date = (v: string) => this.dates.date(v);
     const parts = [this.transloco.translate('notify.devices.added', { date: date(d.createdAt) })];
     if (d.lastSuccessAt)
       parts.push(

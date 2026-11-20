@@ -21,6 +21,7 @@ import {
   type WebhookEndpointView,
 } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { injectOrganization } from '../organizations/current-organization';
 import { canManage } from '../organizations/org-format';
 import { NotifyFrame } from './notify-frame';
@@ -382,6 +383,7 @@ const ADDRESS_PROBLEMS = {
 export class RecipientsPage {
   private readonly api = inject(NotificationsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   protected readonly organization = injectOrganization().organization;
   private readonly orgId = computed(() => {
     const org = this.organization();
@@ -412,12 +414,7 @@ export class RecipientsPage {
   );
 
   protected when(value: string | null | undefined): string {
-    return value
-      ? new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        }).format(new Date(value))
-      : '';
+    return value ? this.dates.dateTime(value) : '';
   }
 
   protected resendable(a: ExternalAddressView): boolean {

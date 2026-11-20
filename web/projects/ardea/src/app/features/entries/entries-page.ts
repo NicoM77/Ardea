@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
 import { form, FormField, FormRoot } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideSearch, LucideShieldExclamationPoint } from '@lucide/angular';
 import {
   UiButton,
@@ -15,6 +15,7 @@ import {
 } from 'ui';
 import { listEntriesResource, type EntrySummary } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import {
   EntryFilters,
   filtersFrom,
@@ -296,7 +297,7 @@ export class EntriesPage {
   readonly since = input<string | null>(null);
 
   private readonly router = inject(Router);
-  private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
 
   protected readonly filters = computed(() =>
     filtersFrom({ q: this.q(), kind: this.kind(), since: this.since() }),
@@ -404,15 +405,7 @@ export class EntriesPage {
     return others.slice(0, 3).join(', ') + (others.length > 3 ? ' …' : '');
   }
 
-  private readonly format = computed(
-    () =>
-      new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }),
-  );
-
   protected when(value: string): string {
-    return this.format().format(new Date(value));
+    return this.dates.dateTime(value);
   }
 }

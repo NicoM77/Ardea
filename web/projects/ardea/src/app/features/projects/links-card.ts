@@ -12,6 +12,7 @@ import { firstValueFrom } from 'rxjs';
 import { UiButton, UiCard, UiLoader, UiMenu, UiMenuItem, UiNotice, UiOverflowMenu } from 'ui';
 import { RepositoriesService, type LinkView } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
 import { isReading, LINK_STATE_LABELS, repositoryName } from './link-format';
 
@@ -327,6 +328,7 @@ export class LinksCard {
 
   private readonly api = inject(RepositoriesService);
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private opener: UiOverflowMenu | null = null;
 
@@ -348,10 +350,7 @@ export class LinksCard {
 
   protected when(value: string | null): string {
     if (!value) return '';
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value));
+    return this.dates.dateTime(value);
   }
 
   protected ask(link: LinkView, opener: UiOverflowMenu): void {

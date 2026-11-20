@@ -9,6 +9,7 @@ import {
   type SessionOrganization,
 } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { ROLE_LABELS } from '../organizations/org-format';
 import { TEAM_PROBLEMS } from './team-problems';
 
@@ -148,6 +149,7 @@ export class InvitationsCard {
 
   private readonly api = inject(OrganizationsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
 
   protected readonly roleLabels = ROLE_LABELS;
   protected readonly busy = signal<string | null>(null);
@@ -177,8 +179,6 @@ export class InvitationsCard {
   }
 
   protected when(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' }).format(
-      new Date(value),
-    );
+    return this.dates.date(value);
   }
 }

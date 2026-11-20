@@ -38,6 +38,7 @@ import {
   type NoticeView,
 } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { reloadOnLiveChange } from '../../core/live/live-events';
 import { num } from '../actions/action-format';
 import { injectOrganization } from '../organizations/current-organization';
@@ -658,6 +659,7 @@ export class NoticesPage {
   private readonly router = inject(Router);
   private readonly toaster = inject(UiToaster);
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly counter = inject(NoticeCount);
@@ -856,9 +858,7 @@ export class NoticesPage {
 
   protected day(value: string | null): string {
     if (!value) return '';
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' }).format(
-      new Date(value),
-    );
+    return this.dates.date(value);
   }
 
   protected reload(): boolean {

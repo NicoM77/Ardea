@@ -9,6 +9,7 @@ import {
   type SessionOrganization,
 } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { fieldProblems } from '../admin/admin-errors';
 import { EMAIL_ERRORS, emailRules, fieldErrorKey } from '../auth/auth-forms';
 import { focusFirstInvalid } from '../auth/focus-invalid';
@@ -136,6 +137,7 @@ export class InviteCard {
 
   private readonly api = inject(OrganizationsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
   protected readonly fieldErrorKey = fieldErrorKey;
@@ -196,8 +198,6 @@ export class InviteCard {
   });
 
   protected when(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' }).format(
-      new Date(value),
-    );
+    return this.dates.date(value);
   }
 }

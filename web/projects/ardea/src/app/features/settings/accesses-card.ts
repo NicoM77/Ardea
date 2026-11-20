@@ -24,6 +24,7 @@ import {
   type SessionOrganization,
 } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { fieldProblems } from '../admin/admin-errors';
 import { fieldErrorKey } from '../auth/auth-forms';
 import { focusFirstInvalid } from '../auth/focus-invalid';
@@ -295,6 +296,7 @@ export class AccessesCard {
 
   private readonly api = inject(RepositoryConnectionsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private opener: UiOverflowMenu | null = null;
 
@@ -386,9 +388,7 @@ export class AccessesCard {
   }
 
   protected when(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' }).format(
-      new Date(value),
-    );
+    return this.dates.date(value);
   }
 
   protected async test(c: ConnectionView): Promise<void> {

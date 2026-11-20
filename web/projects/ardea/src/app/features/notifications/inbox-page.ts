@@ -19,6 +19,7 @@ import {
   type InAppNotificationView,
 } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { reloadOnLiveChange } from '../../core/live/live-events';
 import { num } from '../actions/action-format';
 import { injectOrganization } from '../organizations/current-organization';
@@ -343,6 +344,7 @@ function dayKey(createdAt: string, now: Date): string {
 export class InboxPage {
   private readonly api = inject(NotificationsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   private readonly unreadCount = inject(UnreadCount);
   protected readonly organization = injectOrganization().organization;
   private readonly orgId = computed(() => this.organization()?.id);
@@ -377,9 +379,7 @@ export class InboxPage {
             ? this.transloco.translate(
                 key === 'today' ? 'notify.inbox.today' : 'notify.inbox.yesterday',
               )
-            : new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'full' }).format(
-                new Date(key),
-              );
+            : this.dates.date(key, 'full');
         group = { key, label, items: [] };
         groups.push(group);
       }
@@ -411,9 +411,7 @@ export class InboxPage {
   }
 
   protected time(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { timeStyle: 'short' }).format(
-      new Date(value),
-    );
+    return this.dates.time(value);
   }
 
   protected open(n: InAppNotificationView): void {

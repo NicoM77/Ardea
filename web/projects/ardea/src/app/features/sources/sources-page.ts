@@ -15,6 +15,7 @@ import {
 } from 'ui';
 import { listSourcesResource, SourcesService, type SourceStatus } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { Session } from '../../core/session/session';
 import { CatalogLearning } from './catalog-learning';
 import { ReviewList } from './review-list';
@@ -361,6 +362,7 @@ export class SourcesPage {
 
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   private readonly session = inject(Session);
   private readonly api = inject(SourcesService);
   private readonly toaster = inject(UiToaster);
@@ -440,15 +442,7 @@ export class SourcesPage {
     return interval(count(source.intervalMinutes));
   }
 
-  private readonly format = computed(
-    () =>
-      new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }),
-  );
-
   protected when(value: string): string {
-    return this.format().format(new Date(value));
+    return this.dates.dateTime(value);
   }
 }

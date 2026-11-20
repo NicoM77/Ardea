@@ -1,8 +1,9 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { UiPill, UiPriority, UiStatus } from 'ui';
 import type { ActionSummary } from '../../core/api/client';
+import { Dates } from '../../core/format/dates';
 import {
   actionName,
   clockStart,
@@ -207,16 +208,15 @@ export class ActionsTable {
   readonly closed = input(false);
   readonly caption = input.required<string>();
 
-  private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
 
   protected readonly shown = computed<Row[]>(() => {
-    const day = new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' });
     return this.rows().map((action) => ({
       action,
       number: num(action.number),
       name: actionName(action),
       entries: entriesLine(action),
-      since: day.format(new Date(action.closedAt ?? clockStart(action))),
+      since: this.dates.date(action.closedAt ?? clockStart(action)),
     }));
   });
 

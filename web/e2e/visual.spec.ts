@@ -1,7 +1,16 @@
 import { expect, test } from '@playwright/test';
 import { watchConsole } from './console';
 
-const PAGES = ['foundations', 'buttons', 'fields', 'feedback', 'signals', 'two-factor', 'shell'];
+const PAGES = [
+  'foundations',
+  'buttons',
+  'actions',
+  'fields',
+  'feedback',
+  'signals',
+  'two-factor',
+  'shell',
+];
 
 for (const name of PAGES) {
   test(`component library: ${name}`, async ({ page }) => {

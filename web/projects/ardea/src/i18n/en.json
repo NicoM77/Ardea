@@ -15,6 +15,9 @@
     "copy": {
       "done": "Copied"
     },
+    "menu": {
+      "more": "More actions for {name}"
+    },
     "priority": {
       "critical": "Critical",
       "high": "High",

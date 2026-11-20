@@ -90,3 +90,11 @@ textarea.ui-input:read-only:not(:disabled) {
     border-color: var(--text);
   }
 }
+
+.ui-button.is-icon.is-loading {
+  gap: 0;
+}
+
+.ui-button.is-icon > ui-loader.is-visible ~ svg {
+  display: none;
+}

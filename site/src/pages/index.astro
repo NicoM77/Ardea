@@ -1,0 +1,170 @@
+---
+import '../../../web/projects/ui/src/styles/tokens.css';
+import '../styles/fonts.css';
+import '../styles/landing.css';
+import { base, releases, repository } from '../../site.config.mjs';
+import { features, inline, purpose, quickStartCommands, quickStartNote } from '../readme';
+
+const home = `${base}/`;
+const page = (slug: string) => `${base}/${slug}/`;
+const media = (path: string) => `${base}/media/${path}`;
+
+const shots = [
+  {
+    file: 'reminder.png',
+    alt: 'A reminder with its level, the reasoning behind it and the recommended step',
+    caption: 'A reminder: the level, why, and the step to take.',
+  },
+  {
+    file: 'notices.png',
+    alt: 'Notices that might affect the organisation, each waiting for «affects us» or «doesn’t affect us»',
+    caption: 'Notices waiting for one answer: affects us, or not.',
+  },
+  {
+    file: 'vulnerability.png',
+    alt: 'One consolidated vulnerability entry with its sources, severity and affected versions',
+    caption: 'One entry per vulnerability, every field traceable to its source.',
+  },
+  {
+    file: 'wizard-stack.png',
+    alt: 'The setup wizard at the step where the organisation declares its stack',
+    caption: 'The setup wizard: declare the stack, no versions needed.',
+  },
+];
+
+const guides = [
+  { slug: 'operations/try-it', title: 'Try it', text: 'Look at an instance with sample data, without tokens or source access.' },
+  { slug: 'operations/installation', title: 'Installation', text: 'Docker Compose, HTTPS and the first user.' },
+  { slug: 'operations/configuration', title: 'Configuration', text: 'Every setting, where it lives and its default.' },
+  { slug: 'operations/operation', title: 'Operation', text: 'Health, logs, backups, sources, notifications.' },
+  { slug: 'operations/update', title: 'Update', text: 'A new version, the dump before migration, going back.' },
+  { slug: 'operations/add-a-source', title: 'Add a source', text: 'Write an adapter for another vulnerability source.' },
+  { slug: 'architecture', title: 'Architecture', text: 'Modules, the rules between them, and the decision records.' },
+  { slug: 'api', title: 'API reference', text: 'Every endpoint, from the OpenAPI document.' },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Ardea · Early warning for the vulnerabilities that affect you</title>
+    <meta name="description" content={purpose[0]} />
+    <link rel="icon" type="image/svg+xml" href={media('ardea-favicon.svg')} />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="top">
+      <a class="brand" href={home}><img src={media('ardea-logo.svg')} alt="Ardea" width="115" height="35" /></a>
+      <nav aria-label="Main">
+        <ul>
+          <li><a href={page('operations')}>Documentation</a></li>
+          <li><a href={page('api')}>API</a></li>
+          <li><a href={releases}>Releases</a></li>
+          <li><a href={repository}>GitHub</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main" class="sheet">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-text">
+          <p class="eyebrow">Self-hosted · open source · AGPL-3.0</p>
+          <h1 id="hero-title">Early warning for the vulnerabilities that affect you</h1>
+          {purpose.map((paragraph) => <p class="lead" set:html={inline(paragraph)} />)}
+          <div class="actions">
+            <a class="button primary" href={page('operations/installation')}>Install Ardea</a>
+            <a class="button" href={page('operations/try-it')}>Try it with sample data</a>
+            <a class="button ghost" href={releases}>Latest release</a>
+          </div>
+          <p class="status"><span class="pill">Pre-release</span> There is no published release or image yet.</p>
+        </div>
+        <figure class="hero-shot">
+          <img
+            src={media('screenshots/overview.png')}
+            alt="Ardea overview: one organisation, its open reminders and the notices waiting for an answer"
+            width="1440"
+            height="900"
+          />
+        </figure>
+      </section>
+
+      <section aria-labelledby="features-title">
+        <h2 id="features-title">What it does</h2>
+        <ul class="cards features">
+          {
+            features.map((feature) => (
+              <li class="card">
+                <h3>{feature.title}</h3>
+                <p set:html={inline(feature.text)} />
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section aria-labelledby="look-title">
+        <h2 id="look-title">A look inside</h2>
+        <div class="shots">
+          {
+            shots.map((shot) => (
+              <figure class="shot">
+                <img src={media(`screenshots/${shot.file}`)} alt={shot.alt} width="1440" height="900" loading="lazy" />
+                <figcaption>{shot.caption}</figcaption>
+              </figure>
+            ))
+          }
+        </div>
+        <div class="phones">
+          <figure class="shot phone">
+            <img src={media('screenshots/phone-overview.png')} alt="The overview at phone width" width="390" height="844" loading="lazy" />
+            <figcaption>The overview at phone width.</figcaption>
+          </figure>
+          <figure class="shot phone">
+            <img src={media('screenshots/phone-reminder.png')} alt="A reminder at phone width" width="390" height="844" loading="lazy" />
+            <figcaption>A reminder at phone width.</figcaption>
+          </figure>
+          <p class="phones-text">The web app is responsive and installable, so a reminder can be answered from a phone.</p>
+        </div>
+      </section>
+
+      <section aria-labelledby="start-title">
+        <h2 id="start-title">Quick start</h2>
+        <p class="note" set:html={inline(quickStartNote)} />
+        <pre class="code" tabindex="0" aria-label="Quick start commands"><code>{quickStartCommands}</code></pre>
+        <p>
+          Then open the address and create the first user with the setup token. The full guide is{' '}
+          <a class="link" href={page('operations/installation')}>Installation</a>; to look at Ardea with sample data first, see{' '}
+          <a class="link" href={page('operations/try-it')}>Try it</a>.
+        </p>
+      </section>
+
+      <section aria-labelledby="docs-title">
+        <h2 id="docs-title">Documentation</h2>
+        <ul class="cards guides">
+          {
+            guides.map((guide) => (
+              <li class="card">
+                <a href={page(guide.slug)}>
+                  <h3>{guide.title}</h3>
+                  <p>{guide.text}</p>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        Ardea is licensed under the AGPL-3.0; the provider SDK under Apache-2.0.{' '}
+        <a class="link" href={page('security')}>Security policy</a>{' · '}
+        <a class="link" href={page('contributing')}>Contributing</a>{' · '}
+        <a class="link" href={repository}>Source code</a>
+      </p>
+    </footer>
+  </body>
+</html>

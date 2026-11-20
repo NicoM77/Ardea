@@ -1,0 +1,115 @@
+:root,
+::backdrop,
+:root[data-theme='light'],
+[data-theme='light'] ::backdrop {
+  color-scheme: light;
+
+  --sl-color-white: var(--text);
+  --sl-color-gray-1: var(--text);
+  --sl-color-gray-2: var(--text);
+  --sl-color-gray-3: var(--muted);
+  --sl-color-gray-4: var(--faint);
+  --sl-color-gray-5: var(--control);
+  --sl-color-gray-6: var(--border);
+  --sl-color-gray-7: var(--raised);
+  --sl-color-black: var(--surface);
+
+  --sl-color-accent-low: var(--accent-soft);
+  --sl-color-accent: var(--accent);
+  --sl-color-accent-high: var(--score-deep);
+
+  --sl-color-text: var(--text);
+  --sl-color-text-accent: var(--text);
+  --sl-color-text-invert: var(--surface);
+  --sl-color-bg: var(--surface);
+  --sl-color-bg-nav: var(--ground);
+  --sl-color-bg-sidebar: var(--ground);
+  --sl-color-bg-inline-code: var(--raised);
+  --sl-color-bg-accent: var(--primary);
+  --sl-color-hairline-light: var(--rule);
+  --sl-color-hairline: var(--border);
+  --sl-color-hairline-shade: var(--border);
+
+  --sl-color-backdrop-overlay: var(--scrim);
+  --sl-shadow-sm: none;
+  --sl-shadow-md: var(--shadow-tip);
+  --sl-shadow-lg: var(--shadow-dialog);
+
+  --sl-font: 'IBM Plex Sans';
+  --sl-font-mono: 'IBM Plex Mono';
+  --sl-line-height: 1.65;
+  --sl-text-h1: 1.75rem;
+  --sl-text-h2: 1.375rem;
+  --sl-text-h3: 1.125rem;
+  --sl-text-h4: 1rem;
+  --sl-text-h5: 1rem;
+}
+
+body {
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.01em;
+}
+
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.sl-markdown-content a:not(:where(.not-content *)) {
+  color: var(--text);
+  text-decoration-color: var(--field);
+  text-underline-offset: 3px;
+}
+
+.sl-markdown-content a:not(:where(.not-content *)):hover {
+  text-decoration-color: var(--text);
+}
+
+.sl-markdown-content code:not(:where(.not-content *)) {
+  border-radius: var(--radius-key);
+}
+
+.sl-markdown-content table:not(:where(.not-content *)) {
+  font-size: var(--sl-text-sm);
+}
+
+.sidebar-content a[aria-current='page'],
+.sidebar-content a[aria-current='page']:hover,
+.sidebar-content a[aria-current='page']:focus {
+  background-color: var(--active);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.sidebar-content a {
+  border-radius: var(--radius-control);
+}
+
+site-search button[data-open-modal] > kbd {
+  display: none !important;
+}
+
+main .sl-openapi-section-panel.sl-openapi-section-panel {
+  background-color: var(--raised);
+  border-color: var(--border);
+}
+
+main .sl-openapi-example.sl-openapi-example.sl-openapi-example div.expressive-code .frame pre,
+main .sl-openapi-content-picker-select.sl-openapi-content-picker-select select,
+main .sl-openapi-content-picker-select-value.sl-openapi-content-picker-select-value,
+main .sl-openapi-operation-url.sl-openapi-operation-url input {
+  background-color: var(--surface);
+  border-color: var(--field);
+  border-radius: var(--radius-control);
+}
+
+main .sl-openapi-request-body-required.sl-openapi-request-body-required,
+main .sl-openapi-key-required.sl-openapi-key-required {
+  color: var(--text);
+  font-weight: 500;
+}

@@ -1,7 +1,8 @@
 # Installation
 
 > Images are published to `ghcr.io/nicom77/ardea` from the first release on (task 7.3). Until then, build
-> one from source: `docker build -f deploy/Dockerfile -t ardea:dev .` and set `ARDEA_IMAGE=ardea:dev`.
+> one from source: `docker build -f deploy/Dockerfile -t ardea:dev .` and set `ARDEA_IMAGE=ardea:dev`. Such a build
+> reports its version as `dev`; `--build-arg VERSION=0.1.0` gives it a version.
 
 Ardea runs as one image in three roles (`migrate`, `api`, `worker`) next to PostgreSQL 18, described in
 [`deploy/compose.yaml`](../../deploy/compose.yaml).
@@ -21,6 +22,49 @@ Ardea runs as one image in three roles (`migrate`, `api`, `worker`) next to Post
   `*.notify.windows.com`). For a hosted language model: its address (for example `api.anthropic.com`). Everything
   else is closed to Ardea; `ardea doctor` tries the hosts of the sources, the SMTP server and the providers.
 - A host name with HTTPS in front of the API. Ardea answers API calls only over HTTPS.
+
+## Releases and image tags
+
+Each [release](https://github.com/NicoM77/Ardea/releases) lists its changes and carries `compose.yaml`,
+`compose.caddy.yaml`, `Caddyfile`, the SBOMs (CycloneDX: `ardea-dotnet.cdx.json`, `ardea-web.cdx.json`) and
+`THIRD-PARTY-NOTICES.md`. The image `ghcr.io/nicom77/ardea` exists for `linux/amd64` and `linux/arm64` under the
+tags `0.4.2` (exactly this version), `0.4` (its patches) and `0` (every 0.x version, the tag `compose.yaml` uses).
+Versions before 1.0 are pre-releases; from 1.0 on, `latest` follows the newest release. `ardea version`, the first
+line of `ardea doctor` and the administration show the version that runs.
+
+## Verify the image
+
+Every release image is signed with [cosign](https://docs.sigstore.dev/) without a key, by the identity of the
+repository's release workflow, and has its build provenance and SBOM attested on GitHub. Check them before the first
+start and after an update, with cosign 3 or later and the GitHub CLI (`gh`, signed in with any account). Set
+`version` to the release you pull:
+
+```bash
+image=ghcr.io/nicom77/ardea
+version=0.1.0
+identity='^https://github\.com/NicoM77/Ardea/\.github/workflows/release\.yml@refs/heads/main$'
+issuer=https://token.actions.githubusercontent.com
+signer=https://github.com/NicoM77/Ardea/.github/workflows/release.yml@refs/heads/main
+
+cosign verify "$image:$version" --certificate-identity-regexp "$identity" --certificate-oidc-issuer "$issuer"
+gh attestation verify "oci://$image:$version" --repo NicoM77/Ardea --cert-identity "$signer" --deny-self-hosted-runners
+gh attestation verify "oci://$image:$version" --repo NicoM77/Ardea --cert-identity "$signer" --deny-self-hosted-runners \
+  --predicate-type https://cyclonedx.org/bom
+
+for arch in amd64 arm64; do
+  digest=$(docker buildx imagetools inspect "$image:$version" \
+    --format "{{range .Manifest.Manifests}}{{if eq .Platform.Architecture \"$arch\"}}{{.Digest}}{{end}}{{end}}")
+  echo "== $arch $digest"
+  cosign verify "$image@$digest" --certificate-identity-regexp "$identity" --certificate-oidc-issuer "$issuer"
+  gh attestation verify "oci://$image@$digest" --repo NicoM77/Ardea --cert-identity "$signer" --deny-self-hosted-runners
+done
+```
+
+The first two commands check the multi-architecture index (what `docker pull` resolves the tag to), the third its
+SBOM; the loop checks the image of each architecture by its own digest. Each command fails unless the image was
+built and signed by `release.yml` on the main branch of `NicoM77/Ardea`, on a GitHub-hosted runner. An image tag is
+set only after its image was signed and attested, so a tag that fails these checks was not made by a release. To run exactly what you checked, pin the
+digest in `.env`: `ARDEA_IMAGE=ghcr.io/nicom77/ardea:0.1.0@sha256:…`.
 
 ## Steps
 

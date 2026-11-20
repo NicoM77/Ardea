@@ -1,0 +1,31 @@
+name: Commits
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commits-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  conventional:
+    name: Conventional Commits
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: The pull request title follows Conventional Commits
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: node build/check-commits.mjs --title "$TITLE"
+      # The checked-out merge ref has the base as first and the pull request's head as second parent.
+      - name: Every commit of the pull request follows Conventional Commits
+        if: ${{ !cancelled() }}
+        run: node build/check-commits.mjs HEAD^1 HEAD^2

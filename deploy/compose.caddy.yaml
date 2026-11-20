@@ -3,7 +3,8 @@
 # Caddy obtains a certificate for a public domain automatically. For a test on one machine use
 # ARDEA_DOMAIN=localhost: Caddy then issues a certificate from its own local authority.
 # ARDEA_HTTP_PORT_PUBLIC and ARDEA_HTTPS_PORT_PUBLIC move the published ports when 80 and 443 are
-# taken; ARDEA_PUBLIC_URL must then carry the port (https://localhost:8443).
+# taken; ARDEA_PUBLIC_URL must then carry the port (https://localhost:8443). Open that HTTPS address: Caddy's
+# redirect from the plain-HTTP port names port 443, not the moved one.
 services:
   caddy:
     image: caddy:2

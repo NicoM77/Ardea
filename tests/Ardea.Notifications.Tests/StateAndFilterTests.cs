@@ -55,6 +55,33 @@ public sealed class StateAndFilterTests(PostgresServer server)
     }
 
     [Fact]
+    public async Task Events_of_the_same_instant_are_evaluated_in_the_order_they_were_written_whatever_their_ids()
+    {
+        await using var host = await NotifyTestHost.StartAsync(server);
+        var s = await Scenario.StartAsync(host);
+        await s.RuleAsync("Watch", 4, ["action.raised", "action.level_raised", "action.level_lowered"], Scenario.Target("in_app"));
+        var action = await s.ActionAsync(3, level: 5);
+        var at = host.Time.GetUtcNow().ToString("O");
+        string[] written = ["action.raised", "action.level_lowered", "action.level_raised"];
+        string[] data = ["""{"level": 5}""", """{"from": 5, "to": 4}""", """{"from": 4, "to": 5}"""];
+        var ids = new[] { "01a1f9ff-0000-7000-8000-000000000001", "01a1f9ff-0000-7000-8000-000000000003", "01a1f9ff-0000-7000-8000-000000000002" };
+        for (var i = 0; i < written.Length; i++)
+        {
+            await host.ExecuteAsync($"""
+                INSERT INTO assess.assess_event (id, organization_id, remediation_id, at, kind, data)
+                VALUES ('{ids[i]}', '{s.Organization}', '{action}', '{at}', '{written[i]}', '{data[i]}');
+                INSERT INTO notify.pending_event (event_id, organization_id, kind, at) VALUES ('{ids[i]}', '{s.Organization}', '{written[i]}', '{at}');
+                """);
+        }
+
+        await s.EvaluateAsync();
+
+        Assert.Equal(
+            ["action.level_lowered", "action.level_raised", "action.raised"],
+            await host.RowsAsync($"SELECT kind FROM notify.notification WHERE remediation_id = '{action}' ORDER BY kind"));
+    }
+
+    [Fact]
     public async Task A_rule_for_one_project_and_level_hears_neither_other_projects_nor_lower_levels_at_once_nor_in_the_growth_of_its_digest()
     {
         await using var host = await NotifyTestHost.StartAsync(server);

@@ -17,14 +17,14 @@
       "rollForward": false
     },
     "cyclonedx": {
-      "version": "6.3.1",
+      "version": "6.3.2",
       "commands": [
         "dotnet-CycloneDX"
       ],
       "rollForward": false
     },
     "coverlet.console": {
-      "version": "10.1.0",
+      "version": "10.1.1",
       "commands": [
         "coverlet"
       ],

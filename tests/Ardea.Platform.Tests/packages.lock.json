@@ -4,9 +4,9 @@
     "net10.0": {
       "Microsoft.Extensions.TimeProvider.Testing": {
         "type": "Direct",
-        "requested": "[10.11.0, )",
-        "resolved": "10.11.0",
-        "contentHash": "DTivKZ2Du0dJideTTa6vPj/eXKNRu+RxtjBX7NOOUXHBtHx1ehbE+lM+j3/5M3wU6BqzcZqEEyR4+FnPKs2rTA=="
+        "requested": "[10.11.1, )",
+        "resolved": "10.11.1",
+        "contentHash": "+ao8Sj5oSSANi3rM1JN0u/76bTE61Afxb2idMhlLjB84Z/bFArnUQeRrXOqzqaqj8bxqPQQUKXwv3jai+IN+GA=="
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
@@ -484,7 +484,7 @@
       "ardea.ai": {
         "type": "Project",
         "dependencies": {
-          "Anthropic": "[13.10.0, )",
+          "Anthropic": "[13.11.0, )",
           "Ardea.Platform": "[0.0.0, )",
           "Microsoft.Extensions.AI": "[11.0.0, )",
           "Microsoft.Extensions.AI.OpenAI": "[11.0.0, )",
@@ -522,9 +522,9 @@
       },
       "Anthropic": {
         "type": "CentralTransitive",
-        "requested": "[13.10.0, )",
-        "resolved": "13.10.0",
-        "contentHash": "p9kXFfvKk2quABpikYRstGp522CAMp9nQkllnS5dV07T6lmY6OBX2pSW6QTrI844vovya0jYC84cSCQuxGVnDw==",
+        "requested": "[13.11.0, )",
+        "resolved": "13.11.0",
+        "contentHash": "H466KZWidIycmozTYWNDgxsX/Wi9iN93YXRedYtR3SZ6d/pD137DhsD7DgiYf0OIQcs7rhxHBKf5A4PBNSOuPQ==",
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "10.5.1"
         }

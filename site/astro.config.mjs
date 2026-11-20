@@ -15,6 +15,27 @@ const focusableTables = {
   },
 };
 
+const labelledTaskLists = {
+  name: 'ardea-labelled-task-lists',
+  hooks: {
+    'astro:config:setup': ({ config }) => {
+      config.markdown.processor.options.hastPlugins.push({
+        name: 'ardea-labelled-task-lists',
+        element: {
+          filter: ['input'],
+          visit: (node, ctx) => {
+            if (node.properties.type !== 'checkbox') return;
+            const item = ctx.parent(node);
+            if (item?.type !== 'element' || item.tagName !== 'li') return;
+            const label = ctx.textContent(item).replace(/\s+/g, ' ').trim();
+            if (label) ctx.setProperty(node, 'ariaLabel', label);
+          },
+        },
+      });
+    },
+  },
+};
+
 export default defineConfig({
   site,
   base,
@@ -23,6 +44,7 @@ export default defineConfig({
   vite: { server: { fs: { allow: ['..'] } } },
   integrations: [
     focusableTables,
+    labelledTaskLists,
     starlight({
       title: 'Ardea',
       description: 'Self-hosted, open-source early warning for security vulnerabilities.',

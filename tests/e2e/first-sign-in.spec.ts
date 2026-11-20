@@ -108,6 +108,19 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await expect(
     page.getByRole('heading', { level: 1, name: 'Set up your organization' }),
   ).toBeVisible();
+  const stack = page.getByRole('region', { name: 'Your stack' });
+  await expect(stack).toBeVisible();
+  const product = page.getByRole('combobox', { name: 'Add a product' });
+  await product.fill('postgres');
+  await expect(page.getByRole('option', { name: /PostgreSQL/ }).first()).toBeVisible();
+  await product.press('ArrowDown');
+  await product.press('Enter');
+  await expect(
+    stack.getByRole('list', { name: 'Stack entries' }).getByRole('listitem'),
+  ).toHaveCount(1);
+  await expectAccessible(page, 'wizard stack');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page).toHaveURL(/\/setup\?step=project$/);
   await page.getByLabel('Name').fill('Customer Portal');
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.getByRole('heading', { name: 'Where Ardea reads from' })).toBeVisible();
@@ -126,7 +139,7 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
     .fill('18.1');
   await expectAccessible(page, 'wizard technologies');
   await page.getByRole('button', { name: 'Continue' }).click();
-  await expect(page.getByRole('heading', { name: 'Coverage' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Coverage', exact: true })).toBeVisible();
   await expectAccessible(page, 'wizard coverage');
   await page.getByRole('button', { name: 'Finish setup' }).click();
 

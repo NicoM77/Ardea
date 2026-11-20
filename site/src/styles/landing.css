@@ -70,9 +70,10 @@ pre {
 
 .top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-lg);
+  gap: var(--space-sm) var(--space-lg);
   max-width: calc(var(--content-max) + 2 * var(--pad));
   margin: 0 auto;
   padding: var(--space-md) var(--pad);
@@ -212,7 +213,9 @@ h1 {
 }
 
 .pill {
+  flex: none;
   display: inline-flex;
+  white-space: nowrap;
   align-items: center;
   height: 22px;
   padding: 0 var(--space-sm);

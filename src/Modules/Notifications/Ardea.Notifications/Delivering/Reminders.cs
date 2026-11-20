@@ -10,11 +10,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Notifications.Delivering;
 
-/// <summary>
-/// The rhythm of the reminders by level (master plan 8.7, 17.5; ADR 048): an open reminder reminds its recipients daily at
-/// level 5, weekly at 4 and monthly at 3 by default, each configurable or off per organisation; below level 3 only the
-/// digests name it.
-/// </summary>
 internal static class ReminderRhythms
 {
     public const string Daily = "daily";
@@ -24,19 +19,12 @@ internal static class ReminderRhythms
 
     public static readonly IReadOnlyList<string> All = [Daily, Weekly, Monthly, Off];
 
-    /// <summary>Weekdays at 08:00 in the organisation's time zone: never at night, never at the weekend.</summary>
     public const string Schedule = "0 8 * * 1-5";
 
-    /// <summary>Below this level a reminder is not reminded of; the digests name it.</summary>
     public const int MinLevel = 3;
 
-    /// <summary>
-    /// A reminder is due this much before its rhythm is complete, so a run at 08:00 takes one raised at 09:00 the day (or week,
-    /// or month) before instead of leaving it to the next run.
-    /// </summary>
     public static readonly TimeSpan Slack = TimeSpan.FromHours(12);
 
-    /// <summary>The rhythm the organisation set for a level.</summary>
     public static string Of(ReminderSchedule schedule, int level) => level switch
     {
         >= 5 => schedule.Level5,
@@ -45,10 +33,6 @@ internal static class ReminderRhythms
         _ => Off,
     };
 
-    /// <summary>
-    /// Whether a reminder is due in a run at <paramref name="now"/>: one rhythm after it reached its level, or after it last
-    /// reminded, whichever is later. A reminder whose level dropped counts its new rhythm from its last reminder.
-    /// </summary>
     public static bool IsDue(string rhythm, DateTimeOffset since, DateTimeOffset? lastReminded, DateTimeOffset now)
     {
         var anchor = lastReminded is { } last && last > since ? last : since;
@@ -62,11 +46,9 @@ internal static class ReminderRhythms
         return next is { } at && at - Slack <= now;
     }
 
-    /// <summary>Reminders reach people: in the app, by e-mail and by push; webhooks hear about changes, not about what still stands.</summary>
     public static bool Reaches(string channel) => channel is Channels.InApp or Channels.Email or Channels.Push;
 }
 
-/// <summary>One run of the organisation's reminders by level (ADR 048), queued when its schedule is due.</summary>
 internal sealed record SendReminders : IJob
 {
     public static string Kind => "notify.send-reminders";
@@ -75,13 +57,6 @@ internal sealed record SendReminders : IJob
         new() { CoalesceKey = $"notify.send-reminders:{organizationId}", OrganizationId = organizationId };
 }
 
-/// <summary>
-/// The run (ADR 048), in one unit of work of the organisation: takes the schedule under its lock and checks it is still due,
-/// finds the open reminders whose rhythm is complete, resolves who hears about each (the targets of the enabled rules that
-/// announce the reminder: <c>action.raised</c>, its level and project), and writes one message per recipient and channel
-/// with every reminder due for them. The messages go out through <see cref="Deliver"/> like any other; the run itself
-/// talks to nobody outside.
-/// </summary>
 internal sealed class SendRemindersHandler(
     NotifyDbContext db,
     IActionFacts facts,
@@ -102,7 +77,6 @@ internal sealed class SendRemindersHandler(
             return;
         }
 
-        // Organisations from before, or created by the previous build during an upgrade, get the defaults with their first run.
         await db.Database.ExecuteSqlAsync($"""
             INSERT INTO notify.reminder_schedule (organization_id, level5, level4, level3, changed_at)
             VALUES ({organization}, {ReminderRhythms.Daily}, {ReminderRhythms.Weekly}, {ReminderRhythms.Monthly}, {now})
@@ -118,7 +92,6 @@ internal sealed class SendRemindersHandler(
             return;
         }
 
-        // Checked under the lock: a second job for the same run finds it done.
         if (runAt > now)
         {
             return;
@@ -126,7 +99,6 @@ internal sealed class SendRemindersHandler(
 
         await RemindAsync(schedule, profile, runAt, now, cancellationToken);
         schedule.LastRunAt = runAt;
-        // A worker that was down sends one run for the gap, not one per missed weekday.
         schedule.NextRunAt = DigestSchedule.Next(ReminderRhythms.Schedule, profile.TimeZone, now);
         await db.SaveChangesAsync(cancellationToken);
     }
@@ -134,7 +106,6 @@ internal sealed class SendRemindersHandler(
     private async Task RemindAsync(ReminderSchedule schedule, OrganizationProfile profile, DateTimeOffset runAt, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var open = await facts.OpenRemindersAsync(ReminderRhythms.MinLevel, cancellationToken);
-        // A reminder done, or below level 3, has nothing to count from any more: taken back or raised again, it counts from then.
         var openIds = open.Select(r => r.Id).ToArray();
         await db.ReminderStates.Where(s => !openIds.Contains(s.RemediationId)).ExecuteDeleteAsync(cancellationToken);
         if (open.Count == 0)
@@ -177,7 +148,6 @@ internal sealed class SendRemindersHandler(
             }
         }
 
-        // Each reminder is one event of this run, the same on every channel and for every recipient.
         var events = due.ToDictionary(r => r.Id, _ => Guid.CreateVersion7());
         foreach (var ((key, channel), reminders) in messages)
         {
@@ -218,7 +188,6 @@ internal sealed class SendRemindersHandler(
             await jobs.EnqueueAsync(new Deliver(delivery.Id), Deliver.Options(delivery.Id, now), cancellationToken);
         }
 
-        // Only what went into a message counts as reminded; a reminder nobody hears about is due again at the next run.
         foreach (var reminder in messages.Values.SelectMany(r => r).DistinctBy(r => r.Id))
         {
             if (states.TryGetValue(reminder.Id, out var state))

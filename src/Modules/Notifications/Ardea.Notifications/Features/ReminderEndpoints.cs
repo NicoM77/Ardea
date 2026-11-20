@@ -11,22 +11,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Notifications.Features;
 
-/// <summary>
-/// How often open reminders remind, by level (master plan 8.7, 17.5; ADR 048).
-/// </summary>
-/// <param name="Level5"><c>daily</c>, <c>weekly</c>, <c>monthly</c> or <c>off</c>; daily by default.</param>
-/// <param name="Level4">Weekly by default.</param>
-/// <param name="Level3">Monthly by default.</param>
-/// <param name="NextRunAt">The next run, weekdays at 08:00 in the organisation's time zone; <c>null</c> before the first.</param>
 internal sealed record ReminderRhythmView(string Level5, string Level4, string Level3, DateTimeOffset? NextRunAt);
 
-/// <summary>Sets the rhythm per level; each of <c>daily</c>, <c>weekly</c>, <c>monthly</c> or <c>off</c>.</summary>
 internal sealed record ReminderRhythmRequest(string? Level5, string? Level4, string? Level3);
 
-/// <summary>
-/// The organisation's reminders by level (ADR 048): owners and admins read and set the rhythm, like the rules. Levels 1 and 2
-/// have none: below level 3 only the digests name a reminder.
-/// </summary>
 internal static class ReminderEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
@@ -59,7 +47,6 @@ internal static class ReminderEndpoints
 
         var now = time.GetUtcNow();
         var organization = tenant.RequiredOrganizationId;
-        // Under the row's lock, as a run takes it: a run sees the rhythm before or after, never half of it.
         await db.Database.ExecuteSqlAsync($"""
             INSERT INTO notify.reminder_schedule (organization_id, level5, level4, level3, changed_at)
             VALUES ({organization}, {request.Level5}, {request.Level4}, {request.Level3}, {now})

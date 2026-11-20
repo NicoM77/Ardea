@@ -16,11 +16,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// The webhook channel (master plan 8.5, 8.8, 9.5; task 5.6): every message is signed with the shared secret,
-/// targets in the private network need the instance administrator's release, loopback and metadata addresses
-/// never work, and an answer of 4xx ends the retries while 5xx does not.
-/// </summary>
 public sealed class WebhookChannelTests(PostgresServer server)
 {
     [Fact]
@@ -35,7 +30,6 @@ public sealed class WebhookChannelTests(PostgresServer server)
             Assert.True(refused.StatusCode == HttpStatusCode.BadRequest, $"{url}: {(int)refused.StatusCode}");
         }
 
-        // The instance administrator releases one internal host; loopback and metadata addresses stay closed.
         var release = await s.Owner.SendAsync(HttpMethod.Patch, "/api/v1/instance/settings", new { webhookInternalHosts = "10.11.12.13" });
         Assert.Equal(HttpStatusCode.OK, release.StatusCode);
         Assert.Equal(HttpStatusCode.Created, (await s.Owner.PostAsync($"{s.Path}/endpoints", new { name = "Internal", url = "http://10.11.12.13/hook" })).StatusCode);
@@ -57,7 +51,6 @@ public sealed class WebhookChannelTests(PostgresServer server)
         var endpoint = created.GetProperty("id").GetGuid();
         Assert.StartsWith("whsec_", secret, StringComparison.Ordinal);
         Assert.Equal(address.ToString(), created.GetProperty("host").GetString());
-        // The secret is shown once; the list never carries it, and the database holds it encrypted.
         Assert.Equal(JsonValueKind.Null, (await NotifyTestHost.JsonAsync(await s.Owner.GetAsync($"{s.Path}/endpoints")))[0].GetProperty("secret").ValueKind);
         Assert.DoesNotContain(secret, await host.ScalarAsync<string>("SELECT secret_enc FROM notify.endpoint"), StringComparison.Ordinal);
 
@@ -86,10 +79,8 @@ public sealed class WebhookChannelTests(PostgresServer server)
         Assert.Equal("sent", await host.ScalarAsync<string>("SELECT state FROM notify.delivery WHERE channel = 'webhook'"));
         Assert.Equal("200", await host.ScalarAsync<string>("SELECT last_status FROM notify.endpoint"));
 
-        // Chat services carry the webhook's secret in its path: no log line names the address.
         Assert.DoesNotContain(host.Logs.Messages, m => m.Contains("s3cr3t", StringComparison.Ordinal));
 
-        // 503 is worth another attempt; 410 ends the retries.
         receiver.Answers.Enqueue(503);
         receiver.Answers.Enqueue(410);
         var second = await s.ActionAsync(3, level: 4);
@@ -137,7 +128,6 @@ public sealed class WebhookChannelTests(PostgresServer server)
         static (SendOutcome, string?) Pair(SendResult result) => (result.Outcome, result.Status);
     }
 
-    /// <summary>What a receiver does: HMAC-SHA256 over «{t}.{body}» with the shared secret, compared in constant time.</summary>
     private static bool Verify(Received request, string secret)
     {
         var parts = request.Signature.Split(',').Select(p => p.Split('=', 2)).ToDictionary(p => p[0], p => p[1]);
@@ -145,7 +135,6 @@ public sealed class WebhookChannelTests(PostgresServer server)
         return CryptographicOperations.FixedTimeEquals(expected, Convert.FromHexString(parts["v1"]));
     }
 
-    /// <summary>An address of this machine in a private range: the test listener is reached like an internal target.</summary>
     private static IPAddress PrivateAddress() =>
         NetworkInterface.GetAllNetworkInterfaces()
             .Where(n => n.OperationalStatus == OperationalStatus.Up)
@@ -161,7 +150,6 @@ public sealed class WebhookChannelTests(PostgresServer server)
         public HttpClient CreateClient(string name) => new(OutboundAddresses.CreateHandler()) { Timeout = timeout };
     }
 
-    /// <summary>A local HTTP listener that records what it receives and answers with the queued status codes, else 200.</summary>
     private sealed class Receiver : IAsyncDisposable
     {
         private readonly WebApplication _app;

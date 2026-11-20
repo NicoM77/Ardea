@@ -19,19 +19,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// Web Push (master plan 8.5, 8.8, 9.5; task 5.5, ADR 041): the message is encrypted for the device (RFC 8291) and
-/// signed with the instance's VAPID key (RFC 8292), level 5 goes out with high urgency, a subscription the push
-/// service no longer knows disappears after the first failed attempt, subscriptions are accepted only for the
-/// browser makers' push services, and nobody reaches another user's devices.
-/// </summary>
 public sealed class WebPushTests(PostgresServer server)
 {
     [Fact]
     public async Task The_push_service_receives_an_encrypted_message_signed_with_the_instance_key_and_a_gone_subscription_disappears()
     {
         await using var service = await FakePushService.StartAsync();
-        // The guard never lets push reach a local address; here the push client talks to the fake service directly.
         await using var host = await NotifyTestHost.StartAsync(server, services: s => s.AddHttpClient(WebPushChannel.ClientName)
             .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false, UseProxy = false }));
         var s = await Scenario.StartAsync(host);
@@ -51,7 +44,6 @@ public sealed class WebPushTests(PostgresServer server)
         Assert.Equal("86400", request.Headers["TTL"]);
         Assert.Equal("high", request.Headers["Urgency"]);
 
-        // VAPID: an ES256 token for the push service's origin, valid for at most a day, verified with the public key the browser subscribed with.
         var authorization = request.Headers["Authorization"];
         Assert.StartsWith("vapid t=", authorization, StringComparison.Ordinal);
         var parts = authorization["vapid ".Length..].Split(", ").Select(p => p.Split('=', 2)).ToDictionary(p => p[0], p => p[1]);
@@ -62,7 +54,6 @@ public sealed class WebPushTests(PostgresServer server)
         var expires = DateTimeOffset.FromUnixTimeSeconds(claims.GetProperty("exp").GetInt64());
         Assert.InRange(expires, host.Time.GetUtcNow(), host.Time.GetUtcNow().AddHours(24));
 
-        // Only the device can read it: the body decrypts with its private key and authentication secret.
         var payload = JsonDocument.Parse(device.Decrypt(request.Body)).RootElement;
         Assert.Equal(8030, payload.GetProperty("web_push").GetInt32());
         var notification = payload.GetProperty("notification");
@@ -72,7 +63,6 @@ public sealed class WebPushTests(PostgresServer server)
         Assert.Equal("sent", await host.ScalarAsync<string>("SELECT state FROM notify.delivery WHERE channel = 'push'"));
         Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.push_subscription WHERE last_success_at IS NOT NULL"));
 
-        // The push service no longer knows the subscription: it is removed after this first attempt, and nothing retries.
         service.Answers.Enqueue(410);
         await s.EventAsync("action.raised", await s.ActionAsync(3, level: 4), """{"level":4}""");
         await s.EvaluateAsync();
@@ -83,7 +73,6 @@ public sealed class WebPushTests(PostgresServer server)
         Assert.Equal("dead", await host.ScalarAsync<string>("SELECT state FROM notify.delivery WHERE channel = 'push' ORDER BY created_at DESC LIMIT 1"));
         Assert.DoesNotContain(host.Logs.Messages, m => m.Contains("device-1", StringComparison.Ordinal));
 
-        // Without a device the member is not reached by push at all: no delivery, nothing in the log.
         await s.EventAsync("action.raised", await s.ActionAsync(4, level: 4), """{"level":4}""");
         await s.EvaluateAsync();
         Assert.Equal(2L, await s.CountAsync("SELECT count(*) FROM notify.delivery WHERE channel = 'push'"));
@@ -129,15 +118,12 @@ public sealed class WebPushTests(PostgresServer server)
             await s.Owner.PostAsync("/api/v1/me/push-subscriptions", new { endpoint = Endpoint, keys = new { p256dh = keys.P256dh, auth = keys.Auth } }),
             HttpStatusCode.Created);
         var id = created.GetProperty("id").GetGuid();
-        // The same device again changes nothing but its keys.
         await NotifyTestHost.JsonAsync(await s.Owner.PostAsync("/api/v1/me/push-subscriptions", new { endpoint = Endpoint, keys = new { p256dh = keys.P256dh, auth = keys.Auth } }));
         Assert.Single((await NotifyTestHost.JsonAsync(await s.Owner.GetAsync("/api/v1/me/push-subscriptions"))).EnumerateArray());
 
-        // Default rule 1 reaches owners and admins by push (master plan 8.3).
         var critical = (await NotifyTestHost.JsonAsync(await s.Owner.GetAsync($"{s.Path}/rules"))).EnumerateArray().Single(r => r.GetProperty("preset").GetString() == "critical");
         Assert.Contains(critical.GetProperty("targets").EnumerateArray(), t => t.GetProperty("channel").GetString() == "push" && t.GetProperty("recipientRef").GetString() == "admin");
 
-        // Another user sees nothing of it and cannot remove or test it.
         var other = await host.RegisterAsync("other@example.org", "Other");
         Assert.Empty((await NotifyTestHost.JsonAsync(await other.GetAsync("/api/v1/me/push-subscriptions"))).EnumerateArray());
         Assert.Equal(HttpStatusCode.NotFound, (await other.SendAsync(HttpMethod.Delete, $"/api/v1/me/push-subscriptions/{id}")).StatusCode);
@@ -145,7 +131,6 @@ public sealed class WebPushTests(PostgresServer server)
         Assert.Equal(HttpStatusCode.NoContent, (await other.SendAsync(HttpMethod.Delete, $"/api/v1/me/push-subscriptions?endpoint={Uri.EscapeDataString(Endpoint)}")).StatusCode);
         Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.push_subscription"));
 
-        // This device turns push off by its endpoint.
         Assert.Equal(HttpStatusCode.NoContent, (await s.Owner.SendAsync(HttpMethod.Delete, $"/api/v1/me/push-subscriptions?endpoint={Uri.EscapeDataString(Endpoint)}")).StatusCode);
         Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.push_subscription"));
     }
@@ -173,12 +158,10 @@ public sealed class WebPushTests(PostgresServer server)
         var started = System.Diagnostics.Stopwatch.StartNew();
         var errors = await host.RunJobsAsync();
 
-        // Three devices that never answer cost the budget once, not three times; the job retries for them.
         Assert.InRange(started.Elapsed, TimeSpan.Zero, TimeSpan.FromSeconds(15));
         Assert.Single(errors);
         Assert.Equal(4, service.Requests.Count);
         Assert.Equal("failed", await host.ScalarAsync<string>("SELECT state FROM notify.delivery WHERE channel = 'push'"));
-        // What the call found is kept all the same: the gone device is removed, the silent ones count a failure.
         Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.push_subscription WHERE endpoint LIKE '%/gone'"));
         Assert.Equal(3L, await s.CountAsync("SELECT count(*) FROM notify.push_subscription WHERE failed_count = 1"));
     }
@@ -267,15 +250,12 @@ public sealed class WebPushTests(PostgresServer server)
             var db = scope.ServiceProvider.GetRequiredService<Persistence.NotifyDbContext>();
             var seen = await db.PushSubscriptions.CountAsync();
             var deleted = await db.PushSubscriptions.ExecuteDeleteAsync();
-            // Rolled back: the probe changes nothing.
             return (seen, deleted);
         }
 
-        // A job of organisation Beta, which the member is not in, sees and removes nothing; neither does a user of Beta.
         Assert.Equal((0, 0), await AsAsync(b, null));
         Assert.Equal((0, 0), await AsAsync(b, otherId));
         Assert.Empty((await NotifyTestHost.JsonAsync(await other.GetAsync("/api/v1/me/push-subscriptions"))).EnumerateArray());
-        // A job of the member's organisation sees the device.
         Assert.Equal(1, (await AsAsync(a.Organization, null)).Seen);
         Assert.Equal(1L, await a.CountAsync("SELECT count(*) FROM notify.push_subscription"));
     }
@@ -283,7 +263,6 @@ public sealed class WebPushTests(PostgresServer server)
     [Fact]
     public void Encryption_matches_the_example_of_RFC_8291()
     {
-        // RFC 8291, Appendix A.
         var plaintext = WebEncoders.Base64UrlDecode("V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24");
         using var server = ECDiffieHellman.Create(P256.Parameters(
             WebEncoders.Base64UrlDecode("BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8"),
@@ -299,7 +278,6 @@ public sealed class WebPushTests(PostgresServer server)
             WebEncoders.Base64UrlEncode(body));
     }
 
-    /// <summary>Checks the ES256 signature of a JWT with the public key and returns its claims.</summary>
     private static JsonElement VerifyJwt(string token, byte[] publicKey)
     {
         var parts = token.Split('.');
@@ -312,7 +290,6 @@ public sealed class WebPushTests(PostgresServer server)
         return JsonDocument.Parse(WebEncoders.Base64UrlDecode(parts[1])).RootElement.Clone();
     }
 
-    /// <summary>What a browser holds for one subscription: its own key pair and authentication secret.</summary>
     private sealed class Device
     {
         private readonly ECDiffieHellman _key;
@@ -333,7 +310,6 @@ public sealed class WebPushTests(PostgresServer server)
             VALUES ('{user}', '{endpoint}', '{WebPushChannel.Hash(endpoint)}', '{Keys.P256dh}', '{Keys.Auth}', 'Test browser', now(), 0, 0)
             """);
 
-        /// <summary>RFC 8291 and RFC 8188 from the receiving side, written out here rather than taken from the channel.</summary>
         public string Decrypt(byte[] body)
         {
             var salt = body[..16];
@@ -362,7 +338,6 @@ public sealed class WebPushTests(PostgresServer server)
 
     private sealed record Received(string Path, Dictionary<string, string> Headers, byte[] Body);
 
-    /// <summary>A push service on a local port: records every message and answers with the queued status codes, else 201.</summary>
     private sealed class FakePushService : IAsyncDisposable
     {
         private readonly WebApplication _app;
@@ -394,7 +369,6 @@ public sealed class WebPushTests(PostgresServer server)
                 self!.Requests.Enqueue(new Received(request.Path, headers, body.ToArray()));
                 if (request.Path.Value!.Contains("/slow", StringComparison.Ordinal))
                 {
-                    // A push service that never answers, until the sender gives up.
                     await Task.Delay(Timeout.Infinite, request.HttpContext.RequestAborted).ContinueWith(_ => { }, TaskScheduler.Default);
                     return Results.StatusCode(504);
                 }

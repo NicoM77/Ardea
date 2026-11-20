@@ -11,12 +11,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Notifications.Features;
 
-/// <summary>
-/// The signed-in member's own notifications and settings in one organisation (master plan 8.3, 8.5, 10.2;
-/// tasks 5.3, 5.7). Every member, viewers too, sees only their own rows: the queries name the user, and the
-/// row-level policy on these user tables does the same. New notifications wake the live stream of the
-/// organisation, whose <c>changed</c> event makes the web app reload the counter.
-/// </summary>
 internal static class InboxEndpoints
 {
     private const int DefaultLimit = 30;
@@ -130,7 +124,6 @@ internal static class InboxEndpoints
     }
 }
 
-/// <summary>Cursor pages (master plan 10.1); the cursor is opaque to clients and counts the rows already shown.</summary>
 internal static class Paging
 {
     public static bool TryOffset(string? cursor, out int offset)

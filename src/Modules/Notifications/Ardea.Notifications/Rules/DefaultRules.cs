@@ -4,23 +4,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Notifications.Rules;
 
-/// <summary>
-/// The three rules every new organisation starts with (master plan 8.3). They overlap on purpose; the
-/// state per recipient and channel keeps them from sending the same twice (8.4). The migrations
-/// <c>InitialNotify</c> and <c>WebPush</c> (the push target of rule 1) write the same for organisations created before.
-/// </summary>
 internal sealed class DefaultRules(NotifyDbContext db, IOrganizationProfiles organizations, TimeProvider time) : IOrganizationCreatedSubscriber
 {
-    /// <summary>Weekdays at 08:00 in the organisation's time zone.</summary>
     public const string Weekdays = "0 8 * * 1-5";
 
-    /// <summary>Mondays at 08:00 in the organisation's time zone.</summary>
     public const string Mondays = "0 8 * * 1";
 
-    /// <summary>
-    /// The events of every default rule. A notice has no level: it meets every threshold when it is actively exploited or in
-    /// KEV, else only level 2, so rule 1 brings the important ones at once and the weekly summary all of them (ADR 048).
-    /// </summary>
     private static readonly string[] ActionEvents =
     [
         NotifyEvents.ActionRaised, NotifyEvents.ActionLevelRaised, NotifyEvents.ActionExploitationEscalated,
@@ -38,12 +27,6 @@ internal sealed class DefaultRules(NotifyDbContext db, IOrganizationProfiles org
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// The module's step after every <c>migrate</c> (ADR 048): default rules nobody edited (<c>changed_at = created_at</c>)
-    /// learn <c>notice.raised</c>, also those the previous build creates during an upgrade, at the next migrate. A preset an
-    /// admin changed, narrowed or switched off stays as it is: it may name one person now. Idempotent; the rule counts as
-    /// changed afterwards, so a later edit that removes the event is kept.
-    /// </summary>
     public static Task<int> NameNoticesAsync(NotifyDbContext db, CancellationToken cancellationToken) =>
         db.Database.ExecuteSqlRawAsync(
             """
@@ -54,7 +37,6 @@ internal sealed class DefaultRules(NotifyDbContext db, IOrganizationProfiles org
 
     public static IReadOnlyList<NotificationRule> Create(DateTimeOffset now, string timeZone)
     {
-        // One microsecond apart, the database's precision: lists show targets in the order written here.
         var order = 0;
         RuleTarget Target(string channel, string role, string mode, string? cron = null, bool sendEmpty = false) => new()
         {
@@ -106,7 +88,6 @@ internal sealed class DefaultRules(NotifyDbContext db, IOrganizationProfiles org
     }
 }
 
-/// <summary>Moves the next digest of every target, and the next run of the reminders, to the time their schedule names in the new time zone (master plan 8.3).</summary>
 internal sealed class DigestRescheduler(NotifyDbContext db, TimeProvider time) : IOrganizationTimeZoneSubscriber
 {
     public async Task OnTimeZoneChangedAsync(Guid organizationId, string timeZone, CancellationToken cancellationToken)
@@ -117,7 +98,6 @@ internal sealed class DigestRescheduler(NotifyDbContext db, TimeProvider time) :
             target.NextDigestAt = DigestSchedule.Next(target.DigestCron!, timeZone, now);
         }
 
-        // The reminders by level keep their quiet hour in the new zone too (ADR 048).
         foreach (var schedule in await db.ReminderSchedules.Where(s => s.NextRunAt != null).ToListAsync(cancellationToken))
         {
             schedule.NextRunAt = DigestSchedule.Next(Delivering.ReminderRhythms.Schedule, timeZone, now);

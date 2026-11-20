@@ -1,6 +1,5 @@
 namespace Ardea.Notifications.Rules;
 
-/// <summary>The events of master plan 8.2, the only list of them.</summary>
 internal static class NotifyEvents
 {
     public const string ActionRaised = "action.raised";
@@ -14,28 +13,18 @@ internal static class NotifyEvents
     public const string WarningPublished = "warning.published";
     public const string BackfillCompleted = "backfill.completed";
 
-    /// <summary>Raised by the repository indexing of master plan 16.6; rules may name it already.</summary>
     public const string RepositoryUnavailable = "repository.unavailable";
 
-    /// <summary>
-    /// A new notice «could affect you» (master plan 8.2, 17.3; ADR 048). Rules name this one event; it also stands for
-    /// <see cref="NoticeReappeared"/> and the single summary <see cref="NoticeBackfilled"/>.
-    /// </summary>
     public const string NoticeRaised = "notice.raised";
 
-    /// <summary>An answered «doesn't affect us» came back once, the entry being exploited or in KEV now (E22); a rule names <see cref="NoticeRaised"/>.</summary>
     public const string NoticeReappeared = "notice.reappeared";
 
-    /// <summary>An open notice nobody answered became actively exploited (KEV included): once per notice (ADR 048); a rule names <see cref="NoticeRaised"/>.</summary>
     public const string NoticeExploited = "notice.exploited";
 
-    /// <summary>A reverse search raised earlier notices quietly: one summary instead of one message each (ADR 047); a rule names <see cref="NoticeRaised"/>.</summary>
     public const string NoticeBackfilled = "notice.backfilled";
 
-    /// <summary>The owners' in-app warning when level 5 failed on every channel of a recipient (master plan 8.6); not a rule event.</summary>
     public const string DeliveryFailed = "delivery.failed";
 
-    /// <summary>A line of the reminders by level (master plan 8.7, ADR 048): an open reminder, still open; not a rule event.</summary>
     public const string ReminderDue = "reminder.due";
 
     public static readonly IReadOnlyList<string> All =
@@ -44,17 +33,13 @@ internal static class NotifyEvents
         ActionStatusChanged, ActionNoteAdded, WarningPublished, NoticeRaised, BackfillCompleted, RepositoryUnavailable,
     ];
 
-    /// <summary>The event a rule names for a kind: the notice's exploitation, its return and its summary go with <see cref="NoticeRaised"/>.</summary>
     public static string RuleEvent(string kind) => kind is NoticeReappeared or NoticeExploited or NoticeBackfilled ? NoticeRaised : kind;
 
-    /// <summary>The kinds that are about a notice.</summary>
     public static bool IsNotice(string kind) => kind is NoticeRaised or NoticeReappeared or NoticeExploited or NoticeBackfilled;
 
-    /// <summary>The work of the team reaches people in the app only (master plan 8.2); machines may listen through webhooks.</summary>
     public static bool AllowedOn(string kind, string channel) =>
         kind is not (ActionStatusChanged or ActionNoteAdded) || channel is Channels.InApp or Channels.Webhook;
 
-    /// <summary>The all-clear: sent on a channel only if the action was reported there before (master plan 8.4).</summary>
     public static bool IsAllClear(string kind) => kind is ActionLevelLowered or ActionWithdrawn;
 }
 
@@ -64,7 +49,6 @@ internal static class Channels
     public const string Email = "email";
     public const string Webhook = "webhook";
 
-    /// <summary>Web Push to the members' devices (task 5.5, ADR 041); immediate only.</summary>
     public const string Push = "push";
 
     public static readonly IReadOnlyList<string> Usable = [InApp, Email, Webhook, Push];
@@ -79,7 +63,6 @@ internal static class RecipientKinds
 
     public static readonly IReadOnlyList<string> All = [Role, User, Address, Endpoint];
 
-    /// <summary>Which channels a kind of recipient can be reached on.</summary>
     public static bool Reaches(string kind, string channel) => kind switch
     {
         Role or User => channel is Channels.InApp or Channels.Email or Channels.Push,
@@ -89,10 +72,6 @@ internal static class RecipientKinds
     };
 }
 
-/// <summary>
-/// <c>recipient_key</c> (master plan 4.7): the user, the confirmed external address or the webhook endpoint,
-/// with its kind in front so that ids of different kinds never collide.
-/// </summary>
 internal static class RecipientKeys
 {
     public static string User(Guid id) => $"user:{id}";

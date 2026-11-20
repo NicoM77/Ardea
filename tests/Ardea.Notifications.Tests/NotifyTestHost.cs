@@ -21,11 +21,6 @@ using Npgsql;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// The real API pipeline on a test server against a freshly migrated database, with a clock the test moves
-/// and the job system's work done by <see cref="RunJobsAsync"/>, the way the worker does it: one scope, the
-/// job's tenant, one committed unit of work per job, and a failed attempt back in the queue.
-/// </summary>
 internal sealed class NotifyTestHost : IAsyncDisposable
 {
     public const string SetupTokenValue = "test-setup-token";
@@ -46,23 +41,16 @@ internal sealed class NotifyTestHost : IAsyncDisposable
         Logs = logs;
     }
 
-    /// <summary>Everything logged at Warning and above, and every log of outgoing HTTP requests.</summary>
     public CapturingLogs Logs { get; }
 
     public DatabaseOptions Database { get; }
 
     public FakeTimeProvider Time { get; }
 
-    /// <summary>The captured e-mails; <c>null</c> when the host sends through a real SMTP server.</summary>
     public CapturingEmailSender? Mail { get; }
 
     public IServiceProvider Services => _app.Services;
 
-    /// <param name="server">The test run's database server.</param>
-    /// <param name="settings">Further configuration, e.g. SMTP for a real mail server.</param>
-    /// <param name="captureMail">Replace SMTP by a capturing sender, configured unless the test turns it off.</param>
-    /// <param name="start">The fake clock's start; now by default. Sessions are checked against the database's clock, so the API is used before the clock moves far.</param>
-    /// <param name="services">Replaces services after every registration.</param>
     public static async Task<NotifyTestHost> StartAsync(
         PostgresServer server, Dictionary<string, string?>? settings = null, bool captureMail = true, DateTimeOffset? start = null,
         Action<IServiceCollection>? services = null)
@@ -106,10 +94,7 @@ internal sealed class NotifyTestHost : IAsyncDisposable
         }, collection =>
         {
             collection.AddSingleton<TimeProvider>(time);
-            // The self-check's timer would run rounds whenever the test moves the clock and mail the owner, who is the
-            // instance administrator, about the stalled worker of the test (ADR 043). Its own tests are in Ardea.Host.Tests.
             collection.Remove(collection.Single(d => d.ImplementationType == typeof(Host.Features.InstanceSelfCheckService)));
-            // Here, after the host replaced the providers with its JSON console.
             collection.AddSingleton<ILoggerProvider>(logs);
             if (mail is not null)
             {
@@ -124,7 +109,6 @@ internal sealed class NotifyTestHost : IAsyncDisposable
 
     public ApiClient Client() => new(_app.GetTestServer(), "https://ardea.test");
 
-    /// <summary>Runs <c>migrate</c> again, as an upgrade does: nothing to migrate, every module's step after it runs.</summary>
     public async Task MigrateAgainAsync()
     {
         await using var owner = new NpgsqlConnection(Database.OwnerConnectionString("tests"));
@@ -132,7 +116,6 @@ internal sealed class NotifyTestHost : IAsyncDisposable
         await new DatabaseMigrator(Database, Modules.Databases, NoBackup.Instance, NullLogger<DatabaseMigrator>.Instance).MigrateAsync(owner, CancellationToken.None);
     }
 
-    /// <summary>A plain client without cookies or CSRF token, as a mail client's server is.</summary>
     public HttpClient RawClient()
     {
         var client = _app.GetTestServer().CreateClient();
@@ -140,7 +123,6 @@ internal sealed class NotifyTestHost : IAsyncDisposable
         return client;
     }
 
-    /// <summary>Sets up the instance with its first user, who founds an organisation.</summary>
     public async Task<(ApiClient Client, Guid Organization)> OwnerAsync(string email = "owner@example.org", string organization = "Acme")
     {
         var client = Client();
@@ -160,7 +142,6 @@ internal sealed class NotifyTestHost : IAsyncDisposable
     public static async Task<Guid> OrganizationAsync(ApiClient client, string name) =>
         (await JsonAsync(await client.PostAsync("/api/v1/orgs", new { name }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
 
-    /// <summary>Makes a registered account a member of the organisation, as accepting an invitation does.</summary>
     public Task AddMemberAsync(Guid organization, string email, string role) => ExecuteAsync($"""
         INSERT INTO iam.membership (id, organization_id, user_id, role, created_at)
         SELECT uuidv7(), '{organization}', id, '{role}', now() FROM iam."user" WHERE normalized_email = upper('{email}')
@@ -174,7 +155,6 @@ internal sealed class NotifyTestHost : IAsyncDisposable
         return (projectId, component);
     }
 
-    /// <summary>An action with one open finding, as the assessment writes it (task 3.5).</summary>
     public async Task<Guid> ActionAsync(
         Guid organization, Guid project, Guid component, int number, int level, string exploitation = "none", bool backfill = false, string? key = null)
     {
@@ -198,7 +178,6 @@ internal sealed class NotifyTestHost : IAsyncDisposable
         return action;
     }
 
-    /// <summary>An open notice naming the components, as the assessment writes it (ADR 047).</summary>
     public async Task<Guid> NoticeAsync(Guid organization, Guid[] components, string key, string exploitation = "none", double score = 9.8, bool backfill = false)
     {
         var entry = await ScalarAsync<Guid>($$"""
@@ -212,14 +191,9 @@ internal sealed class NotifyTestHost : IAsyncDisposable
             """);
     }
 
-    /// <summary>Changes an action as the assessment would, before the event that reports it.</summary>
     public Task SetActionAsync(Guid action, int level, string exploitation = "none") =>
         ExecuteAsync($"UPDATE assess.remediation SET level = {level}, exploitation = '{exploitation}' WHERE id = '{action}'");
 
-    /// <summary>
-    /// A history row and its place in <c>notify.pending_event</c>, as the hand-off from Assessment writes them
-    /// in one transaction (ADR 038). Returns the event's id.
-    /// </summary>
     public async Task<Guid> EventAsync(Guid organization, string kind, Guid? action = null, Guid? project = null, string data = "{}", Guid? notice = null)
     {
         var id = Guid.CreateVersion7();
@@ -231,16 +205,13 @@ internal sealed class NotifyTestHost : IAsyncDisposable
         return id;
     }
 
-    /// <summary>Puts an event back into the queue, as a second run of the same hand-off would.</summary>
     public Task RequeueAsync(Guid organization, Guid eventId, string kind) => ExecuteAsync($"""
         INSERT INTO notify.pending_event (event_id, organization_id, kind, at) VALUES ('{eventId}', '{organization}', '{kind}', '{Time.GetUtcNow():O}')
         ON CONFLICT DO NOTHING
         """);
 
-    /// <summary>Runs the organisation's evaluation job, as the hand-off queues it.</summary>
     public Task EvaluateAsync(Guid organization) => RunAsync(new EvaluateEvents(), organization);
 
-    /// <summary>Runs one job directly in its own scope and unit of work.</summary>
     public async Task RunAsync<TJob>(TJob job, Guid? organization, int attempt = 1)
         where TJob : IJob
     {
@@ -256,10 +227,6 @@ internal sealed class NotifyTestHost : IAsyncDisposable
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 
-    /// <summary>
-    /// Runs every waiting job that is due by the fake clock, whatever its kind, until none is left. A job that
-    /// throws goes back to the queue with its attempt counted, due again after the back-off; its error is returned.
-    /// </summary>
     public async Task<IReadOnlyList<string>> RunJobsAsync()
     {
         var registry = Services.GetRequiredService<JobRegistry>();
@@ -416,7 +383,6 @@ internal sealed class NotifyTestHost : IAsyncDisposable
     }
 }
 
-/// <summary>Takes the e-mails instead of a mail server; configured unless a test turns SMTP off.</summary>
 internal sealed class CapturingEmailSender : IEmailSender
 {
     private readonly List<EmailMessage> _sent = [];
@@ -432,7 +398,6 @@ internal sealed class CapturingEmailSender : IEmailSender
         }
     }
 
-    /// <summary>When set, sending throws this instead, as a broken mail server would.</summary>
     public Func<Exception>? Failure { get; set; }
 
     public Func<bool> Configured { get; set; } = () => true;
@@ -455,7 +420,6 @@ internal sealed class CapturingEmailSender : IEmailSender
     }
 }
 
-/// <summary>A browser-like client: keeps cookies and echoes the CSRF token like the web app.</summary>
 internal sealed class ApiClient : IDisposable
 {
     private readonly CookieContainer _cookies = new();
@@ -532,7 +496,6 @@ internal sealed class ApiClient : IDisposable
     }
 }
 
-/// <summary>Collects log messages with their category.</summary>
 internal sealed class CapturingLogs : ILoggerProvider
 {
     private readonly System.Collections.Concurrent.ConcurrentQueue<string> _messages = new();

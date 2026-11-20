@@ -10,28 +10,18 @@ using Npgsql;
 
 namespace Ardea.Notifications.Delivering;
 
-/// <summary>The instance's VAPID key pair (RFC 8292) and the contact the push services see.</summary>
-/// <param name="PublicKey">The uncompressed P-256 point, 65 bytes; browsers subscribe with it.</param>
-/// <param name="PrivateKey">The private scalar, 32 bytes.</param>
-/// <param name="Subject">A <c>mailto:</c> or <c>https:</c> contact for the push services.</param>
 internal sealed record VapidKeys(byte[] PublicKey, byte[] PrivateKey, string Subject);
 
-/// <summary>Configuration of Web Push (master plan 8.5, 12.4); checked when API and worker start.</summary>
 internal static class PushConfiguration
 {
-    /// <summary><c>ARDEA_VAPID__PUBLIC_KEY</c>: base64url of the uncompressed point (65 bytes).</summary>
     public const string PublicKeyKey = "VAPID:PUBLIC_KEY";
 
-    /// <summary><c>ARDEA_VAPID__PRIVATE_KEY</c>: base64url of the private scalar (32 bytes).</summary>
     public const string PrivateKeyKey = "VAPID:PRIVATE_KEY";
 
-    /// <summary><c>ARDEA_VAPID__SUBJECT</c>: <c>mailto:</c> or <c>https:</c>; the public address by default.</summary>
     public const string SubjectKey = "VAPID:SUBJECT";
 
-    /// <summary><c>ARDEA_PUSH_SERVICE_HOSTS</c>: further push services subscriptions may name, e.g. a self-hosted one.</summary>
     public const string ServiceHostsKey = "PUSH_SERVICE_HOSTS";
 
-    /// <summary>What is wrong with the VAPID variables: both keys or neither, of the right length, and one pair.</summary>
     public static IReadOnlyList<string> Errors(IConfiguration configuration)
     {
         var errors = new List<string>();
@@ -68,7 +58,6 @@ internal static class PushConfiguration
         return errors;
     }
 
-    /// <summary>The configured pair, or <c>null</c> when the instance keeps its own in the database.</summary>
     internal static VapidKeys? FromConfiguration(IConfiguration configuration) =>
         Decode(configuration[PublicKeyKey]) is { Length: 65 } point && Decode(configuration[PrivateKeyKey]) is { Length: 32 } scalar
             ? new VapidKeys(point, scalar, Subject(configuration))
@@ -99,7 +88,6 @@ internal static class PushConfiguration
         }
     }
 
-    /// <summary>A signature made with the private key verifies with the public one: the two are one pair.</summary>
     private static bool Matches(byte[] point, byte[] scalar)
     {
         try
@@ -116,11 +104,6 @@ internal static class PushConfiguration
     }
 }
 
-/// <summary>
-/// The VAPID key pair, loaded once per process (master plan 8.5, 9.4). From the configuration when it is set,
-/// else from <c>platform.setting</c>, encrypted, both halves in one value. The first process to start writes a
-/// new pair if none exists; another process racing it inserts nothing and reads the same pair.
-/// </summary>
 internal sealed class VapidKeyStore(IServiceScopeFactory scopes, ISecretProtector secrets, IConfiguration configuration) : IDisposable
 {
     public const string SettingKey = "notify.vapid_keys";
@@ -149,7 +132,6 @@ internal sealed class VapidKeyStore(IServiceScopeFactory scopes, ISecretProtecto
 
     public void Dispose() => _gate.Dispose();
 
-    /// <summary>Insert if absent, then read: whatever was there first wins (a short unit of work of its own).</summary>
     private async Task<VapidKeys> LoadAsync(CancellationToken cancellationToken)
     {
         await using var scope = scopes.CreateAsyncScope();

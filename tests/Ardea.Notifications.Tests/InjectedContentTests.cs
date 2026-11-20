@@ -6,10 +6,6 @@ using Ardea.Notifications.Rules;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// A warning's title and key come from a source and may carry markup or addresses (master plan 9.5, 9.7). Every
-/// channel words them as text, and every link a message holds leads to the instance itself (task 6.1).
-/// </summary>
 public sealed partial class InjectedContentTests
 {
     private const string Title = "<script>alert(1)</script><a href=\"javascript:alert(2)\">Patch now</a> <img src=x onerror=alert(3)>";

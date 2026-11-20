@@ -15,39 +15,18 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Notifications.Features;
 
-/// <summary>The instance's VAPID public key, which a browser subscribes with.</summary>
-/// <param name="PublicKey">The uncompressed P-256 point, base64url.</param>
 internal sealed record PushPublicKeyView(string PublicKey);
 
-/// <summary>A device of the signed-in user that receives Web Push.</summary>
-/// <param name="Id">The subscription.</param>
-/// <param name="Label">The browser and system, e.g. «Chrome on macOS».</param>
-/// <param name="CreatedAt">When the device subscribed.</param>
-/// <param name="LastSuccessAt">When a push service last accepted a message for it.</param>
-/// <param name="FailedCount">Failed attempts since the last success.</param>
 internal sealed record PushSubscriptionView(Guid Id, string Label, DateTimeOffset CreatedAt, DateTimeOffset? LastSuccessAt, int FailedCount);
 
-/// <summary>The browser's subscription as <c>PushSubscription.toJSON()</c> writes it.</summary>
 internal sealed record PushSubscriptionRequest(string? Endpoint, PushSubscriptionKeysRequest? Keys, double? ExpirationTime);
 
-/// <param name="P256dh">The browser's P-256 key, base64url.</param>
-/// <param name="Auth">The browser's 16-byte authentication secret, base64url.</param>
 internal sealed record PushSubscriptionKeysRequest(string? P256dh, string? Auth);
 
-/// <summary>The outcome of a test message to one device.</summary>
-/// <param name="Ok">The push service accepted it.</param>
-/// <param name="Status">The push service's HTTP status, or <c>blocked</c>, <c>unreachable</c>, <c>timeout</c>.</param>
-/// <param name="Removed">The subscription had expired and was removed.</param>
 internal sealed record PushTestView(bool Ok, string? Status, bool Removed);
 
-/// <summary>
-/// Web Push subscriptions of the signed-in user (master plan 8.5, 10.2; task 5.5, ADR 041). A device belongs to
-/// the user, not to an organisation: it receives the push messages of every organisation they are a member of,
-/// each with its own mute. Only endpoints at the browser makers' push services are accepted (master plan 9.5).
-/// </summary>
 internal static class PushEndpoints
 {
-    /// <summary>Devices per user; the oldest goes when a new one subscribes beyond it.</summary>
     public const int DevicesPerUser = 20;
 
     public static void Map(IEndpointRouteBuilder api)
@@ -106,13 +85,11 @@ internal static class PushEndpoints
         var now = time.GetUtcNow();
         if (!await db.PushSubscriptions.AnyAsync(s => s.UserId == user && s.EndpointHash == hash, cancellationToken))
         {
-            // At most twenty devices: the oldest makes room for a new one.
             var oldest = await db.PushSubscriptions.Where(s => s.UserId == user).OrderByDescending(s => s.CreatedAt)
                 .Skip(DevicesPerUser - 1).Select(s => s.Id).ToListAsync(cancellationToken);
             await db.PushSubscriptions.Where(s => oldest.Contains(s.Id)).ExecuteDeleteAsync(cancellationToken);
         }
 
-        // One statement, so that the same device subscribing twice at once ends with one row, not a conflict.
         var p256dh = request.Keys!.P256dh!.Trim();
         var auth = request.Keys.Auth!.Trim();
         var agent = userAgent.Length > 500 ? userAgent[..500] : userAgent;
@@ -130,7 +107,6 @@ internal static class PushEndpoints
         return created ? Results.Created($"/api/v1/me/push-subscriptions/{subscription.Id}", view) : Results.Ok(view);
     }
 
-    /// <summary>This device turns push off: the browser names its endpoint; nothing to find is fine.</summary>
     private static async Task<IResult> UnsubscribeAsync(string? endpoint, NotifyDbContext db, ITenantContext tenant, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
         if (!string.IsNullOrWhiteSpace(endpoint))
@@ -156,7 +132,6 @@ internal static class PushEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>A test message to one device now. The request holds no transaction while it waits for the push service (master plan 9.2).</summary>
     private static async Task<IResult> TestAsync(
         Guid id, NotifyDbContext db, ITenantContext tenant, IUnitOfWork unitOfWork, IUnitOfWorkFactory units, WebPushChannel channel, IConfiguration configuration,
         CancellationToken cancellationToken)
@@ -180,7 +155,6 @@ internal static class PushEndpoints
         return Results.Ok(new PushTestView(result.Outcome == PushDeviceOutcome.Sent, result.Status, result.Outcome == PushDeviceOutcome.Gone));
     }
 
-    /// <summary>«Chrome on macOS», «Safari on iPhone»: enough to tell one's devices apart; «Browser» when unknown.</summary>
     public static string DeviceLabel(string? userAgent)
     {
         var ua = userAgent ?? string.Empty;

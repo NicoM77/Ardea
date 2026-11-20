@@ -5,13 +5,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Ardea.Notifications.Persistence.Migrations
 {
-    /// <summary>
-    /// Task 5a.6 (master plan 8.7, 17.5; ADR 048): the reminders by level get their schedule per organisation and the time
-    /// each open reminder last reminded; a run's messages are deliveries of the kind <c>reminder</c>. A notice is announced
-    /// once per recipient and channel (<c>delivery_event.notice_id</c>); the default rules learn <c>notice.raised</c> in the
-    /// module's step after every migrate.
-    /// Only additions and a widened check: the previous build runs against this schema (master plan 4.11).
-    /// </summary>
     public partial class RemindersByLevel : Migration
     {
         /// <inheritdoc />
@@ -86,7 +79,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                 sql: "kind IN ('immediate', 'digest', 'reminder')");
 
             migrationBuilder.Sql("""
-                -- Organisation data (master plan 4.1, 9.2; ADR 029).
                 ALTER TABLE notify.reminder_schedule ENABLE ROW LEVEL SECURITY;
                 CREATE POLICY tenant ON notify.reminder_schedule
                     USING (organization_id = platform.current_organization_id())
@@ -96,8 +88,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                     USING (organization_id = platform.current_organization_id())
                     WITH CHECK (organization_id = platform.current_organization_id());
 
-                -- System operation "reminders by level" (master plan 9.2, ADR 029, ADR 048): the organisations whose run is
-                -- due, or that have rules but no schedule yet (their first run writes the defaults). Organisation ids only.
                 CREATE FUNCTION notify.due_reminder_runs(p_now timestamptz)
                     RETURNS TABLE (organization_id uuid)
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
@@ -109,9 +99,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                         WHERE NOT EXISTS (SELECT 1 FROM notify.reminder_schedule s WHERE s.organization_id = r.organization_id)
                     $$;
                 """);
-
-            // The default rules that nobody edited learn notice.raised in the module's step after every migrate
-            // (DefaultRules.NameNoticesAsync), so organisations the previous build creates during an upgrade get it too.
         }
 
         /// <inheritdoc />
@@ -120,8 +107,6 @@ namespace Ardea.Notifications.Persistence.Migrations
             migrationBuilder.Sql("""
                 DROP FUNCTION notify.due_reminder_runs(timestamptz);
                 DELETE FROM notify.delivery WHERE kind = 'reminder';
-                -- A rule that names nothing but notices is an organisation's own: it is switched off, not deleted; the build
-                -- before ignores the event it names. The others forget it.
                 UPDATE notify.rule SET enabled = false WHERE events <@ ARRAY['notice.raised']::text[] AND cardinality(events) > 0;
                 UPDATE notify.rule SET events = array_remove(events, 'notice.raised')
                 WHERE 'notice.raised' = ANY (events) AND NOT (events <@ ARRAY['notice.raised']::text[]);

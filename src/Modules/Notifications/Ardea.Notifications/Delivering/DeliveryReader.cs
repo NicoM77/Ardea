@@ -13,16 +13,8 @@ using Microsoft.Extensions.Configuration;
 
 namespace Ardea.Notifications.Delivering;
 
-/// <summary>What the first, short step of a delivery found.</summary>
-/// <param name="Message">The message to send, or <c>null</c>.</param>
-/// <param name="Suppress">Why nothing is sent, when the recipient is gone or the channel is off.</param>
 internal sealed record DeliveryStart(Outgoing? Message, string? Suppress);
 
-/// <summary>
-/// The first step of a delivery (master plan 9.2, «job with outside contact»): marks the message as being sent,
-/// so no further event joins it, and reads everything the channel needs. Runs in a short unit of work of its
-/// own; the call to the outside happens after it has committed.
-/// </summary>
 internal sealed class DeliveryReader(
     NotifyDbContext db,
     IActionFacts facts,
@@ -38,11 +30,9 @@ internal sealed class DeliveryReader(
     public const string SecretPurpose = "notify.webhook-secret";
     public const string UnsubscribePurpose = "notify.unsubscribe";
 
-    /// <summary><c>null</c> when there is nothing to send: unknown, already sent, given up or suppressed.</summary>
     public async Task<DeliveryStart?> StartAsync(Guid deliveryId, CancellationToken cancellationToken)
     {
         var organization = tenant.RequiredOrganizationId;
-        // Takes the row lock: an evaluation that holds the waiting message finishes adding to it first (Evaluator.WaitingAsync).
         await db.Database.ExecuteSqlAsync(
             $"UPDATE notify.delivery SET state = 'sending' WHERE id = {deliveryId} AND organization_id = {organization} AND state = 'pending'", cancellationToken);
         var delivery = await db.Deliveries.AsNoTracking().SingleOrDefaultAsync(d => d.Id == deliveryId, cancellationToken);
@@ -103,7 +93,6 @@ internal sealed class DeliveryReader(
         switch (recipient.Kind)
         {
             case RecipientKinds.User when delivery.Channel == Channels.Push:
-                // Through the worker's policy: the subscriptions of this member of the job's organisation (ADR 041).
                 var devices = await db.PushSubscriptions.AsNoTracking().Where(p => p.UserId == recipient.Id).OrderBy(p => p.CreatedAt)
                     .Select(p => new PushDevice(p.Id, p.Endpoint, p.P256dh, p.Auth)).ToListAsync(cancellationToken);
                 if (devices.Count == 0)
@@ -140,7 +129,6 @@ internal sealed class DeliveryReader(
         return new DeliveryStart(message, null);
     }
 
-    /// <summary>The signed token of an external address's unsubscribe link; it works without signing in and does not expire.</summary>
     public static string UnsubscribeToken(ISecretProtector secrets, Guid organization, Guid address) =>
         secrets.Protect(UnsubscribePurpose, $"{organization:N}:{address:N}");
 
@@ -159,14 +147,9 @@ internal sealed class DeliveryReader(
     {
         var covered = await db.DeliveryEvents.AsNoTracking().Where(e => e.DeliveryId == delivery.Id).OrderBy(e => e.OccurredAt).ToListAsync(cancellationToken);
         var items = await ItemsAsync(covered.Select(e => (e.EventId, e.Event, e.OccurredAt, e.EntryId, e.Level)).ToList(), cancellationToken);
-        // A notice answered or withdrawn while the message waited asks nobody any more (ADR 048).
         return [.. items.Where(i => i.Notice is not { State: not "open" })];
     }
 
-    /// <summary>
-    /// A run of the reminders by level (ADR 048): the reminders it named that are still open now, at the level they stand
-    /// at now; one done in the meantime is left out.
-    /// </summary>
     private async Task<IReadOnlyList<MessageItem>> ReminderItemsAsync(Delivery delivery, CancellationToken cancellationToken)
     {
         var rows = await db.DeliveryEvents.AsNoTracking().Where(e => e.DeliveryId == delivery.Id && e.RemediationId != null).ToListAsync(cancellationToken);
@@ -179,10 +162,6 @@ internal sealed class DeliveryReader(
             .OrderByDescending(i => i.Level).ThenBy(i => i.At)];
     }
 
-    /// <summary>
-    /// A digest holds what its target noted for the period, the actions that grew in it and matched the rule,
-    /// and marks what this recipient already heard about at once on the same channel (master plan 8.4).
-    /// </summary>
     private async Task<IReadOnlyList<MessageItem>> DigestItemsAsync(Delivery delivery, CancellationToken cancellationToken)
     {
         var noted = await db.DigestItems.AsNoTracking()

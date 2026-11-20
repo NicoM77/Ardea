@@ -6,11 +6,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// The event <c>notice.raised</c> (master plan 8.2, 17.3; task 5a.6, ADR 048): every member hears about a new notice in the
-/// app, the default rules bring an actively exploited one to the admins at once and every one to the weekly summary, a
-/// notice is announced once per recipient and channel and its return once more, and a reverse search gives one summary.
-/// </summary>
 public sealed class NoticeNotificationTests(PostgresServer server)
 {
     [Fact]
@@ -30,7 +25,6 @@ public sealed class NoticeNotificationTests(PostgresServer server)
         Assert.Equal(
             ["notice.raised|[Notice] CVE-2026-9001: PostgreSQL: remote code execution|/o/acme/notices", "notice.raised|[Notice] CVE-2026-9001: PostgreSQL: remote code execution|/o/acme/notices"],
             await host.RowsAsync("SELECT kind || '|' || title || '|' || link FROM notify.notification"));
-        // Bob signed up: his confirmation mail is the only other one.
         var mail = Assert.Single(host.Mail!.Sent, m => m.Subject.StartsWith("[Notice]", StringComparison.Ordinal));
         Assert.Equal("owner@example.org", mail.To);
         Assert.Equal("[Notice] CVE-2026-9001: PostgreSQL: remote code execution", mail.Subject);
@@ -38,7 +32,6 @@ public sealed class NoticeNotificationTests(PostgresServer server)
         Assert.Contains("CVSS 9.8. It is actively exploited.", mail.Text, StringComparison.Ordinal);
         Assert.Contains("https://ardea.test/o/acme/notices", mail.Text, StringComparison.Ordinal);
 
-        // A plain notice: in the app for everyone, and in the weekly summary, not by e-mail at once.
         var plain = await host.NoticeAsync(s.Organization, [postgres], "CVE-2026-9002");
         var raised = await s.EventAsync("notice.raised", notice: plain);
         await s.EvaluateAsync();
@@ -62,14 +55,12 @@ public sealed class NoticeNotificationTests(PostgresServer server)
         await s.EventAsync("notice.raised", notice: notice);
         await s.EvaluateAsync();
         await s.DeliverAsync();
-        // Raised anew after a withdrawal: the same notice, nothing new for the people who heard of it.
         await s.EventAsync("notice.raised", notice: notice);
         await s.EvaluateAsync();
         await s.DeliverAsync();
         Assert.Single(host.Mail!.Sent);
         Assert.Contains("Platform Ops names PostgreSQL 16.2.", host.Mail.Sent[0].Text, StringComparison.Ordinal);
 
-        // «Doesn't affect us» came back once: one message more on each channel.
         await host.ExecuteAsync($"UPDATE assess.notice SET reappeared_at = now(), reappeared_reason = 'exploited', exploitation = 'active' WHERE id = '{notice}'");
         await s.EventAsync("notice.reappeared", notice: notice, data: """{"reason": "exploited"}""");
         await s.EvaluateAsync();
@@ -93,7 +84,6 @@ public sealed class NoticeNotificationTests(PostgresServer server)
         await s.DeliverAsync();
         Assert.DoesNotContain(host.Mail!.Sent, m => m.Subject.StartsWith("[Notice]", StringComparison.Ordinal));
 
-        // Actively exploited now, nobody answered: the default rule 1 brings it at once, the app says what changed.
         await host.ExecuteAsync($"UPDATE assess.notice SET exploitation = 'active' WHERE id = '{notice}'");
         await s.EventAsync("notice.exploited", notice: notice);
         await s.EvaluateAsync();
@@ -101,7 +91,6 @@ public sealed class NoticeNotificationTests(PostgresServer server)
         var mail = Assert.Single(host.Mail.Sent, m => m.Subject.StartsWith("[Notice]", StringComparison.Ordinal));
         Assert.Contains("Now actively exploited, still unanswered", mail.Text, StringComparison.Ordinal);
 
-        // The same event again, as a retried hand-off would: nothing more.
         await s.EventAsync("notice.exploited", notice: notice);
         await s.EvaluateAsync();
         await s.DeliverAsync();
@@ -114,7 +103,6 @@ public sealed class NoticeNotificationTests(PostgresServer server)
     {
         await using var host = await NotifyTestHost.StartAsync(server);
         var s = await Scenario.StartAsync(host, keepDefaultRules: true);
-        // As the previous build wrote them: without notice.raised; one of them narrowed by an admin since.
         await host.ExecuteAsync($"""
             UPDATE notify.rule SET events = array_remove(events, 'notice.raised'), changed_at = created_at WHERE organization_id = '{s.Organization}';
             UPDATE notify.rule SET changed_at = created_at + interval '1 day' WHERE organization_id = '{s.Organization}' AND preset = 'critical';

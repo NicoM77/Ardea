@@ -50,8 +50,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                 defaultValue: 0);
 
             migrationBuilder.Sql("""
-                -- Safety net of the hand-off (ADR 038): which organisations have events waiting since before a point in
-                -- time and not set aside, for the instance's minute schedule to queue their evaluation. Ids only.
                 CREATE FUNCTION notify.organizations_with_waiting_events(p_before timestamptz)
                     RETURNS TABLE (organization_id uuid)
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
@@ -59,13 +57,10 @@ namespace Ardea.Notifications.Persistence.Migrations
                         SELECT DISTINCT e.organization_id FROM notify.pending_event e WHERE e.failed_at IS NULL AND e.at < p_before
                     $$;
 
-                -- Instance status (ADR 038): how many events were set aside after repeated failures. A count only.
                 CREATE FUNCTION notify.failed_event_count() RETURNS bigint
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
                     AS $$ SELECT count(*) FROM notify.pending_event e WHERE e.failed_at IS NOT NULL $$;
 
-                -- Limit on confirmation mails (ADR 038): how many organisations asked this address since a point in
-                -- time, over the instance. A count only.
                 CREATE FUNCTION notify.address_confirmations_since(p_normalized_address text, p_since timestamptz) RETURNS bigint
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
                     AS $$

@@ -10,15 +10,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Notifications.Delivering;
 
-/// <summary>
-/// <c>Deliver(deliveryId)</c> of master plan 3.3: sends one message. Retries, waiting times and giving up come
-/// from the job system (master plan 8.6); the delivery row is the log.
-/// </summary>
 internal sealed record Deliver(Guid DeliveryId) : IJob
 {
     public static string Kind => "notify.deliver";
 
-    /// <summary>With the job system's back-off (10 s doubling, at most one hour) the last attempt comes about 3.5 hours after the first.</summary>
     public const int MaxAttempts = 12;
 
     public static readonly JobKindOptions KindOptions = new() { MaxConcurrency = 8, MaxAttempts = MaxAttempts, Timeout = TimeSpan.FromMinutes(1) };
@@ -26,15 +21,8 @@ internal sealed record Deliver(Guid DeliveryId) : IJob
     public static EnqueueOptions Options(Guid deliveryId, DateTimeOffset runAt) => new() { CoalesceKey = $"notify.deliver:{deliveryId}", RunAt = runAt };
 }
 
-/// <summary>A transient failure: the job system tries again after its back-off.</summary>
 internal sealed class DeliveryRetryException(string message) : Exception(message);
 
-/// <summary>
-/// Three steps (master plan 9.2): read and mark in a short unit of work, call the channel without a
-/// transaction, write the outcome afterwards. The outcome goes into the job's own unit of work when the job
-/// ends here; when it is retried, or ran out of time during the call, into a unit of work of its own, because
-/// the job's is rolled back when it throws. Nothing touches the database between the first step and the call.
-/// </summary>
 internal sealed partial class DeliverHandler(
     IUnitOfWorkFactory units,
     IEnumerable<INotificationChannel> channels,
@@ -67,7 +55,6 @@ internal sealed partial class DeliverHandler(
 
         if (message.Channel == Channels.InApp)
         {
-            // A digest or a run of the reminders by level in the app is a row like any other notification; nothing leaves the instance.
             var delivery = await db.Deliveries.SingleAsync(d => d.Id == job.DeliveryId, cancellationToken);
             var reminders = message.Content.Kind == "reminder";
             var text = reminders ? MessageRenderer.InAppReminders(message.Content) : MessageRenderer.InAppDigest(message.Content);
@@ -90,7 +77,6 @@ internal sealed partial class DeliverHandler(
             return;
         }
 
-        // The call to the outside: no transaction is open while it waits (master plan 9.2, ADR 041).
         var channel = channels.Single(c => c.Name == message.Channel);
         SendResult result;
         try
@@ -99,7 +85,6 @@ internal sealed partial class DeliverHandler(
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
-            // A channel answers with a result; should one throw all the same, the delivery must not stay in «sending».
             result = new SendResult(SendOutcome.Transient, $"{ex.GetType().Name}: the channel failed.");
         }
 
@@ -107,8 +92,6 @@ internal sealed partial class DeliverHandler(
         var retry = result.Outcome == SendOutcome.Transient && context.Attempt < Deliver.MaxAttempts;
         if (timedOut || retry)
         {
-            // The job's unit of work ends without a commit; what the call found must stay all the same: which devices
-            // took the message, which subscriptions are gone, and that a retry is due.
             await using var scope = units.CreateScope();
             var store = scope.ServiceProvider.GetRequiredService<NotifyDbContext>();
             await WriteAsync(store, scope.ServiceProvider, job.DeliveryId, context.Attempt, message, result, CancellationToken.None);
@@ -123,7 +106,6 @@ internal sealed partial class DeliverHandler(
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    /// <summary>Writes what the call found into the delivery, the endpoint and the push subscriptions.</summary>
     private async Task WriteAsync(
         NotifyDbContext store, IServiceProvider scope, Guid deliveryId, int attempt, Outgoing message, SendResult result, CancellationToken cancellationToken)
     {
@@ -138,7 +120,6 @@ internal sealed partial class DeliverHandler(
 
         if (result.Devices is { } devices)
         {
-            // Also before a retry: a subscription that is gone goes now, a device that took the message counts it.
             await PushChannel.RecordAsync(store, devices, cancellationToken);
         }
 
@@ -168,14 +149,10 @@ internal sealed partial class DeliverHandler(
         delivery.LastError = error is null ? null : Truncate(error);
     }
 
-    /// <summary>
-    /// Level 5 that reached a recipient on none of their channels: the owners get an in-app warning (master plan 8.6).
-    /// </summary>
     private async Task WarnOwnersAsync(NotifyDbContext store, IOrganizationMembers members, Delivery delivery, CancellationToken cancellationToken)
     {
         if (delivery.Kind != "immediate")
         {
-            // A digest or a reminder repeats what was announced at once before; its failure is in the log.
             return;
         }
 

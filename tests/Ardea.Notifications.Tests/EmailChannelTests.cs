@@ -7,11 +7,6 @@ using DotNet.Testcontainers.Builders;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// The e-mail channel (master plan 8.5, 8.6, 8.8; task 5.4) against a real mail server: an unreachable server
-/// delays the message, the job system retries it, and it arrives with level and number in the subject and
-/// the unsubscribe header.
-/// </summary>
 public sealed class EmailChannelTests(PostgresServer server)
 {
     [Fact]
@@ -39,13 +34,11 @@ public sealed class EmailChannelTests(PostgresServer server)
         await s.EventAsync("action.raised", action);
         await s.EvaluateAsync();
 
-        // The server is down: the attempt fails, the message waits for the next one.
         host.Time.Advance(TimeSpan.FromMinutes(3));
         Assert.Single(await host.RunJobsAsync());
         Assert.Equal("failed|1", await host.ScalarAsync<string>("SELECT state || '|' || attempts FROM notify.delivery"));
         Assert.Equal("pending", await host.ScalarAsync<string>("SELECT state FROM platform.job WHERE kind = 'notify.deliver'"));
 
-        // The server is back: the retry after the back-off delivers it.
         var back = await s.Owner.SendAsync(HttpMethod.Patch, "/api/v1/instance/settings", new { smtpPort = mailpit.GetMappedPublicPort(1025).ToString(System.Globalization.CultureInfo.InvariantCulture) });
         Assert.Equal(HttpStatusCode.OK, back.StatusCode);
         host.Time.Advance(TimeSpan.FromSeconds(30));

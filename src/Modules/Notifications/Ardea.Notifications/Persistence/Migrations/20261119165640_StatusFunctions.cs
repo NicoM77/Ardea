@@ -11,8 +11,6 @@ namespace Ardea.Notifications.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("""
-                -- Instance status (master plan 12.7; task 6.6): deliveries by state since a point in time, over all
-                -- organisations. Counts only; the status runs without an organisation.
                 CREATE FUNCTION notify.delivery_counts_since(p_since timestamptz)
                     RETURNS TABLE (state text, deliveries bigint)
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp

@@ -5,11 +5,6 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// Recipients (master plan 8.2, 8.3; tasks 5.1, 5.7): the default rules of a new organisation, external
-/// addresses that receive nothing until confirmed and unsubscribe without signing in, the personal mute with
-/// its exception for level 5, and the assignee who hears about an assignment.
-/// </summary>
 public sealed class RecipientTests(PostgresServer server)
 {
     [Fact]
@@ -32,7 +27,6 @@ public sealed class RecipientTests(PostgresServer server)
         Assert.True(weekly.GetProperty("sendEmpty").GetBoolean());
         Assert.Contains("warning.published", rules[2].GetProperty("events").EnumerateArray().Select(e => e.GetString()));
 
-        // Monday 08:00 in the organisation's time zone (Europe/Zurich by default).
         var zurich = TimeZoneInfo.FindSystemTimeZoneById("Europe/Zurich");
         var next = TimeZoneInfo.ConvertTime(weekly.GetProperty("nextDigestAt").GetDateTimeOffset(), zurich);
         Assert.Equal((DayOfWeek.Monday, 8, 0), (next.DayOfWeek, next.Hour, next.Minute));
@@ -51,7 +45,6 @@ public sealed class RecipientTests(PostgresServer server)
         Assert.Empty(await host.RunJobsAsync());
         var confirmation = Assert.Single(host.Mail!.Sent);
         Assert.Equal("oncall@partner.example", confirmation.To);
-        // The link carries the token in its fragment, which the browser never sends: no request log sees it.
         var token = QueryHelpers.ParseQuery(Link(confirmation, "/notifications/confirm").Fragment.TrimStart('#'))["token"].ToString();
 
         var first = await s.ActionAsync(2, level: 4);
@@ -59,7 +52,6 @@ public sealed class RecipientTests(PostgresServer server)
         await s.EvaluateAsync();
         Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.delivery"));
 
-        // No session, no CSRF token: the link is the proof.
         using var stranger = host.Client();
         var preview = await NotifyTestHost.JsonAsync(await stranger.PostAsync("/api/v1/notify/addresses/preview", new { token }, csrf: false));
         Assert.Equal("Acme", preview.GetProperty("organizationName").GetString());
@@ -76,7 +68,6 @@ public sealed class RecipientTests(PostgresServer server)
         var oneClick = new Uri(message.Headers["List-Unsubscribe"].Trim('<', '>'));
         Assert.Contains("https://ardea.test/notifications/unsubscribe#token=", message.Text, StringComparison.Ordinal);
 
-        // A mail client posts the one-click unsubscribe from its own servers (RFC 8058): a form body, no cookie, no CSRF token.
         using var mailClient = host.RawClient();
         using var form = new FormUrlEncodedContent([new KeyValuePair<string, string>("List-Unsubscribe", "One-Click")]);
         Assert.Equal(HttpStatusCode.NoContent, (await mailClient.PostAsync(oneClick, form, TestContext.Current.CancellationToken)).StatusCode);
@@ -86,11 +77,9 @@ public sealed class RecipientTests(PostgresServer server)
         Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.delivery"));
         Assert.Equal("unsubscribed", (await NotifyTestHost.JsonAsync(await s.Owner.GetAsync($"{s.Path}/external-addresses")))[0].GetProperty("state").GetString());
 
-        // A forged or foreign token finds nothing.
         Assert.Equal(HttpStatusCode.NotFound, (await stranger.PostAsync("/api/v1/notify/addresses/unsubscribe/one-click?token=forged", csrf: false)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await stranger.PostAsync("/api/v1/notify/addresses/unsubscribe", new { token = "forged" }, csrf: false)).StatusCode);
 
-        // The organisation cannot ask again, nor remove the address to add it anew; only the recipient can take it back.
         Assert.Equal("address_unsubscribed", await CodeAsync(await s.Owner.PostAsync($"{s.Path}/external-addresses/{address}/resend")));
         Assert.Equal("address_unsubscribed", await CodeAsync(await s.Owner.SendAsync(HttpMethod.Delete, $"{s.Path}/external-addresses/{address}")));
         var signed = QueryHelpers.ParseQuery(oneClick.Query)["token"].ToString();
@@ -114,14 +103,12 @@ public sealed class RecipientTests(PostgresServer server)
         host.Time.Advance(TimeSpan.FromMinutes(16));
         Assert.Equal("confirmation_limit", await CodeAsync(await s.Owner.PostAsync($"{path}/{address}/resend")));
 
-        // Over the instance: an address asked by three organisations today is not asked by a fourth.
         await host.ExecuteAsync($"""
             INSERT INTO notify.external_address (organization_id, address, normalized_address, confirmation_sent_at, confirmations_sent, created_at)
             SELECT o.id, 'target@example.net', 'TARGET@EXAMPLE.NET', now(), 1, now() FROM (VALUES (gen_random_uuid()), (gen_random_uuid()), (gen_random_uuid())) AS o(id)
             """);
         Assert.Equal("confirmation_limit", await CodeAsync(await s.Owner.PostAsync(path, new { address = "target@example.net" })));
 
-        // Per organisation and day, and in all.
         await host.ExecuteAsync($"""
             INSERT INTO notify.external_address (organization_id, address, normalized_address, confirmation_sent_at, confirmations_sent, created_at)
             SELECT '{s.Organization}', 'bulk' || i || '@example.net', 'BULK' || i || '@EXAMPLE.NET', '{host.Time.GetUtcNow():O}', 1, now() FROM generate_series(1, 19) AS i
@@ -166,8 +153,6 @@ public sealed class RecipientTests(PostgresServer server)
         var memberId = await host.ScalarAsync<Guid>("SELECT id FROM iam.\"user\" WHERE normalized_email = 'MEMBER@EXAMPLE.ORG'");
         await s.ActionAsync(2, level: 3);
 
-        // A reminder has no assignee (master plan 17.5): the team's work reaches people only through a rule that names it,
-        // and in the app only (master plan 8.2).
         var rule = new
         {
             name = "Team work",
@@ -178,7 +163,6 @@ public sealed class RecipientTests(PostgresServer server)
         };
         Assert.Equal(HttpStatusCode.Created, (await s.Owner.PostAsync($"{s.Path}/rules", rule)).StatusCode);
 
-        // The API writes the history row; the hand-off queues it for the rules in the same transaction (ADR 038).
         var changed = await s.Owner.PostAsync($"{s.Path}/actions/2/status", new { status = "risk_accepted", expectedStatus = "open" });
         Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
         Assert.Equal(["action.status_changed"], await host.RowsAsync("SELECT kind FROM notify.pending_event"));
@@ -199,7 +183,6 @@ public sealed class RecipientTests(PostgresServer server)
         await s.RuleAsync("Team work", 2, ["action.status_changed", "action.note_added"], Scenario.Target("in_app"));
         var action = await s.ActionAsync(2, level: 3);
 
-        // Waiting in the queue across the upgrade (ADR 046): an assignment, taking into review, closing from review.
         await s.EventAsync("action.assigned", action, $$"""{"from": null, "to": "{{Guid.CreateVersion7()}}"}""");
         await s.EventAsync("action.status_changed", action, """{"from": "open", "to": "in_review"}""");
         await s.EventAsync("action.status_changed", action, """{"from": "in_review", "to": "risk_accepted"}""");
@@ -209,7 +192,6 @@ public sealed class RecipientTests(PostgresServer server)
         Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.notification WHERE kind = 'action.assigned' OR body ILIKE '%review%' OR body ILIKE '%assign%' OR title ILIKE '%status.%'"));
     }
 
-    /// <summary>The notification e-mails, without the account e-mails of registration.</summary>
     private static List<EmailMessage> Notifications(NotifyTestHost host) => [.. host.Mail!.Sent.Where(m => m.Subject.StartsWith('['))];
 
     private static async Task<string?> CodeAsync(HttpResponseMessage response) =>

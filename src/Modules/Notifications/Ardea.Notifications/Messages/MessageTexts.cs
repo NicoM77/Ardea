@@ -4,11 +4,6 @@ using Ardea.Notifications.Rules;
 
 namespace Ardea.Notifications.Messages;
 
-/// <summary>
-/// The wording of messages in the recipient's language (master plan 8.5). English and German; the other
-/// languages of the interface fall back to English until their texts exist. Quoted titles stay as the
-/// source wrote them.
-/// </summary>
 internal sealed class MessageTexts
 {
     private readonly Dictionary<string, string> _texts;
@@ -39,7 +34,6 @@ internal sealed class MessageTexts
         _ => this["level.1"],
     };
 
-    /// <summary>One line that says what happened to the subject (master plan 8.5: «Level 5, Critical. Raised from level 4.»).</summary>
     public string Headline(MessageItem item)
     {
         var level = item.Level;
@@ -70,7 +64,6 @@ internal sealed class MessageTexts
         };
     }
 
-    /// <summary>What a notice is about, as the first answer of a message: the entry, its score, its exploitation.</summary>
     public string NoticeWhat(NoticeFacts notice)
     {
         var what = Format("what.plain", notice.EntryKey, notice.EntryTitle ?? notice.EntryKey);
@@ -87,7 +80,6 @@ internal sealed class MessageTexts
         return notice.InKev ? what + this["notice.kev"] : what;
     }
 
-    /// <summary>Why a notice asks: «Your stack names PostgreSQL 17.», and the projects that name the product.</summary>
     public string NoticeWhy(NoticeFacts notice)
     {
         static string Named(IEnumerable<NoticeComponentFacts> components) =>
@@ -104,7 +96,6 @@ internal sealed class MessageTexts
         return string.Join(" ", parts);
     }
 
-    /// <summary>The title of an item: «[5 Critical] #143 Puppet Enterprise in Platform Ops».</summary>
     public string Title(MessageItem item)
     {
         if (item.Action is { } action)

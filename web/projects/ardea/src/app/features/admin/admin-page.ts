@@ -15,13 +15,6 @@ import { RegistrationCard } from './registration-card';
 import { count } from './settings-patch';
 import { SmtpCard } from './smtp-card';
 
-/**
- * The first administration (task 0.13, master plan 11.4), for the instance administrator:
- * the installed version and the job queue, the system's warnings and operating figures (task 6.6),
- * registration, SMTP with a test e-mail, the AI
- * providers with a connection test and the models' correction rate (tasks 4.1, 4.7), and the
- * jobs that gave up, with a retry each.
- */
 @Component({
   selector: 'ardea-admin-page',
   imports: [
@@ -179,7 +172,6 @@ export class AdminPage {
   protected readonly status = getInstanceStatusResource();
   protected readonly number = count;
 
-  /** The whole page waits for its first answers once, then each card shows its own state. */
   protected readonly firstLoad = computed(
     () =>
       this.instance.status() === 'loading' &&

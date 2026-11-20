@@ -14,7 +14,6 @@ import {
 } from './auth-forms';
 import { focusFirstInvalid } from './focus-invalid';
 
-/** Choosing a new password from the emailed link (`/reset-password?email=...&token=...`). */
 @Component({
   selector: 'ardea-reset-password-page',
   imports: [
@@ -51,7 +50,6 @@ import { focusFirstInvalid } from './focus-invalid';
             }
           </ui-notice>
         }
-        <!-- The account the link belongs to, for password managers -->
         <input
           class="sr-only"
           type="email"

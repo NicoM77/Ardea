@@ -8,11 +8,6 @@ const R = 50;
 const LENGTH = 2 * Math.PI * R;
 const GAP = 3;
 
-/**
- * The priority ring (DESIGN.md Charts): a thin ring, one segment per priority, the total in the
- * middle. Its legend is the list of counts and leads to the filtered list; pointing at a row lets
- * that priority stand out in the ring.
- */
 @Component({
   selector: 'ardea-priority-ring',
   imports: [RouterLink, TranslocoPipe, UiPriority],

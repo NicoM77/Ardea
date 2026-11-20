@@ -40,7 +40,6 @@ const HOSTS: readonly ChoiceOption[] = [
   { value: 'unknown', label: 'wizard.operations.hosts.unknown' },
 ];
 
-/** What each answer asks next, and which kinds of the catalogue fit the answer. */
 const FOLLOW_UP: Record<string, { label: string; kinds: readonly string[] }> = {
   server: { label: 'wizard.operations.which.os', kinds: ['os'] },
   containers: {
@@ -50,11 +49,6 @@ const FOLLOW_UP: Record<string, { label: string; kinds: readonly string[] }> = {
   managed: { label: 'wizard.operations.which.service', kinds: ['service'] },
 };
 
-/**
- * Step "Operations" (master plan 11.6): what the repository cannot answer, asked while it is read.
- * Exposure and criticality are saved on the project; where it runs and what sits in front become
- * components entered by hand. "Don't know" is always valid.
- */
 @Component({
   selector: 'ardea-operations-step',
   imports: [TranslocoPipe, UiButton, UiCard, UiNotice, CatalogPicker, ChoiceGroup],

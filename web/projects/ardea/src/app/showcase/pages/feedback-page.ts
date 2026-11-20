@@ -11,7 +11,6 @@ import {
   UiToast,
 } from 'ui';
 
-/** Notices, empty states, loading and copy feedback. */
 @Component({
   selector: 'ardea-feedback-page',
   imports: [

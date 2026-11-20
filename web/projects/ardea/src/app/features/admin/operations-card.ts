@@ -4,11 +4,6 @@ import { UiButton, UiCard, UiLoader, UiNotice } from 'ui';
 import type { InstanceStatusView, StatusWarning } from '../../core/api/client';
 import { groupMetrics, notifiedAt } from './operations';
 
-/**
- * The system's warnings about itself and the operating figures of the instance (master plan 12.7; task
- * 6.6): lag and failures per source, jobs waiting and failed, deliveries, calls to language models. Counts
- * and times only, never contents. Group and figure names are the technical identifiers the server reports.
- */
 @Component({
   selector: 'ardea-operations-card',
   imports: [TranslocoPipe, UiButton, UiCard, UiLoader, UiNotice],
@@ -124,7 +119,6 @@ export class OperationsCard {
 
   protected readonly groups = computed(() => groupMetrics(this.status()?.metrics ?? []));
 
-  /** When the instance administrators were last mailed about the warning (ADR 043). */
   protected mailed(view: InstanceStatusView, warning: StatusWarning): string | null {
     return notifiedAt(view.notified, warning);
   }

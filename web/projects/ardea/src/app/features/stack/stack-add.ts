@@ -22,12 +22,6 @@ import { StackStore } from './stack-store';
 
 let nextAdd = 0;
 
-/**
- * Adds a product to the stack from the catalogue (master plan 17.2): a combobox over the catalogue
- * search, which knows names, aliases and the odd typo (`GET /catalog/products`). The focus stays in
- * the field; the arrow keys move through the products, Enter adds one, Escape closes the list.
- * Only catalogue products: a free name would never match a source, so it would raise nothing.
- */
 @Component({
   selector: 'ardea-stack-add',
   imports: [TranslocoPipe, LucideSearch, UiInput, UiLoader],
@@ -58,7 +52,6 @@ let nextAdd = 0;
     </div>
     <p class="hint" [id]="id + '-hint'">{{ 'stack.add.hint' | transloco }}</p>
 
-    <!-- The list stays in the page while it is closed, so aria-controls always points somewhere. -->
     <div
       class="list"
       role="listbox"
@@ -83,7 +76,6 @@ let nextAdd = 0;
         </div>
       }
     </div>
-    <!-- Always in the page, so screen readers hear each new sentence; only its text changes. -->
     <div class="notes" role="status">
       @if (open()) {
         @if (results.isLoading() && !options().length) {
@@ -178,7 +170,6 @@ export class StackAdd {
     this.query() ? { q: this.query(), limit: 12 } : undefined,
   );
   protected readonly results = searchCatalogResource(this.params);
-  /** Products the stack does not name yet; a stack entry stands for the product itself (17.2). */
   protected readonly options = computed<CatalogProductView[]>(() => {
     if (!this.results.hasValue() || !this.query()) return [];
     const taken = this.store.keys();
@@ -197,7 +188,6 @@ export class StackAdd {
 
   constructor() {
     inject(DestroyRef).onDestroy(() => clearTimeout(this.timer));
-    // The active option stays in sight while the arrow keys move through a long list.
     const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
     afterRenderEffect(() => {
       const id = this.activeId();
@@ -214,7 +204,6 @@ export class StackAdd {
     this.expanded.set(true);
     this.active.set(0);
     clearTimeout(this.timer);
-    // A short pause before asking: one request per word, not per key.
     this.timer = setTimeout(() => this.query.set(value.trim()), 200);
     if (!value.trim()) this.query.set('');
   }
@@ -233,7 +222,6 @@ export class StackAdd {
           this.active.update((i) => (i + (event.key === 'ArrowDown' ? 1 : count - 1)) % count);
         return;
       case 'Enter': {
-        // Typed faster than the search: ask now, and pick nothing from the previous words' results.
         if (this.text().trim() !== this.query()) {
           event.preventDefault();
           clearTimeout(this.timer);

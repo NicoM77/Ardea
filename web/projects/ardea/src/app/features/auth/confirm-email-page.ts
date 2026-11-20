@@ -9,10 +9,6 @@ import { Session } from '../../core/session/session';
 
 type State = 'confirming' | 'confirmed' | 'failed' | 'incomplete';
 
-/**
- * The link from the confirmation e-mail (`/confirm-email?userId=...&token=...`). Opening it is the
- * confirmation, so the page sends it at once. It works signed in or out.
- */
 @Component({
   selector: 'ardea-confirm-email-page',
   imports: [RouterLink, TranslocoPipe, UiButton, UiLoader, UiNotice],
@@ -73,7 +69,6 @@ export class ConfirmEmailPage implements OnInit {
   protected readonly state = signal<State>('confirming');
   protected readonly problem = signal<string | null>(null);
   protected readonly signedIn = computed(() => this.session.state() === 'signedIn');
-  /** An expired or used link stays that way; only an outage is worth another try. */
   protected readonly canRetry = computed(() => this.problem() !== 'auth.confirmEmail.invalid');
 
   ngOnInit(): void {
@@ -89,7 +84,6 @@ export class ConfirmEmailPage implements OnInit {
     }
     this.state.set('confirming');
     try {
-      // The session read sets the antiforgery cookie this write needs.
       await this.session.ready();
       await firstValueFrom(this.auth.confirmEmail({ userId, token }));
       this.state.set('confirmed');

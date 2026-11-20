@@ -17,16 +17,9 @@ interface Row {
   number: number;
   name: ReturnType<typeof actionName>;
   entries: ReturnType<typeof entriesLine>;
-  /** When it opened or last rose; closed, when it closed. */
   since: string;
 }
 
-/**
- * The actions as a real table (master plan 11.8): priority, the action with its project, version
- * and entry, the day it opened or last rose (closed: the day it closed) and status. A reminder has
- * no owner and no deadline (master plan 17.5). Below 640px the rows become two-line records. The
- * title is the link; the whole row answers the pointer.
- */
 @Component({
   selector: 'ardea-actions-table',
   imports: [RouterLink, TranslocoPipe, UiPill, UiPriority, UiStatus],
@@ -206,7 +199,6 @@ interface Row {
 export class ActionsTable {
   readonly rows = input.required<readonly ActionSummary[]>();
   readonly closed = input(false);
-  /** Already translated: what the table lists, for screen readers. */
   readonly caption = input.required<string>();
 
   private readonly transloco = inject(TranslocoService);

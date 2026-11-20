@@ -27,11 +27,6 @@ import { focusFirstInvalid } from '../auth/focus-invalid';
 import { canManage } from '../organizations/org-format';
 import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
 
-/**
- * Accesses to GitHub (master plan 16.4): a fine-grained, read-only token per GitHub organization,
- * added once by the owner or an admin and chosen by everyone in the wizard. The token is written,
- * never shown again: only its last four characters and its expiry.
- */
 @Component({
   selector: 'ardea-accesses-card',
   imports: [

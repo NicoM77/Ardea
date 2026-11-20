@@ -35,10 +35,6 @@ const CHANNEL_ICONS: Record<Channel, NotifyIconName | null> = {
   webhook: 'webhook',
 };
 
-/**
- * «Notification rules» (master plan 8.3, 11.4; task 5.8; mockup notification-rules.html): the rules as a
- * matrix of rules and channels. Each cell says when and to whom; a rule turns on and off in its row.
- */
 @Component({
   selector: 'ardea-rules-page',
   imports: [

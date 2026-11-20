@@ -1,6 +1,5 @@
 import type { CatalogProductView, ComponentInput, ComponentView } from '../../core/api/client';
 
-/** The kinds of a component (master plan 4.5), with their translation keys. */
 export const KIND_LABELS: Record<string, string> = {
   os: 'projects.kinds.os',
   runtime: 'projects.kinds.runtime',
@@ -47,10 +46,6 @@ export const CRITICALITY_HINTS: Record<string, string> = {
   low: 'projects.criticality.lowHint',
 };
 
-/**
- * The groups of the catalogue search (master plan 11.6), each a set of component kinds. A
- * product's group decides where it is listed; a chip narrows the results to one group.
- */
 export const CATALOG_GROUPS: readonly { id: string; label: string; kinds: readonly string[] }[] = [
   { id: 'os', label: 'projects.groups.os', kinds: ['os'] },
   { id: 'runtime', label: 'projects.groups.runtime', kinds: ['runtime', 'framework'] },
@@ -62,8 +57,7 @@ export const CATALOG_GROUPS: readonly { id: string; label: string; kinds: readon
   { id: 'other', label: 'projects.groups.other', kinds: ['library', 'other'] },
 ];
 
-/** Ecosystems whose packages can be checked in this version (master plan 16.3, 5.6). */
-export const CHECKABLE_ECOSYSTEMS = new Set([
+const CHECKABLE_ECOSYSTEMS = new Set([
   'npm',
   'nuget',
   'composer',
@@ -84,7 +78,6 @@ const ECOSYSTEM_NAMES: Record<string, string> = {
   cargo: 'crates.io',
 };
 
-/** The ecosystem of a package URL (`pkg:npm/...` gives `npm`), or null for anything else. */
 export function ecosystemOf(purl: string | null | undefined): string | null {
   const match = /^pkg:([a-z0-9.+-]+)\//i.exec(purl ?? '');
   return match ? match[1].toLowerCase() : null;
@@ -94,7 +87,6 @@ export function ecosystemName(id: string): string {
   return ECOSYSTEM_NAMES[id] ?? id;
 }
 
-/** A package: a library with a package URL. Everything else is a platform or a service. */
 export function isPackage(component: ComponentView): boolean {
   return component.kind === 'library' && !!ecosystemOf(component.purl);
 }
@@ -109,7 +101,6 @@ export interface Ecosystem {
   checkable: boolean;
 }
 
-/** Packages per ecosystem, the largest first, with the figures the summary line prints. */
 export function ecosystems(components: readonly ComponentView[]): Ecosystem[] {
   const groups = new Map<string, ComponentView[]>();
   for (const component of components) {
@@ -130,7 +121,6 @@ export function ecosystems(components: readonly ComponentView[]): Ecosystem[] {
     .sort((a, b) => b.packages.length - a.packages.length || a.name.localeCompare(b.name));
 }
 
-/** Platforms and services: what is not a package, by kind and name. */
 export function platforms(components: readonly ComponentView[]): ComponentView[] {
   return components
     .filter((c) => !isPackage(c))
@@ -165,10 +155,6 @@ export function filterPackages(
   );
 }
 
-/**
- * A manual component as the wizard edits it before it is saved with `PUT …/components`. A saved
- * one keeps its id; a new one has a ref, and a plugin points at its platform by id or by ref.
- */
 export interface DraftComponent {
   id: string | null;
   ref: string;
@@ -183,7 +169,6 @@ export interface DraftComponent {
   protectionNote: string;
   parentId: string | null;
   parentRef: string | null;
-  /** The catalogue's platform for a plugin, to find its parent when that is added later. */
   platformKey: string | null;
 }
 
@@ -209,7 +194,7 @@ export function draftFromView(view: ComponentView): DraftComponent {
   };
 }
 
-export function draftFromProduct(
+function draftFromProduct(
   product: CatalogProductView,
   existing: readonly DraftComponent[],
 ): DraftComponent {
@@ -234,7 +219,6 @@ export function draftFromProduct(
   };
 }
 
-/** A free entry: not in the catalogue, so no source can match it; marked unchecked. */
 export function draftFromName(name: string, kind: string): DraftComponent {
   return {
     id: null,
@@ -274,7 +258,6 @@ export function toInput(d: DraftComponent): ComponentInput {
   };
 }
 
-/** Removing a platform takes its plugins with it, as the reconcile would leave them orphaned. */
 export function withoutDraft(drafts: readonly DraftComponent[], ref: string): DraftComponent[] {
   const gone = drafts.find((d) => d.ref === ref);
   if (!gone) return [...drafts];
@@ -283,10 +266,6 @@ export function withoutDraft(drafts: readonly DraftComponent[], ref: string): Dr
   );
 }
 
-/**
- * Adds a choice from the catalogue search to the drafts. A product that is already there is not
- * added twice: the reconcile would take both for the same component. Returns the list and the draft.
- */
 export function addChoice(
   drafts: readonly DraftComponent[],
   choice: { product: CatalogProductView } | { name: string; kind: string },

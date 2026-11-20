@@ -16,14 +16,10 @@ import { IcuTranspiler } from './icu-transpiler';
 import { Observable, of } from 'rxjs';
 import en from '../../../i18n/en.json';
 
-export const AVAILABLE_LANGUAGES = ['en'] as const;
+const AVAILABLE_LANGUAGES = ['en'] as const;
 
-/**
- * English is built in, so the first screen never waits for a translation file; every other
- * language is fetched from `/i18n/<lang>.json` when someone switches to it (master plan 11.7).
- */
 @Injectable({ providedIn: 'root' })
-export class TranslationLoader implements TranslocoLoader {
+class TranslationLoader implements TranslocoLoader {
   private readonly http = inject(HttpClient);
 
   getTranslation(lang: string): Observable<Translation> {
@@ -31,7 +27,6 @@ export class TranslationLoader implements TranslocoLoader {
   }
 }
 
-/** Transloco, switchable at runtime, with ICU message format for plurals from the start. */
 export function provideTranslations(): EnvironmentProviders[] {
   return [
     ...provideTransloco({
@@ -45,7 +40,6 @@ export function provideTranslations(): EnvironmentProviders[] {
       },
       loader: TranslationLoader,
     }),
-    // ICU without eval: the instance's Content Security Policy has no 'unsafe-eval'.
     makeEnvironmentProviders([{ provide: TRANSLOCO_TRANSPILER, useClass: IcuTranspiler }]),
   ];
 }

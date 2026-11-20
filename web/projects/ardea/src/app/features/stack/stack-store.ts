@@ -24,34 +24,21 @@ const STACK_PROBLEMS = {
   fallback: 'stack.errors.save',
 };
 
-/** A product to add: its catalogue key and its name, for the confirmation. */
 export interface StackProduct {
   key: string;
   name: string;
 }
 
-/** Where a change goes: fixed when it is made, so its Undo still reaches the same stack later. */
 interface Target {
   org: string;
   stackId: string;
 }
 
-/**
- * Counts changes made by an Undo after the page that made them was left. The confirmation toast
- * outlives the page (it is the application's), so a stack shown meanwhile reads itself again.
- */
 @Injectable({ providedIn: 'root' })
-export class StackRevision {
+class StackRevision {
   readonly count = signal(0);
 }
 
-/**
- * The organization's stack (master plan 17.2, ADR 046) for one page: its entries and what to add,
- * read from `GET stack` and `GET stack/suggestions`. Every change is saved at once through the
- * stack project's component endpoints and confirmed with Undo (DESIGN.md, Feedback). Provided by
- * the page that shows the stack, so the wizard and the stack page each have their own; an Undo
- * works after the page is gone, because it carries its organization and stack with it.
- */
 @Injectable()
 export class StackStore {
   private readonly projects = inject(ProjectsService);
@@ -62,7 +49,6 @@ export class StackStore {
   private alive = true;
 
   readonly orgId = computed(() => this.current.organization()?.id);
-  /** Viewers read the stack; members and above change it, as any project. */
   readonly canEdit = computed(
     () => roleRank(this.current.organization()?.role) >= roleRank('member'),
   );
@@ -81,14 +67,12 @@ export class StackStore {
   readonly keys = computed(
     () => new Set(this.entries().flatMap((e) => (e.productKey ? [e.productKey] : []))),
   );
-  /** Suggestions without what the stack names meanwhile, so nothing is offered twice while they reload. */
   readonly suggested = computed(() => {
     const keys = this.keys();
     const list = this.suggestions.hasValue() ? (this.suggestions.value() ?? []) : [];
     return list.filter((s) => !keys.has(s.productKey));
   });
 
-  /** Products and entries being saved; their controls wait. */
   readonly pending = signal<ReadonlySet<string>>(new Set());
   readonly problem = signal<string | null>(null);
 
@@ -160,10 +144,6 @@ export class StackStore {
     return true;
   }
 
-  /**
-   * A new version, or none («""»), with the precision it is meant with (ADR 046). False when it
-   * was not saved, so the row can show the stored version again.
-   */
   async setVersion(entry: ComponentView, version: string, precision: Precision): Promise<boolean> {
     const before = entry.version ?? '';
     if (before === version && (version === '' || entry.versionPrecision === precision)) return true;
@@ -216,10 +196,8 @@ export class StackStore {
     );
   }
 
-  /** Undo of a removal: the entry comes back with its version, precision and threshold. */
   private restore(target: Target, entry: ComponentView): void {
     if (!entry.productKey) {
-      // A name the catalogue does not know cannot be added to the stack again from here.
       this.toaster.show({
         text: this.transloco.translate('stack.errors.undoFree', { name: entry.name }),
       });
@@ -243,10 +221,6 @@ export class StackStore {
     );
   }
 
-  /**
-   * Runs an Undo against the stack it was made on, whether or not this page is still shown. While
-   * it is, the list follows the answer; afterwards, a stack page shown meanwhile reads itself again.
-   */
   private undo<T>(
     work: () => Promise<T>,
     change: (list: ComponentView[], answer: T | null) => ComponentView[],
@@ -273,7 +247,6 @@ export class StackStore {
     this.toaster.show({ text: this.transloco.translate(key, params), undo });
   }
 
-  /** The stack as the last answer left it; suggestions follow in the background. */
   private patch(change: (list: ComponentView[]) => ComponentView[]): void {
     const stack = this.stack.hasValue() ? this.stack.value() : undefined;
     if (stack) {

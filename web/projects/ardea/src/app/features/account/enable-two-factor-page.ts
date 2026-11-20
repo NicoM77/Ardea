@@ -26,10 +26,6 @@ import { RecoveryCodes } from './recovery-codes';
 
 type Step = 'intro' | 'scan' | 'codes';
 
-/**
- * Turning on two-factor authentication in three steps: start, scan the code (or type the key)
- * and confirm with a code from the app, then save the recovery codes, which are shown only once.
- */
 @Component({
   selector: 'ardea-enable-two-factor-page',
   imports: [
@@ -259,7 +255,6 @@ type Step = 'intro' | 'scan' | 'codes';
   `,
 })
 export class EnableTwoFactorPage {
-  /** Where to go once it is on, such as an organization that requires it. */
   readonly returnUrl = input<string | null>(null);
 
   private readonly account = inject(AccountService);
@@ -283,13 +278,11 @@ export class EnableTwoFactorPage {
   protected readonly alreadyOn = computed(() => this.session.user()?.twoFactorEnabled === true);
   protected readonly sharedKey = computed(() => formatSharedKey(this.setup()?.sharedKey ?? ''));
 
-  /** On a phone the URI opens the authenticator app directly; only `otpauth://` URIs are linked. */
   protected readonly authenticatorLink = computed<SafeUrl | null>(() => {
     const uri = this.setup()?.authenticatorUri ?? '';
     return uri.startsWith('otpauth://totp/') ? this.sanitizer.bypassSecurityTrustUrl(uri) : null;
   });
 
-  /** Setup starts only with the password re-entered: a stolen session alone cannot bind the account to another phone. */
   private readonly introModel = signal({ password: '' });
   protected readonly intro = form(
     this.introModel,

@@ -19,11 +19,6 @@ import {
 } from './source-format';
 import { SourceHealth } from './source-health';
 
-/**
- * «Sources» (task 1.10, master plan 11.4): every source with its operator and kind of operator
- * (master plan 5.6), its health and when it ran and runs next. Sources that need attention come
- * first. The instance administrator opens a source for its runs, its quarantine list and control.
- */
 @Component({
   selector: 'ardea-sources-page',
   imports: [
@@ -316,10 +311,8 @@ import { SourceHealth } from './source-health';
   `,
 })
 export class SourcesPage {
-  /** From the address: `?operatorKind=...&operator=...`. */
   readonly operatorKind = input<string>('');
   readonly operator = input<string>('');
-  /** `?learned=<raw key>`: the learned catalogue entry a hit links to (master plan 6.9). */
   readonly learned = input<string>('');
 
   private readonly router = inject(Router);

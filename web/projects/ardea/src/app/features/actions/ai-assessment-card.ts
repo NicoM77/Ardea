@@ -5,13 +5,6 @@ import type { ModelAnswersView } from '../../core/api/client';
 import { webUrl } from '../entries/entry-detail-format';
 import { budget, refs } from './model-format';
 
-/**
- * The model's assessment behind the answers (mockup remediation.html?ai, «AI assessment»; master
- * plan 7.5): the preconditions of an attack and whether they hold here, the impact, the reasoning
- * with its source numbers, what the profile does not say, the numbered sources it was given, and
- * the budget line: model, prompt and rule set, tokens and time. Every text of the model is plain
- * text; only the source list, which Ardea built, carries links.
- */
 @Component({
   selector: 'ardea-ai-assessment-card',
   imports: [TranslocoPipe, UiButton, UiCard],
@@ -239,14 +232,12 @@ import { budget, refs } from './model-format';
 })
 export class AiAssessmentCard {
   readonly model = input.required<ModelAnswersView>();
-  /** Members and up may ask for the assessment again (alert page). */
   readonly canRequest = input(false);
   readonly busy = input(false);
   readonly again = output();
 
   private readonly transloco = inject(TranslocoService);
   protected readonly numbers = refs;
-  /** Source links come from source data: they open only when they are web addresses. */
   protected readonly web = webUrl;
   protected readonly figures = computed(() => budget(this.model()));
   protected readonly rulesetVersion = computed(() => String(this.model().rulesetVersion));

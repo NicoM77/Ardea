@@ -1,12 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 
-/**
- * WCAG 2.2 AA with the target-size rule (master plan 11.8) on the page as it is now; the same rule
- * set as the end-to-end tests against the real instance (tests/e2e/support.ts).
- */
 export async function expectAccessible(page: Page, label: string): Promise<void> {
-  // Arrival animations fade content in; contrast is judged once they have finished (loops excepted).
   await page.waitForFunction(() =>
     document
       .getAnimations()

@@ -10,15 +10,8 @@ import { Session } from '../../core/session/session';
 
 export type LinkMode = 'confirm' | 'unsubscribe' | 'resubscribe';
 
-/** What the page shows: the question, the outcome, or why the link does not work. */
 type View = 'ask' | 'confirmed' | 'unsubscribed' | 'resubscribed' | 'invalid';
 
-/**
- * The pages behind the links in e-mails to external addresses (master plan 8.3, 8.5; ADR 038 decision 9;
- * task 5.8; mockup notification-link.html): confirm an address, unsubscribe it, or take the unsubscribe back.
- * They work without signing in; the token in the link is the proof. Opening a link only shows what it does: the
- * change is a button, so a mail scanner that follows links changes nothing.
- */
 @Component({
   selector: 'ardea-address-link-page',
   imports: [TranslocoPipe, UiButton, UiLoader, UiNotice],
@@ -112,18 +105,12 @@ type View = 'ask' | 'confirmed' | 'unsubscribed' | 'resubscribed' | 'invalid';
   `,
 })
 export class AddressLinkPage {
-  /** From the route's data. */
   readonly mode = input.required<LinkMode>();
-  /** From the query string, where links written before the fragment carried it. */
   readonly token = input<string | null>(null);
 
   private readonly api = inject(NotificationsService);
   private readonly session = inject(Session);
 
-  /**
-   * The link carries its token in the fragment, which the browser never sends: it stays out of every request
-   * line and log on the way (ADR 041). The API gets it in a request body.
-   */
   private readonly fragment = toSignal(inject(ActivatedRoute).fragment, { initialValue: null });
   protected readonly linkToken = computed(
     () => new URLSearchParams(this.fragment() ?? '').get('token') ?? this.token(),
@@ -136,7 +123,6 @@ export class AddressLinkPage {
   protected readonly busy = signal(false);
   protected readonly problem = signal<string | null>(null);
 
-  /** Starts from the address's state, then follows what the person did here. */
   protected readonly view = linkedSignal<View>(() => {
     const state = this.preview.hasValue() ? this.preview.value()?.state : undefined;
     switch (this.mode()) {
@@ -201,7 +187,6 @@ export class AddressLinkPage {
       resubscribe: () => this.api.resubscribeExternalAddress({ token }),
     };
     try {
-      // The session read sets the antiforgery cookie the request carries; the token is what proves it.
       await this.session.ready();
       await firstValueFrom(calls[mode]());
       this.view.set(

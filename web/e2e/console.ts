@@ -1,10 +1,5 @@
 import type { Page } from '@playwright/test';
 
-/**
- * Collects console errors, uncaught exceptions and Content Security Policy violations of a page.
- * A test ends with `expect(problems).toEqual([])`. The one console error that is expected is the
- * browser's own line for a 401 answer: signed-out visitors get it from GET /api/v1/auth/session.
- */
 export function watchConsole(page: Page): string[] {
   const problems: string[] = [];
   page.on('console', (message) => {

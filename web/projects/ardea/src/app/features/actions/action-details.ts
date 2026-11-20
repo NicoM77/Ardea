@@ -5,10 +5,6 @@ import { UiCard, UiStatus } from 'ui';
 import type { ActionSummary } from '../../core/api/client';
 import { num, statusKindOf } from './action-format';
 
-/**
- * The facts of a reminder (mockup reminder.html «Details»): status, project, component, versions,
- * number and when it opened. A reminder has no owner and no deadline (master plan 17.5).
- */
 @Component({
   selector: 'ardea-action-details',
   imports: [RouterLink, TranslocoPipe, UiCard, UiStatus],

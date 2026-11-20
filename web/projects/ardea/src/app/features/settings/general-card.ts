@@ -25,7 +25,6 @@ import { focusFirstInvalid } from '../auth/focus-invalid';
 import { canManage } from '../organizations/org-format';
 import { TEAM_PROBLEMS } from '../team/team-problems';
 
-/** The languages of e-mails and analyses, each in its own language (not translated). */
 export const LOCALES: readonly { value: string; name: string }[] = [
   { value: 'en', name: 'English' },
   { value: 'de', name: 'Deutsch' },
@@ -41,7 +40,6 @@ function timeZones(): string[] {
   }
 }
 
-/** The organization's name, language and time zone (master plan 4.8, 10.2), for owner and admins. */
 @Component({
   selector: 'ardea-general-card',
   imports: [FormField, FormRoot, TranslocoPipe, UiButton, UiCard, UiField, UiInput, UiNotice],
@@ -168,7 +166,6 @@ export class GeneralCard {
             );
             this.saved.set(true);
             this.current.reload();
-            // The name shows in the switch and the search.
             await this.session.refresh();
             return undefined;
           } catch (error) {

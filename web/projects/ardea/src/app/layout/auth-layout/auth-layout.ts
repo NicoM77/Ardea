@@ -3,13 +3,6 @@ import { RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { ICON_CONFIG } from '../../core/icons';
 
-/**
- * The frame for everything before the shell: setup, sign-in, two-factor, registration and the
- * password pages. The ground, the logo, and one white sheet with the form; nothing else on the page.
- *
- * Encapsulation is off so the pages inside share one set of rules for their title, lead sentence,
- * form rhythm and footer links (`.auth-*` classes), instead of repeating them in every page.
- */
 @Component({
   selector: 'ardea-auth-layout',
   providers: [ICON_CONFIG],
@@ -61,7 +54,6 @@ import { ICON_CONFIG } from '../../core/icons';
       text-align: center;
     }
 
-    /* Shared by the pages inside */
     .auth-sheet h1 {
       margin-bottom: var(--space-xs);
     }

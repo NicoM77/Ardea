@@ -65,10 +65,8 @@
       }
     </ui-card>
 
-    <!-- «n new notices» leads the side column (master plan 17.7); below 1100px it moves to the top -->
     <div class="side span-4">
       <ui-card class="notices-card" [heading]="'overview.notices.title' | transloco">
-        <!-- No all-clear before the notices are known: a wait, or a sentence when they could not be read -->
         @if (noticesKnown()) {
           <p class="figure-row">
             <span class="figure">{{ noticeText() }}</span>

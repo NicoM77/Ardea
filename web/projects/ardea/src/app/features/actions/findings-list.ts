@@ -25,12 +25,6 @@ export interface FindingChange {
   note: string | null;
 }
 
-/**
- * The findings of an action (mockup remediation.html «Findings»), highest level first: each opens
- * to its version check, its factors and its own outcome, which may differ from the action's. A
- * finding whose verdict came from the model shows it, marks «not affected» as a proposal, and
- * opens to «Confirm the estimate» and «Correct this assessment» (mockup remediation.html?ai).
- */
 @Component({
   selector: 'ardea-findings-list',
   imports: [
@@ -260,9 +254,7 @@ export class FindingsList {
   readonly findings = input.required<readonly FindingView[]>();
   readonly canEdit = input(false);
   readonly busy = input(false);
-  /** The organization's members, to name who reviewed an assessment. */
   readonly members = input<readonly MemberView[]>([]);
-  /** The first finding opens by itself; the reminder keeps factors collapsed (master plan 17.7). */
   readonly openFirst = input(true);
   readonly outcome = output<FindingChange>();
   readonly review = output<ReviewChange>();
@@ -304,7 +296,6 @@ export class FindingsList {
     }
   }
 
-  /** Called by the page once a change went through. */
   done(): void {
     this.pending.set(null);
     for (const review of this.reviews()) review.done();

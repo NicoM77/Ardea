@@ -13,11 +13,6 @@ import { problemMessageKey } from '../../core/api/problem';
 import { webUrl } from '../entries/entry-detail-format';
 import { count } from './source-format';
 
-/**
- * What the instance administrator sees of one source (master plan 6.8, 11.4): the recent runs with
- * what they fetched and changed, the quarantine list with the reason each record could not be
- * read, and control: run now, pause or resume.
- */
 @Component({
   selector: 'ardea-source-admin',
   imports: [TranslocoPipe, LucidePause, LucidePlay, LucideRefreshCw, UiButton, UiLoader, UiNotice],
@@ -210,7 +205,6 @@ import { count } from './source-format';
 })
 export class SourceAdmin {
   readonly source = input.required<SourceStatus>();
-  /** The source changed (paused, resumed or made due); the list reloads. */
   readonly changed = output();
 
   private readonly api = inject(SourcesService);

@@ -6,12 +6,6 @@ import type { StackSuggestionView } from '../../core/api/client';
 import { groupCommon, suggestionReason } from './stack-format';
 import { StackStore } from './stack-store';
 
-/**
- * What to add to the stack (the stack mockup, «Suggested» and «Often in stacks»): first what an
- * entry does not cover although its records name it (ADR 044: Windows Server with IIS or Exchange,
- * the Linux kernel with a distribution) and what the projects name, each with its reason; then the
- * usual entries of master plan 17.8 as chips, by the groups of the catalogue search.
- */
 @Component({
   selector: 'ardea-stack-suggestions',
   imports: [TranslocoPipe, LucidePlus, UiButton],
@@ -179,7 +173,6 @@ export class StackSuggestions {
   protected readonly groups = computed(() => groupCommon(this.store.suggested()));
   protected readonly reason = suggestionReason;
 
-  /** After adding, the focus moves to the suggestion now in the same place, so a list can be worked through. */
   protected async add(s: StackSuggestionView): Promise<void> {
     const buttons = [...this.host.nativeElement.querySelectorAll<HTMLElement>('[data-suggest]')];
     const at = buttons.findIndex((b) => b.dataset['suggest'] === s.productKey);

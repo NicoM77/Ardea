@@ -6,21 +6,6 @@ import { notifyApi } from './notify-api';
 import { stackApi } from './stack-api';
 import { PROJECT_ID } from './mock-api';
 
-/**
- * The core screens of phase 3 (tasks 3.8 to 3.11) in the production build under the production
- * policy, against a stateful stand-in for the API (e2e/flows-api.ts): the overview on a busy and a
- * quiet day, the filters of the reminders list, a status change with the 409 conflict and taking a
- * closing back, the three answers above the action bar at 390 × 844, and the alert. Phase 4 adds
- * the model's assessment: its texts as plain text, the proposal confirmed and a verdict corrected
- * (task 4.7), and a request for an assessment refused for today (task 4.3); the catalogue that learns
- * with its review list and the note on a hit through a learned entry (tasks 4.9, 4.10). Phase 5a adds
- * the stack (task 5a.4, e2e/stack-api.ts): the wizard with the stack only, and the stack page, also
- * at 390 × 844; and the notices with the reminders (task 5a.5): the inbox answered by pointer and by
- * keyboard with Undo, the follow-up of «Affects us», the earlier and answered views, the reminder
- * with its status and answers first, and the overview's new notices, also at 390 × 844. The «actions»
- * of the API are «reminders» in the interface. Every page is checked
- * with axe (WCAG 2.2 AA) and must log no console error.
- */
 const ORG = '/o/example';
 
 test('overview on a busy day: the finding, the open reminders with their answers, the new notices and the warnings', async ({
@@ -31,15 +16,12 @@ test('overview on a busy day: the finding, the open reminders with their answers
   await page.goto(`${ORG}/overview`);
 
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible();
-  // A reminder has no deadline and no owner (master plan 17.5): the sentence speaks of notices,
-  // exploitation and fixes.
   await expect(
     page.getByRole('status').filter({ hasText: 'critical reminder is open' }),
   ).toHaveText(
     /3 new notices to answer\.\s*1 critical reminder is open\. 1 actively exploited, 1 with a fix\./,
   );
   await expect(page.getByRole('region', { name: 'Deadlines' })).toHaveCount(0);
-  // The open reminders, highest priority first, the first with its three answers.
   const urgent = page.getByRole('region', { name: 'Open reminders' });
   const reminderLinks = urgent.getByRole('link', { name: /^(Update|Mitigate) / });
   await expect(reminderLinks).toHaveCount(4);
@@ -48,7 +30,6 @@ test('overview on a busy day: the finding, the open reminders with their answers
   await expect(urgent.getByRole('heading', { name: 'What happened' })).toBeVisible();
   await expect(urgent.getByRole('heading', { name: 'Are we affected?' })).toBeVisible();
   await expect(urgent.getByRole('heading', { name: 'What to do' })).toBeVisible();
-  // «n new notices» leads the side column (master plan 17.7): the backfill and the answered do not count.
   const notices = page.getByRole('region', { name: 'Notices' });
   await expect(notices).toContainText(/3\s*new notices/);
   const peek = notices.getByRole('listitem');
@@ -65,7 +46,6 @@ test('overview on a busy day: the finding, the open reminders with their answers
     'Phishing campaign against hospital suppliers',
   );
   await expect(warnings).toContainText('BACS warnings');
-  // The sidebar counts the new notices beside «Notices», then «Reminders» (mockup notices.html).
   const nav = page.getByRole('navigation', { name: 'Main' });
   await expect(nav.getByRole('link', { name: 'Notices 3 new' })).toBeVisible();
   await expect(nav.getByRole('link').nth(2)).toHaveText('Reminders');
@@ -106,7 +86,6 @@ test('reminders list: filter by priority and project, search, and the done view'
 }) => {
   const problems = watchConsole(page);
   await flowsApi(page);
-  // Addresses from before the rename lead to the reminders, with their filters.
   await page.goto(`${ORG}/actions?view=open`);
   await expect(page).toHaveURL(/\/o\/example\/reminders\?view=open$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Reminders' })).toBeVisible();
@@ -117,7 +96,6 @@ test('reminders list: filter by priority and project, search, and the done view'
   await expect(page.getByRole('status').filter({ hasText: 'open.' })).toHaveText(
     '4 open. 1 critical.',
   );
-  // No owner and no time left: a reminder has neither (master plan 17.5).
   await expect(table.getByRole('columnheader')).toHaveText([
     'Priority',
     'Reminder',
@@ -181,7 +159,6 @@ test('reminder: someone else changed it meanwhile (409), the page says so and sh
   await expect(page.getByRole('alert')).toHaveText(
     'Someone changed this reminder in the meantime. It shows the current state now; decide again.',
   );
-  // Read again: someone else closed it as an accepted risk; the way back is to reopen it.
   await expect(page.getByRole('button', { name: 'Reopen' })).toBeVisible();
   await expect(page.getByRole('status').filter({ hasText: 'Done on' })).toContainText(
     'risk accepted. No more reminders.',
@@ -194,7 +171,6 @@ test('reminder: status and the three answers first, «Mark as remediated» with 
 }) => {
   const problems = watchConsole(page);
   await flowsApi(page);
-  // A link from before the rename, as in e-mails and notifications, opens the reminder.
   await page.goto(`${ORG}/reminders/143`);
   await expect(page).toHaveURL(/\/o\/example\/reminders\/143$/);
   await expect(
@@ -203,7 +179,6 @@ test('reminder: status and the three answers first, «Mark as remediated» with 
   await expect(page.getByRole('link', { name: 'Reminders' }).first()).toBeVisible();
   const state = page.locator('.status-band').getByRole('status');
   await expect(state).toHaveText(/^Open since /);
-  // No owner, no deadline, no «in review» (master plan 17.5); score and history are collapsed.
   await expect(page.getByLabel('Owner')).toHaveCount(0);
   await expect(page.getByLabel('Due')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Take into review' })).toHaveCount(0);
@@ -215,7 +190,6 @@ test('reminder: status and the three answers first, «Mark as remediated» with 
   );
   await expectAccessible(page, 'reminder');
 
-  // «Mark as remediated» needs no reason, and Undo opens it again.
   const remediated = page.waitForRequest((r) => r.url().endsWith('/actions/143/status'));
   await page.getByRole('button', { name: 'Mark as remediated' }).click();
   expect((await remediated).postDataJSON()).toMatchObject({
@@ -233,7 +207,6 @@ test('reminder: status and the three answers first, «Mark as remediated» with 
   expect((await undo).postDataJSON()).toMatchObject({ status: 'open', expectedStatus: 'closed' });
   await expect(state).toHaveText(/^Open since /);
 
-  // «Other outcome»: risk accepted or not affected, each with a reason.
   const other = page.locator('.controls').getByRole('button', { name: 'Other outcome' });
   await other.click();
   await expect(other).toHaveAttribute('aria-expanded', 'true');
@@ -248,7 +221,6 @@ test('reminder: status and the three answers first, «Mark as remediated» with 
   await history.getByRole('button', { name: /^History/ }).click();
   await expect(history).toContainText('Only the replicas run 17.9.');
 
-  // Reopening sends «open» against the status the page saw: closed.
   const reopen = page.waitForRequest(
     (r) => r.url().endsWith('/actions/143/status') && r.postDataJSON()?.expectedStatus === 'closed',
   );
@@ -260,10 +232,6 @@ test('reminder: status and the three answers first, «Mark as remediated» with 
   expect(problems).toEqual([]);
 });
 
-/*
- * Notices (task 5a.5, master plan 17.7, mockup notices.html) against the notices of `flowsApi`: three
- * new ones (two exploited), one a backfill brought in quietly, and two answered.
- */
 test('notices: the inbox in order, «Doesn’t affect us» with Undo, and the focus moving on', async ({
   page,
 }) => {
@@ -274,7 +242,6 @@ test('notices: the inbox in order, «Doesn’t affect us» with Undo, and the fo
   const summary = page.getByRole('status').filter({ hasText: 'might affect you' });
   await expect(summary).toHaveText('3 new notices might affect you. 2 answered.');
 
-  // Exploited first, then by score; no priority of their own, the score as a neutral pill.
   const list = page.getByRole('list', { name: 'New notices' });
   const cards = list.getByRole('article');
   await expect(cards).toHaveCount(3);
@@ -289,10 +256,8 @@ test('notices: the inbox in order, «Doesn’t affect us» with Undo, and the fo
   await expect(cards.nth(2)).toContainText(
     'Your stack names the 17 line, not the installed release.',
   );
-  // FortiGate came back once (E22).
   await expect(cards.nth(1)).toContainText('Back once.');
   await expect(cards.nth(1)).toContainText('CISA lists it as exploited');
-  // What a backfill raised waits under «Earlier» and does not count as new.
   await expect(page.getByRole('button', { name: /^New/ })).toHaveText(/New\s*3/);
   await expectAccessible(page, 'notices');
   await page.getByRole('button', { name: /^Earlier/ }).click();
@@ -309,11 +274,9 @@ test('notices: the inbox in order, «Doesn’t affect us» with Undo, and the fo
   await expect(toast).toContainText('Doesn’t affect us. It comes back once if it gets exploited.');
   await expect(summary).toHaveText('2 new notices might affect you. 3 answered.');
   await expect(cards).toHaveCount(2);
-  // The focus moves to the card that took its place.
   await expect(cards.first()).toBeFocused();
   await expect(page.getByRole('link', { name: 'Notices 2 new' })).toBeVisible();
 
-  // Undo takes the answer back: the notice returns in its place and takes the focus.
   const reopen = page.waitForRequest((r) => r.url().endsWith('/reopen'));
   await toast.getByRole('button', { name: 'Undo' }).click();
   expect((await reopen).postDataJSON()).toEqual({ expectedState: 'not_affected' });
@@ -342,7 +305,6 @@ test('notices: the keyboard moves between cards and answers with 1 and 2, Esc cl
   await expect(cards.nth(1)).toBeFocused();
   await page.keyboard.press('ArrowDown');
 
-  // 1 opens «Affects us» on the PostgreSQL card: the stack has an open reminder for it, so it adds to it.
   await page.keyboard.press('1');
   const project = cards.nth(2).getByLabel('Project');
   await expect(project).toBeFocused();
@@ -350,14 +312,12 @@ test('notices: the keyboard moves between cards and answers with 1 and 2, Esc cl
     'As far as Ardea can tell, this adds the entry to the open reminder #155 “Update PostgreSQL” in the stack, which has 1 entry.',
   );
   await expect(cards.nth(2).getByRole('button', { name: 'Add to reminder' })).toBeVisible();
-  // Scrolled down, the sticky top bar covers the first card's links; axe would count them as obscured.
   await page.evaluate(() => window.scrollTo(0, 0));
   await expectAccessible(page, 'notices with the follow-up');
   await page.keyboard.press('Escape');
   await expect(cards.nth(2).getByLabel('Project')).toHaveCount(0);
   await expect(cards.nth(2)).toBeFocused();
 
-  // 2 answers «Doesn't affect us» at once; the focus stays at that place, now the last card.
   const answer = page.waitForRequest((r) => r.url().endsWith('/answer'));
   await page.keyboard.press('2');
   expect((await answer).postDataJSON()).toMatchObject({ answer: 'not_affected' });
@@ -380,7 +340,6 @@ test('notices: «Affects us» with a project and a version makes a reminder, a r
   await card.getByLabel('Project').selectOption({ label: 'Customer Portal' });
   await expect(card).toContainText('Creates a reminder to update PostgreSQL in Customer Portal.');
 
-  // A version the API refuses is said under the field.
   await card.getByLabel('Version').fill('not-a-version');
   await card.getByRole('button', { name: 'Create reminder' }).click();
   await expect(card.getByText('Ardea cannot record this version here')).toBeVisible();
@@ -420,12 +379,10 @@ test('notices: the answered view grouped by stack entry and answer, a filter by 
   );
   await expectAccessible(page, 'notices answered');
 
-  // «Change answer» takes «Doesn't affect us» back: the notice is new again.
   await answered.getByRole('button', { name: 'Change answer' }).click();
   await expect(page.locator('ui-toast')).toContainText('Moved back to New');
   await expect(answered).not.toContainText('Windows Server · 1 entry');
 
-  // The filter narrows both views to one stack entry.
   await page
     .getByRole('combobox', { name: 'Stack entry' })
     .selectOption({ label: 'PostgreSQL 17' });
@@ -445,7 +402,6 @@ test('notices: Undo after leaving the page still takes the answer back', async (
   await expect(toast).toContainText('Doesn’t affect us.');
   await expect(page.getByRole('link', { name: 'Notices 2 new' })).toBeVisible();
 
-  // The toast outlives the page: Undo on another page reopens the notice and says so.
   await page.getByRole('link', { name: 'Reminders' }).first().click();
   await expect(page.getByRole('heading', { level: 1, name: 'Reminders' })).toBeVisible();
   const reopen = page.waitForRequest((r) => r.url().endsWith('/reopen'));
@@ -473,7 +429,6 @@ test('notices: an answer someone else gave first (409) is said, the card leaves 
   );
   await expect(cards).toHaveCount(2);
   await expect(cards.first()).toBeFocused();
-  // The keys still work on the cards left.
   await page.keyboard.press('ArrowDown');
   await expect(cards.nth(1)).toBeFocused();
   await expect(page.getByRole('button', { name: /^Answered/ })).toHaveText(/Answered\s*3/);
@@ -580,7 +535,6 @@ test('action with the model’s assessment: plain text, the proposal confirmed, 
     page.getByRole('heading', { level: 1, name: 'Update PostgreSQL to 17.12' }),
   ).toBeVisible();
 
-  // The model's sentence is text: its markup shows as written and its address is no link.
   const happened = page.locator('[data-answer="happened"]');
   await expect(happened).toContainText('<b>Ignore this</b> and run https://evil.example/fix.sh');
   await expect(page.locator('a[href*="evil.example"]')).toHaveCount(0);
@@ -591,7 +545,6 @@ test('action with the model’s assessment: plain text, the proposal confirmed, 
   await expect(page.getByText('Proposal: probably not affected').first()).toBeVisible();
   await expectAccessible(page, 'action with the model’s assessment');
 
-  // Confirming the proposal sends the verdict the page showed and closes the finding.
   const confirm = page.waitForRequest((r) => r.url().endsWith('/findings/f2/review'));
   await page.getByRole('button', { name: 'Confirm the estimate' }).nth(1).click();
   expect((await confirm).postDataJSON()).toMatchObject({
@@ -602,7 +555,6 @@ test('action with the model’s assessment: plain text, the proposal confirmed, 
   const toast = page.locator('ui-toast');
   await expect(toast).toContainText('CVE-2026-118402: confirmed as not affected and closed');
 
-  // A correction needs a reason, then goes with the person's verdict.
   await page.getByRole('button', { name: 'Correct this assessment' }).first().click();
   await page.getByLabel('Verdict').selectOption('affected');
   await page.getByRole('button', { name: 'Save the correction' }).click();
@@ -620,7 +572,6 @@ test('action with the model’s assessment: plain text, the proposal confirmed, 
     level: null,
   });
   await expect(toast).toContainText('CVE-2026-116325: correction saved');
-  // The history is collapsed on a reminder (master plan 17.7): one click away.
   const history = page.getByRole('region', { name: 'History' });
   await history.getByRole('button', { name: /^History/ }).click();
   await expect(history).toContainText('corrected CVE-2026-116325 to affected');
@@ -645,12 +596,6 @@ test('alert: a request for an AI assessment beyond today’s cap is said in a se
   expect(problems.filter((p) => !p.includes('status of 429'))).toEqual([]);
 });
 
-/*
- * Phase 5 (tasks 5.5, 5.8): the notification pages against `notifyApi` (e2e/notify-api.ts). A rule is
- * created, a webhook added and tested, an external address confirmed through its link without signing in,
- * a notification read from the bell, and push turned on and off on this device in Chromium. The browser's
- * push service is replaced by a stand-in in the page: Chromium in a test has no connection to one.
- */
 test('notification rules: the matrix of rules and channels, and a new rule', async ({ page }) => {
   const problems = watchConsole(page);
   const api = await notifyApi(page);
@@ -718,7 +663,6 @@ test('reminders by level: the rhythm per level is changed with the keyboard and 
   await expect(save).toBeDisabled();
   await expectAccessible(page, 'reminders by level');
 
-  // Keyboard only: to the level 4 choice, «Off», and the save button.
   await critical.focus();
   await page.keyboard.press('Tab');
   await expect(card.getByRole('combobox', { name: 'High' })).toBeFocused();
@@ -732,11 +676,9 @@ test('reminders by level: the rhythm per level is changed with the keyboard and 
   expect(put.body).toEqual({ level5: 'daily', level4: 'off', level3: 'weekly' });
   await expect(save).toBeDisabled();
 
-  // The rule editor offers notices among its events.
   await page.getByRole('link', { name: 'New rule' }).click();
   await expect(page.getByRole('checkbox', { name: /New notice/ })).toBeChecked();
 
-  // The delivery log names a run of the reminders, with how many it held.
   await page.goto(`${ORG}/notification-rules/log`);
   const run = page.getByRole('row', { name: /Reminders by level/ });
   await expect(run).toContainText('3 reminders');
@@ -770,14 +712,12 @@ test('an external address is confirmed through the link in its e-mail, without s
 }) => {
   const problems = watchConsole(page);
   const api = await notifyApi(page, { signedIn: false });
-  // The token is in the fragment: the page's own request carries none.
   await page.goto('/notifications/confirm#token=link-token');
 
   await expect(page.getByRole('heading', { level: 1, name: 'Confirm your address' })).toBeVisible();
   await expect(
     page.getByText('Example Org wants to send security alerts to support@agency.example.'),
   ).toBeVisible();
-  // Opening the link changed nothing; the button does.
   expect(api.requests.filter((r) => r.path.includes('/confirm'))).toEqual([]);
   await expectAccessible(page, 'confirm link');
 
@@ -814,9 +754,7 @@ test('the bell counts unread notifications; reading one in the inbox opens its r
 
 test('push is turned on and off on this device in Chromium', async ({ page }) => {
   const problems = watchConsole(page);
-  // The browser's push service is not reachable in a test: subscribing stays in the page.
   await page.addInitScript(() => {
-    // Headless Chromium answers «denied» whatever the context grants.
     Object.defineProperty(Notification, 'permission', { get: () => 'granted' });
     Notification.requestPermission = async () => 'granted';
     let current: PushSubscription | null = null;
@@ -860,20 +798,17 @@ test('push is turned on and off on this device in Chromium', async ({ page }) =>
 
   await page.getByRole('button', { name: 'Turn off on this device' }).click();
   await expect(page.getByText('Off on this device')).toBeVisible();
-  // This device turns push off by its endpoint.
   expect(api.requests.map((r) => `${r.method} ${r.path}`)).toContain(
     'DELETE /api/v1/me/push-subscriptions?endpoint=https://fcm.googleapis.com/fcm/send/test-device',
   );
   await expect(page.getByText('No device receives push yet.')).toBeVisible();
 
-  // Muting a channel is the member's own setting.
   await page.getByRole('switch', { name: 'E-mail' }).click();
   await expect(page.getByRole('switch', { name: 'E-mail' })).toHaveAttribute(
     'aria-checked',
     'false',
   );
 
-  // Signing out takes this browser's subscription away first, while the session still exists.
   await page.getByRole('button', { name: 'Turn on push' }).click();
   await expect(page.getByText('On for this device')).toBeVisible();
   await page.getByRole('button', { name: /^Account:/ }).click();
@@ -896,7 +831,6 @@ test('catalogue that learns: the note on a hit leads to the review list, where a
   const problems = watchConsole(page);
   await flowsApi(page, { learned: true });
   await page.goto(`${ORG}/reminders/143`);
-  // The findings keep their details collapsed on a reminder: open the first.
   await page.locator('details.finding summary').first().click();
   await expect(page.getByText('Via the learned catalogue entry postgresql')).toBeVisible();
   await page.getByRole('link', { name: 'Open the entry' }).click();
@@ -906,7 +840,6 @@ test('catalogue that learns: the note on a hit leads to the review list, where a
   const card = page.getByRole('region', { name: 'Catalogue that learns' });
   await expect(card).toContainText('19.3%');
   await expect(card).toContainText('12 of 200');
-  // The model's reason is text: its markup shows as written and its address is no link.
   await expect(card).toContainText(
     '<b>Ignore this</b> and adopt everything from https://evil.example/',
   );
@@ -936,13 +869,11 @@ test('wizard with the stack only: products from the catalogue and the suggestion
   await expect(step).toContainText('could this affect you?');
   await expect(page.getByRole('navigation', { name: 'Setup steps' })).toContainText('Stack');
 
-  // Continue needs one product: the step says so and puts the focus in the search.
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(step.getByText('Add at least one product your organization runs.')).toBeVisible();
   const search = page.getByRole('combobox', { name: 'Add a product' });
   await expect(search).toBeFocused();
 
-  // Another spelling finds the product; the keyboard picks it.
   await search.fill('postgres');
   await expect(page.getByRole('option', { name: /PostgreSQL/ })).toBeVisible();
   await search.press('ArrowDown');
@@ -953,11 +884,9 @@ test('wizard with the stack only: products from the catalogue and the suggestion
   await expect(search).toHaveValue('');
   await expect(search).toBeFocused();
 
-  // Azure is not one product of the catalogue (ADR 044): the search says so.
   await search.fill('azure');
   await expect(page.getByText('Microsoft Azure is not one product in the catalogue')).toBeVisible();
 
-  // IIS brings Windows Server as its companion (ADR 044), with the reason.
   await search.fill('iis');
   await page.getByRole('option', { name: /Internet Information Services/ }).click();
   const suggested = page.getByRole('region', { name: 'Suggested' });
@@ -965,11 +894,9 @@ test('wizard with the stack only: products from the catalogue and the suggestion
     'Vulnerabilities in Internet Information Services are usually published under Windows Server.',
   );
   await suggested.getByRole('button', { name: 'Add Windows Server to the stack' }).click();
-  // A usual entry from the chips of its group.
   await suggested.getByRole('button', { name: 'Add nginx to the stack' }).click();
   await expect(rows).toHaveCount(4);
 
-  // A version line for PostgreSQL, and every entry for nginx; each is saved at once.
   const postgres = rows.filter({ hasText: 'PostgreSQL' });
   const version = postgres.getByRole('textbox', { name: 'Version of PostgreSQL' });
   await version.fill('17');
@@ -988,7 +915,6 @@ test('wizard with the stack only: products from the catalogue and the suggestion
   ]);
   await expectAccessible(page, 'wizard stack step');
 
-  // Continue: the focus moves to the next step's title; the project is optional.
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page).toHaveURL(/\/setup\?step=project$/);
   await expect(page.getByRole('heading', { name: /Step 3: Project/ })).toBeFocused();
@@ -1025,7 +951,6 @@ test('stack page: suggestions with their reasons, a removal taken back, a versio
   );
   await expectAccessible(page, 'stack page');
 
-  // Removing Ubuntu moves the focus to the next Remove; Undo brings it back as it was.
   await rows.filter({ hasText: 'Ubuntu' }).getByRole('button', { name: 'Remove Ubuntu' }).click();
   await expect(rows).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Remove PostgreSQL' })).toBeFocused();
@@ -1034,7 +959,6 @@ test('stack page: suggestions with their reasons, a removal taken back, a versio
   await expect(rows).toHaveCount(2);
   await expect(rows.filter({ hasText: 'Ubuntu' })).toBeVisible();
 
-  // Clearing the version makes it any version again.
   const postgres = rows.filter({ hasText: 'PostgreSQL' });
   await postgres.getByRole('textbox', { name: 'Version of PostgreSQL' }).fill('');
   await postgres.getByRole('textbox', { name: 'Version of PostgreSQL' }).press('Enter');
@@ -1070,7 +994,6 @@ test('stack page: a save that fails says so, and the row shows what is stored', 
   await expect(exactness).toHaveValue('line');
   await expect(exactness).toBeFocused();
 
-  // Once writes go through again, the same change is saved.
   stack.failWrites = false;
   await version.fill('24.04');
   await version.press('Enter');
@@ -1141,7 +1064,6 @@ test.describe('notices and the overview at 390 × 844', () => {
     const cards = page.getByRole('list', { name: 'New notices' }).getByRole('article');
     await expect(cards).toHaveCount(3);
     expect(await overflow(page)).toBeLessThanOrEqual(0);
-    // No key caps on a touch screen.
     await expect(page.getByText('next notice')).toBeHidden();
     const affects = cards.first().getByRole('button', { name: 'Affects us' });
     expect((await affects.boundingBox())!.height).toBeGreaterThanOrEqual(44);

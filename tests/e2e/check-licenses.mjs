@@ -1,9 +1,4 @@
 #!/usr/bin/env node
-/*
- * Checks the licences of the end-to-end test packages (Playwright, axe, otpauth and what they pull
- * in) against build/licenses/allowed-licenses.json, as web/scripts/check-licenses.mjs does for the
- * app. The licence checker itself is a dev dependency and not checked.
- */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';

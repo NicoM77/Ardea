@@ -2,10 +2,6 @@ import { Component, input } from '@angular/core';
 
 let nextCard = 0;
 
-/**
- * Cards (DESIGN.md): white, 1px Border, 8px corners, 20px padding, a 16px title and optional meta
- * on the right. No shadow at rest. Slots: meta or tools in the header (`[uiCardMeta]`), the body.
- */
 @Component({
   selector: 'ui-card',
   template: `
@@ -54,6 +50,5 @@ let nextCard = 0;
 })
 export class UiCard {
   readonly heading = input<string | null>(null);
-  /** The id of the heading; set it when something else on the page points at this card. */
   readonly headingId = input(`ui-card-${nextCard++}`);
 }

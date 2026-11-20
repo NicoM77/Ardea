@@ -1,9 +1,5 @@
 import type { AuditEventView } from '../../core/api/client';
 
-/**
- * Sentences for the audit actions the organization records. An action without one shows its code,
- * so a new action is never hidden, only less readable until it gets its sentence.
- */
 export const AUDIT_ACTIONS: Record<string, string> = {
   'org.created': 'settings.audit.actions.orgCreated',
   'org.settings_changed': 'settings.audit.actions.orgSettingsChanged',
@@ -29,7 +25,6 @@ export const AUDIT_ACTIONS: Record<string, string> = {
   'repository_connection.deleted': 'settings.audit.actions.connectionDeleted',
 };
 
-/** The actor as the log prints it: a member's name, or a translation key for the others. */
 export function actorKey(event: AuditEventView): { name: string | null; key: string | null } {
   if (event.actorKind === 'member' && event.actorName) return { name: event.actorName, key: null };
   return {
@@ -39,10 +34,6 @@ export function actorKey(event: AuditEventView): { name: string | null; key: str
   };
 }
 
-/**
- * A short, readable form of an event's data for the detail line: its plain values, never nested
- * objects. The full data stays in the API for whoever needs it.
- */
 export function dataSummary(data: unknown): string {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return '';
   return Object.entries(data as Record<string, unknown>)

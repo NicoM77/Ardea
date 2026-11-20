@@ -5,8 +5,7 @@ import { UiCard, UiLoader, UiNotice } from 'ui';
 import type { CoverageHint, CoverageView } from '../../core/api/client';
 import { ecosystemName } from './component-format';
 
-/** A sentence per kind of gap (`GET /orgs/{orgId}/profile/coverage`, task 2.8). */
-export const COVERAGE_LABELS: Record<string, string> = {
+const COVERAGE_LABELS: Record<string, string> = {
   missing_version: 'projects.coverage.kinds.missingVersion',
   version_line_only: 'projects.coverage.kinds.versionLineOnly',
   platform_without_plugins: 'projects.coverage.kinds.platformWithoutPlugins',
@@ -22,11 +21,6 @@ export const COVERAGE_LABELS: Record<string, string> = {
 const number = (value: number | string) =>
   typeof value === 'number' ? value : Number.parseInt(value, 10) || 0;
 
-/**
- * What can be checked and what cannot (master plan 11.6 step 6, task 2.8): the share of fully
- * checkable components as a figure and a bar, and each gap with its count and a few examples.
- * Hints, not locks: everything else works with the gaps open.
- */
 @Component({
   selector: 'ardea-coverage-card',
   imports: [TranslocoPipe, UiCard, UiLoader, UiNotice],
@@ -143,7 +137,6 @@ export class CoverageCard {
   protected readonly total = computed(() => number(this.view()?.components ?? 0));
   protected readonly checkable = computed(() => number(this.view()?.fullyCheckable ?? 0));
   protected readonly share = computed(() => (this.total() ? this.checkable() / this.total() : 1));
-  /** Warnings first, then the larger gaps. */
   protected readonly hints = computed(() =>
     [...(this.view()?.hints ?? [])].sort(
       (a, b) =>

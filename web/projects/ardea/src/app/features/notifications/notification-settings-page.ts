@@ -25,11 +25,6 @@ const CHANNEL_HINTS: Readonly<Record<string, string>> = {
   push: 'notify.settings.hints.push',
 };
 
-/**
- * The member's own notification settings in one organization (master plan 8.3, 11.4, 11.9; tasks 5.5, 5.8;
- * mockup notification-settings.html), linked from every e-mail: the channels they hear on, the language of
- * messages, push on this device with the Home Screen guide for iPhone and iPad, and their devices.
- */
 @Component({
   selector: 'ardea-notification-settings-page',
   imports: [

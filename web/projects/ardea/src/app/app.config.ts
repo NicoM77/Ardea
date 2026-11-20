@@ -36,17 +36,13 @@ export const appConfig: ApplicationConfig = {
       withViewTransitions({ skipInitialTransition: true }),
     ),
     { provide: TitleStrategy, useClass: TranslatedTitleStrategy },
-    // Same origin: the API serves the app in production, the dev server proxies /api.
     provideHttpClient(
       withFetch(),
       withXsrfConfiguration({ cookieName: 'XSRF-TOKEN', headerName: 'X-XSRF-TOKEN' }),
       withInterceptors([apiBaseUrlInterceptor, sessionExpiredInterceptor]),
     ),
     provideTranslations(),
-    // Icons: provided by the layouts (core/icons.ts), so the icon set is not part of start-up.
     provideAppInitializer(() => {
-      // Start reading the session at once: it tells the guards who is signed in and sets the
-      // XSRF-TOKEN cookie before the first write. A failure is not fatal; the guards show it.
       inject(Session);
       return firstValueFrom(inject(TranslocoService).load('en')).then(() => undefined);
     }),

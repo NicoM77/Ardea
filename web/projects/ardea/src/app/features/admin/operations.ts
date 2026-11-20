@@ -1,24 +1,18 @@
 import type { StatusMetric, StatusWarning, WarningNotified } from '../../core/api/client';
 
-/** The operating figures of one group, e.g. everything about the sources, in a stable order. */
 export interface MetricGroup {
   readonly group: string;
   readonly rows: readonly MetricRow[];
 }
 
-export interface MetricRow {
+interface MetricRow {
   readonly name: string;
   readonly value: number;
   readonly unit: string | null;
 }
 
-/** The groups the server reports, in the order an operator reads them; unknown ones follow alphabetically. */
 const ORDER = ['worker', 'jobs', 'sources', 'deliveries', 'notify', 'ai', 'repositories'];
 
-/**
- * Groups the figures of `GET /api/v1/instance/status` by their group. The server sends counts and times
- * only; values arrive as numbers or, for large ones, as numeric strings.
- */
 export function groupMetrics(metrics: readonly StatusMetric[]): MetricGroup[] {
   const groups = new Map<string, MetricRow[]>();
   for (const metric of metrics) {
@@ -38,10 +32,6 @@ export function groupMetrics(metrics: readonly StatusMetric[]): MetricGroup[] {
     }));
 }
 
-/**
- * When the instance administrators were last mailed about this warning (ADR 043), or null while they were
- * not. Warnings are keyed by code and subject, as the server keys them.
- */
 export function notifiedAt(
   notified: readonly WarningNotified[],
   warning: StatusWarning,

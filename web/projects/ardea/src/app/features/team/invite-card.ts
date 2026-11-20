@@ -15,11 +15,6 @@ import { focusFirstInvalid } from '../auth/focus-invalid';
 import { ASSIGNABLE_ROLES, ROLE_HINTS, ROLE_LABELS } from '../organizations/org-format';
 import { TEAM_PROBLEMS } from './team-problems';
 
-/**
- * Inviting someone by e-mail address with a role. With SMTP the invitation goes out by mail;
- * without it the API hands the link back once, and this card shows it to pass on by hand
- * (master plan 12.4). The link is not shown again: the list of invitations has no tokens.
- */
 @Component({
   selector: 'ardea-invite-card',
   imports: [
@@ -153,7 +148,6 @@ export class InviteCard {
   protected readonly roles = ASSIGNABLE_ROLES;
   protected readonly roleLabels = ROLE_LABELS;
   protected readonly problem = signal<string | null>(null);
-  /** The last invitation, with its one-time link when the instance sends no e-mail. */
   protected readonly sent = signal<InvitationView | null>(null);
 
   private readonly model = signal({ email: '', role: 'member' });

@@ -81,7 +81,6 @@ describe('TeamPage', () => {
     http.expectOne(`/api/v1/orgs/${ORG_ID}/invitations`).flush([invitation()]);
     await settle(fixture);
 
-    // Two others with a role select each; the owner's own row has none.
     expect(element.querySelectorAll('select[aria-label]').length).toBe(2);
     expect(element.textContent).toContain('new@example.org');
 
@@ -137,7 +136,6 @@ describe('TeamPage', () => {
     const link = element.querySelector<HTMLInputElement>('#invitation-link')!;
     expect(link.value).toBe('https://ardea.example.org/invitations/t0k3n');
     expect(element.textContent).toContain('en.team.invite.linkText');
-    // The form is ready for the next address.
     expect(email.value).toBe('');
 
     button(element, 'en.team.invite.done')!.click();

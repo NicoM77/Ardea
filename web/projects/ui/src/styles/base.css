@@ -1,5 +1,3 @@
-/* Base styles shared by every page: reset, type, browser surfaces. Tokens only. */
-
 *,
 *::before,
 *::after {
@@ -10,7 +8,6 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scrollbar-color: var(--control) transparent;
-  /* What takes the focus or is scrolled to stays clear of the sticky top bar */
   scroll-padding-top: calc(var(--topbar) + var(--space-sm));
 }
 
@@ -133,12 +130,10 @@ h3 {
   }
 }
 
-/* Lucide icons: 1.6px line drawings on a 24px grid at 16px (DESIGN.md, Shapes) */
 svg.lucide {
   flex: none;
 }
 
-/* Screenshots and reduced motion: everything in its final state */
 .static *,
 .static *::before,
 .static *::after {

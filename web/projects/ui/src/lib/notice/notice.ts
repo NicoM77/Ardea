@@ -3,11 +3,6 @@ import { LucideCircleExclamationPoint, LucideCircleCheck, LucideInfo } from '@lu
 
 export type UiNoticeTone = 'info' | 'error' | 'success';
 
-/**
- * A sentence about the page or the form as a whole: a failed sign-in, a sent link, a step done.
- * Errors stay neutral (red means Critical); the icon and the sentence carry the state. An error
- * notice is an alert, so screen readers hear it the moment it appears; the others are status.
- */
 @Component({
   selector: 'ui-notice',
   imports: [LucideCircleExclamationPoint, LucideCircleCheck, LucideInfo],

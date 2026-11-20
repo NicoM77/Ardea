@@ -22,7 +22,6 @@ const summary = (key: string): EntrySummary => ({
   aliases: [],
 });
 
-/** Lets answered requests settle, runs effects (where httpResource sends) and renders; never waits for an open request. */
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve));
   TestBed.tick();

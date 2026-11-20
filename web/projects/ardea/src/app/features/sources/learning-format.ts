@@ -1,5 +1,3 @@
-/** The lists of the catalogue that learns (master plan 6.9), with their translation keys written out in full. */
-
 export type LearningView = 'review' | 'open' | 'in_effect' | 'decided';
 
 export const LEARNING_VIEWS: readonly { value: LearningView; label: string }[] = [
@@ -33,7 +31,6 @@ export const HOLD_LABELS: Readonly<Record<string, string>> = {
   check: 'catalogLearning.hold.check',
 };
 
-/** The kinds and version schemes the catalogue knows (data/catalog.schema.json). */
 export const KINDS = [
   'os',
   'runtime',
@@ -61,7 +58,6 @@ export const SCHEMES = [
   'semver',
 ] as const;
 
-/** A share from 0 to 1 as a percentage in the reader's language; a dash before the first collection. */
 export function share(value: number | string | null | undefined, locale: string): string {
   if (value === null || value === undefined || value === '') return '–';
   const n = Number(value);

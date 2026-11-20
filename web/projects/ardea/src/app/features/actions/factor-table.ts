@@ -3,14 +3,13 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { UiPriority } from 'ui';
 import { priorityOfLevel } from './action-format';
 
-/** A finding's stored explanation (`finding.factors`, rule set version 1, master plan 7.6). */
-export interface FactorRow {
+interface FactorRow {
   factor: string;
   value: string;
   evidence?: string | null;
   points: number;
 }
-export interface Bound {
+interface Bound {
   bound: string;
   level: number;
 }
@@ -24,8 +23,7 @@ export interface RuleResult {
   floors: Bound[];
 }
 
-/** Reads the explanation defensively: it is stored JSON, and older rows may lack parts. */
-export function ruleResultOf(json: unknown): RuleResult | null {
+function ruleResultOf(json: unknown): RuleResult | null {
   if (!json || typeof json !== 'object') return null;
   const r = json as Partial<RuleResult>;
   return {
@@ -39,10 +37,6 @@ export function ruleResultOf(json: unknown): RuleResult | null {
   };
 }
 
-/**
- * The priority as the rule set computed it (DESIGN.md «Priority score»): one row per factor with
- * its evidence and points, the sum, and the bounds that moved the level. A real table.
- */
 @Component({
   selector: 'ardea-factor-table',
   imports: [TranslocoPipe, UiPriority],
@@ -157,7 +151,6 @@ export function ruleResultOf(json: unknown): RuleResult | null {
 })
 export class FactorTable {
   readonly factors = input.required<unknown>();
-  /** Already translated, for screen readers: whose factors these are. */
   readonly caption = input.required<string>();
 
   protected readonly result = computed(() => ruleResultOf(this.factors()));

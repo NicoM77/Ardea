@@ -15,15 +15,6 @@ import {
   whatParams,
 } from './notice-format';
 
-/**
- * One notice of the inbox (master plan 17.3, 17.7; mockup notices.html; named `NoticeCard` so it is not
- * mistaken for the library's `ui-notice` callout): the source's signals without a priority of its own
- * (E23: the Exploited pill and the CVSS score as a neutral pill), the title, the reason «Your stack names
- * PostgreSQL», the three answers and the two answers of equal weight. «Affects us» opens the short
- * follow-up in place; «Doesn't affect us» takes effect at once and the page offers Undo. The card itself
- * takes the focus, so the keyboard of the page can move between cards and answer the one in focus.
- * A notice that came back once (E22) says so above its head.
- */
 @Component({
   selector: 'ardea-notice-card',
   imports: [
@@ -63,7 +54,6 @@ import {
                       }
               }}
             } @else {
-              <!-- Taken back since (reopen clears who answered): the earlier answer is not known here -->
               {{
                 'notices.back.textBefore' | transloco: { reason: n.reappearedReason ?? 'exploited' }
               }}
@@ -162,7 +152,6 @@ import {
           </a>
         </footer>
       }
-      <!-- Always in the page, so a refused answer is read out; the open follow-up says it in its form -->
       <p class="problem" role="alert">
         @if (!following() && problem(); as p) {
           {{ p | transloco }}
@@ -335,7 +324,6 @@ import {
         color: var(--text);
       }
     }
-    /* Key caps only where there is a keyboard to hint at */
     @media (hover: none), (pointer: coarse), (max-width: 640px) {
       .actions ui-kbd {
         display: none;
@@ -370,18 +358,14 @@ import {
 })
 export class NoticeCard {
   readonly notice = input.required<NoticeView>();
-  /** Members answer; viewers read (ADR 047 decision 9). */
   readonly canAnswer = input(false);
-  /** The follow-up of «Affects us» is open on this card. */
   readonly following = input(false);
   readonly busy = input(false);
-  /** Why the last answer was refused, as a translation key. */
   readonly problem = input<string | null>(null);
   readonly versionError = input<string | null>(null);
   readonly projectError = input<string | null>(null);
   readonly projects = input<readonly { id: string; name: string }[]>([]);
   readonly reminders = input<readonly ActionSummary[]>([]);
-  /** Who answered «Doesn't affect us» before the notice came back, by name. */
   readonly decider = input<string | null>(null);
 
   readonly affects = output();

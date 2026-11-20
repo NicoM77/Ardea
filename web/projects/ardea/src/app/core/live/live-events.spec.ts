@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { LIVE_SOURCE, LiveEvents, reloadOnLiveChange, type LiveSource } from './live-events';
 
-/** A stand-in for the browser's EventSource that the test drives by hand. */
 class FakeSource implements LiveSource {
   readyState = 0;
   closed = false;
@@ -72,7 +71,6 @@ describe('LiveEvents', () => {
     expect(sources).toHaveLength(1);
     vi.advanceTimersByTime(1);
     expect(sources).toHaveLength(2);
-    // A second failure waits twice as long.
     sources[1].readyState = 2;
     sources[1].emit('error');
     vi.advanceTimersByTime(9_999);

@@ -8,7 +8,6 @@ import { num } from '../actions/action-format';
 import { SourceHealth } from '../sources/source-health';
 import { warningSource } from './overview-format';
 
-/** Shared row styles of the overview's list cards (mockup `.rows`). */
 const ROWS = `
   .rows {
     display: flex;
@@ -91,7 +90,6 @@ function formatWhen(lang: string, value: string): string {
   );
 }
 
-/** Open actions per project (mockup «Projects»): one block per action in its priority's colour. */
 @Component({
   selector: 'ardea-projects-card',
   imports: [RouterLink, TranslocoPipe, UiCard],
@@ -160,7 +158,6 @@ export class ProjectsCard {
   );
 }
 
-/** The words for each kind of change in the last 24 hours. */
 const CHANGE_LABELS: Readonly<Record<string, string>> = {
   'action.raised': 'overview.changes.raised',
   'action.level_raised': 'overview.changes.levelRaised',
@@ -173,10 +170,6 @@ const CHANGE_LABELS: Readonly<Record<string, string>> = {
   'backfill.completed': 'overview.changes.backfill',
 };
 
-/**
- * What changed since yesterday (mockup «Since yesterday»), as counts per kind of change: the API
- * gives the counts of the last 24 hours, not the single events.
- */
 @Component({
   selector: 'ardea-changes-card',
   imports: [TranslocoPipe, UiCard],
@@ -210,11 +203,6 @@ export class ChangesCard {
   protected readonly total = computed(() => this.known().reduce((n, c) => n + c.count, 0));
 }
 
-/**
- * Warnings without an identifier (mockup, master plan 11.4): campaigns and advisories of national
- * centres with no CVE yet, from the last seven days. They name no product of the organization, so
- * they raise no action; each leads to its entry.
- */
 @Component({
   selector: 'ardea-warnings-card',
   imports: [RouterLink, TranslocoPipe, LucideMegaphone, UiCard],
@@ -258,7 +246,6 @@ export class WarningsCard {
   }
 }
 
-/** The state of the sources (mockup «Sources»): symbol and word; only Healthy takes a colour. */
 @Component({
   selector: 'ardea-sources-card',
   imports: [RouterLink, TranslocoPipe, LucideChevronRight, UiCard, SourceHealth],

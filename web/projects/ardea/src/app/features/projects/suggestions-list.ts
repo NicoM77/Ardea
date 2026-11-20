@@ -8,11 +8,6 @@ import { RepositoriesService, type SuggestionView } from '../../core/api/client'
 import { problemMessageKey } from '../../core/api/problem';
 import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
 
-/**
- * Suggestions to confirm (master plan 16.5, 16.7): a platform derived from a file, with the file,
- * the line and what it says, and three answers. Confirming makes it a component from the
- * repository; a dismissed one is not suggested again while the file says the same.
- */
 @Component({
   selector: 'ardea-suggestions-list',
   imports: [TranslocoPipe, LucideFileCode, UiButton, UiCard, UiInput, UiLoader, UiNotice],
@@ -199,7 +194,6 @@ export class SuggestionsList {
   readonly projectId = input.required<string>();
   readonly suggestions = input.required<HttpResourceRef<SuggestionView[] | undefined>>();
   readonly canEdit = input(false);
-  /** A suggestion was confirmed: the project has a new component. */
   readonly decided = output<void>();
 
   private readonly api = inject(RepositoriesService);

@@ -18,10 +18,6 @@ import {
 
 const PAGE = 50;
 
-/**
- * The delivery log (master plan 8.6, 11.4; task 5.8; mockup notification-rules.html, «Delivery log»): one row per
- * message, newest first, with its state, attempts and why it failed; filtered by state and channel.
- */
 @Component({
   selector: 'ardea-delivery-log-page',
   imports: [TranslocoPipe, UiButton, UiInput, UiLoader, UiNotice, UiStatus, NotifyFrame],

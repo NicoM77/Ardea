@@ -8,10 +8,6 @@ import {
 } from '@lucide/angular';
 import { HEALTH_LABELS } from './source-format';
 
-/**
- * A source's health as symbol and word (DESIGN.md: never colour alone). Neutral like the working
- * states; only "healthy" takes the positive colour, as Remediated does. Red stays for Critical.
- */
 @Component({
   selector: 'ardea-source-health',
   imports: [TranslocoPipe, LucideCircleCheck, LucideCircleDashed, LucideCirclePause, LucideCircleX],

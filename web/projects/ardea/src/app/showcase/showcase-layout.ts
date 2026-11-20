@@ -2,11 +2,6 @@ import { Component, ViewEncapsulation } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ICON_CONFIG } from '../core/icons';
 
-/**
- * Frame of the component library pages. Development only and never shipped, so its own labels
- * are plain English rather than translation keys (scripts/check-translations.mjs skips this folder).
- * Encapsulation is off: the `.sc-*` classes lay out every page below.
- */
 @Component({
   selector: 'ardea-showcase-layout',
   providers: [ICON_CONFIG],

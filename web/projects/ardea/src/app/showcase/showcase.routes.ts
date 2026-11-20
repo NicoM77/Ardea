@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { ShowcaseLayout } from './showcase-layout';
 
-/** One page per group of components; the visual test takes one image of each (e2e/visual.spec.ts). */
 export const SHOWCASE_PAGES: Routes = [
   {
     path: '',

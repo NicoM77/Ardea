@@ -4,14 +4,8 @@ import { inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { NotificationsService, type PushPublicKeyView } from '../../core/api/client';
 
-/**
- * What this browser can do about push (master plan 11.9): `unsupported` (no push at all), `install` (iPhone or
- * iPad in a Safari tab: push needs the app on the Home Screen first), `blocked` (the person denied it),
- * `off`, `on`.
- */
 export type PushState = 'checking' | 'unsupported' | 'install' | 'blocked' | 'off' | 'on';
 
-/** The browser's subscription key comes base64url; PushManager wants the bytes. */
 export function keyBytes(base64url: string): Uint8Array<ArrayBuffer> {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
   const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
@@ -21,15 +15,10 @@ export function keyBytes(base64url: string): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
-/** iPhone and iPad, also an iPad that reports itself as a Mac. */
 export function isAppleMobile(userAgent: string, maxTouchPoints: number): boolean {
   return /iPhone|iPad|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && maxTouchPoints > 1);
 }
 
-/**
- * Web Push on this device (task 5.5, ADR 041): registers the service worker, asks for permission on a tap,
- * subscribes with the instance's key and hands the subscription to the API; turning it off removes both.
- */
 @Injectable({ providedIn: 'root' })
 export class PushDevice {
   private readonly api = inject(NotificationsService);
@@ -38,10 +27,8 @@ export class PushDevice {
 
   private readonly current = signal<PushState>('checking');
   readonly state = this.current.asReadonly();
-  /** The endpoint of this browser's subscription, to find it among the devices. */
   readonly endpoint = signal<string | null>(null);
 
-  /** Looks at the browser and its subscription without asking anything. */
   async check(): Promise<PushState> {
     const w = this.window;
     if (!w || !w.navigator.serviceWorker) return this.set('unsupported');
@@ -62,8 +49,6 @@ export class PushDevice {
       this.endpoint.set(null);
       return this.set('off');
     }
-    // The browser's subscription alone does not say the server knows it (another person signed out here, or the
-    // device was removed): hand it over again, which changes nothing when it is known.
     try {
       await this.register(subscription);
       return this.set('on');
@@ -73,10 +58,6 @@ export class PushDevice {
     }
   }
 
-  /**
-   * Signing out: this browser stops receiving the person's push messages. The server forgets the device while the
-   * session still exists, then the browser drops its subscription. Best effort, and never longer than a moment.
-   */
   async forget(): Promise<void> {
     const w = this.window;
     if (!w?.navigator.serviceWorker || !('PushManager' in w)) return;
@@ -97,7 +78,6 @@ export class PushDevice {
     this.current.set('off');
   }
 
-  /** Turns push on: called from a tap, because browsers ask for permission only then. */
   async enable(): Promise<PushState> {
     const w = this.window;
     if (!w) return this.set('unsupported');
@@ -105,13 +85,11 @@ export class PushDevice {
     if (permission !== 'granted') return this.set(permission === 'denied' ? 'blocked' : 'off');
     const registration = await w.navigator.serviceWorker.register('/sw.js', { scope: '/' });
     await w.navigator.serviceWorker.ready;
-    // A read: the generated client offers it as a resource only.
     const { publicKey } = await firstValueFrom(
       this.http.get<PushPublicKeyView>('/api/v1/push/public-key'),
     );
     const key = keyBytes(publicKey);
     let subscription = await registration.pushManager.getSubscription();
-    // A subscription made with another key (the instance's pair changed) cannot be used any more.
     const existing = subscription?.options.applicationServerKey;
     if (subscription && existing && !sameKey(new Uint8Array(existing), key)) {
       await subscription.unsubscribe();
@@ -125,7 +103,6 @@ export class PushDevice {
     return this.set('on');
   }
 
-  /** Turns push off on this device: the server forgets it, then the browser does. */
   async disable(): Promise<PushState> {
     const registration = await this.window?.navigator.serviceWorker.getRegistration('/');
     const subscription = await registration?.pushManager.getSubscription();
@@ -139,7 +116,6 @@ export class PushDevice {
     return this.set('off');
   }
 
-  /** Hands the browser's subscription to the API; the same device again only refreshes its keys. */
   private async register(subscription: PushSubscription): Promise<void> {
     const json = subscription.toJSON();
     await firstValueFrom(

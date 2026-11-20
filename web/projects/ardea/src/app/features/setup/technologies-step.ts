@@ -12,12 +12,6 @@ import {
 import { DraftList } from '../projects/draft-list';
 import { PackagesView } from '../projects/packages-view';
 
-/**
- * Step "Technologies" (master plan 11.6, 16.7) in three groups: what came from the repositories (a
- * summary per ecosystem and what cannot be checked), the suggestions to confirm (projected by the
- * wizard when repositories are linked), and what the repositories do not show, entered by hand
- * with the catalogue search. Without a repository only the last group is there.
- */
 @Component({
   selector: 'ardea-technologies-step',
   imports: [TranslocoPipe, UiButton, UiCard, UiNotice, CatalogPicker, DraftList, PackagesView],
@@ -139,7 +133,6 @@ export class TechnologiesStep {
 
   protected readonly packageCount = computed(() => this.fromRepository().filter(isPackage).length);
 
-  /** What cannot be checked, and why (master plan 16.7; the full hints are task 2.8). */
   protected readonly gaps = computed(() => {
     const list: { key: string; count: number; params: Record<string, string | number> }[] = [];
     for (const eco of ecosystems(this.fromRepository())) {

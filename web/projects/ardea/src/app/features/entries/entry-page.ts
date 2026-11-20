@@ -21,11 +21,6 @@ const OPERATOR_KINDS: Record<string, string> = {
   community: 'sources.operatorKind.community',
 };
 
-/**
- * One consolidated entry (task 1.10): what it is, how severe, whether it is exploited, what it
- * affects, where it comes from and how it changed. Every field the API gives, nothing assessed:
- * the organization's view of a vulnerability is a later page (master plan 11.4 Vulnerability).
- */
 @Component({
   selector: 'ardea-entry-page',
   imports: [
@@ -531,7 +526,6 @@ const OPERATOR_KINDS: Record<string, string> = {
   `,
 })
 export class EntryPage {
-  /** From the route: `/entries/:key`. */
   readonly key = input.required<string>();
 
   private readonly transloco = inject(TranslocoService);

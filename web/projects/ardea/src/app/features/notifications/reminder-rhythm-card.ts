@@ -15,11 +15,6 @@ import {
   type ReminderRhythm,
 } from './notify-format';
 
-/**
- * «Reminders by level» on the rules page (master plan 8.7, 17.5; task 5a.6, ADR 048): how often an open reminder reminds
- * the people its rules name, per level, or not at all. Runs come on weekdays at 08:00 in the organization's time zone; below
- * Medium only the digests name a reminder.
- */
 @Component({
   selector: 'ardea-reminder-rhythm-card',
   imports: [TranslocoPipe, UiButton, UiCard, UiInput, UiLoader, UiNotice, UiPriority],
@@ -137,7 +132,6 @@ export class ReminderRhythmCard {
   private readonly api = inject(NotificationsService);
   private readonly transloco = inject(TranslocoService);
 
-  /** The organization whose rhythm this is. */
   readonly organizationId = input.required<string>();
 
   protected readonly rhythm = getReminderRhythmResource(computed(() => this.organizationId()));

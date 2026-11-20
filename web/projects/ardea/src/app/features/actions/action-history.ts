@@ -4,10 +4,6 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { UiButton, UiCard, UiInput, UiPriority } from 'ui';
 import type { HistoryLine } from './history-format';
 
-/**
- * An action's history (master plan 8.2): newest first, each line with its event kind and id, so a
- * notification can be traced back to it. Members add notes for the team at the end.
- */
 @Component({
   selector: 'ardea-action-history',
   imports: [NgTemplateOutlet, TranslocoPipe, UiButton, UiCard, UiInput, UiPriority],
@@ -154,14 +150,12 @@ import type { HistoryLine } from './history-format';
 export class ActionHistory {
   readonly lines = input.required<readonly HistoryLine[]>();
   readonly canEdit = input(false);
-  /** Without its card, inside a disclosure that carries the heading (the reminder, master plan 17.7). */
   readonly bare = input(false, { transform: booleanAttribute });
   readonly busy = input(false);
   readonly note = output<string>();
 
   private readonly transloco = inject(TranslocoService);
 
-  /** A person who left, or none, is «Someone». */
   protected params(line: HistoryLine): HistoryLine['params'] {
     return line.params['who'] === 'someone'
       ? { ...line.params, who: this.transloco.translate('actionDetail.history.someone') }
@@ -185,7 +179,6 @@ export class ActionHistory {
     this.note.emit(text);
   }
 
-  /** Called by the page once the note is saved. */
   clear(): void {
     const field = document.getElementById('action-note') as HTMLTextAreaElement | null;
     if (field) field.value = '';

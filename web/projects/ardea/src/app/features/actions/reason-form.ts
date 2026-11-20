@@ -10,10 +10,6 @@ import {
 import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiInput } from 'ui';
 
-/**
- * The short reason a closing asks for (master plan 11.5: «Remediated», «Risk accepted» and «Not
- * affected» need one). It stays in the history. Opens with the focus in the text.
- */
 @Component({
   selector: 'ardea-reason-form',
   imports: [TranslocoPipe, UiButton, UiInput],
@@ -68,7 +64,6 @@ export class ReasonForm {
   private static next = 0;
   protected readonly id = `reason-${ReasonForm.next++}`;
 
-  /** Already translated: the question, such as «How was it remediated?». */
   readonly label = input.required<string>();
   readonly submitLabel = input.required<string>();
   readonly busy = input(false);

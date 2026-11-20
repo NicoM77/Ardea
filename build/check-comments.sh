@@ -2,3 +2,4 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 dotnet run --project build/Ardea.CommentCheck -c Release -- "$@"
+node build/check-comments.mjs "$@"

@@ -3,17 +3,12 @@ import { TranslocoPipe } from '@jsverse/transloco';
 
 let nextGroup = 0;
 
-/** An option: its value and the translation keys of its word and its one sentence. */
 export interface ChoiceOption {
   value: string;
   label: string;
   hint?: string;
 }
 
-/**
- * One question with a few options, each with one sentence (master plan 11.6): native radio
- * buttons in a fieldset, drawn as cards. The legend is the question.
- */
 @Component({
   selector: 'ardea-choice-group',
   imports: [TranslocoPipe],

@@ -1,4 +1,3 @@
-/** Problem codes of the project, component and repository endpoints the wizard and project pages call. */
 export const WIZARD_PROBLEMS: Readonly<Record<string, string>> = {
   project_not_found: 'wizard.errors.projectNotFound',
   component_not_found: 'wizard.errors.componentNotFound',

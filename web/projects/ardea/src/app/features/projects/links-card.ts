@@ -15,11 +15,6 @@ import { problemMessageKey } from '../../core/api/problem';
 import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
 import { isReading, LINK_STATE_LABELS, repositoryName } from './link-format';
 
-/**
- * The repositories that feed a project (master plan 16.6): state as a symbol and a word, branch
- * and subfolder, the commit and time of the last reading, and "Read now". A failing link keeps
- * the last good state; a much smaller new state waits for confirmation instead of being applied.
- */
 @Component({
   selector: 'ardea-links-card',
   imports: [
@@ -320,9 +315,7 @@ export class LinksCard {
   readonly projectId = input.required<string>();
   readonly links = input.required<HttpResourceRef<LinkView[] | undefined>>();
   readonly canEdit = input(false);
-  /** The wizard's side column: state only, no actions. */
   readonly compact = input(false);
-  /** A link was removed or read again: the project's components change. */
   readonly changed = output<void>();
 
   private readonly api = inject(RepositoriesService);
@@ -359,7 +352,6 @@ export class LinksCard {
     });
   }
 
-  /** Takes the much smaller new state after all; until then the current one stays (master plan 16.5). */
   protected async confirmShrink(link: LinkView): Promise<void> {
     await this.run(link, async () => {
       await firstValueFrom(

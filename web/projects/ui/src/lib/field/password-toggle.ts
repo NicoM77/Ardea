@@ -2,12 +2,6 @@ import { Component, input, signal } from '@angular/core';
 import { LucideEye, LucideEyeOff } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 
-/**
- * Shows or hides the password in the input it points to. Pasting from a password manager stays
- * allowed (WCAG 2.2, accessible authentication); seeing what was typed replaces a second field.
- *
- * Usage: `<input uiInput type="password" #pw /> <ui-password-toggle [control]="pw" />`
- */
 @Component({
   selector: 'ui-password-toggle',
   imports: [LucideEye, LucideEyeOff, TranslocoPipe],

@@ -55,12 +55,10 @@ import {
   type AnsweredGroup,
 } from './notice-format';
 
-/** As many as the API gives on one page. */
 const PAGE = 100;
 
 type View = 'new' | 'earlier' | 'answered';
 
-/** Why an answer or taking it back did not go through, in the reader's words (ADR 047 decision 9). */
 const NOTICE_PROBLEMS = {
   codes: {
     status_conflict: 'notices.errors.conflict',
@@ -76,7 +74,6 @@ const NOTICE_PROBLEMS = {
   fallback: 'notices.errors.failed',
 };
 
-/** A refusal on one notice: the sentence, and the one under the version when that was the cause. */
 interface Refusal {
   id: string;
   key: string | null;
@@ -84,7 +81,6 @@ interface Refusal {
   project: string | null;
 }
 
-/** One list of notices read page by page; a further page is appended, a notice that moved appears once. */
 function pages(
   shown: readonly NoticeView[],
   page: readonly NoticeView[],
@@ -95,18 +91,6 @@ function pages(
   return [...shown, ...page.filter((n) => !known.has(n.id))];
 }
 
-/**
- * «Notices» (master plan 17.3, 17.7; ADR 047; mockup notices.html): the inbox «could affect you» of the
- * organization's stack. One card per notice, exploited first, then by the source's CVSS score, then
- * newest (E23); each with the reason, the three answers and the two answers of equal weight. «Affects
- * us» opens a short follow-up (project and version, both optional) and makes a normal reminder;
- * «Doesn't affect us» takes effect at once. Both confirm with Undo, which takes the answer back
- * (ADR 047 decision 8), and the focus moves on to the next card. Notices that a stack entry added later
- * brought in quietly wait under «Earlier». «Answered» groups the answers by stack entry and answer.
- *
- * Keyboard: ↓ or J and ↑ or K move between cards, 1 answers «Affects us», 2 «Doesn't affect us», Esc
- * closes the follow-up. Digits rather than the mockup's A and D, because letters belong to one language.
- */
 @Component({
   selector: 'ardea-notices-page',
   imports: [
@@ -129,7 +113,6 @@ function pages(
   template: `
     <header class="head">
       <h1>{{ 'notices.title' | transloco }}</h1>
-      <!-- The count line stays in the page and only changes its words, so it is read out as notices are answered -->
       <p class="summary" role="status">
         @if (loaded()) {
           <strong>{{ summary().lead.key | transloco: summary().lead.params }}</strong>
@@ -653,7 +636,6 @@ function pages(
   `,
 })
 export class NoticesPage {
-  /** From the address: `view=earlier` or `view=answered`, and `entry=<component id>`. */
   readonly view = input<View, string | null | undefined>('new', {
     transform: (v) => (v === 'answered' || v === 'earlier' ? v : 'new'),
   });
@@ -674,7 +656,6 @@ export class NoticesPage {
   );
   protected readonly entryId = computed(() => this.entry() || null);
 
-  /* ---------- Reading: new and answered, page by page ---------- */
   private readonly newCursor = linkedSignal<string | null, string | undefined>({
     source: this.entryId,
     computation: () => undefined,
@@ -701,7 +682,6 @@ export class NoticesPage {
       cursor: this.answeredCursor(),
     })),
   );
-  /** Raised quietly when a stack entry was added or changed (ADR 047): not new, under «Earlier». */
   private readonly earlierCursor = linkedSignal<string | null, string | undefined>({
     source: this.entryId,
     computation: () => undefined,
@@ -718,9 +698,7 @@ export class NoticesPage {
   private readonly newRows = this.rowsOf(this.newRead, this.newCursor);
   private readonly earlierRows = this.rowsOf(this.earlierRead, this.earlierCursor);
   private readonly answeredRows = this.rowsOf(this.answeredRead, this.answeredCursor);
-  /** The answers given and taken back on this page, newer than the pages read before them. */
   private readonly changed = signal<NoticeView[]>([]);
-  /** Cards an answer found changed by someone else (409) or gone (404): hidden until read anew. */
   private readonly stale = signal<{ id: string; changedAt: string }[]>([]);
   private alive = true;
 
@@ -755,7 +733,6 @@ export class NoticesPage {
   protected readonly newMore = computed(() => this.nextOf(this.newRead) !== null);
   protected readonly earlierMore = computed(() => this.nextOf(this.earlierRead) !== null);
   protected readonly answeredMore = computed(() => this.nextOf(this.answeredRead) !== null);
-  /** The cards of the view: new, or earlier. */
   protected readonly shown = computed(() =>
     this.view() === 'earlier' ? this.earlier() : this.fresh(),
   );
@@ -782,7 +759,6 @@ export class NoticesPage {
     () => this.fresh().length + this.earlier().length + this.answered().length,
   );
 
-  /** The count line: «3 new notices might affect you. 5 answered.» */
   protected readonly summary = computed(() => {
     const count = this.fresh().length;
     const answered = this.answered().length;
@@ -797,7 +773,6 @@ export class NoticesPage {
         };
   });
 
-  /** One block per notice, new first, then earlier, «affects us» and «doesn't affect us». */
   protected readonly blocks = computed(() => [
     ...this.fresh().map(() => 'new'),
     ...this.earlier().map(() => 'earlier'),
@@ -814,7 +789,6 @@ export class NoticesPage {
     }),
   );
 
-  /* ---------- What the follow-up and the filter need ---------- */
   private readonly stack = getStackResource(this.orgId);
   protected readonly entries = computed(() => {
     const components = this.stack.hasValue() ? (this.stack.value()?.components ?? []) : [];
@@ -842,7 +816,6 @@ export class NoticesPage {
   );
   private readonly members = listMembersResource(this.orgId);
 
-  /* ---------- Answering ---------- */
   protected readonly following = signal<string | null>(null);
   protected readonly busyId = signal<string | null>(null);
   private readonly refusal = signal<Refusal | null>(null);
@@ -851,7 +824,6 @@ export class NoticesPage {
     inject(DestroyRef).onDestroy(() => (this.alive = false));
     reloadOnLiveChange(
       {
-        // A change can move notices between pages: start again from the first.
         reload: () => this.reload(),
       },
       this.openReminders,
@@ -943,7 +915,6 @@ export class NoticesPage {
       projectId: follow.projectId,
       version: follow.version,
     };
-    // Whether the reminder the answer names was open before: joined, or created by the answer.
     const before = new Set(this.reminders().map((r) => num(r.number)));
     void this.answer(n, request, (view) =>
       view.reminderNumber === null
@@ -954,7 +925,6 @@ export class NoticesPage {
     );
   }
 
-  /** «Change answer» in the answered view: every notice of the group back to New, with Undo. */
   protected async changeAnswer(group: AnsweredGroup): Promise<void> {
     const org = this.orgId();
     if (!org) return;
@@ -980,7 +950,6 @@ export class NoticesPage {
       this.busyId.set(null);
     }
     this.counter.reload();
-    // What moved back can be answered again with Undo, also when a later one was refused.
     if (back.length)
       this.toaster.show({
         text: this.transloco.translate(
@@ -996,7 +965,6 @@ export class NoticesPage {
 
   protected onKeydown(event: KeyboardEvent): void {
     if (this.view() === 'answered' || !this.canAnswer()) return;
-    // A follow-up open on a card still shown takes the keys; one whose card left does not.
     const following = this.following();
     if (following && this.shown().some((n) => n.id === following)) return;
     const target = event.target as HTMLElement | null;
@@ -1024,7 +992,6 @@ export class NoticesPage {
     }
   }
 
-  /** Answers one notice; on success the next card takes the focus and the toast offers Undo. */
   private async answer(
     n: NoticeView,
     request: AnswerNoticeRequest,
@@ -1050,7 +1017,6 @@ export class NoticesPage {
     }
     if (view) {
       const answered = view;
-      // The confirmation and its Undo also reach a person who left the page meanwhile.
       this.counter.reload();
       this.toaster.show({
         text: this.transloco.translate(confirmation(answered), {
@@ -1072,8 +1038,6 @@ export class NoticesPage {
     }
     const status = problemOf(error)?.status;
     if (status === 409 || status === 404) {
-      // Someone else answered it, or it is gone: the card leaves, the toast says why, and the
-      // focus stays at its place.
       this.stale.update((list) => [...list, { id: n.id, changedAt: n.changedAt }]);
       this.following.set(null);
       this.say(error);
@@ -1085,11 +1049,6 @@ export class NoticesPage {
     this.refusal.set(this.refusalFrom(n.id, error));
   }
 
-  /**
-   * Undo of an answer: the plain reopen of ADR 047 decision 8, against the answer just given. It
-   * carries its organization and notice, so it works after the page is gone; only a page still
-   * shown shows the notice again and gives it the focus.
-   */
   private async takeBack(org: string, view: NoticeView): Promise<void> {
     let back: NoticeView;
     try {
@@ -1109,7 +1068,6 @@ export class NoticesPage {
     this.focusCard(back.id);
   }
 
-  /** Undo of «Change answer»: «Doesn't affect us» again for each notice moved back. */
   private async answerAgain(org: string, notices: readonly NoticeView[]): Promise<void> {
     const again: NoticeView[] = [];
     try {
@@ -1133,7 +1091,6 @@ export class NoticesPage {
     this.changed.update((list) => [...list.filter((n) => n.id !== view.id), view]);
   }
 
-  /** A refusal shown on the card: under a field when the API names it, else as a sentence. */
   private refusalFrom(id: string, error: unknown): Refusal {
     const problem = problemOf(error);
     const version = problem?.errors?.['version'] ? 'notices.errors.version' : null;
@@ -1142,7 +1099,6 @@ export class NoticesPage {
     return { id, key, version, project };
   }
 
-  /** Says in a toast why a change did not go through; the toast outlives the page. */
   private say(error: unknown): void {
     this.toaster.show({
       text: this.transloco.translate(problemMessageKey(error, NOTICE_PROBLEMS)),
@@ -1165,7 +1121,6 @@ export class NoticesPage {
     );
   }
 
-  /** After an answer the card at the same place (the next one) takes the focus, else the quiet state. */
   private focusAfter(index: number): void {
     if (!this.alive) return;
     afterNextRender(
@@ -1182,7 +1137,6 @@ export class NoticesPage {
     );
   }
 
-  /** After «Change answer» the group at the same place takes the focus, else the view's button. */
   private focusGroup(index: number): void {
     if (!this.alive) return;
     afterNextRender(

@@ -35,13 +35,6 @@ import { FactorTable } from './factor-table';
 import { isProposal, isStaleReview, REQUEST_PROBLEMS, REVIEW_PROBLEMS } from './model-format';
 import { ModelReview, type ReviewChange } from './model-review';
 
-/**
- * An alert (task 3.10, master plan 7.4, mockup alert.html): one vulnerability from the
- * organization's view. The three answers, every component it hits with its own version check,
- * level and factors, the action each belongs to, and the entry's facts and sources. Members ask
- * for the model's assessment here (task 4.3); its verdict per component is marked, «not affected»
- * as a proposal, and confirmed or corrected under the component's factors (task 4.7).
- */
 @Component({
   selector: 'ardea-alert-page',
   imports: [
@@ -476,7 +469,6 @@ import { ModelReview, type ReviewChange } from './model-review';
   `,
 })
 export class AlertPage {
-  /** From the route. */
   readonly number = input.required<string>();
 
   private readonly transloco = inject(TranslocoService);
@@ -501,7 +493,6 @@ export class AlertPage {
   );
   protected readonly sources = listEntrySourcesResource(computed(() => this.view()?.entry.key));
   protected readonly cvss = computed(() => score(this.view()?.entry.cvssScore ?? null));
-  /** The finding whose factors are open; the first by default (mockup). */
   protected readonly open = linkedSignal<string | null>(() => this.view()?.findings[0]?.id ?? null);
   protected readonly loadProblem = computed(() =>
     problemMessageKey(this.detail.error(), {
@@ -520,11 +511,6 @@ export class AlertPage {
   protected readonly actionNumber = num;
   protected readonly proposal = isProposal;
 
-  /**
-   * «Request an AI assessment» (task 4.3): the job is queued; the live stream reloads the page once
-   * the model answered. No provider under the organization's policy (409) and today's requests used
-   * up (429) are said in a sentence.
-   */
   protected async request(): Promise<void> {
     const org = this.orgId();
     if (!org || this.requesting()) return;
@@ -544,7 +530,6 @@ export class AlertPage {
     }
   }
 
-  /** A person confirms the model's estimate or corrects the assessment of a component (task 4.7). */
   protected async review(change: ReviewChange): Promise<void> {
     const org = this.orgId();
     if (!org || this.busy()) return;

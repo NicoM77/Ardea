@@ -10,7 +10,6 @@ import {
   UiStatus,
 } from 'ui';
 
-/** The signature marks: priority, working state, signal pills and people. */
 @Component({
   selector: 'ardea-signals-page',
   imports: [UiAvatar, UiCard, UiPageHeader, UiPill, UiPriority, UiStatus],

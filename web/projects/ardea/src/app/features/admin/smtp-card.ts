@@ -32,11 +32,6 @@ import { focusFirstInvalid } from '../auth/focus-invalid';
 import { fieldProblems } from './admin-errors';
 import { hasChanges, NO_CHANGES, SMTP_SECURITY, smtpFormOf, smtpPatch } from './settings-patch';
 
-/**
- * SMTP settings with a test e-mail (master plan 11.4, 12.4). Values set by an environment variable
- * are read-only. The password is write-only: the page says whether one is set and offers a field
- * to replace it, never the value.
- */
 @Component({
   selector: 'ardea-smtp-card',
   imports: [
@@ -261,7 +256,6 @@ import { hasChanges, NO_CHANGES, SMTP_SECURITY, smtpFormOf, smtpPatch } from './
 })
 export class SmtpCard {
   readonly settings = input.required<InstanceSettingsResponse>();
-  /** The settings as the server stored them, after a save. */
   readonly changed = output<InstanceSettingsResponse>();
 
   private readonly admin = inject(AdministrationService);
@@ -370,7 +364,6 @@ export class SmtpCard {
     }
   }
 
-  // The test e-mail
   protected readonly testProblem = signal<string | null>(null);
   protected readonly testDetail = signal<string | null>(null);
   protected readonly testSentTo = signal<string | null>(null);
@@ -404,7 +397,6 @@ export class SmtpCard {
               fallback: 'admin.smtp.errors.failed',
             });
             this.testProblem.set(key);
-            // The mail server's own answer helps the administrator find the cause.
             if (key === 'admin.smtp.errors.failed')
               this.testDetail.set(problemOf(error)?.detail ?? null);
             return undefined;

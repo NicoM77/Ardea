@@ -218,7 +218,6 @@ describe('ProjectPage', () => {
       await settle(fixture);
       http.expectOne(`${BASE}/repositories`).flush([link({})]);
       await settle(fixture);
-      // Done reading: the project and its suggestions are loaded again.
       http.expectOne(BASE);
       http.expectOne((r) => r.url === `${BASE}/suggestions`);
       http.expectOne((r) => r.url === `/api/v1/orgs/${ORG}/profile/coverage`);

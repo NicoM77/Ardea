@@ -23,12 +23,6 @@ import {
   share,
 } from './learning-format';
 
-/**
- * The catalogue that learns (master plan 6.9, tasks 4.9 and 4.10), for the instance administrator next to the
- * data-quality review on «Sources»: the measures, the provider the catalogue asks, the review list with confirm,
- * change and reject, the unknown products without a proposal, the learned entries in effect with «Withdraw», and the
- * export as catalogue files. Texts of the sources and the model are shown as plain text only.
- */
 @Component({
   selector: 'ardea-catalog-learning',
   imports: [
@@ -544,7 +538,6 @@ import {
   `,
 })
 export class CatalogLearning {
-  /** From the address (`?learned=` of the note on a hit): the raw key to show, whatever became of it. */
   readonly rawKey = input<string>('');
 
   private readonly api = inject(CatalogService);
@@ -574,7 +567,6 @@ export class CatalogLearning {
   protected readonly kind = signal('other');
   protected readonly scheme = signal('numeric');
 
-  /** The request of the change form. */
   protected readonly change = computed<AdoptLearnedRequest>(() =>
     this.mode() === 'alias'
       ? { aliasOf: this.aliasKey().trim(), newProduct: null }

@@ -12,18 +12,12 @@ import { problemMessageKey, problemOf } from '../../core/api/problem';
 import { Session } from '../../core/session/session';
 import { ROLE_HINTS, sameEmail } from '../organizations/org-format';
 
-/** Codes of the invitation endpoints, for the preview and for accepting. */
 const PROBLEMS = {
   invalid_invitation: 'invitation.errors.invalid',
   invitation_email_mismatch: 'invitation.errors.mismatch',
   signed_in: 'invitation.errors.signedIn',
 };
 
-/**
- * The link from an invitation (`/invitations/:token`), signed in or out. It shows what the
- * invitation is for, then the one step that fits: accept it; sign out of another account; or
- * sign in or create an account with the invited address and come back to accept.
- */
 @Component({
   selector: 'ardea-invitation-page',
   imports: [RouterLink, TranslocoPipe, UiButton, UiLoader, UiNotice],
@@ -157,7 +151,6 @@ const PROBLEMS = {
   `,
 })
 export class InvitationPage {
-  /** From the route. */
   readonly token = input.required<string>();
 
   private readonly organizations = inject(OrganizationsService);

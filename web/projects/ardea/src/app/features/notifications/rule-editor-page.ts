@@ -41,13 +41,10 @@ import {
 } from './notify-format';
 import { NotifyIcon } from './notify-icon';
 
-/** One row of «Who hears it» while it is edited. */
 interface TargetDraft {
-  /** `kind:ref`, e.g. `role:admin`, `user:<id>`, `endpoint:<id>`. */
   recipient: string;
   channel: Channel;
   mode: 'immediate' | 'digest';
-  /** A preset's cron, or `custom`. */
   schedule: string;
   cron: string;
   sendEmpty: boolean;
@@ -78,11 +75,6 @@ function newTarget(): TargetDraft {
   };
 }
 
-/**
- * A notification rule (master plan 8.3; task 5.8; mockup notification-rules.html, the editor): where it applies,
- * from which priority, for which events, and who hears it on which channel and when. Beside the form the rule
- * reads as one sentence. Saving or deleting confirms with a toast; a deleted rule comes back with Undo.
- */
 @Component({
   selector: 'ardea-rule-editor-page',
   imports: [
@@ -640,7 +632,6 @@ function newTarget(): TargetDraft {
   `,
 })
 export class RuleEditorPage {
-  /** From the route; absent for a new rule. */
   readonly ruleId = input<string | undefined>(undefined);
 
   private readonly api = inject(NotificationsService);
@@ -706,7 +697,6 @@ export class RuleEditorPage {
     })),
   );
 
-  /** The rule in one sentence, as the mockup writes it beside the form. */
   protected readonly sentence = computed(() => {
     const t = (key: string, params?: Record<string, unknown>) =>
       this.transloco.translate(key, params);
@@ -735,7 +725,6 @@ export class RuleEditorPage {
   });
 
   constructor() {
-    // The stored rule fills the form once it has arrived.
     effect(() => {
       const rule = this.rule.hasValue() ? this.rule.value() : undefined;
       if (rule) untracked(() => this.fill(rule));
@@ -776,7 +765,6 @@ export class RuleEditorPage {
       list.map((t, i) => {
         if (i !== index) return t;
         const next = { ...t, ...change };
-        // Push goes out at once only (ADR 041).
         if (next.channel === 'push') next.mode = 'immediate';
         return next;
       }),
@@ -859,7 +847,6 @@ export class RuleEditorPage {
   }
 
   private reloadList(): void {
-    // The list reads the rules when it opens; returning to it after Undo shows the rule again.
     if (this.router.url === this.listUrl())
       void this.router.navigateByUrl(this.listUrl(), { onSameUrlNavigation: 'reload' });
   }

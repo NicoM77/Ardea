@@ -1,7 +1,3 @@
-/* Native form controls marked with uiInput (DESIGN.md, Fields): white, 1px Field edge, 6px corners,
-   32px (40px on phones). Hover darkens the edge to Text, focus shows the Accent ring, an error adds a
-   second line in Text. Global because a native input cannot carry component styles. */
-
 .ui-input {
   width: 100%;
   min-width: 0;
@@ -22,7 +18,6 @@ textarea.ui-input {
   line-height: var(--lh-body);
 }
 
-/* The select's chevron is drawn from two gradients so it takes its colour from a token */
 select.ui-input {
   appearance: none;
   padding-right: 28px;
@@ -75,12 +70,10 @@ textarea.ui-input:read-only:not(:disabled) {
   border-color: var(--text);
 }
 
-/* Room for a control that sits inside the field, such as the password toggle */
 .ui-input:has(+ ui-password-toggle) {
   padding-right: var(--control-height);
 }
 
-/* Autofill keeps the sheet's white, not the browser's yellow */
 .ui-input:autofill {
   box-shadow: inset 0 0 0 100px var(--surface);
   -webkit-text-fill-color: var(--text);

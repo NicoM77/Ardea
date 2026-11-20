@@ -19,10 +19,6 @@ const STATUS_LABELS: Record<UiStatusKind, string> = {
   notAffected: 'ui.status.notAffected',
 };
 
-/**
- * Working state (DESIGN.md): a neutral symbol plus the word. Empty ring Open, half-filled ring
- * In review, green check disc Remediated, flag Risk accepted, struck ring Not affected.
- */
 @Component({
   selector: 'ui-status',
   imports: [TranslocoPipe],
@@ -89,7 +85,6 @@ const STATUS_LABELS: Record<UiStatusKind, string> = {
 })
 export class UiStatus {
   readonly kind = input.required<UiStatusKind>();
-  /** Another word for the same shape, e.g. a delivery's state; a translation key like the defaults. */
   readonly word = input<string | null>(null);
   protected readonly label = computed(() => this.word() ?? STATUS_LABELS[this.kind()]);
 }

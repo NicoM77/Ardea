@@ -3,10 +3,6 @@ import { LucideCheck, LucideCopy } from '@lucide/angular';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton } from '../button/button';
 
-/**
- * Copies a string people need verbatim (a key, recovery codes) and says so in place for two
- * seconds. The confirmation is a status message, so screen readers hear it too.
- */
 @Component({
   selector: 'ui-copy-button',
   imports: [UiButton, LucideCopy, LucideCheck, TranslocoPipe],
@@ -30,7 +26,6 @@ import { UiButton } from '../button/button';
 })
 export class UiCopyButton {
   readonly text = input.required<string>();
-  /** The button's label before copying. Already translated. */
   readonly label = input.required<string>();
   readonly variant = input<'default' | 'ghost'>('default');
 

@@ -1,10 +1,4 @@
 #!/usr/bin/env node
-/*
- * Checks the licence of every production npm package (dependencies and what they pull in) against
- * the repository's allow-list, build/licenses/allowed-licenses.json (master plan 13.5). Packages
- * that need an exception are named one by one, with a reason, in license-exceptions.json.
- * Development tools (devDependencies) are not shipped and are not checked here.
- */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
@@ -19,7 +13,6 @@ const allowed = new Set(
 );
 const { exceptions } = JSON.parse(readFileSync(join(web, 'license-exceptions.json'), 'utf8'));
 
-/** An SPDX expression is acceptable when every AND part has at least one allowed OR alternative. */
 function acceptable(expression, isAllowed) {
   const cleaned = expression.replace(/[()]/g, ' ').trim();
   return cleaned

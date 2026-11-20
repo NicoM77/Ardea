@@ -1,10 +1,6 @@
 import { Component } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 
-/**
- * What raises a notice (ADR 044): the two thresholds, and that an entry covers the product itself,
- * not what is built on it (master plan 17.2).
- */
 @Component({
   selector: 'ardea-stack-thresholds',
   imports: [TranslocoPipe],

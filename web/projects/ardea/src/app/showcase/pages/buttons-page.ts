@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { LucideArrowRight, LucideCopy, LucideMenu, LucideSearch } from '@lucide/angular';
 import { UiButton, UiCard, UiKbd, UiPageHeader } from 'ui';
 
-/** Buttons in every variant and state. Hover and focus are pinned with `data-ui-state` for the image. */
 @Component({
   selector: 'ardea-buttons-page',
   imports: [

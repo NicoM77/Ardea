@@ -4,10 +4,6 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideBuilding, LucidePlus } from '@lucide/angular';
 import { UiButton, UiEmptyState, UiPageHeader } from 'ui';
 
-/**
- * Signed in, but not a member of any organization yet: after setup, or after leaving the last
- * one. Anyone may create an organization; joining an existing one takes an invitation.
- */
 @Component({
   selector: 'ardea-no-organization-page',
   imports: [

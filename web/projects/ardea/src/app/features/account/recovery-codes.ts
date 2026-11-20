@@ -3,7 +3,6 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideDownload } from '@lucide/angular';
 import { UiButton, UiCopyButton } from 'ui';
 
-/** The recovery codes, shown once: a numbered grid in mono, to copy or download as a text file. */
 @Component({
   selector: 'ardea-recovery-codes',
   imports: [TranslocoPipe, LucideDownload, UiButton, UiCopyButton],
@@ -28,8 +27,6 @@ import { UiButton, UiCopyButton } from 'ui';
       display: grid;
       gap: var(--space-lg);
     }
-    /* Two columns where a whole code and its number fit in each, one column otherwise. The list is
-       set in mono, so ch is the width of one character of a code. */
     .codes {
       display: grid;
       grid-template-columns: repeat(
@@ -45,7 +42,6 @@ import { UiButton, UiCopyButton } from 'ui';
       line-height: var(--lh-body);
       counter-reset: code;
     }
-    /* The number has its own track, so it can never run into a code */
     .codes li {
       display: grid;
       grid-template-columns: 3ch minmax(0, 1fr);

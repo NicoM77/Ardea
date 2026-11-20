@@ -7,7 +7,6 @@ interface Swatch {
   note: string;
 }
 
-/** Tokens drawn from the token file: colours with their role and contrast, type, shape. */
 @Component({
   selector: 'ardea-foundations-page',
   imports: [UiCard, UiPageHeader],

@@ -13,10 +13,6 @@ import {
 
 const PAGE = 50;
 
-/**
- * Packages per ecosystem (master plan 16.7): one ecosystem at a time, searchable and filterable by
- * relation, use and missing version, never one long list. Shows the first 50; more on demand.
- */
 @Component({
   selector: 'ardea-packages-view',
   imports: [TranslocoPipe, LucideSearch, UiButton, UiInput],
@@ -343,7 +339,6 @@ const PAGE = 50;
 })
 export class PackagesView {
   readonly components = input.required<readonly ComponentView[]>();
-  /** Offer Detach on packages from a repository (the project page). */
   readonly detachable = input(false);
   readonly detach = output<ComponentView>();
 

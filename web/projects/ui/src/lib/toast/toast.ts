@@ -1,17 +1,11 @@
 import { Component, inject, Injectable, input, output, signal } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 
-/** A confirmation: the sentence, and what Undo does when there is a way back. */
 export interface UiToastMessage {
-  /** Already translated. */
   text: string;
   undo?: () => void;
 }
 
-/**
- * The confirmation toast (DESIGN.md, Feedback): a change is confirmed by a dark toast at the
- * bottom with Undo, never by a dialog. Presentational; `UiToaster` and `ui-toast-host` show it.
- */
 @Component({
   selector: 'ui-toast',
   imports: [TranslocoPipe],
@@ -81,13 +75,8 @@ export class UiToast {
   readonly undo = output();
 }
 
-/**
- * Shows one confirmation at a time. A new one replaces the last; it leaves after a while unless
- * the pointer or the focus rests on it, so Undo stays in reach.
- */
 @Injectable({ providedIn: 'root' })
 export class UiToaster {
-  /** How long a confirmation stays; long enough to read it and reach Undo. */
   static readonly duration = 6000;
 
   private readonly shown = signal<(UiToastMessage & { id: number }) | null>(null);
@@ -106,14 +95,12 @@ export class UiToaster {
     this.shown.set(null);
   }
 
-  /** Runs the toast's Undo once and removes it. */
   undo(): void {
     const message = this.shown();
     this.dismiss();
     message?.undo?.();
   }
 
-  /** While the pointer or the focus is on the toast, it stays. */
   hold(held: boolean): void {
     this.held = held;
     if (held) clearTimeout(this.timer);
@@ -127,10 +114,6 @@ export class UiToaster {
   }
 }
 
-/**
- * Where confirmations appear: fixed at the bottom, above a phone's action bar. The region is
- * always in the page and polite, so screen readers hear each new sentence once.
- */
 @Component({
   selector: 'ui-toast-host',
   imports: [UiToast],
@@ -165,7 +148,6 @@ export class UiToaster {
       pointer-events: auto;
       animation: ui-toast-in var(--t-ui) var(--ease-out) both;
     }
-    /* A page with a fixed action bar at phone width (an action) lifts the toast above it. */
     @media (max-width: 640px) {
       :host-context(body:has(.ui-actionbar)) {
         --toast-lift: 64px;

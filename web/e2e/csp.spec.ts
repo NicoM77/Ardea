@@ -2,11 +2,6 @@ import { expect, test } from '@playwright/test';
 import { watchConsole } from './console';
 import { api } from './mock-api';
 
-/**
- * The production build under the production Content Security Policy (served by
- * scripts/serve-static.mjs): every page loads, translates and routes without a single console
- * error. Guards against code that needs eval or inline script, which the instance never allows.
- */
 const PAGES: { path: string; signedIn: boolean; title: string; heading: string }[] = [
   { path: '/sign-in', signedIn: false, title: 'Sign in · Ardea', heading: 'Sign in' },
   {

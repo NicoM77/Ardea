@@ -1,6 +1,3 @@
-/* Things that float: menus and the dialog scrim. They are the only surfaces with a shadow
-   (DESIGN.md, Elevation). Global because the CDK renders them in its overlay container. */
-
 .ui-scrim {
   background: var(--scrim);
 }

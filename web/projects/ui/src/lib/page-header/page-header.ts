@@ -1,9 +1,5 @@
 import { Component, input } from '@angular/core';
 
-/**
- * The title row of a page: one title (22/600) per page, an optional sentence under it, and the
- * page's actions on the right (`[uiPageActions]`). Wraps under the title on narrow screens.
- */
 @Component({
   selector: 'ui-page-header',
   template: `

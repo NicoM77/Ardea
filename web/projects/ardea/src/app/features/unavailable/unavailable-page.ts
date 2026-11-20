@@ -6,7 +6,6 @@ import { UiButton } from 'ui';
 import { safeReturnUrl } from '../../core/session/access';
 import { Session } from '../../core/session/session';
 
-/** The API did not answer: say so plainly and offer to try again, instead of a blank screen. */
 @Component({
   selector: 'ardea-unavailable-page',
   imports: [TranslocoPipe, LucideWifiOff, UiButton],

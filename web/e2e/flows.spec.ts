@@ -350,6 +350,8 @@ test('notices: the keyboard moves between cards and answers with 1 and 2, Esc cl
   await cards.first().focus();
   await page.keyboard.press('ArrowDown');
   await expect(cards.nth(1)).toBeFocused();
+  await expect(cards.nth(1).locator('ui-kbd').first()).toBeVisible();
+  await expect(cards.first().locator('ui-kbd').first()).toBeHidden();
   await page.keyboard.press('j');
   await expect(cards.nth(2)).toBeFocused();
   await page.keyboard.press('k');
@@ -532,6 +534,21 @@ test('notices on a quiet day: nothing to answer, said in the same place', async 
   await page.getByRole('button', { name: 'See answered' }).click();
   await expect(page).toHaveURL(/view=answered/);
   await expectAccessible(page, 'notices calm');
+  expect(problems).toEqual([]);
+});
+
+test('notices before the first one: no chart and nothing answered to look at', async ({ page }) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  await page.route('**/api/v1/orgs/*/notices?**', (route) =>
+    route.fulfill({ json: { items: [], nextCursor: null } }),
+  );
+  await page.goto(`${ORG}/notices`);
+  await expect(page.getByText('Nothing to answer')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'See answered' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Notices so far' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Stack', exact: true }).last()).toBeVisible();
+  await expectAccessible(page, 'notices before the first one');
   expect(problems).toEqual([]);
 });
 

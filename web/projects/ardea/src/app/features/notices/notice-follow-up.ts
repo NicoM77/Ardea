@@ -85,9 +85,6 @@ export interface FollowUpAnswer {
         <ui-notice tone="error">{{ p | transloco }}</ui-notice>
       }
       <div class="buttons">
-        <button uiButton type="button" (click)="dismiss.emit()">
-          {{ 'notices.follow.cancel' | transloco }}
-        </button>
         <button
           uiButton
           variant="primary"
@@ -96,6 +93,9 @@ export interface FollowUpAnswer {
           [attr.aria-describedby]="uid + '-lead'"
         >
           {{ (open ? 'notices.follow.add' : 'notices.follow.create') | transloco }}
+        </button>
+        <button uiButton variant="ghost" type="button" (click)="dismiss.emit()">
+          {{ 'notices.follow.cancel' | transloco }}
         </button>
       </div>
     </form>
@@ -117,7 +117,6 @@ export interface FollowUpAnswer {
     .buttons {
       display: flex;
       flex-wrap: wrap;
-      justify-content: flex-end;
       gap: var(--space-sm);
     }
     @media (max-width: 640px) {

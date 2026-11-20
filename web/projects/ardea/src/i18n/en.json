@@ -1498,6 +1498,7 @@
     "tryAgain": "Try again",
     "more": "Show more",
     "show": "Show",
+    "sub": "Ardea asks when an entry names a technology of your stack without an exact version and is critical or exploited.",
     "view": {
       "new": "New",
       "answered": "Answered",
@@ -1549,9 +1550,7 @@
     "side": {
       "title": "Notices so far",
       "note": "One block per notice: new, earlier, and how they were answered.",
-      "blocks": "{total} notices: {fresh} new, {earlier} earlier, {affects} affect us, {not} do not",
-      "stackTitle": "From your stack",
-      "stackText": "A notice asks when an entry names a technology of your stack without an exact version and is critical or exploited. “Doesn’t affect us” is final; it comes back once if the entry gets exploited."
+      "blocks": "{total} notices: {fresh} new, {earlier} earlier, {affects} affect us, {not} do not"
     },
     "affects": "Affects us",
     "notAffected": "Doesn’t affect us",

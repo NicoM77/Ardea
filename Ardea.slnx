@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/build/">
+    <Project Path="build/Ardea.CommentCheck/Ardea.CommentCheck.csproj" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/BuildingBlocks/">
     <Project Path="src/BuildingBlocks/Ardea.Ai/Ardea.Ai.csproj" />

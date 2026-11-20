@@ -10,9 +10,17 @@ The rules below summarise chapter 13 of the [master plan](docs/masterplan/13-rep
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `<type>(<optional scope>)!: <description>`
   with the type `feat`, `fix`, `perf`, `revert`, `docs`, `style`, `refactor`, `test`, `build`, `ci` or `chore`, and
   `!` or a `BREAKING CHANGE:` footer for a breaking change. Changes to the catalogue data are `feat(catalog):` or
-  `fix(catalog):`. The *Commits* check (`.github/workflows/commits.yml`) fails a pull request with a commit that
-  does not follow them; merge commits and GitHub's `Revert "…"` commits pass. Check a branch before pushing with
-  `node build/check-commits.mjs` (range `origin/main..HEAD`, or base and head as arguments).
+  `fix(catalog):`. The *Commits* check (`.github/workflows/commits.yml`) fails a pull request whose title or one of
+  whose commits does not follow them; merge commits and git's `Revert "…"` and `Reapply "…"` commits pass. Check a
+  branch before pushing with `node build/check-commits.mjs` (range `origin/main..HEAD`, or base and head as
+  arguments): a pushed branch is not rewritten.
+- **The pull request title is a Conventional Commit, and it becomes the subject of the merge commit.** Pull requests
+  are merged with a merge commit (no squash, no rebase), and its subject is the title with the number:
+  `gh pr merge <N> --merge --subject "<title> (#<N>)" --body "<branch>"`, or the merge button once the repository's
+  default merge message is the pull request title with an empty body. The changelog relies on it: release-please
+  reads `main`'s history by date and stops at the last release, so a branch commit written before the last release
+  but merged after it is found only through the merge commit's subject. The body must not hold a second Conventional
+  Commit; a breaking change takes the `!` in the title.
 - Decisions with lasting impact get an ADR in `docs/adr/`: context, decision, alternatives, consequences.
 - Vertical slices: a feature is finished through every layer before the next one starts. Nothing is built in advance.
 
@@ -84,23 +92,45 @@ tools read. Migrations and generated code are left out. Tests against the databa
 ## Releases
 
 Releases are made by [release-please](https://github.com/googleapis/release-please) in
-`.github/workflows/release.yml` ([ADR 050](docs/adr/0050-releases-with-release-please-and-signed-images.md)):
+`.github/workflows/release.yml` ([ADR 050](docs/adr/0050-releases-with-release-please-and-signed-images.md)).
+
+**Before the first release (owner, repository settings):**
+
+- [ ] *Settings → Actions → General → Workflow permissions:* «Allow GitHub Actions to create and approve pull
+      requests» on. Without it release-please cannot open the release pull request.
+- [ ] The repository is public. GitHub artifact attestations (provenance and SBOM) need a public repository or
+      GitHub Enterprise Cloud, and users must be able to pull the image.
+- [ ] *Settings → General → Pull Requests:* «Allow merge commits» with the default message «Pull request title»
+      (empty body); «Allow squash merging» and «Allow rebase merging» off (see «Workflow» above).
+- [ ] After the first release: the package `ghcr.io/nicom77/ardea` is linked to the repository and public
+      (*Packages → ardea → Package settings*).
+
+The flow:
 
 1. Every push to `main` updates the **release pull request** (`chore(main): release X.Y.Z`): the next version from the
    commits since the last release (`fix` a patch, `feat` a minor version, a breaking change the major version, before
    1.0 the minor version) and its section in `CHANGELOG.md`. Only `feat`, `fix`, `perf` and `revert` appear there and
-   open a release pull request; the other types do not. Never edit `CHANGELOG.md` or `.release-please-manifest.json`
-   by hand; a commit with a `Release-As: X.Y.Z` footer sets the next version.
-2. **The owner merges it** when a release is due; nobody else does. The pull request is opened by the workflow's
-   token, so no check starts on it by itself: close and reopen it once to run them.
-3. The merge creates the tag `vX.Y.Z` and a draft release. The same workflow builds the image with the version,
-   requires `ardea version` to print it and the smoke test to pass, pushes `linux/amd64` and `linux/arm64` to
-   `ghcr.io/nicom77/ardea` (`X.Y.Z`, `X.Y`, `X`; `latest` from 1.0 on), signs them with cosign (keyless), attests
-   provenance and SBOM, attaches SBOMs, notices, `compose.yaml`, `compose.caddy.yaml` and `Caddyfile`, and publishes
-   the release, as a pre-release while the version is 0.x. About 18 minutes, at most 25.
-4. If a job fails, the release stays a draft and nothing is announced. A passing cause (a registry or network error):
-   *Re-run failed jobs* on the run. A defect: delete the draft release and its tag and release the fix as the next
-   version.
+   open a release pull request; the other types do not. A pull request can appear twice, by its merge commit and by
+   its own commits. Never edit `CHANGELOG.md` or `.release-please-manifest.json` by hand; a commit with a
+   `Release-As: X.Y.Z` footer sets the next version.
+2. **The owner merges it** (with a merge commit, as any pull request) when a release is due; nobody else does. The
+   pull request is opened by the workflow's token, so no check starts on it by itself: close and reopen it once to
+   run them.
+3. The merge creates the tag `vX.Y.Z` and a draft release. The same workflow then builds `linux/amd64` and
+   `linux/arm64` with the version and pushes them to `ghcr.io/nicom77/ardea` by digest only, without a tag; requires
+   `ardea version` to print the version and the *CI* run on the release commit to be green (it waits up to 25
+   minutes for it); signs the images with cosign (keyless) and attests provenance and SBOM; attaches SBOMs, notices,
+   `compose.yaml`, `compose.caddy.yaml` and `Caddyfile`; and only then sets the tags `X.Y.Z`, `X.Y`, `X` (`latest` from
+   1.0 on) and publishes the release, as a pre-release while the version is 0.x. About 20 minutes, at most 25 when
+   CI keeps its own budget.
+4. If a job fails, the release stays a draft and no image tag moves.
+   - A passing cause (CI re-run green, a registry or network error): *Re-run failed jobs* on the run. *Re-run all
+     jobs* does nothing: release-please finds the release already tagged and creates nothing.
+   - Started by hand, *Actions → Release → Run workflow* on `main` with an existing tag (`vX.Y.Z`) builds, signs,
+     attests and publishes that tag again, for example after the run's logs expired.
+   - A defect in the released code: delete the **draft release only** and keep the tag `vX.Y.Z` (release-please
+     takes the tag as the last release, so the next changelog does not repeat this one), then release the fix as
+     the next version. A deleted tag would make release-please start again from `bootstrap-sha`.
 
 Local builds report the version `dev`; `docker build --build-arg VERSION=X.Y.Z` gives an image a version.
 
@@ -109,7 +139,7 @@ Local builds report the version `dev`; `docker build --build-arg VERSION=X.Y.Z` 
 | Script | What it does |
 | --- | --- |
 | `build/check-comments.sh [--fix]` | Comments outside the exceptions (see «Comments»): the C# tool, then the web part. |
-| `node build/check-commits.mjs [base] [head]` | Every commit in `base..head` (default `origin/main..HEAD`) follows Conventional Commits; merge commits pass. The *Commits* check of a pull request runs it. |
+| `node build/check-commits.mjs [base] [head]`, `--title "<title>"` | Every commit in `base..head` (default `origin/main..HEAD`) follows Conventional Commits, merge commits pass; or a pull request title does. The *Commits* check of a pull request runs both. |
 | `npm run build` (in `site/`) | The website: copies the pages from `docs/`, `SECURITY.md`, `CONTRIBUTING.md` and the API reference from `openapi/ardea.v1.json` into Astro with Starlight and builds `site/dist/`; a link from those pages to a file that does not exist fails it. Sources and publishing in [`site/README.md`](site/README.md). |
 | `npm run check:links` (in `site/`) | Every internal link and anchor of the built site, landing page and API reference included. |
 | `npm run check:a11y` (in `site/`) | axe (WCAG 2.2 AA tags) with Playwright on the landing page, every documentation page and a sample of API operations; runs in the Playwright image like the web app's checks (command in `site/README.md`). |

@@ -44,11 +44,11 @@ image=ghcr.io/nicom77/ardea
 version=0.1.0
 identity='^https://github\.com/NicoM77/Ardea/\.github/workflows/release\.yml@refs/heads/main$'
 issuer=https://token.actions.githubusercontent.com
-workflow=NicoM77/Ardea/.github/workflows/release.yml
+signer=https://github.com/NicoM77/Ardea/.github/workflows/release.yml@refs/heads/main
 
 cosign verify "$image:$version" --certificate-identity-regexp "$identity" --certificate-oidc-issuer "$issuer"
-gh attestation verify "oci://$image:$version" --repo NicoM77/Ardea --signer-workflow "$workflow"
-gh attestation verify "oci://$image:$version" --repo NicoM77/Ardea --signer-workflow "$workflow" \
+gh attestation verify "oci://$image:$version" --repo NicoM77/Ardea --cert-identity "$signer" --deny-self-hosted-runners
+gh attestation verify "oci://$image:$version" --repo NicoM77/Ardea --cert-identity "$signer" --deny-self-hosted-runners \
   --predicate-type https://cyclonedx.org/bom
 
 for arch in amd64 arm64; do
@@ -56,13 +56,14 @@ for arch in amd64 arm64; do
     --format "{{range .Manifest.Manifests}}{{if eq .Platform.Architecture \"$arch\"}}{{.Digest}}{{end}}{{end}}")
   echo "== $arch $digest"
   cosign verify "$image@$digest" --certificate-identity-regexp "$identity" --certificate-oidc-issuer "$issuer"
-  gh attestation verify "oci://$image@$digest" --repo NicoM77/Ardea --signer-workflow "$workflow"
+  gh attestation verify "oci://$image@$digest" --repo NicoM77/Ardea --cert-identity "$signer" --deny-self-hosted-runners
 done
 ```
 
 The first two commands check the multi-architecture index (what `docker pull` resolves the tag to), the third its
 SBOM; the loop checks the image of each architecture by its own digest. Each command fails unless the image was
-built and signed by `release.yml` on the main branch of `NicoM77/Ardea`. To run exactly what you checked, pin the
+built and signed by `release.yml` on the main branch of `NicoM77/Ardea`, on a GitHub-hosted runner. An image tag is
+set only after its image was signed and attested, so a tag that fails these checks was not made by a release. To run exactly what you checked, pin the
 digest in `.env`: `ARDEA_IMAGE=ghcr.io/nicom77/ardea:0.1.0@sha256:…`.
 
 ## Steps

@@ -41,13 +41,13 @@ comes from Fontsource, and the site is light only.
 `site.config.mjs` holds the address: `https://nicom77.github.io/Ardea/` by default, `ARDEA_SITE_URL` and
 `ARDEA_SITE_BASE` change it (for example `ARDEA_SITE_BASE=/` for a custom domain).
 
-## Publishing (not enabled yet)
+## Publishing
 
-`.github/workflows/site.yml` builds, checks and publishes the site to GitHub Pages, but it only runs when started by
-hand. Before it is enabled, the owner decides on GitHub Pages for the repository (Settings → Pages → Source «GitHub
-Actions»; for a private repository this depends on the plan) and Actions minutes are available again (task 7.13).
-Then the triggers of the roadmap are added: every published release, and every push to `main` that changes
-`docs/**`, `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `openapi/**` or `site/**`.
+`.github/workflows/site.yml` builds, checks and publishes the site to GitHub Pages (Settings → Pages → Source
+«GitHub Actions») on every published release, on every push to `main` that changes `docs/**`, `README.md`,
+`SECURITY.md`, `CONTRIBUTING.md`, `openapi/**` or `site/**`, and when started by hand. The Publish job runs only for
+`main` and releases: `gh workflow run site.yml --ref <branch>` builds and checks a branch without publishing it.
+A change to the workflow file alone starts nothing, so start it by hand on `main` after one.
 
 ## Accessibility check locally
 

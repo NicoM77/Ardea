@@ -123,6 +123,7 @@ import {
           [busy]="busy()"
           [problem]="problem()"
           [versionError]="versionError()"
+          [projectError]="projectError()"
           (answer)="follow.emit($event)"
           (dismiss)="dismiss.emit()"
         />
@@ -364,6 +365,7 @@ export class NoticeCard {
   /** Why the last answer was refused, as a translation key. */
   readonly problem = input<string | null>(null);
   readonly versionError = input<string | null>(null);
+  readonly projectError = input<string | null>(null);
   readonly projects = input<readonly { id: string; name: string }[]>([]);
   readonly reminders = input<readonly ActionSummary[]>([]);
   /** Who answered «Doesn't affect us» before the notice came back, by name. */

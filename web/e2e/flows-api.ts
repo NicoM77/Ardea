@@ -375,7 +375,12 @@ function notices(calm: boolean): Notice[] {
       cvssScore: 9.8,
       exploitation: 'active',
     }),
-    notice('n2', 'CVE-2026-200002', 'PostgreSQL: privilege escalation through a crafted index', POSTGRES),
+    notice(
+      'n2',
+      'CVE-2026-200002',
+      'PostgreSQL: privilege escalation through a crafted index',
+      POSTGRES,
+    ),
     notice('n3', 'CVE-2026-200003', 'FortiGate: heap overflow in the SSL VPN', FORTIGATE, {
       cvssScore: 9.6,
       exploitation: 'active',
@@ -407,7 +412,13 @@ function notices(calm: boolean): Notice[] {
   return calm
     ? rows.map((n) =>
         n.state === 'open'
-          ? { ...n, state: 'not_affected', decidedBy: USER_ID, decidedAt: at(-HOUR), isBackfill: false }
+          ? {
+              ...n,
+              state: 'not_affected',
+              decidedBy: USER_ID,
+              decidedAt: at(-HOUR),
+              isBackfill: false,
+            }
           : n,
       )
     : rows;
@@ -415,7 +426,9 @@ function notices(calm: boolean): Notice[] {
 
 function noticeOrder(a: Notice, b: Notice): number {
   const exploited = Number(b.exploitation === 'active') - Number(a.exploitation === 'active');
-  return exploited || (b.cvssScore ?? -1) - (a.cvssScore ?? -1) || b.raisedAt.localeCompare(a.raisedAt);
+  return (
+    exploited || (b.cvssScore ?? -1) - (a.cvssScore ?? -1) || b.raisedAt.localeCompare(a.raisedAt)
+  );
 }
 
 export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<void> {
@@ -770,10 +783,13 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
       const state = q.get('state') ?? 'new';
       const component = q.get('component');
       const items = inbox
+        // «new» leaves out what a backfill raised; that is «earlier» (ADR 047).
         .filter((n) =>
           state === 'answered'
             ? n.state === 'affects_us' || n.state === 'not_affected'
-            : n.state === (state === 'new' ? 'open' : state),
+            : state === 'new' || state === 'earlier'
+              ? n.state === 'open' && n.isBackfill === (state === 'earlier')
+              : n.state === state,
         )
         .filter((n) => !component || n.components.some((c) => c.id === component))
         .sort(noticeOrder);
@@ -782,7 +798,8 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
     const answer = new RegExp(`^${base}/notices/([^/]+)/(answer|reopen)$`).exec(path);
     if (answer && request.method() === 'POST') {
       const n = inbox.find((x) => x.id === answer[1]);
-      if (!n) return route.fulfill({ status: 404, json: { status: 404, code: 'notice_not_found' } });
+      if (!n)
+        return route.fulfill({ status: 404, json: { status: 404, code: 'notice_not_found' } });
       const body = request.postDataJSON() as {
         answer?: string;
         expectedState: string;

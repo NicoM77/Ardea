@@ -9,13 +9,16 @@ import { PROJECT_ID } from './mock-api';
 /**
  * The core screens of phase 3 (tasks 3.8 to 3.11) in the production build under the production
  * policy, against a stateful stand-in for the API (e2e/flows-api.ts): the overview on a busy and a
- * quiet day, the filters of the actions list, a status change with the 409 conflict and taking a
+ * quiet day, the filters of the reminders list, a status change with the 409 conflict and taking a
  * closing back, the three answers above the action bar at 390 × 844, and the alert. Phase 4 adds
  * the model's assessment: its texts as plain text, the proposal confirmed and a verdict corrected
  * (task 4.7), and a request for an assessment refused for today (task 4.3); the catalogue that learns
  * with its review list and the note on a hit through a learned entry (tasks 4.9, 4.10). Phase 5a adds
  * the stack (task 5a.4, e2e/stack-api.ts): the wizard with the stack only, and the stack page, also
- * at 390 × 844. Every page is checked
+ * at 390 × 844; and the notices with the reminders (task 5a.5): the inbox answered by pointer and by
+ * keyboard with Undo, the follow-up of «Affects us», the earlier and answered views, the reminder
+ * with its status and answers first, and the overview's new notices, also at 390 × 844. The «actions»
+ * of the API are «reminders» in the interface. Every page is checked
  * with axe (WCAG 2.2 AA) and must log no console error.
  */
 const ORG = '/o/example';
@@ -47,11 +50,13 @@ test('overview on a busy day: the finding, the open reminders with their answers
   await expect(urgent.getByRole('heading', { name: 'What to do' })).toBeVisible();
   // «n new notices» leads the side column (master plan 17.7): the backfill and the answered do not count.
   const notices = page.getByRole('region', { name: 'Notices' });
-  await expect(notices).toContainText('3new notices');
+  await expect(notices).toContainText(/3\s*new notices/);
   const peek = notices.getByRole('listitem');
   await expect(peek).toHaveCount(3);
   await expect(peek.first()).toContainText('Windows Server: code execution in the RPC runtime');
-  await expect(peek.first()).toContainText('Your stack names Windows Server · CVSS 9.8 · exploited');
+  await expect(peek.first()).toContainText(
+    'Your stack names Windows Server · CVSS 9.8 · exploited',
+  );
   await notices.getByRole('link', { name: 'Answer notices' }).click();
   await expect(page).toHaveURL(/\/o\/example\/notices$/);
   await page.goBack();
@@ -86,7 +91,7 @@ test('overview on a quiet day keeps its cards and says nothing is urgent', async
   ).toHaveCount(2);
   await expect(page.getByRole('region', { name: 'By priority' })).toContainText('2open');
   const notices = page.getByRole('region', { name: 'Notices' });
-  await expect(notices).toContainText('0new notices');
+  await expect(notices).toContainText(/0\s*new notices/);
   await expect(notices.getByRole('link', { name: 'Answered notices' })).toHaveAttribute(
     'href',
     '/o/example/notices?view=answered',
@@ -196,8 +201,8 @@ test('reminder: status and the three answers first, «Mark as remediated» with 
     page.getByRole('heading', { level: 1, name: 'Update PostgreSQL to 17.12' }),
   ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Reminders' }).first()).toBeVisible();
-  const head = page.getByRole('region', { name: 'The three answers' });
-  await expect(head.getByRole('status')).toHaveText(/^Open since /);
+  const state = page.locator('.status-band').getByRole('status');
+  await expect(state).toHaveText(/^Open since /);
   // No owner, no deadline, no «in review» (master plan 17.5); score and history are collapsed.
   await expect(page.getByLabel('Owner')).toHaveCount(0);
   await expect(page.getByLabel('Due')).toHaveCount(0);
@@ -217,13 +222,13 @@ test('reminder: status and the three answers first, «Mark as remediated» with 
   });
   const toast = page.locator('ui-toast');
   await expect(toast).toContainText('Marked as remediated');
-  await expect(head.getByRole('status')).toContainText('remediated. No more reminders.');
+  await expect(state).toContainText('remediated. No more reminders.');
   const undo = page.waitForRequest(
     (r) => r.url().endsWith('/actions/143/status') && r.postDataJSON()?.status === 'open',
   );
   await toast.getByRole('button', { name: 'Undo' }).click();
   expect((await undo).postDataJSON()).toMatchObject({ status: 'open', expectedStatus: 'closed' });
-  await expect(head.getByRole('status')).toHaveText(/^Open since /);
+  await expect(state).toHaveText(/^Open since /);
 
   // «Other outcome»: risk accepted or not affected, each with a reason.
   const other = page.locator('.controls').getByRole('button', { name: 'Other outcome' });
@@ -236,7 +241,7 @@ test('reminder: status and the three answers first, «Mark as remediated» with 
   await page.getByLabel('Why is the project not affected?').fill('Only the replicas run 17.9.');
   await page.getByRole('button', { name: 'Close reminder' }).click();
   await expect(toast).toContainText('Closed as not affected for all findings');
-  await expect(head.getByRole('status')).toContainText('not affected. No more reminders.');
+  await expect(state).toContainText('not affected. No more reminders.');
   await history.getByRole('heading', { name: 'History' }).click();
   await expect(history).toContainText('Only the replicas run 17.9.');
 
@@ -275,19 +280,24 @@ test('notices: the inbox in order, «Doesn’t affect us» with Undo, and the fo
     'FortiGate: heap overflow in the SSL VPN',
     'PostgreSQL: privilege escalation through a crafted index',
   ]);
-  await expect(cards.first()).toContainText('ExploitedCVSS 9.8CVE-2026-200001');
+  await expect(cards.first()).toContainText(/Exploited\s*CVSS 9\.8\s*CVE-2026-200001/);
   await expect(cards.first()).toContainText('Your stack names Windows Server');
   await expect(cards.nth(2)).toContainText('Your stack names PostgreSQL 17');
-  await expect(cards.nth(2)).toContainText('Your stack names the 17 line, not the installed release.');
+  await expect(cards.nth(2)).toContainText(
+    'Your stack names the 17 line, not the installed release.',
+  );
   // FortiGate came back once (E22).
   await expect(cards.nth(1)).toContainText('Back once.');
   await expect(cards.nth(1)).toContainText('CISA lists it as exploited');
-  // The backfill waits under «Earlier» and does not count.
-  const earlier = page.getByRole('region', { name: 'Earlier' });
-  await expect(earlier.getByRole('article')).toHaveCount(1);
-  await expect(earlier).toContainText('PostgreSQL: memory disclosure in the planner');
+  // What a backfill raised waits under «Earlier» and does not count as new.
   await expect(page.getByRole('button', { name: /^New/ })).toHaveText(/New\s*3/);
   await expectAccessible(page, 'notices');
+  await page.getByRole('button', { name: /^Earlier/ }).click();
+  await expect(page).toHaveURL(/view=earlier/);
+  const earlier = page.getByRole('list', { name: 'Earlier notices' }).getByRole('article');
+  await expect(earlier).toHaveCount(1);
+  await expect(earlier).toContainText('PostgreSQL: memory disclosure in the planner');
+  await page.getByRole('button', { name: /^New/ }).click();
 
   const answer = page.waitForRequest((r) => r.url().endsWith('/answer'));
   await cards.first().getByRole('button', { name: 'Doesn’t affect us' }).click();
@@ -337,6 +347,8 @@ test('notices: the keyboard moves between cards and answers with 1 and 2, Esc cl
     'Adds this entry to the open reminder #155 “Update PostgreSQL” in the stack, which has 1 entry.',
   );
   await expect(cards.nth(2).getByRole('button', { name: 'Add to reminder' })).toBeVisible();
+  // Scrolled down, the sticky top bar covers the first card's links; axe would count them as obscured.
+  await page.evaluate(() => window.scrollTo(0, 0));
   await expectAccessible(page, 'notices with the follow-up');
   await page.keyboard.press('Escape');
   await expect(cards.nth(2).getByLabel('Project')).toHaveCount(0);
@@ -368,7 +380,7 @@ test('notices: «Affects us» with a project and a version makes a reminder, a r
   // A version the API refuses is said under the field.
   await card.getByLabel('Version').fill('not-a-version');
   await card.getByRole('button', { name: 'Create reminder' }).click();
-  await expect(card.getByText('Ardea cannot record this version here.')).toBeVisible();
+  await expect(card.getByText('Ardea cannot record this version here')).toBeVisible();
 
   await card.getByLabel('Version').fill('17.9');
   const answer = page.waitForRequest(
@@ -411,7 +423,9 @@ test('notices: the answered view grouped by stack entry and answer, a filter by 
   await expect(answered).not.toContainText('Windows Server · 1 entry');
 
   // The filter narrows both views to one stack entry.
-  await page.getByRole('combobox', { name: 'Stack entry' }).selectOption({ label: 'PostgreSQL 17' });
+  await page
+    .getByRole('combobox', { name: 'Stack entry' })
+    .selectOption({ label: 'PostgreSQL 17' });
   await expect(page).toHaveURL(/entry=c-st-pg/);
   await page.getByRole('button', { name: /^New/ }).click();
   await expect(page.getByRole('list', { name: 'New notices' }).getByRole('article')).toHaveCount(1);
@@ -867,7 +881,7 @@ test('stack page: suggestions with their reasons, a removal taken back, a versio
   await flowsApi(page);
   const stack = await stackApi(page);
   await page.goto(`${ORG}/overview`);
-  await page.getByRole('link', { name: 'Stack' }).click();
+  await page.getByRole('link', { name: 'Stack', exact: true }).click();
   await expect(page).toHaveURL(/\/o\/example\/stack$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Stack' })).toBeVisible();
   await expect(page.getByText('2 entries, 1 with a version line.')).toBeVisible();
@@ -982,6 +996,56 @@ test.describe('the stack at 390 × 844', () => {
       rows.filter({ hasText: 'Ubuntu' }).getByRole('button', { name: 'Everything' }),
     ).toHaveAttribute('aria-pressed', 'true');
     await expectAccessible(page, 'stack page on a phone');
+    expect(problems).toEqual([]);
+  });
+});
+
+test.describe('notices and the overview at 390 × 844', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  const overflow = (page: import('@playwright/test').Page) =>
+    page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+
+  test('the inbox fits the width; the answers are large enough to tap', async ({ page }) => {
+    const problems = watchConsole(page);
+    await flowsApi(page);
+    await page.goto(`${ORG}/notices`);
+    const cards = page.getByRole('list', { name: 'New notices' }).getByRole('article');
+    await expect(cards).toHaveCount(3);
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
+    // No key caps on a touch screen.
+    await expect(page.getByText('next notice')).toBeHidden();
+    const affects = cards.first().getByRole('button', { name: 'Affects us' });
+    expect((await affects.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await affects.click();
+    await expect(cards.first().getByLabel('Project')).toBeVisible();
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
+    await expectAccessible(page, 'notices on a phone');
+    expect(problems).toEqual([]);
+  });
+
+  test('the overview puts the new notices first and fits the width', async ({ page }) => {
+    const problems = watchConsole(page);
+    await flowsApi(page);
+    await page.goto(`${ORG}/overview`);
+    const notices = page.getByRole('region', { name: 'Notices' });
+    const reminders = page.getByRole('region', { name: 'Open reminders' });
+    await expect(notices).toBeVisible();
+    expect((await notices.boundingBox())!.y).toBeLessThan((await reminders.boundingBox())!.y);
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
+    await expectAccessible(page, 'overview on a phone');
+    expect(problems).toEqual([]);
+  });
+
+  test('the reminder fits the width with its status above the answers', async ({ page }) => {
+    const problems = watchConsole(page);
+    await flowsApi(page);
+    await page.goto(`${ORG}/reminders/143`);
+    const bar = page.locator('.ui-actionbar');
+    await expect(bar.getByRole('button', { name: 'Other outcome' })).toBeVisible();
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
     expect(problems).toEqual([]);
   });
 });

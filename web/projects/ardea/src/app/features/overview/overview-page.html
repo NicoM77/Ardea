@@ -3,7 +3,9 @@
   <p class="finding" role="status">
     @if (finding(); as f) {
       @if (noticeCount()) {
-        <strong>{{ 'overview.finding.notices' | transloco: { count: noticeCount() } }}</strong>
+        <strong>{{
+          'overview.finding.notices' | transloco: { count: noticeCount() }
+        }}</strong>&ngsp;
       }
       <strong>{{ f.lead.key | transloco: f.lead.params }}</strong>
       @if (f.detail; as d) {

@@ -65,9 +65,9 @@ interface NavLink {
               <span>{{ link.area.label | transloco }}</span>
               @if (link.area.id === 'notices' && noticeCount()) {
                 <span class="count" aria-hidden="true">{{ noticeCount() }}</span>
-                <span class="sr-only">{{
-                  'nav.noticesNew' | transloco: { count: noticeCount() }
-                }}</span>
+                <span class="sr-only"
+                  >&ngsp;{{ 'nav.noticesNew' | transloco: { count: noticeCount() } }}</span
+                >
               }
             </a>
           </li>

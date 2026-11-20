@@ -53,7 +53,11 @@ export interface FollowUpAnswer {
         }
       </p>
       <div class="fields">
-        <ui-field [label]="'notices.follow.project' | transloco" optional>
+        <ui-field
+          [label]="'notices.follow.project' | transloco"
+          [error]="projectError() ? (projectError()! | transloco) : null"
+          optional
+        >
           <select uiInput #project (change)="placeId.set(project.value || null)">
             <option value="">{{ 'notices.follow.noProject' | transloco }}</option>
             @for (p of projects(); track p.id) {
@@ -142,6 +146,7 @@ export class NoticeFollowUp {
   readonly problem = input<string | null>(null);
   /** Why the version was refused, as a translation key. */
   readonly versionError = input<string | null>(null);
+  readonly projectError = input<string | null>(null);
 
   readonly answer = output<FollowUpAnswer>();
   readonly dismiss = output();

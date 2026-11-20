@@ -1466,7 +1466,8 @@
     "show": "Show",
     "view": {
       "new": "New",
-      "answered": "Answered"
+      "answered": "Answered",
+      "earlier": "Earlier"
     },
     "filter": {
       "label": "Stack entry",
@@ -1485,7 +1486,8 @@
       "cancel": "cancel"
     },
     "list": {
-      "new": "New notices"
+      "new": "New notices",
+      "earlier": "Earlier notices"
     },
     "calm": {
       "heading": "Nothing to answer",
@@ -1495,15 +1497,16 @@
     },
     "earlier": {
       "title": "Earlier",
-      "text": "Raised quietly when a stack entry was added or changed, from up to half a year back. They do not count as new."
+      "text": "Raised quietly when a stack entry was added or changed, from up to half a year back. They do not count as new.",
+      "none": "Nothing earlier is waiting."
     },
     "answered": {
       "title": "Answered",
       "meta": "{count} notices",
       "entries": "{product} · {count, plural, one {# entry} other {# entries}}",
-      "affects": "reminder #{number} · {who}, {date}",
-      "affectsNoReminder": "checked against the version, no reminder · {who}, {date}",
-      "notAffected": "{who}, {date} · comes back once if exploited",
+      "affects": "· reminder #{number} · {who}, {date}",
+      "affectsNoReminder": "· checked against the version, no reminder · {who}, {date}",
+      "notAffected": "· {who}, {date} · comes back once if exploited",
       "openReminder": "Open reminder",
       "change": "Change answer",
       "none": "Nothing answered yet.",
@@ -1543,7 +1546,7 @@
       "affect": "Does it affect us?",
       "possibly": "Possibly",
       "todo": "What to do?",
-      "todoText": "Check whether you run an affected version of {product}. If so, answer “Affects us”: a reminder follows, and with a version Ardea checks it exactly."
+      "todoText": "Check whether you run an affected version of {product}. If so, answer “Affects us”."
     },
     "follow": {
       "createsStack": "Creates a reminder to update {product} in the stack. Add the project and version if you know them.",
@@ -1573,8 +1576,8 @@
       "withoutComponent": "The stack entry that raised this notice was removed; there is nothing left to remind about.",
       "projectGone": "That project no longer exists. Choose another one or the stack.",
       "projectArchived": "That project is archived. Choose another one or the stack.",
-      "projectNeeded": "Several places name this product. Choose the project the version belongs to.",
-      "version": "Ardea cannot record this version here. Leave it empty, or choose the project where it runs.",
+      "projectNeeded": "The notice names several projects. Choose the project the version is for.",
+      "version": "Ardea cannot record this version here: a repository reads this product in the project and sets its version, or it is a service without one. Answer without a version.",
       "invalid": "The answer is not valid.",
       "forbidden": "Only members can answer notices.",
       "gone": "This notice no longer exists.",
@@ -1644,7 +1647,7 @@
     }
   },
   "findings": {
-    "meta": "{count} open · the reminder takes the highest",
+    "meta": "{count} open",
     "verdict": "{verdict, select, affected {Affected} likely {Likely} uncertain {Uncertain} unlikely {Unlikely} not_affected {Not affected} other {Not judged}}",
     "fixedIn": "fixed in {version}",
     "noFix": "no fix named",

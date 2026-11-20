@@ -57,7 +57,7 @@ import {
 /** As many as the API gives on one page. */
 const PAGE = 100;
 
-type View = 'new' | 'answered';
+type View = 'new' | 'earlier' | 'answered';
 
 /** Why an answer or taking it back did not go through, in the reader's words (ADR 047 decision 9). */
 const NOTICE_PROBLEMS = {
@@ -80,6 +80,7 @@ interface Refusal {
   id: string;
   key: string | null;
   version: string | null;
+  project: string | null;
 }
 
 /** One list of notices read page by page; a further page is appended, a notice that moved appears once. */
@@ -144,6 +145,16 @@ function pages(
               {{ 'notices.view.new' | transloco }}
               <span class="count">{{ freshCount() }}</span>
             </button>
+            @if (earlier().length || view() === 'earlier') {
+              <button
+                type="button"
+                [attr.aria-pressed]="view() === 'earlier'"
+                (click)="show('earlier')"
+              >
+                {{ 'notices.view.earlier' | transloco }}
+                <span class="count">{{ earlierCount() }}</span>
+              </button>
+            }
             <button
               type="button"
               [attr.aria-pressed]="view() === 'answered'"
@@ -173,8 +184,11 @@ function pages(
           </button>
         } @else if (!loaded()) {
           <div class="wait"><ui-loader size="page" [label]="'notices.loading' | transloco" /></div>
-        } @else if (view() === 'new') {
-          @if (fresh().length || earlier().length) {
+        } @else if (view() !== 'answered') {
+          @if (view() === 'earlier') {
+            <p class="quiet">{{ 'notices.earlier.text' | transloco }}</p>
+          }
+          @if (shown().length) {
             @if (canAnswer()) {
               <p class="keys">
                 <ui-kbd>↑</ui-kbd><ui-kbd>↓</ui-kbd> {{ 'notices.keys.move' | transloco }}
@@ -186,15 +200,17 @@ function pages(
               </p>
             }
           }
-          @if (fresh().length) {
-            <h2 class="sr-only">{{ 'notices.list.new' | transloco }}</h2>
-            <ol class="cards" [attr.aria-label]="'notices.list.new' | transloco">
-              @for (n of fresh(); track n.id) {
+          @if (shown().length) {
+            <h2 class="sr-only">{{ listLabel() | transloco }}</h2>
+            <ol class="cards" [attr.aria-label]="listLabel() | transloco">
+              @for (n of shown(); track n.id) {
                 <li>
                   <ng-container *ngTemplateOutlet="card; context: { $implicit: n }"></ng-container>
                 </li>
               }
             </ol>
+          } @else if (view() === 'earlier') {
+            <p class="quiet">{{ 'notices.earlier.none' | transloco }}</p>
           } @else if (entryId()) {
             <p class="quiet">
               {{ 'notices.calm.filtered' | transloco: { entry: entryLabel() } }}
@@ -213,28 +229,13 @@ function pages(
               </button>
             </ui-empty-state>
           }
-          @if (earlier().length) {
-            <section class="earlier" aria-labelledby="notices-earlier">
-              <h2 id="notices-earlier">{{ 'notices.earlier.title' | transloco }}</h2>
-              <p class="quiet">{{ 'notices.earlier.text' | transloco }}</p>
-              <ol class="cards">
-                @for (n of earlier(); track n.id) {
-                  <li>
-                    <ng-container
-                      *ngTemplateOutlet="card; context: { $implicit: n }"
-                    ></ng-container>
-                  </li>
-                }
-              </ol>
-            </section>
-          }
-          @if (newMore()) {
+          @if (view() === 'new' ? newMore() : earlierMore()) {
             <div class="more">
               <button
                 uiButton
                 type="button"
-                [loading]="newRead.isLoading()"
-                (click)="loadMore('new')"
+                [loading]="newRead.isLoading() || earlierRead.isLoading()"
+                (click)="loadMore(view())"
               >
                 {{ 'notices.more' | transloco }}
               </button>
@@ -371,6 +372,7 @@ function pages(
         [busy]="busyId() === n.id"
         [problem]="refusalOf(n.id)?.key ?? null"
         [versionError]="refusalOf(n.id)?.version ?? null"
+        [projectError]="refusalOf(n.id)?.project ?? null"
         [projects]="projects()"
         [reminders]="reminders()"
         [decider]="person(n.decidedBy)"
@@ -650,9 +652,9 @@ function pages(
   `,
 })
 export class NoticesPage {
-  /** From the address: `view=answered` and `entry=<component id>`. */
+  /** From the address: `view=earlier` or `view=answered`, and `entry=<component id>`. */
   readonly view = input<View, string | null | undefined>('new', {
-    transform: (v) => (v === 'answered' ? 'answered' : 'new'),
+    transform: (v) => (v === 'answered' || v === 'earlier' ? v : 'new'),
   });
   readonly entry = input<string | null>(null);
 
@@ -698,24 +700,42 @@ export class NoticesPage {
       cursor: this.answeredCursor(),
     })),
   );
+  /** Raised quietly when a stack entry was added or changed (ADR 047): not new, under «Earlier». */
+  private readonly earlierCursor = linkedSignal<string | null, string | undefined>({
+    source: this.entryId,
+    computation: () => undefined,
+  });
+  protected readonly earlierRead = listNoticesResource(
+    this.orgId,
+    computed(() => ({
+      state: 'earlier',
+      component: this.entryId() ?? undefined,
+      limit: PAGE,
+      cursor: this.earlierCursor(),
+    })),
+  );
   private readonly newRows = this.rowsOf(this.newRead, this.newCursor);
+  private readonly earlierRows = this.rowsOf(this.earlierRead, this.earlierCursor);
   private readonly answeredRows = this.rowsOf(this.answeredRead, this.answeredCursor);
   /** The answers given and taken back on this page, newer than the pages read before them. */
   private readonly changed = signal<NoticeView[]>([]);
 
   protected readonly loaded = computed(
-    () => this.newRead.hasValue() && this.answeredRead.hasValue(),
+    () => this.newRead.hasValue() && this.earlierRead.hasValue() && this.answeredRead.hasValue(),
   );
   protected readonly loadProblem = computed(() => {
-    const error = this.newRead.error() ?? this.answeredRead.error();
+    const error = this.newRead.error() ?? this.earlierRead.error() ?? this.answeredRead.error();
     return error ? problemMessageKey(error, { fallback: 'notices.loadFailed' }) : null;
   });
 
   private readonly all = computed(() => {
     const entry = this.entryId();
-    return latestById(this.newRows(), this.answeredRows(), this.changed()).filter(
-      (n) => !entry || n.components.some((c) => c.id === entry),
-    );
+    return latestById(
+      this.newRows(),
+      this.earlierRows(),
+      this.answeredRows(),
+      this.changed(),
+    ).filter((n) => !entry || n.components.some((c) => c.id === entry));
   });
   protected readonly fresh = computed(() => freshNotices(this.all()).sort(noticeOrder));
   protected readonly earlier = computed(() => this.all().filter(isEarlier).sort(noticeOrder));
@@ -724,10 +744,21 @@ export class NoticesPage {
   );
   protected readonly groups = computed(() => answeredGroups(this.answered()));
   protected readonly newMore = computed(() => this.nextOf(this.newRead) !== null);
+  protected readonly earlierMore = computed(() => this.nextOf(this.earlierRead) !== null);
   protected readonly answeredMore = computed(() => this.nextOf(this.answeredRead) !== null);
+  /** The cards of the view: new, or earlier. */
+  protected readonly shown = computed(() =>
+    this.view() === 'earlier' ? this.earlier() : this.fresh(),
+  );
+  protected readonly listLabel = computed(() =>
+    this.view() === 'earlier' ? 'notices.list.earlier' : 'notices.list.new',
+  );
 
   protected readonly freshCount = computed(
     () => `${this.fresh().length}${this.newMore() ? '+' : ''}`,
+  );
+  protected readonly earlierCount = computed(
+    () => `${this.earlier().length}${this.earlierMore() ? '+' : ''}`,
   );
   protected readonly answeredCount = computed(
     () => `${this.answered().length}${this.answeredMore() ? '+' : ''}`,
@@ -838,6 +869,8 @@ export class NoticesPage {
   protected reload(): boolean {
     if (this.newCursor()) this.newCursor.set(undefined);
     else this.newRead.reload();
+    if (this.earlierCursor()) this.earlierCursor.set(undefined);
+    else this.earlierRead.reload();
     if (this.answeredCursor()) this.answeredCursor.set(undefined);
     else this.answeredRead.reload();
     return true;
@@ -847,6 +880,9 @@ export class NoticesPage {
     if (list === 'new') {
       const next = this.nextOf(this.newRead);
       if (next) this.newCursor.set(next);
+    } else if (list === 'earlier') {
+      const next = this.nextOf(this.earlierRead);
+      if (next) this.earlierCursor.set(next);
     } else {
       const next = this.nextOf(this.answeredRead);
       if (next) this.answeredCursor.set(next);
@@ -857,7 +893,7 @@ export class NoticesPage {
     this.following.set(null);
     this.refusal.set(null);
     void this.router.navigate([], {
-      queryParams: { view: view === 'answered' ? 'answered' : null },
+      queryParams: { view: view === 'new' ? null : view },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
@@ -932,7 +968,7 @@ export class NoticesPage {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    if (this.view() !== 'new' || !this.canAnswer() || this.following()) return;
+    if (this.view() === 'answered' || !this.canAnswer() || this.following()) return;
     const target = event.target as HTMLElement | null;
     if (!target || target.closest('input, textarea, select, [contenteditable="true"]')) return;
     const card = target.closest<HTMLElement>('[data-notice]');
@@ -1031,9 +1067,9 @@ export class NoticesPage {
   private failed(error: unknown, id: string | null): void {
     const problem = problemOf(error);
     const version = problem?.errors?.['version'] ? 'notices.errors.version' : null;
-    const projectNeeded = problem?.errors?.['projectId'] ? 'notices.errors.projectNeeded' : null;
-    const key = version ? null : (projectNeeded ?? problemMessageKey(error, NOTICE_PROBLEMS));
-    if (id) this.refusal.set({ id, key, version });
+    const project = problem?.errors?.['projectId'] ? 'notices.errors.projectNeeded' : null;
+    const key = version || project ? null : problemMessageKey(error, NOTICE_PROBLEMS);
+    if (id) this.refusal.set({ id, key, version, project });
     else this.toaster.show({ text: this.transloco.translate(key ?? 'notices.errors.failed') });
     // Someone else answered or took it back meanwhile: read the notices as they are now.
     if (problem?.status === 409 || problem?.status === 404) this.reload();

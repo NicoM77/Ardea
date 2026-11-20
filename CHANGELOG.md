@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.2](https://github.com/NicoM77/Ardea/compare/v0.1.1...v0.1.2) (2026-11-20)
+
+
+### Bug Fixes
+
+* follow-ups from the acceptance of release 0.1.1 ([#161](https://github.com/NicoM77/Ardea/issues/161)) ([1932347](https://github.com/NicoM77/Ardea/commit/1932347ca3352b94a32afc5b772b8632a48bb238))
+* **host:** seed-demo speaks of reminders ([37898f0](https://github.com/NicoM77/Ardea/commit/37898f066d2e5ae6371d82cb3faf4d69766ba193))
+* **platform:** dispose a unit of work's transaction only once ([5f88b09](https://github.com/NicoM77/Ardea/commit/5f88b09194c395107d360d154b59317141b5b1a3))
+* **platform:** dispose a unit of work's transaction only once ([#164](https://github.com/NicoM77/Ardea/issues/164)) ([081476d](https://github.com/NicoM77/Ardea/commit/081476d86289630465d56d449df274001b9cc7c5))
+* **web:** the phone action bar stays at the bottom of the screen ([90a109b](https://github.com/NicoM77/Ardea/commit/90a109bd5270868cf4b4af7fa94ffe1f44ef36e2))
+* **web:** the phone action bar stays at the bottom of the screen ([#162](https://github.com/NicoM77/Ardea/issues/162)) ([94b7781](https://github.com/NicoM77/Ardea/commit/94b7781332d70266ea1ff6d55786205c85a3be3d))
+
 ## [0.1.1](https://github.com/NicoM77/Ardea/compare/v0.1.0...v0.1.1) (2026-11-20)
 
 

@@ -64,6 +64,7 @@ public sealed class NotificationsModule : IModule
 
         services.AddJob<EvaluateEvents, EvaluateEventsHandler>(new JobKindOptions { MaxConcurrency = 4, MaxAttempts = 8, Timeout = TimeSpan.FromMinutes(2), Priority = JobPriority.Urgent });
         services.AddJob<Deliver, DeliverHandler>(Deliver.KindOptions);
+        services.AddJob<SendOverflow, SendOverflowHandler>(new JobKindOptions { MaxConcurrency = 2, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(1) });
         services.AddJob<DistributeWarning, DistributeWarningHandler>(new JobKindOptions { MaxConcurrency = 1, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(1) });
         services.AddJob<ReceiveWarning, ReceiveWarningHandler>(new JobKindOptions { MaxConcurrency = 2, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(1) });
         services.AddJob<FindDueDigests, FindDueDigestsHandler>(new JobKindOptions { MaxConcurrency = 1, MaxAttempts = 1, Timeout = TimeSpan.FromMinutes(1), Priority = JobPriority.Urgent });

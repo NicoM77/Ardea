@@ -121,7 +121,7 @@ Bei einer Reminder mit vielen Befunden nennt die Nachricht die Anzahl und die dr
 - `notify.delivery` ist das Protokoll, eine Zeile je Nachricht: Empfänger, Kanal, Art, Zustand (`pending`, `sent`, `failed`, `dead`, `suppressed`), Fehler, Zeitpunkt. Welche Ereignisse sie abdeckt, steht in `delivery_event` oder `digest_item`.
 - Endgültige Fehler (unbekannte Adresse, Abo abgelaufen, Webhook antwortet mit 4xx ausser 429) werden nicht wiederholt.
 - Schlägt die Zustellung für Stufe 5 auf allen Kanälen eines Empfängers fehl, erhalten die Owner eine In-App-Warnung.
-- Obergrenze je Kanal und Organisation als Schutz vor Fehlkonfiguration: höchstens 60 Sofortnachrichten pro Stunde, darüber wird in die Sammelnachricht verschoben.
+- Obergrenze je Kanal und Organisation als Schutz vor Fehlkonfiguration: höchstens 60 Sofortnachrichten pro Stunde, darüber wird in die Sammelnachricht verschoben: in die nächste des Empfängers auf diesem Kanal, wenn sie innerhalb einer Stunde kommt, sonst nach einer Stunde in eine Nachricht mit allem Zurückgehaltenen ([ADR 049](../adr/0049-overflow-above-the-hourly-cap.md)).
 
 ## 8.7 Erinnerung statt Eskalation
 

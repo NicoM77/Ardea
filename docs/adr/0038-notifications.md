@@ -72,7 +72,8 @@ digest schedule works.
    its back-off; 12 attempts reach about 3.5 hours. Permanent failures (recipient refused, 4xx except 408 and
    429, blocked target) end as `dead`. If a level 5 message is given up and the recipient was reached on no
    other channel, the owners get an in-app warning (8.6). Above 60 immediate messages per channel, organisation
-   and hour, a new message is `suppressed`; the event stays in the digests that cover it.
+   and hour, a new message is `suppressed`; the event goes out with the next digest of that recipient and channel
+   or an hour later (ADR 049).
 7. **Digests.** A rule target in digest mode carries its cron expression (organisation's time zone),
    `next_digest_at` and `last_digest_at`. The instance schedule `notify.find-due-digests` runs every minute and
    asks `notify.due_digest_targets(now)` for due targets, queuing `notify.send-digest` per target in its
@@ -144,5 +145,5 @@ data not listed in master plan 4.7.
 - The confirmation and unsubscribe pages and the settings page under `/o/{slug}/settings/notifications` are
   linked from mails but come with task 5.8; until then the API endpoints work, the pages do not exist.
 - `repository.unavailable` can be chosen in rules but has no producer until Assets raises it (16.6).
-- Rate limit: a suppressed immediate message is not moved into a digest of its own; it appears only in digests
-  whose targets match the event anyway.
+- Rate limit: refined by ADR 049; a suppressed immediate message reaches its recipient with the next digest of
+  that channel or in an overflow message an hour later.

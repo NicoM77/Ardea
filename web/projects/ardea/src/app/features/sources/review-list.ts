@@ -1,16 +1,17 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideCircleCheck } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiEmptyState, UiLoader, UiNotice } from 'ui';
+import { UiButton, UiCard, UiLoader, UiNotice } from 'ui';
 import {
   listReviewItemsResource,
   SourcesService,
   type ReviewItemView,
 } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 
 @Component({
   selector: 'ardea-review-list',
@@ -21,7 +22,6 @@ import { problemMessageKey } from '../../core/api/problem';
     LucideCircleCheck,
     UiButton,
     UiCard,
-    UiEmptyState,
     UiLoader,
     UiNotice,
   ],
@@ -71,10 +71,10 @@ import { problemMessageKey } from '../../core/api/problem';
             }
           </ul>
         } @else {
-          <ui-empty-state [heading]="'review.emptyHeading' | transloco">
-            <svg uiEmptyIcon lucideCircleCheck aria-hidden="true"></svg>
-            {{ 'review.emptyText' | transloco }}
-          </ui-empty-state>
+          <p class="healthy">
+            <svg lucideCircleCheck aria-hidden="true"></svg>
+            {{ 'review.empty' | transloco }}
+          </p>
         }
       } @else if (open.error()) {
         <ui-notice tone="error">{{ 'review.loadFailed' | transloco }}</ui-notice>
@@ -164,6 +164,18 @@ import { problemMessageKey } from '../../core/api/problem';
       outline: var(--focus-ring);
       outline-offset: var(--focus-offset);
     }
+    .healthy {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      color: var(--muted);
+    }
+    .healthy svg {
+      flex: none;
+      width: 16px;
+      height: 16px;
+      color: var(--positive);
+    }
     .intro {
       margin: calc(-1 * var(--space-sm)) 0 var(--space-md);
       color: var(--muted);
@@ -244,7 +256,6 @@ import { problemMessageKey } from '../../core/api/problem';
 })
 export class ReviewList {
   private readonly api = inject(SourcesService);
-  private readonly transloco = inject(TranslocoService);
 
   protected readonly showDecided = signal(false);
   protected readonly open = listReviewItemsResource(signal({ state: 'open' }));
@@ -277,15 +288,9 @@ export class ReviewList {
     }
   }
 
-  private readonly format = computed(
-    () =>
-      new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }),
-  );
+  private readonly dates = inject(Dates);
 
   protected when(value: string): string {
-    return this.format().format(new Date(value));
+    return this.dates.dateTime(value);
   }
 }

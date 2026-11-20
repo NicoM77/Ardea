@@ -1,3 +1,5 @@
+import type { LearningWeekView } from '../../core/api/client';
+
 export type LearningView = 'review' | 'open' | 'in_effect' | 'decided';
 
 export const LEARNING_VIEWS: readonly { value: LearningView; label: string }[] = [
@@ -63,4 +65,10 @@ export function share(value: number | string | null | undefined, locale: string)
   const n = Number(value);
   if (!Number.isFinite(n)) return '–';
   return new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }).format(n);
+}
+
+export function weeksWithActivity(weeks: readonly LearningWeekView[]): boolean {
+  return weeks.some((w) =>
+    [w.learned, w.adopted, w.confirmed, w.rejected, w.withdrawn].some((n) => Number(n) > 0),
+  );
 }

@@ -62,7 +62,7 @@ describe('ReviewList', () => {
     await settle(fixture);
     http.expectOne((r) => r.url === '/api/v1/instance/review').flush([]);
     await settle(fixture);
-    expect(element.textContent).toContain('review.emptyHeading');
+    expect(element.textContent).toContain('review.empty');
   });
 
   it('loads decided cases only when they are asked for', async () => {

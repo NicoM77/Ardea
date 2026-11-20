@@ -68,13 +68,22 @@
     <!-- «n new notices» leads the side column (master plan 17.7); below 1100px it moves to the top -->
     <div class="side span-4">
       <ui-card class="notices-card" [heading]="'overview.notices.title' | transloco">
-        <p class="figure-row">
-          <span class="figure">{{ noticeCount() }}</span>
-          <span>{{ 'overview.notices.word' | transloco: { count: noticeCount() } }}</span>
-        </p>
-        <p class="figure-sub">
-          {{ (noticeCount() ? 'overview.notices.sub' : 'overview.notices.calm') | transloco }}
-        </p>
+        <!-- No all-clear before the notices are known: a wait, or a sentence when they could not be read -->
+        @if (noticesKnown()) {
+          <p class="figure-row">
+            <span class="figure">{{ noticeText() }}</span>
+            <span>{{ 'overview.notices.word' | transloco: { count: noticeCount() } }}</span>
+          </p>
+          <p class="figure-sub">
+            {{ (noticeCount() ? 'overview.notices.sub' : 'overview.notices.calm') | transloco }}
+          </p>
+        } @else if (noticesFailed()) {
+          <p class="figure-sub">{{ 'overview.notices.loadFailed' | transloco }}</p>
+        } @else {
+          <div class="notices-wait">
+            <ui-loader [label]="'overview.notices.loading' | transloco" />
+          </div>
+        }
         @if (peek().length) {
           <ul class="peek">
             @for (n of peek(); track n.id) {
@@ -95,10 +104,14 @@
             }
           </ul>
         }
-        @if (noticeCount()) {
-          <a uiButton variant="primary" class="notices-go" routerLink="../notices">{{
-            'overview.notices.answer' | transloco
-          }}</a>
+        @if (noticeCount() || !noticesKnown()) {
+          <a
+            uiButton
+            [variant]="noticeCount() ? 'primary' : 'default'"
+            class="notices-go"
+            routerLink="../notices"
+            >{{ 'overview.notices.answer' | transloco }}</a
+          >
         } @else {
           <a
             uiButton

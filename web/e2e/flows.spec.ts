@@ -208,8 +208,11 @@ test('reminder: status and the three answers first, «Mark as remediated» with 
   await expect(page.getByLabel('Due')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Take into review' })).toHaveCount(0);
   await expect(page.getByRole('table', { name: /^Factors of/ })).toHaveCount(0);
-  const history = page.locator('details', { has: page.getByRole('heading', { name: 'History' }) });
-  await expect(history).not.toHaveAttribute('open');
+  const history = page.getByRole('region', { name: 'History' });
+  await expect(history.getByRole('button', { name: /^History/ })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
   await expectAccessible(page, 'reminder');
 
   // «Mark as remediated» needs no reason, and Undo opens it again.
@@ -242,7 +245,7 @@ test('reminder: status and the three answers first, «Mark as remediated» with 
   await page.getByRole('button', { name: 'Close reminder' }).click();
   await expect(toast).toContainText('Closed as not affected for all findings');
   await expect(state).toContainText('not affected. No more reminders.');
-  await history.getByRole('heading', { name: 'History' }).click();
+  await history.getByRole('button', { name: /^History/ }).click();
   await expect(history).toContainText('Only the replicas run 17.9.');
 
   // Reopening sends «open» against the status the page saw: closed.
@@ -344,7 +347,7 @@ test('notices: the keyboard moves between cards and answers with 1 and 2, Esc cl
   const project = cards.nth(2).getByLabel('Project');
   await expect(project).toBeFocused();
   await expect(cards.nth(2)).toContainText(
-    'Adds this entry to the open reminder #155 “Update PostgreSQL” in the stack, which has 1 entry.',
+    'As far as Ardea can tell, this adds the entry to the open reminder #155 “Update PostgreSQL” in the stack, which has 1 entry.',
   );
   await expect(cards.nth(2).getByRole('button', { name: 'Add to reminder' })).toBeVisible();
   // Scrolled down, the sticky top bar covers the first card's links; axe would count them as obscured.
@@ -430,6 +433,85 @@ test('notices: the answered view grouped by stack entry and answer, a filter by 
   await page.getByRole('button', { name: /^New/ }).click();
   await expect(page.getByRole('list', { name: 'New notices' }).getByRole('article')).toHaveCount(1);
   expect(problems).toEqual([]);
+});
+
+test('notices: Undo after leaving the page still takes the answer back', async ({ page }) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  await page.goto(`${ORG}/notices`);
+  const cards = page.getByRole('list', { name: 'New notices' }).getByRole('article');
+  await cards.first().getByRole('button', { name: 'Doesn’t affect us' }).click();
+  const toast = page.locator('ui-toast');
+  await expect(toast).toContainText('Doesn’t affect us.');
+  await expect(page.getByRole('link', { name: 'Notices 2 new' })).toBeVisible();
+
+  // The toast outlives the page: Undo on another page reopens the notice and says so.
+  await page.getByRole('link', { name: 'Reminders' }).first().click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Reminders' })).toBeVisible();
+  const reopen = page.waitForRequest((r) => r.url().endsWith('/reopen'));
+  await toast.getByRole('button', { name: 'Undo' }).click();
+  expect((await reopen).postDataJSON()).toEqual({ expectedState: 'not_affected' });
+  await expect(toast).toHaveText(/Undone/);
+  await expect(page.getByRole('link', { name: 'Notices 3 new' })).toBeVisible();
+  await page.getByRole('link', { name: 'Notices 3 new' }).click();
+  await expect(cards).toHaveCount(3);
+  expect(problems).toEqual([]);
+});
+
+test('notices: an answer someone else gave first (409) is said, the card leaves and the focus stays', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page, { noticeConflict: true });
+  await page.goto(`${ORG}/notices`);
+  const cards = page.getByRole('list', { name: 'New notices' }).getByRole('article');
+  await expect(cards).toHaveCount(3);
+  await cards.first().focus();
+  await page.keyboard.press('2');
+  await expect(page.locator('ui-toast')).toContainText(
+    'Someone answered this notice in the meantime.',
+  );
+  await expect(cards).toHaveCount(2);
+  await expect(cards.first()).toBeFocused();
+  // The keys still work on the cards left.
+  await page.keyboard.press('ArrowDown');
+  await expect(cards.nth(1)).toBeFocused();
+  await expect(page.getByRole('button', { name: /^Answered/ })).toHaveText(/Answered\s*3/);
+  expect(problems.filter((p) => !p.includes('status of 409'))).toEqual([]);
+});
+
+test('notices: a notice that came back once keeps saying so after its new answer is taken back', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  await page.goto(`${ORG}/notices`);
+  const card = page.getByRole('article', { name: 'FortiGate: heap overflow in the SSL VPN' });
+  await expect(card).toContainText('Sample Person answered “Doesn’t affect us” on');
+  await card.getByRole('button', { name: 'Doesn’t affect us' }).click();
+  const toast = page.locator('ui-toast');
+  await expect(toast).toContainText('Doesn’t affect us. It will not come back.');
+  await toast.getByRole('button', { name: 'Undo' }).click();
+  await expect(card).toContainText(
+    'It was answered “Doesn’t affect us” before; since then CISA lists it as exploited.',
+  );
+  await expect(card).toBeFocused();
+  expect(problems).toEqual([]);
+});
+
+test('overview: notices that could not be read are no all-clear', async ({ page }) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  await page.route('**/api/v1/orgs/*/notices?**', (route) =>
+    route.fulfill({ status: 500, json: { status: 500 } }),
+  );
+  await page.goto(`${ORG}/overview`);
+  const notices = page.getByRole('region', { name: 'Notices' });
+  await expect(notices).toContainText('The notices could not be loaded.');
+  await expect(notices).not.toContainText('Nothing to answer');
+  await expect(notices).not.toContainText('new notices');
+  await expect(notices.getByRole('link', { name: 'Answer notices' })).toBeVisible();
+  expect(problems.filter((p) => !p.includes('status of 500'))).toEqual([]);
 });
 
 test('notices on a quiet day: nothing to answer, said in the same place', async ({ page }) => {
@@ -539,8 +621,8 @@ test('action with the model’s assessment: plain text, the proposal confirmed, 
   });
   await expect(toast).toContainText('CVE-2026-116325: correction saved');
   // The history is collapsed on a reminder (master plan 17.7): one click away.
-  const history = page.locator('details', { has: page.getByRole('heading', { name: 'History' }) });
-  await history.getByRole('heading', { name: 'History' }).click();
+  const history = page.getByRole('region', { name: 'History' });
+  await history.getByRole('button', { name: /^History/ }).click();
   await expect(history).toContainText('corrected CVE-2026-116325 to affected');
   await expectAccessible(page, 'action after the review');
   expect(problems).toEqual([]);

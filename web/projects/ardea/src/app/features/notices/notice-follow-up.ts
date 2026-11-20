@@ -59,7 +59,13 @@ export interface FollowUpAnswer {
           optional
         >
           <select uiInput #project (change)="placeId.set(project.value || null)">
-            <option value="">{{ 'notices.follow.noProject' | transloco }}</option>
+            <option value="">
+              {{
+                defaultPlace()
+                  ? ('notices.follow.noProjectThere' | transloco: { project: defaultPlace() })
+                  : ('notices.follow.noProject' | transloco)
+              }}
+            </option>
             @for (p of projects(); track p.id) {
               <option [value]="p.id">{{ p.name }}</option>
             }
@@ -161,7 +167,16 @@ export class NoticeFollowUp {
   /** The chosen project's name; `null` for the stack entry the notice names. */
   protected readonly placeName = computed(() => {
     const chosen = this.placeId();
-    return chosen ? (this.projects().find((p) => p.id === chosen)?.name ?? null) : null;
+    if (chosen) return this.projects().find((p) => p.id === chosen)?.name ?? null;
+    // Without a project the API places it where the notice's component is: the stack entry, or
+    // the project of a component outside the stack (ADR 047 decision 7).
+    const reason = reasonComponent(this.notice());
+    return reason && !reason.inStack ? (reason.project?.name ?? null) : null;
+  });
+  /** The project a reminder goes to without a choice, when that is not the stack. */
+  protected readonly defaultPlace = computed(() => {
+    const reason = reasonComponent(this.notice());
+    return reason && !reason.inStack ? (reason.project?.name ?? null) : null;
   });
   protected readonly joins = computed(() =>
     openReminderFor(this.notice(), this.place(), this.reminders()),

@@ -1528,7 +1528,8 @@
     "someone": "Someone",
     "back": {
       "lead": "Back once.",
-      "text": "{who} answered “Doesn’t affect us” on {date}. Since then {reason, select, kev {CISA lists it as exploited} other {it is exploited}}. It will not come back again."
+      "text": "{who} answered “Doesn’t affect us” on {date}. Since then {reason, select, kev {CISA lists it as exploited} other {it is exploited}}. It will not come back again.",
+      "textBefore": "It was answered “Doesn’t affect us” before; since then {reason, select, kev {CISA lists it as exploited} other {it is exploited}}. It will not come back again."
     },
     "reason": {
       "stack": "Your stack names {product}",
@@ -1551,8 +1552,8 @@
     "follow": {
       "createsStack": "Creates a reminder to update {product} in the stack. Add the project and version if you know them.",
       "createsProject": "Creates a reminder to update {product} in {project}.",
-      "joinsStack": "Adds this entry to the open reminder #{number} “{reminder}” in the stack, which has {entries, plural, one {# entry} other {# entries}}.",
-      "joinsProject": "Adds this entry to the open reminder #{number} “{reminder}” in {project}, which has {entries, plural, one {# entry} other {# entries}}.",
+      "joinsStack": "As far as Ardea can tell, this adds the entry to the open reminder #{number} “{reminder}” in the stack, which has {entries, plural, one {# entry} other {# entries}}.",
+      "joinsProject": "As far as Ardea can tell, this adds the entry to the open reminder #{number} “{reminder}” in {project}, which has {entries, plural, one {# entry} other {# entries}}.",
       "project": "Project",
       "noProject": "No project, the stack",
       "version": "Version",
@@ -1560,7 +1561,8 @@
       "versionPlaceholder": "Installed version",
       "cancel": "Cancel",
       "add": "Add to reminder",
-      "create": "Create reminder"
+      "create": "Create reminder",
+      "noProjectThere": "No other project: {project}"
     },
     "toast": {
       "notAffected": "Doesn’t affect us. It comes back once if it gets exploited.",
@@ -1569,7 +1571,9 @@
       "affectsJoined": "Added to reminder #{number}",
       "affectsOutOfRange": "Checked against {version}: outside the affected range, no reminder",
       "movedBack": "{count, plural, one {Moved back to New} other {# notices moved back to New}}",
-      "undone": "Undone"
+      "undone": "Undone",
+      "oneAtATime": "One answer at a time: the last one is still being saved.",
+      "movedBackPart": "{count} of {total} notices moved back to New; the rest could not be changed."
     },
     "errors": {
       "conflict": "Someone answered this notice in the meantime. It shows the current state now.",
@@ -1778,7 +1782,9 @@
       "answered": "Answered notices",
       "peek": "Your stack names {product}",
       "exploited": "exploited",
-      "cvss": "CVSS {score}"
+      "cvss": "CVSS {score}",
+      "loading": "Loading the notices",
+      "loadFailed": "The notices could not be loaded. They are on the Notices page."
     }
   },
   "estimate": {

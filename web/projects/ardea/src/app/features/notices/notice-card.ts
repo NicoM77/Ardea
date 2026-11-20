@@ -52,15 +52,22 @@ import {
           <svg lucideRotateCcw aria-hidden="true"></svg>
           <span>
             <b>{{ 'notices.back.lead' | transloco }}</b>
-            {{
-              'notices.back.text'
-                | transloco
-                  : {
-                      who: decider() ?? ('notices.someone' | transloco),
-                      date: day(n.decidedAt),
-                      reason: n.reappearedReason ?? 'exploited',
-                    }
-            }}
+            @if (n.decidedAt) {
+              {{
+                'notices.back.text'
+                  | transloco
+                    : {
+                        who: decider() ?? ('notices.someone' | transloco),
+                        date: day(n.decidedAt),
+                        reason: n.reappearedReason ?? 'exploited',
+                      }
+              }}
+            } @else {
+              <!-- Taken back since (reopen clears who answered): the earlier answer is not known here -->
+              {{
+                'notices.back.textBefore' | transloco: { reason: n.reappearedReason ?? 'exploited' }
+              }}
+            }
           </span>
         </p>
       }
@@ -154,10 +161,13 @@ import {
             <svg lucideChevronRight aria-hidden="true"></svg>
           </a>
         </footer>
-        @if (problem(); as p) {
-          <p class="problem">{{ p | transloco }}</p>
-        }
       }
+      <!-- Always in the page, so a refused answer is read out; the open follow-up says it in its form -->
+      <p class="problem" role="alert">
+        @if (!following() && problem(); as p) {
+          {{ p | transloco }}
+        }
+      </p>
     </article>
   `,
   styles: `
@@ -316,6 +326,9 @@ import {
       margin-top: var(--space-sm);
       font-size: var(--fs-sub);
       font-weight: 500;
+    }
+    .problem:empty {
+      margin-top: 0;
     }
     @media (hover: hover) and (pointer: fine) {
       .more:hover {

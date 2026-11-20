@@ -18,7 +18,7 @@ import { reloadOnLiveChange } from '../../core/live/live-events';
 import { actionName, num, priorityOf } from '../actions/action-format';
 import { Answers } from '../actions/answers';
 import { NoticeCount } from '../notices/notice-count';
-import { cvssText, reasonComponent } from '../notices/notice-format';
+import { countText, cvssText, reasonComponent } from '../notices/notice-format';
 import { injectOrganization } from '../organizations/current-organization';
 import { roleRank } from '../organizations/org-format';
 import { ChangesCard, ProjectsCard, SourcesCard, WarningsCard } from './overview-cards';
@@ -117,6 +117,12 @@ export class OverviewPage {
   /** The new notices (master plan 17.7): their count leads the side column, the first three below. */
   private readonly notices = inject(NoticeCount);
   protected readonly noticeCount = this.notices.count;
+  protected readonly noticesKnown = this.notices.ready;
+  protected readonly noticesFailed = this.notices.failed;
+  /** «3», «99+», or «100+» when a further page was not read. */
+  protected readonly noticeText = computed(() =>
+    countText(this.notices.count(), this.notices.more()),
+  );
   protected readonly peek = computed(() => this.notices.fresh().slice(0, 3));
   protected peekProduct(n: NoticeView): string {
     return reasonComponent(n)?.name ?? '?';

@@ -138,6 +138,12 @@
 .notices-go {
   align-self: flex-start;
 }
+.notices-wait {
+  display: grid;
+  place-items: center;
+  min-height: 72px;
+  margin-bottom: var(--space-md);
+}
 
 @media (hover: hover) and (pointer: fine) {
   .card-link:hover {

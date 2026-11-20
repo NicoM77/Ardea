@@ -2,6 +2,7 @@ import {
   afterNextRender,
   Component,
   computed,
+  DestroyRef,
   ElementRef,
   inject,
   Injector,
@@ -247,7 +248,7 @@ function pages(
               'notices.answered.meta' | transloco: { count: answeredCount() }
             }}</span>
             @for (g of groups(); track g.key) {
-              <div class="group">
+              <div class="group" tabindex="-1" [attr.data-group]="g.key">
                 <div class="group-main">
                   <b>{{
                     'notices.answered.entries'
@@ -719,6 +720,9 @@ export class NoticesPage {
   private readonly answeredRows = this.rowsOf(this.answeredRead, this.answeredCursor);
   /** The answers given and taken back on this page, newer than the pages read before them. */
   private readonly changed = signal<NoticeView[]>([]);
+  /** Cards an answer found changed by someone else (409) or gone (404): hidden until read anew. */
+  private readonly stale = signal<{ id: string; changedAt: string }[]>([]);
+  private alive = true;
 
   protected readonly loaded = computed(
     () => this.newRead.hasValue() && this.earlierRead.hasValue() && this.answeredRead.hasValue(),
@@ -730,12 +734,17 @@ export class NoticesPage {
 
   private readonly all = computed(() => {
     const entry = this.entryId();
+    const stale = this.stale();
     return latestById(
       this.newRows(),
       this.earlierRows(),
       this.answeredRows(),
       this.changed(),
-    ).filter((n) => !entry || n.components.some((c) => c.id === entry));
+    ).filter(
+      (n) =>
+        (!entry || n.components.some((c) => c.id === entry)) &&
+        !stale.some((x) => x.id === n.id && x.changedAt === n.changedAt),
+    );
   });
   protected readonly fresh = computed(() => freshNotices(this.all()).sort(noticeOrder));
   protected readonly earlier = computed(() => this.all().filter(isEarlier).sort(noticeOrder));
@@ -839,6 +848,7 @@ export class NoticesPage {
   private readonly refusal = signal<Refusal | null>(null);
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => (this.alive = false));
     reloadOnLiveChange(
       {
         // A change can move notices between pages: start again from the first.
@@ -933,10 +943,12 @@ export class NoticesPage {
       projectId: follow.projectId,
       version: follow.version,
     };
+    // Whether the reminder the answer names was open before: joined, or created by the answer.
+    const before = new Set(this.reminders().map((r) => num(r.number)));
     void this.answer(n, request, (view) =>
       view.reminderNumber === null
         ? 'notices.toast.affectsOutOfRange'
-        : this.reminders().some((r) => num(r.number) === num(view.reminderNumber))
+        : before.has(num(view.reminderNumber))
           ? 'notices.toast.affectsJoined'
           : 'notices.toast.affectsCreated',
     );
@@ -945,30 +957,48 @@ export class NoticesPage {
   /** «Change answer» in the answered view: every notice of the group back to New, with Undo. */
   protected async changeAnswer(group: AnsweredGroup): Promise<void> {
     const org = this.orgId();
-    if (!org || this.busyId()) return;
+    if (!org) return;
+    if (this.busyId()) {
+      this.toaster.show({ text: this.transloco.translate('notices.toast.oneAtATime') });
+      return;
+    }
     this.busyId.set(group.key);
+    const index = this.groupElements().findIndex((g) => g.dataset['group'] === group.key);
     const back: NoticeView[] = [];
+    let error: unknown = null;
     try {
       for (const n of group.notices) {
-        back.push(
-          await firstValueFrom(this.api.reopenNotice(org, n.id, { expectedState: n.state })),
+        const view = await firstValueFrom(
+          this.api.reopenNotice(org, n.id, { expectedState: n.state }),
         );
-        this.remember(back[back.length - 1]);
+        back.push(view);
+        this.remember(view);
       }
-      this.counter.reload();
-      this.toaster.show({
-        text: this.transloco.translate('notices.toast.movedBack', { count: back.length }),
-        undo: () => void this.answerAgain(org, back),
-      });
-    } catch (error) {
-      this.failed(error, null);
+    } catch (e) {
+      error = e;
     } finally {
       this.busyId.set(null);
     }
+    this.counter.reload();
+    // What moved back can be answered again with Undo, also when a later one was refused.
+    if (back.length)
+      this.toaster.show({
+        text: this.transloco.translate(
+          error ? 'notices.toast.movedBackPart' : 'notices.toast.movedBack',
+          { count: back.length, total: group.notices.length },
+        ),
+        undo: () => void this.answerAgain(org, back),
+      });
+    else if (error) this.say(error);
+    if (error && this.alive) this.reload();
+    this.focusGroup(index);
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    if (this.view() === 'answered' || !this.canAnswer() || this.following()) return;
+    if (this.view() === 'answered' || !this.canAnswer()) return;
+    // A follow-up open on a card still shown takes the keys; one whose card left does not.
+    const following = this.following();
+    if (following && this.shown().some((n) => n.id === following)) return;
     const target = event.target as HTMLElement | null;
     if (!target || target.closest('input, textarea, select, [contenteditable="true"]')) return;
     const card = target.closest<HTMLElement>('[data-notice]');
@@ -1001,85 +1031,134 @@ export class NoticesPage {
     confirmation: (view: NoticeView) => string,
   ): Promise<void> {
     const org = this.orgId();
-    if (!org || this.busyId()) return;
+    if (!org) return;
+    if (this.busyId()) {
+      this.toaster.show({ text: this.transloco.translate('notices.toast.oneAtATime') });
+      return;
+    }
     this.busyId.set(n.id);
     this.refusal.set(null);
     const index = this.cardElements().findIndex((c) => c.dataset['notice'] === n.id);
+    let view: NoticeView | null = null;
+    let error: unknown = null;
     try {
-      const view = await firstValueFrom(this.api.answerNotice(org, n.id, request));
-      this.remember(view);
-      this.following.set(null);
-      this.counter.reload();
-      this.openReminders.reload();
-      this.focusAfter(index);
-      this.toaster.show({
-        text: this.transloco.translate(confirmation(view), {
-          number: num(view.reminderNumber),
-          version: request.version ?? '',
-        }),
-        undo: () => void this.takeBack(org, view),
-      });
-    } catch (error) {
-      this.failed(error, n.id);
+      view = await firstValueFrom(this.api.answerNotice(org, n.id, request));
+    } catch (e) {
+      error = e;
     } finally {
       this.busyId.set(null);
     }
+    if (view) {
+      const answered = view;
+      // The confirmation and its Undo also reach a person who left the page meanwhile.
+      this.counter.reload();
+      this.toaster.show({
+        text: this.transloco.translate(confirmation(answered), {
+          number: num(answered.reminderNumber),
+          version: request.version ?? '',
+        }),
+        undo: () => void this.takeBack(org, answered),
+      });
+      if (!this.alive) return;
+      this.remember(answered);
+      this.following.set(null);
+      this.openReminders.reload();
+      this.focusAfter(index);
+      return;
+    }
+    if (!this.alive) {
+      this.say(error);
+      return;
+    }
+    const status = problemOf(error)?.status;
+    if (status === 409 || status === 404) {
+      // Someone else answered it, or it is gone: the card leaves, the toast says why, and the
+      // focus stays at its place.
+      this.stale.update((list) => [...list, { id: n.id, changedAt: n.changedAt }]);
+      this.following.set(null);
+      this.say(error);
+      this.reload();
+      this.counter.reload();
+      this.focusAfter(index);
+      return;
+    }
+    this.refusal.set(this.refusalFrom(n.id, error));
   }
 
-  /** Undo of an answer: the plain reopen of ADR 047 decision 8, against the answer just given. */
+  /**
+   * Undo of an answer: the plain reopen of ADR 047 decision 8, against the answer just given. It
+   * carries its organization and notice, so it works after the page is gone; only a page still
+   * shown shows the notice again and gives it the focus.
+   */
   private async takeBack(org: string, view: NoticeView): Promise<void> {
+    let back: NoticeView;
     try {
-      const back = await firstValueFrom(
+      back = await firstValueFrom(
         this.api.reopenNotice(org, view.id, { expectedState: view.state }),
       );
-      this.remember(back);
-      this.counter.reload();
-      this.openReminders.reload();
-      this.focusCard(back.id);
-      this.toaster.show({ text: this.transloco.translate('notices.toast.undone') });
     } catch (error) {
-      this.failed(error, null);
+      this.say(error);
+      if (this.alive) this.reload();
+      return;
     }
+    this.counter.reload();
+    this.toaster.show({ text: this.transloco.translate('notices.toast.undone') });
+    if (!this.alive) return;
+    this.remember(back);
+    this.openReminders.reload();
+    this.focusCard(back.id);
   }
 
   /** Undo of «Change answer»: «Doesn't affect us» again for each notice moved back. */
   private async answerAgain(org: string, notices: readonly NoticeView[]): Promise<void> {
+    const again: NoticeView[] = [];
     try {
       for (const n of notices) {
-        this.remember(
+        again.push(
           await firstValueFrom(
             this.api.answerNotice(org, n.id, { answer: 'not_affected', expectedState: 'open' }),
           ),
         );
       }
-      this.counter.reload();
       this.toaster.show({ text: this.transloco.translate('notices.toast.undone') });
     } catch (error) {
-      this.failed(error, null);
+      this.say(error);
+      if (this.alive) this.reload();
     }
+    this.counter.reload();
+    if (this.alive) again.forEach((v) => this.remember(v));
   }
 
   private remember(view: NoticeView): void {
     this.changed.update((list) => [...list.filter((n) => n.id !== view.id), view]);
   }
 
-  /** Says why a change did not go through: on the card when it has one, else in a toast. */
-  private failed(error: unknown, id: string | null): void {
+  /** A refusal shown on the card: under a field when the API names it, else as a sentence. */
+  private refusalFrom(id: string, error: unknown): Refusal {
     const problem = problemOf(error);
     const version = problem?.errors?.['version'] ? 'notices.errors.version' : null;
     const project = problem?.errors?.['projectId'] ? 'notices.errors.projectNeeded' : null;
     const key = version || project ? null : problemMessageKey(error, NOTICE_PROBLEMS);
-    if (id) this.refusal.set({ id, key, version, project });
-    else this.toaster.show({ text: this.transloco.translate(key ?? 'notices.errors.failed') });
-    // Someone else answered or took it back meanwhile: read the notices as they are now.
-    if (problem?.status === 409 || problem?.status === 404) this.reload();
+    return { id, key, version, project };
+  }
+
+  /** Says in a toast why a change did not go through; the toast outlives the page. */
+  private say(error: unknown): void {
+    this.toaster.show({
+      text: this.transloco.translate(problemMessageKey(error, NOTICE_PROBLEMS)),
+    });
   }
 
   private cardElements(): HTMLElement[] {
     return Array.from(this.host.querySelectorAll<HTMLElement>('[data-notice]'));
   }
 
+  private groupElements(): HTMLElement[] {
+    return Array.from(this.host.querySelectorAll<HTMLElement>('[data-group]'));
+  }
+
   private focusCard(id: string): void {
+    if (!this.alive) return;
     afterNextRender(
       () => this.host.querySelector<HTMLElement>(`[data-notice="${CSS.escape(id)}"]`)?.focus(),
       { injector: this.injector },
@@ -1088,12 +1167,30 @@ export class NoticesPage {
 
   /** After an answer the card at the same place (the next one) takes the focus, else the quiet state. */
   private focusAfter(index: number): void {
+    if (!this.alive) return;
     afterNextRender(
       () => {
         const cards = this.cardElements();
         const next = cards[Math.min(Math.max(index, 0), cards.length - 1)];
         if (next) next.focus();
-        else this.host.querySelector<HTMLElement>('#notices-calm')?.focus();
+        else
+          this.host
+            .querySelector<HTMLElement>('#notices-calm, .segments [aria-pressed="true"]')
+            ?.focus();
+      },
+      { injector: this.injector },
+    );
+  }
+
+  /** After «Change answer» the group at the same place takes the focus, else the view's button. */
+  private focusGroup(index: number): void {
+    if (!this.alive) return;
+    afterNextRender(
+      () => {
+        const groups = this.groupElements();
+        const next = groups[Math.min(Math.max(index, 0), groups.length - 1)];
+        if (next) next.focus();
+        else this.host.querySelector<HTMLElement>('.segments [aria-pressed="true"]')?.focus();
       },
       { injector: this.injector },
     );

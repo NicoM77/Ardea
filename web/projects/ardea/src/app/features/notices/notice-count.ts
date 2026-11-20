@@ -21,6 +21,8 @@ export class NoticeCount {
   );
 
   readonly ready = computed(() => this.read.hasValue());
+  /** The last read failed: nothing is known about the notices. */
+  readonly failed = computed(() => !!this.read.error());
   /** The new notices read, in the order of the inbox. */
   readonly fresh = computed<NoticeView[]>(() =>
     this.read.hasValue() ? freshNotices(this.read.value()?.items ?? []).sort(noticeOrder) : [],

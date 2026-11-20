@@ -296,6 +296,8 @@ export interface FlowOptions {
   learned?: boolean;
   /** The stack's PostgreSQL entry has an open reminder #155 from an earlier «Affects us». */
   stackReminder?: boolean;
+  /** Someone else answers the first notice just before this page does. */
+  noticeConflict?: boolean;
 }
 
 /* ---------- Notices (task 5a.5): the stack, its notices, their answers and taking them back ---------- */
@@ -435,6 +437,7 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
   await api(page, true);
   const inbox = notices(!!options.calm);
   let nextReminder = 160;
+  let noticeConflict = !!options.noticeConflict;
   let rows = actions();
   if (options.calm) rows = rows.filter((r) => r.level <= 3);
   if (options.stackReminder)
@@ -806,6 +809,15 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
         projectId?: string | null;
         version?: string | null;
       };
+      if (noticeConflict && answer[2] === 'answer') {
+        noticeConflict = false;
+        Object.assign(n, {
+          state: 'not_affected',
+          decidedBy: USER_ID,
+          decidedAt: at(0),
+          changedAt: at(0),
+        });
+      }
       if (n.state !== body.expectedState)
         return route.fulfill({
           status: 409,
@@ -813,7 +825,14 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
           body: JSON.stringify({ status: 409, code: 'status_conflict' }),
         });
       if (answer[2] === 'reopen') {
-        Object.assign(n, { state: 'open', reminderNumber: null, changedAt: at(0) });
+        // As the API: taking an answer back forgets who gave it; a return once (E22) stays.
+        Object.assign(n, {
+          state: 'open',
+          reminderNumber: null,
+          decidedBy: null,
+          decidedAt: null,
+          changedAt: at(0),
+        });
         return route.fulfill({ json: n });
       }
       if (body.answer === 'affects_us' && body.version === 'not-a-version')

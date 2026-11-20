@@ -143,15 +143,25 @@ interface Confirmation {
           @if (v.answers && v.answers.origin === 'model' && v.answers.model; as model) {
             <ardea-ai-assessment-card [model]="model" />
           }
-          <details class="disclose">
-            <summary>
-              <h2>{{ 'actionDetail.history.title' | transloco }}</h2>
-              <span class="disclose-meta">{{
-                'actionDetail.historyMeta' | transloco: { count: lines().length }
-              }}</span>
-              <svg lucideChevronRight aria-hidden="true"></svg>
-            </summary>
-            <div class="disclose-body">
+          <!-- A disclosure: the heading holds the button that opens it (WAI-ARIA disclosure pattern) -->
+          <section class="disclose" [class.is-open]="historyOpen()" aria-labelledby="history-title">
+            <h2>
+              <button
+                type="button"
+                aria-controls="history-body"
+                [attr.aria-expanded]="historyOpen()"
+                (click)="historyOpen.set(!historyOpen())"
+              >
+                <span class="disclose-title" id="history-title">{{
+                  'actionDetail.history.title' | transloco
+                }}</span>
+                <span class="disclose-meta">{{
+                  'actionDetail.historyMeta' | transloco: { count: lines().length }
+                }}</span>
+                <svg lucideChevronRight aria-hidden="true"></svg>
+              </button>
+            </h2>
+            <div class="disclose-body" id="history-body" [hidden]="!historyOpen()">
               <ardea-action-history
                 bare
                 [lines]="lines()"
@@ -160,7 +170,7 @@ interface Confirmation {
                 (note)="addNote($event)"
               />
             </div>
-          </details>
+          </section>
         </div>
         <div class="stack">
           <ardea-action-details [action]="a" />
@@ -289,45 +299,49 @@ interface Confirmation {
       border-radius: var(--radius-card);
       background: var(--surface);
     }
-    .disclose > summary {
+    .disclose h2 {
+      font-size: var(--fs-section);
+      line-height: var(--lh-section);
+    }
+    .disclose h2 button {
       display: flex;
       align-items: center;
       gap: var(--space-md);
+      width: 100%;
       min-height: 56px;
       padding: 0 var(--card-pad);
+      border: 0;
       border-radius: var(--radius-card);
+      background: none;
+      color: inherit;
+      font: inherit;
+      text-align: left;
       cursor: pointer;
-      list-style: none;
       transition: background-color var(--t-hover) ease;
     }
-    .disclose > summary::-webkit-details-marker {
-      display: none;
-    }
-    .disclose > summary:focus-visible {
+    .disclose h2 button:focus-visible {
       outline: var(--focus-ring);
       outline-offset: var(--focus-offset);
     }
-    .disclose h2 {
+    .disclose-title {
       flex: 1;
       min-width: 0;
-      font-size: var(--fs-section);
-      line-height: var(--lh-section);
     }
     .disclose-meta {
       color: var(--faint);
       font-size: var(--fs-small);
       white-space: nowrap;
     }
-    .disclose > summary svg {
+    .disclose h2 svg {
       width: 16px;
       height: 16px;
       color: var(--faint);
       transition: transform var(--t-ui) var(--ease-out);
     }
-    .disclose[open] > summary svg {
+    .disclose.is-open h2 svg {
       transform: rotate(90deg);
     }
-    .disclose[open] > summary {
+    .disclose.is-open h2 button {
       border-radius: var(--radius-card) var(--radius-card) 0 0;
     }
     .disclose-body {
@@ -346,12 +360,12 @@ interface Confirmation {
         background: var(--raised);
         color: var(--text);
       }
-      .disclose > summary:hover {
+      .disclose h2 button:hover {
         background: var(--raised);
       }
     }
     @media (prefers-reduced-motion: reduce) {
-      .disclose > summary svg {
+      .disclose h2 svg {
         transition: none;
       }
     }
@@ -449,6 +463,8 @@ export class ActionPage {
       },
     };
   });
+  /** The history is collapsed, one click away (master plan 17.7). */
+  protected readonly historyOpen = signal(false);
   /** «Other outcome» is open: risk accepted or not affected, with a reason. */
   protected readonly closing = signal(false);
   protected readonly lines = computed(() =>

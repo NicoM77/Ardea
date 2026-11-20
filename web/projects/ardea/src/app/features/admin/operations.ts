@@ -5,7 +5,7 @@ export interface MetricGroup {
   readonly rows: readonly MetricRow[];
 }
 
-export interface MetricRow {
+interface MetricRow {
   readonly name: string;
   readonly value: number;
   readonly unit: string | null;

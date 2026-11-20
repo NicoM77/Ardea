@@ -22,7 +22,7 @@ export function rangePhrase(range: AffectedRange): Phrase {
   return { key: 'answers.range.any', params: {} };
 }
 
-export const AFFECTED_LABELS: Readonly<Record<string, string>> = {
+const AFFECTED_LABELS: Readonly<Record<string, string>> = {
   affected: 'answers.affected.yes',
   unknown: 'answers.affected.unknown',
   not_affected: 'answers.affected.no',
@@ -32,7 +32,7 @@ export function affectedLabel(verdict: string): string {
   return AFFECTED_LABELS[verdict] ?? 'answers.affected.unknown';
 }
 
-export const CHECK_LABELS: Readonly<Record<string, string>> = {
+const CHECK_LABELS: Readonly<Record<string, string>> = {
   in_range: 'answers.check.inRange',
   out_of_range: 'answers.check.outside',
   unknown: 'answers.check.unknown',
@@ -44,7 +44,7 @@ export function checkLabel(versionVerdict: string | null): string {
     : (CHECK_LABELS[versionVerdict] ?? 'answers.check.unknown');
 }
 
-export const REASON_LABELS: Readonly<Record<string, string>> = {
+const REASON_LABELS: Readonly<Record<string, string>> = {
   no_installed_version: 'answers.reason.noInstalledVersion',
   distribution_package: 'answers.reason.distributionPackage',
   installed_version_not_readable: 'answers.reason.installedNotReadable',

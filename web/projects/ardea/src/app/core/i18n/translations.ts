@@ -16,10 +16,10 @@ import { IcuTranspiler } from './icu-transpiler';
 import { Observable, of } from 'rxjs';
 import en from '../../../i18n/en.json';
 
-export const AVAILABLE_LANGUAGES = ['en'] as const;
+const AVAILABLE_LANGUAGES = ['en'] as const;
 
 @Injectable({ providedIn: 'root' })
-export class TranslationLoader implements TranslocoLoader {
+class TranslationLoader implements TranslocoLoader {
   private readonly http = inject(HttpClient);
 
   getTranslation(lang: string): Observable<Translation> {

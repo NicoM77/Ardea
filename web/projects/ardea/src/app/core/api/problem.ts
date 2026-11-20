@@ -15,7 +15,7 @@ export interface ProblemMessages {
   fallback: string;
 }
 
-export const COMMON_PROBLEM_KEYS = {
+const COMMON_PROBLEM_KEYS = {
   offline: 'errors.offline',
   tooManyRequests: 'errors.tooManyRequests',
   server: 'errors.server',

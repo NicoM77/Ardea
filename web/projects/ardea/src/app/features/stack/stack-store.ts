@@ -35,7 +35,7 @@ interface Target {
 }
 
 @Injectable({ providedIn: 'root' })
-export class StackRevision {
+class StackRevision {
   readonly count = signal(0);
 }
 

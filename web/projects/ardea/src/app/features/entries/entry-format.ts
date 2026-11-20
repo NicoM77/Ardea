@@ -7,8 +7,6 @@ export interface EntryFilters {
   since: '' | 'day' | 'week' | 'month';
 }
 
-export const NO_FILTERS: EntryFilters = { q: '', kind: '', since: '' };
-
 const SINCE_DAYS: Record<Exclude<EntryFilters['since'], ''>, number> = {
   day: 1,
   week: 7,
@@ -95,8 +93,4 @@ export function score(value: number | string | null): string | null {
   if (value === null || value === '') return null;
   const number = typeof value === 'number' ? value : Number.parseFloat(value);
   return Number.isFinite(number) ? number.toFixed(1) : null;
-}
-
-export function entryLink(key: string): string[] {
-  return ['/entries', key];
 }

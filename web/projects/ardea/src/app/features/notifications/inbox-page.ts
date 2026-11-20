@@ -18,7 +18,7 @@ import { notificationPriority } from './notify-format';
 import { NotifyIcon } from './notify-icon';
 import { UnreadCount } from './unread-count';
 
-export function dayKey(createdAt: string, now: Date): string {
+function dayKey(createdAt: string, now: Date): string {
   const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const diff = Math.round((day(now) - day(new Date(createdAt))) / 86_400_000);
   return diff <= 0

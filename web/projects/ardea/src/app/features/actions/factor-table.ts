@@ -3,13 +3,13 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { UiPriority } from 'ui';
 import { priorityOfLevel } from './action-format';
 
-export interface FactorRow {
+interface FactorRow {
   factor: string;
   value: string;
   evidence?: string | null;
   points: number;
 }
-export interface Bound {
+interface Bound {
   bound: string;
   level: number;
 }
@@ -23,7 +23,7 @@ export interface RuleResult {
   floors: Bound[];
 }
 
-export function ruleResultOf(json: unknown): RuleResult | null {
+function ruleResultOf(json: unknown): RuleResult | null {
   if (!json || typeof json !== 'object') return null;
   const r = json as Partial<RuleResult>;
   return {

@@ -57,7 +57,7 @@ export const CATALOG_GROUPS: readonly { id: string; label: string; kinds: readon
   { id: 'other', label: 'projects.groups.other', kinds: ['library', 'other'] },
 ];
 
-export const CHECKABLE_ECOSYSTEMS = new Set([
+const CHECKABLE_ECOSYSTEMS = new Set([
   'npm',
   'nuget',
   'composer',
@@ -194,7 +194,7 @@ export function draftFromView(view: ComponentView): DraftComponent {
   };
 }
 
-export function draftFromProduct(
+function draftFromProduct(
   product: CatalogProductView,
   existing: readonly DraftComponent[],
 ): DraftComponent {

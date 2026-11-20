@@ -5,7 +5,7 @@ import { UiCard, UiLoader, UiNotice } from 'ui';
 import type { CoverageHint, CoverageView } from '../../core/api/client';
 import { ecosystemName } from './component-format';
 
-export const COVERAGE_LABELS: Record<string, string> = {
+const COVERAGE_LABELS: Record<string, string> = {
   missing_version: 'projects.coverage.kinds.missingVersion',
   version_line_only: 'projects.coverage.kinds.versionLineOnly',
   platform_without_plugins: 'projects.coverage.kinds.platformWithoutPlugins',

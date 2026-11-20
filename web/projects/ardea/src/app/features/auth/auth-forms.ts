@@ -2,8 +2,8 @@ import { email, maxLength, minLength, required, SchemaPath } from '@angular/form
 import type { FieldTree, TreeValidationResult } from '@angular/forms/signals';
 import { problemOf } from '../../core/api/problem';
 
-export const PASSWORD_MIN_LENGTH = 12;
-export const PASSWORD_MAX_LENGTH = 256;
+const PASSWORD_MIN_LENGTH = 12;
+const PASSWORD_MAX_LENGTH = 256;
 
 export type ErrorKeys = Partial<Record<string, string>>;
 

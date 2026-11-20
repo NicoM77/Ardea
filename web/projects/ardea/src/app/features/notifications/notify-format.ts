@@ -153,7 +153,7 @@ export interface MatrixCell {
   sendEmpty: boolean;
 }
 
-export function recipientOf(target: NotificationTargetView): {
+function recipientOf(target: NotificationTargetView): {
   key: string | null;
   name: string | null;
 } {

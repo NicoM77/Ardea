@@ -8,13 +8,6 @@ export interface ActionFilters {
   q: string;
 }
 
-export const NO_ACTION_FILTERS: ActionFilters = {
-  view: 'open',
-  priorities: [],
-  project: '',
-  q: '',
-};
-
 export function actionFiltersFrom(params: {
   view?: string | null;
   priority?: string | null;

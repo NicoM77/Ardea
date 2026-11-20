@@ -4,7 +4,6 @@ import type { ProblemMessages } from '../../core/api/problem';
 import { num, priorityOfLevel } from './action-format';
 
 export const VERDICTS = ['affected', 'likely', 'uncertain', 'unlikely', 'not_affected'] as const;
-export type Verdict = (typeof VERDICTS)[number];
 
 export const EXPECTED_LEVELS = [5, 4, 3, 2, 1] as const;
 

@@ -50,7 +50,7 @@ export function entryInput(change: Partial<ComponentInput>): ComponentInput {
   };
 }
 
-export function groupOf(kind: string): string {
+function groupOf(kind: string): string {
   return CATALOG_GROUPS.find((g) => g.kinds.includes(kind))?.id ?? 'other';
 }
 

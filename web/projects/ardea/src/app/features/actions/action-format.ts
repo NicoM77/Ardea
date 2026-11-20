@@ -40,7 +40,7 @@ export function priorityOfLevel(level: number | string | null | undefined): UiPr
   }
 }
 
-export const OUTCOMES = ['remediated', 'risk_accepted', 'not_affected'] as const;
+const OUTCOMES = ['remediated', 'risk_accepted', 'not_affected'] as const;
 export type Outcome = (typeof OUTCOMES)[number];
 export type ActionStatus = 'open' | Outcome;
 

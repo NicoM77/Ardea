@@ -6,9 +6,9 @@ export interface Phrase {
   params: Record<string, string | number>;
 }
 
-export type NoticeAnswer = 'affects_us' | 'not_affected';
+type NoticeAnswer = 'affects_us' | 'not_affected';
 
-export function cvssOf(notice: Pick<NoticeView, 'cvssScore'>): number | null {
+function cvssOf(notice: Pick<NoticeView, 'cvssScore'>): number | null {
   const value = notice.cvssScore;
   if (value === null || value === '') return null;
   const score = typeof value === 'number' ? value : Number.parseFloat(value);
@@ -87,7 +87,7 @@ export function reasonComponent(notice: Pick<NoticeView, 'components'>): NoticeC
   return present.find((c) => c.inStack) ?? present[0] ?? notice.components[0] ?? null;
 }
 
-export function productName(component: Pick<NoticeComponentRef, 'name' | 'version'>): string {
+function productName(component: Pick<NoticeComponentRef, 'name' | 'version'>): string {
   return component.version ? `${component.name} ${component.version}` : component.name;
 }
 

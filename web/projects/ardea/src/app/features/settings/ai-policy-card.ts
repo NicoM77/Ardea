@@ -11,7 +11,7 @@ import { problemMessageKey } from '../../core/api/problem';
 import { ChoiceGroup, type ChoiceOption } from '../setup/choice-group';
 import { TEAM_PROBLEMS } from '../team/team-problems';
 
-export const AI_POLICIES: readonly ChoiceOption[] = [
+const AI_POLICIES: readonly ChoiceOption[] = [
   { value: 'none', label: 'settings.ai.none', hint: 'settings.ai.noneHint' },
   { value: 'local_only', label: 'settings.ai.localOnly', hint: 'settings.ai.localOnlyHint' },
   {

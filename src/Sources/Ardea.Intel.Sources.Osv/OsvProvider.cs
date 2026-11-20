@@ -7,26 +7,6 @@ using Ardea.Intel.Sources.Formats.Osv;
 
 namespace Ardea.Intel.Sources.Osv;
 
-/// <summary>
-/// OSV.dev for the six package ecosystems of the MVP (master plan 5.6, 16; task 1.12): npm, NuGet,
-/// Packagist, PyPI, Maven and Go, one cursor position per ecosystem. Everything comes from the public
-/// bucket <c>osv-vulnerabilities</c>, never from the query API, which would send an organisation's
-/// dependencies to a foreign service.
-/// <list type="bullet">
-/// <item><b>Incremental:</b> the ecosystem's <c>modified_id.csv</c> (every record with its last change,
-/// newest first; 88 KB for NuGet up to 8.8 MB for npm, and nothing at all while its ETag holds) is read
-/// only down to the cursor. The changed records are fetched one by one, oldest first, with a checkpoint
-/// every <see cref="CheckpointEvery"/> records.</item>
-/// <item><b>First start, or more changes than <see cref="ArchiveThreshold"/>:</b> the ecosystem's
-/// <c>all.zip</c> (2.8 MB for NuGet up to 222 MB for npm) on the working volume, of which only records
-/// changed since the start of the window are kept. The position then stands at the newest change in the
-/// archive. An entry larger than <see cref="MaxRecordBytes"/>, by its header or by what it unpacks to, is
-/// skipped.</item>
-/// <item><b>Single:</b> one record by id from <c>api.osv.dev/v1/vulns/{id}</c>; it sends nothing but the id.</item>
-/// </list>
-/// Records of the OpenSSF malicious-packages feed (<c>MAL-</c>) are skipped: they report malicious
-/// package versions, not vulnerabilities, and make up 96 % of npm's list (decision in ADR 031).
-/// </summary>
 public sealed class OsvProvider : ISourceProvider, IChangeLogSource
 {
     public const string Key = "osv";
@@ -47,24 +27,16 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
             + "(GitHub, Inc.), the PyPA Advisory Database, the Go Vulnerability Database, OSS-Fuzz and the Erlang Ecosystem Foundation under CC BY 4.0 "
             + "(https://creativecommons.org/licenses/by/4.0/); of the Drupal Advisory Database under the MIT licence; "
             + "of the Global Security Database under CC0 1.0.",
-        // One request per changed record; the change lists and archives are one request each.
         RequestsPerMinute = 600,
-        // npm's change list is 8.8 MB and grows with the malicious-packages feed; it is read only down to the cursor.
         MaxResponseBytes = 64L * 1024 * 1024,
-        // npm's archive is 222 MB, almost all of it malicious-package reports.
         MaxBackfillBytes = 2L * 1024 * 1024 * 1024,
         ParserVersion = OsvRecordReader.ParserVersion,
     };
 
-    /// <summary>More pending changes than this in one ecosystem, and its archive is cheaper than single requests.</summary>
     internal int ArchiveThreshold { get; init; } = 2000;
 
     internal int CheckpointEvery { get; init; } = 200;
 
-    /// <summary>
-    /// The largest record read from an archive. The largest of the six ecosystems measured 177 KB
-    /// (18 Nov 2026); anything above 4 MB is not a record but a broken or hostile archive entry.
-    /// </summary>
     internal int MaxRecordBytes { get; init; } = 4 * 1024 * 1024;
 
     public NormalizationResult Normalize(RawRecord record) => OsvRecordReader.Read(record.Content);
@@ -72,11 +44,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
     public IAsyncEnumerable<FetchItem> FetchAsync(SyncContext context, CancellationToken cancellationToken) =>
         context.Mode == SyncMode.Single ? FetchSingleAsync(context, cancellationToken) : FetchEcosystemsAsync(context, cancellationToken);
 
-    /// <summary>
-    /// For the completeness check (task 1.11): every record each ecosystem's change list names as changed at
-    /// or after <paramref name="since"/>, read only down to that time; malicious-package reports are left out.
-    /// A record listed in several ecosystems comes once per ecosystem.
-    /// </summary>
     public async IAsyncEnumerable<ChangedRecord> ListChangesAsync(SyncContext context, DateTimeOffset since, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         foreach (var ecosystem in OsvEcosystems.Mvp)
@@ -86,7 +53,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
             {
                 response.EnsureSuccessStatusCode();
                 await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                // The list stops at the first line at or before its bound; one tick earlier keeps «since» itself.
                 changes = await ChangeList.ReadAsync(stream, since.AddTicks(-1), cancellationToken);
             }
 
@@ -97,7 +63,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
         }
     }
 
-    /// <summary>Malicious-package reports (OpenSSF) are not vulnerabilities; see the class remarks.</summary>
     internal static bool IsSkipped(string id) => id.StartsWith("MAL-", StringComparison.OrdinalIgnoreCase);
 
     internal static RawRecord Record(string id, string json)
@@ -148,7 +113,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
         }
     }
 
-    /// <summary>The changes of one ecosystem after its position, from the change list.</summary>
     private async IAsyncEnumerable<(FetchItem Item, OsvCursor? Cursor)> FetchChangesAsync(
         SyncContext context, string ecosystem, EcosystemCursor position, OsvCursor cursor, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
@@ -169,7 +133,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
         var pending = changes.Pending.Where(c => !IsSkipped(c.Id)).ToList();
         if (pending.Count > ArchiveThreshold)
         {
-            // After a long pause or a re-import at OSV.dev, one download is cheaper than thousands of requests.
             await foreach (var step in FetchArchiveAsync(context, ecosystem, position.Through, cursor, cancellationToken))
             {
                 yield return step;
@@ -186,7 +149,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
                 yield return (Record(change.Id, json), null);
             }
 
-            // A checkpoint only between distinct times: everything up to its time is then stored.
             var last = i == pending.Count - 1;
             if (!last && (i + 1) % CheckpointEvery == 0 && pending[i + 1].Modified > change.Modified)
             {
@@ -195,7 +157,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
             }
         }
 
-        // Also when only skipped records changed: remember the list's validators and newest time.
         cursor = cursor.With(ecosystem, new EcosystemCursor(changes.Newest ?? position.Through, validators));
         yield return (new Checkpoint(cursor.ToString()), cursor);
     }
@@ -205,7 +166,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
         using var response = await context.Http.GetAsync(new Uri($"{BucketUrl}{ecosystem}/{Uri.EscapeDataString(id)}.json"), cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
-            // Listed but gone, e.g. a record that moved to another id in between; the next list no longer has it.
             return null;
         }
 
@@ -213,10 +173,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
         return await response.Content.ReadAsStringAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// The ecosystem's full archive: written once to the working volume (a zip cannot be read without
-    /// seeking), its records read one by one and kept when changed at or after <paramref name="from"/>.
-    /// </summary>
     private async IAsyncEnumerable<(FetchItem Item, OsvCursor? Cursor)> FetchArchiveAsync(
         SyncContext context, string ecosystem, DateTimeOffset from, OsvCursor cursor, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
@@ -245,7 +201,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
                     continue;
                 }
 
-                // The declared size is checked first, the read itself is bounded too: the header may lie.
                 if (entry.Length > MaxRecordBytes || await ReadBoundedAsync(entry, MaxRecordBytes, cancellationToken) is not { } json)
                 {
                     continue;
@@ -257,7 +212,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
                     newest = metadata.Modified;
                 }
 
-                // A record without a readable change date cannot be filtered; it goes on to quarantine.
                 if (metadata is null || metadata.Modified >= from)
                 {
                     yield return (Record(metadata?.Id ?? id, json), null);
@@ -269,7 +223,6 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
         cursor = cursor.With(ecosystem, new EcosystemCursor(newest, null));
         yield return (new Checkpoint(cursor.ToString()), cursor);
     }
-    /// <summary>The entry's text, or <c>null</c> when it holds more than <paramref name="limit"/> bytes or cannot be unpacked.</summary>
     private static async Task<string?> ReadBoundedAsync(ZipArchiveEntry entry, int limit, CancellationToken cancellationToken)
     {
         try
@@ -293,13 +246,11 @@ public sealed class OsvProvider : ISourceProvider, IChangeLogSource
         }
         catch (InvalidDataException)
         {
-            // A damaged entry, e.g. sizes that do not match its data.
             return null;
         }
     }
 }
 
-/// <summary>Ids <see cref="OsvProvider"/> fetches singly: OSV ids of package advisories, not CVE ids.</summary>
 internal static class OsvId
 {
     public static bool IsValid(string id)

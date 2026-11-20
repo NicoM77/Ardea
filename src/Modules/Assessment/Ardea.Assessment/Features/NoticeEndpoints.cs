@@ -11,10 +11,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assessment.Features;
 
-/// <summary>
-/// Notices (master plan 17.3, 17.7; ADR 047): the inbox «could affect you», its answers and taking an answer back. Every
-/// member reads; members and up answer. The page comes with task 5a.5.
-/// </summary>
 internal static class NoticeEndpoints
 {
     private const int MaxLimit = 100;
@@ -30,12 +26,6 @@ internal static class NoticeEndpoints
             .Produces<NoticeView>().Problems(400, 403, 404, 409);
     }
 
-    /// <summary>
-    /// Notices, actively exploited first, then by CVSS score, then newest (E23). <c>state</c>: <c>new</c> (default: open, raised
-    /// as an entry arrived), <c>earlier</c> (open, raised at once when a stack entry was added or changed, from the half year
-    /// before; ADR 047), <c>answered</c> (affects us or doesn't), <c>withdrawn</c>; <c>component</c> narrows to the notices a stack entry or
-    /// another coarse component raised.
-    /// </summary>
     internal static async Task<IResult> ListAsync(
         AssessDbContext db, NoticeReader reader, string? state, Guid? component, int? limit, string? cursor, CancellationToken cancellationToken)
     {
@@ -96,7 +86,6 @@ internal static class NoticeEndpoints
         CancellationToken cancellationToken) =>
         await RespondAsync(await commands.ReopenAsync(noticeId, request, http.OrganizationAccess().UserId, cancellationToken), reader, unitOfWork, cancellationToken);
 
-    /// <summary>The view is read before the commit, never after (ADR 023).</summary>
     private static async Task<IResult> RespondAsync(CommandResult<Notice> result, NoticeReader reader, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
         if (result.Refusal is { } refusal)

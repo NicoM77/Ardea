@@ -22,13 +22,11 @@ public sealed class InstanceStatusBuilder
     public List<StatusMetric> Metrics { get; } = [];
 }
 
-/// <summary>A module's part of the instance status; runs in a unit of work without an organisation.</summary>
 public interface IInstanceStatusContributor
 {
     Task ContributeAsync(InstanceStatusBuilder status, CancellationToken cancellationToken);
 }
 
-/// <summary>Worker and job queue.</summary>
 internal sealed class PlatformStatusContributor(PlatformDbContext db, TimeProvider time) : IInstanceStatusContributor
 {
     public async Task ContributeAsync(InstanceStatusBuilder status, CancellationToken cancellationToken)

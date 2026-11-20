@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Ardea.SharedKernel;
 
-/// <summary>Outcome of an operation without a value.</summary>
 public readonly record struct Result
 {
     private Result(Error? error) => Error = error;
@@ -19,7 +18,6 @@ public readonly record struct Result
     public static implicit operator Result(Error error) => Failure(error);
 }
 
-/// <summary>Outcome of an operation that yields a value on success.</summary>
 public readonly record struct Result<T>
 {
     private Result(T? value, Error? error)

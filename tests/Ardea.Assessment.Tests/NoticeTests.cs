@@ -10,10 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Assessment.Tests;
 
-/// <summary>
-/// The coarse path of master plan 17 (task 5a.3, ADR 044, ADR 047): components without an exact version raise notices instead
-/// of findings and reminders; «affects us» makes a normal reminder; «doesn't affect us» comes back only once.
-/// </summary>
 public sealed class NoticeTests(PostgresServer server)
 {
     private static readonly Guid Alice = Guid.CreateVersion7();
@@ -40,7 +36,6 @@ public sealed class NoticeTests(PostgresServer server)
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation"));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.alert WHERE number IS NOT NULL"));
 
-        // The findings are the notice's: closed at level 1, with the level the rules would give on the precise path.
         Assert.Equal(
             ["CVE-2026-8001\tnot_affected\tmoved_to_notice\t1\tmoved_to_notice\tTrue", "CVE-2026-8001\tnot_affected\tmoved_to_notice\t1\tmoved_to_notice\tTrue",
              "CVE-2026-8002\tnot_affected\tmoved_to_notice\t1\tmoved_to_notice\tTrue", "CVE-2026-8002\tnot_affected\tmoved_to_notice\t1\tmoved_to_notice\tTrue"],
@@ -49,7 +44,6 @@ public sealed class NoticeTests(PostgresServer server)
                 FROM assess.finding f JOIN assess.alert a ON a.id = f.alert_id ORDER BY 1
                 """));
 
-        // One event per notice, handed to the notifications in its unit of work (task 5a.6, ADR 048).
         Assert.Equal(["notice.raised\tCVE-2026-8001"], await host.RowsAsync("SELECT kind, data->>'entry' FROM assess.assess_event WHERE kind LIKE 'notice.%'"));
         Assert.Equal(["notice.raised"], handedOn.Kinds.Where(k => k.StartsWith("notice.", StringComparison.Ordinal)));
         Assert.Contains(postgres, await ComponentIdsAsync(host));
@@ -118,12 +112,10 @@ public sealed class NoticeTests(PostgresServer server)
         await host.RunJobsAsync();
         Assert.Equal(["line", "none"], await host.RowsAsync("SELECT version_precision FROM assets.component ORDER BY version_precision"));
 
-        // Only 16 is affected: the line 17 rules it out. 17.0 to 17.6 and an unplaceable bound stay.
         await EntryAsync(host, "CVE-2026-8201", 9.8, introduced: "16.0", fixedAt: "16.11");
         await EntryAsync(host, "CVE-2026-8202", 9.8, introduced: "17.0", fixedAt: "17.7");
         await EntryAsync(host, "CVE-2026-8203", 9.8, introduced: "0", fixedAt: "*");
 
-        // A plugin of the platform is a weak «ecosystem» hit: «WordPress» covers WordPress itself (master plan 17.2).
         await EntryAsync(host, "CVE-2026-8204", 9.8, productKey: "woocommerce");
 
         Assert.Equal(["CVE-2026-8202\topen\t1\tFalse", "CVE-2026-8203\topen\t1\tFalse"], await host.RowsAsync(Notices));
@@ -141,11 +133,9 @@ public sealed class NoticeTests(PostgresServer server)
         await StackAsync(host, acme, "postgresql", "database");
         var entry = await EntryAsync(host, "CVE-2026-8311", 9.1);
 
-        // Unanswered and exploited now: one event, so the rules announce it at once (master plan 8.2, ADR 048).
         await ExploitAsync(host, entry, "active");
         Assert.Equal(["notice.raised", "notice.exploited"], await host.RowsAsync("SELECT kind FROM assess.assess_event WHERE kind LIKE 'notice.%' ORDER BY at, id"));
 
-        // Calm again and exploited again: nothing more; the notice still asks.
         await ExploitAsync(host, entry, "none", revision: 4);
         await ExploitAsync(host, entry, "active", revision: 5);
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'notice.exploited'"));
@@ -164,18 +154,15 @@ public sealed class NoticeTests(PostgresServer server)
 
         Assert.Null((await AnswerAsync(host, acme, notice, new AnswerNoticeRequest("not_affected", "open"))).Refusal);
 
-        // A later change of the entry that is not exploitation leaves the answer alone.
         await host.ScalarAsync<int>($"UPDATE intel.security_entry SET cvss_score = 9.8, exploitation = 'poc', revision = 2 WHERE id = '{entry}' RETURNING 1");
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
         Assert.Equal(["not_affected\t-"], await host.RowsAsync("SELECT state, coalesce(reappeared_reason, '-') FROM assess.notice"));
 
-        // Exploited now: the notice comes back once, with the earlier answer kept for the card (E22).
         await ExploitAsync(host, entry, "active");
         Assert.Equal(["open\texploited\tTrue"], await host.RowsAsync("SELECT state, reappeared_reason, decided_by IS NOT NULL FROM assess.notice"));
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'notice.reappeared'"));
 
-        // Answered again, it does not come back: not with KEV, not with any other change.
         Assert.Null((await AnswerAsync(host, acme, notice, new AnswerNoticeRequest("not_affected", "open"))).Refusal);
         await host.ScalarAsync<int>($"UPDATE intel.security_entry SET exploitation = 'none', revision = 4 WHERE id = '{entry}' RETURNING 1");
         await host.EntryChangedAsync(entry);
@@ -214,7 +201,6 @@ public sealed class NoticeTests(PostgresServer server)
             SELECT f.verdict, f.verdict_source, f.status, f.level >= 2 FROM assess.finding f JOIN assess.alert a ON a.id = f.alert_id WHERE a.entry_key = 'CVE-2026-8401'
             """));
 
-        // The same product in the same place: the second answer joins the open reminder.
         Assert.Null((await AnswerAsync(host, acme, second, new AnswerNoticeRequest("affects_us", "open"))).Refusal);
         Assert.Equal([$"{postgres}\topen\t2"], await host.RowsAsync("SELECT component_id, status, open_findings FROM assess.remediation"));
         Assert.Equal(["affects_us\tTrue", "affects_us\tTrue"], await host.RowsAsync("""
@@ -224,7 +210,6 @@ public sealed class NoticeTests(PostgresServer server)
             SELECT kind FROM assess.assess_event WHERE kind IN ('action.raised', 'finding.joined') ORDER BY kind
             """));
 
-        // A reassessment keeps the person's reminder open.
         await host.EntryChangedAsync(await host.ScalarAsync<Guid>("SELECT entry_id FROM assess.notice WHERE entry_key = 'CVE-2026-8401'"));
         await host.RunJobsAsync();
         Assert.Equal([$"{postgres}\topen\t2"], await host.RowsAsync("SELECT component_id, status, open_findings FROM assess.remediation"));
@@ -246,7 +231,6 @@ public sealed class NoticeTests(PostgresServer server)
         await EntryAsync(host, "CVE-2026-8502", 9.1, introduced: "17.0", fixedAt: "17.7");
         var (first, second) = (await NoticeIdAsync(host, "CVE-2026-8501"), await NoticeIdAsync(host, "CVE-2026-8502"));
 
-        // The shop gets PostgreSQL 17.4, exact: the precise path finds it in range and opens a reminder there.
         var inRange = await AnswerAsync(host, acme, first, new AnswerNoticeRequest("affects_us", "open", shop, "17.4"));
         Assert.Null(inRange.Refusal);
         Assert.Equal(["Shop\t17.4\texact\tin_range\topen\trules"], await host.RowsAsync("""
@@ -256,7 +240,6 @@ public sealed class NoticeTests(PostgresServer server)
             """));
         Assert.NotNull(await host.ScalarAsync<Guid?>($"SELECT remediation_id FROM assess.notice WHERE id = '{first}'"));
 
-        // The billing database, without a version so far, learns 17.9: fixed, so the answer stands but no reminder opens.
         var fixedAlready = await AnswerAsync(host, acme, second, new AnswerNoticeRequest("affects_us", "open", billing, "17.9"));
         Assert.Null(fixedAlready.Refusal);
         Assert.Equal(["affects_us\t-"], await host.RowsAsync($"SELECT state, coalesce(remediation_id::text, '-') FROM assess.notice WHERE id = '{second}'"));
@@ -265,7 +248,6 @@ public sealed class NoticeTests(PostgresServer server)
             """));
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation WHERE status = 'open'"));
 
-        // A project of another organisation, or one that does not exist, is not found; a notice takes one answer.
         await EntryAsync(host, "CVE-2026-8503", 9.1, introduced: "17.0", fixedAt: "17.7");
         var third = await NoticeIdAsync(host, "CVE-2026-8503");
         Assert.Equal("project_not_found", (await AnswerAsync(host, acme, third, new AnswerNoticeRequest("affects_us", "open", Guid.CreateVersion7()))).Refusal?.Code);
@@ -291,7 +273,6 @@ public sealed class NoticeTests(PostgresServer server)
         Assert.Equal(["open"], await host.RowsAsync("SELECT status FROM assess.remediation"));
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'notice.withdrawn'"));
 
-        // Without the version again, the notice is raised anew, as a new one: it takes over the open reminder, which is withdrawn.
         await host.ChangeComponentAsync(acme, postgres, c => c.Version = null);
         await host.ProfileChangedAsync(acme, stack);
         await host.RunJobsAsync();
@@ -309,7 +290,6 @@ public sealed class NoticeTests(PostgresServer server)
         await EntryAsync(host, "CVE-2026-9102", 9.8, introduced: "17.0", fixedAt: "17.7");
         Assert.Equal(["CVE-2026-9101\topen\t1\tFalse", "CVE-2026-9102\topen\t1\tFalse"], await host.RowsAsync(Notices));
 
-        // none → line 17: only 16 is affected by the first entry, so its notice goes; the findings stay the notices'.
         await host.ChangeComponentAsync(acme, postgres, c => (c.Version, c.VersionPrecision) = ("17", "line"));
         await host.ProfileChangedAsync(acme, stack);
         await host.RunJobsAsync();
@@ -321,7 +301,6 @@ public sealed class NoticeTests(PostgresServer server)
                 FROM assess.finding f JOIN assess.alert a ON a.id = f.alert_id ORDER BY 1
                 """));
 
-        // line → none: nothing narrows the first entry any more, and its notice is raised again.
         await host.ChangeComponentAsync(acme, postgres, c => (c.Version, c.VersionPrecision) = (null, "none"));
         await host.ProfileChangedAsync(acme, stack);
         await host.RunJobsAsync();
@@ -345,14 +324,12 @@ public sealed class NoticeTests(PostgresServer server)
             """;
         Assert.Equal(["4\t4\topen\t-\topen\t-"], await host.RowsAsync(State));
 
-        // exact → none: the notice takes over, the alert falls to the level of its findings.
         await host.ChangeComponentAsync(acme, postgres, c => c.Version = null);
         await host.ProfileChangedAsync(acme, shop);
         await host.RunJobsAsync();
         Assert.Equal(["CVE-2026-9201\topen\t1\tFalse"], await host.RowsAsync(Notices));
         Assert.Equal(["1\t1\tnot_affected\tmoved_to_notice\tclosed\tmoved_to_notice"], await host.RowsAsync(State));
 
-        // none → exact: the precise path takes over again, the finding reopens and the reminder with it.
         await host.ChangeComponentAsync(acme, postgres, c => c.Version = "17.4");
         await host.ProfileChangedAsync(acme, shop);
         await host.RunJobsAsync();
@@ -373,7 +350,6 @@ public sealed class NoticeTests(PostgresServer server)
         var notice = await NoticeIdAsync(host);
         Assert.Null((await AnswerAsync(host, acme, notice, new AnswerNoticeRequest("affects_us", "open"))).Refusal);
 
-        // The answer the person saw is checked under the lock: a second answer to the same notice is refused.
         Assert.Equal("status_conflict", (await AnswerAsync(host, acme, notice, new AnswerNoticeRequest("not_affected", "open"), Bob)).Refusal?.Code);
         Assert.Equal("status_conflict", (await ReopenAsync(host, acme, notice, "not_affected")).Refusal?.Code);
 
@@ -386,7 +362,6 @@ public sealed class NoticeTests(PostgresServer server)
             await host.RowsAsync("SELECT kind FROM assess.assess_event WHERE kind LIKE 'notice.%' ORDER BY at, id"));
         Assert.Equal(["notice.answered", "notice.reopened"], await host.RowsAsync("SELECT action FROM platform.audit_event WHERE action LIKE 'notice.%' ORDER BY id"));
 
-        // An open notice has nothing to take back.
         Assert.Equal("status_conflict", (await ReopenAsync(host, acme, notice, "affects_us")).Refusal?.Code);
     }
 
@@ -408,14 +383,11 @@ public sealed class NoticeTests(PostgresServer server)
         Assert.Equal(["CVE-2026-8801\topen\t1\tTrue", "CVE-2026-8802\topen\t1\tTrue"], await host.RowsAsync(Notices));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'notice.raised'"));
         Assert.Equal([$"{stack}\t2\t0"], await host.RowsAsync("SELECT project_id, data->>'notices', data->>'important' FROM assess.assess_event WHERE kind = 'notice.backfilled'"));
-        // One summary reaches the notifications, not one event per notice (ADR 048).
         Assert.Equal(["notice.backfilled"], handedOn.Kinds.Where(k => k.StartsWith("notice.", StringComparison.Ordinal)));
 
-        // They are open but not new: the list shows them as earlier ones (ADR 047).
         Assert.Empty(await ListKeysAsync(host, acme, "new"));
         Assert.Equal(["CVE-2026-8802", "CVE-2026-8801"], await ListKeysAsync(host, acme, "earlier"));
 
-        // An entry that arrives later is new.
         await EntryAsync(host, "CVE-2026-8804", 9.3);
         Assert.Equal(["CVE-2026-8804"], await ListKeysAsync(host, acme, "new"));
     }
@@ -432,20 +404,16 @@ public sealed class NoticeTests(PostgresServer server)
         await EntryAsync(host, "CVE-2026-9001", 7.5, introduced: "17.0", fixedAt: "17.7");
         Assert.Equal(["open"], await host.RowsAsync("SELECT status FROM assess.remediation"));
 
-        // A person confirmed the finding; then the version is only a line, below the threshold of «only important».
         await host.ScalarAsync<int>("UPDATE assess.finding SET verdict = 'affected', verdict_source = 'human' RETURNING 1");
         await host.ChangeComponentAsync(acme, postgres, c => (c.Version, c.VersionPrecision) = ("17", "line"));
         await host.ProfileChangedAsync(acme, shop);
         await host.RunJobsAsync();
 
-        // The reminder goes, but not silently: the notice asks (E25, ADR 047), as a new one although a reverse search raised
-        // it, with its event, so the person who had the reminder sees it.
         Assert.Equal(["closed\tmoved_to_notice"], await host.RowsAsync("SELECT status, close_reason FROM assess.remediation"));
         Assert.Equal(["CVE-2026-9001\topen\t1\tFalse"], await host.RowsAsync(Notices));
         Assert.Equal(["CVE-2026-9001"], await ListKeysAsync(host, acme, "new"));
         Assert.Equal(["notice.raised"], await host.RowsAsync("SELECT kind FROM assess.assess_event WHERE kind LIKE 'notice.%'"));
 
-        // Reassessed later, it stays new and raises nothing more.
         await host.ProfileChangedAsync(acme, shop);
         await host.RunJobsAsync();
         Assert.Equal(["CVE-2026-9001\topen\t1\tFalse"], await host.RowsAsync(Notices));
@@ -465,13 +433,11 @@ public sealed class NoticeTests(PostgresServer server)
         await EntryAsync(host, "CVE-2026-9011", 9.1, introduced: "17.0", fixedAt: "17.7");
         Assert.Equal(["open"], await host.RowsAsync("SELECT status FROM assess.remediation"));
 
-        // A stack entry added later raises the notice quietly, as an earlier one; the shop's reminder still stands.
         await host.AddComponentAsync(acme, stack, c => (c.ProductKey, c.Kind) = ("postgresql", "database"));
         await host.ProfileChangedAsync(acme, stack);
         await host.RunJobsAsync();
         Assert.Equal(["CVE-2026-9011"], await ListKeysAsync(host, acme, "earlier"));
 
-        // The shop's version becomes a line: its reminder hands over to that notice, which becomes new.
         await host.ChangeComponentAsync(acme, postgres, c => (c.Version, c.VersionPrecision) = ("17", "line"));
         await host.ProfileChangedAsync(acme, shop);
         await host.RunJobsAsync();
@@ -521,7 +487,6 @@ public sealed class NoticeTests(PostgresServer server)
         Assert.Equal(["repository\t17\tline"], await host.RowsAsync("SELECT origin, version, version_precision FROM assets.component"));
         Assert.Equal(["open"], await host.RowsAsync("SELECT state FROM assess.notice"));
 
-        // Without a version the answer opens the reminder on the repository's component.
         Assert.Null((await AnswerAsync(host, acme, notice, new AnswerNoticeRequest("affects_us", "open", shop))).Refusal);
         Assert.Equal(["open\t1"], await host.RowsAsync("SELECT status, open_findings FROM assess.remediation"));
     }
@@ -557,7 +522,6 @@ public sealed class NoticeTests(PostgresServer server)
         Assert.Null((await AnswerAsync(host, acme, await NoticeIdAsync(host), new AnswerNoticeRequest("not_affected", "open"))).Refusal);
         Assert.Equal(["active\tFalse"], await host.RowsAsync("SELECT decided_exploitation, decided_kev FROM assess.notice"));
 
-        // CISA lists it now: the plan names KEV on its own (master plan 17.3), so it comes back once.
         await host.ScalarAsync<int>($$"""
             UPDATE intel.security_entry SET revision = 2,
                 exploitation_evidence = '[{"source": "cisa-kev", "state": "active", "evidence": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog", "since": null}]'
@@ -567,7 +531,6 @@ public sealed class NoticeTests(PostgresServer server)
         await host.RunJobsAsync();
         Assert.Equal(["open\tkev"], await host.RowsAsync("SELECT state, reappeared_reason FROM assess.notice"));
 
-        // Answered again with KEV known, it stays.
         Assert.Null((await AnswerAsync(host, acme, await NoticeIdAsync(host), new AnswerNoticeRequest("not_affected", "open"))).Refusal);
         await ExploitAsync(host, entry, "active", revision: 3);
         Assert.Equal(["not_affected\tTrue"], await host.RowsAsync("SELECT state, decided_kev FROM assess.notice"));
@@ -582,7 +545,6 @@ public sealed class NoticeTests(PostgresServer server)
         await EntryAsync(host, "CVE-2026-9501", 9.1, introduced: "17.0", fixedAt: "17.7");
         var notice = await NoticeIdAsync(host);
 
-        // The stack entry learns 17.4 and takes the precise path; the reminder is the precise one.
         Assert.Null((await AnswerAsync(host, acme, notice, new AnswerNoticeRequest("affects_us", "open", null, "17.4"))).Refusal);
         Assert.Equal(["17.4\texact"], await host.RowsAsync("SELECT version, version_precision FROM assets.component"));
         Assert.Equal(["open"], await host.RowsAsync("SELECT status FROM assess.remediation"));
@@ -700,7 +662,6 @@ public sealed class NoticeTests(PostgresServer server)
 
     private static RangeView Range(string json) => JsonSerializer.Deserialize<RangeView>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
 
-    /// <summary>The organisation's stack with one entry without a version, its first fill done.</summary>
     private static async Task<(Guid Stack, Guid Component)> StackAsync(AssessmentTestHost host, Guid organization, string product, string kind)
     {
         var stack = await host.AddStackAsync(organization);
@@ -764,7 +725,6 @@ public sealed class NoticeTests(PostgresServer server)
         return result;
     }
 
-    /// <summary>Stands in for the notifications: records the events the history hands on before a unit of work commits.</summary>
     private sealed class HandedOn
     {
         private readonly System.Collections.Concurrent.ConcurrentQueue<string> _kinds = new();

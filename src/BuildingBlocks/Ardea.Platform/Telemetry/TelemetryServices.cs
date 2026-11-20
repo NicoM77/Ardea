@@ -9,12 +9,6 @@ using OpenTelemetry.Trace;
 
 namespace Ardea.Platform.Telemetry;
 
-/// <summary>
-/// OpenTelemetry for traces, metrics and logs (master plan 12.7). Nothing leaves the instance unless
-/// the operator sets <c>OTEL_EXPORTER_OTLP_ENDPOINT</c>; the application never reports to its
-/// developers (master plan 9.4). The trace context travels inside jobs, so one trace runs from the
-/// source to the delivery.
-/// </summary>
 public static class TelemetryServices
 {
     public const string SourcePrefix = "Ardea.";
@@ -37,7 +31,6 @@ public static class TelemetryServices
             .WithTracing(tracing => tracing
                 .AddSource($"{SourcePrefix}*")
                 .AddAspNetCoreInstrumentation(o => o.Filter = context => !context.Request.Path.StartsWithSegments("/health"))
-                // Push endpoints and chat webhooks carry their secret in the address (ADR 041): no span for them.
                 .AddHttpClientInstrumentation(o => o.FilterHttpRequestMessage = request =>
                     !(request.Options.TryGetValue(Http.OutboundAddresses.Untraced, out var untraced) && untraced))
                 .AddNpgsql()

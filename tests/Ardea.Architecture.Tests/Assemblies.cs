@@ -2,7 +2,6 @@ using System.Reflection;
 
 namespace Ardea.Architecture.Tests;
 
-/// <summary>Every production assembly, loaded through a type that lives in it.</summary>
 internal static class Assemblies
 {
     public static readonly Assembly SharedKernel = typeof(SharedKernel.Result).Assembly;
@@ -19,7 +18,6 @@ internal static class Assemblies
         ["Notifications"] = typeof(Notifications.NotificationsModule).Assembly,
     };
 
-    /// <summary>Contracts are loaded by name: they may be empty until a module publishes something.</summary>
     public static Assembly Contracts(string module) => Assembly.Load($"Ardea.{module}.Contracts");
 
     public static IEnumerable<Assembly> AllSources()

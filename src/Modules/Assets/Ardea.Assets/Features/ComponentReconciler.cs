@@ -3,7 +3,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Assets.Features;
 
-/// <summary>What replacing a profile changes; nothing is written when <see cref="Errors"/> has entries.</summary>
 internal sealed class ReconcileResult
 {
     public List<Component> Created { get; } = [];
@@ -17,12 +16,6 @@ internal sealed class ReconcileResult
     public Dictionary<string, string[]> Errors { get; } = new(StringComparer.Ordinal);
 }
 
-/// <summary>
-/// Replacing the manual components of a project keeps identities (master plan 4.9): an item keeps
-/// the component with its id or, without one, an unmatched manual component with the same product and
-/// the same parent. Only what the new list lacks is removed, so changing one version changes one
-/// component and every other keeps its id. Repository components are neither matched nor removed (16.5).
-/// </summary>
 internal static class ComponentReconciler
 {
     public static async Task<ReconcileResult> ReconcileAsync(
@@ -79,7 +72,6 @@ internal static class ComponentReconciler
             return result;
         }
 
-        // Parents first, so that a child can be matched under its parent's final id.
         var unmatched = existing.Where(c => c.Origin == "manual").OrderBy(c => c.CreatedAt).ThenBy(c => c.Id).ToList();
         var assigned = new Guid?[items.Count];
         var pending = Enumerable.Range(0, items.Count).ToList();

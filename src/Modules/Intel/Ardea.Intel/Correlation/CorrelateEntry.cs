@@ -10,11 +10,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Intel.Correlation;
 
-/// <summary>
-/// Recomputes the entry an identifier belongs to (master plan 3.3, 6.2–6.4). The key is an alias
-/// (<c>CVE:CVE-2026-1</c>) or, for a warning without identifier, its source record
-/// (<c>SRC:bacs-warnings:123</c>).
-/// </summary>
 internal sealed record CorrelateEntry(string Key) : IJob
 {
     public static string Kind => "intel.correlate-entry";
@@ -22,7 +17,6 @@ internal sealed record CorrelateEntry(string Key) : IJob
     public static EnqueueOptions Options(string key) => new() { CoalesceKey = $"intel.correlate:{key}" };
 }
 
-/// <summary>Fans a material change out to the subscribers, after a short pause so a wave of changes counts once.</summary>
 internal sealed record NotifyEntryChanged(Guid EntryId) : IJob
 {
     public static string Kind => "intel.notify-entry-changed";
@@ -33,7 +27,6 @@ internal sealed record NotifyEntryChanged(Guid EntryId) : IJob
 internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue jobs, IProductCatalog catalog, TimeProvider time, ILogger<CorrelateEntryHandler> logger)
     : IJobHandler<CorrelateEntry>
 {
-    /// <summary>Rounds of following shared aliases; identity chains are short in practice.</summary>
     private const int MaxClosureRounds = 5;
 
     public async Task HandleAsync(CorrelateEntry job, JobContext context, CancellationToken cancellationToken)
@@ -45,7 +38,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
             return;
         }
 
-        // Identity: everything that shares an alias belongs together (master plan 6.2 rule 1).
         var (aliasSet, observations) = await ClosureAsync(job.Key, exclude: [], cancellationToken);
         var keyArray = aliasSet.ToArray();
         var linked = await db.EntryAliases.Where(a => keyArray.Contains(a.Scheme + ":" + a.Value)).Select(a => a.EntryId).Distinct().ToListAsync(cancellationToken);
@@ -54,7 +46,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         var cveEntries = entries.Where(e => IsCve(e.PrimaryKey)).OrderBy(e => e.PrimaryKey, StringComparer.Ordinal).ToList();
         if (cveEntries.Count >= 2)
         {
-            // Two entries that both carry their own CVE id are never merged automatically (master plan 6.2 rule 5).
             await SeparateAsync(cveEntries, observations, sources, job.Key, cancellationToken);
             return;
         }
@@ -72,10 +63,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         await WriteAsync(target, projection, triggeredBy, cancellationToken);
     }
 
-    /// <summary>
-    /// Follows shared aliases from <paramref name="key"/>; observations that carry one of
-    /// <paramref name="exclude"/> are not followed (they lead to an entry kept apart).
-    /// </summary>
     private async Task<(HashSet<string> Aliases, List<ObservationRow> Observations)> ClosureAsync(string key, IReadOnlyCollection<string> exclude, CancellationToken cancellationToken)
     {
         var aliasSet = new HashSet<string>([key], StringComparer.Ordinal);
@@ -97,7 +84,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         return (aliasSet, observations);
     }
 
-    /// <summary>The merged view of the claim blocks that name one of the aliases; <c>null</c> when none does.</summary>
     private static (EntryProjection? Projection, string TriggeredBy) Project(List<ObservationRow> observations, HashSet<string> aliasSet, Dictionary<Guid, SourceRow> sources)
     {
         var contributions = observations
@@ -115,7 +101,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         return contributions.Count == 0 ? (null, string.Empty) : (Projection.Compute(contributions), contributions[0].SourceKey);
     }
 
-    /// <summary>The later discovered shared identifier joins the entries; the losers stay as redirects (6.2 rule 4).</summary>
     private async Task MergeIntoAsync(EntryRow? target, IEnumerable<EntryRow> losers, CancellationToken cancellationToken)
     {
         foreach (var loser in losers)
@@ -127,12 +112,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         }
     }
 
-    /// <summary>
-    /// Keeps entries with different CVE ids apart: each is built from what its own CVE id reaches
-    /// without passing an observation that names another of them. Identifiers both sides reach (the
-    /// bridge, e.g. a GHSA id listing both CVE ids) belong to neither; the case goes to the review
-    /// list. Entries without a CVE id that only one side reaches merge into that side as usual.
-    /// </summary>
     private async Task SeparateAsync(List<EntryRow> cveEntries, List<ObservationRow> joined, Dictionary<Guid, SourceRow> sources, string via, CancellationToken cancellationToken)
     {
         var keys = cveEntries.ToDictionary(e => e.Id, e => "CVE:" + e.PrimaryKey);
@@ -142,7 +121,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
             closures[entry.Id] = await ClosureAsync(keys[entry.Id], [.. keys.Values.Where(k => k != keys[entry.Id])], cancellationToken);
         }
 
-        // Reached from more than one side, or named by an observation that names several of the CVE ids.
         var shared = closures.Values.SelectMany(c => c.Aliases).GroupBy(a => a, StringComparer.Ordinal).Where(g => g.Count() > 1).Select(g => g.Key)
             .Concat(joined.Where(o => o.Aliases.Count(keys.ContainsValue) > 1).SelectMany(o => o.Aliases))
             .Where(a => !keys.ContainsValue(a))
@@ -150,7 +128,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
 
         await RecordConflictAsync(cveEntries, shared, via, cancellationToken);
 
-        // Free identifiers that move or become shared before any entry writes its own.
         foreach (var entry in cveEntries)
         {
             var own = closures[entry.Id].Aliases.Where(a => !shared.Contains(a)).ToArray();
@@ -178,7 +155,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         }
     }
 
-    /// <summary>Opens the case on the review list, or notes that it was seen again; a decided case stays decided.</summary>
     private async Task RecordConflictAsync(List<EntryRow> cveEntries, HashSet<string> shared, string via, CancellationToken cancellationToken)
     {
         var subject = string.Join(",", cveEntries.Select(e => e.PrimaryKey));
@@ -196,10 +172,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// Folds the signals of the entry's identifiers in (master plan 4.4): a KEV listing means active
-    /// exploitation with its evidence; the EPSS class is high when any identifier's class is high.
-    /// </summary>
     private async Task<EntryProjection> WithSignalsAsync(EntryProjection projection, Dictionary<Guid, SourceRow> sources, CancellationToken cancellationToken)
     {
         var keys = projection.Aliases.Select(a => a.Scheme.ToUpperInvariant() + ":" + a.Value).ToArray();
@@ -237,10 +209,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         };
     }
 
-    /// <summary>
-    /// The catalogue's key for every affected product it knows by CPE pair, package or name (master
-    /// plan 6.5); unknown products keep their raw key and stay findable.
-    /// </summary>
     private async Task<EntryProjection> WithCatalogKeysAsync(EntryProjection projection, CancellationToken cancellationToken)
     {
         var resolved = new Dictionary<(string?, string?, string?, string?, string?, string?), (string? Key, string? LearnedFrom)>();
@@ -258,7 +226,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
                 resolved[lookup] = key;
             }
 
-            // A key from a learned entry keeps its raw key: what found the raw key before still finds it (master plan 6.9).
             affected.Add(row with { ProductKey = key.Key, LearnedFrom = key.LearnedFrom });
         }
 
@@ -295,7 +262,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         await WriteAsync(entry, projection, source.Key, cancellationToken);
     }
 
-    /// <summary>Writes the projection; a revision and a history line only when something changed (master plan 6.4).</summary>
     private async Task WriteAsync(EntryRow? entry, EntryProjection projection, string triggeredBy, CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
@@ -345,7 +311,6 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         }
         if (kinds.Count == 0)
         {
-            // Same observations, same entry: nothing to write beyond what is already there.
             await db.SaveChangesAsync(cancellationToken);
             return;
         }

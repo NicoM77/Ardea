@@ -4,16 +4,6 @@ using Ardea.Catalog.Products;
 
 namespace Ardea.Catalog.Learning;
 
-/// <summary>
-/// The mapping without a model (master plan 6.9 step 2), which also runs without any provider:
-/// <list type="number">
-/// <item>a CPE pair or package an entry knows: alias of that entry;</item>
-/// <item>the same name but for legal form, version suffix, a leading vendor name and spelling: alias of that entry;</item>
-/// <item>a CPE pair no entry knows: a new entry with name and vendor from the record and the numeric version scheme;</item>
-/// <item>a package no entry knows: a new entry of kind library with the ecosystem's version scheme (ADR 040).</item>
-/// </list>
-/// Everything else is left to the model, or to the administrator without one.
-/// </summary>
 internal static partial class RuleMapping
 {
     public static LearnedProposal? Map(UnknownProductStatement statement, CatalogLayers catalog, ISet<string> keys)
@@ -57,11 +47,6 @@ internal static partial class RuleMapping
         return null;
     }
 
-    /// <summary>
-    /// The name of a new entry made by rule: the record's name without trailing versions, the vendor's name kept where the
-    /// record has it (<c>Redis Insight</c>), and put in front where what is left is generic (<c>Agent</c> of Grafana is
-    /// <c>Grafana Agent</c>), so that a generic word never becomes an entry of its own.
-    /// </summary>
     public static string NameOf(string? vendor, string product)
     {
         var words = product.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).ToList();
@@ -81,7 +66,6 @@ internal static partial class RuleMapping
         return generic ? $"{vendorName} {name}" : name;
     }
 
-    /// <summary>Words that name a kind of thing rather than a product.</summary>
     private static readonly HashSet<string> GenericWords = new(StringComparer.Ordinal)
     {
         "agent", "server", "client", "portal", "gateway", "insight", "insights", "manager", "management", "console", "studio",
@@ -92,7 +76,6 @@ internal static partial class RuleMapping
         "backup", "admin", "control", "panel", "online", "pro", "plus", "lite", "express", "standard",
     };
 
-    /// <summary>The vendor as people write it, without a legal form at the end: <c>Acme Corp.</c> is <c>Acme</c>.</summary>
     private static string? VendorName(string? vendor)
     {
         if (ProductKey.NormalizeVendor(vendor) is null)
@@ -115,10 +98,6 @@ internal static partial class RuleMapping
         "labs", "software", "foundation", "project", "team", "technologies", "systems", "group",
     };
 
-    /// <summary>
-    /// The product name without trailing version numbers (<c>Widget 2.4</c>, <c>Widget v3</c>, <c>Widget version 5</c>) and
-    /// without the vendor's name in front (<c>Acme Widget</c> of Acme); only forms that differ from the name itself.
-    /// </summary>
     public static IEnumerable<string> Variants(string? vendor, string product)
     {
         var words = product.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).ToList();
@@ -134,7 +113,6 @@ internal static partial class RuleMapping
             yield return stripped;
         }
 
-        // The vendor as its key compares it: «Microsoft Corporation» is «microsoft», so «Microsoft ASP.NET Core» is «ASP.NET Core».
         var vendorKey = ProductKey.NormalizeVendor(vendor);
         for (var take = 1; vendorKey is not null && take < words.Count; take++)
         {
@@ -151,7 +129,6 @@ internal static partial class RuleMapping
         }
     }
 
-    /// <summary>The version scheme of a package ecosystem.</summary>
     public static string SchemeOf(string purlType) => purlType switch
     {
         "npm" or "cargo" => VersionSchemeNames.SemVer,
@@ -184,7 +161,6 @@ internal static partial class RuleMapping
             : null;
     }
 
-    /// <summary>The record's own spelling as alias, so that its vendor and product find the new entry.</summary>
     public static IReadOnlyList<ProductAlias> RecordSpelling(UnknownProductStatement statement, string name, string? vendor)
     {
         var product = statement.Product.Trim();
@@ -195,7 +171,6 @@ internal static partial class RuleMapping
             : [new ProductAlias(ProductKey.NormalizeVendor(statement.Vendor) is null ? null : statement.Vendor!.Trim(), [product])];
     }
 
-    /// <summary>A CPE vendor as words: <c>acme_corp</c> → <c>acme corp</c>.</summary>
     private static string Words(string cpeVendor) => cpeVendor.Replace('_', ' ').Replace('\\', ' ').Trim();
 
     [GeneratedRegex(@"^(v(ersion)?\.?)?\d+([._-]\d+)*[a-z]?$|^(version|release|rel|v)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]

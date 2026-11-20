@@ -6,7 +6,6 @@ using Ardea.Intel.Sources.Ncsc;
 
 namespace Ardea.Sources.Tests.Ncsc;
 
-/// <summary>The Cyber Security Hub reader against recorded responses (task 1.9, master plan 5.5).</summary>
 public sealed class NcscHubProviderTests
 {
     private static readonly long[] Recorded = [13196, 13203, 13198, 13083, 13054, 13163, 13180];
@@ -90,7 +89,6 @@ public sealed class NcscHubProviderTests
             .ToDictionary(i => i["id"]!.GetValue<long>(), i => i["lastChange"]!.GetValue<string>());
         var stale = new HubCursor(NcscTest.Today.AddHours(-25), known).ToString();
 
-        // Post 13198 slipped past the first page (order is unreliable) and is only seen on page 1 of the sweep.
         var http = new RecordedHttp()
             .On("pageIndex=0", TestData.Read("ncsc-hub", "dashboard-page0.json"))
             .On("pageIndex=1", TestData.Read("ncsc-hub", "dashboard-page1.json"))
@@ -121,7 +119,6 @@ public sealed class NcscHubProviderTests
     public async Task Backfill_mode_sweeps_even_when_the_last_sweep_is_recent()
     {
         var recent = new HubCursor(NcscTest.Today.AddMinutes(-5), []).ToString();
-        // 120 posts announced at 50 per page: three list requests.
         var http = new RecordedHttp().On("pageIndex=0", PageWith(120, [(13198, "2026-11-17T21:57:54.549455Z")])).On("pageIndex=", EmptyPage(120));
 
         await NcscTest.Collect(Provider, NcscTest.Context("ncsc-hub", http, recent, mode: SyncMode.Backfill));
@@ -164,7 +161,6 @@ public sealed class NcscHubProviderTests
     public async Task Cursor_stays_bounded_and_checkpoints_come_in_batches()
     {
         var ids = Enumerable.Range(1, 30).Select(i => (long)i).ToArray();
-        // Synthetic posts: only the batching matters here.
         var http = new RecordedHttp().On("pageIndex=0", PageWith(30, [.. ids.Select(i => (i, $"2026-11-01T00:00:{i:00}.000000Z"))]));
         foreach (var id in ids)
         {
@@ -263,7 +259,6 @@ public sealed class NcscHubProviderTests
     {
         var observation = Normalize("post-13203.json");
 
-        // Neither id is in the title or summary of post 13203; both come from the text, with six-digit sequence numbers.
         Assert.Equal(["CVE-2026-123007", "CVE-2026-123633"], observation.Claims.Select(c => c.Aliases.Single().Value).Order());
         Assert.DoesNotContain("CVE-", observation.Title + observation.Summary, StringComparison.Ordinal);
     }
@@ -296,7 +291,6 @@ public sealed class NcscHubProviderTests
 
     private static string EmptyPage(int count) => $$"""{"pageIndex":9,"pageSize":50,"items":[],"count":{{count}}}""";
 
-    /// <summary>A list page of the recorded items with the given ids, in the real shape.</summary>
     private static string PageWith(int count, IEnumerable<(long Id, string LastChange)> ids)
     {
         var recorded = Items(PageOf("dashboard-page0.json")).Concat(Items(PageOf("dashboard-page1.json"))).ToDictionary(i => i["id"]!.GetValue<long>());
@@ -313,8 +307,6 @@ public sealed class NcscHubProviderTests
         return new JsonObject { ["pageIndex"] = 0, ["pageSize"] = 50, ["items"] = items, ["count"] = count }.ToJsonString();
     }
 
-
-    /// <summary>The hub as recorded for the given posts; <paramref name="moved"/> gives some posts a later <c>lastChange</c>.</summary>
     private static RecordedHttp Hub(long[] ids, Dictionary<long, string>? moved = null)
     {
         var recorded = Items(PageOf("dashboard-page0.json")).Concat(Items(PageOf("dashboard-page1.json"))).ToDictionary(i => i["id"]!.GetValue<long>());

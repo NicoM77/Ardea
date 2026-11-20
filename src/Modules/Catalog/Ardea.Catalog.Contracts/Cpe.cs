@@ -4,12 +4,6 @@ using System.Text;
 
 namespace Ardea.Catalog.Contracts;
 
-/// <summary>
-/// A CPE name (NISTIR 7695), read from the CPE 2.3 formatted string (<c>cpe:2.3:a:vendor:product:…</c>)
-/// or the CPE 2.2 URI (<c>cpe:/a:vendor:product:…</c>). Every attribute is kept in the canonical form
-/// of the formatted string: lower case, <c>*</c> for ANY, <c>-</c> for NA, punctuation other than
-/// <c>. - _</c> escaped with a backslash, unescaped <c>*</c> and <c>?</c> as wildcards.
-/// </summary>
 public sealed record Cpe
 {
     public const string Any = "*";
@@ -21,7 +15,6 @@ public sealed record Cpe
 
     private Cpe(string[] attributes) => _attributes = attributes;
 
-    /// <summary><c>a</c> (application), <c>o</c> (operating system), <c>h</c> (hardware), or ANY.</summary>
     public string Part => _attributes[0];
 
     public string Vendor => _attributes[1];
@@ -44,16 +37,11 @@ public sealed record Cpe
 
     public string Other => _attributes[10];
 
-    /// <summary>Vendor and product, the part of a CPE the catalogue maps to a product.</summary>
     public CpePair Pair => new(Vendor, Product);
 
     public static Cpe Parse(string text) =>
         TryParse(text, out var cpe) ? cpe : throw new FormatException($"'{text}' is not a CPE 2.3 formatted string or CPE 2.2 URI.");
 
-    /// <summary>
-    /// Reads a CPE 2.3 formatted string or a CPE 2.2 URI. A formatted string with fewer than eleven
-    /// attributes is accepted, the missing ones are ANY; more than eleven are not.
-    /// </summary>
     public static bool TryParse([NotNullWhen(true)] string? text, [NotNullWhen(true)] out Cpe? cpe)
     {
         cpe = null;
@@ -82,10 +70,6 @@ public sealed record Cpe
         return true;
     }
 
-    /// <summary>
-    /// Whether this CPE, taken as a pattern, applies to <paramref name="target"/>: per attribute, ANY on
-    /// either side fits, NA fits only NA, values must be equal or match this CPE's wildcards.
-    /// </summary>
     public bool Matches(Cpe target)
     {
         ArgumentNullException.ThrowIfNull(target);
@@ -104,7 +88,6 @@ public sealed record Cpe
 
     public override int GetHashCode() => string.Join(':', _attributes).GetHashCode(StringComparison.Ordinal);
 
-    /// <summary>The CPE 2.3 formatted string.</summary>
     public override string ToString() => "cpe:2.3:" + string.Join(':', _attributes);
 
     internal static bool HasWildcard(string canonical) => Tokens(canonical).Exists(t => t.Wildcard);
@@ -221,7 +204,6 @@ public sealed record Cpe
         {
             if (i == 5 && raw[i].StartsWith('~'))
             {
-                // Packed edition of the 2.3 URI binding: ~edition~sw_edition~target_sw~target_hw~other.
                 var packed = raw[i].Split('~');
                 if (packed.Length != 6)
                 {
@@ -254,7 +236,6 @@ public sealed record Cpe
         return attributes;
     }
 
-    /// <summary>One attribute of the formatted string, re-escaped canonically; <c>null</c> when malformed.</summary>
     private static string? CanonicalFromFormatted(string raw)
     {
         if (raw.Length == 0)
@@ -293,7 +274,6 @@ public sealed record Cpe
         return Finish(builder);
     }
 
-    /// <summary>One attribute of the URI, percent-decoded and escaped canonically; <c>null</c> when malformed.</summary>
     private static string? CanonicalFromUri(string raw)
     {
         if (raw.Length == 0)
@@ -354,7 +334,6 @@ public sealed record Cpe
     private static string Finish(StringBuilder builder)
     {
         var value = builder.ToString();
-        // A literal hyphen on its own would read as NA.
         return value == NotApplicable ? "\\-" : value;
     }
 
@@ -380,13 +359,8 @@ public sealed record Cpe
     }
 }
 
-/// <summary>
-/// Vendor and product of a CPE in the canonical form of the formatted string, written
-/// <c>vendor:product</c> as in <c>catalog.product.cpe_pairs</c>.
-/// </summary>
 public readonly record struct CpePair(string Vendor, string Product)
 {
-    /// <summary>Reads <c>vendor:product</c>; escapes as in the formatted string, e.g. <c>gnu:c\+\+</c>.</summary>
     public static bool TryParse([NotNullWhen(true)] string? text, out CpePair pair)
     {
         pair = default;

@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Assets;
 
-/// <summary>Projects, components and, from task 2.10 on, the repositories that feed them (master plan 3.2, 4.5, 16).</summary>
 public sealed class AssetsModule : IModule
 {
     public string Name => AssetsDbContext.Schema;
@@ -31,7 +30,6 @@ public sealed class AssetsModule : IModule
         services.AddSingleton<IDemoSeedStep, DemoSeed>();
         services.AddSingleton<IDemoSeedStep, DemoUpdate>();
         services.AddJob<ProjectProfileChanged, ProjectProfileChangedHandler>(new JobKindOptions { MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(1) });
-        // One reading at a time per worker slot of four; a reading talks to GitHub and may wait for the SBOM.
         services.AddJob<Repositories.Indexing.IndexRepository, Repositories.Indexing.IndexRepositoryHandler>(
             new JobKindOptions { MaxConcurrency = 4, MaxAttempts = 2, Timeout = TimeSpan.FromMinutes(10) });
         services.AddJob<Repositories.Indexing.ScheduleDueRepositories, Repositories.Indexing.ScheduleDueRepositoriesHandler>(

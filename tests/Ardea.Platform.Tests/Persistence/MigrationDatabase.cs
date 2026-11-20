@@ -6,7 +6,6 @@ using Npgsql;
 
 namespace Ardea.Platform.Tests.Persistence;
 
-/// <summary>A fresh database on the shared server with options for both roles.</summary>
 internal sealed class MigrationDatabase(PostgresServer server, string name)
 {
     public const string AppPassword = "app-test-password";

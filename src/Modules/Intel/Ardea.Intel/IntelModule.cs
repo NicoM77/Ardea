@@ -28,7 +28,6 @@ public sealed class IntelModule : IModule
         services.AddSingleton<HostRateLimits>();
         services.AddSingleton<SourceHttpFactory>();
         services.AddScoped<Contracts.IEntryQueries, Features.EntryQueries>();
-        // The catalogue learns from the unknown products of the entries and has the entries merged again (master plan 6.9).
         services.AddScoped<Catalog.Contracts.IUnknownProductFeed, Features.UnknownProductFeed>();
         services.AddScoped<Catalog.Contracts.ICatalogChangeSubscriber, Features.LearnedEntriesSubscriber>();
 
@@ -45,7 +44,6 @@ public sealed class IntelModule : IModule
             .ConfigurePrimaryHttpMessageHandler(PrimaryHandler)
             .AddStandardResilienceHandler(o =>
             {
-                // A full archive is large; the run's own time limit bounds it.
                 o.AttemptTimeout.Timeout = TimeSpan.FromMinutes(30);
                 o.TotalRequestTimeout.Timeout = TimeSpan.FromMinutes(55);
                 o.CircuitBreaker.SamplingDuration = TimeSpan.FromHours(1);
@@ -62,7 +60,6 @@ public sealed class IntelModule : IModule
         services.AddSchedule("intel.check-completeness", "23 4 * * *", new CheckCompleteness());
     }
 
-    /// <summary>Only the worker fetches; it registers every adapter's source at start.</summary>
     public void AddWorkerServices(IServiceCollection services, IConfiguration configuration) =>
         services.AddSingleton<IHostedService, SourceRegistrar>();
 
@@ -77,7 +74,6 @@ public sealed class IntelModule : IModule
 
     private static HttpMessageHandler PrimaryHandler() => new SocketsHttpHandler
     {
-        // Redirects are followed by the guard, which checks every target host.
         AllowAutoRedirect = false,
         AutomaticDecompression = System.Net.DecompressionMethods.All,
         PooledConnectionLifetime = TimeSpan.FromMinutes(5),

@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Platform.Persistence;
 
-/// <summary>Tables of the <c>platform</c> schema (master plan 4.8). All of them are global.</summary>
 internal sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> options) : ModuleDbContext(options, tenant: null)
 {
     public const string Schema = "platform";
@@ -42,12 +41,9 @@ internal sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> opti
             job.Property(j => j.LeaseOwner).HasMaxLength(200);
             job.Property(j => j.TraceParent).HasMaxLength(100);
             job.Property(j => j.CreatedAt).HasDefaultValueSql("now()");
-            // Fetch: pending jobs of one kind that are due, by priority and due time. The kind leads, so a
-            // claim for a rare kind does not walk a backlog of another (100 000 correlations on first start).
             job.HasIndex(j => new { j.Kind, j.Priority, j.RunAt })
                 .HasFilter("state = 'pending'")
                 .HasDatabaseName("ix_job_due");
-            // At most one waiting job per coalesce key; running or finished jobs do not block a new one.
             job.HasIndex(j => j.CoalesceKey)
                 .IsUnique()
                 .HasFilter("state = 'pending' AND coalesce_key IS NOT NULL")

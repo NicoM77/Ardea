@@ -5,7 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>The setup wizard's state and the organisation's audit log (task 2.7; master plan 9.4, 10.2, 11.6).</summary>
 public sealed class SetupAndAuditTests(PostgresServer server)
 {
     [Fact]
@@ -25,18 +24,14 @@ public sealed class SetupAndAuditTests(PostgresServer server)
         Assert.Equal(["project", "operations"], saved.GetProperty("stepsDone").EnumerateArray().Select(s => s.GetString()));
         Assert.Equal(projectId, saved.GetProperty("firstProjectId").GetGuid());
 
-        // The stack comes before the projects (master plan 11.6 step 1b, task 5a.4), also when an organisation that
-        // started the wizard before saves it afterwards.
         var stack = await Json(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "stack" }));
         Assert.Equal(["stack", "project", "operations"], stack.GetProperty("stepsDone").EnumerateArray().Select(s => s.GetString()));
 
-        // A step another version wrote, which this one does not know, stays when a step is saved (master plan 4.11).
         Assert.Equal(1, await host.ScalarAsync<int>(
             $"UPDATE iam.organization SET settings = jsonb_set(settings, '{{setup,stepsDone}}', (settings -> 'setup' -> 'stepsDone') || '[\"later\"]') WHERE id = '{orgId}' RETURNING 1"));
         var kept = await Json(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "repository" }));
         Assert.Equal(["stack", "project", "repository", "operations", "later"], kept.GetProperty("stepsDone").EnumerateArray().Select(s => s.GetString()));
 
-        // Saving a step twice changes nothing.
         await Json(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "project" }));
         Assert.Equal(5, (await Json(await owner.GetAsync($"/api/v1/orgs/{orgId}/setup"))).GetProperty("stepsDone").GetArrayLength());
         await ExpectProblem(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "dance" }), HttpStatusCode.BadRequest, "validation_failed");
@@ -45,7 +40,6 @@ public sealed class SetupAndAuditTests(PostgresServer server)
         var at = completed.GetProperty("completedAt").GetDateTimeOffset();
         Assert.Equal(at, (await Json(await owner.PostAsync($"/api/v1/orgs/{orgId}/setup/complete"))).GetProperty("completedAt").GetDateTimeOffset());
 
-        // Viewers read the state but do not change it.
         using var viewer = await JoinAsync(host, owner, orgId, "viewer@example.org", "viewer");
         Assert.Equal(at, (await Json(await viewer.GetAsync($"/api/v1/orgs/{orgId}/setup"))).GetProperty("completedAt").GetDateTimeOffset());
         await ExpectProblem(await viewer.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "coverage" }), HttpStatusCode.Forbidden, "insufficient_role");
@@ -62,7 +56,6 @@ public sealed class SetupAndAuditTests(PostgresServer server)
         await Json(await member.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/setup", new { stepDone = "project" }));
         await Expect(HttpStatusCode.NoContent, await member.SendAsync(HttpMethod.Delete, $"/api/v1/orgs/{orgId}/members/{await UserIdAsync(host, "member@example.org")}"));
 
-        // A member may not read it.
         using var viewer = await JoinAsync(host, owner, orgId, "viewer@example.org", "viewer");
         await ExpectProblem(await viewer.GetAsync($"/api/v1/orgs/{orgId}/audit"), HttpStatusCode.Forbidden, "insufficient_role");
 
@@ -89,7 +82,6 @@ public sealed class SetupAndAuditTests(PostgresServer server)
         }
         while (cursor is not null && pages < 20);
 
-        // Newest first, every event once, only this organisation's.
         Assert.Equal("org.member_joined", actions[0]);
         Assert.Equal("org.created", actions[^1]);
         Assert.Equal(await host.ScalarAsync<long>($"SELECT count(*) FROM platform.audit_event WHERE organization_id = '{orgId}'"), actions.Count);
@@ -97,7 +89,6 @@ public sealed class SetupAndAuditTests(PostgresServer server)
         Assert.Contains("org.member_left", actions);
         Assert.Equal(1, actions.Count(a => a == "org.created"));
 
-        // The owner by name; the member who left only as a former member.
         Assert.Equal(("member", "Owner"), actors["org.created"]);
         Assert.Equal(("former_member", null), actors["org.setup_saved"]);
 

@@ -5,7 +5,6 @@ namespace Ardea.Platform.Jobs;
 
 public static class JobSystemServices
 {
-    /// <summary>The queue: every role that writes may enqueue jobs.</summary>
     public static IServiceCollection AddJobQueue(this IServiceCollection services)
     {
         JobServiceCollectionExtensions.GetRegistry(services);
@@ -20,7 +19,6 @@ public static class JobSystemServices
         return services;
     }
 
-    /// <summary>Processing: only the worker role runs jobs and schedules.</summary>
     public static IServiceCollection AddJobWorker(this IServiceCollection services, JobWorkerOptions? options = null)
     {
         services.AddJobQueue();

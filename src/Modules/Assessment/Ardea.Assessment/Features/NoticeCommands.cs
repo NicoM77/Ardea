@@ -8,18 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assessment.Features;
 
-/// <summary>
-/// What people answer to a notice (master plan 17.3, E21, E22; ADR 047). Every answer checks the state the caller saw under
-/// the alert's lock, which the assessment of the entry takes too, is audited and written to the notice's history.
-/// <list type="bullet">
-/// <item>«Doesn't affect us» closes the notice. It comes back once, when the entry becomes actively exploited (KEV included).</item>
-/// <item>«Affects us» opens a normal reminder: on the stack entry the notice names, or in a project; a version is recorded on
-/// that project's component of the product, which then takes the precise path (E21). The entry joins the open reminder of
-/// that component when there is one.</item>
-/// <item>Taking an answer back reopens the notice; the findings «affects us» opened return to the notice, which closes their
-/// reminder when nothing else keeps it open. A version recorded stays: it is what the person said about the profile.</item>
-/// </list>
-/// </summary>
 internal sealed class NoticeCommands(
     AssessDbContext db,
     AlertAssessor assessor,
@@ -92,18 +80,15 @@ internal sealed class NoticeCommands(
             return notPlaced;
         }
 
-        // The answer comes first: the assessment below keeps an answered notice's state.
         var targets = placed.Value!;
         Decide(notice, Notice.AffectsUs, user, entry, now);
         await db.SaveChangesAsync(cancellationToken);
 
-        // The entry on every target: the precise path where the version is exact, else the finding a person opens (E21).
         var scope = AssessmentScope.ForComponents(targets);
         var touched = new HashSet<Guid>(await assessor.AssessAsync(entry, scope, cancellationToken));
         var coarse = (await profiles.FindComponentsAsync(targets, cancellationToken)).Where(NoticeRules.IsCoarse).Select(c => c.Id).Order().ToArray();
         foreach (var component in coarse)
         {
-            // After the alert's lock, as every change of a component's findings (Remediations.LockAsync).
             await remediations.LockAsync(component, cancellationToken);
         }
 
@@ -155,7 +140,6 @@ internal sealed class NoticeCommands(
         var now = time.GetUtcNow();
         var from = notice.State;
 
-        // The findings the answer opened, unchanged since by a person (same person, same moment): they return to the notice.
         var openedByAnswer = db.Findings.Where(f => f.EntryId == notice.EntryId && f.Status == "open" && f.VerdictSource == "human"
             && f.StatusChangedBy == notice.DecidedBy && f.StatusChangedAt == notice.DecidedAt);
         var components = from != Notice.AffectsUs || notice.DecidedBy is null ? [] : await openedByAnswer.Select(f => f.ComponentId).Distinct().ToListAsync(cancellationToken);
@@ -184,8 +168,6 @@ internal sealed class NoticeCommands(
         await db.SaveChangesAsync(cancellationToken);
         history.Add(EventKinds.NoticeReopened, new { from, entry = entry.Key }, actor: user, notice: notice.Id);
 
-        // The findings it named and those the answer opened are assessed again: these return to the notice (their reminder is
-        // withdrawn when nothing else keeps it open), and a notice whose components got an exact version since is withdrawn.
         var back = returned.Select(f => f.ComponentId).ToHashSet();
         var touched = new HashSet<Guid>(await assessor.AssessAsync(entry, AssessmentScope.ForComponents(back.Union(notice.ComponentIds).ToHashSet()), cancellationToken));
         touched.UnionWith(back);
@@ -196,10 +178,6 @@ internal sealed class NoticeCommands(
         return notice;
     }
 
-    /// <summary>
-    /// The notice, read again under the alert's lock, which the assessment of its entry takes too: the state the caller saw
-    /// is compared then and holds until the unit of work commits.
-    /// </summary>
     private async Task<CommandResult<(Notice Notice, EntryFacts Entry)>> LockedAsync(Guid noticeId, string expectedState, CancellationToken cancellationToken)
     {
         var notice = await db.Notices.SingleOrDefaultAsync(n => n.Id == noticeId, cancellationToken);
@@ -224,13 +202,8 @@ internal sealed class NoticeCommands(
         return (notice, entry);
     }
 
-    /// <summary>
-    /// Where «affects us» puts the entry: the project's component of the product, found or recorded with the version; without
-    /// a project, the stack entries the notice names (else every component it names), with the version recorded on them.
-    /// </summary>
     private async Task<CommandResult<HashSet<Guid>>> PlaceAsync(Notice notice, Guid? projectId, string? version, CancellationToken cancellationToken)
     {
-        // The project first: one of another organisation, or none, is not found, whatever the notice names.
         if (projectId is { } chosen)
         {
             var project = await profiles.FindProjectAsync(chosen, cancellationToken);
@@ -245,7 +218,6 @@ internal sealed class NoticeCommands(
             }
         }
 
-        // Only components still on the coarse path: one that got an exact version since takes the precise path by itself.
         var named = (await profiles.FindComponentsAsync(notice.ComponentIds, cancellationToken)).Where(c => NoticeRules.IsCoarse(c) && !c.ProjectArchived).ToList();
         if (named.Count == 0)
         {
@@ -262,7 +234,6 @@ internal sealed class NoticeCommands(
             var stack = named.Where(c => c.ProjectKind == "organization_stack").ToList();
             places = stack.Count > 0 ? stack : named;
 
-            // A version belongs to one place: across several projects the person says which (ADR 047).
             if (version is not null && places.Count(c => c.ProjectKind != "organization_stack") > 1)
             {
                 return Refusal.Validation("invalid_answer", "The answer is not valid.", new(StringComparer.Ordinal)
@@ -286,7 +257,6 @@ internal sealed class NoticeCommands(
                 case "archived":
                     return Refusal.Conflict("project_archived", "The project is archived.");
                 case "repository":
-                    // Master plan 16.5: the repository's component takes its version from the repository.
                     return Refusal.Validation("invalid_answer", "The answer is not valid.", new(StringComparer.Ordinal)
                     {
                         ["version"] = ["A repository reads this product in the project: its version comes from there. Answer without a version, or detach the component first."],
@@ -311,7 +281,6 @@ internal sealed class NoticeCommands(
         notice.ChangedAt = now;
     }
 
-    /// <summary>A person's «affects us» on a coarse component: the finding opens with the verdict «affected» (master plan 17.3).</summary>
     private static void Open(Finding finding, Guid user, DateTimeOffset now)
     {
         finding.Status = "open";
@@ -323,7 +292,6 @@ internal sealed class NoticeCommands(
         finding.ClosedLevel = null;
         finding.ClosedVersionVerdict = null;
         finding.Level = Math.Max(finding.Level, 2);
-        // A person's decision, not part of a first fill: the reminder is announced like any other (master plan 7.7).
         finding.IsBackfill = false;
         finding.ChangedAt = now;
     }

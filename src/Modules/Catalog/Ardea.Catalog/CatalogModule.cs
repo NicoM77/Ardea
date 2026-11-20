@@ -15,11 +15,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Ardea.Catalog;
 
-/// <summary>
-/// The technology catalogue (master plan 3.2, 4.5): product keys, CPE reader, version schemes and the
-/// curated products, loaded from <c>data/catalog/</c> by <c>migrate</c>; and the entries the instance
-/// learns from the sources (master plan 6.9).
-/// </summary>
 public sealed class CatalogModule : IModule
 {
     public string Name => CatalogDbContext.Schema;
@@ -37,7 +32,6 @@ public sealed class CatalogModule : IModule
         services.AddScoped<IProductCatalog>(sp => sp.GetRequiredService<ProductCatalog>());
         services.AddSingleton<IVersionSchemes>(VersionSchemeRegistry.Instance);
 
-        // The catalogue that learns (master plan 6.9; tasks 4.9, 4.10). Without a provider only the rules map.
         services.TryAddSingleton<IAiProviders, NoAiProviders>();
         services.TryAddSingleton(AiLimits.FromConfiguration(configuration));
         services.AddSingleton(LearningOptions.FromConfiguration(configuration));
@@ -47,7 +41,6 @@ public sealed class CatalogModule : IModule
         services.AddJob<GrowCatalog, GrowCatalogHandler>(new JobKindOptions
         {
             MaxConcurrency = 1,
-            // One attempt: a second run of the job would ask the model again (ADR 040).
             MaxAttempts = 1,
             Timeout = TimeSpan.FromMinutes(60),
             Priority = JobPriority.Background,

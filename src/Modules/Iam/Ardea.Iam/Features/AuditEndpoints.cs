@@ -15,21 +15,11 @@ using NpgsqlTypes;
 
 namespace Ardea.Iam.Features;
 
-/// <summary>
-/// One audit event as the organisation's administrators read it. <see cref="ActorKind"/> is
-/// <c>member</c> (with <see cref="ActorName"/>), <c>former_member</c> (the account left the
-/// organisation, its name is no longer readable) or <c>system</c> (a job, the command line).
-/// </summary>
 internal sealed record AuditEventView(
     Guid Id, DateTimeOffset At, string Action, string? SubjectType, string? SubjectId, JsonElement? Data, string Origin, string ActorKind, string? ActorName);
 
 internal sealed record AuditPage(IReadOnlyList<AuditEventView> Items, string? NextCursor);
 
-/// <summary>
-/// The organisation's audit log (master plan 9.4, 10.2; task 2.7), newest first, paged with a
-/// cursor. <c>platform.audit_event</c> is guarded per organisation by row-level security, so the
-/// query runs in the organisation's unit of work and sees nothing else.
-/// </summary>
 internal static class AuditEndpoints
 {
     private const int DefaultLimit = 50;
@@ -98,8 +88,6 @@ internal static class AuditEndpoints
 
         var page = rows.Take(size).ToList();
 
-        // Names of the current members only: the member directory is all an organisation may read of
-        // its people (master plan 9.2). Whoever left shows as a former member.
         var actorIds = page.Where(r => r.Actor is not null).Select(r => r.Actor!.Value).Distinct().ToList();
         var names = await db.Memberships.Where(m => actorIds.Contains(m.UserId))
             .Join(db.Users, m => m.UserId, u => u.Id, (m, u) => new { u.Id, u.DisplayName })
@@ -117,7 +105,6 @@ internal static class AuditEndpoints
         return Results.Ok(new AuditPage(items, next));
     }
 
-    /// <summary>The position after an event: its time in microseconds and its id, URL-safe.</summary>
     internal static string Encode(DateTimeOffset at, Guid id)
     {
         var micros = (at.UtcTicks - DateTimeOffset.UnixEpoch.UtcTicks) / 10;

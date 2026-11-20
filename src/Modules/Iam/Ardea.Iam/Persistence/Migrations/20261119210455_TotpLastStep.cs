@@ -10,8 +10,6 @@ namespace Ardea.Iam.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // The time step of the last accepted authenticator code (issue #85, ADR 045). The row-level policy "own"
-            // on iam."user" covers the new column: an account writes only its own row (ADR 029).
             migrationBuilder.AddColumn<long>(
                 name: "totp_last_step",
                 schema: "iam",
@@ -19,8 +17,6 @@ namespace Ardea.Iam.Persistence.Migrations
                 type: "bigint",
                 nullable: true);
 
-            // Defence in depth: whatever writes the column, the used step never goes back and never becomes empty
-            // again, so a used code cannot become valid again. Not SECURITY DEFINER; it runs as the writer.
             migrationBuilder.Sql("""
                 CREATE FUNCTION iam.keep_totp_last_step() RETURNS trigger
                     LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp

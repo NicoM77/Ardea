@@ -5,10 +5,6 @@ using Ardea.Intel.Contracts;
 
 namespace Ardea.Assessment.Tests;
 
-/// <summary>
-/// The pure rules of the coarse path (master plan 17.1 to 17.3; ADR 044, ADR 047) without a database: which component goes
-/// the coarse path, what its line is, when a line rules an entry out and why an answered notice comes back.
-/// </summary>
 public sealed class CoarsePathRuleTests
 {
     [Theory]
@@ -67,7 +63,6 @@ public sealed class CoarsePathRuleTests
     [InlineData(null, "3e1b9c4")]
     public void A_range_of_git_commits_stays_whatever_digits_its_hashes_start_with(string? introduced, string fixedAt)
     {
-        // ADR 044 decision 5: a range whose bounds the line cannot place stays. A commit hash such as 4f2e1a9b is no version 4.
         var commits = new RangeView(introduced, fixedAt, null, null, "affected");
 
         Assert.Null(LineNarrowing.Touches(commits, [17]));

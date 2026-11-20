@@ -10,7 +10,6 @@ namespace Ardea.Assets.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // System operation "instance figures" (master plan 9.2): counts without contents.
             migrationBuilder.Sql("""
                 CREATE FUNCTION assets.repository_link_counts()
                     RETURNS TABLE (state text, links bigint)

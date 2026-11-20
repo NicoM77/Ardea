@@ -113,7 +113,6 @@ namespace Ardea.Assessment.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.Sql("""
-                -- The entry is global data; the key keeps alerts consistent without coupling the modules in code (master plan 4.1).
                 ALTER TABLE assess.alert ADD CONSTRAINT fk_alert_security_entry FOREIGN KEY (entry_id) REFERENCES intel.security_entry (id);
 
                 ALTER TABLE assess.alert ENABLE ROW LEVEL SECURITY;
@@ -125,8 +124,6 @@ namespace Ardea.Assessment.Persistence.Migrations
                     USING (organization_id = platform.current_organization_id())
                     WITH CHECK (organization_id = platform.current_organization_id());
 
-                -- System operation "reassessment, withdrawal of an entry" (master plan 9.2, ADR 029): which
-                -- organisations have an alert for this entry. Returns organisation ids only.
                 CREATE FUNCTION assess.organizations_with_alert(p_entry_id uuid)
                     RETURNS TABLE (organization_id uuid)
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp

@@ -4,14 +4,8 @@ using System.Text.Json.Serialization;
 
 namespace Ardea.Intel.Sources.Osv;
 
-/// <summary>Where one ecosystem stands: every change listed up to <see cref="Through"/> is stored.</summary>
 internal sealed record EcosystemCursor(DateTimeOffset Through, string? Validators);
 
-/// <summary>
-/// The source's cursor: one position per ecosystem, and the start of the backfill window. An ecosystem
-/// without a position (first start, a run aborted before it got there, an ecosystem added later) is
-/// filled from its archive, from <see cref="From"/> on.
-/// </summary>
 internal sealed record OsvCursor(DateTimeOffset? From, IReadOnlyDictionary<string, EcosystemCursor> Ecosystems)
 {
     public OsvCursor With(string ecosystem, EcosystemCursor position)

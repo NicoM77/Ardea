@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 
 namespace Ardea.Assessment.Tests.Reference;
 
-/// <summary>The reference set of master plan 7.9 as stored in <c>data/reference</c>.</summary>
 internal sealed record ReferenceSet(IReadOnlyList<ReferencePair> Pairs, IReadOnlyDictionary<string, string> Records)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -69,15 +68,12 @@ internal sealed record ReferenceLabel(string Verdict, int Level, string Reason, 
     public const string NotAffected = "not_affected";
     public const string Undecidable = "undecidable";
 
-    /// <summary>Whether a person made or checked the label (master plan 7.9).</summary>
     [JsonIgnore]
     public bool ByPerson => Reviewed || !By.Contains("model", StringComparison.OrdinalIgnoreCase);
 }
 
-/// <summary>What the rules said about one pair: the finding's level, or level 1 without a finding.</summary>
 internal sealed record ReferenceOutcome(ReferencePair Pair, int Level, string? MatchType, string? VersionVerdict, string? VersionReason);
 
-/// <summary>The measures and thresholds of master plan 7.9.</summary>
 internal sealed record ReferenceEvaluation(IReadOnlyList<ReferenceOutcome> Outcomes)
 {
     public const double MaxMissedShare = 0.02;
@@ -91,10 +87,8 @@ internal sealed record ReferenceEvaluation(IReadOnlyList<ReferenceOutcome> Outco
 
     public IReadOnlyList<ReferenceOutcome> LabelledNotAffected => [.. Labelled.Where(o => o.Pair.Label!.Verdict == ReferenceLabel.NotAffected)];
 
-    /// <summary>Labelled affected, given level 1.</summary>
     public IReadOnlyList<ReferenceOutcome> Missed => [.. LabelledAffected.Where(o => o.Level <= 1)];
 
-    /// <summary>Labelled not affected, given level 3 or higher.</summary>
     public IReadOnlyList<ReferenceOutcome> Unfounded => [.. LabelledNotAffected.Where(o => o.Level >= 3)];
 
     public IReadOnlyList<ReferenceOutcome> MissedExact => [.. Missed.Where(o => o.Pair.Group == "exact")];
@@ -103,7 +97,6 @@ internal sealed record ReferenceEvaluation(IReadOnlyList<ReferenceOutcome> Outco
 
     public double UnfoundedShare => LabelledNotAffected.Count == 0 ? 0 : (double)Unfounded.Count / LabelledNotAffected.Count;
 
-    /// <summary>The share of pairs whose version check said «unknown»: the work left to the model and to people.</summary>
     public double UnknownShare => Outcomes.Count == 0 ? 0 : (double)Outcomes.Count(o => o.VersionVerdict == "unknown") / Outcomes.Count;
 
     public IReadOnlyList<string> Failures()
@@ -114,7 +107,6 @@ internal sealed record ReferenceEvaluation(IReadOnlyList<ReferenceOutcome> Outco
             failures.Add($"{Labelled.Count} labelled pairs, at least {MinPairs} needed.");
         }
 
-        // Master plan 7.9: at least 30 above every range, half of them affected, half not: at least 15 of each.
         var above = Labelled.Where(o => o.Pair.AboveRanges).ToList();
         var aboveAffected = above.Count(o => o.Pair.Label!.Verdict == ReferenceLabel.Affected);
         var aboveNot = above.Count(o => o.Pair.Label!.Verdict == ReferenceLabel.NotAffected);
@@ -141,7 +133,6 @@ internal sealed record ReferenceEvaluation(IReadOnlyList<ReferenceOutcome> Outco
         return failures;
     }
 
-    /// <summary>A Markdown report: the measures, the levels against the labels, and every disagreement.</summary>
     public string Report(TimeSpan duration)
     {
         var text = new StringBuilder();

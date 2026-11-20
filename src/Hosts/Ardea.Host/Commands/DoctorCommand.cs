@@ -4,11 +4,6 @@ using Npgsql;
 
 namespace Ardea.Host.Commands;
 
-/// <summary>
-/// <c>ardea doctor</c> checks configuration, database, schema, the runtime image, and, as warnings, whether the
-/// configured SMTP server, language model providers and sources can be reached (master plan 12.8). A service
-/// that cannot be reached right now is a warning, not a failure: the instance keeps working and tries again.
-/// </summary>
 internal static class DoctorCommand
 {
     public static async Task<int> RunAsync(string[] args)
@@ -41,7 +36,6 @@ internal static class DoctorCommand
         return results.All(r => r.Ok) ? 0 : 1;
     }
 
-    /// <summary>The hosts every source adapter in the image may reach, by source key.</summary>
     private static IReadOnlyDictionary<string, IReadOnlyList<string>> SourceHosts()
     {
         var hosts = new SortedDictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
@@ -61,7 +55,6 @@ internal static class DoctorCommand
         return hosts;
     }
 
-    /// <summary>Time zones and ICU must work in the chiseled image (experiment 0.7, ADR 0003).</summary>
     internal static IEnumerable<(string, bool, string)> RuntimeChecks(string scratch)
     {
         (string, bool, string) Try(string name, Func<string> probe)
@@ -116,7 +109,6 @@ internal static class DoctorCommand
         }
     }
 
-    /// <summary>Whether a volume is mounted at the path; reads the mount table on Linux.</summary>
     private static bool IsMountPoint(string path)
     {
         const string mountInfo = "/proc/self/mountinfo";

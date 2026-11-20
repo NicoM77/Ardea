@@ -7,11 +7,6 @@ using Npgsql;
 
 namespace Ardea.Iam.Features;
 
-/// <summary>
-/// The system operation «instance administrators» (ADR 043): <c>iam.instance_administrators()</c> names their
-/// accounts, ids only; each account's own row is then read in a short unit of work that acts as that account,
-/// which the user policy allows (ADR 029). No function hands out an address.
-/// </summary>
 internal sealed class InstanceAdministrators(NpgsqlDataSource dataSource, IServiceScopeFactory scopes) : IInstanceAdministrators
 {
     public async Task<IReadOnlyList<InstanceAdministrator>> ListReachableAsync(CancellationToken cancellationToken)
@@ -29,7 +24,6 @@ internal sealed class InstanceAdministrators(NpgsqlDataSource dataSource, IServi
         var administrators = new List<InstanceAdministrator>();
         foreach (var id in ids)
         {
-            // A scope of its own, not the caller's: its unit of work acts as this account and nobody else.
             await using var scope = scopes.CreateAsyncScope();
             scope.ServiceProvider.GetRequiredService<TenantContext>().SetUser(id);
             var db = scope.ServiceProvider.GetRequiredService<IamDbContext>();

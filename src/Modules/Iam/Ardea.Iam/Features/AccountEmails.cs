@@ -9,29 +9,21 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Features;
 
-/// <summary>Sends the password-reset link. The job carries only the account's id (master plan 4.1).</summary>
 internal sealed record SendPasswordResetEmail(Guid UserId) : IJob
 {
     public static string Kind => "iam.send-password-reset";
 }
 
-/// <summary>Sends the link that confirms an e-mail address after registration.</summary>
 internal sealed record SendEmailConfirmation(Guid UserId) : IJob
 {
     public static string Kind => "iam.send-email-confirmation";
 }
 
-/// <summary>Tells the owner of an address that someone tried to register it again.</summary>
 internal sealed record SendAlreadyRegisteredNotice(Guid UserId) : IJob
 {
     public static string Kind => "iam.send-already-registered";
 }
 
-/// <summary>
-/// The jobs talk to the outside world: they read account and token in a short unit of work of
-/// their own, then send without an open transaction (master plan 9.2). Repeating a job sends the
-/// mail again, which is harmless.
-/// </summary>
 internal sealed class AccountEmailHandlers(IUnitOfWorkFactory units, IEmailSender email, IConfiguration configuration)
     : IJobHandler<SendPasswordResetEmail>, IJobHandler<SendEmailConfirmation>, IJobHandler<SendAlreadyRegisteredNotice>
 {
@@ -99,7 +91,6 @@ internal sealed class AccountEmailHandlers(IUnitOfWorkFactory units, IEmailSende
     private async Task<(ArdeaUser? User, string? Token)> ReadAsync(Guid userId, Func<UserManager<ArdeaUser>, ArdeaUser, Task<string>> token)
     {
         await using var scope = units.CreateScope();
-        // The job acts for the account it writes to (row-level security on user data, ADR 029).
         scope.ServiceProvider.GetRequiredService<Platform.Tenancy.TenantContext>().SetUser(userId);
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ArdeaUser>>();
         var user = await users.FindByIdAsync(userId.ToString());

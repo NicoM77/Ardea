@@ -3,7 +3,6 @@ using static Ardea.Catalog.Tests.Versions.SchemeAssert;
 
 namespace Ardea.Catalog.Tests.Versions;
 
-/// <summary>RPM versions (master plan 6.6); the rpmvercmp table comes from rpm's own test suite (rpmvercmp.at).</summary>
 public sealed class RpmSchemeTests
 {
     [Theory]
@@ -43,16 +42,13 @@ public sealed class RpmSchemeTests
     }
 
     [Theory]
-    // openssl in RHEL 9 errata; release numbers with dist tags.
     [InlineData("3.0.7-16.el9 < 3.0.7-18.el9 < 3.0.7-25.el9_3 < 3.0.7-27.el9")]
     [InlineData("1:1.1.1k-7.el8_6 < 1:1.1.1k-9.el8_7 < 1:1.1.1k-12.el8_9")]
-    // The epoch outranks version and release.
     [InlineData("9.9-1 < 1:1.0-1")]
     public void Epoch_version_release_follow_rpm(string ascending) => Ascending("rpm", ascending);
 
     [Theory]
     [InlineData("0:1.2.3-4.el8", "1.2.3-4.el8")]
-    // As in rpm's comparison of dependencies, a missing release is not compared.
     [InlineData("1.2.3", "1.2.3-4")]
     public void Missing_epoch_is_zero_and_missing_release_is_not_compared(string left, string right) => Same("rpm", left, right);
 

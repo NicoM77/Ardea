@@ -7,26 +7,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Catalog.Learning;
 
-/// <summary>What came of asking the model about one raw key: a checked proposal, or why there is none, with the calls and tokens spent.</summary>
 internal sealed record LearnResult(LearnedProposal? Proposal, string? Failure, int Attempts, int Tokens, long DurationMs);
 
-/// <summary>
-/// Asks the language model about one raw key (master plan 6.9 step 3 and 4; the pattern of ADR 037). Two attempts at
-/// most: an answer that fails the check is asked again once. One provider, the catalogue's own (ADR 040); the model has
-/// no tools; the time limit holds per call. A call without a usage report is charged its estimate. Metrics count calls,
-/// tokens and outcomes; logs carry the raw key's length, never the source's or the model's texts.
-/// </summary>
 internal sealed partial class Learner(IAiProviders providers, AiLimits limits, ILogger<Learner> logger)
 {
     public const int Attempts = 2;
     public const int MaxOutputTokens = 600;
 
-    /// <param name="input">The raw key's input.</param>
-    /// <param name="provider">The catalogue's provider.</param>
-    /// <param name="catalog">The catalogue in effect, to check the answer against.</param>
-    /// <param name="keys">Every key of <c>catalog.product</c>, also of withdrawn entries.</param>
-    /// <param name="budget">Calls left in the day's quota; at most <see cref="Attempts"/> are made.</param>
-    /// <param name="cancellationToken">Cancels the job.</param>
     public async Task<LearnResult> LearnAsync(LearnInput input, AiProviderInfo provider, CatalogLayers catalog, ISet<string> keys, int budget, CancellationToken cancellationToken)
     {
         if (providers.Client(provider.Name) is not { } client)
@@ -95,7 +82,6 @@ internal sealed partial class Learner(IAiProviders providers, AiLimits limits, I
     private partial void LogProviderFailed(string provider, string error, int attempt);
 }
 
-/// <summary>The catalogue's measurements of its model use (master plan 7.8 «Telemetrie»): counts, never texts.</summary>
 internal static class LearnMetrics
 {
     public const string MeterName = "Ardea.Catalog.Learning";
@@ -106,6 +92,5 @@ internal static class LearnMetrics
 
     public static readonly Counter<long> Retries = Meter.CreateCounter<long>("ardea.catalog.learning.retries", description: "Second attempts after an invalid answer.");
 
-    /// <summary>Raw keys by what came of them: <c>rule</c>, <c>adopted</c>, <c>pending</c>, <c>unclear</c>, <c>failed</c>.</summary>
     public static readonly Counter<long> Keys = Meter.CreateCounter<long>("ardea.catalog.learning.keys", description: "Unknown product keys worked on, by outcome.");
 }

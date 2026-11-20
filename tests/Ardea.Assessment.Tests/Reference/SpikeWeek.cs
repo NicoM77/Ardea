@@ -4,12 +4,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Assessment.Tests.Reference;
 
-/// <summary>
-/// The spike week as a test dataset (task 3.7; the planning spike at tag <c>archive/planning-and-design</c>): every CVE record that
-/// appeared or changed from 11 to 17 November 2026, newest state each, and the three example projects of
-/// the requirements. Their versions are the ones installed before that week's security updates, the
-/// situation the spike asks about: what does one week bring to an organisation that was up to date.
-/// </summary>
 internal static class SpikeWeek
 {
     public static readonly IReadOnlyList<(string Name, ReferenceProject Project, IReadOnlyList<ReferenceComponent> Components)> Projects =
@@ -19,7 +13,6 @@ internal static class SpikeWeek
             Product("dotnet", "runtime", "10.0.403"),
             Product("angular", "framework", "22.2.0"),
             Product("umbraco", "cms", "17.2.0"),
-            // A managed service: the catalogue does not know it, and self-hosted SQL Server records do not concern it.
             new ReferenceComponent(null, null, "Azure SQL Database", "service", null, "unknown", null),
         ]),
         ("B: WordPress, PHP, MySQL", new ReferenceProject("normal", "internet"),

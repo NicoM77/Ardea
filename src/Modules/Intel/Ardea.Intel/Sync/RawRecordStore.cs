@@ -8,21 +8,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Intel.Sync;
 
-/// <summary>Counts of one stored batch.</summary>
 internal sealed record StoreResult(int Fetched, int Changed, IReadOnlyList<Guid> ChangedRecordIds);
 
-/// <summary>
-/// Raw record storage with revisions (master plan 4.4, 6.4 step 2). A record is identified by source
-/// and external id; its canonical content is hashed, and an unchanged record only refreshes
-/// <c>last_seen_at</c>. Every new state is kept as a revision; the first and the newest ten remain.
-/// </summary>
 internal static class RawRecordStore
 {
     public const int KeptRevisions = 10;
 
     public static async Task<StoreResult> StoreAsync(IntelDbContext db, Guid sourceId, IReadOnlyList<RawRecord> records, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        // The same id twice in one batch: the later state wins, as it would over two runs.
         var latest = records.GroupBy(r => r.ExternalId, StringComparer.Ordinal).Select(g => g.Last()).ToList();
         var ids = latest.Select(r => r.ExternalId).ToList();
         var existing = await db.SourceRecords
@@ -86,7 +79,6 @@ internal static class RawRecordStore
         await db.SaveChangesAsync(cancellationToken);
         if (changed.Count > 0)
         {
-            // Keep the first and the newest ten states of every changed record (master plan 4.10).
             await db.Database.ExecuteSqlInterpolatedAsync(
                 $"""
                 DELETE FROM intel.source_record_revision v USING intel.source_record r
@@ -99,10 +91,6 @@ internal static class RawRecordStore
         return new StoreResult(latest.Count, changed.Count, changed);
     }
 
-    /// <summary>
-    /// SHA-256 of the canonical content: JSON with sorted object keys and no insignificant whitespace,
-    /// so a source that reorders or reformats an unchanged record does not create a revision.
-    /// </summary>
     public static string Hash(RawRecord record)
     {
         var canonical = record.ContentType.Contains("json", StringComparison.OrdinalIgnoreCase) ? CanonicalJson(record.Content) : record.Content;

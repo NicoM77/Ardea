@@ -6,37 +6,25 @@ using System.Text.Json.Serialization;
 
 namespace Ardea.Assets.GitHub;
 
-/// <summary>Where a connection talks to: github.com, or a GitHub Enterprise Server the instance administrator registered.</summary>
 internal sealed record GitHubHost(string? Id, Uri ApiBase)
 {
     public static readonly GitHubHost GitHubCom = new(null, new Uri("https://api.github.com/"));
 }
 
-/// <summary>What a token is and may do, as GitHub reports it.</summary>
 internal sealed record TokenCheck(bool Valid, string Kind, string? Login, DateTimeOffset? ExpiresAt, IReadOnlyList<string> ClassicScopes, string? Error);
 
 internal sealed record RepositoryInfo(string Owner, string Name, bool Private, string DefaultBranch, DateTimeOffset? PushedAt);
 
-/// <summary>
-/// The few GitHub REST calls the connection management needs (master plan 16.4; task 2.10). Only
-/// the host of the connection is reachable, no redirect is followed, the API version is pinned
-/// (ADR 032) and the token goes nowhere else.
-/// </summary>
 internal sealed class GitHubApi(IHttpClientFactory clients)
 {
     public const string ClientName = "ardea-github";
 
-    /// <summary>The REST API version Ardea was checked against.</summary>
     public const string ApiVersion = GitHubHttp.ApiVersion;
 
     private const int MaxRepositoryPages = 10;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    /// <summary>
-    /// Checks a token with <c>GET /user</c>. Fine-grained tokens (<c>github_pat_</c>) report their
-    /// expiry in a header; classic tokens (<c>ghp_</c>) report their scopes, which are shown as a warning.
-    /// </summary>
     public async Task<TokenCheck> CheckTokenAsync(GitHubHost host, string token, CancellationToken cancellationToken)
     {
         var kind = token.StartsWith("github_pat_", StringComparison.Ordinal) ? "fine_grained"
@@ -62,8 +50,6 @@ internal sealed class GitHubApi(IHttpClientFactory clients)
         }
         catch (HttpRequestException ex)
         {
-            // Every member of the organisation reads the connection's last error: the kind of failure, never the
-            // exception's text with addresses and ports of the network the instance runs in.
             return new TokenCheck(false, kind, null, null, [], Describe(ex));
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -76,10 +62,6 @@ internal sealed class GitHubApi(IHttpClientFactory clients)
         }
     }
 
-    /// <summary>
-    /// Repositories the token can read, most recently pushed first, filtered by <paramref name="query"/>.
-    /// Without a token only one public repository can be found, by <c>owner/name</c>.
-    /// </summary>
     public async Task<IReadOnlyList<RepositoryInfo>> RepositoriesAsync(GitHubHost host, string? token, string? query, CancellationToken cancellationToken)
     {
         query = query?.Trim();
@@ -112,7 +94,6 @@ internal sealed class GitHubApi(IHttpClientFactory clients)
         return [.. result.Where(r => string.IsNullOrEmpty(query) || $"{r.Owner}/{r.Name}".Contains(query, StringComparison.OrdinalIgnoreCase)).Take(100)];
     }
 
-    /// <summary>A failed call in words for the organisation: Ardea's own messages as they are, others by their kind only.</summary>
     internal static string Describe(HttpRequestException exception) =>
         exception.Message.StartsWith("GitHub ", StringComparison.Ordinal) ? exception.Message
         : exception.Message.Contains("resolves to no address Ardea may connect to", StringComparison.Ordinal) ? "The GitHub server resolves to an address Ardea may not connect to."
@@ -131,7 +112,6 @@ internal sealed class GitHubApi(IHttpClientFactory clients)
         return response;
     }
 
-    /// <summary><c>github-authentication-token-expiration: 2026-12-31 00:00:00 UTC</c>.</summary>
     private static DateTimeOffset? Expiry(HttpResponseMessage response) =>
         response.Headers.TryGetValues("github-authentication-token-expiration", out var values)
         && DateTimeOffset.TryParse(values.First().Replace(" UTC", "Z", StringComparison.Ordinal), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var expires)

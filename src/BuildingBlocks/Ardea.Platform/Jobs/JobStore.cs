@@ -4,21 +4,12 @@ using NpgsqlTypes;
 
 namespace Ardea.Platform.Jobs;
 
-/// <summary>A job as claimed by a worker. The lease token identifies this one claim.</summary>
 internal sealed record ClaimedJob(Guid Id, Guid LeaseToken, string Kind, JsonDocument Payload, int Attempt, int MaxAttempts, TimeSpan Timeout, Guid? OrganizationId, string? TraceParent);
 
-/// <summary>
-/// The SQL of the job system (master plan 3.4). Claiming, renewing, failing and reclaiming run in
-/// their own short transactions; completing runs inside the job's unit of work, so the job's effect
-/// and its completion commit together or not at all. Every write after a claim presents the claim's
-/// lease token: a stale run of the same job, even on the same worker, can change nothing.
-/// </summary>
 internal static class JobStore
 {
-    /// <summary>A terminal state for jobs that never retry: the cause reschedules itself.</summary>
     private const string FinalState = "CASE WHEN j.max_attempts = 1 THEN 'failed' ELSE 'dead' END";
 
-    /// <summary>A waiting successor with the same coalesce key does the work; this run is superseded.</summary>
     private const string HasWaitingSuccessor =
         "j.coalesce_key IS NOT NULL AND EXISTS (SELECT 1 FROM platform.job p WHERE p.coalesce_key = j.coalesce_key AND p.state = 'pending')";
 
@@ -63,7 +54,6 @@ internal static class JobStore
         return jobs;
     }
 
-    /// <summary>Marks the job done inside the job's transaction; <c>false</c> when this claim no longer holds it.</summary>
     public static async Task<bool> CompleteAsync(NpgsqlConnection connection, ClaimedJob job, CancellationToken cancellationToken)
     {
         await using var command = new NpgsqlCommand(
@@ -76,7 +66,6 @@ internal static class JobStore
         return await command.ExecuteNonQueryAsync(cancellationToken) == 1;
     }
 
-    /// <summary>Extends the lease while the worker is alive; <c>false</c> when the lease was lost.</summary>
     public static async Task<bool> RenewAsync(NpgsqlDataSource dataSource, ClaimedJob job, TimeSpan lease, CancellationToken cancellationToken)
     {
         await using var command = dataSource.CreateCommand(
@@ -87,10 +76,6 @@ internal static class JobStore
         return await command.ExecuteNonQueryAsync(cancellationToken) == 1;
     }
 
-    /// <summary>
-    /// Records a failed attempt: back to pending after the back-off, or terminal after the last
-    /// attempt. A job whose coalesce key already has a waiting successor is superseded by it.
-    /// </summary>
     public static Task FailAsync(NpgsqlDataSource dataSource, ClaimedJob job, string error, TimeSpan backoff, CancellationToken cancellationToken) =>
         RetryOnCoalesceConflictAsync(async () =>
         {
@@ -111,7 +96,6 @@ internal static class JobStore
             await command.ExecuteNonQueryAsync(cancellationToken);
         }, cancellationToken);
 
-    /// <summary>Gives a job back without counting the attempt, e.g. on an orderly shutdown.</summary>
     public static Task ReleaseAsync(NpgsqlDataSource dataSource, ClaimedJob job, CancellationToken cancellationToken) =>
         RetryOnCoalesceConflictAsync(async () =>
         {
@@ -129,7 +113,6 @@ internal static class JobStore
             await command.ExecuteNonQueryAsync(cancellationToken);
         }, cancellationToken);
 
-    /// <summary>The watchdog: jobs whose lease ran out (their worker died) run again; the attempt counts.</summary>
     public static async Task<int> ReclaimExpiredAsync(NpgsqlDataSource dataSource, CancellationToken cancellationToken)
     {
         var reclaimed = 0;
@@ -150,7 +133,6 @@ internal static class JobStore
         return reclaimed;
     }
 
-    /// <summary>Removes finished jobs: succeeded after 7 days, given up after 30 (master plan 3.4).</summary>
     public static async Task<int> CleanUpAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
     {
         await using var command = new NpgsqlCommand(
@@ -162,10 +144,6 @@ internal static class JobStore
         return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// Putting a job back to pending can collide with a successor enqueued but not yet committed when
-    /// the EXISTS check ran. After the conflict that successor is visible, and the retry supersedes.
-    /// </summary>
     private static async Task RetryOnCoalesceConflictAsync(Func<Task> statement, CancellationToken cancellationToken)
     {
         for (var attempt = 1; ; attempt++)

@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Catalog.Persistence;
 
-/// <summary>A row of <c>catalog.product</c> (master plan 4.5): curated entries and learned ones (6.9).</summary>
 internal sealed class ProductRow
 {
     public const string Curated = "curated";
@@ -20,13 +19,10 @@ internal sealed class ProductRow
 
     public required string Kind { get; set; }
 
-    /// <summary>CPE <c>vendor:product</c> pairs in the canonical form of the formatted string.</summary>
     public string[] CpePairs { get; set; } = [];
 
-    /// <summary>Package URLs without version, e.g. <c>pkg:npm/express</c>.</summary>
     public string[] Purls { get; set; } = [];
 
-    /// <summary>JSON list of <c>{ "vendor": …, "names": [ … ] }</c>.</summary>
     public string Aliases { get; set; } = "[]";
 
     public required string VersionScheme { get; set; }
@@ -37,24 +33,18 @@ internal sealed class ProductRow
 
     public string[] ImageNames { get; set; } = [];
 
-    /// <summary>Curated: a product whose notices need active exploitation or an authority warning (ADR 044 decision 3).</summary>
     public bool Noisy { get; set; }
 
-    /// <summary><c>curated</c> or <c>learned</c>.</summary>
     public required string Origin { get; set; }
 
-    /// <summary><c>active</c>, <c>pending</c>, <c>rejected</c> or <c>withdrawn</c>; always <c>active</c> for curated entries.</summary>
     public required string State { get; set; }
 
-    /// <summary>For learned entries: the model's confidence (<c>high</c>, <c>medium</c>, <c>low</c>).</summary>
     public string? Confidence { get; set; }
 
     public string? Reasoning { get; set; }
 
-    /// <summary>For learned entries: raw statements and records the entry was learned from (JSON).</summary>
     public string? Evidence { get; set; }
 
-    /// <summary>For learned entries: <c>rule</c>, <c>model</c> or <c>admin</c>.</summary>
     public string? LearnedBy { get; set; }
 
     public Guid? DecidedBy { get; set; }
@@ -66,28 +56,20 @@ internal sealed class ProductRow
     public DateTimeOffset UpdatedAt { get; set; }
 }
 
-/// <summary>A row of <c>catalog.unknown_product</c>: a product statement of a source without catalogue entry (master plan 4.5, 6.9).</summary>
 internal sealed class UnknownProductRow
 {
-    /// <summary>Collected, not decided yet.</summary>
     public const string Open = "open";
 
-    /// <summary>A proposal waits on the review list.</summary>
     public const string Pending = "pending";
 
-    /// <summary>In effect: the raw key resolves to <see cref="ProductKey"/>, an existing entry.</summary>
     public const string Alias = "alias";
 
-    /// <summary>In effect: the raw key resolves to the learned entry <see cref="ProductKey"/> made from it.</summary>
     public const string New = "new";
 
-    /// <summary>The model could not say, or its answers failed the check twice; on the review list.</summary>
     public const string Unclear = "unclear";
 
-    /// <summary>Rejected by the administrator; never proposed again.</summary>
     public const string Rejected = "rejected";
 
-    /// <summary>Was in effect and was taken back; never proposed again.</summary>
     public const string Withdrawn = "withdrawn";
 
     public Guid Id { get; set; }
@@ -110,48 +92,33 @@ internal sealed class UnknownProductRow
 
     public DateTimeOffset? LastAttemptAt { get; set; }
 
-    /// <summary><c>open</c>, <c>alias</c>, <c>new</c>, <c>unclear</c> or <c>rejected</c>.</summary>
     public required string Outcome { get; set; }
 
-    /// <summary>For <c>alias</c> and <c>new</c>: the catalogue key the raw key now resolves to.</summary>
     public string? ProductKey { get; set; }
 
-    /// <summary>What was learned about the raw key (<c>LearnedProposal</c> as JSON): by rule, model or administrator.</summary>
     public string? Proposal { get; set; }
 
-    /// <summary>Calls to a language model made for this raw key.</summary>
     public int Attempts { get; set; }
 
-    /// <summary>The administrator who decided; <c>null</c> for a decision of the system.</summary>
     public Guid? DecidedBy { get; set; }
 
     public DateTimeOffset? DecidedAt { get; set; }
 }
 
-/// <summary>
-/// A row of <c>catalog.learning_event</c>: what happened while the catalogue learned (master plan 6.9 «Messgrössen»),
-/// one row per collection, model call, proposal and decision. Counts only, never texts of a model.
-/// </summary>
 internal sealed class LearningEventRow
 {
-    /// <summary>A collection of unknown products; <see cref="Data"/> holds the counts.</summary>
     public const string Collected = "collected";
 
-    /// <summary>The model was asked about a raw key; <see cref="Calls"/> and <see cref="Tokens"/> count it.</summary>
     public const string Asked = "asked";
 
-    /// <summary>Something was learned about a raw key, by rule or model.</summary>
     public const string Learned = "learned";
 
-    /// <summary>A learned entry took effect without a person.</summary>
     public const string Adopted = "adopted";
 
-    /// <summary>The administrator confirmed (or changed and confirmed) a proposal.</summary>
     public const string Confirmed = "confirmed";
 
     public const string Rejected = "rejected";
 
-    /// <summary>A learned entry in effect was taken back.</summary>
     public const string Withdrawn = "withdrawn";
 
     public Guid Id { get; set; }
@@ -170,11 +137,9 @@ internal sealed class LearningEventRow
 
     public int Tokens { get; set; }
 
-    /// <summary>JSON with counts, e.g. of a collection.</summary>
     public string? Data { get; set; }
 }
 
-/// <summary>Schema <c>catalog</c>: global data without organisation, readable by every role.</summary>
 internal sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options, ITenantContext tenant) : ModuleDbContext(options, tenant)
 {
     public const string Schema = "catalog";
@@ -232,7 +197,6 @@ internal sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> option
             unknown.Property(u => u.Outcome).HasMaxLength(10).HasDefaultValue("open");
             unknown.Property(u => u.ProductKey).HasMaxLength(200);
             unknown.Property(u => u.FirstSeenAt).HasDefaultValueSql("now()");
-            // The list of open keys and the daily choice of what to ask: in KEV first, then the most records (master plan 6.9).
             unknown.HasIndex(u => new { u.Outcome, u.InKev, u.RecordCount, u.RawKey }).IsDescending(false, true, true, false).HasDatabaseName("ix_unknown_product_outcome_count");
             unknown.Property(u => u.Proposal).HasColumnType("jsonb");
             unknown.Property(u => u.Attempts).HasDefaultValue(0);
@@ -248,7 +212,6 @@ internal sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> option
             e.Property(x => x.RawKey).HasMaxLength(200);
             e.Property(x => x.ProductKey).HasMaxLength(200);
             e.Property(x => x.Data).HasColumnType("jsonb");
-            // The weekly measures and the daily call quota read by kind and time.
             e.HasIndex(x => new { x.Kind, x.At }).HasDatabaseName("ix_learning_event_kind_at");
         });
 

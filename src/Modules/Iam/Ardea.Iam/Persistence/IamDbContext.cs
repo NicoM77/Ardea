@@ -6,11 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Iam.Persistence;
 
-/// <summary>
-/// Schema <c>iam</c>. The Identity tables are mapped here by hand instead of inheriting
-/// <c>IdentityDbContext</c>, so the context is a <see cref="ModuleDbContext"/> and writes inside the
-/// unit of work like every other module (ADR 023).
-/// </summary>
 internal sealed class IamDbContext(DbContextOptions<IamDbContext> options, ITenantContext tenant) : ModuleDbContext(options, tenant)
 {
     public const string Schema = "iam";
@@ -51,9 +46,6 @@ internal sealed class IamDbContext(DbContextOptions<IamDbContext> options, ITena
             user.Property(u => u.NormalizedEmail).HasMaxLength(256);
             user.Property(u => u.DisplayName).HasMaxLength(200);
             user.Property(u => u.CreatedAt).HasDefaultValueSql("now()");
-            // Written only by the compare-and-set of SingleUseAuthenticatorTokenProvider (ADR 045). Identity's
-            // UpdateAsync marks every column modified; an account loaded before a code was claimed would otherwise
-            // write the older step back and make that code valid again.
             user.Property(u => u.TotpLastStep).Metadata.SetAfterSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Ignore);
             user.HasMany<IdentityUserClaim<Guid>>().WithOne().HasForeignKey(c => c.UserId).IsRequired();
             user.HasMany<IdentityUserLogin<Guid>>().WithOne().HasForeignKey(l => l.UserId).IsRequired();
@@ -115,7 +107,6 @@ internal sealed class IamDbContext(DbContextOptions<IamDbContext> options, ITena
             membership.Property(m => m.Role).HasMaxLength(20);
             membership.HasIndex(m => new { m.OrganizationId, m.UserId }).IsUnique().HasDatabaseName("ux_membership_org_user");
             membership.HasIndex(m => m.UserId).HasDatabaseName("ix_membership_user");
-            // At most one owner; the transfer changes both rows in one unit of work.
             membership.HasIndex(m => m.OrganizationId).IsUnique().HasFilter("role = 'owner'").HasDatabaseName("ux_membership_owner");
             membership.HasOne<Organization>().WithMany().HasForeignKey(m => m.OrganizationId).OnDelete(DeleteBehavior.Cascade);
             membership.HasOne<ArdeaUser>().WithMany().HasForeignKey(m => m.UserId).OnDelete(DeleteBehavior.Cascade);

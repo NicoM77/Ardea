@@ -10,7 +10,6 @@ using Ardea.Intel.Sources.Osv;
 
 namespace Ardea.Sources.Tests.Osv;
 
-/// <summary>Fetching from OSV.dev against recorded responses (task 1.12, master plan 5.4, 5.6).</summary>
 public sealed class OsvProviderTests : IDisposable
 {
     private const string Bucket = "osv-vulnerabilities.storage.googleapis.com/";
@@ -27,8 +26,6 @@ public sealed class OsvProviderTests : IDisposable
 
         var items = await Collect(new OsvProvider { CheckpointEvery = 1 }, Context(http, cursor));
 
-        // npm: two advisories among malicious-package reports, which are never fetched.
-        // Go: two records changed at the same instant come last, without a checkpoint between them.
         Assert.Equal(
             ["GHSA-fc5q-39xc-vjpf", "GHSA-xvcc-vqjv-phqh", "GHSA-xhv5-8fpq-g7hf", "GHSA-fq3v-74gv-27gm", "GHSA-6qr9-g2xw-cw92", "GO-2026-4527"],
             items.OfType<RawRecord>().Select(r => r.ExternalId));
@@ -83,12 +80,10 @@ public sealed class OsvProviderTests : IDisposable
 
         var items = await Collect(new OsvProvider(), context);
 
-        // Express (changed 2026-09-10) and ZITADEL (2026-03-09) lie before the window.
         Assert.Equal(["GHSA-xvcc-vqjv-phqh", "GO-2026-6547"], items.OfType<RawRecord>().Select(r => r.ExternalId));
         Assert.Equal(6, items.OfType<Checkpoint>().Count());
         var last = Cursor(items[^1]);
         Assert.Equal("2026-10-01T00:00:00.0000000+00:00", last.GetProperty("from").GetString());
-        // The position stands at the newest change in the archive, also when it lies before the window.
         Assert.Equal("2026-11-18T16:30:05.5991176+00:00", last.GetProperty("ecosystems").GetProperty("npm").GetProperty("through").GetString());
         Assert.Equal("2026-10-01T20:45:12.2275527+00:00", last.GetProperty("ecosystems").GetProperty("Go").GetProperty("through").GetString());
         Assert.Equal("2026-10-01T00:00:00.0000000+00:00", last.GetProperty("ecosystems").GetProperty("NuGet").GetProperty("through").GetString());
@@ -105,7 +100,6 @@ public sealed class OsvProviderTests : IDisposable
 
         var items = await Collect(new OsvProvider { ArchiveThreshold = 3 }, Context(http, cursor));
 
-        // Twelve changes listed after the position: one archive instead of twelve requests.
         Assert.Equal(["GO-2026-6547"], items.OfType<RawRecord>().Select(r => r.ExternalId));
         Assert.DoesNotContain(http.Requests, r => r.RequestUri!.AbsolutePath.EndsWith("GO-2026-6547.json", StringComparison.Ordinal));
         Assert.Equal(["Go:2026-10-01T20:45:12.2275527+00:00"], Moves(cursor, items));
@@ -150,7 +144,6 @@ public sealed class OsvProviderTests : IDisposable
     [Fact]
     public async Task Archive_entries_above_the_record_cap_are_skipped_and_a_lying_header_cannot_inflate_the_read()
     {
-        // GHSA-xvcc is 14.5 KB, GHSA-fc5q 2.1 KB; the cap is set between them.
         var honest = ZipBytes(Archive("npm", "GHSA-xvcc-vqjv-phqh", "GHSA-fc5q-39xc-vjpf"));
         var lying = WithDeclaredSize(ZipBytes(Archive("npm", "GHSA-xvcc-vqjv-phqh", "GHSA-fc5q-39xc-vjpf")), "GHSA-xvcc-vqjv-phqh.json", 100);
         var provider = new OsvProvider { MaxRecordBytes = 10_000 };
@@ -159,8 +152,6 @@ public sealed class OsvProviderTests : IDisposable
         var fromLying = (await Collect(provider, ArchiveContext(lying))).OfType<RawRecord>().ToList();
 
         Assert.Equal(["GHSA-fc5q-39xc-vjpf"], fromHonest.Select(r => r.ExternalId));
-        // A header that claims less than the entry holds: the unpacking stops at the claimed size, so the
-        // read stays bounded; the cut-off text is no record and goes to quarantine instead of being lost.
         var cut = Assert.Single(fromLying, r => r.ExternalId == "GHSA-xvcc-vqjv-phqh");
         Assert.True(cut.Content.Length <= 100);
         Assert.NotNull(provider.Normalize(cut).QuarantineReason);
@@ -189,7 +180,6 @@ public sealed class OsvProviderTests : IDisposable
             changes.Add(change);
         }
 
-        // GHSA-xvcc changed exactly at the given time and counts; the malicious-package reports above it do not.
         Assert.Equal(
             [
                 new ChangedRecord("GHSA-xvcc-vqjv-phqh", Date("2026-11-18T16:30:05.599117675Z")),
@@ -216,7 +206,6 @@ public sealed class OsvProviderTests : IDisposable
 
     private static DateTimeOffset Date(string text) => OsvTimestamp.TryParse(text, out var date) ? date : throw new FormatException(text);
 
-    /// <summary>A cursor with every ecosystem at the given position, the others recently and with validators.</summary>
     private static string Positions(params (string Ecosystem, string Through)[] positions)
     {
         var ecosystems = OsvEcosystems.Mvp.ToDictionary(
@@ -227,7 +216,6 @@ public sealed class OsvProviderTests : IDisposable
         return JsonSerializer.Serialize(new { from = "2026-05-22T00:00:00.0000000+00:00", ecosystems });
     }
 
-    /// <summary>Each checkpoint as ecosystem and position, where it moved one.</summary>
     private static List<string> Moves(string cursor, List<FetchItem> items)
     {
         var moves = new List<string>();
@@ -294,7 +282,6 @@ public sealed class OsvProviderTests : IDisposable
         return response;
     }
 
-    /// <summary>The archive's shape in small: record files named by id at the root of the zip.</summary>
     private static HttpResponseMessage Zip(params (string Name, string Content)[] files) =>
         new(HttpStatusCode.OK) { Content = new ByteArrayContent(ZipBytes(files)) };
 
@@ -313,10 +300,6 @@ public sealed class OsvProviderTests : IDisposable
         return buffer.ToArray();
     }
 
-    /// <summary>
-    /// Rewrites the uncompressed size an entry declares, in its local header (offset 22) and its central
-    /// directory record (offset 24), as a hostile archive would.
-    /// </summary>
     private static byte[] WithDeclaredSize(byte[] zip, string name, uint size)
     {
         var bytes = (byte[])zip.Clone();
@@ -335,10 +318,6 @@ public sealed class OsvProviderTests : IDisposable
         return bytes;
     }
 
-    /// <summary>
-    /// Answers recorded responses; the first matching route wins. A record URL in the bucket gets the
-    /// recorded record if there is one, otherwise a minimal valid record with that id.
-    /// </summary>
     private sealed class RecordedHttp : HttpMessageHandler
     {
         private readonly List<(string Match, Func<HttpResponseMessage> Respond)> _routes = [];
@@ -347,7 +326,6 @@ public sealed class OsvProviderTests : IDisposable
 
         public RecordedHttp On(string match, Func<HttpResponseMessage> respond)
         {
-            // Later, more specific routes go first.
             _routes.Insert(0, (match, respond));
             return this;
         }

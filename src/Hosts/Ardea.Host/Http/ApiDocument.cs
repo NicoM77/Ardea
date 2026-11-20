@@ -4,11 +4,6 @@ using Microsoft.OpenApi;
 
 namespace Ardea.Host.Http;
 
-/// <summary>
-/// The OpenAPI 3.1 document of the API (master plan 10.1). It is committed as
-/// <c>openapi/ardea.v1.json</c>; a test fails when code and file drift apart, and the web client is
-/// generated from the file.
-/// </summary>
 internal static class ApiDocument
 {
     public const string Name = "v1";
@@ -28,8 +23,6 @@ internal static class ApiDocument
             return Task.CompletedTask;
         });
 
-        // Route parameters a group filter reads, not the handler (the organisation of /orgs/{orgId}),
-        // are still part of the path and must be declared for the generated client.
         options.AddOperationTransformer((operation, context, _) =>
         {
             var route = context.Description.RelativePath ?? string.Empty;
@@ -51,7 +44,6 @@ internal static class ApiDocument
             return Task.CompletedTask;
         });
 
-        // Every problem carries the code the web app maps to a message.
         options.AddSchemaTransformer((schema, context, _) =>
         {
             var type = context.JsonTypeInfo.Type;
@@ -65,16 +57,10 @@ internal static class ApiDocument
         });
     }
 
-    /// <summary>The names of the <c>{…}</c> segments of a route template that are UUIDs, e.g. <c>orgId</c>.</summary>
     private static IEnumerable<string> RouteParameters(string route) =>
         System.Text.RegularExpressions.Regex.Matches(route, @"\{(?<name>orgId)(:[^}]*)?\}", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromMilliseconds(100))
             .Select(m => m.Groups["name"].Value);
 
-    /// <summary>
-    /// Stable formatting for the committed file. Descriptions come from XML doc comments, whose line breaks are
-    /// those of the source file as checked out (CRLF on Windows): every string value gets <c>\n</c> only, so the
-    /// document is the same on every machine.
-    /// </summary>
     public static string Normalize(string json)
     {
         var node = JsonNode.Parse(json)!;

@@ -3,7 +3,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Tests;
 
-/// <summary>Precedence rules of the consolidated entry (task 1.6, master plan 6.3).</summary>
 public sealed class ProjectionTests
 {
     private static readonly Guid Cve = Guid.CreateVersion7();
@@ -127,7 +126,6 @@ public sealed class ProjectionTests
     [Fact]
     public void Affected_ranges_are_stored_with_their_peculiarities_resolved()
     {
-        // As the CVE reader delivers them: Oracle's range in one field, a kernel stable line ending in a placeholder.
         var record = Contribution(Cve, "cve-program", "mandated", ObservationKind.Vulnerability, new ClaimBlock
         {
             Aliases = [new Identifier("CVE", "CVE-2026-114949")],

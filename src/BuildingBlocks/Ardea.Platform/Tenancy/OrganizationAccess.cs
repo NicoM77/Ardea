@@ -1,6 +1,5 @@
 namespace Ardea.Platform.Tenancy;
 
-/// <summary>The role of a member in one organisation (master plan 9.1); a higher role includes the lower ones.</summary>
 public enum OrganizationRole
 {
     Viewer = 0,
@@ -9,14 +8,8 @@ public enum OrganizationRole
     Owner = 3,
 }
 
-/// <summary>What the signed-in user may do in one organisation, as the membership check found it.</summary>
 public sealed record OrganizationAccess(Guid OrganizationId, Guid UserId, OrganizationRole Role, bool MfaRequired, bool UserHasMfa);
 
-/// <summary>
-/// Looks up a user's membership in an organisation for the access check in front of every
-/// organisation endpoint (master plan 9.2, layer 1). Implemented by <c>Iam</c>; it runs inside the
-/// request's unit of work after the organisation is set.
-/// </summary>
 public interface IOrganizationMembership
 {
     Task<OrganizationAccess?> FindAsync(Guid organizationId, Guid userId, CancellationToken cancellationToken);

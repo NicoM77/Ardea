@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# Software bill of materials in CycloneDX JSON: one for the .NET host (all NuGet packages, transitive),
-# one for the web app's production packages (master plan 12). Runs locally and in CI; needs the
-# restored host project and installed web packages (npm ci in web/).
-# Usage: build/sbom.sh [output directory]   (default artifacts/sbom)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 out="${1:-artifacts/sbom}"

@@ -5,13 +5,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Ardea.Assessment.Persistence.Migrations
 {
-    /// <summary>
-    /// Task 5a.3 (master plan 17.3, ADR 047): notices are written by the assessment. A notice keeps the entry's score and
-    /// exploitation, with the list's order computed from them and indexed, the exploitation and KEV listing when it was
-    /// answered (E22: it comes back only when one of them is new), whether a reverse search raised it, and may be withdrawn;
-    /// history rows name their notice. New columns have defaults or are computed and the checks only widen, so the previous
-    /// build keeps working during the upgrade (master plan 4.11).
-    /// </summary>
     public partial class NoticeGeneration : Migration
     {
         /// <inheritdoc />
@@ -128,8 +121,6 @@ namespace Ardea.Assessment.Persistence.Migrations
                 table: "assess_event",
                 columns: new[] { "notice_id", "at" });
 
-            // The notices of the migration NoticesAndOpenOrDone take their entry's score and exploitation; Intel migrates before
-            // Assess (master plan 4.11, ADR 046 decision 10). A test database without Intel skips it.
             migrationBuilder.Sql("""
                 DO $$
                 BEGIN
@@ -145,7 +136,6 @@ namespace Ardea.Assessment.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // The earlier checks know no withdrawn notice: it is open again, as before this migration.
             migrationBuilder.Sql("UPDATE assess.notice SET state = 'open' WHERE state = 'withdrawn';");
 
             migrationBuilder.DropIndex(

@@ -9,10 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Assessment.Tests.Estimating;
 
-/// <summary>
-/// The assessment by the language model through the real jobs, with recorded answers (master plan 7.5, 7.8, 7.9;
-/// tasks 4.2 to 4.6, 4.8): what is sent, what is stored, what the verdict changes, and when the model is not asked.
-/// </summary>
 public sealed class EstimateTests(PostgresServer server)
 {
     [Fact]
@@ -39,7 +35,6 @@ public sealed class EstimateTests(PostgresServer server)
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
 
-        // One call; its request names the two hit components under placeholders, no project and nothing else of the profile.
         var request = Assert.Single(model.Requests);
         Assert.Equal(["C1 P1 17.11 in_range", "C2 P2 17.4 unknown"], request.Data.GetProperty("components").EnumerateArray()
             .Select(c => $"{c.GetProperty("ref").GetString()} {c.GetProperty("project").GetString()} {(c.TryGetProperty("version", out var v) ? v.GetString() : "-")} {c.GetProperty("version_check").GetString()}"));
@@ -48,7 +43,6 @@ public sealed class EstimateTests(PostgresServer server)
             Assert.DoesNotContain(secret, request.Text, StringComparison.OrdinalIgnoreCase);
         }
 
-        // Stored once, immutably, with what it rests on.
         Assert.Equal(
             "rules+model|1|1|de|local|local-model|1|1800|400|-|2",
             Assert.Single(await host.RowsAsync("""
@@ -58,8 +52,6 @@ public sealed class EstimateTests(PostgresServer server)
         Assert.Equal(64, (await host.ScalarAsync<string>("SELECT input_fingerprint FROM assess.assessment")).Length);
         await Assert.ThrowsAsync<Npgsql.PostgresException>(() => host.ScalarAsync<int>("UPDATE assess.assessment SET tokens_in = 0 RETURNING 1"));
 
-        // In range the version decides; with an unknown version «not_affected» counts like «unlikely»: one level lower at
-        // most, still open, shown as a proposal.
         Assert.Equal(
             ["Billing\tnot_affected\tmodel\t2\topen", "Shop Backend\taffected\trules\t4\topen"],
             await host.RowsAsync("SELECT p.name, f.verdict, f.verdict_source, f.level, f.status FROM assess.finding f JOIN assets.project p ON p.id = f.project_id ORDER BY p.name"));
@@ -72,7 +64,6 @@ public sealed class EstimateTests(PostgresServer server)
         Assert.Equal(("not_affected", true, "Billing"), (verdict.Verdict, verdict.Proposal, verdict.Project.Name));
         Assert.Equal(1, answers.Model.Sources[0].Number);
 
-        // The instance status counts the call and its tokens, over all organisations and without content (master plan 12.7).
         var status = new Platform.Status.InstanceStatusBuilder();
         await host.InSystemAsync(async services =>
         {
@@ -85,25 +76,18 @@ public sealed class EstimateTests(PostgresServer server)
             ["local.calls=1", "local.refused=0", "local.tokens_in=1800", "local.tokens_out=400"],
             status.Metrics.Where(m => m.Group == "ai").Select(m => $"{m.Name}={m.Value}").Order(StringComparer.Ordinal));
 
-        // The verdicts reached the findings through a reassessment of its own, after the row was stored.
         Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'assess.assess-alert'"));
 
-        // The same input asks nothing new.
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
         Assert.Single(model.Requests);
 
-        // A verdict made for another profile state no longer counts: the rules alone apply until the model looks again.
         await host.ChangeComponentAsync(acme, billingDb, c => c.Exposure = "internet");
         await host.ProfileChangedAsync(acme, billing);
         await host.RunJobsAsync();
         Assert.Equal("uncertain\trules\t4", Assert.Single(await host.RowsAsync($"SELECT verdict, verdict_source, level FROM assess.finding WHERE component_id = '{billingDb}'")));
     }
 
-    /// <summary>
-    /// A person's request has its own place in the queue and its own cap (task 4.3): a waiting job of the system
-    /// does not swallow it, failed calls are charged, and a repeated run of the job never asks the model again.
-    /// </summary>
     [Fact]
     public async Task A_persons_request_runs_beside_the_systems_within_a_daily_cap_and_a_job_never_asks_twice()
     {
@@ -117,12 +101,10 @@ public sealed class EstimateTests(PostgresServer server)
         await host.RunJobsAsync();
         var entry = await host.AddEntryAsync(new TestEntry("CVE-2026-7601", new TestAffected { ProductKey = "postgresql", Introduced = "17", Fixed = "17.12" }) { Score = 9.1 });
 
-        // The system asks; the model is down: two calls, charged at their estimate, and the rules stand.
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
         Assert.Equal(2, down.Requests.Count);
 
-        // A system job and a person's request for the same alert wait side by side, the person's first.
         var queued = new List<bool>();
         await host.InOrganizationAsync(acme, async services =>
         {
@@ -133,7 +115,6 @@ public sealed class EstimateTests(PostgresServer server)
         Assert.Equal([true, true], queued);
         Assert.Equal(["0", "2"], await host.RowsAsync("SELECT priority FROM platform.job WHERE kind = 'assess.estimate-alert' AND state = 'pending' ORDER BY priority"));
 
-        // The system does not try the same input again after two failures; the person may.
         await host.RunJobsAsync();
         Assert.Equal(4, down.Requests.Count);
         Assert.Equal(
@@ -143,12 +124,10 @@ public sealed class EstimateTests(PostgresServer server)
                 """));
         Assert.True(await host.ScalarAsync<int>("SELECT min(tokens_in) FROM assess.assessment") > 0);
 
-        // The organisation's people used today's one request: the next waits until tomorrow.
         await RequestAsync(host, acme, entry);
         await host.RunJobsAsync();
         Assert.Equal(4, down.Requests.Count);
 
-        // A job that runs a second time (the worker died after the call) asks nothing.
         await host.InOrganizationAsync(acme, services => services.GetRequiredService<EstimateAlertHandler>()
             .HandleAsync(new EstimateAlert(entry), new JobContext(Guid.CreateVersion7(), EstimateAlert.Kind, 2, acme), CancellationToken.None));
         Assert.Equal(4, down.Requests.Count);
@@ -187,7 +166,6 @@ public sealed class EstimateTests(PostgresServer server)
                 """));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assessment WHERE output::text LIKE '%evil.example%' OR output::text LIKE '%C9%' OR output::text LIKE '%Ignore%'"));
 
-        // The failed one keeps the rules' verdict and says so; the other carries the model's.
         Assert.Equal(
             ["left-pad\tuncertain\trules", "right-pad\tlikely\tmodel"],
             await host.RowsAsync("SELECT c.custom_name, f.verdict, f.verdict_source FROM assess.finding f JOIN assets.component c ON c.id = f.component_id ORDER BY 1"));
@@ -216,8 +194,6 @@ public sealed class EstimateTests(PostgresServer server)
         await host.EntryChangedAsync(await host.AddEntryAsync(new TestEntry("CVE-2026-7301", new TestAffected { ProductKey = "postgresql", Introduced = "17", Fixed = "17.12" }) { Score = 9.1 }));
         await host.RunJobsAsync();
 
-        // local_only: two attempts at the local provider, which is down; nothing to the cloud. cloud_allowed: local first,
-        // then the cloud. none: nothing at all.
         Assert.Equal(3, local.Requests.Count);
         Assert.Single(cloud.Requests);
         Assert.Equal(
@@ -235,7 +211,6 @@ public sealed class EstimateTests(PostgresServer server)
             new Dictionary<string, string?> { [AiLimits.DailyTokensPerOrganizationKey] = "12000", [AiLimits.DailyTokensKey] = "14000" });
         var acme = AssessmentTestHost.NewOrganization();
 
-        // A first fill: the entry is there before the project. Its finding opens an action without asking the model.
         var first = await host.AddEntryAsync(new TestEntry("CVE-2026-7400", new TestAffected { ProductKey = "postgresql", Introduced = "17", Fixed = "17.12" }) { Score = 9.1 });
         var project = await host.AddProjectAsync(acme, "Platform", criticality: "high", exposure: "internet");
         await host.AddComponentAsync(acme, project, c => (c.ProductKey, c.Kind, c.Version) = ("postgresql", "database", "17.11"));
@@ -244,8 +219,6 @@ public sealed class EstimateTests(PostgresServer server)
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.finding WHERE is_backfill AND level = 4"));
         Assert.Empty(model.Requests);
 
-        // Below the threshold: level 3 with a known version asks nothing. Above it, five per action in seven days;
-        // waiting ones are ranked by level (level 4 → 2, a person's request → 0).
         var low = await host.AddEntryAsync(new TestEntry("CVE-2026-7401", new TestAffected { ProductKey = "postgresql", Introduced = "17", Fixed = "17.12" }) { Score = 2.0 });
         await host.EntryChangedAsync(low);
         var high = new List<Guid>();
@@ -261,18 +234,15 @@ public sealed class EstimateTests(PostgresServer server)
         Assert.DoesNotContain(model.Requests, r => r.EntryKey is "CVE-2026-7400" or "CVE-2026-7401");
         Assert.Equal(["2"], await host.RowsAsync("SELECT DISTINCT priority FROM platform.job WHERE kind = 'assess.estimate-alert'"));
 
-        // A person may ask beyond the action's quota, within the organisation's tokens: 5 × 2 200 = 11 000 of 12 000.
         await RequestAsync(host, acme, high[^1]);
         await host.RunJobsAsync();
         Assert.Equal(6, model.Requests.Count);
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assessment WHERE requested_by IS NOT NULL"));
 
-        // 13 200 tokens: the organisation's day is used up, the rules alone apply.
         await RequestAsync(host, acme, low);
         await host.RunJobsAsync();
         Assert.Equal(6, model.Requests.Count);
 
-        // Another organisation has its own day, until the instance's 14 000 are used up as well.
         var other = AssessmentTestHost.NewOrganization();
         var otherProject = await host.AddProjectAsync(other, "Other", criticality: "high", exposure: "internet");
         await host.AddComponentAsync(other, otherProject, c => (c.ProductKey, c.Kind, c.Version) = ("postgresql", "database", "17.11"));
@@ -286,12 +256,6 @@ public sealed class EstimateTests(PostgresServer server)
         Assert.Equal(7, model.Requests.Count);
     }
 
-    /// <summary>
-    /// The phase 4 acceptance (master plan 14): 20 prepared entries with instructions embedded in their descriptions,
-    /// half with the version in range and half unknown, against recorded answers that follow the instructions or break
-    /// the schema. None reaches level 1 without a person, none falls below the floors, none ends more than one level
-    /// below the result without the model, and no invalid output is stored.
-    /// </summary>
     [Fact]
     public async Task Twenty_entries_with_embedded_instructions_stay_within_the_bounds_of_the_rules()
     {
@@ -370,7 +334,6 @@ public sealed class EstimateTests(PostgresServer server)
 
         Assert.Empty(problems);
 
-        // Valid answers are stored, invalid ones only as «without model»; no text of an invalid answer is anywhere.
         Assert.Equal(["rules\t6", "rules+model\t14"], await host.RowsAsync("SELECT engine, count(*) FROM assess.assessment GROUP BY 1 ORDER BY 1"));
         Assert.Equal(0L, await host.ScalarAsync<long>("""
             SELECT count(*) FROM assess.assessment

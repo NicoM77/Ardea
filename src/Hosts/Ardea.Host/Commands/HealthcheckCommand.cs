@@ -4,10 +4,6 @@ using Npgsql;
 
 namespace Ardea.Host.Commands;
 
-/// <summary>
-/// The image has neither shell nor curl, so Docker health checks call the program itself
-/// (master plan 12.3).
-/// </summary>
 internal static class HealthcheckCommand
 {
     public static async Task<int> RunAsync(string[] args)

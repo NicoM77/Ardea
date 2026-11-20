@@ -5,11 +5,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Sources.Signals;
 
-/// <summary>
-/// FIRST's Exploit Prediction Scoring System (master plan 4.4, 6.4): one gzip file a day with a score
-/// and percentile for every CVE (about 407,000 rows, 2.9 MB). The file honours ETag and
-/// Last-Modified, so the hourly check costs nothing until the next day's scores appear.
-/// </summary>
 public sealed class EpssProvider : ISignalProvider
 {
     public const string Key = "first-epss";
@@ -50,7 +45,6 @@ public sealed class EpssProvider : ISignalProvider
         context.SaveCursor(response.Validators.ToString());
     }
 
-    /// <summary>Lines <c>CVE-…,score,percentile</c> after a comment line and a header.</summary>
     internal static async IAsyncEnumerable<Signal> ParseAsync(TextReader reader, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         while (await reader.ReadLineAsync(cancellationToken) is { } line)

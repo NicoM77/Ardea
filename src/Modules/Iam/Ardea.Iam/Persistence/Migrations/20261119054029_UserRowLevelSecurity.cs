@@ -10,9 +10,6 @@ namespace Ardea.Iam.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // User data (master plan 4.1, 9.2; ADR 029): a user reads and writes their own rows. Members
-            // of the transaction's organisation see each other's account row (the member directory,
-            // name and address are all the code reads), but nobody writes another account.
             migrationBuilder.Sql("""
                 ALTER TABLE iam."user" ENABLE ROW LEVEL SECURITY;
                 CREATE POLICY own ON iam."user"
@@ -29,18 +26,14 @@ namespace Ardea.Iam.Persistence.Migrations
                 ALTER TABLE iam.session ENABLE ROW LEVEL SECURITY;
                 CREATE POLICY own ON iam.session USING (user_id = platform.current_user_id()) WITH CHECK (user_id = platform.current_user_id());
 
-                -- System operation "sign-in": the account of an address, before a user context exists.
                 CREATE FUNCTION iam.user_id_by_email(p_normalized_email text) RETURNS uuid
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
                     AS $$ SELECT u.id FROM iam."user" u WHERE u.normalized_email = p_normalized_email $$;
 
-                -- Instance figure for the setup: whether any account exists yet.
                 CREATE FUNCTION iam.any_user() RETURNS boolean
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
                     AS $$ SELECT EXISTS (SELECT 1 FROM iam."user") $$;
 
-                -- The session check in front of every request: valid, not revoked, within both
-                -- lifetimes, security stamp unchanged; marks the session as seen at most every five minutes.
                 CREATE FUNCTION iam.validate_session(p_session uuid, p_user uuid, p_stamp text, p_idle interval) RETURNS boolean
                     LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
                     AS $$

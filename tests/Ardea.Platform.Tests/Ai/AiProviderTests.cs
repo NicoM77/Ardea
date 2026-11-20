@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Ardea.Platform.Tests.Ai;
 
-/// <summary>Named AI providers from the configuration and their connection test (master plan 7.8; task 4.1).</summary>
 public sealed class AiProviderTests
 {
     [Fact]

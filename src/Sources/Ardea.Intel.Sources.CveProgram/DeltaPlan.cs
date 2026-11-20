@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 
 namespace Ardea.Intel.Sources.CveProgram;
 
-/// <summary>Where the adapter stands: every change up to <see cref="Through"/> is stored.</summary>
 internal sealed record CveCursor(DateTimeOffset Through, string? Validators)
 {
     public override string ToString() => JsonSerializer.Serialize(new Stored(Through.ToString("O", CultureInfo.InvariantCulture), Validators));
@@ -35,11 +34,6 @@ internal sealed record DeltaEntry(
 
 internal sealed record DeltaStep(DateTimeOffset FetchTime, IReadOnlyList<DeltaChange> Changes, bool IsNewest);
 
-/// <summary>
-/// Turns the change log into ordered steps after the cursor. Each record is fetched once per run, at
-/// its first appearance: the repository holds its current state, which already includes the later
-/// changes. A record listed twice, in one entry or in several, is therefore fetched once.
-/// </summary>
 internal sealed record DeltaPlan(IReadOnlyList<DeltaStep> Steps, bool GapTooLong)
 {
     public static DeltaPlan Create(IReadOnlyList<DeltaEntry> log, DateTimeOffset through)
@@ -52,7 +46,6 @@ internal sealed record DeltaPlan(IReadOnlyList<DeltaStep> Steps, bool GapTooLong
         var ordered = log.OrderBy(e => e.FetchTime).ToList();
         if (through < ordered[0].FetchTime)
         {
-            // The log does not reach back to the cursor; what changed in between is not listed.
             return new DeltaPlan([], GapTooLong: true);
         }
 

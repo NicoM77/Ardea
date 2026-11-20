@@ -10,7 +10,6 @@ using Npgsql;
 
 namespace Ardea.Host.Commands;
 
-/// <summary>The <c>worker</c> role: background jobs (master plan 3.1, 3.4).</summary>
 internal static class WorkerRole
 {
     public static async Task<int> RunAsync(string[] args)
@@ -38,7 +37,6 @@ internal static class WorkerRole
         return 0;
     }
 
-    /// <summary>Everything the worker runs; on its own so that a test can see what is registered.</summary>
     internal static void AddServices(HostApplicationBuilder builder)
     {
         builder.Services.AddArdeaPlatform(builder.Configuration, "worker");

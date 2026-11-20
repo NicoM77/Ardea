@@ -4,7 +4,6 @@ using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
 namespace Ardea.Architecture.Tests;
 
-/// <summary>Types of a module are internal; only the module entry point is public (master plan 13.4).</summary>
 public sealed class VisibilityTests
 {
     private static readonly ArchUnitNET.Domain.Architecture Architecture =
@@ -13,7 +12,6 @@ public sealed class VisibilityTests
     [Fact]
     public void Only_the_module_entry_point_is_public()
     {
-        // EF Core generates migrations as public classes; they are generated code, not module API.
         var rule = Types().That().ArePublic().And().DoNotResideInNamespaceMatching(@"^Ardea\.\w+\.Persistence\.Migrations$")
             .Should().HaveNameEndingWith("Module")
             .AndShould().ImplementInterface(typeof(Platform.Modules.IModule))

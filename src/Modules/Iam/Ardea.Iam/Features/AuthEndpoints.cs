@@ -20,21 +20,15 @@ using Npgsql;
 
 namespace Ardea.Iam.Features;
 
-/// <summary>Setup, sign-in, registration and password reset (master plan 9.1, 9.3, 10.2).</summary>
 internal static class AuthEndpoints
 {
     public const string RateLimitPolicy = "ardea-auth";
 
-    /// <summary>For read-only lookups before sign-in; six times the limit of <see cref="RateLimitPolicy"/>.</summary>
     public const string ReadRateLimitPolicy = RateLimits.Lookup;
 
     private static readonly ArdeaUser Nobody = new() { DisplayName = "-" };
     private static string? _dummyHash;
 
-    /// <summary>
-    /// Costs as much as checking a real password: a hash made with the configured hasher, so its
-    /// iteration count matches the stored hashes.
-    /// </summary>
     private static void BurnPasswordCheck(UserManager<ArdeaUser> users, string password)
     {
         var hash = _dummyHash ??= users.PasswordHasher.HashPassword(Nobody, Guid.NewGuid().ToString());
@@ -76,14 +70,12 @@ internal static class AuthEndpoints
             return IamErrors.Validation(errors.Errors);
         }
 
-        // The first account is the user of this unit of work from its first statement on.
         var userId = Guid.CreateVersion7();
         if (!AccountLookup.TryActAs(tenant, userId))
         {
             return IamErrors.SignedIn();
         }
 
-        // Two requests at once must not both create a first user.
         var connection = await unitOfWork.GetConnectionAsync(cancellationToken);
         await using (var lockCommand = new NpgsqlCommand("SELECT pg_advisory_xact_lock(hashtext('ardea-setup'))", connection))
         {
@@ -121,7 +113,6 @@ internal static class AuthEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>The signed-in user and the readable CSRF token; 401 when signed out, still with a token for the sign-in form.</summary>
     private static async Task<IResult> SessionAsync(
         HttpContext http, IAntiforgery antiforgery, UserManager<ArdeaUser> users, IamDbContext db, CancellationToken cancellationToken)
     {
@@ -155,7 +146,6 @@ internal static class AuthEndpoints
         var user = userId is null ? null : await users.FindByIdAsync(userId.Value.ToString());
         if (user is null)
         {
-            // Same work and the same answer as for a wrong password: nothing tells whether the account exists.
             BurnPasswordCheck(users, request.Password);
             return IamErrors.InvalidCredentials();
         }
@@ -176,7 +166,6 @@ internal static class AuthEndpoints
 
         if (result.IsLockedOut)
         {
-            // Identity skips the password check for a locked account; doing it anyway keeps the timing equal.
             BurnPasswordCheck(users, request.Password);
         }
 
@@ -191,7 +180,6 @@ internal static class AuthEndpoints
         TwoFactorRequest request, HttpContext http, IUnitOfWork unitOfWork, ArdeaSignInManager signIn, IAuditLog audit, TenantContext tenant,
         CancellationToken cancellationToken)
     {
-        // The account of the first step, from its short-lived cookie, is the user of this unit of work.
         var pending = await http.AuthenticateAsync(IdentityConstants.TwoFactorUserIdScheme);
         if (!Guid.TryParse(pending.Principal?.FindFirstValue(ClaimTypes.Name), out var pendingId))
         {
@@ -203,7 +191,6 @@ internal static class AuthEndpoints
             return IamErrors.SignedIn();
         }
 
-        // One code check per account at a time, on the account as the previous one committed it.
         await AccountLookup.LockAsync(unitOfWork, pendingId, cancellationToken);
         var user = await signIn.GetTwoFactorAuthenticationUserAsync();
         if (user is null)
@@ -251,8 +238,6 @@ internal static class AuthEndpoints
         ArdeaSignInManager signIn, IEmailSender email, IJobQueue jobs, IAuditLog audit, TimeProvider time, NpgsqlDataSource dataSource,
         TenantContext tenant, CancellationToken cancellationToken)
     {
-        // Who this unit of work acts for is settled before it begins: the existing account of the
-        // address, or the one about to be created.
         var existingId = string.IsNullOrWhiteSpace(request.Email) ? null
             : await AccountLookup.UserIdByEmailAsync(dataSource, users.NormalizeEmail(request.Email.Trim()), cancellationToken);
         var userId = existingId ?? Guid.CreateVersion7();
@@ -277,8 +262,6 @@ internal static class AuthEndpoints
             return IamErrors.Validation(errors.Errors);
         }
 
-        // An invitation for this very address opens registration in the mode "invite" and confirms
-        // the address; the web app accepts the invitation right after (POST /invitations/{token}/accept).
         var invited = !string.IsNullOrWhiteSpace(request.InvitationToken)
             && await OrganizationDirectory.OrganizationOfTokenAsync(dataSource, request.InvitationToken, users.NormalizeEmail(request.Email!.Trim()), cancellationToken) is not null;
         if (mode == "invite" && !invited)
@@ -288,9 +271,6 @@ internal static class AuthEndpoints
 
         if (existingId is not null && await users.FindByIdAsync(userId.ToString()) is { } existing)
         {
-            // The same answer as a new registration, without signing in: the web app then shows the
-            // sign-in page. Nothing tells a stranger that the address has an account (master plan 9.3);
-            // the owner of the address learns it by e-mail.
             BurnPasswordCheck(users, request.Password!);
             if (await email.IsConfiguredAsync(cancellationToken))
             {
@@ -302,7 +282,6 @@ internal static class AuthEndpoints
         }
 
         var user = NewUser(request.Email!, request.DisplayName!, time, userId);
-        // Without SMTP addresses count as confirmed (master plan 12.4); with it, a mail confirms them.
         var withMail = await email.IsConfiguredAsync(cancellationToken) && !invited;
         user.EmailConfirmed = !withMail;
         IdentityResult created;
@@ -312,7 +291,6 @@ internal static class AuthEndpoints
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
         {
-            // Registered at the same moment by another request: the same answer as for any existing account.
             return Results.NoContent();
         }
         if (!created.Succeeded)
@@ -331,10 +309,6 @@ internal static class AuthEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>
-    /// Always 204, whether or not the account exists (master plan 9.3). With SMTP a job sends the link;
-    /// without it the operator resets the password with <c>ardea admin reset-password</c> (master plan 12.4).
-    /// </summary>
     private static async Task<IResult> ForgotPasswordAsync(
         ForgotPasswordRequest request, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, IEmailSender email, IJobQueue jobs,
         IAuditLog audit, TenantContext tenant, NpgsqlDataSource dataSource, CancellationToken cancellationToken)
@@ -345,7 +319,6 @@ internal static class AuthEndpoints
             && await email.IsConfiguredAsync(cancellationToken)
             && await users.FindByIdAsync(id.ToString()) is { } user)
         {
-            // At most one waiting mail per account, however often the form is sent.
             await jobs.EnqueueAsync(new SendPasswordResetEmail(user.Id), new EnqueueOptions { CoalesceKey = $"iam.password-reset:{user.Id}" }, cancellationToken);
             await audit.RecordAsync(new AuditEntry("auth.password_reset_requested", "user", user.Id.ToString()) { ActorUserId = user.Id, InstanceEvent = true }, cancellationToken);
             await unitOfWork.CommitAsync(cancellationToken);

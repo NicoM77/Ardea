@@ -4,7 +4,6 @@ using static Ardea.Catalog.Tests.Versions.SchemeAssert;
 
 namespace Ardea.Catalog.Tests.Versions;
 
-/// <summary>Which scheme compares a record's versions, and that versions of two schemes are never ordered (master plan 6.6).</summary>
 public sealed class VersionSchemeRegistryTests
 {
     [Theory]

@@ -2,11 +2,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Assets.Repositories.Packages;
 
-/// <summary>
-/// Findings collected per package and version: the same package in the same version seen twice is one
-/// finding. Runtime wins over development and unknown (a package shipped anywhere is shipped, 16.5);
-/// direct wins over transitive and unknown; the first evidence stays.
-/// </summary>
 internal sealed class Findings
 {
     private readonly Dictionary<(PackageCoordinate Package, string? Version), PackageFinding> _byKey = [];
@@ -25,7 +20,6 @@ internal sealed class Findings
         }
     }
 
-    /// <summary>In a stable order: type, name, version.</summary>
     public List<PackageFinding> ToList() =>
         [.. _byKey.Values
             .OrderBy(f => f.Package.Type, StringComparer.Ordinal)
@@ -44,11 +38,6 @@ internal sealed class Findings
     };
 }
 
-/// <summary>
-/// One package list from the SBOM and Ardea's own lockfile readers (ADR 032, decision 4): for a package
-/// (purl type and name) a lockfile knows, the lockfile's versions, scope and relation replace whatever
-/// the SBOM says about it; packages only the SBOM knows stay as the SBOM gave them, with unknown scope.
-/// </summary>
 internal static class PackageMerge
 {
     public static IReadOnlyList<PackageFinding> Merge(IEnumerable<PackageFinding> sbom, IEnumerable<PackageFinding> lockfiles)

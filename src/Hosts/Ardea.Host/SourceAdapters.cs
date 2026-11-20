@@ -3,11 +3,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Host;
 
-/// <summary>
-/// Source adapters are found in their assemblies (master plan 5.2): every <c>Ardea.Intel.Sources.*</c>
-/// assembly next to the program is scanned for <see cref="ISourceProvider"/> and
-/// <see cref="ISignalProvider"/>. A new source needs no change to the core.
-/// </summary>
 internal static class SourceAdapters
 {
     public static IServiceCollection AddSourceAdapters(this IServiceCollection services)

@@ -3,12 +3,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Versions;
 
-/// <summary>
-/// RPM versions <c>[epoch:]version[-release]</c>: epoch numerically (missing is 0), then version and
-/// release with <c>rpmvercmp</c> of rpm 4.15 and later, including <c>~</c> (sorts before everything,
-/// for pre-releases) and <c>^</c> (sorts after the base version, for snapshots). As in rpm's own
-/// comparison of dependencies, the release counts only when both sides have one.
-/// </summary>
 internal sealed class RpmScheme : IVersionScheme
 {
     public string Name => VersionSchemeNames.Rpm;
@@ -55,7 +49,6 @@ internal sealed class RpmScheme : IVersionScheme
         return true;
     }
 
-    /// <summary>rpmvercmp: segments of digits or letters, separators skipped, <c>~</c> and <c>^</c> as above.</summary>
     internal static int Compare(string a, string b)
     {
         if (string.Equals(a, b, StringComparison.Ordinal))
@@ -157,7 +150,6 @@ internal sealed class RpmScheme : IVersionScheme
 
             if (endB == j)
             {
-                // Segments of different kinds: a number is newer than letters.
                 return numeric ? 1 : -1;
             }
 

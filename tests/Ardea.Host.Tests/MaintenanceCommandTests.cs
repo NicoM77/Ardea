@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 
 namespace Ardea.Host.Tests;
 
-/// <summary>The maintenance commands of master plan 12.8 are all reachable and listed, and <c>ardea doctor</c> checks the services around the instance (task 6.6).</summary>
 public sealed class MaintenanceCommandTests
 {
     [Fact]
@@ -11,7 +10,6 @@ public sealed class MaintenanceCommandTests
     {
         var commands = Modules.All.SelectMany(m => m.Commands).ToList();
 
-        // The ones the plan names: reset-password, intel import --full, renormalize, recompute (intel and assess), catalog grow.
         Assert.Equal(
             ["assess-recompute", "catalog-grow", "intel-import", "intel-recompute", "intel-renormalize", "reset-password"],
             commands.Select(c => c.Name).Order(StringComparer.Ordinal));

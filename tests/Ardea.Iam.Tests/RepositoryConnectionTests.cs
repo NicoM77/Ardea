@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>Accesses to GitHub (task 2.10; master plan 16.4, 16.9), against a recorded GitHub.</summary>
 public sealed class RepositoryConnectionTests(PostgresServer server)
 {
     private const string FineGrained = "github_pat_11AAAAAA_fineGrainedTokenForTests1234";
@@ -30,13 +29,11 @@ public sealed class RepositoryConnectionTests(PostgresServer server)
         Assert.Empty(created.GetProperty("warnings").EnumerateArray());
         Assert.DoesNotContain(FineGrained, created.GetRawText(), StringComparison.Ordinal);
 
-        // Encrypted at rest, never in the list, never in the audit log.
         var stored = await host.ScalarAsync<string>("SELECT token_enc FROM assets.repository_connection");
         Assert.DoesNotContain(FineGrained, stored, StringComparison.Ordinal);
         Assert.DoesNotContain(FineGrained, await (await owner.GetAsync($"/api/v1/orgs/{orgId}/repository-connections")).Content.ReadAsStringAsync(), StringComparison.Ordinal);
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM platform.audit_event WHERE data::text LIKE '%{FineGrained}%'"));
 
-        // GitHub saw the token only on its own host, with the pinned API version.
         Assert.All(github.Requests, r => Assert.Equal("api.github.com", r.Host));
         Assert.All(github.Requests, r => Assert.Equal(GitHubApi.ApiVersion, r.ApiVersion));
 
@@ -140,7 +137,6 @@ public sealed class RepositoryConnectionTests(PostgresServer server)
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
 
-    /// <summary>Answers like GitHub for the few calls of task 2.10.</summary>
     private sealed class FakeGitHub : HttpMessageHandler
     {
         public List<(string Host, string? ApiVersion)> Requests { get; } = [];

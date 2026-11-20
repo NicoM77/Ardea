@@ -5,7 +5,6 @@ using Ardea.Catalog.Tests.Products;
 
 namespace Ardea.Catalog.Tests.Learning;
 
-/// <summary>The mapping without a model (master plan 6.9 step 2), over the curated catalogue of the repository.</summary>
 public sealed class RuleMappingTests
 {
     private static readonly CatalogLayers Catalog = new(CatalogFiles.Load(CatalogFilesTests.RepositoryCatalog).Products);
@@ -53,7 +52,6 @@ public sealed class RuleMappingTests
         Assert.Equal(["pkg:npm/left-pad-ng"], proposal?.NewProduct?.Packages);
     }
 
-    /// <summary>Review finding: the vendor stays in the name where the record has it, and comes in front of a generic word.</summary>
     [Theory]
     [InlineData("Redis", "Redis Insight 2.64", "redis:redisinsight", "Redis Insight", "redis-insight")]
     [InlineData("Grafana Labs", "Agent", "grafana:agent", "Grafana Agent", "grafana-agent")]
@@ -97,7 +95,6 @@ public sealed class RuleMappingTests
     [Fact]
     public void A_new_entry_never_takes_a_name_or_key_an_entry_has()
     {
-        // «PostgreSQL» under another vendor with an unknown CPE pair: the name is taken, so the rule makes nothing.
         Assert.Null(RuleMapping.Map(Statement("Some Fork Ltd", "PostgreSQL", cpe: ["somefork:pg"]), Catalog, Keys));
     }
 

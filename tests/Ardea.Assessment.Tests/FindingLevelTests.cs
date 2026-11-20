@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Assessment.Tests;
 
-/// <summary>Findings get their level and explanation from rule set version 1 (task 3.4; master plan 7.6).</summary>
 public sealed class FindingLevelTests(PostgresServer server)
 {
     [Fact]
@@ -60,12 +59,10 @@ public sealed class FindingLevelTests(PostgresServer server)
         Assert.Equal(4, await host.ScalarAsync<int>("SELECT level FROM assess.finding"));
         var factors = await host.ScalarAsync<string>("SELECT factors::text FROM assess.finding");
 
-        // Reassessing the same input leaves the stored level and factors as they are.
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
         Assert.Equal(factors, await host.ScalarAsync<string>("SELECT factors::text FROM assess.finding"));
 
-        // KEV lists it: actively exploited, in range, critical and reachable → level 5 (master plan 7.6, Puppet example).
         await host.ScalarAsync<int>($"UPDATE intel.security_entry SET exploitation = 'active', revision = 2 WHERE id = '{entry}' RETURNING 1");
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
@@ -73,7 +70,6 @@ public sealed class FindingLevelTests(PostgresServer server)
     }
 }
 
-/// <summary><c>ardea admin assess-recompute</c> (task 3.11): every alert is assessed again with the rule set in effect.</summary>
 public sealed class RecomputeCommandTests(PostgresServer server)
 {
     [Fact]
@@ -88,7 +84,6 @@ public sealed class RecomputeCommandTests(PostgresServer server)
         await host.RunJobsAsync();
         var factors = await host.ScalarAsync<string>("SELECT factors::text FROM assess.finding");
 
-        // As if an older rule set had computed it.
         await host.ScalarAsync<int>("UPDATE assess.finding SET level = 2, factors = '{\"rulesetVersion\": 0}' RETURNING 1");
 
         await using (var scope = host.Services.CreateAsyncScope())

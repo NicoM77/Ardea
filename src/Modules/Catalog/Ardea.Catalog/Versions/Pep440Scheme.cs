@@ -4,11 +4,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Versions;
 
-/// <summary>
-/// PEP 440 (PyPI), following the reference implementation <c>packaging.version</c>: epoch, release,
-/// pre-release (a, b, rc and their spellings), post-release (also <c>-1</c>), dev release and local
-/// version; trailing zeros of the release do not count. Normal form as PEP 440 defines it.
-/// </summary>
 internal sealed partial class Pep440Scheme : IVersionScheme
 {
     public string Name => VersionSchemeNames.Pep440;
@@ -38,7 +33,7 @@ internal sealed partial class Pep440Scheme : IVersionScheme
             {
                 "a" or "alpha" => 0,
                 "b" or "beta" => 1,
-                _ => 2, // rc, c, pre, preview
+                _ => 2,
             };
             pre = (letter, m.Groups["pre_n"].Success ? NumericText.Trim(m.Groups["pre_n"].Value) : "0");
         }
@@ -61,7 +56,6 @@ internal sealed partial class Pep440Scheme : IVersionScheme
         return true;
     }
 
-    // The pattern of packaging.version (VERSION_PATTERN), case-insensitive, with optional surrounding «v».
     [GeneratedRegex(
         @"^v?(?:(?:(?<epoch>[0-9]+)!)?(?<release>[0-9]+(?:\.[0-9]+)*)(?<pre>[-_\.]?(?<pre_l>alpha|a|beta|b|preview|pre|c|rc)[-_\.]?(?<pre_n>[0-9]+)?)?(?<post>(?:-(?<post_n1>[0-9]+))|(?:[-_\.]?(?<post_l>post|rev|r)[-_\.]?(?<post_n2>[0-9]+)?))?(?<dev>[-_\.]?(?<dev_l>dev)[-_\.]?(?<dev_n>[0-9]+)?)?)(?:\+(?<local>[a-z0-9]+(?:[-_\.][a-z0-9]+)*))?$",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
@@ -96,22 +90,16 @@ internal sealed partial class Pep440Scheme : IVersionScheme
                 return c;
             }
 
-            // No post-release sorts before any post-release.
             c = CompareOptional(a.Post, b.Post, missingFirst: true);
             if (c != 0)
             {
                 return c;
             }
 
-            // No dev release sorts after any dev release.
             c = CompareOptional(a.Dev, b.Dev, missingFirst: false);
             return c != 0 ? c : CompareLocal(a.Local, b.Local);
         }
 
-        /// <summary>
-        /// A dev release without pre- and post-release sorts before every pre-release of the same
-        /// release; no pre-release sorts after every pre-release.
-        /// </summary>
         private static int ComparePre(Key a, Key b)
         {
             var rankA = PreRank(a);
@@ -143,7 +131,6 @@ internal sealed partial class Pep440Scheme : IVersionScheme
             return NumericText.Compare(a, b);
         }
 
-        /// <summary>No local version sorts first; numeric segments sort after alphanumeric ones; a longer local version wins on a shared prefix.</summary>
         private static int CompareLocal(string[]? a, string[]? b)
         {
             if (a is null || b is null)

@@ -11,19 +11,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Iam.Features;
 
-/// <summary>Saves a step of the wizard; <see cref="FirstProjectId"/> once the project step has created it.</summary>
 internal sealed record UpdateSetupRequest(string? StepDone, Guid? FirstProjectId);
 
 internal sealed record SetupView(IReadOnlyList<string> StepsDone, Guid? FirstProjectId, DateTimeOffset? CompletedAt);
 
-/// <summary>
-/// The setup wizard's state per organisation (master plan 10.2, 11.6; task 2.7), kept in
-/// <c>organization.settings</c>. The wizard saves after every step and can be continued at any time;
-/// completing it does not lock anything, it only stops the overview from offering it.
-/// </summary>
 internal static class SetupEndpoints
 {
-    /// <summary>The steps of master plan 11.6, in order.</summary>
     public static readonly string[] Steps = ["organization", "stack", "project", "repository", "operations", "technologies", "coverage", "notifications", "overview"];
 
     public static void Map(IEndpointRouteBuilder api)
@@ -52,8 +45,6 @@ internal static class SetupEndpoints
 
         var organization = await db.Organizations.SingleAsync(cancellationToken);
         var before = organization.Settings.Setup ?? new SetupState();
-        // Steps this build does not know (written by another version during an upgrade, master plan 4.11) are kept
-        // after the known ones instead of being dropped.
         var steps = request.StepDone is null || before.StepsDone.Contains(request.StepDone)
             ? before.StepsDone
             : [.. Steps.Where(s => s == request.StepDone || before.StepsDone.Contains(s)), .. before.StepsDone.Where(s => !Steps.Contains(s))];

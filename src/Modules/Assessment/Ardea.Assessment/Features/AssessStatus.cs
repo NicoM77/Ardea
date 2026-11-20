@@ -4,11 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assessment.Features;
 
-/// <summary>
-/// Calls to language models over the last day, per provider, over all organisations (master plan 12.7):
-/// how many, how many tokens, how many answers were refused twice. Counts only, through the narrow function
-/// <c>assess.model_usage_since</c>: the status runs without an organisation and never sees a prompt or an answer.
-/// </summary>
 internal sealed class AssessStatusContributor(AssessDbContext db, TimeProvider time) : IInstanceStatusContributor
 {
     public async Task ContributeAsync(InstanceStatusBuilder status, CancellationToken cancellationToken)

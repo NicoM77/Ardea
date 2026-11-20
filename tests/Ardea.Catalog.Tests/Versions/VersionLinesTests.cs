@@ -2,7 +2,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Tests.Versions;
 
-/// <summary>Release lines read from leading numbers, independent of how many parts a version is written with.</summary>
 public sealed class VersionLinesTests
 {
     [Theory]

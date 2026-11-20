@@ -5,7 +5,6 @@ using Ardea.Intel.Sources.Formats.CveJson5;
 
 namespace Ardea.Sources.Tests.CveProgram;
 
-/// <summary>The CVE JSON 5 reader against recorded real records; the output is a reviewed snapshot.</summary>
 public sealed class CveRecordReaderTests
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -61,7 +60,6 @@ public sealed class CveRecordReaderTests
                 ("2.4", "2.12.2", AffectedStatus.Affected),
                 ("2.12.2", "2.13.0", AffectedStatus.Unaffected),
                 ("2.13.0", "2.15.0", AffectedStatus.Affected),
-                // The correlation reads «log4j-core*» as no end (VersionRanges.Normalize); the reader keeps what the record says.
                 ("2.15.0", "log4j-core*", AffectedStatus.Unaffected),
             ],
             ranges.Select(r => (r.Introduced!, r.Fixed, r.Status)).ToList());
@@ -103,7 +101,6 @@ public sealed class CveRecordReaderTests
     [Fact]
     public void Missing_information_is_not_guessed()
     {
-        // n/a vendors are dropped; an absent default status stays absent (master plan 6.1, 6.5).
         var claims = TestData.Files("cve-program", "CVE-*.json").Select(Read).ToList();
 
         Assert.DoesNotContain(claims.SelectMany(c => c.Affected), a => a.Vendor is "n/a" or "N/A");
@@ -126,7 +123,6 @@ public sealed class CveRecordReaderTests
     }
 
     [Theory]
-    // Siemens writes «all versions» as lessThan «*»; with bounds kept as written that must not count as a fix.
     [InlineData("*", false)]
     [InlineData("6.12.*", false)]
     [InlineData("log4j-core*", false)]

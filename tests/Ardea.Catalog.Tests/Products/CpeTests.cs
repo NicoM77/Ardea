@@ -2,7 +2,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Tests.Products;
 
-/// <summary>Reading CPE names (NISTIR 7695): both bindings, escapes, ANY and NA; and matching them.</summary>
 public sealed class CpeTests
 {
     [Fact]
@@ -50,7 +49,6 @@ public sealed class CpeTests
     [Fact]
     public void Uri_packed_edition_is_unpacked()
     {
-        // Example of NISTIR 7695, 6.1.3.
         var cpe = Cpe.Parse("cpe:/a:hp:insight_diagnostics:7.4.0.1570:-:~~online~win2003~x64~");
 
         Assert.Equal(

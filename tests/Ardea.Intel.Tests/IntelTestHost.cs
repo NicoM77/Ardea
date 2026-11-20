@@ -13,7 +13,6 @@ using Npgsql;
 
 namespace Ardea.Intel.Tests;
 
-/// <summary>Platform and Intel schemas on a fresh database, with a scripted provider.</summary>
 internal sealed class IntelTestHost : IAsyncDisposable
 {
     private IntelTestHost(ServiceProvider services, DatabaseOptions database, ScriptedProvider provider, ScriptedSignalProvider signals, FakeTimeProvider clock)
@@ -35,8 +34,6 @@ internal sealed class IntelTestHost : IAsyncDisposable
 
     public FakeTimeProvider Clock { get; }
 
-    /// <param name="server">The test database server.</param>
-    /// <param name="sources">Further record sources beside the scripted one, e.g. real adapters replaying recorded data.</param>
     public static async Task<IntelTestHost> StartAsync(PostgresServer server, params ISourceProvider[] sources)
     {
         var name = await server.CreateDatabaseAsync("intel");
@@ -87,7 +84,6 @@ internal sealed class IntelTestHost : IAsyncDisposable
         return new IntelTestHost(built, database, provider, signals, clock);
     }
 
-    /// <summary>Runs one sync of a scripted source the way the worker does, and commits the job's unit of work.</summary>
     public async Task SyncAsync(string key = ScriptedProvider.Key)
     {
         await using var scope = Services.CreateAsyncScope();
@@ -96,7 +92,6 @@ internal sealed class IntelTestHost : IAsyncDisposable
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 
-    /// <summary>Runs the daily completeness check the way the worker does.</summary>
     public async Task CheckCompletenessAsync()
     {
         await using var scope = Services.CreateAsyncScope();
@@ -105,7 +100,6 @@ internal sealed class IntelTestHost : IAsyncDisposable
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 
-    /// <summary>Runs a maintenance command the way <c>ardea admin</c> does: own scope, tenant-free unit of work.</summary>
     public async Task<int> RunCommandAsync(Platform.Modules.MaintenanceCommand command, params string[] args)
     {
         await using var scope = Services.CreateAsyncScope();
@@ -128,7 +122,6 @@ internal sealed class IntelTestHost : IAsyncDisposable
         await command.ExecuteNonQueryAsync();
     }
 
-    /// <summary>Runs the normalisation job the way the worker does.</summary>
     public async Task NormalizeAsync()
     {
         await using var scope = Services.CreateAsyncScope();
@@ -137,7 +130,6 @@ internal sealed class IntelTestHost : IAsyncDisposable
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 
-    /// <summary>Runs every waiting job of the given kinds, the way the worker would, until none is left.</summary>
     public async Task RunJobsAsync(params string[] kinds)
     {
         for (var round = 0; round < 10; round++)
@@ -202,7 +194,6 @@ internal sealed class IntelTestHost : IAsyncDisposable
     }
 }
 
-/// <summary>A provider that yields what the test scripts, and can fail after a number of items.</summary>
 internal sealed class ScriptedProvider : ISourceProvider, IChangeLogSource
 {
     public const string Key = "scripted";
@@ -229,10 +220,8 @@ internal sealed class ScriptedProvider : ISourceProvider, IChangeLogSource
 
     public DateTimeOffset? BackfillFromSeen { get; private set; }
 
-    /// <summary>What the change log lists; may hold duplicates and records <see cref="Items"/> never delivered in a run.</summary>
     public List<ChangedRecord> ChangeLog { get; } = [];
 
-    /// <summary>What a single fetch finds, by id; falls back to <see cref="Items"/>.</summary>
     public Dictionary<string, RawRecord> Singles { get; } = [];
 
     public async IAsyncEnumerable<ChangedRecord> ListChangesAsync(SyncContext context, DateTimeOffset since, [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -276,7 +265,6 @@ internal sealed class ScriptedProvider : ISourceProvider, IChangeLogSource
         }
     }
 
-    /// <summary><c>{"id":"X","bad":true}</c> goes to quarantine; anything else becomes a vulnerability observation with alias TEST:id.</summary>
     public NormalizationResult Normalize(RawRecord record)
     {
         using var document = System.Text.Json.JsonDocument.Parse(record.Content);
@@ -311,7 +299,6 @@ internal sealed class ScriptedProvider : ISourceProvider, IChangeLogSource
     public static RawRecord Json(string id, string json) => new(id, json, "application/json");
 }
 
-/// <summary>Delivers the signals the test scripts.</summary>
 internal sealed class ScriptedSignalProvider : ISignalProvider
 {
     public const string Key = "scripted-signals";

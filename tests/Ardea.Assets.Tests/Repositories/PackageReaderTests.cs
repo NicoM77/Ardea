@@ -18,12 +18,10 @@ public sealed class PackageReaderTests
         var result = NpmLockReader.Read(Fixture("web-package-lock.json"), "web/package-lock.json");
 
         Assert.True(result.Ok, result.Error);
-        // 835 install paths, 763 distinct package and version.
         Assert.Equal(763, result.Findings.Count);
         Assert.All(result.Findings, f => Assert.True(f.Exact && f.Version is not null));
         Assert.Equal(720, result.Findings.Count(f => f.Scope == DependencyScope.Development));
         Assert.Equal(43, result.Findings.Count(f => f.Scope == DependencyScope.Runtime));
-        // 16 dependencies and 15 devDependencies of the root; typescript is declared as dev but not flagged dev by npm.
         Assert.Equal(31, result.Findings.Count(f => f.Relation == DependencyRelation.Direct));
         Assert.Equal(14, result.Findings.Count(f => f.Relation == DependencyRelation.Direct && f.Scope == DependencyScope.Development));
         Assert.DoesNotContain(result.Findings, f => f.Relation == DependencyRelation.Unknown);
@@ -33,7 +31,6 @@ public sealed class PackageReaderTests
         Assert.Equal(new FindingEvidence(FindingSource.Lockfile, "web/package-lock.json", 500), core.Evidence);
         Assert.Equal("pkg:npm/%40angular/core@22.2.6", core.Purl);
 
-        // Only under node_modules of another package: transitive.
         var nested = Find(result.Findings, "npm", "@jridgewell/gen-mapping", "0.3.13");
         Assert.Equal(DependencyRelation.Transitive, nested.Relation);
     }
@@ -189,14 +186,12 @@ public sealed class PackageReaderTests
 
         Assert.True(result.Ok, result.Error);
         Assert.Equal("master", result.DescribedBranch);
-        // 54 packages: the repository itself (skipped), 44 npm packages, 9 GitHub Actions.
         Assert.Equal(53, result.Findings.Count);
         Assert.Equal(44, result.Findings.Count(f => f.Package.Type == "npm"));
         Assert.Equal(9, result.Findings.Count(f => f.Package.Type == "githubactions"));
         Assert.DoesNotContain(result.Findings, f => f.Package.Type == "github");
         Assert.All(result.Findings, f => Assert.Equal((DependencyScope.Unknown, DependencyRelation.Unknown, FindingSource.Sbom), (f.Scope, f.Relation, f.Evidence.Source)));
 
-        // From package.json only: a range is "version unknown", a pinned version stays.
         Assert.Equal(8, result.Findings.Count(f => f.Package.Type == "npm" && f.Version is not null));
         Assert.Equal((null, false), (Find(result.Findings, "npm", "fresh").Version, Find(result.Findings, "npm", "fresh").Exact));
         Assert.Null(Find(result.Findings, "npm", "vhost").Version);
@@ -219,7 +214,6 @@ public sealed class PackageReaderTests
         Assert.Equal(96, npm.Count(f => f.Relation == DependencyRelation.Transitive));
         Assert.All(npm, f => Assert.True(f.Exact));
         Assert.Equal(DependencyRelation.Direct, Find(npm, "npm", "@actions/core").Relation);
-        // Actions hang off the repository without paths of their own.
         Assert.All(result.Findings.Where(f => f.Package.Type == "githubactions"), f => Assert.Equal(DependencyRelation.Unknown, f.Relation));
     }
 
@@ -252,7 +246,6 @@ public sealed class PackageReaderTests
         Assert.Equal(3, result.Findings.Count);
         Assert.Equal((null, false), (Find(result.Findings, "nuget", "serilog").Version, Find(result.Findings, "nuget", "serilog").Exact));
         Assert.Equal(("8.4.0", false), (Find(result.Findings, "nuget", "polly").Version, Find(result.Findings, "nuget", "polly").Exact));
-        // Without a version in the purl, versionInfo counts.
         Assert.Equal(("2.31.0", true), (Find(result.Findings, "pypi", "requests").Version, Find(result.Findings, "pypi", "requests").Exact));
     }
 
@@ -293,7 +286,6 @@ public sealed class PackageReaderTests
         var fresh = Find(merged, "npm", "fresh");
         Assert.Equal(("2.0.0", true, DependencyScope.Runtime, DependencyRelation.Direct, FindingSource.Lockfile), (fresh.Version, fresh.Exact, fresh.Scope, fresh.Relation, fresh.Evidence.Source));
         Assert.Equal(DependencyScope.Development, Find(merged, "npm", "mocha").Scope);
-        // The SBOM's range for debug is gone; both versions from the lockfile are there.
         Assert.Equal(["4.3.7", "4.4.1"], merged.Where(f => f.Package.Name == "debug").Select(f => f.Version));
         var vhost = Find(merged, "npm", "vhost");
         Assert.Equal((DependencyScope.Unknown, DependencyRelation.Unknown, FindingSource.Sbom), (vhost.Scope, vhost.Relation, vhost.Evidence.Source));

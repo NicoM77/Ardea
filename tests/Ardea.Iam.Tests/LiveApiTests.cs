@@ -5,10 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>
-/// The live stream (task 3.11; master plan 10.2 «Live»): a member's stream starts with <c>ready</c> and says
-/// <c>changed</c> once a change of the organisation commits; strangers get no stream.
-/// </summary>
 public sealed class LiveApiTests(PostgresServer server)
 {
     [Fact(Timeout = 120_000)]
@@ -27,10 +23,8 @@ public sealed class LiveApiTests(PostgresServer server)
         using var reader = new StreamReader(await response.Content.ReadAsStreamAsync(cancellation));
         Assert.Equal("ready", await NextEventAsync(reader));
 
-        // The stream holds no transaction while it waits (master plan 9.2).
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM pg_stat_activity WHERE state LIKE 'idle in transaction%' AND usename = 'ardea_app' AND datname = current_database()"));
 
-        // A change of another organisation says nothing here; one of this organisation does, once committed.
         await host.ScalarAsync<int>($"INSERT INTO assess.assess_event (id, organization_id, at, kind, data) VALUES (gen_random_uuid(), '{other}', now(), 'action.raised', '{{}}') RETURNING 1");
         await host.ScalarAsync<int>($"INSERT INTO assess.assess_event (id, organization_id, at, kind, data) VALUES (gen_random_uuid(), '{org}', now(), 'action.raised', '{{}}') RETURNING 1");
         Assert.Equal("changed", await NextEventAsync(reader));
@@ -49,7 +43,6 @@ public sealed class LiveApiTests(PostgresServer server)
         Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
     }
 
-    /// <summary>The type of the next event; a «ping» is skipped.</summary>
     private static async Task<string> NextEventAsync(StreamReader reader)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);

@@ -15,7 +15,6 @@ using Npgsql;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>The real API pipeline on a test server, against a freshly migrated database.</summary>
 internal sealed class ApiTestHost : IAsyncDisposable
 {
     public const string SetupTokenValue = "test-setup-token";
@@ -81,7 +80,6 @@ internal sealed class ApiTestHost : IAsyncDisposable
         return new ApiTestHost(app, database);
     }
 
-    /// <summary>A browser-like client: keeps cookies and echoes the CSRF token like the web app.</summary>
     public ApiClient Client(string baseAddress = "https://localhost") => new(_app.GetTestServer(), baseAddress);
 
     public async Task<T> ScalarAsync<T>(string sql)
@@ -121,15 +119,12 @@ internal sealed class ApiClient : IDisposable
 
     public CookieContainer Cookies => _cookies;
 
-    /// <summary>Reads the session, which also refreshes the CSRF token, as the web app does after every sign-in.</summary>
     public Task<HttpResponseMessage> SessionAsync() => _http.GetAsync(new Uri("/api/v1/auth/session", UriKind.Relative));
 
     public Task<HttpResponseMessage> GetAsync(string path) => _http.GetAsync(new Uri(path, UriKind.Relative));
 
-    /// <summary>A request exactly as built, without the CSRF token or a session read before it.</summary>
     public Task<HttpResponseMessage> SendRawAsync(HttpRequestMessage request) => _http.SendAsync(request);
 
-    /// <summary>A GET whose body is read as it arrives, for Server-Sent Events.</summary>
     public Task<HttpResponseMessage> StreamAsync(string path, CancellationToken cancellationToken) =>
         _http.GetAsync(new Uri(path, UriKind.Relative), HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
@@ -164,7 +159,6 @@ internal sealed class ApiClient : IDisposable
         var response = await _http.SendAsync(request, cancellationToken);
         if (response.IsSuccessStatusCode && ChangesIdentity(path))
         {
-            // The token is bound to the signed-in user; the web app reads the session again after these calls.
             (await SessionAsync()).Dispose();
         }
 
@@ -206,7 +200,6 @@ internal sealed class ApiClient : IDisposable
     }
 }
 
-/// <summary>RFC 6238 time-based codes, as an authenticator app computes them.</summary>
 internal static class Totp
 {
     public static string Code(string base32Key, DateTimeOffset? at = null)

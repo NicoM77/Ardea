@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>Task 0.13: the first administration, for the instance administrator only.</summary>
 public sealed class InstanceAdministrationTests(PostgresServer server)
 {
     private const string AdminEmail = "admin@example.org";
@@ -27,7 +26,6 @@ public sealed class InstanceAdministrationTests(PostgresServer server)
         Assert.Equal(HttpStatusCode.Unauthorized, (await stranger.GetAsync("/api/v1/instance/settings")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await member.PostAsync("/api/v1/instance/jobs/" + Guid.CreateVersion7() + "/retry")).StatusCode);
 
-        // The correction rate per model and prompt version (task 4.7): counts over all organisations, for the administrator only.
         var quality = await admin.GetAsync("/api/v1/instance/ai/quality");
         Assert.Equal(HttpStatusCode.OK, quality.StatusCode);
         Assert.Equal(0, (await quality.Content.ReadFromJsonAsync<JsonElement>()).GetArrayLength());
@@ -54,7 +52,6 @@ public sealed class InstanceAdministrationTests(PostgresServer server)
             provider.GetProperty("name").GetString(), provider.GetProperty("kind").GetString(), provider.GetProperty("model").GetString(),
             provider.GetProperty("local").GetBoolean(), provider.GetProperty("host").GetString()));
 
-        // Nothing listens on the discard port: the test fails, says so in words, and is audited.
         var test = await (await admin.PostAsync("/api/v1/instance/ai/providers/local/test")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.False(test.GetProperty("ok").GetBoolean());
         Assert.Equal("The provider could not be reached.", test.GetProperty("error").GetString());
@@ -70,7 +67,7 @@ public sealed class InstanceAdministrationTests(PostgresServer server)
         using var visitor = host.Client();
 
         var before = await visitor.PostAsync("/api/v1/auth/register", new { email = "a@example.org", displayName = "A", password = ApiTestHost.Password });
-        Assert.Equal(HttpStatusCode.BadRequest, before.StatusCode); // invite is the default
+        Assert.Equal(HttpStatusCode.BadRequest, before.StatusCode);
 
         var update = await admin.SendAsync(HttpMethod.Patch, "/api/v1/instance/settings", new { registration = "open" });
         Assert.Equal("open", (await update.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("registration").GetProperty("value").GetString());
@@ -137,7 +134,6 @@ public sealed class InstanceAdministrationTests(PostgresServer server)
     [Fact]
     public async Task Every_instance_endpoint_requires_the_instance_role()
     {
-        // The administration reads and changes data of every organisation (jobs, sources, catalogue, model quality).
         await using var host = await ApiTestHost.StartAsync(server);
         using var admin = await AdminAsync(host);
         using var member = host.Client();

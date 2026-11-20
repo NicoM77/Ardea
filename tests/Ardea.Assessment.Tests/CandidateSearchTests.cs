@@ -3,10 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Assessment.Tests;
 
-/// <summary>
-/// Candidate search forward and backward with match strength (task 3.2; master plan 7.2) and the
-/// version check with its three outcomes (task 3.3; master plan 6.6, 7.3).
-/// </summary>
 public sealed class CandidateSearchTests(PostgresServer server)
 {
     private const string Findings = """
@@ -41,7 +37,6 @@ public sealed class CandidateSearchTests(PostgresServer server)
             ],
             await host.RowsAsync(Findings));
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM assess.alert WHERE organization_id = '{other}'"));
-        // The other organisation never got a job: the system operation named only Acme.
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM platform.job WHERE org_id = '{other}'"));
     }
 
@@ -57,7 +52,6 @@ public sealed class CandidateSearchTests(PostgresServer server)
         var free = await host.AddProjectAsync(acme, "Free");
         await host.AddComponentAsync(acme, free, c => (c.CustomName, c.Kind, c.Version) = ("Billing Engine", "other", "2.0"));
 
-        // PHP is related to WordPress, MySQL to MariaDB; Yoast SEO is a WordPress plugin not in the profile.
         var entries = new[]
         {
             await host.AddEntryAsync(new TestEntry("CVE-2026-2001", new TestAffected { ProductKey = "php", Fixed = "8.3.14" })),
@@ -96,7 +90,6 @@ public sealed class CandidateSearchTests(PostgresServer server)
         await host.AddComponentAsync(acme, project, c => (c.ProductKey, c.Kind, c.Version) = ("postgresql", "database", null));
         await host.AddComponentAsync(acme, project, c => (c.ProductKey, c.Kind, c.Version, c.Packaging) = ("postgresql", "database", "15.0", "distribution"));
 
-        // 16.0 up to before 16.4 affected; 17.x said unaffected; everything else: the record's default status, affected.
         var entry = await host.AddEntryAsync(new TestEntry(
             "CVE-2026-3001",
             new TestAffected { ProductKey = "postgresql", Introduced = "16.0", Fixed = "16.4", DefaultStatus = "affected" },
@@ -106,7 +99,6 @@ public sealed class CandidateSearchTests(PostgresServer server)
 
         Assert.Equal(
             [
-                // Without a version the hit is the notice's (ADR 047); a distribution's package stays unknown and open.
                 "Ops\tproduct\tunknown\tuncertain\t1\tnot_affected\tmoved_to_notice\t-",
                 "Ops\tproduct\tunknown\tuncertain\t2\topen\t-\t-",
                 "Ops\tproduct\tin_range\taffected\t3\topen\t-\t16.4",
@@ -134,7 +126,6 @@ public sealed class CandidateSearchTests(PostgresServer server)
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
 
-        // 1.2.0 lies below a lower bound the record names itself: outside. 3.1.0 is above every fix: outside (row 5).
         Assert.Equal(
             ["1.2.0\tout_of_range\toutside_named_bounds", "2.5.0\tin_range\tin_affected_range", "3.1.0\tout_of_range\tabove_all_ranges"],
             await host.RowsAsync("SELECT c.version, f.version_verdict, f.version_reason FROM assess.finding f JOIN assets.component c ON c.id = f.component_id ORDER BY c.version"));
@@ -158,7 +149,6 @@ public sealed class CandidateSearchTests(PostgresServer server)
         Assert.Equal(["Ops\tcpe\tin_range\taffected\t3\topen\t-\t16.4"], await host.RowsAsync(Findings));
         Assert.Equal(recent, await host.ScalarAsync<Guid>("SELECT entry_id FROM assess.finding"));
 
-        // The same profile again changes nothing.
         var changedAt = await host.ScalarAsync<DateTime>("SELECT changed_at FROM assess.finding");
         host.Clock.Advance(TimeSpan.FromMinutes(5));
         await host.ProfileChangedAsync(acme, project);

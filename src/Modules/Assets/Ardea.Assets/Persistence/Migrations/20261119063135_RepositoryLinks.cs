@@ -163,9 +163,6 @@ namespace Ardea.Assets.Persistence.Migrations
                     USING (organization_id = platform.current_organization_id())
                     WITH CHECK (organization_id = platform.current_organization_id());
 
-                -- System operation "read repositories" (master plan 9.2): which links are due now. Claims
-                -- them by moving their due time past the reading's time limit and returns ids only; the
-                -- reading itself runs as a job in the link's organisation.
                 CREATE FUNCTION assets.claim_due_repository_links(p_limit integer, p_hold interval)
                     RETURNS TABLE (organization_id uuid, link_id uuid)
                     LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path = pg_catalog, pg_temp

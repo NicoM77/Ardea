@@ -5,7 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>Repository links and suggestions (task 2.13, first part; master plan 10.2, 16.5, 16.6).</summary>
 public sealed class RepositoryLinkTests(PostgresServer server)
 {
     [Fact]
@@ -26,7 +25,6 @@ public sealed class RepositoryLinkTests(PostgresServer server)
         await ExpectAsync(await client.PostAsync(path, new { connectionId, owner = "acme", name = "portal", path = "../etc" }), HttpStatusCode.BadRequest, "validation_failed");
         await ExpectAsync(await client.PostAsync(path, new { connectionId = Guid.NewGuid(), owner = "acme", name = "portal" }), HttpStatusCode.BadRequest, "validation_failed");
 
-        // A component the repository delivered goes with the link.
         await host.ScalarAsync<int>($"""
             INSERT INTO assets.component (organization_id, project_id, product_key, kind, version, version_precision, packaging, protection, origin, repository_link_id, purl, created_at, changed_at)
             VALUES ('{orgId}', '{projectId}', 'newtonsoft-json', 'library', '13.0.3', 'exact', 'upstream', 'none', 'repository', '{linkId}', 'pkg:nuget/Newtonsoft.Json@13.0.3', now(), now())
@@ -76,7 +74,6 @@ public sealed class RepositoryLinkTests(PostgresServer server)
         await client.PostAsync($"/api/v1/orgs/{orgId}/projects/{projectId}/repositories", new { connectionId, owner = "acme", name = "portal" });
         await client.PostAsync($"/api/v1/orgs/{orgId}/projects/{projectId}/repositories", new { connectionId, owner = "acme", name = "website" });
 
-        // The application role, without a tenant, gets ids through the system function only.
         await using var dataSource = Npgsql.NpgsqlDataSource.Create(host.Database.AppConnectionString("tests"));
         await using var claim = dataSource.CreateCommand("SELECT count(*) FROM assets.claim_due_repository_links(10, interval '30 minutes')");
         Assert.Equal(2L, (long)(await claim.ExecuteScalarAsync())!);

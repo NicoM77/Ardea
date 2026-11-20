@@ -10,60 +10,31 @@ using Ardea.TestSupport;
 
 namespace Ardea.Assessment.Tests.Reference;
 
-/// <summary>
-/// The notice spike of task 5a.1 (master plan 17.9, ADR 044), run on the real generation of task 5a.3 (ADR 047): how many
-/// notices a typical organisation stack gets in one week. Every record of the spike week (11 to 17 November 2026, newest
-/// state each) goes through the real pipeline (CVE Program parser, correlation, forward search, candidates, version check,
-/// notices) against one organisation per stack, whose stack entries carry no version or a line and the default threshold
-/// «only important». The notices are read from <c>assess.notice</c>; the other columns count the hits from the findings,
-/// to show what the thresholds of ADR 044 leave out.
-/// <para>
-/// Opt-in, never in CI (master plan 13.6): the full week is not in the repository. Unpack the CVE Program's delta
-/// archives of the week into one folder per day (<c>11</c> … <c>17</c>) and run
-/// <c>ARDEA_SPIKE_DIR=&lt;folder&gt; dotnet test --project tests/Ardea.Assessment.Tests --filter-class "*NoticeSpike"</c>.
-/// The report lands next to the test binaries as <c>notice-spike-report.md</c>. CI checks the rules on the week's subset in
-/// the repository (<see cref="ReferenceSetTests"/>) and on small cases (<see cref="NoticeTests"/>).
-/// </para>
-/// </summary>
 public sealed class NoticeSpike(PostgresServer server)
 {
-    /// <summary>The acceptance of phase 5a (ADR 044): a stack of ten entries gets at most this many notices in the spike week.</summary>
     internal const int MaxNoticesPerWeek = 25;
 
-    /// <summary>Records published from this day on are new in the week; older ones changed in it (the 10th was a Patch Tuesday).</summary>
     private static readonly DateTimeOffset WeekStart = new(2026, 11, 11, 0, 0, 0, TimeSpan.Zero);
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    /// <summary>Thresholds for the what-if columns; each lets an actively exploited entry pass.</summary>
     internal enum Threshold
     {
-        /// <summary>Every hit: «everything».</summary>
         Everything,
 
-        /// <summary>CVSS 4.0 or more.</summary>
         Medium,
 
-        /// <summary>CVSS 7.0 or more: «only important» as master plan 17.2 first proposed it.</summary>
         High,
 
-        /// <summary>CVSS 9.0 or more: «only important» as ADR 044 decides it.</summary>
         Critical,
 
-        /// <summary>Actively exploited only: «only important» for products the catalogue marks as noisy (ADR 044).</summary>
         Exploited,
     }
 
-    /// <summary>A stack entry: one technology, as one or more catalogue products, optionally a version line.</summary>
-    /// <param name="Label">How the organisation names it.</param>
-    /// <param name="Products">Catalogue keys; a key starting with <c>name:</c> is a free entry «vendor/name» the catalogue lacks.</param>
-    /// <param name="Line">A version line such as <c>17</c> or <c>8.3</c>, stored with the precision <c>line</c>; <c>null</c> for none.</param>
-    /// <param name="Default">The entry's «only important» as ADR 044 measured it, to compare with the real generation.</param>
     internal sealed record StackEntry(string Label, string[] Products, string? Line = null, Threshold Default = Threshold.Critical);
 
     internal sealed record Stack(string Name, StackEntry[] Entries);
 
-    /// <summary>Typical stacks from master plan 17.8, ten entries each, and the spike's three example projects without versions.</summary>
     internal static readonly Stack[] Stacks =
     [
         new("Web agency: .NET, Angular, Azure",
@@ -164,7 +135,6 @@ public sealed class NoticeSpike(PostgresServer server)
                 }
             }
 
-            // The organisation was set up before the week: its first fill is done when the week's records arrive.
             await host.ProfileChangedAsync(organization, project);
         }
 
@@ -186,7 +156,6 @@ public sealed class NoticeSpike(PostgresServer server)
             """)).Select(row => Raised.Parse(row, components)).ToList();
         var entries = await host.RowsAsync("SELECT state, count(*) FROM intel.security_entry GROUP BY state ORDER BY state");
 
-        // The backfill (ADR 047): the same stacks, set up after the week, get its notices from the reverse search at once.
         var late = new Dictionary<Guid, Stack>();
         foreach (var stack in Stacks.Where(s => s.Entries.Length == 10))
         {
@@ -226,7 +195,6 @@ public sealed class NoticeSpike(PostgresServer server)
         TestContext.Current.SendDiagnosticMessage($"Notice spike report: {output}");
         TestContext.Current.SendDiagnosticMessage(report);
 
-        // Only open notices, raised by the forward search one by one: nothing was answered, nothing came from a first fill.
         Assert.All(notices, n => Assert.Equal(("open", false), (n.State, n.Backfill)));
         foreach (var stack in Stacks.Where(s => s.Entries.Length == 10))
         {
@@ -234,14 +202,12 @@ public sealed class NoticeSpike(PostgresServer server)
             Assert.True(count <= MaxNoticesPerWeek, $"{stack.Name}: {count} notices, at most {MaxNoticesPerWeek} (ADR 044).{Environment.NewLine}{report}");
         }
 
-        // Set up after the week, a stack gets the same notices, all quiet, with one summary and no event each.
         foreach (var (stack, b) in backfilled)
         {
             Assert.Equal((Generated(notices, stack).Count, Generated(notices, stack).Count, 1, 0), (b.Notices, b.Quiet, b.Summaries, b.Raised));
         }
     }
 
-    /// <summary>A stack entry as the wizard records it: a catalogue product or a free name, with its line if one is given.</summary>
     internal static void Describe(Component c, string product, string? line)
     {
         if (product.StartsWith("name:", StringComparison.Ordinal))
@@ -261,7 +227,6 @@ public sealed class NoticeSpike(PostgresServer server)
         }
     }
 
-    /// <summary>Every CVE record of the week, newest state each: a later day's archive wins.</summary>
     private static List<RawRecord> WeekRecords(string folder)
     {
         var latest = new SortedDictionary<string, string>(StringComparer.Ordinal);
@@ -281,11 +246,9 @@ public sealed class NoticeSpike(PostgresServer server)
         })];
     }
 
-    /// <summary>The notices the generation wrote for a stack: distinct entries.</summary>
     private static HashSet<string> Generated(IReadOnlyList<Raised> notices, Stack stack, StackEntry? entry = null, bool newOnly = false) =>
         [.. notices.Where(n => n.Stack == stack && (entry is null || n.Entry == entry) && (!newOnly || n.IsNew)).Select(n => n.Cve)];
 
-    /// <summary>What ADR 044 counted from the hits: a hit on the product itself whose entry meets the threshold.</summary>
     private static HashSet<string> Counted(IReadOnlyList<Hit> hits, Stack stack, Func<StackEntry, Threshold> threshold, bool newOnly = false) =>
         [.. hits.Where(h => h.Stack == stack && h.Counts && h.Meets(threshold(h.Entry)) && (!newOnly || h.IsNew)).Select(h => h.Cve)];
 
@@ -339,7 +302,6 @@ public sealed class NoticeSpike(PostgresServer server)
         return text.ToString();
     }
 
-    /// <summary>One component a notice names.</summary>
     private sealed record Raised(Stack Stack, StackEntry Entry, string Cve, string State, bool Backfill, bool IsNew)
     {
         public static Raised Parse(string row, IReadOnlyDictionary<Guid, (Stack Stack, StackEntry Entry)> components)
@@ -350,10 +312,8 @@ public sealed class NoticeSpike(PostgresServer server)
         }
     }
 
-    /// <summary>One finding: an entry's hit on one component of a stack.</summary>
     private sealed record Hit(Stack Stack, StackEntry Entry, string Cve, bool IsNew, double? Score, bool Exploited, bool Strong, bool InLine)
     {
-        /// <summary>A hit a broad entry covers (master plan 17.2, 17.3): on the product itself, within the line.</summary>
         public bool Counts => Strong && InLine;
 
         public bool Meets(Threshold threshold) => threshold switch

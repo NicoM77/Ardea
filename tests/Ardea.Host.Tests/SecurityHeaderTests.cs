@@ -5,10 +5,6 @@ using Microsoft.AspNetCore.TestHost;
 
 namespace Ardea.Host.Tests;
 
-/// <summary>
-/// The web app's own files carry the header set of master plan 9.6 like every API answer: index.html, the hashed
-/// bundles and the single-page fallback for client routes (task 6.1).
-/// </summary>
 public sealed class SecurityHeaderTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("ardea-web-").FullName;

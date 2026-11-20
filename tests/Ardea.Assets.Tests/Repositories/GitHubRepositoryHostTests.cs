@@ -197,7 +197,6 @@ public sealed class GitHubRepositoryHostTests
         Assert.Equal(RepositoryFailure.SbomNotReady, result.Error?.Kind);
         Assert.Null(result.Value);
         Assert.True(_waits.Sum(w => w.TotalSeconds) <= 30);
-        // The _waits grow: 1, 2, 3, ... seconds.
         Assert.Equal([1, 2, 3, 4, 5, 6, 7], _waits.Select(w => w.TotalSeconds));
     }
 
@@ -345,13 +344,11 @@ public sealed class GitHubRepositoryHostTests
         return response;
     }
 
-    /// <summary>A body with or without Content-Length, so the limit must hold while reading.</summary>
     private static HttpContent Body(byte[] bytes, bool announced) =>
         announced ? new ByteArrayContent(bytes) : new StreamContent(new UnseekableStream(bytes));
 
     private sealed record SeenRequest(Uri Url, string? Authorization, string? Accept, string? ApiVersion, string UserAgent, string? IfNoneMatch);
 
-    /// <summary>GitHub and the download host by exact address; anything else answers 599 so a stray call shows.</summary>
     private sealed class FakeGitHub : HttpMessageHandler, IHttpClientFactory
     {
         private readonly Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>> _routes = new(StringComparer.Ordinal);

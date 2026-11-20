@@ -2,10 +2,8 @@ using Ardea.Iam.Security;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>RFC 6238 codes and the time step they belong to, without a database (issue #85).</summary>
 public sealed class AuthenticatorCodeTests
 {
-    // RFC 6238 appendix B: the ASCII key "12345678901234567890" in base32.
     private const string RfcKey = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";
 
     private static readonly DateTimeOffset Now = new(2026, 11, 19, 12, 0, 10, TimeSpan.Zero);

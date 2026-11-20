@@ -5,7 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>Projects and components, with profile replacement as a reconcile (task 2.3; master plan 4.5, 4.9, 10.2).</summary>
 public sealed class ProjectApiTests(PostgresServer server)
 {
     [Fact]
@@ -30,7 +29,6 @@ public sealed class ProjectApiTests(PostgresServer server)
         await ExpectProblem(await owner.PostAsync($"/api/v1/orgs/{orgId}/projects/{projectId}/components", new { productKey = "no-such-product" }), HttpStatusCode.BadRequest, "validation_failed");
         await ExpectProblem(await owner.PostAsync($"/api/v1/orgs/{orgId}/projects/{projectId}/components", new { customName = "Mail", kind = "service", version = "1" }), HttpStatusCode.BadRequest, "validation_failed");
 
-        // Changing the version keeps the id.
         var postgresId = postgres.GetProperty("id").GetGuid();
         var changed = await Json(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/projects/{projectId}/components/{postgresId}", new { version = "17.3", protection = "effective", protectionNote = "Only reachable from the app server" }));
         Assert.Equal(postgresId, changed.GetProperty("id").GetGuid());
@@ -70,7 +68,6 @@ public sealed class ProjectApiTests(PostgresServer server)
         var wordpress = before["wordpress"];
         Assert.Equal(wordpress, Components(first).Single(c => c.GetProperty("productKey").GetString() == "woocommerce").GetProperty("parentId").GetGuid());
 
-        // The wizard sends the whole list again, without ids, with one version raised.
         var second = await Json(await owner.SendAsync(HttpMethod.Put, path, new
         {
             components = new object[]
@@ -85,7 +82,6 @@ public sealed class ProjectApiTests(PostgresServer server)
         Assert.Equal((0, 1, 0, 4), Counts(second));
         Assert.Equal(before, Ids(second));
 
-        // Nothing changed: nothing written. A missing item is removed, the rest keep their ids.
         Assert.Equal((0, 0, 0, 5), Counts(await Json(await owner.SendAsync(HttpMethod.Put, path, new
         {
             components = new object[]
@@ -134,19 +130,13 @@ public sealed class ProjectApiTests(PostgresServer server)
         await ExpectProblem(await owner.SendAsync(HttpMethod.Delete, $"{path}/{repositoryComponent}"), HttpStatusCode.Conflict, "repository_component");
         Assert.Equal("internet", (await Json(await owner.SendAsync(HttpMethod.Patch, $"{path}/{repositoryComponent}", new { exposure = "internet" }))).GetProperty("exposure").GetString());
 
-        // Replacing the manual list leaves it alone.
         await Json(await owner.SendAsync(HttpMethod.Put, path, new { components = new object[] { new { productKey = "dotnet", version = "10.0.0" } } }));
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM assets.component WHERE id = '{repositoryComponent}'"));
 
-        // Detached, it is the user's to change.
         Assert.Equal("manual", (await Json(await owner.PostAsync($"{path}/{repositoryComponent}/detach"))).GetProperty("origin").GetString());
         Assert.Equal("13.0.3", (await Json(await owner.SendAsync(HttpMethod.Patch, $"{path}/{repositoryComponent}", new { version = "13.0.3" }))).GetProperty("version").GetString());
     }
 
-    /// <summary>
-    /// Regression: every unit of work reads the catalogue anew after a decision about a learned entry (ADR 040). A response
-    /// that reads the catalogue after the commit then met a closed unit of work; the views are built before the commit.
-    /// </summary>
     [Fact]
     public async Task Component_responses_read_the_catalogue_before_the_commit_also_after_a_decision_about_a_learned_entry()
     {

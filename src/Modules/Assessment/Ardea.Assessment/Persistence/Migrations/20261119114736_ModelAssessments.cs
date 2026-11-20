@@ -76,7 +76,6 @@ namespace Ardea.Assessment.Persistence.Migrations
                     USING (organization_id = platform.current_organization_id())
                     WITH CHECK (organization_id = platform.current_organization_id());
 
-                -- An assessment is immutable (master plan 4.6): a correction is a new row, never a change.
                 CREATE FUNCTION assess.assessment_immutable() RETURNS trigger
                     LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
                     AS $$
@@ -87,8 +86,6 @@ namespace Ardea.Assessment.Persistence.Migrations
                 CREATE TRIGGER assessment_immutable BEFORE UPDATE ON assess.assessment
                     FOR EACH ROW EXECUTE FUNCTION assess.assessment_immutable();
 
-                -- System operation "token quota of the instance" (master plan 7.8, 9.2, ADR 037): whether all
-                -- organisations together used up a quota since a point in time. Returns a flag only.
                 CREATE FUNCTION assess.model_tokens_exhausted(since timestamptz, quota bigint)
                     RETURNS boolean
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp

@@ -11,18 +11,12 @@ namespace Ardea.Assets.Features;
 
 internal sealed record CoverageExample(Guid ProjectId, Guid? ComponentId, string Name, string? Detail);
 
-/// <summary>One gap in the profile: what it is, how many, where, and a few examples.</summary>
 internal sealed record CoverageHint(string Kind, string Severity, int Count, IReadOnlyList<Guid> ProjectIds, IReadOnlyList<CoverageExample> Examples);
 
 internal sealed record CoverageView(int Components, int FullyCheckable, IReadOnlyList<CoverageHint> Hints);
 
-/// <summary>
-/// Hints on gaps in the profile (master plan 10.2, 11.6 step 6, 16.3; task 2.8): what Ardea can check
-/// and what not. Hints, never locks; the wizard and the project page show them.
-/// </summary>
 internal static partial class CoverageEndpoints
 {
-    /// <summary>Package ecosystems with a source and a version comparison in the MVP (master plan 5.6, 16.3).</summary>
     public static readonly string[] CheckableEcosystems = ["npm", "nuget", "composer", "pypi", "maven", "golang"];
 
     private const int MaxExamples = 10;
@@ -33,8 +27,6 @@ internal static partial class CoverageEndpoints
 
     private static async Task<IResult> CoverageAsync(Guid? projectId, AssetsDbContext db, IProductCatalog catalog, CancellationToken cancellationToken)
     {
-        // The stack names technologies without versions on purpose (master plan 17.1): its gaps are no gaps of the profile,
-        // unless it is asked for by its id.
         var projects = await db.Projects.AsNoTracking()
             .Where(p => p.ArchivedAt == null && (projectId == null ? p.Kind == Project.ProjectKind : p.Id == projectId))
             .Select(p => p.Id).ToListAsync(cancellationToken);
@@ -65,30 +57,23 @@ internal static partial class CoverageEndpoints
         var packages = components.Where(c => c.Purl is not null).ToList();
         var platforms = components.Where(c => c.Purl is null).ToList();
 
-        // Without a version every finding is "unknown": the most common reason for noise or silence.
         Add("missing_version", "warning", [.. platforms.Where(c => c.Version is null && c.Kind != "service")]);
 
-        // A version line from an image tag or a project file ("10.0"): the running version depends on the last pull.
         Add("version_line_only", "info", [.. platforms.Where(c => c.Origin == "repository" && c.Version is not null && VersionLine().IsMatch(c.Version))], c => c.Version);
 
-        // A platform whose catalogue product has plugins, but no plugin in the profile (WordPress without plugins).
         var hosts = await PlatformsWithPluginsAsync(catalog, products.Keys, cancellationToken);
         Add("platform_without_plugins", "warning", [.. platforms.Where(c => c.ProductKey is not null && hosts.Contains(c.ProductKey) && !components.Any(o => o.ParentId == c.Id))]);
 
-        // Distributions backport fixes without changing the upstream version: version checks are unreliable.
         Add("distribution_packages", "info", [.. components.Where(c => c.Packaging == "distribution")]);
 
-        // A package with a range from a manifest but no lock file: "version unknown" (16.3).
         Add("packages_without_lockfile", "warning", [.. packages.Where(c => c.Version is null)], _ => "Check in the lock file to get exact versions.");
 
-        // Packages of ecosystems Ardea does not check yet: shown, counted, no findings (16.3).
         var notCheckable = packages.Where(c => !CheckableEcosystems.Contains(Ecosystem(c.Purl!))).ToList();
         foreach (var ecosystem in notCheckable.GroupBy(c => Ecosystem(c.Purl!)).OrderByDescending(g => g.Count()))
         {
             Add("ecosystem_not_checkable", "info", [.. ecosystem], _ => ecosystem.Key);
         }
 
-        // A product the catalogue does not know is found only by its name: weakly without a vendor.
         Add("not_in_catalog", "info", [.. platforms.Where(c => c.ProductKey is null || products.GetValueOrDefault(c.ProductKey) is null)]);
 
         var suggestions = await db.ComponentSuggestions.AsNoTracking().Where(s => projects.Contains(s.ProjectId) && s.State == "open")
@@ -112,7 +97,6 @@ internal static partial class CoverageEndpoints
         return Results.Ok(new CoverageView(components.Count, components.Count - gaps.Count, hints));
     }
 
-    /// <summary>Whether an item counts for a gap kind, for the number of fully checkable components.</summary>
     private static bool IsIn(string kind, Item c, Dictionary<string, CatalogProduct?> products, HashSet<string> hosts, List<Item> all) => kind switch
     {
         "missing_version" => c.Purl is null && c.Version is null && c.Kind != "service",
@@ -124,7 +108,6 @@ internal static partial class CoverageEndpoints
         _ => false,
     };
 
-    /// <summary>Catalogue products that are the platform of some plugin, among those in the profile.</summary>
     private static async Task<HashSet<string>> PlatformsWithPluginsAsync(IProductCatalog catalog, IEnumerable<string> keys, CancellationToken cancellationToken)
     {
         var result = new HashSet<string>(StringComparer.Ordinal);

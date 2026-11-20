@@ -9,11 +9,6 @@ using Microsoft.Extensions.Options;
 
 namespace Ardea.Iam.Security;
 
-/// <summary>
-/// Every successful sign-in, with or without the two-factor step, passes through
-/// <see cref="SignInWithClaimsAsync"/>. That is where the server-side session is created; the
-/// cookie then carries only its id.
-/// </summary>
 internal sealed class ArdeaSignInManager(
     UserManager<ArdeaUser> userManager,
     IHttpContextAccessor contextAccessor,

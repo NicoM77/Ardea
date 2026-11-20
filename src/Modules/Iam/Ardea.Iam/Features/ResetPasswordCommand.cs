@@ -9,11 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Features;
 
-/// <summary>
-/// <c>ardea admin reset-password &lt;email&gt; [--disable-mfa]</c>: restores access without e-mail
-/// (master plan 12.4, 12.8). Sets a generated password, lifts a lockout, ends every session and,
-/// on request, turns two-factor authentication off.
-/// </summary>
 internal static class ResetPasswordCommand
 {
     public static readonly MaintenanceCommand Definition = new(
@@ -81,7 +76,6 @@ internal static class ResetPasswordCommand
         return 0;
     }
 
-    /// <summary>Five groups of five letters and digits without look-alikes: easy to pass on, about 120 bits.</summary>
     internal static string Generate()
     {
         const string alphabet = "abcdefghjkmnpqrstuvwxyz23456789";

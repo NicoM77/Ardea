@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Iam.Features;
 
-/// <summary>An organisation's language and AI data policy for other modules, in the caller's unit of work.</summary>
 internal sealed class OrganizationProfiles(IamDbContext db) : IOrganizationProfiles
 {
     public async Task<OrganizationProfile?> FindAsync(Guid organizationId, CancellationToken cancellationToken)
@@ -24,7 +23,6 @@ internal sealed class OrganizationProfiles(IamDbContext db) : IOrganizationProfi
     }
 }
 
-/// <summary>The member directory for other modules, in the caller's unit of work.</summary>
 internal sealed class OrganizationMembers(IamDbContext db) : IOrganizationMembers
 {
     public async Task<IReadOnlyList<OrganizationMember>> ListAsync(CancellationToken cancellationToken) =>

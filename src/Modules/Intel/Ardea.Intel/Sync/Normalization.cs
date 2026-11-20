@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Intel.Sync;
 
-/// <summary>Translates a source's pending raw records into observations (master plan 3.3, 6.1).</summary>
 internal sealed record NormalizeRecords(string SourceKey) : IJob
 {
     public static string Kind => "intel.normalize-records";
@@ -18,17 +17,11 @@ internal sealed record NormalizeRecords(string SourceKey) : IJob
     public static EnqueueOptions Options(string sourceKey) => new() { CoalesceKey = $"intel.normalize:{sourceKey}" };
 }
 
-/// <summary>
-/// Pure translation, no outside contact: batches of pending records, each batch one transaction.
-/// A record that cannot be translated goes to quarantine with its reason; the run goes on. The same
-/// revision always yields the same observation, so a repeated job changes nothing.
-/// </summary>
 internal sealed partial class NormalizeRecordsHandler(IUnitOfWorkFactory units, SourceRegistry registry, TimeProvider time, ILogger<NormalizeRecordsHandler> logger)
     : IJobHandler<NormalizeRecords>
 {
     internal const int BatchSize = 200;
 
-    /// <summary>Above this share of quarantined records a source is marked degraded (master plan 6.8).</summary>
     internal const double QuarantineThreshold = 0.05;
 
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -100,7 +93,6 @@ internal sealed partial class NormalizeRecordsHandler(IUnitOfWorkFactory units, 
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // A parser defect must not stop the run: the record waits in quarantine for a fixed parser.
                 result = NormalizationResult.Quarantine($"Parser error: {ex.GetType().Name}: {ex.Message}");
             }
 
@@ -112,7 +104,6 @@ internal sealed partial class NormalizeRecordsHandler(IUnitOfWorkFactory units, 
                 quarantined++;
                 if (existing.TryGetValue(record.Id, out var stale))
                 {
-                    // The entries it backed are recomputed without it.
                     correlate.UnionWith(stale.Aliases);
                     db.Observations.Remove(stale);
                 }
@@ -148,7 +139,6 @@ internal sealed partial class NormalizeRecordsHandler(IUnitOfWorkFactory units, 
             row.Aliases = [.. observation.Claims.SelectMany(c => c.Aliases).Select(Correlation.CorrelateEntryHandler.AliasKey).Distinct(StringComparer.Ordinal)];
             if (changed)
             {
-                // Step 3 of change detection: only a different observation reaches the entry (master plan 6.4).
                 correlate.UnionWith(row.Aliases.Length > 0 ? row.Aliases.Concat(previous) : [$"SRC:{sourceKey}:{record.ExternalId}"]);
             }
             row.ParserVersion = provider.Descriptor.ParserVersion;

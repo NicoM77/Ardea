@@ -3,7 +3,6 @@ using Npgsql;
 
 namespace Ardea.Host.Commands;
 
-/// <summary><c>ardea migrate [--roles-only]</c>: runs once per start and exits (master plan 3.1, 12.2).</summary>
 internal static partial class MigrateCommand
 {
     public static async Task<int> RunAsync(string[] args)
@@ -42,8 +41,6 @@ internal static partial class MigrateCommand
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            // An operator reads this in `docker compose logs migrate`: a clear line and a defined exit code
-            // instead of a runtime crash (master plan 12.2). API and worker do not start (service_completed_successfully).
             LogFailed(logger, ex.GetType().Name, ex.InnerException?.Message ?? ex.Message, ex);
             return 70;
         }
@@ -52,7 +49,6 @@ internal static partial class MigrateCommand
     [LoggerMessage(EventId = 1303, Level = LogLevel.Critical, Message = "Migration failed ({Kind}): {Reason}. API and worker stay stopped; the dump taken before the run is in the backup folder of the database volume.")]
     private static partial void LogFailed(ILogger logger, string kind, string reason, Exception exception);
 
-    /// <summary>The database container may still be starting; wait up to a minute.</summary>
     private static async Task<NpgsqlConnection> ConnectAsync(DatabaseOptions options, ILogger logger, CancellationToken cancellationToken)
     {
         var deadline = DateTime.UtcNow.AddMinutes(1);

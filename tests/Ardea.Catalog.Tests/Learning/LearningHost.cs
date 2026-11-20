@@ -16,11 +16,6 @@ using Npgsql;
 
 namespace Ardea.Catalog.Tests.Learning;
 
-/// <summary>
-/// The catalogue module on a freshly migrated database with the curated catalogue of the repository, a feed of
-/// unknown products the test fills, a subscriber that records what Intel would recompute, and the providers a test gives.
-/// The job runs as the worker runs it: its own scope, its unit of work committed after it.
-/// </summary>
 internal sealed class LearningHost : IAsyncDisposable
 {
     private LearningHost(ServiceProvider services, CatalogDatabase database, FakeTimeProvider clock)
@@ -79,7 +74,6 @@ internal sealed class LearningHost : IAsyncDisposable
         return new LearningHost(services.BuildServiceProvider(validateScopes: true), database, clock);
     }
 
-    /// <summary>One run of <see cref="GrowCatalog"/>, as the worker runs it.</summary>
     public async Task GrowAsync(bool collect = true, string? rulesAfter = null)
     {
         await using var scope = Services.CreateAsyncScope();
@@ -88,7 +82,6 @@ internal sealed class LearningHost : IAsyncDisposable
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 
-    /// <summary>Work in a unit of work of its own, committed after.</summary>
     public async Task<T> InScopeAsync<T>(Func<IServiceProvider, Task<T>> work)
     {
         await using var scope = Services.CreateAsyncScope();
@@ -119,7 +112,6 @@ internal sealed class LearningHost : IAsyncDisposable
         return (T)Convert.ChangeType((await command.ExecuteScalarAsync())!, typeof(T), System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Every curated row as text: what no learned entry may change.</summary>
     public Task<IReadOnlyList<string>> CuratedAsync() => RowsAsync("""
         SELECT key || '|' || name || '|' || coalesce(vendor, '') || '|' || kind || '|' || array_to_string(cpe_pairs, ',') || '|' || array_to_string(purls, ',')
                || '|' || aliases::text || '|' || version_scheme || '|' || coalesce(platform_key, '') || '|' || array_to_string(related_keys, ',') || '|' || state || '|' || updated_at::text
@@ -136,7 +128,6 @@ internal sealed class LearningHost : IAsyncDisposable
     }
 }
 
-/// <summary>The unknown products a test puts before the catalogue, with titles per raw key.</summary>
 internal sealed class FakeFeed : IUnknownProductFeed
 {
     public List<UnknownProductStatement> Unknown { get; } = [];
@@ -153,7 +144,6 @@ internal sealed class FakeFeed : IUnknownProductFeed
         Task.FromResult<IReadOnlyList<string>>([.. Titles.GetValueOrDefault(rawKey, []).Take(limit)]);
 }
 
-/// <summary>What the catalogue had Intel recompute.</summary>
 internal sealed class RecordingSubscriber : ICatalogChangeSubscriber
 {
     public List<LearnedEntriesChanged> Changes { get; } = [];
@@ -171,7 +161,6 @@ internal sealed class RecordingSubscriber : ICatalogChangeSubscriber
     }
 }
 
-/// <summary>A model that answers with recorded answers, chosen per request, and keeps every request.</summary>
 internal sealed class RecordedModel(Func<string, string> answer) : IChatClient
 {
     private readonly List<string> _requests = [];
@@ -212,7 +201,6 @@ internal sealed class RecordedModel(Func<string, string> answer) : IChatClient
     }
 }
 
-/// <summary>Configured providers of a test: name, whether local, and the recorded model behind each.</summary>
 internal sealed class RecordedProviders(params (string Name, bool Local, RecordedModel Model)[] providers) : IAiProviders
 {
     public IReadOnlyList<AiProviderInfo> All { get; } = [.. providers.Select(p => new AiProviderInfo(p.Name, p.Local ? "ollama" : "anthropic", p.Name + "-model", p.Local, null))];

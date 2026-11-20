@@ -3,21 +3,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Assets.Repositories.Packages;
 
-/// <summary>
-/// Reads npm's <c>package-lock.json</c> (master plan 16.3, ADR 032 decision 4): exact versions, the
-/// <c>dev</c> flag and the path.
-/// <list type="bullet">
-/// <item>Version 2 and 3: the <c>packages</c> map keyed by install path. <c>dev: true</c> is development;
-/// everything else, <c>devOptional</c> included (an optional dependency of a shipped package), is runtime.
-/// A package directly under the root's or a workspace's <c>node_modules</c> whose name the root or a
-/// workspace declares (<c>dependencies</c>, <c>devDependencies</c>, <c>optionalDependencies</c>,
-/// <c>peerDependencies</c>) is direct; everything else, nested <c>node_modules</c> above all, is transitive.
-/// Links and workspace folders are the project itself and are skipped.</item>
-/// <item>Version 1: the nested <c>dependencies</c> map. It does not record what the root declares, so
-/// top-level packages have an unknown relation and nested ones are transitive.</item>
-/// </list>
-/// The same package in the same version at several paths is one finding: runtime if any copy is, direct if any copy is.
-/// </summary>
 internal static class NpmLockReader
 {
     private const string NodeModules = "node_modules/";
@@ -63,7 +48,6 @@ internal static class NpmLockReader
 
     private static List<PackageFinding> ReadPackages(JsonElement packages, string path, Dictionary<string, int> lines)
     {
-        // The project's own folders: the root ("") and its workspaces, i.e. every key outside node_modules.
         var projectFolders = new HashSet<string>(StringComparer.Ordinal);
         var declared = new HashSet<string>(StringComparer.Ordinal);
         foreach (var entry in packages.EnumerateObject())
@@ -99,7 +83,6 @@ internal static class NpmLockReader
             }
 
             var folderName = entry.Name[(cut + NodeModules.Length)..];
-            // An alias ("x": "npm:real@1") installs under its own folder but names the real package.
             var name = String(value, "name") ?? folderName;
             var parent = cut == 0 ? string.Empty : entry.Name[..(cut - 1)];
             var relation = projectFolders.Contains(parent) && declared.Contains(folderName) ? DependencyRelation.Direct : DependencyRelation.Transitive;

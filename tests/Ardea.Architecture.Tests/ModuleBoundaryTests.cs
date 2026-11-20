@@ -1,12 +1,7 @@
 namespace Ardea.Architecture.Tests;
 
-/// <summary>
-/// Rules 1 to 4 of master plan 3.2: modules only see each other's Contracts, dependencies point
-/// one way, and source adapters only know the provider SDK.
-/// </summary>
 public sealed class ModuleBoundaryTests
 {
-    /// <summary>Which other modules' Contracts a module may use (master plan 3.2, rule 3).</summary>
     private static readonly IReadOnlyDictionary<string, string[]> AllowedContracts = new Dictionary<string, string[]>
     {
         ["Iam"] = [],
@@ -79,10 +74,6 @@ public sealed class ModuleBoundaryTests
         Assert.True(violations.Count == 0, $"Building blocks must not reference: {string.Join(", ", violations)}");
     }
 
-    /// <summary>
-    /// The addresses of the instance administrators are for the self-check in the host only (ADR 043): no module
-    /// other than Iam, which provides it, may use <see cref="Iam.Contracts.IInstanceAdministrators"/>.
-    /// </summary>
     [Fact]
     public void Only_the_host_reads_the_instance_administrators()
     {

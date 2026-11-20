@@ -4,11 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Assessment.Tests;
 
-/// <summary>
-/// Findings, actions, alerts and their history (task 3.5; master plan 7.4, 7.7, 4.9, 8.2): actions per
-/// component, events as history rows, numbers from the organisation's counter, a first fill with one
-/// summary, closing by a raised version, and the status changes people make.
-/// </summary>
 public sealed class ActionTests(PostgresServer server)
 {
     private static readonly Guid Alice = Guid.CreateVersion7();
@@ -39,12 +34,10 @@ public sealed class ActionTests(PostgresServer server)
             """{"scope": "project", "actions": 2, "findings": 40, "highestLevel": 4, "repositoryLinks": []}""",
             await host.ScalarAsync<string>("SELECT data::text FROM assess.assess_event WHERE kind = 'backfill.completed'"));
 
-        // Alerts and actions share one number range; every number is handed out once.
         Assert.Equal(42L, await host.ScalarAsync<long>(
             "SELECT count(DISTINCT n) FROM (SELECT number AS n FROM assess.alert UNION ALL SELECT number FROM assess.remediation) x WHERE n IS NOT NULL"));
         Assert.Equal(43, await host.ScalarAsync<int>("SELECT next_number FROM assess.org_counter"));
 
-        // Later the forward search is no first fill: a new hit on a third component raises an action.
         var redis = await host.AddComponentAsync(acme, project, c => (c.ProductKey, c.Kind, c.Version) = ("redis", "database", "7.2.0"));
         await host.ProfileChangedAsync(acme, project);
         await host.RunJobsAsync();
@@ -68,25 +61,21 @@ public sealed class ActionTests(PostgresServer server)
         Assert.Equal(["2\t3\t16.3\t1\topen"], await host.RowsAsync("SELECT number, level, target_version, open_findings, status FROM assess.remediation"));
         Assert.Equal(1, await host.ScalarAsync<int>("SELECT number FROM assess.alert"));
 
-        // A second finding without a higher level joins quietly.
         var second = await host.AddEntryAsync(new TestEntry("CVE-2026-8002", new TestAffected { ProductKey = "postgresql", Introduced = "16.0", Fixed = "16.4" }) { Score = 5.0 });
         await host.EntryChangedAsync(second);
         await host.RunJobsAsync();
         Assert.Equal(["3\t16.4\t2"], await host.RowsAsync("SELECT level, target_version, open_findings FROM assess.remediation"));
 
-        // A third raises the level; the reminder has no deadline, so nothing but the level and the time of the raise moves (ADR 046).
         var third = await host.AddEntryAsync(new TestEntry("CVE-2026-8003", new TestAffected { ProductKey = "postgresql", Fixed = "16.4" }) { Score = 9.8 });
         await host.EntryChangedAsync(third);
         await host.RunJobsAsync();
         Assert.Equal(["4\t3\tTrue\tTrue"], await host.RowsAsync(
             "SELECT level, open_findings, level_raised_at IS NOT NULL, due_at IS NULL AND assigned_to IS NULL AND NOT due_at_manual FROM assess.remediation"));
 
-        // Exploitation becomes known without a higher level: its own event.
         await host.ScalarAsync<int>($"UPDATE intel.security_entry SET exploitation = 'poc', revision = 2 WHERE id = '{first}' RETURNING 1");
         await host.EntryChangedAsync(first);
         await host.RunJobsAsync();
 
-        // The version is raised in the profile: every finding closes as fixed by update, and so does the action.
         await host.ChangeComponentAsync(acme, component, c => c.Version = "16.4");
         await host.ProfileChangedAsync(acme, project);
         await host.RunJobsAsync();
@@ -96,7 +85,6 @@ public sealed class ActionTests(PostgresServer server)
             await host.RowsAsync("SELECT kind FROM assess.assess_event WHERE kind LIKE 'action.%' ORDER BY at, id"));
         Assert.Equal(3L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'finding.closed'"));
 
-        // Every history row has its own id, the event's id for the notifications (master plan 8.2).
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) - count(DISTINCT id) FROM assess.assess_event"));
     }
 
@@ -111,11 +99,9 @@ public sealed class ActionTests(PostgresServer server)
         await host.RunJobsAsync();
         var number = await host.ScalarAsync<int>("SELECT number FROM assess.remediation");
 
-        // A stale starting status is refused.
         var stale = await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("risk_accepted", "closed", null), Alice, default));
         Assert.Equal("status_conflict", stale.Refusal?.Code);
 
-        // «In review» no longer exists (master plan 17.5): an action is open or done.
         var review = await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("in_review", "open", null), Alice, default));
         Assert.Equal("invalid_status_change", review.Refusal?.Code);
         var again = await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("open", "open", null), Alice, default));
@@ -124,12 +110,10 @@ public sealed class ActionTests(PostgresServer server)
         await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("risk_accepted", "open", "Internal only"), Alice, default));
         Assert.Equal(["closed\trisk_accepted\trisk_accepted"], await host.RowsAsync("SELECT r.status, r.close_reason, f.status FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id"));
 
-        // A reassessment with the same level leaves a person's decision alone.
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
         Assert.Equal("risk_accepted", await host.ScalarAsync<string>("SELECT status FROM assess.finding"));
 
-        // Taking it back opens the action again with its findings.
         await CommandAsync(host, acme, c => c.SetActionStatusAsync(number, new SetActionStatusRequest("open", "closed", null), Alice, default));
         Assert.Equal(["open\topen"], await host.RowsAsync("SELECT r.status, f.status FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id"));
         Assert.Equal(
@@ -151,7 +135,6 @@ public sealed class ActionTests(PostgresServer server)
         await CommandAsync(host, acme, c => c.SetFindingStatusAsync(finding, new SetFindingStatusRequest("not_affected", "open", "Feature not used"), Alice, default));
         Assert.Equal(["not_affected\t1\tclosed"], await host.RowsAsync("SELECT f.status, f.level, r.status FROM assess.finding f JOIN assess.remediation r ON r.id = f.remediation_id"));
 
-        // Actively exploited now: the level rises above what the person saw, so it opens again in a new action (master plan 6.7).
         await host.ScalarAsync<int>($"UPDATE intel.security_entry SET exploitation = 'active', revision = 2 WHERE id = '{entry}' RETURNING 1");
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
@@ -179,7 +162,6 @@ public sealed class ActionTests(PostgresServer server)
             ["action.raised", "action.note_added", "action.level_raised"],
             await host.RowsAsync("SELECT kind FROM assess.assess_event WHERE kind LIKE 'action.%' ORDER BY at, id"));
 
-        // assigned_to, due_at and due_at_manual wait for their removal one version later (master plan 4.11, ADR 046).
         Assert.Equal(["True"], await host.RowsAsync("SELECT assigned_to IS NULL AND due_at IS NULL AND NOT due_at_manual FROM assess.remediation"));
     }
 

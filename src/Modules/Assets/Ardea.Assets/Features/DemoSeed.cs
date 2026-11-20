@@ -9,14 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Assets.Features;
 
-/// <summary>
-/// The three projects of the demo (<c>ardea seed-demo</c>, task 7.6): the example projects A, B and C of the requirements
-/// under the names of the mockups, each with the versions installed before the spike week's security updates. Every
-/// component passes the checks of the profile endpoints, which take kind and version scheme from the catalogue, and each
-/// project queues its reverse search. The organisation's stack (master plan 17.2, task 5a.4) names what the agency runs
-/// besides the projects, as the wizard would: broad entries, three with a version line, two with every entry; some of them
-/// the demo's records hit, which gives the Notices page its notices (task 5a.3).
-/// </summary>
 internal sealed class DemoSeed : IDemoSeedStep
 {
     private sealed record Part(string? Key, string Version, string Packaging = "upstream", string? Name = null, string? Vendor = null, string? Kind = null);
@@ -25,11 +17,6 @@ internal sealed class DemoSeed : IDemoSeedStep
 
     private sealed record StackEntry(string Key, string? Version = null, string? Precision = null, string? Threshold = null);
 
-    /// <summary>
-    /// Twelve entries. Eight the demo's records do not name; Ubuntu without the Linux kernel leaves the wizard's companion
-    /// suggestion to show (ADR 044). Four the records hit (task 5a.3, ADR 047): PHP's two exploited entries, a critical MySQL
-    /// entry and, with «everything» and the line 17, the week's PostgreSQL entries raise the notices of the Notices page.
-    /// </summary>
     private static readonly StackEntry[] Stack =
     [
         new("ubuntu", "24.04", VersionPrecisions.Line),
@@ -53,7 +40,6 @@ internal sealed class DemoSeed : IDemoSeedStep
             new("dotnet", DemoUpdate.DotnetBefore),
             new("angular", "22.2.0"),
             new("umbraco", "17.2.0"),
-            // A managed service: the catalogue does not know it, and records about self-hosted SQL Server do not concern it.
             new(null, string.Empty, "unknown", "Azure SQL Database", "Microsoft", "service"),
         ]),
         new("Webshop", "Online shop on WordPress with PHP and MySQL", "normal", "internet",
@@ -119,7 +105,6 @@ internal sealed class DemoSeed : IDemoSeedStep
         await SeedStackAsync(context, cancellationToken);
     }
 
-    /// <summary>The stack's entries, as the wizard adds them through the component endpoints: checked, keyed, audited, searched.</summary>
     private static async Task SeedStackAsync(DemoSeedContext context, CancellationToken cancellationToken)
     {
         await using var scope = context.CreateScope(context.OrganizationId, context.Members[DemoUpdate.Owner].UserId);
@@ -150,10 +135,6 @@ internal sealed class DemoSeed : IDemoSeedStep
     }
 }
 
-/// <summary>
-/// After the people's work (<c>ardea seed-demo</c>, task 7.6): the owner records the .NET security update of the
-/// Customer Portal in its profile, as the component endpoint does, and the pipeline closes the action by itself.
-/// </summary>
 internal sealed class DemoUpdate : IDemoSeedStep
 {
     public const string Owner = "nina";

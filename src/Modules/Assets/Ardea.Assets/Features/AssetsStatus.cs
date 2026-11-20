@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assets.Features;
 
-/// <summary>Repository links across organisations, as counts only (system operation «instance figures», master plan 9.2).</summary>
 internal sealed class AssetsStatusContributor(AssetsDbContext db) : IInstanceStatusContributor
 {
     public async Task ContributeAsync(InstanceStatusBuilder status, CancellationToken cancellationToken)

@@ -9,7 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Platform.Tests.Secrets;
 
-/// <summary>Secrets are encrypted with keys that live in the database, themselves encrypted with the master key (master plan 9.4).</summary>
 public sealed class SecretProtectionTests(PostgresServer server)
 {
     private static readonly MasterKey Key = new(RandomNumberGenerator.GetBytes(32));
@@ -83,7 +82,6 @@ public sealed class SecretProtectionTests(PostgresServer server)
             return Record(s, "settings.changed");
         });
 
-        // Instance events are for the operator: the application role writes them but cannot read them back.
         Assert.Equal(1, await host.CountAsOwnerAsync("SELECT count(*) FROM platform.audit_event WHERE origin = 'api' AND ip_address = '203.0.113.7' AND organization_id IS NULL"));
         Assert.Equal(0, await host.CountAsync("SELECT count(*) FROM platform.audit_event"));
 

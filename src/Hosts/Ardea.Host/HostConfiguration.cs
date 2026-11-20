@@ -3,7 +3,6 @@ using Ardea.Platform.Persistence;
 
 namespace Ardea.Host;
 
-/// <summary>Configuration shared by every role: environment with prefix, JSON logs, start-up checks.</summary>
 internal static class HostConfiguration
 {
     public const string MasterKeyKey = "MASTER_KEY";
@@ -16,7 +15,6 @@ internal static class HostConfiguration
         return builder.Build();
     }
 
-    /// <summary>What API and worker need (master plan 12.4).</summary>
     public static ConfigurationCheck CheckApplication(IConfiguration configuration) =>
         new ConfigurationCheck(configuration)
             .Require(DatabaseOptions.AppPasswordKey, "password of the application role for API and worker")
@@ -33,12 +31,10 @@ internal static class HostConfiguration
             .Add(AiErrors(configuration))
             .Add(Ardea.Notifications.NotificationsModule.ConfigurationErrors(configuration));
 
-    /// <summary>A provider that is configured wrongly stops the start instead of failing on its first call (master plan 7.8).</summary>
     private static IReadOnlyList<string> AiErrors(IConfiguration configuration)
     {
         var providers = Ardea.Platform.Ai.AiProviderOptions.FromConfiguration(configuration, out var errors);
 
-        // The catalogue's provider (ADR 040): a configured provider's name, or none.
         if (configuration["AI:CATALOG_PROVIDER"]?.Trim() is { Length: > 0 } catalog && catalog != "none" && errors.Count == 0
             && !providers.Any(p => string.Equals(p.Name, catalog, StringComparison.Ordinal)))
         {
@@ -48,14 +44,12 @@ internal static class HostConfiguration
         return errors;
     }
 
-    /// <summary>What <c>migrate</c> needs.</summary>
     public static ConfigurationCheck CheckMigration(IConfiguration configuration) =>
         new ConfigurationCheck(configuration)
             .Require(DatabaseOptions.OwnerPasswordKey, "password of the owner role, only for migrate and maintenance commands")
             .Require(DatabaseOptions.AppPasswordKey, "password of the application role that migrate creates")
             .PositiveInt("DB_PORT");
 
-    /// <summary>Writes every error and returns the exit code for invalid configuration.</summary>
     public static int Fail(ConfigurationCheck check)
     {
         Console.Error.WriteLine("Ardea cannot start because of its configuration:");
@@ -64,14 +58,12 @@ internal static class HostConfiguration
             Console.Error.WriteLine($"  - {error}");
         }
 
-        return 78; // EX_CONFIG
+        return 78;
     }
 
     public static void AddJsonLogging(ILoggingBuilder logging)
     {
         logging.ClearProviders();
-        // «Request starting» and «Request finished» name the query string, and links carry tokens there (the RFC 8058
-        // one-click address of an e-mail). The request lines are left out for every endpoint; traces keep the timings.
         logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
         logging.AddJsonConsole(o =>
         {

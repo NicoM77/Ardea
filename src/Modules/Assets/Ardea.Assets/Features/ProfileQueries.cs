@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assets.Features;
 
-/// <summary>Profiles for the Assessment module (master plan 3.2, 7.2, 9.2), in the caller's unit of work.</summary>
 internal sealed class ProfileQueries(AssetsDbContext db, IProductCatalog catalog) : IProfileQueries
 {
     public async Task<IReadOnlyList<Guid>> OrganizationsWithKeysAsync(IReadOnlyCollection<ProfileKey> keys, CancellationToken cancellationToken)
@@ -15,7 +14,6 @@ internal sealed class ProfileQueries(AssetsDbContext db, IProductCatalog catalog
             return [];
         }
 
-        // The system function reads across organisations and returns ids only (ADR 029, master plan 9.2).
         var types = keys.Select(k => k.Type).ToArray();
         var values = keys.Select(k => k.Value).ToArray();
         return await db.Database.SqlQuery<Guid>($"""
@@ -30,7 +28,6 @@ internal sealed class ProfileQueries(AssetsDbContext db, IProductCatalog catalog
             return [];
         }
 
-        // One lookup per key type on ix_component_key_value; the tenant filter narrows to the organisation.
         var hits = new List<ProfileKeyHit>();
         foreach (var group in keys.GroupBy(k => k.Type, StringComparer.Ordinal))
         {

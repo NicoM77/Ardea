@@ -3,7 +3,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Intel.Tests;
 
-/// <summary>From observations to consolidated entries (tasks 1.6, 1.7; phase 1 acceptance).</summary>
 public sealed class CorrelationTests(PostgresServer server)
 {
     private static readonly string[] Pipeline = ["intel.normalize-records", "intel.correlate-entry"];
@@ -64,7 +63,6 @@ public sealed class CorrelationTests(PostgresServer server)
         await DeliverAsync(host, ("C", """{"aliases":["CVE:CVE-2026-8"],"title":"Record"}"""));
         Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.security_entry"));
 
-        // The package advisory now names the CVE id.
         await DeliverAsync(host, ("G", """{"aliases":["GHSA:GHSA-aaaa-bbbb-cccc","CVE:CVE-2026-8"],"title":"Package advisory"}"""));
 
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.security_entry WHERE state <> 'merged'"));
@@ -84,12 +82,10 @@ public sealed class CorrelationTests(PostgresServer server)
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.security_entry WHERE state = 'merged'"));
         Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.security_entry"));
 
-        // The case is on the review list once, with the identifier that joins them.
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.review_item"));
         Assert.Equal("CVE-2026-10,CVE-2026-11|open|GHSA:GHSA-dddd-eeee-ffff", await host.ScalarAsync<string>(
             "SELECT subject_key || '|' || state || '|' || array_to_string(shared_aliases, ',') FROM intel.review_item"));
 
-        // The bridge belongs to neither entry; each keeps only its own identifier.
         Assert.Equal("CVE:CVE-2026-10,CVE:CVE-2026-11", await host.ScalarAsync<string>(
             "SELECT string_agg(scheme || ':' || value, ',' ORDER BY value) FROM intel.entry_alias"));
     }
@@ -130,7 +126,6 @@ public sealed class CorrelationTests(PostgresServer server)
         await DeliverAsync(host, ("A", """{"aliases":["CVE:CVE-2026-10"]}"""), ("B", """{"aliases":["CVE:CVE-2026-11"]}"""));
         await DeliverAsync(host, ("X", """{"aliases":["GHSA:GHSA-dddd-eeee-ffff","CVE:CVE-2026-10","CVE:CVE-2026-11"]}"""));
 
-        // The package advisory learns its CVE id: it joins CVE-2026-10, not the bridge.
         await DeliverAsync(host, ("P", """{"aliases":["GHSA:GHSA-1111-2222-3333","CVE:CVE-2026-10"],"title":"Only package"}"""));
 
         Assert.Equal("merged", await host.ScalarAsync<string>("SELECT state FROM intel.security_entry WHERE primary_key = 'GHSA-1111-2222-3333'"));

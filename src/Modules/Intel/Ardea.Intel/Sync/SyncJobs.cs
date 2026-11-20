@@ -10,23 +10,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Intel.Sync;
 
-/// <summary>Every minute: enqueue a sync for every due source (master plan 5.4).</summary>
 internal sealed record ScheduleDueSources : IJob
 {
     public static string Kind => "intel.schedule-due-sources";
 }
 
-/// <summary>
-/// One run of one source. A single attempt: the source's own back-off decides the next run (master
-/// plan 3.4). With <see cref="SingleIds"/> it fetches just those records, e.g. what the completeness
-/// check found missing, and leaves cursor and schedule alone. <see cref="Full"/> reads the source's whole
-/// inventory regardless of cursor and look-back (<c>ardea intel import --full</c>, master plan 12.8).
-/// </summary>
 internal sealed record SyncSource(string SourceKey, IReadOnlyList<string>? SingleIds = null, bool Full = false) : IJob
 {
     public static string Kind => "intel.sync-source";
 
-    /// <summary>Upper bound of a run; also how far the due time is pushed while it runs.</summary>
     public static readonly TimeSpan Timeout = TimeSpan.FromMinutes(60);
 }
 
@@ -40,7 +32,6 @@ internal sealed class ScheduleDueSourcesHandler(IntelDbContext db, IJobQueue job
             .ToListAsync(cancellationToken);
         foreach (var source in due)
         {
-            // No second run while this one works: the due time moves past the run's time limit.
             source.NextSyncAt = now + SyncSource.Timeout + TimeSpan.FromMinutes(5);
             await jobs.EnqueueAsync(new SyncSource(source.Key), new EnqueueOptions { CoalesceKey = $"intel.sync:{source.Key}" }, cancellationToken);
         }
@@ -49,11 +40,6 @@ internal sealed class ScheduleDueSourcesHandler(IntelDbContext db, IJobQueue job
     }
 }
 
-/// <summary>
-/// Runs a provider (master plan 5.2, 5.4, 9.2): read the state in a short unit of work, fetch without
-/// an open transaction, store records and cursor at every checkpoint in a unit of work of their own,
-/// then record the outcome and the next due time in the job's unit of work.
-/// </summary>
 internal sealed partial class SyncSourceHandler(
     IUnitOfWorkFactory units,
     IntelDbContext db,
@@ -64,13 +50,8 @@ internal sealed partial class SyncSourceHandler(
     IEnumerable<Catalog.Contracts.ICatalogGrowth> catalogGrowth,
     ILogger<SyncSourceHandler> logger) : IJobHandler<SyncSource>
 {
-    /// <summary>
-    /// After a source's first load the catalogue learns from what it brought (master plan 6.9 «nach der Erstbefüllung»),
-    /// once normalisation and merging had time to work through the records; until then the daily run would wait.
-    /// </summary>
     internal static readonly TimeSpan CatalogAfterFirstLoad = TimeSpan.FromHours(1);
 
-    /// <summary>Records stored in one transaction when a provider delivers many between checkpoints.</summary>
     internal const int FlushSize = 500;
 
     public static readonly TimeSpan MaxBackoff = TimeSpan.FromHours(6);
@@ -85,7 +66,6 @@ internal sealed partial class SyncSourceHandler(
 
         if (!registry.TryGetProvider(job.SourceKey, out var provider))
         {
-            // An unknown key is an adapter that is no longer in the image.
             LogNoProvider(job.SourceKey);
             return;
         }
@@ -130,7 +110,6 @@ internal sealed partial class SyncSourceHandler(
                         buffer.Add(record);
                         if (buffer.Count >= FlushSize)
                         {
-                            // Records without moving the cursor: safe, a repeat delivery changes nothing.
                             await CommitAsync(sourceId, job.SourceKey, runId, buffer, newCursor: null, run, cancellationToken);
                         }
 
@@ -145,7 +124,6 @@ internal sealed partial class SyncSourceHandler(
             await FinishAsync(sourceId, runId, run, interval, sync.NextSyncHint, error: null, publicReason: null, cancellationToken);
             if (mode == SyncMode.Backfill)
             {
-                // In the job's unit of work: the run exists exactly when the load is recorded as done.
                 foreach (var growth in catalogGrowth)
                 {
                     await growth.RequestAsync(CatalogAfterFirstLoad, cancellationToken);
@@ -165,7 +143,6 @@ internal sealed partial class SyncSourceHandler(
         }
     }
 
-    /// <summary>Fetches named records one by one; a record that fails is logged and the others go on.</summary>
     private async Task FetchSinglesAsync(string sourceKey, ISourceProvider provider, IReadOnlyList<string> ids, CancellationToken cancellationToken)
     {
         var (sourceId, _, _, settings) = await ReadStateAsync(sourceKey, cancellationToken);
@@ -223,13 +200,8 @@ internal sealed partial class SyncSourceHandler(
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    /// <summary>Batch size of the bulk signal write; EPSS brings about 400,000 values a day.</summary>
     internal const int SignalBatchSize = 20_000;
 
-    /// <summary>
-    /// Signal sources (KEV, EPSS) write per identifier into <c>entry_signal</c> instead of storing raw
-    /// records (master plan 4.4, 5.2); only identifiers whose class changed recompute their entry.
-    /// </summary>
     private async Task SyncSignalsAsync(SyncSource job, ISignalProvider provider, CancellationToken cancellationToken)
     {
         var (sourceId, cursor, interval, settings) = await ReadStateAsync(job.SourceKey, cancellationToken);
@@ -287,7 +259,6 @@ internal sealed partial class SyncSourceHandler(
         }
     }
 
-    /// <summary>One batch of signals and the recomputation of the entries whose class changed, in one transaction.</summary>
     private async Task StoreSignalsAsync(Guid runId, List<Signal> batch, RunCounters run, CancellationToken cancellationToken)
     {
         if (batch.Count == 0)
@@ -300,7 +271,6 @@ internal sealed partial class SyncSourceHandler(
         var connection = await unitOfWork.GetConnectionAsync(cancellationToken);
         var changed = await SignalStore.StoreAsync(connection, batch, cancellationToken);
 
-        // Only identifiers that already belong to an entry need it recomputed.
         var batchDb = scope.ServiceProvider.GetRequiredService<IntelDbContext>();
         var known = changed.Count == 0 ? [] : await batchDb.EntryAliases
             .Where(a => changed.Contains(a.Scheme + ":" + a.Value))
@@ -349,7 +319,6 @@ internal sealed partial class SyncSourceHandler(
         return run.Id;
     }
 
-    /// <summary>Records up to a checkpoint and the checkpoint's cursor in one transaction (master plan 5.2).</summary>
     private async Task CommitAsync(Guid sourceId, string sourceKey, Guid runId, List<RawRecord> buffer, string? newCursor, RunCounters run, CancellationToken cancellationToken)
     {
         if (buffer.Count == 0 && newCursor is null)
@@ -370,7 +339,6 @@ internal sealed partial class SyncSourceHandler(
 
         if (stored.Changed > 0)
         {
-            // The follow-up job commits with the records it is for.
             await scope.ServiceProvider.GetRequiredService<IJobQueue>().EnqueueAsync(new NormalizeRecords(sourceKey), NormalizeRecords.Options(sourceKey), cancellationToken);
         }
 
@@ -383,11 +351,6 @@ internal sealed partial class SyncSourceHandler(
         buffer.Clear();
     }
 
-    /// <summary>
-    /// Why a source is unhealthy, in words every signed-in user may read (the source list is not an administration
-    /// page): the kind of failure, never the exception's text, which can carry database, path or address details.
-    /// The run log of the administration keeps the full text.
-    /// </summary>
     internal static string PublicReason(Exception exception) => exception switch
     {
         HttpRequestException { StatusCode: { } status } => $"The source answered HTTP {(int)status}.",
@@ -397,7 +360,6 @@ internal sealed partial class SyncSourceHandler(
         _ => "The sync failed; the instance administrator finds the details in the run log.",
     };
 
-    /// <summary>Outcome and next due time, in the job's own unit of work.</summary>
     private async Task FinishAsync(
         Guid sourceId, Guid runId, RunCounters run, TimeSpan interval, TimeSpan? hint, string? error, string? publicReason, CancellationToken cancellationToken)
     {
@@ -430,14 +392,12 @@ internal sealed partial class SyncSourceHandler(
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    /// <summary>The interval, or longer if the source asked for it, plus a spread of up to a tenth (at most ten minutes).</summary>
     internal static TimeSpan NextInterval(TimeSpan interval, TimeSpan? hint)
     {
         var baseInterval = hint is { } h && h > interval ? h : interval;
         return baseInterval + SourceRegistrar.Spread(TimeSpan.FromTicks(Math.Min(baseInterval.Ticks / 10, TimeSpan.FromMinutes(10).Ticks)));
     }
 
-    /// <summary>After failures the interval doubles per failure up to six hours (master plan 5.4).</summary>
     internal static TimeSpan Backoff(TimeSpan interval, int failures, TimeSpan? hint)
     {
         var doubled = TimeSpan.FromTicks((long)Math.Min(interval.Ticks * Math.Pow(2, Math.Min(failures, 20)), MaxBackoff.Ticks));
@@ -445,7 +405,6 @@ internal sealed partial class SyncSourceHandler(
         return delay + SourceRegistrar.Spread(TimeSpan.FromTicks(Math.Min(delay.Ticks / 10, TimeSpan.FromMinutes(10).Ticks)));
     }
 
-    /// <summary>Before the first CVE record (1999): the whole inventory.</summary>
     internal static readonly DateTimeOffset FullInventoryFrom = new(1999, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     private TimeSpan BackfillWindow() =>

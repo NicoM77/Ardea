@@ -4,14 +4,8 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Sources.Formats.CveJson5;
 
-/// <summary>
-/// Reads a record of the CVE JSON 5.x format (master plan 5.3) into an observation: the CNA
-/// container, plus the ADP containers (CISA-ADP enrichment with CVSS, SSVC and KEV, the CVE
-/// Program's references). Only what the record says; nothing is guessed (master plan 6.1).
-/// </summary>
 public static class CveRecordReader
 {
-    /// <summary>2: upper bounds with wildcards are kept as written instead of dropped.</summary>
     public const int ParserVersion = 2;
 
     public static NormalizationResult Read(string json)
@@ -151,14 +145,6 @@ public static class CveRecordReader
         }
     }
 
-    /// <summary>
-    /// A version entry: <c>version</c> with <c>lessThan</c> (exclusive upper bound) or
-    /// <c>lessThanOrEqual</c> (inclusive) is a range from <c>version</c>; without either it is one exact
-    /// version. Bounds are kept as written, wildcards included (<c>6.12.*</c>, <c>*</c>, <c>log4j-core*</c>):
-    /// the correlation resolves them with the other peculiarities of master plan 6.6 (<c>VersionRanges.Normalize</c>).
-    /// <c>changes</c> switch the status inside the range at given versions, so one entry becomes
-    /// several consecutive ranges, e.g. Log4Shell's fixed 2.3.1, 2.12.2 and 2.15.0 lines.
-    /// </summary>
     private static IEnumerable<VersionRange> Versions(JsonElement entry)
     {
         var version = Text(entry, "version");
@@ -201,15 +187,10 @@ public static class CveRecordReader
 
     private static string? Bound(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    /// <summary>
-    /// Whether an upper bound names a fixed version. Bounds are kept as written, so open and wildcard bounds
-    /// (Siemens' «lessThan: *», «6.12.*», «log4j-core*», «unspecified», «0») are no fix.
-    /// </summary>
     private static bool NamesFix(string? bound) =>
         bound is not null && bound != "0" && !bound.Contains('*', StringComparison.Ordinal)
         && !bound.EndsWith(".x", StringComparison.OrdinalIgnoreCase) && bound.Any(char.IsAsciiDigit);
 
-    /// <summary>SSVC "Exploitation" from any container, and KEV from CISA-ADP; the strongest wins.</summary>
     private static Exploitation? Exploitation(IEnumerable<JsonElement> containers)
     {
         ExploitationState? state = null;
@@ -312,7 +293,6 @@ public static class CveRecordReader
         _ => null,
     };
 
-    /// <summary><c>n/a</c> and empty names carry nothing (master plan 6.5).</summary>
     private static string? Clean(string? value) =>
         string.IsNullOrWhiteSpace(value) || value.Trim() is "n/a" or "N/A" or "-" ? null : value.Trim();
 

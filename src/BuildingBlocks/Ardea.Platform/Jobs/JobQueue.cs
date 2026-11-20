@@ -7,13 +7,6 @@ using NpgsqlTypes;
 
 namespace Ardea.Platform.Jobs;
 
-/// <summary>
-/// Writes jobs into <c>platform.job</c> on the unit of work's connection and transaction. The table
-/// is the outbox at the same time: there is no window in which a change exists without its
-/// follow-up job (master plan 3.4). <c>NOTIFY</c> wakes the workers when the transaction commits.
-/// A coalesced enqueue holds the waiting job until the transaction commits (ADR 038), so the job
-/// that does the work always sees what its cause wrote.
-/// </summary>
 internal sealed class JobQueue(IUnitOfWork unitOfWork, JobRegistry registry, ITenantContext tenant, TimeProvider time) : IJobQueue
 {
     public const string Channel = "ardea_jobs";
@@ -46,15 +39,11 @@ internal sealed class JobQueue(IUnitOfWork unitOfWork, JobRegistry registry, ITe
                 return true;
             }
 
-            // A job with the key is waiting. It must not start before this transaction commits, or it would miss
-            // what the transaction wrote for it: a share lock on it until then makes the claim skip it (SKIP LOCKED).
-            // Share locks do not conflict with each other, so enqueuers of the same key never wait for one another.
             if (await HoldWaitingAsync(connection, options.CoalesceKey!, cancellationToken))
             {
                 return false;
             }
 
-            // It was claimed in between and runs now, perhaps without what this transaction wrote: enqueue anew.
             if (attempt == 5)
             {
                 throw new InvalidOperationException($"Coalescing on '{options.CoalesceKey}' kept racing with claims.");
@@ -92,7 +81,6 @@ internal sealed class JobQueue(IUnitOfWork unitOfWork, JobRegistry registry, ITe
         return reader.GetInt64(0) > 0;
     }
 
-    /// <summary>Share-locks the waiting job with the key until the transaction ends; <c>false</c> when none is waiting any more.</summary>
     private static async Task<bool> HoldWaitingAsync(NpgsqlConnection connection, string coalesceKey, CancellationToken cancellationToken)
     {
         await using var command = new NpgsqlCommand(

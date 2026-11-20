@@ -7,11 +7,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Host.Tests;
 
-/// <summary>
-/// Master plan 10.1: the OpenAPI document is committed, and the build fails when code and file drift
-/// apart. Run with <c>ARDEA_UPDATE_OPENAPI=1</c> to rewrite <c>openapi/ardea.v1.json</c> after an
-/// intended API change; the web client is then regenerated from it (<c>npm run generate:api</c>).
-/// </summary>
 public sealed class OpenApiContractTests
 {
     [Fact]
@@ -52,11 +47,6 @@ public sealed class OpenApiContractTests
         await app.StopAsync(TestContext.Current.CancellationToken);
     }
 
-    /// <summary>
-    /// Phase 5a acceptance (master plan 14, 17.5; ADR 046): no endpoint knows assignment, deadline or «in review». The
-    /// committed document equals the code (the test above), so its schemas, parameters and enumerations speak for every
-    /// endpoint. «assigner» (who scored a CVSS vector) is not an assignment.
-    /// </summary>
     [Fact]
     public async Task No_endpoint_knows_assignment_deadline_or_review_state()
     {

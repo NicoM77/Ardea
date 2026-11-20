@@ -6,7 +6,6 @@ using Ardea.Intel.Sources.Signals;
 
 namespace Ardea.Sources.Tests.Signals;
 
-/// <summary>KEV and EPSS against recorded real files (task 1.8).</summary>
 public sealed class SignalProviderTests
 {
     [Fact]

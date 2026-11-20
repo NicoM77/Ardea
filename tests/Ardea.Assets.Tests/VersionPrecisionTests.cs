@@ -2,10 +2,6 @@ using Ardea.Assets.Persistence;
 
 namespace Ardea.Assets.Tests;
 
-/// <summary>
-/// The precision a version has when nobody states it (master plan 17.1, ADR 046); the migration <c>StackAndPrecision</c>
-/// backfills existing components by the same rule.
-/// </summary>
 public sealed class VersionPrecisionTests
 {
     [Theory]

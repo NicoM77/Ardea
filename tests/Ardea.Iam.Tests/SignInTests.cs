@@ -5,7 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>Sign-in after master plan 9.1 and 9.3; the first core flow of the plan, at API level.</summary>
 public sealed class SignInTests(PostgresServer server)
 {
     private const string Email = "first@example.org";
@@ -29,7 +28,6 @@ public sealed class SignInTests(PostgresServer server)
         Assert.Equal("twoFactorRequired", (await login.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("status").GetString());
         await Expect(HttpStatusCode.Unauthorized, await browser.SessionAsync());
 
-        // The next step's code: the one that turned two-factor on is used up (issue #85).
         var code = Totp.Code(key, DateTimeOffset.UtcNow.AddSeconds(30));
         await Expect(HttpStatusCode.NoContent, await browser.PostAsync("/api/v1/auth/login/two-factor", new { code, isRecoveryCode = false }));
         Assert.True((await SessionAsync(browser)).GetProperty("user").GetProperty("twoFactorEnabled").GetBoolean());
@@ -43,13 +41,11 @@ public sealed class SignInTests(PostgresServer server)
         using var owner = host.Client();
         await SetupAsync(owner);
         var key = await EnableTotpAsync(owner);
-        // The code of the next time step: still accepted, and not the one that turned two-factor on.
         var code = Totp.Code(key, DateTimeOffset.UtcNow.AddSeconds(30));
         using var laptop = host.Client();
         await laptop.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
         await Expect(HttpStatusCode.NoContent, await laptop.PostAsync("/api/v1/auth/login/two-factor", new { code, isRecoveryCode = false }));
 
-        // Someone who watched the code being typed and knows the password.
         using var onlooker = host.Client();
         await onlooker.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
         var replay = await onlooker.PostAsync("/api/v1/auth/login/two-factor", new { code, isRecoveryCode = false });
@@ -205,13 +201,11 @@ public sealed class SignInTests(PostgresServer server)
         await using var host = await ApiTestHost.StartAsync(server, new() { ["RATE_LIMIT:AUTH_PER_MINUTE"] = "3" });
         using var browser = host.Client();
 
-        // The web app reads the setup state on every load; a few reloads must not end in 429.
         for (var i = 0; i < 10; i++)
         {
             Assert.Equal(HttpStatusCode.OK, (await browser.GetAsync("/api/v1/setup/status")).StatusCode);
         }
 
-        // Still bounded: six times the attempt limit.
         var statuses = new List<HttpStatusCode>();
         for (var i = 0; i < 10; i++)
         {
@@ -461,7 +455,6 @@ public sealed class SignInTests(PostgresServer server)
         Assert.Null(await StoredSetupTokenAsync(host));
     }
 
-    /// <summary>A six-digit code that the key does not produce around now.</summary>
     private static string WrongCode(string key)
     {
         var valid = Enumerable.Range(-3, 7).Select(step => Totp.Code(key, DateTimeOffset.UtcNow.AddSeconds(step * 30))).ToHashSet();
@@ -475,17 +468,11 @@ public sealed class SignInTests(PostgresServer server)
         return (await settings.GetAsync(Security.SetupToken.Setting, CancellationToken.None)).Value;
     }
 
-    /// <summary>
-    /// The code of the stored authenticator key for the next time step, as the user's app shows it 30 seconds
-    /// on: the current step's code turned two-factor on and is used up.
-    /// </summary>
     private static async Task<string> NextCodeAsync(ApiTestHost host) => Totp.Code(await StoredKeyAsync(host), DateTimeOffset.UtcNow.AddSeconds(30));
 
-    /// <summary>The stored authenticator key of the account.</summary>
     private static async Task<string> StoredKeyAsync(ApiTestHost host)
     {
         await using var scope = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.CreateAsyncScope(host.Services);
-        // User data is visible only to its own account (row-level security), so the lookup acts for it.
         var userId = await host.ScalarAsync<Guid>($"SELECT id FROM iam.\"user\" WHERE normalized_email = '{Email.ToUpperInvariant()}'");
         Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Platform.Tenancy.TenantContext>(scope.ServiceProvider).SetUser(userId);
         var users = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<Domain.ArdeaUser>>(scope.ServiceProvider);

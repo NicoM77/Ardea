@@ -5,10 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>
-/// The API of notices (task 5a.3, ADR 047): the inbox, answers with the state the caller saw, taking an answer back. The
-/// generation itself is tested in Ardea.Assessment.Tests; here the entry and the notice are written directly.
-/// </summary>
 public sealed class NoticeApiTests(PostgresServer server)
 {
     [Fact]
@@ -38,7 +34,6 @@ public sealed class NoticeApiTests(PostgresServer server)
         await ExpectProblem(await client.GetAsync($"{path}/notices?cursor=nonsense"), HttpStatusCode.BadRequest, "invalid_filter");
         await ExpectProblem(await client.GetAsync($"{path}/notices/{Guid.CreateVersion7()}"), HttpStatusCode.NotFound, "notice_not_found");
 
-        // An answer names the state the caller saw; «doesn't affect us» takes neither project nor version.
         var answer = $"{path}/notices/{notice}/answer";
         await ExpectProblem(await client.PostAsync(answer, new { answer = "maybe", expectedState = "open" }), HttpStatusCode.BadRequest, "invalid_answer");
         await ExpectProblem(await client.PostAsync(answer, new { answer = "not_affected", expectedState = "open", version = "17.2" }), HttpStatusCode.BadRequest, "invalid_answer");
@@ -47,7 +42,6 @@ public sealed class NoticeApiTests(PostgresServer server)
         Assert.NotEqual(JsonValueKind.Null, answered.GetProperty("decidedBy").ValueKind);
         await ExpectProblem(await client.PostAsync(answer, new { answer = "affects_us", expectedState = "open" }), HttpStatusCode.Conflict, "status_conflict");
 
-        // Taken back: open again, and «affects us» opens a reminder on the stack entry.
         Assert.Equal("open", (await Json(await client.PostAsync($"{path}/notices/{notice}/reopen", new { expectedState = "not_affected" }))).GetProperty("state").GetString());
         var affects = await Json(await client.PostAsync(answer, new { answer = "affects_us", expectedState = "open" }));
         Assert.Equal("affects_us", affects.GetProperty("state").GetString());
@@ -59,7 +53,6 @@ public sealed class NoticeApiTests(PostgresServer server)
         Assert.Equal(2L, await host.ScalarAsync<long>($"SELECT count(*) FROM platform.audit_event WHERE action = 'notice.answered' AND subject_id = '{notice}'"));
     }
 
-    /// <summary>A critical entry about PostgreSQL and the notice the assessment would have written for the stack entry.</summary>
     private static async Task<Guid> SeedAsync(ApiTestHost host, Guid org, Guid component)
     {
         var entry = await host.ScalarAsync<Guid>("""

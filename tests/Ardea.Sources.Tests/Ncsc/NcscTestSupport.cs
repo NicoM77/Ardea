@@ -7,7 +7,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Sources.Tests.Ncsc;
 
-/// <summary>A clock that stands still unless the test moves it.</summary>
 internal sealed class FixedClock(DateTimeOffset now) : TimeProvider
 {
     public DateTimeOffset Now { get; set; } = now;
@@ -55,7 +54,6 @@ internal static class NcscTest
     public static string LastCursor(this List<FetchItem> items) => items.OfType<Checkpoint>().Last().Cursor;
 }
 
-/// <summary>Answers recorded responses by URL fragment and remembers every request; an unknown URL is a 404.</summary>
 internal sealed class RecordedHttp : HttpMessageHandler
 {
     private readonly List<(string Match, Func<HttpResponseMessage> Respond)> _routes = [];

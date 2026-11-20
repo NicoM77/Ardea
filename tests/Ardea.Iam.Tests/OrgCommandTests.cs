@@ -9,7 +9,6 @@ using Npgsql;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary><c>ardea org export</c> and <c>ardea org delete</c> (task 6.6; master plan 9.1, 12.8).</summary>
 public sealed class OrgCommandTests(PostgresServer server)
 {
     [Fact]
@@ -32,11 +31,9 @@ public sealed class OrgCommandTests(PostgresServer server)
         Assert.Equal("Acme", export.GetProperty("organization").GetProperty("name").GetString());
         Assert.Equal("Owner Ünïcode", export.GetProperty("members")[0].GetProperty("displayName").GetString());
         var tables = export.GetProperty("tables");
-        // The project and the organisation's stack (master plan 17.2).
         Assert.Equal(2, tables.GetProperty("assets.project").GetArrayLength());
         Assert.Equal(2, tables.GetProperty("assets.component").GetArrayLength());
         Assert.Equal(1, tables.GetProperty("iam.invitation").GetArrayLength());
-        // The other organisation is not in it, and no encrypted value leaves the instance.
         Assert.DoesNotContain(other.ToString(), text.ToString(), StringComparison.Ordinal);
         Assert.False(tables.GetProperty("assets.repository_connection")[0].TryGetProperty("token_enc", out _));
         Assert.DoesNotContain("password", text.ToString(), StringComparison.OrdinalIgnoreCase);

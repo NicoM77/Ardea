@@ -2,11 +2,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Products;
 
-/// <summary>
-/// Checks the curated catalogue before it is loaded: unique keys, spellings, CPE pairs, packages and
-/// images; known version schemes; platform and related keys that exist. <c>migrate</c> refuses a
-/// catalogue with errors, and a test runs the same check on every pull request.
-/// </summary>
 internal static class CatalogValidator
 {
     public static IReadOnlyList<string> Validate(IReadOnlyList<CatalogProduct> products, IVersionSchemes schemes)

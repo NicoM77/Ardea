@@ -2,7 +2,6 @@ using System.Text.Json;
 
 namespace Ardea.Platform.Persistence.Entities;
 
-/// <summary>States of a job (master plan 3.4).</summary>
 internal enum JobState
 {
     Pending,
@@ -35,7 +34,6 @@ internal static class JobStates
     };
 }
 
-/// <summary>A row of <c>platform.job</c>: queue entry and outbox at once (master plan 3.4).</summary>
 internal sealed class JobRow
 {
     public Guid Id { get; set; }
@@ -48,7 +46,6 @@ internal sealed class JobRow
 
     public DateTimeOffset RunAt { get; set; }
 
-    /// <summary>0 urgent, 1 normal, 2 background.</summary>
     public short Priority { get; set; } = 1;
 
     public JobState State { get; set; }
@@ -63,7 +60,6 @@ internal sealed class JobRow
 
     public DateTimeOffset? LeaseUntil { get; set; }
 
-    /// <summary>New for every claim; every later write of the claim must present it.</summary>
     public Guid? LeaseToken { get; set; }
 
     public int TimeoutSeconds { get; set; } = 300;
@@ -77,7 +73,6 @@ internal sealed class JobRow
     public DateTimeOffset? FinishedAt { get; set; }
 }
 
-/// <summary>A recurring task of the instance with cron expression and time zone (master plan 3.4).</summary>
 internal sealed class ScheduleRow
 {
     public required string Key { get; set; }
@@ -95,7 +90,6 @@ internal sealed class ScheduleRow
     public DateTimeOffset NextRunAt { get; set; }
 }
 
-/// <summary>An instance setting; secrets live encrypted in <see cref="SecretValue"/>.</summary>
 internal sealed class SettingRow
 {
     public required string Key { get; set; }
@@ -109,12 +103,10 @@ internal sealed class SettingRow
     public Guid? UpdatedBy { get; set; }
 }
 
-/// <summary>An audit event; immutable for the application (master plan 9.4).</summary>
 internal sealed class AuditEventRow
 {
     public Guid Id { get; set; }
 
-    /// <summary>Empty for events of the instance.</summary>
     public Guid? OrganizationId { get; set; }
 
     public Guid? ActorUserId { get; set; }
@@ -127,7 +119,6 @@ internal sealed class AuditEventRow
 
     public JsonDocument? Data { get; set; }
 
-    /// <summary>Where the change came from: <c>ui</c>, <c>api</c>, <c>worker</c>, <c>cli</c>, a commit, ...</summary>
     public required string Origin { get; set; }
 
     public string? IpAddress { get; set; }
@@ -135,7 +126,6 @@ internal sealed class AuditEventRow
     public DateTimeOffset At { get; set; }
 }
 
-/// <summary>A key of ASP.NET Core Data Protection, stored encrypted with the master key.</summary>
 internal sealed class DataProtectionKeyRow
 {
     public int Id { get; set; }
@@ -145,7 +135,6 @@ internal sealed class DataProtectionKeyRow
     public string? Xml { get; set; }
 }
 
-/// <summary>Liveness of a worker process; the worker health check reads it (master plan 12.3).</summary>
 internal sealed class WorkerHeartbeatRow
 {
     public required string WorkerId { get; set; }
@@ -157,11 +146,6 @@ internal sealed class WorkerHeartbeatRow
     public string? Version { get; set; }
 }
 
-/// <summary>
-/// A warning of the instance about itself (master plan 12.7) as the instance administrators were told about it:
-/// when it was first and last seen, when it cleared, and when a mail about it went out (ADR 043). Instance data,
-/// no organisation; the key is the warning's code and subject (empty when the warning has none).
-/// </summary>
 internal sealed class InstanceWarningRow
 {
     public required string Code { get; set; }
@@ -176,15 +160,11 @@ internal sealed class InstanceWarningRow
 
     public DateTimeOffset LastSeenAt { get; set; }
 
-    /// <summary>The first round that no longer saw it; null while it is active.</summary>
     public DateTimeOffset? ClearedAt { get; set; }
 
-    /// <summary>When the mail about the new warning was claimed; null while nobody was told.</summary>
     public DateTimeOffset? NotifiedAt { get; set; }
 
-    /// <summary>When the last reminder was claimed.</summary>
     public DateTimeOffset? RemindedAt { get; set; }
 
-    /// <summary>When the «resolved» mail was claimed; the next round removes the row.</summary>
     public DateTimeOffset? ResolvedAt { get; set; }
 }

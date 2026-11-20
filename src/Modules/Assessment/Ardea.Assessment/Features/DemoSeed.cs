@@ -7,13 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Assessment.Features;
 
-/// <summary>
-/// The work of the demo's people on the actions and notices the pipeline raised (<c>ardea seed-demo</c>, tasks 7.6 and 5a.3),
-/// done through the commands the endpoints use: notes on two open actions, one action closed as not affected, and two of the
-/// stack's notices answered. Actions stay open or
-/// done; nobody is assigned, no deadline is set by hand and nothing is put in review, because phase 5a removes these.
-/// The history and the notifications the steps cause are the real ones. An action the rules did not raise is skipped.
-/// </summary>
 internal sealed class DemoSeed : IDemoSeedStep
 {
     public int Order => DemoSeedOrder.Workflow;
@@ -46,7 +39,6 @@ internal sealed class DemoSeed : IDemoSeedStep
             done++;
         }
 
-        // The stack's notices (task 5a.3): one «doesn't affect us», one «affects us» on the stack entry; the rest stay new.
         var notices = await OpenNoticesAsync(context, cancellationToken);
         var answered = 0;
         if (notices.TryGetValue("CVE-2026-116304", out var postgresNotice))
@@ -66,7 +58,6 @@ internal sealed class DemoSeed : IDemoSeedStep
         context.Report($"{done} steps of work on {numbers.Count} actions; {answered} of {notices.Count} notices answered");
     }
 
-    /// <summary>The open notices by their entry's key.</summary>
     private static async Task<Dictionary<string, Guid>> OpenNoticesAsync(DemoSeedContext context, CancellationToken cancellationToken)
     {
         await using var scope = context.CreateScope(context.OrganizationId, context.Members["nina"].UserId);
@@ -74,7 +65,6 @@ internal sealed class DemoSeed : IDemoSeedStep
             .Where(n => n.State == Notice.Open).ToDictionaryAsync(n => n.EntryKey, n => n.Id, StringComparer.Ordinal, cancellationToken);
     }
 
-    /// <summary>The numbers of the open actions by the component's product key; the first where several components share one.</summary>
     private static async Task<Dictionary<string, int>> ActionNumbersAsync(DemoSeedContext context, CancellationToken cancellationToken)
     {
         await using var scope = context.CreateScope(context.OrganizationId, context.Members["nina"].UserId);
@@ -88,7 +78,6 @@ internal sealed class DemoSeed : IDemoSeedStep
             .ToDictionary(g => g.Key, g => g.First().Number, StringComparer.Ordinal);
     }
 
-    /// <summary>One unit of work as one person, committed when the work is done.</summary>
     private static Task ActAsync(DemoSeedContext context, string person, Func<ActionCommands, Guid, Task> work, CancellationToken cancellationToken) =>
         ActAsync<ActionCommands>(context, person, work, cancellationToken);
 

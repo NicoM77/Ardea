@@ -4,11 +4,6 @@ using Npgsql;
 
 namespace Ardea.Platform.Persistence;
 
-/// <summary>
-/// What <c>ardea migrate</c> does (master plan 4.11, 12.2): create the application role, take a dump
-/// through the database server when migrations are pending on a database with data, apply every
-/// schema's migrations in fixed order, load the master data, and grant the application role its rights.
-/// </summary>
 public sealed partial class DatabaseMigrator(
     DatabaseOptions options,
     IReadOnlyList<IModuleDatabase> databases,
@@ -25,12 +20,8 @@ public sealed partial class DatabaseMigrator(
             throw new InvalidOperationException("The application role needs a password (ARDEA_DB_APP_PASSWORD).");
         }
 
-        // Role names and passwords cannot be bound as parameters in DDL; format() quotes them safely.
-        // Roles are global to the server: a concurrent migrate on another database may create or
-        // alter the role at the same moment. A duplicate is retried as ALTER, a concurrent update again.
         for (var attempt = 0; ; attempt++)
         {
-            // A failed role update can leave the connection broken; each attempt starts on an open one.
             await EnsureOpenAsync(owner, cancellationToken);
             try
             {
@@ -62,8 +53,6 @@ public sealed partial class DatabaseMigrator(
 
     public async Task<MigrationOutcome> MigrateAsync(NpgsqlConnection owner, CancellationToken cancellationToken)
     {
-        // Two migrate processes against the same database run one after the other. The lock lives on
-        // its own session: EF Core may close and reopen the migration connection (type reloading).
         await using var lockSession = new NpgsqlConnection(options.OwnerConnectionString("ardea-migrate-lock"));
         await lockSession.OpenAsync(cancellationToken);
         await using (var lockCommand = new NpgsqlCommand("SELECT pg_advisory_lock(hashtext('ardea-migrate'))", lockSession))
@@ -71,7 +60,6 @@ public sealed partial class DatabaseMigrator(
             await lockCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        // The session ends with the connection, and the lock with it.
         return await MigrateLockedAsync(owner, cancellationToken);
     }
 
@@ -105,7 +93,6 @@ public sealed partial class DatabaseMigrator(
             LogSchemaMigrated(database.Schema, migrations.Count);
         }
 
-        // Master data after all migrations, in the same order: a module may rely on the schemas before it.
         foreach (var database in databases)
         {
             var changed = await database.SeedAsync(owner, _masterData, cancellationToken);
@@ -124,10 +111,6 @@ public sealed partial class DatabaseMigrator(
         return new MigrationOutcome(pending.Sum(p => p.Migrations.Count), dump);
     }
 
-    /// <summary>
-    /// Whether the current role sees a schema at least as new as this build (master plan 4.11).
-    /// API and worker refuse to start otherwise; a newer, compatibly extended schema is fine.
-    /// </summary>
     public async Task<IReadOnlyList<string>> FindSchemasBehindAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
     {
         var behind = new List<string>();

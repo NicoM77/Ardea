@@ -7,22 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assessment.Features;
 
-/// <summary>How people judged one model's verdicts (master plan 7.9 «Rückmeldung im Betrieb»; task 4.7).</summary>
-/// <param name="Provider">The configured provider, e.g. <c>local</c>.</param>
-/// <param name="Model">The model it was asked for.</param>
-/// <param name="PromptVersion">The prompt's version.</param>
-/// <param name="Assessments">Checked assessments the model made with this prompt.</param>
-/// <param name="Verdicts">Verdicts on components in them.</param>
-/// <param name="Confirmed">Reviews that confirmed a verdict that counted.</param>
-/// <param name="Corrected">Reviews that corrected its verdict or the level it led to.</param>
-/// <param name="CorrectionRate">Corrected among the reviewed, from 0 to 1; <c>null</c> before the first review.</param>
 internal sealed record ModelQualityView(
     string? Provider, string? Model, string? PromptVersion, long Assessments, long Verdicts, long Confirmed, long Corrected, double? CorrectionRate);
 
-/// <summary>
-/// The correction rate per model and prompt version for the instance administration (master plan 7.9, 11.4). Counts
-/// over all organisations, through the system function <c>assess.model_feedback_counts()</c> (ADR 029): no texts, no ids.
-/// </summary>
 internal static class ModelQualityEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
@@ -33,7 +20,6 @@ internal static class ModelQualityEndpoints
 
     private static async Task<IResult> ListAsync(AssessDbContext db, CancellationToken cancellationToken) => Results.Ok(await ReadAsync(db, cancellationToken));
 
-    /// <summary>The rows, ordered by provider, model and prompt version.</summary>
     internal static async Task<IReadOnlyList<ModelQualityView>> ReadAsync(AssessDbContext db, CancellationToken cancellationToken)
     {
         var rows = await db.Database.SqlQuery<Counts>($"""

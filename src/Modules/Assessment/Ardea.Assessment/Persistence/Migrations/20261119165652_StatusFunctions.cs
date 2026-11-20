@@ -11,8 +11,6 @@ namespace Ardea.Assessment.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("""
-                -- Instance status (master plan 12.7; task 6.6): the calls to language models since a point in time,
-                -- over all organisations. Counts only, never a provider's answer or a prompt.
                 CREATE FUNCTION assess.model_usage_since(p_since timestamptz)
                     RETURNS TABLE (provider text, calls bigint, tokens_in bigint, tokens_out bigint, refused bigint)
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp

@@ -8,7 +8,6 @@ namespace Ardea.Platform.Secrets;
 
 public static class SecretServices
 {
-    /// <summary>Data Protection with keys in the database, encrypted at rest with the master key.</summary>
     public static IServiceCollection AddArdeaSecrets(this IServiceCollection services, MasterKey masterKey)
     {
         services.AddSingleton(masterKey);

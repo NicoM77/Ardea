@@ -2,36 +2,24 @@ using System.Globalization;
 
 namespace Ardea.Assessment.Rules;
 
-/// <summary>
-/// Everything the level of one finding depends on (master plan 7.1 property 2: recomputable from stored
-/// inputs). Values are the stored ones: entry, profile, match, version check and, where present, a
-/// verdict of the model or a person.
-/// </summary>
 internal sealed record RuleInput
 {
-    /// <summary>A strong hit (package, CPE, product); a weak one is excluded.</summary>
     public required bool StrongMatch { get; init; }
 
-    /// <summary><c>in_range</c>, <c>out_of_range</c>, <c>unknown</c>; <c>null</c> for a weak hit.</summary>
     public string? VersionVerdict { get; init; }
 
-    /// <summary>The installed version, for the evidence.</summary>
     public string? InstalledVersion { get; init; }
 
-    /// <summary>The rule of the version check, for the evidence.</summary>
     public string? VersionReason { get; init; }
 
-    /// <summary>The entry was withdrawn by its issuer or merged into another.</summary>
     public bool EntryWithdrawn { get; init; }
 
-    /// <summary>A person set the finding to «not affected».</summary>
     public bool HumanExcluded { get; init; }
 
     public double? CvssScore { get; init; }
 
     public string? CvssVersion { get; init; }
 
-    /// <summary><c>none</c>, <c>poc</c> or <c>active</c>.</summary>
     public required string Exploitation { get; init; }
 
     public string? ExploitationSource { get; init; }
@@ -40,78 +28,52 @@ internal sealed record RuleInput
 
     public bool AuthorityWarning { get; init; }
 
-    /// <summary><c>high</c>, <c>low</c> or <c>null</c>.</summary>
     public string? EpssClass { get; init; }
 
-    /// <summary><c>high</c>, <c>normal</c> or <c>low</c>.</summary>
     public required string Criticality { get; init; }
 
-    /// <summary><c>internet</c>, <c>internal</c> or <c>isolated</c>.</summary>
     public required string Exposure { get; init; }
 
-    /// <summary><c>none</c> or <c>effective</c>.</summary>
     public required string Protection { get; init; }
 
-    /// <summary>The component is only used in development (master plan 16.5) and no person said otherwise.</summary>
     public bool DevelopmentOnly { get; init; }
 
-    /// <summary>A person's verdict on affectedness: <c>affected</c>, <c>likely</c>, <c>unlikely</c>; <c>null</c> for none.</summary>
     public string? HumanVerdict { get; init; }
 
-    /// <summary>The model's verdict (phase 4): <c>affected</c>, <c>likely</c>, <c>uncertain</c>, <c>unlikely</c>, <c>not_affected</c>.</summary>
     public string? ModelVerdict { get; init; }
 }
 
-/// <summary>One row of the explanation: the factor, its value, its evidence and its effect.</summary>
 internal sealed record FactorRow(string Factor, string Value, string? Evidence, int Points);
 
-/// <summary>An upper or lower bound that changed the level.</summary>
 internal sealed record BoundRow(string Bound, int Level);
 
-/// <summary>The level of a finding with its explanation, stored as <c>finding.factors</c>.</summary>
 internal sealed record RuleResult
 {
     public required int RulesetVersion { get; init; }
 
     public required int Level { get; init; }
 
-    /// <summary>Why the level is 1 without computation: <c>weak_match</c>, <c>out_of_range</c>, <c>withdrawn</c>, <c>human</c>.</summary>
     public string? Exclusion { get; init; }
 
     public IReadOnlyList<FactorRow> Factors { get; init; } = [];
 
     public int? Points { get; init; }
 
-    /// <summary>The level from the points alone.</summary>
     public int? PointsLevel { get; init; }
 
     public IReadOnlyList<BoundRow> Caps { get; init; } = [];
 
     public IReadOnlyList<BoundRow> Floors { get; init; } = [];
 
-    /// <summary>
-    /// The level the rules give without the model's verdict, after the same bounds; set only when a verdict of the
-    /// model counted. The threshold for asking the model again and the floor of 7.6 compare against it.
-    /// </summary>
     public int? LevelWithoutModel { get; init; }
 
-    /// <summary>
-    /// For a hit on a component without an exact version, which a notice asks about instead of a finding (exclusion
-    /// <c>moved_to_notice</c>, ADR 047): the level the rules give the hit as they would on the precise path. Kept for the
-    /// explanation and the reference set (master plan 7.9); the finding itself stays at level 1.
-    /// </summary>
     public int? PreciseLevel { get; init; }
 }
 
-/// <summary>
-/// The level of one finding after rule set version 1 (master plan 7.6), in fixed order: exclusion,
-/// points, upper bounds, lower bounds. Pure: the same input and rule set give the same result.
-/// </summary>
 internal static class RuleEngine
 {
     public static RuleResult Evaluate(RuleSet rules, RuleInput input)
     {
-        // 1. Exclusion: level 1 without computation, always from structured data or a person; before every bound.
         var exclusion = !input.StrongMatch ? "weak_match"
             : input.EntryWithdrawn ? "withdrawn"
             : input.HumanExcluded ? "human"
@@ -130,14 +92,12 @@ internal static class RuleEngine
         var withoutModel = Points(rules, input, severity, inRange || input.HumanVerdict is "affected" or "likely" ? "confirmed" : input.HumanVerdict == "unlikely" ? "unlikely" : "unknown");
         var factors = Points(rules, input, severity, affectedness);
 
-        // 2. Points.
         var points = factors.Sum(f => f.Points);
         var pointsLevel = rules.LevelOf(points);
         var level = pointsLevel;
         var caps = new List<BoundRow>();
         var floors = new List<BoundRow>();
 
-        // 3. Upper bounds: «critical» only for what the version check or a person confirmed; development-only components.
         var confirmed = inRange || input.HumanVerdict is "affected" or "likely";
         if (!confirmed && level > rules.Caps.Unconfirmed)
         {
@@ -151,7 +111,6 @@ internal static class RuleEngine
             caps.Add(new BoundRow("development", level));
         }
 
-        // 4. Lower bounds that no other factor undercuts.
         void Floor(string name, int minimum)
         {
             if (level < minimum)
@@ -174,7 +133,6 @@ internal static class RuleEngine
             }
         }
 
-        // The model lowers by at most one level against the result without it, until a person confirms it.
         int? reference = null;
         if (input.ModelVerdict is not null && input.HumanVerdict is null)
         {
@@ -195,7 +153,6 @@ internal static class RuleEngine
         };
     }
 
-    /// <summary>The level of a sum after the same bounds, for the comparison with the result without the model.</summary>
     private static int Bounded(RuleSet rules, RuleInput input, int level, bool confirmed, string severity, bool inRange)
     {
         if (!confirmed)

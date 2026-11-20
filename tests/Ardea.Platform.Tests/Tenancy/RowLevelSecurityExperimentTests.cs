@@ -8,12 +8,6 @@ using Npgsql;
 
 namespace Ardea.Platform.Tests.Tenancy;
 
-/// <summary>
-/// Experiment 0.6 (ADR 029): does row-level security work with EF Core, Npgsql, the connection pool
-/// and the unit of work's shared transaction? The policies read <c>ardea.org_id</c>, which the unit
-/// of work sets transaction-locally. Every query here bypasses the EF tenant filter
-/// (<c>IgnoreQueryFilters</c> or raw SQL), so only the database layer separates tenants.
-/// </summary>
 public sealed class RowLevelSecurityExperimentTests(PostgresServer server)
 {
     private static readonly Guid OrgA = Guid.CreateVersion7();
@@ -50,7 +44,6 @@ public sealed class RowLevelSecurityExperimentTests(PostgresServer server)
             await first.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
         }
 
-        // Same physical connection (pool of one), no organisation: nothing is visible, nothing can be written.
         await using var second = fixture.Scope(organization: null);
         var unitOfWork = second.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var connection = await unitOfWork.GetConnectionAsync(CancellationToken.None);
@@ -59,7 +52,7 @@ public sealed class RowLevelSecurityExperimentTests(PostgresServer server)
 
         await using var insert = new NpgsqlCommand($"INSERT INTO rlstest.item (id, organization_id, name) VALUES (uuidv7(), '{OrgA}', 'smuggled')", connection);
         var error = await Assert.ThrowsAsync<PostgresException>(() => insert.ExecuteNonQueryAsync());
-        Assert.Equal("42501", error.SqlState); // new row violates row-level security policy
+        Assert.Equal("42501", error.SqlState);
     }
 
     [Fact]
@@ -85,7 +78,6 @@ public sealed class RowLevelSecurityExperimentTests(PostgresServer server)
         writer.Items.Add(new Item { Id = Guid.CreateVersion7(), Name = "written by one module" });
         await writer.SaveChangesAsync();
 
-        // The other context sees the uncommitted row: same connection, same transaction.
         Assert.Equal(1, await reader.Items.IgnoreQueryFilters().CountAsync());
         Assert.Equal(OrgA, (await reader.Items.IgnoreQueryFilters().SingleAsync()).OrganizationId);
     }
@@ -111,7 +103,6 @@ public sealed class RowLevelSecurityExperimentTests(PostgresServer server)
         await using var fixture = await RlsFixture.CreateAsync(server, maxPoolSize: 2, rowLevelSecurity: false);
         var foreignId = await fixture.SeedAsync(OrgB, 1);
 
-        // Layer 2 alone (no RLS): the write check and the concurrency token on OrganizationId.
         await using var scope = fixture.Scope(OrgA);
         var context = scope.ServiceProvider.GetRequiredService<ItemContext>();
         context.Remove(new Item { Id = foreignId, OrganizationId = OrgA, Name = "stub" });

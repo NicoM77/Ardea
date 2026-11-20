@@ -6,22 +6,11 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Sources.CveProgram;
 
-/// <summary>Upper bounds for unpacking the full archive (master plan 9.5: unpacking with limits for size and file count).</summary>
-/// <param name="MaxInnerBytes">The inner zip written to the working volume; the real one is about 670 MB.</param>
-/// <param name="MaxRecordBytes">One record file; the largest real records have a few hundred KB.</param>
-/// <param name="MaxEntries">Files in the archive; the real one has about 320,000.</param>
 internal sealed record ArchiveLimits(long MaxInnerBytes, int MaxRecordBytes, int MaxEntries)
 {
     public static readonly ArchiveLimits Default = new(2L * 1024 * 1024 * 1024, 4 * 1024 * 1024, 2_000_000);
 }
 
-/// <summary>
-/// Reads the full archive (<c>…_all_CVEs_at_midnight.zip.zip</c>): an outer zip around an inner zip
-/// of record files. The inner zip is written once to the working volume (a zip cannot be read
-/// without seeking); its records are then read one by one, never unpacked into files. Every step is
-/// bounded by <see cref="ArchiveLimits"/>, by what the data unpacks to and not by what its headers claim:
-/// an inner zip or an archive over the limit ends the run, a record over it is skipped.
-/// </summary>
 internal static class ArchiveReader
 {
     public static async IAsyncEnumerable<RawRecord> ReadAsync(
@@ -31,7 +20,6 @@ internal static class ArchiveReader
         var inner = outer.Entries.FirstOrDefault(e => e.FullName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
         if (inner is null)
         {
-            // Some archives hold the records directly.
             await foreach (var record in ReadEntriesAsync(outer, from, limits, cancellationToken))
             {
                 yield return record;
@@ -83,7 +71,6 @@ internal static class ArchiveReader
                 continue;
             }
 
-            // The declared size is checked first, the read itself is bounded too: the header may lie.
             if (entry.Length > limits.MaxRecordBytes || await ReadBoundedAsync(entry, limits.MaxRecordBytes, cancellationToken) is not { } json)
             {
                 continue;
@@ -100,7 +87,6 @@ internal static class ArchiveReader
         }
     }
 
-    /// <summary>The entry's text, or <c>null</c> when it unpacks to more than <paramref name="limit"/> bytes or cannot be unpacked.</summary>
     private static async Task<string?> ReadBoundedAsync(ZipArchiveEntry entry, int limit, CancellationToken cancellationToken)
     {
         try
@@ -124,12 +110,10 @@ internal static class ArchiveReader
         }
         catch (InvalidDataException)
         {
-            // A damaged entry, e.g. sizes that do not match its data.
             return null;
         }
     }
 
-    /// <summary>Publication and update dates from <c>cveMetadata</c>, read without building the whole document.</summary>
     public static (DateTimeOffset? Published, DateTimeOffset? Updated) Metadata(string json)
     {
         try

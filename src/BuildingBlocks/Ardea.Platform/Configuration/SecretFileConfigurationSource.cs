@@ -3,11 +3,6 @@ using Microsoft.Extensions.Configuration;
 
 namespace Ardea.Platform.Configuration;
 
-/// <summary>
-/// Resolves <c>ARDEA_*_FILE</c> variables: the value is a path, the configuration key without the
-/// suffix receives the trimmed file content (Docker secrets, master plan 12.4). A directly set
-/// variable wins over its file variant.
-/// </summary>
 internal sealed class SecretFileConfigurationSource(string prefix, Func<IDictionary> environment) : IConfigurationSource
 {
     public IConfigurationProvider Build(IConfigurationBuilder builder) => new Provider(prefix, environment);

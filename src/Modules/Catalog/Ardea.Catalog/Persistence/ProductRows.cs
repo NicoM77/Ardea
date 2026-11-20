@@ -3,7 +3,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Persistence;
 
-/// <summary>Mapping between <see cref="CatalogProduct"/> and <see cref="ProductRow"/>, written out by hand.</summary>
 internal static class ProductRows
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -26,7 +25,6 @@ internal static class ProductRows
         State = Enum.TryParse<ProductState>(row.State, ignoreCase: true, out var state) ? state : ProductState.Pending,
     };
 
-    /// <summary>Writes the curated fields of a product into a row; only values that differ are assigned.</summary>
     public static void WriteCurated(CatalogProduct product, ProductRow row)
     {
         row.Name = product.Name;
@@ -37,7 +35,6 @@ internal static class ProductRows
         var aliases = WriteAliases(product.Aliases);
         if (WriteAliases(ReadAliases(row.Aliases)) != aliases)
         {
-            // jsonb rewrites the text it stores; compare the content, not the text.
             row.Aliases = aliases;
         }
 

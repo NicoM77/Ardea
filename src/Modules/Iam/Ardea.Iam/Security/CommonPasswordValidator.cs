@@ -4,10 +4,6 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Ardea.Iam.Security;
 
-/// <summary>
-/// Password rules of master plan 9.3: at least 12 characters, no composition rules, and not on the
-/// bundled list of common passwords, nor the account's own e-mail address.
-/// </summary>
 internal sealed class CommonPasswordValidator : IPasswordValidator<ArdeaUser>
 {
     public const int MinimumLength = 12;

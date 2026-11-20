@@ -4,10 +4,6 @@ using Ardea.Platform.Tenancy;
 
 namespace Ardea.Assets.Features;
 
-/// <summary>
-/// A project's profile changed. Waits a moment so that a wave of edits counts once, then tells the
-/// subscribers; the Assessment module starts its reverse search <c>MatchProject</c> from it (master plan 3.3).
-/// </summary>
 internal sealed record ProjectProfileChanged(Guid ProjectId) : IJob
 {
     public static string Kind => "assets.profile-changed";

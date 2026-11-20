@@ -5,21 +5,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Products;
 
-/// <summary>
-/// The input help over the catalogue (task 2.4): what someone types, with spaces, punctuation, version
-/// numbers and the odd typo, finds the product they mean first. Deterministic and in memory; tiers
-/// from strong to weak, the first one that matches counts:
-/// <list type="number">
-/// <item>the text without spaces and punctuation equals a key, name or alias, then a CPE product, package or image;</item>
-/// <item>every word is a whole word of a key, name or alias;</item>
-/// <item>a key, name or alias starts with it, the closer in length the better;</item>
-/// <item>every word is a whole word of these or of the vendor, CPE pair, package or image;</item>
-/// <item>every word starts a word of these;</item>
-/// <item>a CPE product, package or image starts with it; it occurs inside any of them;</item>
-/// <item>it is a few typos away from a key, name or alias (bounded edit distance).</item>
-/// </list>
-/// Version numbers typed after a name (<c>.net 8</c>, <c>ubuntu 22.04</c>) are tried with and without.
-/// </summary>
 internal sealed partial class CatalogSearch
 {
     private const int NoMatch = int.MaxValue;
@@ -55,7 +40,6 @@ internal sealed partial class CatalogSearch
             .ToList();
     }
 
-    /// <summary>Lower-case words of letters and digits, without diacritics; everything else separates.</summary>
     public static List<string> Words(string? text)
     {
         var words = new List<string>();
@@ -91,10 +75,6 @@ internal sealed partial class CatalogSearch
         return words;
     }
 
-    /// <summary>
-    /// Optimal string alignment distance (insertions, deletions, substitutions, swaps of neighbours),
-    /// or <paramref name="bound"/> + 1 once it is certain to exceed the bound.
-    /// </summary>
     public static int Distance(string a, string b, int bound)
     {
         if (Math.Abs(a.Length - b.Length) > bound)
@@ -113,7 +93,6 @@ internal sealed partial class CatalogSearch
             rows[0][j] = j;
         }
 
-        // Row i lives in rows[i % 3]; the swap of neighbours looks two rows back.
         for (var i = 1; i <= a.Length; i++)
         {
             var (before, previous, row) = (rows[(i + 1) % 3], rows[(i + 2) % 3], rows[i % 3]);
@@ -141,7 +120,6 @@ internal sealed partial class CatalogSearch
         return Math.Min(rows[a.Length % 3][b.Length], bound + 1);
     }
 
-    /// <summary>Typos allowed for a text of this length: none up to three characters, one up to seven, then two.</summary>
     private static int TypoBound(int length) => length <= 3 ? 0 : length <= 7 ? 1 : 2;
 
     [GeneratedRegex(@"\{[a-z]+\}|\*", RegexOptions.CultureInvariant)]
@@ -151,15 +129,12 @@ internal sealed partial class CatalogSearch
     {
         public required CatalogProduct Product { get; init; }
 
-        /// <summary>Key, name and aliases, each as one word without separators.</summary>
         public required string[] Names { get; init; }
 
-        /// <summary>CPE products, packages and images, each as one word without separators.</summary>
         public required string[] Others { get; init; }
 
         public required HashSet<string> NameWords { get; init; }
 
-        /// <summary>Words of the names, the vendor spellings, CPE pairs, packages and images.</summary>
         public required HashSet<string> AllWords { get; init; }
 
         public static Entry Create(CatalogProduct product)
@@ -193,7 +168,6 @@ internal sealed partial class CatalogSearch
             };
         }
 
-        /// <summary>Tier and, within it, distance (lower is better) of the query's words and their joined form.</summary>
         public (int Tier, int Distance) Rank(string[] words, string joined)
         {
             if (Array.IndexOf(Names, joined) >= 0)

@@ -22,11 +22,6 @@ internal sealed record ReviewItemView(
     DateTimeOffset LastSeenAt,
     DateTimeOffset? DecidedAt);
 
-/// <summary>
-/// The data-quality review list on the page «Sources» (master plan 6.2 rule 5, 6.9): entries with
-/// different CVE ids that a shared identifier would join. The administrator keeps them apart; an
-/// automatic merge is never offered, since a wrong merge is worse than a duplicate.
-/// </summary>
 internal static class ReviewEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
@@ -60,7 +55,6 @@ internal static class ReviewEndpoints
             i.DecidedAt)).ToList());
     }
 
-    /// <summary>Confirms the entries are different vulnerabilities; the case stays closed when the same evidence comes again.</summary>
     private static async Task<IResult> KeepSeparateAsync(
         Guid id, IntelDbContext db, IUnitOfWork unitOfWork, IAuditLog audit, ITenantContext tenant, TimeProvider time, CancellationToken cancellationToken)
     {

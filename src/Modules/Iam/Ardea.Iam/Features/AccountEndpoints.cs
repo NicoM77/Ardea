@@ -14,7 +14,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Iam.Features;
 
-/// <summary>The signed-in user's own account: profile, password, MFA, sessions (master plan 9.3, 10.2).</summary>
 internal static class AccountEndpoints
 {
     public const int RecoveryCodeCount = 10;
@@ -58,7 +57,6 @@ internal static class AccountEndpoints
         {
             if (result.Errors.Any(e => e.Code == "PasswordMismatch"))
             {
-                // A stolen session must not allow unlimited guesses at the password.
                 await users.AccessFailedAsync(user);
                 await unitOfWork.CommitAsync(cancellationToken);
                 return IamErrors.Validation(new() { ["currentPassword"] = ["The current password is wrong."] });
@@ -67,17 +65,12 @@ internal static class AccountEndpoints
             return IamErrors.WeakPassword(result, "newPassword");
         }
 
-        // The new security stamp ends every other session; this one is issued again.
         await ReissueAsync(http, user, signIn, db, time, cancellationToken);
         await audit.RecordAsync(new AuditEntry("account.password_changed", "user", user.Id.ToString()) { InstanceEvent = true }, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         return Results.NoContent();
     }
 
-    /// <summary>
-    /// Starting two-factor setup needs the password again: otherwise a stolen session could bind the
-    /// account to the thief's authenticator and lock the owner out.
-    /// </summary>
     private static async Task<IResult> SetupMfaAsync(
         MfaSetupRequest? request, HttpContext http, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, ArdeaSignInManager signIn, IamDbContext db,
         TimeProvider time, CancellationToken cancellationToken)
@@ -93,7 +86,6 @@ internal static class AccountEndpoints
             return Platform.Http.ApiProblems.Problem("mfa_enabled", StatusCodes.Status409Conflict, "Two-factor authentication is already on.");
         }
 
-        // A new key changes the security stamp, which ends every session; this one is issued again.
         await users.ResetAuthenticatorKeyAsync(user);
         var key = (await users.GetAuthenticatorKeyAsync(user))!;
         await ReissueAsync(http, user, signIn, db, time, cancellationToken);
@@ -105,7 +97,6 @@ internal static class AccountEndpoints
         EnableMfaRequest request, HttpContext http, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, ArdeaSignInManager signIn,
         IamDbContext db, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
     {
-        // One code check per account at a time, on the account as the previous one committed it (ADR 045).
         await AccountLookup.LockAsync(unitOfWork, UserId(http), cancellationToken);
         var user = await CurrentUserAsync(http, users);
         var code = Normalize(request.Code);
@@ -128,7 +119,6 @@ internal static class AccountEndpoints
         [Microsoft.AspNetCore.Mvc.FromBody] DisableMfaRequest request, HttpContext http, IUnitOfWork unitOfWork, UserManager<ArdeaUser> users, ArdeaSignInManager signIn,
         IamDbContext db, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
     {
-        // One code check per account at a time, on the account as the previous one committed it (ADR 045).
         await AccountLookup.LockAsync(unitOfWork, UserId(http), cancellationToken);
         var user = await CurrentUserAsync(http, users);
         if (!await CheckPasswordAsync(users, user, request.Password, unitOfWork, cancellationToken))
@@ -184,7 +174,6 @@ internal static class AccountEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>"Sign out everywhere else": every session of the account except this one.</summary>
     private static async Task<IResult> RevokeOtherSessionsAsync(
         HttpContext http, IUnitOfWork unitOfWork, IamDbContext db, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
     {
@@ -194,7 +183,6 @@ internal static class AccountEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>After a security-stamp change: end every session, then sign this client in again.</summary>
     private static async Task ReissueAsync(HttpContext http, ArdeaUser user, ArdeaSignInManager signIn, IamDbContext db, TimeProvider time, CancellationToken cancellationToken)
     {
         await AuthEndpoints.RevokeSessionsAsync(db, user.Id, except: null, time, cancellationToken);
@@ -202,7 +190,6 @@ internal static class AccountEndpoints
         _ = http;
     }
 
-    /// <summary>Checks a re-entered password; a wrong one counts toward the lockout like a failed sign-in.</summary>
     private static async Task<bool> CheckPasswordAsync(UserManager<ArdeaUser> users, ArdeaUser user, string? password, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
         if (!await users.IsLockedOutAsync(user) && !string.IsNullOrEmpty(password) && await users.CheckPasswordAsync(user, password))

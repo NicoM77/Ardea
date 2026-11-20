@@ -37,13 +37,8 @@ internal sealed record EnterpriseHostView(string Id, string Name, string ApiUrl)
 
 internal sealed record CreateEnterpriseHostRequest(string? Name, string? ApiUrl);
 
-/// <summary>
-/// Accesses to GitHub (master plan 10.2, 16.4; task 2.10). Owners and administrators add and remove
-/// them; members choose repositories from them. A token is written, never read back.
-/// </summary>
 internal static class ConnectionEndpoints
 {
-    /// <summary>From this long before its expiry, a token is flagged (master plan 16.4).</summary>
     public static readonly TimeSpan ExpiryWarning = TimeSpan.FromDays(14);
 
     internal const string TokenPurpose = "assets.repository-connection.token";
@@ -63,7 +58,6 @@ internal static class ConnectionEndpoints
         org.MapGet("/repository-connections/{id:guid}/repositories", RepositoriesAsync).WithName("listConnectionRepositories").RequireRateLimiting(RateLimits.Outbound)
             .RequireOrganizationRole(OrganizationRole.Member).Produces<IReadOnlyList<RepositoryView>>().Problems(403, 404, 502);
 
-        // The organisations' choice of servers; only the instance administrator changes it (16.9).
         api.MapGet("/github-hosts", HostsAsync).WithTags("Repository connections").WithName("listGitHubHosts").RequireAuthorization();
         var admin = api.MapGroup("/instance/github-hosts").WithTags("Repository connections").RequireAuthorization(Policies.InstanceAdmin);
         admin.MapPost("/", AddHostAsync).WithName("addGitHubHost").RequireRateLimiting(RateLimits.Outbound).Produces<EnterpriseHostView>(StatusCodes.Status201Created).Problems(400);
@@ -141,7 +135,6 @@ internal static class ConnectionEndpoints
         {
             if (request.Token.Trim().Length == 0)
             {
-                // An empty token turns the connection into one for public repositories only.
                 (connection.TokenEnc, connection.TokenHint, connection.TokenKind, connection.TokenScopes, connection.TokenExpiresAt, connection.Login) =
                     (null, null, "none", [], null, null);
             }
@@ -163,7 +156,6 @@ internal static class ConnectionEndpoints
         return Results.Ok(view);
     }
 
-    /// <summary>Deleting the access is how a token is revoked in Ardea (master plan 16.9).</summary>
     private static async Task<IResult> DeleteAsync(Guid id, AssetsDbContext db, IUnitOfWork unitOfWork, IAuditLog audit, CancellationToken cancellationToken)
     {
         var deleted = await db.RepositoryConnections.Where(c => c.Id == id).ExecuteDeleteAsync(cancellationToken);
@@ -177,7 +169,6 @@ internal static class ConnectionEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>Asks GitHub again: is the token still valid, until when, for whom.</summary>
     private static async Task<IResult> TestAsync(
         Guid id, AssetsDbContext db, GitHubHosts hosts, GitHubApi github, ISecretProtector secrets, IUnitOfWork unitOfWork, TimeProvider time,
         CancellationToken cancellationToken)
@@ -280,7 +271,6 @@ internal static class ConnectionEndpoints
         return Results.Created($"github-hosts/{host.Id}", new EnterpriseHostView(host.Id, host.Name, host.ApiUrl));
     }
 
-    /// <summary>Connections of organisations on the server stop working; they show it on their next check.</summary>
     private static async Task<IResult> RemoveHostAsync(
         string hostId, GitHubHosts hosts, ITenantContext tenant, IUnitOfWork unitOfWork, IAuditLog audit, CancellationToken cancellationToken)
     {
@@ -296,7 +286,6 @@ internal static class ConnectionEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>Checks the token with GitHub and stores it encrypted; a token GitHub refuses is not stored.</summary>
     private static async Task<IResult?> SetTokenAsync(
         RepositoryConnection connection, string token, GitHubHost host, GitHubApi github, ISecretProtector secrets, DateTimeOffset now,
         CancellationToken cancellationToken)

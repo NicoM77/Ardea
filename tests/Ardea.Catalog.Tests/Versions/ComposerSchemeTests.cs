@@ -2,20 +2,14 @@ using static Ardea.Catalog.Tests.Versions.SchemeAssert;
 
 namespace Ardea.Catalog.Tests.Versions;
 
-/// <summary>Packagist: Composer's version parser and PHP's version_compare (master plan 6.6).</summary>
 public sealed class ComposerSchemeTests
 {
     [Theory]
-    // Stability order of Composer: dev < alpha < beta < RC < stable < patch.
     [InlineData("1.0.0-dev < 1.0.0-alpha1 < 1.0.0-beta < 1.0.0-beta1 < 1.0.0-beta2 < 1.0.0-RC1 < 1.0.0 < 1.0.0-patch1 < 1.0.1")]
-    // A trailing -dev is the development state of that pre-release.
     [InlineData("1.0.0-beta2-dev < 1.0.0-beta2 < 1.0.0-beta3")]
-    // Four numbers.
     [InlineData("1.2.3 < 1.2.3.4 < 1.2.4")]
-    // guzzlehttp/guzzle: GHSA-w248-ffj2-4v5q fixed in 7.4.5; laravel/framework 9.52.16 before 10.
     [InlineData("v7.4.4 < 7.4.5 < v7.5.0")]
     [InlineData("9.52.16 < 9.52.17 < 10.0.0-RC1 < 10.0.0")]
-    // In SemVer «RC1» would sort before «beta1» (upper case first); Composer does not care about case.
     [InlineData("4.0.0-beta1 < 4.0.0-RC1 < 4.0.0-rc2")]
     public void Versions_follow_composer_order(string ascending) => Ascending("packagist", ascending);
 

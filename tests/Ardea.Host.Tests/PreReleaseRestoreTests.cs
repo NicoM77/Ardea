@@ -9,17 +9,8 @@ using Npgsql;
 
 namespace Ardea.Host.Tests;
 
-/// <summary>
-/// Task 6.5 (master plan 14, phase 6; chapter 12): an instance of an earlier state is updated and, if need be,
-/// taken back, exactly as docs/operations/update.md describes. The earlier state is the schema as phase 1 left
-/// it (every migration before 19 November 2026) with a few rows; it is dumped by the same server-side writer
-/// <c>ardea migrate</c> uses, restored into a fresh database, migrated to this build (which dumps again before
-/// it changes anything), restored from that dump, and migrated once more. It runs on the whole module list in
-/// well under a minute.
-/// </summary>
 public sealed class PreReleaseRestoreTests(PostgresServer server)
 {
-    /// <summary>Migrations from this stamp on are «new»: the state before it is the pre-release state.</summary>
     private const string Cutoff = "20261119";
 
     [Fact]
@@ -28,7 +19,6 @@ public sealed class PreReleaseRestoreTests(PostgresServer server)
         var ct = TestContext.Current.CancellationToken;
         var time = new FakeTimeProvider(new DateTimeOffset(2026, 11, 19, 8, 0, 0, TimeSpan.Zero));
 
-        // 1. The pre-release instance, with data, and its dump.
         var oldName = await server.CreateDatabaseAsync("prerelease");
         var oldOptions = Options(oldName);
         await using (var owner = await OpenOwnerAsync(oldOptions))
@@ -45,7 +35,6 @@ public sealed class PreReleaseRestoreTests(PostgresServer server)
             preReleaseDump = (await new ServerSideBackupWriter(oldOptions, time, NullLogger<ServerSideBackupWriter>.Instance).WriteAsync(owner, ct))!;
         }
 
-        // 2. A fresh server state: restore the dump, as an operator moving to a new machine does.
         var name = await server.CreateDatabaseAsync("restored");
         var options = Options(name);
         await RestoreAsync(name, preReleaseDump, ct);
@@ -56,7 +45,6 @@ public sealed class PreReleaseRestoreTests(PostgresServer server)
             Assert.NotEmpty(await Migrator(options, time).FindSchemasBehindAsync(owner, ct));
         }
 
-        // 3. Update: migrate writes a dump of the old state first, then brings every schema to this build.
         time.Advance(TimeSpan.FromMinutes(1));
         MigrationOutcome outcome;
         await using (var owner = await OpenOwnerAsync(options))
@@ -69,7 +57,6 @@ public sealed class PreReleaseRestoreTests(PostgresServer server)
             Assert.True(await SchemaExistsAsync(owner, "assess", ct));
         }
 
-        // The application role works on the migrated schema, and owns nothing.
         await using (var app = new NpgsqlConnection(options.AppConnectionString("tests")))
         {
             await app.OpenAsync(ct);
@@ -77,14 +64,12 @@ public sealed class PreReleaseRestoreTests(PostgresServer server)
             Assert.Equal(0, await CountAsync(app, "assess.alert", ct));
         }
 
-        // 4. Going back (update.md): restore the dump migrate wrote. The old tables are what they were.
         await RestoreAsync(name, outcome.DumpPath!, ct);
         await using (var owner = await OpenOwnerAsync(options))
         {
             Assert.NotEmpty(await Migrator(options, time).FindSchemasBehindAsync(owner, ct));
             await AssertSampleRowsAsync(owner, ct);
 
-            // 5. And forward again: the same update works on the restored state.
             time.Advance(TimeSpan.FromMinutes(1));
             var again = await Migrator(options, time).MigrateAsync(owner, ct);
             Assert.True(again.Applied > 0);
@@ -112,7 +97,6 @@ public sealed class PreReleaseRestoreTests(PostgresServer server)
         }
     }
 
-    /// <summary>A little of everything the early schemas hold: settings, jobs, an organisation, the catalogue's unknown products.</summary>
     private static async Task InsertSampleRowsAsync(NpgsqlConnection owner, CancellationToken ct)
     {
         await using var command = new NpgsqlCommand(
@@ -136,11 +120,6 @@ public sealed class PreReleaseRestoreTests(PostgresServer server)
         Assert.Equal(1, await CountAsync(connection, "catalog.unknown_product WHERE raw_key = 'cpe:acme:widget'", ct));
     }
 
-    /// <summary>
-    /// Restores as docs/operations/update.md says: the database is dropped and created empty, then <c>pg_restore</c> runs inside
-    /// the database container. Restoring over the migrated tables with <c>--clean</c> does not work: newer schemas
-    /// (policies, foreign keys) depend on the older ones and block dropping them.
-    /// </summary>
     private async Task RestoreAsync(string database, string dump, CancellationToken ct)
     {
         NpgsqlConnection.ClearAllPools();

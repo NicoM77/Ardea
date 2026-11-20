@@ -9,18 +9,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Sources.Ncsc;
 
-/// <summary>
-/// Warnings on the website of the Federal Office for Cyber Security (BACS) (master plan 5.5, task 1.9):
-/// the JSON the website is built from (<c>/api/collector/en/current-incidents.json</c> and one page per
-/// warning). The interface has no validators and is undocumented.
-/// <list type="bullet">
-/// <item>Every run reads the overview (one request). A page is fetched when its teaser is new or changed,
-/// or when the overview's own <c>updatedAt</c> moved; the page's <c>updatedAt</c> then decides whether a
-/// record is delivered. Once a day every page is checked.</item>
-/// <item>The terms of the website require written consent for reproducing texts: only title, lead, link
-/// and ids are kept (<see cref="TermsMode.MetadataOnly"/>).</item>
-/// </list>
-/// </summary>
 public sealed class BacsWarningsProvider : ISourceProvider
 {
     public const string Key = "bacs-warnings";
@@ -57,7 +45,6 @@ public sealed class BacsWarningsProvider : ISourceProvider
     {
         if (context.Mode == SyncMode.Single)
         {
-            // The website has no lookup by id; a single warning is a page by its slug.
             var slug = context.SingleId ?? throw new InvalidOperationException("Single mode needs the page path, e.g. en/warnung-java-2-en.");
             var single = await FetchPageAsync(context, slug, null, cancellationToken)
                 ?? throw new InvalidOperationException($"Page {slug} was not found.");
@@ -89,7 +76,6 @@ public sealed class BacsWarningsProvider : ISourceProvider
             var page = await FetchPageAsync(context, teaser.Slug, teaser, cancellationToken);
             if (page is null)
             {
-                // Listed but gone: nothing to deliver, and it is not remembered.
                 continue;
             }
 
@@ -116,7 +102,6 @@ public sealed class BacsWarningsProvider : ISourceProvider
         var teasers = new List<Teaser>();
         Walk(document.RootElement, teasers);
 
-        // The overview always lists warnings; none at all means the structure changed.
         if (teasers.Count == 0)
         {
             throw new InvalidOperationException("The overview lists no warnings; the website's structure may have changed.");
@@ -153,7 +138,6 @@ public sealed class BacsWarningsProvider : ISourceProvider
         }
     }
 
-    /// <summary>Fetches a page and reduces it to what the terms allow us to keep.</summary>
     private static async Task<Page?> FetchPageAsync(SyncContext context, string slug, Teaser? teaser, CancellationToken cancellationToken)
     {
         var uri = CollectorUrl(slug);
@@ -233,17 +217,11 @@ public sealed class BacsWarningsProvider : ISourceProvider
 
     private sealed record Teaser(string Slug, string Title, string? Description, string? Date)
     {
-        /// <summary>Short and stable: a change of date, title or lead shows without fetching the page.</summary>
         public string Fingerprint() =>
             Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{Date}\n{Title}\n{Description}")), 0, 6).ToLowerInvariant();
     }
 }
 
-/// <summary>
-/// The BACS cursor: the overview's <c>updatedAt</c>, per listed page a fingerprint of its teaser and the page's
-/// <c>updatedAt</c>, and the time of the last full check. Pages that left the overview drop out, so it is
-/// bounded by the overview's length.
-/// </summary>
 internal sealed record BacsCursor(DateTimeOffset? Sweep, string? Page, Dictionary<string, string> Docs)
 {
     public static BacsCursor? Parse(string? cursor)
@@ -260,7 +238,6 @@ internal sealed record BacsCursor(DateTimeOffset? Sweep, string? Page, Dictionar
         }
         catch (JsonException)
         {
-            // An unreadable cursor means: check everything again.
             return null;
         }
     }

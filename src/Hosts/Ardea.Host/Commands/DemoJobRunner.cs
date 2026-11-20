@@ -7,14 +7,8 @@ using Npgsql;
 
 namespace Ardea.Host.Commands;
 
-/// <summary>
-/// Runs the jobs of the pipeline in this process until none is left (<c>ardea seed-demo</c>), each as the worker runs it:
-/// its own scope, its tenant, one unit of work that commits together with the job's completion. Only kinds that stay
-/// inside the database run; whatever reaches out (sources, repositories, e-mail, models) is left to a worker.
-/// </summary>
 internal static class DemoJobRunner
 {
-    /// <summary>Normalise, correlate, match, assess, notify: the path from a stored record to an action and its notification.</summary>
     private static readonly string[] Kinds =
     [
         "assets.profile-changed",
@@ -31,7 +25,6 @@ internal static class DemoJobRunner
 
     private const int MaxRounds = 200;
 
-    /// <summary>Returns the number of jobs run. A job that fails stops the run: the demo must not be half assessed.</summary>
     public static async Task<int> RunUntilIdleAsync(IServiceProvider services, CancellationToken cancellationToken)
     {
         var dataSource = services.GetRequiredService<NpgsqlDataSource>();
@@ -62,7 +55,6 @@ internal static class DemoJobRunner
         throw new InvalidOperationException("The jobs of the pipeline keep producing new jobs.");
     }
 
-    /// <summary>Waiting jobs with a delay (a profile change waits half a minute so that edits count once) run now.</summary>
     private static async Task BringForwardAsync(NpgsqlDataSource dataSource, CancellationToken cancellationToken)
     {
         await using var command = dataSource.CreateCommand("UPDATE platform.job SET run_at = now() WHERE state = 'pending' AND run_at > now() AND kind = ANY($1)");

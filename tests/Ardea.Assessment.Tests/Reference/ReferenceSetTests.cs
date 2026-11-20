@@ -22,12 +22,6 @@ using Npgsql;
 
 namespace Ardea.Assessment.Tests.Reference;
 
-/// <summary>
-/// The evaluation run of master plan 7.9 (task 3.7): every pair of the reference set through the real
-/// pipeline, rules only. The records are stored as the CVE Program source would store them, normalised by
-/// its parser, correlated into entries and matched against one organisation per pair; then the findings'
-/// levels are compared with the labels. The build fails when the thresholds are not met.
-/// </summary>
 public sealed class ReferenceSetTests(PostgresServer server)
 {
     [Fact(Timeout = 300_000)]
@@ -39,7 +33,6 @@ public sealed class ReferenceSetTests(PostgresServer server)
         var evaluation = new ReferenceEvaluation(outcomes);
         var report = evaluation.Report(watch.Elapsed);
 
-        // The report is the calibration's working paper; CI keeps it with the test results.
         var output = Path.Combine(AppContext.BaseDirectory, "reference-report.md");
         await File.WriteAllTextAsync(output, report, TestContext.Current.CancellationToken);
         TestContext.Current.SendDiagnosticMessage($"Reference set report: {output}");
@@ -48,14 +41,6 @@ public sealed class ReferenceSetTests(PostgresServer server)
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures.Prepend("The reference set's thresholds are not met (master plan 7.9):")) + Environment.NewLine + report);
     }
 
-    /// <summary>
-    /// The spike week (master plan 14, phase 3 acceptance): all 6 452 records of 11 to 17 November 2026 against
-    /// the three example projects of the requirements, each with the versions installed before that week's
-    /// security updates. One organisation with all three gives at most 8 open actions; with a local model the
-    /// assessment asks it at most 40 times (phase 4 acceptance: 8 actions times 5), answered by a recorded model. A second
-    /// organisation names the same technologies in its stack without versions (phase 5a acceptance, ADR 044, ADR 047): it
-    /// gets the notices ADR 044 counted on the full week for these entries and no reminder.
-    /// </summary>
     [Fact(Timeout = 600_000)]
     public async Task The_spike_week_gives_at_most_eight_open_actions_and_forty_model_calls_for_the_three_example_projects_and_their_stack_few_notices()
     {
@@ -72,7 +57,6 @@ public sealed class ReferenceSetTests(PostgresServer server)
                 await host.AddComponentAsync(organization, project, component);
             }
 
-            // The organisation was set up before the week: its first fill is done when the week's records arrive.
             await host.ProfileChangedAsync(organization, project);
         }
 
@@ -106,7 +90,6 @@ public sealed class ReferenceSetTests(PostgresServer server)
         Assert.True(actions.Count <= 8, $"{actions.Count} open actions, at most 8:{Environment.NewLine}{string.Join(Environment.NewLine, actions)}");
         Assert.NotEmpty(actions);
         Assert.InRange(model.Requests.Count, 1, 40);
-        // As ADR 044 measured on the full week for these entries (1, 3 and 1), well below its bound of 25.
         Assert.Equal(5, notices.Count);
         Assert.All(notices, n => Assert.EndsWith("\topen\t1", n, StringComparison.Ordinal));
         Assert.Equal(["0"], await host.RowsAsync($"SELECT count(*) FROM assess.remediation WHERE organization_id = '{coarse}'"));
@@ -136,13 +119,10 @@ public sealed class ReferenceSetTests(PostgresServer server)
             projects[pair.Id] = await host.AddPairAsync(pair);
         }
 
-        // Profiles first, then the records: the forward search, as when a new record arrives.
         await host.RunJobsAsync();
         await host.StoreRecordsAsync(set.Records.Select(r => new RawRecord(r.Key, r.Value, "application/json")).ToList());
         await host.RunJobsAsync();
 
-        // The labels hold for the curated catalogue (master plan 6.9): no learned entry may take part in the run. Learning
-        // runs only by schedule or on request, which this host never does; the check makes it fail loudly if that changes.
         Assert.Equal(
             ["0\t0"],
             await host.RowsAsync("SELECT (SELECT count(*) FROM catalog.product WHERE origin = 'learned'), (SELECT count(*) FROM catalog.unknown_product WHERE outcome IN ('alias', 'new'))"));
@@ -158,7 +138,6 @@ public sealed class ReferenceSetTests(PostgresServer server)
     }
 }
 
-/// <summary>Catalogue, Assets, Intel with the CVE Program's parser, and Assessment on a fresh database.</summary>
 internal sealed class ReferenceHost : IAsyncDisposable
 {
     private readonly ServiceProvider _services;
@@ -195,7 +174,6 @@ internal sealed class ReferenceHost : IAsyncDisposable
                 .MigrateAsync(owner, CancellationToken.None);
         }
 
-        // The day after the spike week: every record is recent, none is in the future.
         var clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 18, 12, 0, 0, TimeSpan.Zero));
         var services = new ServiceCollection();
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
@@ -220,12 +198,10 @@ internal sealed class ReferenceHost : IAsyncDisposable
         configure?.Invoke(services);
         var built = services.BuildServiceProvider(validateScopes: true);
 
-        // Registers the CVE Program as a source, as the worker does at start. Nothing syncs: no scheduler runs.
         await built.GetRequiredService<IEnumerable<IHostedService>>().OfType<SourceRegistrar>().Single().StartAsync(CancellationToken.None);
         return new ReferenceHost(built, database, clock);
     }
 
-    /// <summary>One organisation with one project and the pair's component, written as the profile endpoints do.</summary>
     public async Task<Guid> AddPairAsync(ReferencePair pair)
     {
         var organization = Guid.CreateVersion7();
@@ -234,10 +210,6 @@ internal sealed class ReferenceHost : IAsyncDisposable
         return project;
     }
 
-    /// <param name="organization">The organisation.</param>
-    /// <param name="name">The project's name.</param>
-    /// <param name="attributes">Criticality and exposure.</param>
-    /// <param name="kind"><c>project</c>, or <c>organization_stack</c> for the organisation's stack (master plan 17.2).</param>
     public async Task<Guid> AddProjectAsync(Guid organization, string name, ReferenceProject attributes, string kind = Project.ProjectKind)
     {
         var project = Guid.CreateVersion7();
@@ -259,12 +231,10 @@ internal sealed class ReferenceHost : IAsyncDisposable
         return project;
     }
 
-    /// <summary>Assets' profile change: queues the project's reverse search, as the profile endpoints do.</summary>
     public Task ProfileChangedAsync(Guid organization, Guid project) =>
         InOrganizationAsync(organization, services => services.GetRequiredService<IJobQueue>()
             .EnqueueAsync(new Assessing.MatchProject(project), Assessing.MatchProject.Options(organization, project)));
 
-    /// <summary>A component as a test describes it, with its keys as the profile endpoints compute them.</summary>
     public async Task<Guid> AddComponentAsync(Guid organization, Guid project, Action<Component> configure)
     {
         var id = Guid.CreateVersion7();
@@ -282,7 +252,6 @@ internal sealed class ReferenceHost : IAsyncDisposable
         return id;
     }
 
-    /// <summary>Changes a component and its keys as the profile endpoints do, and queues the project's reverse search.</summary>
     public async Task ChangeComponentAsync(Guid organization, Guid project, Guid component, Action<Component> change)
     {
         await InOrganizationAsync(organization, async services =>
@@ -297,7 +266,6 @@ internal sealed class ReferenceHost : IAsyncDisposable
         await ProfileChangedAsync(organization, project);
     }
 
-    /// <summary>Work in a unit of work of its own, without organisation, as a system job or the administration does it.</summary>
     public async Task InSystemAsync(Func<IServiceProvider, Task> work)
     {
         await using var scope = _services.CreateAsyncScope();
@@ -338,7 +306,6 @@ internal sealed class ReferenceHost : IAsyncDisposable
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 
-    /// <summary>Runs a query as the owner and returns its rows as tab-separated text.</summary>
     public async Task<IReadOnlyList<string>> RowsAsync(string sql)
     {
         await using var connection = new NpgsqlConnection(_database.OwnerConnectionString("tests"));
@@ -354,7 +321,6 @@ internal sealed class ReferenceHost : IAsyncDisposable
         return rows;
     }
 
-    /// <summary>Stores the records as the CVE Program source's sync would, and queues their normalisation.</summary>
     public async Task StoreRecordsAsync(IReadOnlyList<RawRecord> records)
     {
         await using var scope = _services.CreateAsyncScope();
@@ -367,10 +333,6 @@ internal sealed class ReferenceHost : IAsyncDisposable
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 
-    /// <summary>
-    /// Runs every waiting job, whatever its kind, the way the worker runs it: its own scope, its tenant,
-    /// one committed unit of work; until none is left.
-    /// </summary>
     public async Task RunJobsAsync(string? except = null)
     {
         var registry = _services.GetRequiredService<JobRegistry>();
@@ -418,10 +380,6 @@ internal sealed class ReferenceHost : IAsyncDisposable
         throw new InvalidOperationException("Jobs keep coming.");
     }
 
-    /// <summary>
-    /// Every finding with its entry's CVE id. A hit on a component without an exact version is the notice's and stays at
-    /// level 1 (ADR 047); its level is the one the rules give it on the precise path, which the reference set calibrates.
-    /// </summary>
     public async Task<IReadOnlyList<FoundFinding>> FindingsAsync()
     {
         await using var connection = new NpgsqlConnection(_database.OwnerConnectionString("tests"));

@@ -3,10 +3,6 @@ using Microsoft.AspNetCore.Http;
 
 namespace Ardea.Platform.Http;
 
-/// <summary>
-/// Problem details after RFC 9457 (master plan 10.1) with a stable <c>code</c> the web app maps to
-/// a translated message. Codes are snake_case and part of the API contract.
-/// </summary>
 public static class ApiProblems
 {
     public static IResult From(Error error) => Problem(error.Code, Status(error.Kind), error.Message);

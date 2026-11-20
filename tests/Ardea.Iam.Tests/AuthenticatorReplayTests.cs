@@ -12,10 +12,6 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>
-/// An authenticator code works once per account (RFC 6238 §5.2, ASVS 2.8.4; issue #85), wherever a code is
-/// checked. The server's clock is a fake one, so every code below belongs to a known time step.
-/// </summary>
 public sealed class AuthenticatorReplayTests(PostgresServer server)
 {
     private const string Email = "first@example.org";
@@ -48,10 +44,8 @@ public sealed class AuthenticatorReplayTests(PostgresServer server)
         await SetupAsync(owner);
         var key = await EnableTotpAsync(owner, clock);
         clock.Advance(Step);
-        // A phone clock running a minute ahead: the code two steps on is still accepted.
         using var phone = await SignInAsync(host, Totp.Code(key, clock.GetUtcNow() + (2 * Step)), HttpStatusCode.NoContent);
 
-        // The code of the current step is within the window, but older than the one just used.
         using var later = host.Client();
         await later.PostAsync("/api/v1/auth/login", new { email = Email, password = ApiTestHost.Password });
         var older = await later.PostAsync("/api/v1/auth/login/two-factor", new { code = Totp.Code(key, clock.GetUtcNow()), isRecoveryCode = false });
@@ -83,7 +77,6 @@ public sealed class AuthenticatorReplayTests(PostgresServer server)
         await ExpectProblem(Assert.Single(answers, a => a.StatusCode != HttpStatusCode.NoContent), HttpStatusCode.BadRequest, "invalid_code");
         var sessions = await Task.WhenAll(laptop.SessionAsync(), onlooker.SessionAsync());
         Assert.Single(sessions, s => s.StatusCode == HttpStatusCode.OK);
-        // The loser's lockout count must not have written the older step back.
         Assert.Equal(AuthenticatorCode.StepAt(clock.GetUtcNow()), await host.ScalarAsync<long>("SELECT totp_last_step FROM iam.\"user\""));
         using var third = await SignInAsync(host, code, HttpStatusCode.BadRequest);
     }
@@ -100,7 +93,6 @@ public sealed class AuthenticatorReplayTests(PostgresServer server)
         var code = Totp.Code(key, clock.GetUtcNow());
         var userId = await host.ScalarAsync<Guid>("SELECT id FROM iam.\"user\"");
 
-        // A request that loaded the account before the code was claimed, such as a wrong password still being hashed.
         await using var stale = host.Services.CreateAsyncScope();
         var staleUsers = ActAs(stale, userId);
         var staleUser = (await staleUsers.FindByIdAsync(userId.ToString()))!;
@@ -225,7 +217,6 @@ public sealed class AuthenticatorReplayTests(PostgresServer server)
         }
     }
 
-    /// <summary>The user manager of a scope whose unit of work acts for <paramref name="userId"/>.</summary>
     private static UserManager<ArdeaUser> ActAs(AsyncServiceScope scope, Guid userId)
     {
         scope.ServiceProvider.GetRequiredService<TenantContext>().SetUser(userId);
@@ -234,13 +225,11 @@ public sealed class AuthenticatorReplayTests(PostgresServer server)
 
     private async Task<(ApiTestHost Host, FakeTimeProvider Clock)> StartAsync()
     {
-        // Close to the real time: sessions are checked against the database's clock.
         var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
         var host = await ApiTestHost.StartAsync(server, services: services => services.AddSingleton<TimeProvider>(clock));
         return (host, clock);
     }
 
-    /// <summary>A new client through both sign-in steps with <paramref name="code"/>.</summary>
     private static async Task<ApiClient> SignInAsync(ApiTestHost host, string code, HttpStatusCode expected)
     {
         var client = host.Client();
@@ -252,7 +241,6 @@ public sealed class AuthenticatorReplayTests(PostgresServer server)
     private static Task<HttpResponseMessage> SetupAsync(ApiClient client) =>
         client.PostAsync("/api/v1/setup", new { setupToken = ApiTestHost.SetupTokenValue, email = Email, displayName = "First Person", password = ApiTestHost.Password });
 
-    /// <summary>Turns two-factor on with the code of the clock's current step, which is then used up.</summary>
     private static async Task<string> EnableTotpAsync(ApiClient client, FakeTimeProvider clock, List<string>? recoveryCodes = null)
     {
         var setup = await (await client.PostAsync("/api/v1/account/mfa/setup", new { password = ApiTestHost.Password })).Content.ReadFromJsonAsync<JsonElement>();

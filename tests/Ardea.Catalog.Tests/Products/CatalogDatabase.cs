@@ -9,7 +9,6 @@ using Npgsql;
 
 namespace Ardea.Catalog.Tests.Products;
 
-/// <summary>A fresh database on the shared server with the platform and catalogue schemas.</summary>
 internal sealed class CatalogDatabase(PostgresServer server, string name)
 {
     public static readonly IModuleDatabase Module = new CatalogModule().Database!;
@@ -30,7 +29,6 @@ internal sealed class CatalogDatabase(PostgresServer server, string name)
 
     public static async Task<CatalogDatabase> CreateAsync(PostgresServer server) => new(server, await server.CreateDatabaseAsync("catalog"));
 
-    /// <summary>The catalogue lookups over a connection, with the given cache.</summary>
     public static ProductCatalog Lookup(NpgsqlConnection connection, CatalogCache cache) =>
         new(
             new CatalogDbContext(new DbContextOptionsBuilder<CatalogDbContext>().UseArdeaNpgsql(connection, CatalogDbContext.Schema).Options, new TenantContext()),

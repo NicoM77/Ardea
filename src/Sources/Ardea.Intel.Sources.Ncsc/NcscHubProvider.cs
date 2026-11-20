@@ -6,18 +6,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Sources.Ncsc;
 
-/// <summary>
-/// The NCSC Cyber Security Hub (master plan 5.5, decision E10, task 1.9): the public JSON interface of
-/// <c>security-hub.ncsc.admin.ch</c>.
-/// <list type="bullet">
-/// <item>Every run reads the first page of the list (50 posts, one request). A post is fetched only when it is
-/// new or its <c>lastChange</c> differs from the one in the cursor.</item>
-/// <item>Once a day (and in backfill mode) all pages are read, because the order of the list is not reliable.</item>
-/// <item>The interface has no validators; the cursor is the only memory: post number to the <c>lastChange</c>
-/// last seen, plus the time of the last full sweep.</item>
-/// </list>
-/// The operator can switch the source off like any other; the interface is undocumented and may change.
-/// </summary>
 public sealed class NcscHubProvider : ISourceProvider
 {
     public const string Key = "ncsc-hub";
@@ -39,7 +27,6 @@ public sealed class NcscHubProvider : ISourceProvider
         MinimumInterval = TimeSpan.FromMinutes(30),
         AllowedHosts = [Host],
         Attribution = "Advisories of the Cyber Security Hub of the Swiss National Cyber Security Centre (NCSC), https://security-hub.ncsc.admin.ch",
-        // First load: one detail request per post (about 340 today); later runs fetch only what changed.
         RequestsPerMinute = 60,
         MaxResponseBytes = 5L * 1024 * 1024,
         ParserVersion = NcscHubReader.ParserVersion,
@@ -94,7 +81,6 @@ public sealed class NcscHubProvider : ISourceProvider
                 yield return record;
             }
 
-            // A post that vanished between list and details (404) is remembered too: the next list tells.
             known[post.Id] = post.LastChange ?? string.Empty;
             if (++sinceCheckpoint == CheckpointEvery)
             {
@@ -114,7 +100,6 @@ public sealed class NcscHubProvider : ISourceProvider
         }
     }
 
-    /// <summary>The first page, and all further pages on a sweep. Fails when the answer does not look like the list.</summary>
     private static async Task<List<ListedPost>> ListAsync(SyncContext context, bool sweep, CancellationToken cancellationToken)
     {
         var posts = new Dictionary<long, ListedPost>();
@@ -145,7 +130,6 @@ public sealed class NcscHubProvider : ISourceProvider
                     throw new InvalidOperationException("A post in the list has no id or title; the interface may have changed.");
                 }
 
-                // Pages overlap or shift while posts change; the last sighting wins.
                 posts[id] = new ListedPost(id, item.String("lastChange") ?? item.String("created"), item.String("title"));
             }
 
@@ -186,11 +170,6 @@ public sealed class NcscHubProvider : ISourceProvider
     private sealed record ListedPost(long Id, string? LastChange, string? Title);
 }
 
-/// <summary>
-/// The hub cursor: the <c>lastChange</c> last seen per post number and the time of the last complete
-/// sweep. It holds at most <see cref="MaxPosts"/> posts (the newest numbers), so it stays small however
-/// long the source runs; a post dropped from it is simply fetched once more when it is seen again.
-/// </summary>
 internal sealed record HubCursor(DateTimeOffset? Sweep, Dictionary<long, string> Posts)
 {
     public const int MaxPosts = 2000;
@@ -214,7 +193,6 @@ internal sealed record HubCursor(DateTimeOffset? Sweep, Dictionary<long, string>
         }
         catch (JsonException)
         {
-            // An unreadable cursor means: start over with a full sweep.
             return null;
         }
     }

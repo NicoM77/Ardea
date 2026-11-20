@@ -3,7 +3,6 @@ using Ardea.Catalog.Products;
 
 namespace Ardea.Catalog.Tests.Products;
 
-/// <summary>Finding products by spelling, CPE pair, package and image (master plan 6.5, 16.3) in the curated catalogue.</summary>
 public sealed class CatalogIndexTests
 {
     private static readonly CatalogIndex Index = new(CatalogFiles.Load(CatalogFilesTests.RepositoryCatalog).Products);

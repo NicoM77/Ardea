@@ -42,21 +42,8 @@ internal sealed record ComponentView(
     string NoticeThreshold,
     CatalogMatchView? CatalogMatch = null);
 
-/// <summary>
-/// The organisation's stack (master plan 17.2, ADR 046): a system project created with the organisation. Its entries are
-/// components of <see cref="ProjectId"/> and change through the component endpoints of that project.
-/// </summary>
-/// <param name="ProjectId">The stack's system project.</param>
-/// <param name="Components">Its entries, each with version precision and notice threshold.</param>
 internal sealed record StackView(Guid ProjectId, IReadOnlyList<ComponentView> Components);
 
-/// <summary>
-/// A free entry the catalogue now knows (master plan 6.9 «Vorschläge»): its name matches this catalogue entry, often a
-/// learned one. Switching the component to the entry is a proposal for a member, never done on its own.
-/// </summary>
-/// <param name="Key">The catalogue key to switch to.</param>
-/// <param name="Name">The entry's name.</param>
-/// <param name="Learned">The match comes from an entry the instance learned.</param>
 internal sealed record CatalogMatchView(string Key, string Name, bool Learned);
 
 internal sealed record ProjectDetail(ProjectView Project, IReadOnlyList<ComponentView> Components);
@@ -65,10 +52,6 @@ internal sealed record ReplaceComponentsRequest(IReadOnlyList<ComponentInput>? C
 
 internal sealed record ReplaceComponentsResponse(int Created, int Updated, int Removed, int Unchanged, IReadOnlyList<ComponentView> Components);
 
-/// <summary>
-/// Projects and their components (master plan 4.5, 4.9, 10.2; task 2.3). Every change to a profile
-/// is audited and queues the reverse search for the project.
-/// </summary>
 internal static class ProjectEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
@@ -97,7 +80,6 @@ internal static class ProjectEndpoints
             .Produces<ComponentView>().Problems(403, 404, 409);
     }
 
-    /// <summary>The organisation's projects; the stack is a system project and not among them (<c>GET stack</c> reads it).</summary>
     private static async Task<IReadOnlyList<ProjectView>> ListAsync(bool? archived, AssetsDbContext db, CancellationToken cancellationToken)
     {
         var projects = await db.Projects.AsNoTracking().Where(p => p.Kind == Project.ProjectKind && (archived == true || p.ArchivedAt == null))
@@ -106,7 +88,6 @@ internal static class ProjectEndpoints
         return [.. projects.OrderBy(p => p.Project.Name, StringComparer.CurrentCultureIgnoreCase).Select(p => View(p.Project, p.Count))];
     }
 
-    /// <summary>The stack with its entries (master plan 17.2); every organisation has one from its creation on.</summary>
     private static async Task<IResult> StackAsync(AssetsDbContext db, IProductCatalog catalog, CancellationToken cancellationToken)
     {
         var stack = await db.Projects.AsNoTracking().Where(p => p.Kind == Project.StackKind).Select(p => (Guid?)p.Id).SingleOrDefaultAsync(cancellationToken);
@@ -189,7 +170,6 @@ internal static class ProjectEndpoints
         await db.SaveChangesAsync(cancellationToken);
         await audit.RecordAsync(new AuditEntry("project.changed", "project", projectId.ToString(), request), cancellationToken);
 
-        // Exposure, criticality and archiving change what a finding means; the name does not.
         if (criticality != project.Criticality || exposure != project.Exposure || archived != (project.ArchivedAt is not null))
         {
             await jobs.EnqueueAsync(new ProjectProfileChanged(projectId), ProjectProfileChanged.Options(projectId), cancellationToken);
@@ -200,10 +180,6 @@ internal static class ProjectEndpoints
         return Results.Ok(View(project, count));
     }
 
-    /// <summary>
-    /// Archives the project: it leaves lists and the matching, but its history stays (master plan 4.5,
-    /// <c>archived_at</c>). <c>PATCH {"archived": false}</c> brings it back.
-    /// </summary>
     private static async Task<IResult> ArchiveAsync(
         Guid projectId, AssetsDbContext db, IUnitOfWork unitOfWork, IAuditLog audit, IJobQueue jobs, TimeProvider time, CancellationToken cancellationToken)
     {
@@ -264,17 +240,11 @@ internal static class ProjectEndpoints
         await ComponentKeys.RefreshAsync(db, catalog, [component], cancellationToken);
         await ProfileChangedAsync(audit, jobs, projectId, "component.added", component.Id, values, cancellationToken);
 
-        // The view reads the catalogue through the unit of work: before the commit, never after (ADR 023).
         var view = await ViewAsync(component, catalog, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         return Results.Created($"projects/{projectId}/components/{component.Id}", view);
     }
 
-    /// <summary>
-    /// Changes the given fields; <c>null</c> keeps a field, an empty string clears it. A component from
-    /// a repository changes only in its context (exposure, criticality, protection); its product and
-    /// version belong to the repository until it is detached (master plan 16.5).
-    /// </summary>
     private static async Task<IResult> UpdateComponentAsync(
         Guid projectId, Guid id, ComponentInput request, AssetsDbContext db, IProductCatalog catalog, IUnitOfWork unitOfWork, IAuditLog audit,
         IJobQueue jobs, TimeProvider time, CancellationToken cancellationToken)
@@ -308,7 +278,6 @@ internal static class ProjectEndpoints
             request.Criticality ?? component.Criticality,
             request.Protection ?? component.Protection,
             request.ProtectionNote ?? component.ProtectionNote,
-            // A new version without a stated precision gets the one that follows from it (ADR 046).
             request.VersionPrecision ?? (request.Version is null ? component.VersionPrecision : null),
             request.NoticeThreshold ?? component.NoticeThreshold);
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
@@ -361,7 +330,6 @@ internal static class ProjectEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>Takes a component away from its repository link: it becomes manual and no reading changes it again (master plan 16.5).</summary>
     private static async Task<IResult> DetachAsync(
         Guid projectId, Guid id, AssetsDbContext db, IProductCatalog catalog, IUnitOfWork unitOfWork, IAuditLog audit, TimeProvider time,
         CancellationToken cancellationToken)
@@ -387,11 +355,6 @@ internal static class ProjectEndpoints
         return Results.Ok(view);
     }
 
-    /// <summary>
-    /// Replaces the manual components as a whole, as the wizard sends them (master plan 4.9, 10.2): an
-    /// item keeps the component with its id or, without one, the component with the same product and
-    /// parent; only what the new list lacks is removed. Components from a repository stay untouched.
-    /// </summary>
     private static async Task<IResult> ReplaceComponentsAsync(
         Guid projectId, ReplaceComponentsRequest request, AssetsDbContext db, IProductCatalog catalog, IUnitOfWork unitOfWork, IAuditLog audit,
         IJobQueue jobs, TimeProvider time, CancellationToken cancellationToken)

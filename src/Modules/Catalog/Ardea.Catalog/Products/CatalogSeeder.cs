@@ -5,12 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Catalog.Products;
 
-/// <summary>
-/// Loads the curated catalogue into <c>catalog.product</c> on every <c>migrate</c> (master plan 4.11).
-/// Idempotent: curated rows are inserted, updated or removed to match the files. Learned rows are left
-/// alone (master plan 6.9), with one exception: a curated file that takes over the key of a learned
-/// entry promotes it to curated; this is how learned entries return to the project.
-/// </summary>
 internal static class CatalogSeeder
 {
     public static async Task<int> SeedAsync(CatalogDbContext context, MasterDataOptions masterData, CancellationToken cancellationToken)
@@ -20,7 +14,6 @@ internal static class CatalogSeeder
         var errors = load.Errors.Concat(CatalogValidator.Validate(load.Products, VersionSchemeRegistry.Instance)).ToList();
         if (errors.Count > 0)
         {
-            // An empty or broken folder must never wipe the catalogue.
             throw new InvalidOperationException($"The catalogue in '{directory}' cannot be loaded:{Environment.NewLine}  - {string.Join(Environment.NewLine + "  - ", errors)}");
         }
 

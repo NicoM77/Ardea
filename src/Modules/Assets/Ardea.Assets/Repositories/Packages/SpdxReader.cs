@@ -3,10 +3,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Assets.Repositories.Packages;
 
-/// <summary>
-/// What the SBOM gave: the packages, and the branch its root package names (GitHub exports the default
-/// branch only, e.g. <c>master</c>), or why it gave nothing.
-/// </summary>
 internal sealed record SbomReadResult(IReadOnlyList<PackageFinding> Findings, string? DescribedBranch, string? Error)
 {
     public bool Ok => Error is null;
@@ -14,26 +10,8 @@ internal sealed record SbomReadResult(IReadOnlyList<PackageFinding> Findings, st
     public static SbomReadResult Failed(string error) => new([], null, error);
 }
 
-/// <summary>
-/// Reads the SPDX 2.3 JSON of GitHub's dependency graph (ADR 032), streaming, without a document tree.
-/// <list type="bullet">
-/// <item>Every package with a purl becomes a finding. Its version comes from the purl, else from
-/// <c>versionInfo</c>; a range (<c>^2.0.0</c>, <c>~3.0.2</c>, <c>&gt;= 0</c>, <c>1.x</c>, <c>*</c>) is
-/// "version unknown". NuGet versions from the graph are never exact: GitHub reads only the project
-/// files, where <c>1.0.0</c> means "at least 1.0.0".</item>
-/// <item>The root package (what the document <c>DESCRIBES</c>) is the repository itself, and
-/// <c>pkg:github/…</c> packages are skipped. GitHub Actions (<c>pkg:githubactions/…</c>) are kept: the
-/// coverage lists them as not yet checkable (16.3).</item>
-/// <item>Scope is always unknown: the SBOM does not mark development dependencies.</item>
-/// <item>Relation: only where the SBOM carries real paths for an ecosystem, i.e. some package of that
-/// purl type itself <c>DEPENDS_ON</c> another (GitHub has a lockfile), is a package the root depends on
-/// direct and every other transitive. Without paths every package hangs off the root, which says
-/// nothing; the relation stays unknown.</item>
-/// </list>
-/// </summary>
 internal static class SpdxReader
 {
-    /// <summary>ADR 032, decision 2.</summary>
     public const long MaxSbomBytes = 64L * 1024 * 1024;
 
     private static readonly JsonSerializerOptions Json = new()
@@ -42,7 +20,6 @@ internal static class SpdxReader
         MaxDepth = 32,
     };
 
-    /// <summary>Reads the SBOM from <paramref name="utf8"/>. Fails as a result for malformed input; a stream beyond <see cref="MaxSbomBytes"/> throws <see cref="ContentTooLargeException"/>.</summary>
     public static async Task<SbomReadResult> ReadAsync(Stream utf8, CancellationToken cancellationToken)
     {
         SpdxDocument? document;

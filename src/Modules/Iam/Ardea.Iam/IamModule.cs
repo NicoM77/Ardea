@@ -31,7 +31,6 @@ public sealed class IamModule : IModule
         services.AddHttpContextAccessor();
         services.AddIdentityCore<ArdeaUser>(options =>
             {
-                // Master plan 9.3: length 12, no composition rules; the common-password list does the rest.
                 options.Password.RequiredLength = CommonPasswordValidator.MinimumLength;
                 options.Password.RequireDigit = false;
                 options.Password.RequireLowercase = false;
@@ -50,9 +49,7 @@ public sealed class IamModule : IModule
             .AddPasswordValidator<CommonPasswordValidator>()
             .AddClaimsPrincipalFactory<ArdeaClaimsFactory>()
             .AddDefaultTokenProviders()
-            // Replaces Identity's authenticator provider: each code works once per account (issue #85).
             .AddTokenProvider<SingleUseAuthenticatorTokenProvider>(TokenOptions.DefaultAuthenticatorProvider);
-        // Reset and confirmation links work for two hours.
         services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromHours(2));
         services.AddJob<SendPasswordResetEmail, AccountEmailHandlers>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });
         services.AddJob<SendEmailConfirmation, AccountEmailHandlers>(new JobKindOptions { MaxAttempts = 3, Timeout = TimeSpan.FromMinutes(1) });
@@ -86,7 +83,6 @@ public sealed class IamModule : IModule
             options.Events = new CookieAuthenticationEvents
             {
                 OnValidatePrincipal = SessionValidator.ValidateAsync,
-                // An API answers with a status code, never with a redirect to a sign-in page.
                 OnRedirectToLogin = context => Status(context.Response, StatusCodes.Status401Unauthorized),
                 OnRedirectToAccessDenied = context => Status(context.Response, StatusCodes.Status403Forbidden),
             };
@@ -97,7 +93,6 @@ public sealed class IamModule : IModule
             options.Cookie.SecurePolicy = policy;
             options.Cookie.SameSite = SameSiteMode.Strict;
             options.Cookie.Path = "/";
-            // Five minutes from the password, however many codes are tried in between.
             options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
             options.SlidingExpiration = false;
         });
@@ -119,18 +114,12 @@ public sealed class IamModule : IModule
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            // Per client network: an IPv6 client controls a whole /64, so the limit applies to it as one.
-            // Per account, the lockout after five failures limits guessing (master plan 9.3).
             options.AddPolicy(AuthEndpoints.RateLimitPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
                 ClientKey(http.Connection.RemoteIpAddress),
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = perMinute, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
-            // Read-only lookups the web app makes on every load (setup state, invitation preview): looser,
-            // so reloading a page does not end in "too many attempts", but still bounded per client.
             options.AddPolicy(AuthEndpoints.ReadRateLimitPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
                 ClientKey(http.Connection.RemoteIpAddress),
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = perMinute * 6, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
-            // Calls out of the instance while the request waits: per account, so one member cannot keep the
-            // instance busy with test messages or GitHub searches, and per client network for anything without one.
             options.AddPolicy(Platform.Http.RateLimits.Outbound, http => RateLimitPartition.GetFixedWindowLimiter(
                 http.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value is { } user ? "user:" + user : ClientKey(http.Connection.RemoteIpAddress),
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = outboundPerMinute, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
@@ -159,7 +148,6 @@ public sealed class IamModule : IModule
         AuditEndpoints.Map(endpoints);
     }
 
-    /// <summary>Real instances have an HTTPS public address; only development runs on plain HTTP.</summary>
     internal static bool IsSecure(IConfiguration configuration) =>
         !Uri.TryCreate(configuration["PUBLIC_URL"], UriKind.Absolute, out var url) || url.Scheme != Uri.UriSchemeHttp;
 

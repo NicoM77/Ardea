@@ -5,7 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Intel.Tests;
 
-/// <summary>Completeness check and maintenance commands (task 1.11; master plan 6.8, 12.8).</summary>
 public sealed class MaintenanceTests(PostgresServer server)
 {
     private static readonly DateTimeOffset Old = new(2026, 11, 15, 8, 0, 0, TimeSpan.Zero);
@@ -22,7 +21,6 @@ public sealed class MaintenanceTests(PostgresServer server)
         ]);
         await host.SyncAsync();
 
-        // The log knows a newer B and two records no delta ever delivered; C appears twice.
         host.Provider.ChangeLog.AddRange([
             new ChangedRecord("A", Old),
             new ChangedRecord("B", New),
@@ -49,7 +47,6 @@ public sealed class MaintenanceTests(PostgresServer server)
         Assert.Equal("c1", await host.ScalarAsync<string>("SELECT cursor FROM intel.source WHERE key = 'scripted'"));
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'intel.normalize-records' AND state = 'pending'"));
 
-        // A second check finds nothing left to fetch.
         await host.CheckCompletenessAsync();
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'intel.sync-source' AND state = 'pending'"));
     }
@@ -95,7 +92,6 @@ public sealed class MaintenanceTests(PostgresServer server)
         await host.SyncAsync();
         await host.NormalizeAsync();
         await host.ExecuteAsync("UPDATE platform.job SET state = 'succeeded' WHERE state = 'pending'");
-        // As if A had been read by the parser before the current one, and quarantined by it.
         await host.ExecuteAsync("UPDATE intel.source_record SET parser_version = 0, parse_status = 'quarantined' WHERE external_id = 'A'");
 
         var registrar = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions
@@ -107,7 +103,6 @@ public sealed class MaintenanceTests(PostgresServer server)
         await host.RunJobsAsync("intel.normalize-records");
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source_record WHERE parse_status <> 'parsed' OR parser_version <> 1"));
 
-        // Nothing outdated: a further start queues nothing.
         await host.ExecuteAsync("UPDATE platform.job SET state = 'succeeded' WHERE state = 'pending'");
         await registrar.RegisterAsync(CancellationToken.None);
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE state = 'pending'"));
@@ -140,7 +135,6 @@ public sealed class MaintenanceTests(PostgresServer server)
         await host.RunJobsAsync("intel.normalize-records", "intel.correlate-entry");
         Assert.Equal(3L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.security_entry"));
 
-        // A rule change the stored entry does not reflect yet.
         await host.ExecuteAsync("UPDATE intel.security_entry SET title = 'stale' WHERE title IN ('First', 'Warn')");
 
         Assert.Equal(0, await host.RunCommandAsync(IntelCommands.Recompute));

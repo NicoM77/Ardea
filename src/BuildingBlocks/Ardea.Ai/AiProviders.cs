@@ -12,11 +12,6 @@ using OpenAI;
 
 namespace Ardea.Ai;
 
-/// <summary>
-/// The configured providers behind <see cref="IAiProviders"/> (master plan 7.8): one <see cref="IChatClient"/> per
-/// provider, built from its kind's SDK and wrapped for telemetry. Telemetry records calls, tokens, duration
-/// and errors, never prompt or answer texts.
-/// </summary>
 internal sealed partial class AiProviders : IAiProviders, IDisposable
 {
     public const string TelemetrySource = "Ardea.Ai";
@@ -82,7 +77,6 @@ internal sealed partial class AiProviders : IAiProviders, IDisposable
         }
     }
 
-    /// <summary>A message for the administrator: the kind of failure and an HTTP status, never the request or a key.</summary>
     internal static string Describe(Exception exception) => exception switch
     {
         ClientResultException { Status: 401 or 403 } => "The provider refused the key (HTTP 401/403).",
@@ -110,12 +104,6 @@ internal sealed partial class AiProviders : IAiProviders, IDisposable
         _ => throw new InvalidOperationException($"Unknown provider kind {options.Kind}."),
     };
 
-    /// <summary>
-    /// The HTTP client of every provider SDK. The operator chose the address, which may well be internal (a local
-    /// model server), but a redirect is the provider's choice: it is not followed, so neither the key in a header nor
-    /// the answer of an internal service (cloud metadata) can be reached through it (master plan 9.5, 9.7). The call
-    /// time limit is <see cref="AiLimits.CallTimeout"/>, set by the caller; the client adds none of its own.
-    /// </summary>
     internal static HttpClient CreateHttpClient() => new(new SocketsHttpHandler
     {
         AllowAutoRedirect = false,
@@ -137,10 +125,6 @@ internal sealed partial class AiProviders : IAiProviders, IDisposable
 
 public static class AiProviderServices
 {
-    /// <summary>
-    /// Registers the providers of the configuration (master plan 7.8, 12.4). A broken provider configuration is
-    /// reported by the start-up check (<see cref="AiProviderOptions.FromConfiguration"/>), not here.
-    /// </summary>
     public static IServiceCollection AddAiProviders(this IServiceCollection services, IConfiguration configuration)
     {
         var providers = AiProviderOptions.FromConfiguration(configuration, out _);

@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Intel.Features;
 
-/// <summary>Entries for the Assessment module (master plan 3.2, 7.2); global data in the caller's unit of work.</summary>
 internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
 {
     public async Task<EntryFacts?> FindAsync(Guid entryId, CancellationToken cancellationToken) =>
@@ -66,7 +65,6 @@ internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
             return [];
         }
 
-        // Four lookups, each on its own index of entry_affected (master plan 4.4), then the entry's state and age.
         var products = keys.ProductKeys.Distinct(StringComparer.Ordinal).ToArray();
         var cpeVendors = keys.CpePairs.Select(p => p.First).ToArray();
         var cpeProducts = keys.CpePairs.Select(p => p.Second).ToArray();
@@ -141,10 +139,6 @@ internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
         };
     }
 
-    /// <summary>
-    /// CISA's catalogue of known exploited vulnerabilities backs the evidence: its own feed (<c>cisa-kev</c>) or the KEV
-    /// entry of a CVE record's CISA-ADP container, which names the catalogue as its reference.
-    /// </summary>
     private static bool IsKev(Correlation.ExploitationEvidence evidence) =>
         evidence.State == "active" && (evidence.Source == "cisa-kev"
             || (evidence.Evidence is { } text && (text.Contains("known-exploited", StringComparison.OrdinalIgnoreCase) || text.Contains("KEV", StringComparison.Ordinal))));

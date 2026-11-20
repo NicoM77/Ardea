@@ -9,11 +9,6 @@ using Npgsql;
 
 namespace Ardea.Iam.Security;
 
-/// <summary>
-/// A fresh instance accepts its first user only with the setup token (master plan 9.1), so nobody
-/// can take over an instance that is already reachable. The token comes from <c>ARDEA_SETUP_TOKEN</c>
-/// or is generated once, stored encrypted and written to the log at start.
-/// </summary>
 internal static class SetupToken
 {
     public const string ConfigurationKey = "SETUP_TOKEN";
@@ -38,7 +33,6 @@ internal static class SetupToken
     }
 }
 
-/// <summary>At API start: without users and without a configured token, create one and log it once.</summary>
 internal sealed partial class SetupTokenAnnouncer(IServiceScopeFactory scopes, IConfiguration configuration, ILogger<SetupTokenAnnouncer> logger) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -56,7 +50,6 @@ internal sealed partial class SetupTokenAnnouncer(IServiceScopeFactory scopes, I
             return;
         }
 
-        // Several API instances may start together; the lock makes them agree on one token.
         await using (var lockCommand = new NpgsqlCommand("SELECT pg_advisory_xact_lock(hashtext('ardea-setup-token'))", connection))
         {
             await lockCommand.ExecuteNonQueryAsync(cancellationToken);

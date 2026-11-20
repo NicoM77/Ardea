@@ -18,34 +18,24 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Assets.Repositories.Indexing;
 
-/// <summary>Reads one linked repository into its project's profile (master plan 3.3, 16.2; task 2.13).</summary>
 internal sealed record IndexRepository(Guid LinkId, bool ApplyShrink = false) : IJob
 {
     public static string Kind => "assets.index-repository";
 
-    /// <summary>Default time between two readings of a link (master plan 16.6).</summary>
     public static readonly TimeSpan Interval = TimeSpan.FromMinutes(60);
 
-    /// <summary>After this long failing, <c>repository.unavailable</c> is raised once (master plan 16.6).</summary>
     public static readonly TimeSpan UnavailableAfter = TimeSpan.FromDays(3);
 
-    /// <summary>Files read per run and their size (master plan 16.3).</summary>
     public const int MaxFiles = 50;
 
     public const int MaxFileBytes = 1024 * 1024;
 
-    /// <summary>Below this many packages a shrink is not held back: small lists change a lot by nature.</summary>
     public const int ShrinkFloor = 10;
 
     public static EnqueueOptions Options(Guid linkId, Guid organizationId, TimeSpan? delay = null) =>
         new() { CoalesceKey = $"assets.index-repository:{linkId}", OrganizationId = organizationId, Delay = delay ?? TimeSpan.Zero };
 }
 
-/// <summary>
-/// Reads in a short unit of work, talks to GitHub without an open transaction, and writes the result
-/// in the job's own unit of work (master plan 9.2). The same commit gives the same profile, a failed
-/// reading never removes anything, and a much smaller state waits for confirmation (16.5).
-/// </summary>
 internal sealed partial class IndexRepositoryHandler(
     IUnitOfWorkFactory units,
     AssetsDbContext db,
@@ -86,7 +76,6 @@ internal sealed partial class IndexRepositoryHandler(
 
         if (head.Value!.Unchanged || head.Value.CommitSha == link.LastCommitSha)
         {
-            // The same commit gives the same profile: nothing to read.
             await TouchAsync(link.Id, head.Value.ETag ?? link.HeadEtag, now, cancellationToken);
             return;
         }
@@ -102,7 +91,6 @@ internal sealed partial class IndexRepositoryHandler(
         await WriteAsync(link.Id, sha, head.Value.ETag, reading, now, cancellationToken);
     }
 
-    /// <summary>The link and how to reach it; <c>null</c> when the link or its access is gone.</summary>
     private async Task<(RepositoryLink Link, RepositoryRef Reference)?> ReadRepositoryAsync(Guid linkId, CancellationToken cancellationToken)
     {
         await using var scope = units.CreateScope();
@@ -129,7 +117,6 @@ internal sealed partial class IndexRepositoryHandler(
         IReadOnlyList<string> FilesRead,
         RepositoryError? Error);
 
-    /// <summary>File tree, the known files (at most 50, each at most 1 MB), the SBOM where it fits, readers and detection rules.</summary>
     private async Task<Reading> ReadCommitAsync(RepositoryRef reference, string sha, RepositoryLink link, CancellationToken cancellationToken)
     {
         var tree = await host.GetTreeAsync(reference, sha, cancellationToken);
@@ -178,8 +165,6 @@ internal sealed partial class IndexRepositoryHandler(
             }
         }
 
-        // The SBOM describes the default branch of the whole repository (ADR 032); for another branch or a
-        // subfolder only the own readers count.
         IReadOnlyList<PackageFinding> sbomFindings = [];
         byte[]? sbomBytes = null;
         var (state, reason) = ("ok", (string?)null);
@@ -209,7 +194,6 @@ internal sealed partial class IndexRepositoryHandler(
 
     private sealed record SbomRead(SbomReadResult Result, byte[] Compressed);
 
-    /// <summary>Keeps the SBOM compressed for the link (master plan 4.5) and reads it.</summary>
     private static async Task<SbomRead> ReadSbomAsync(Stream stream, CancellationToken cancellationToken)
     {
         using var buffer = new MemoryStream();
@@ -219,7 +203,6 @@ internal sealed partial class IndexRepositoryHandler(
         return new SbomRead(result, Compress(buffer.ToArray()));
     }
 
-    /// <summary>The job's unit of work: components, suggestions, link state, audit and the reverse search together.</summary>
     private async Task WriteAsync(Guid linkId, string sha, string? etag, Reading reading, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var link = await db.RepositoryLinks.SingleOrDefaultAsync(l => l.Id == linkId, cancellationToken);
@@ -233,7 +216,6 @@ internal sealed partial class IndexRepositoryHandler(
         var packageCount = existing.Count(c => c.Purl is not null);
         var first = link.LastIndexedAt is null;
 
-        // A much smaller state waits for a person (16.5): a switched-off graph or an empty SBOM never empties a profile.
         if (!first && packageCount >= IndexRepository.ShrinkFloor && reading.Packages.Count < packageCount / 2.0)
         {
             link.PendingShrink = Compress(JsonSerializer.SerializeToUtf8Bytes(reading.Packages.Select(Stored.From), Json));
@@ -270,7 +252,6 @@ internal sealed partial class IndexRepositoryHandler(
         }
     }
 
-    /// <summary>Applies a held-back state after a person confirmed it (<c>confirm-shrink</c>).</summary>
     private async Task ApplyHeldBackAsync(Guid linkId, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var link = await db.RepositoryLinks.SingleOrDefaultAsync(l => l.Id == linkId, cancellationToken);
@@ -314,7 +295,6 @@ internal sealed partial class IndexRepositoryHandler(
         return changes;
     }
 
-    /// <summary>Package, version and evidence of a component from its finding; the catalogue names the product where it knows the package.</summary>
     private async Task DescribeAsync(Component component, PackageFinding finding, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var product = await catalog.FindByPackageAsync(finding.Package.Type, finding.Package.Name, cancellationToken);
@@ -332,10 +312,6 @@ internal sealed partial class IndexRepositoryHandler(
         component.ChangedAt = now;
     }
 
-    /// <summary>
-    /// Suggestions keep their decision: one already confirmed or dismissed for the same values is not
-    /// made again; open ones the repository no longer gives are dropped.
-    /// </summary>
     private async Task ApplySuggestionsAsync(RepositoryLink link, IReadOnlyList<PlatformSuggestion> suggestions, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var known = await db.ComponentSuggestions.Where(s => s.RepositoryLinkId == link.Id).ToListAsync(cancellationToken);
@@ -387,11 +363,6 @@ internal sealed partial class IndexRepositoryHandler(
         }
     }
 
-    /// <summary>
-    /// A failed reading changes nothing in the profile (16.5). Passing trouble (rate limit, GitHub
-    /// unavailable, SBOM still being built) only moves the due time; lasting trouble marks the link
-    /// failing, and after three days raises <c>repository.unavailable</c> once (16.6).
-    /// </summary>
     private async Task FailAsync(Guid linkId, RepositoryError error, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var link = await db.RepositoryLinks.SingleOrDefaultAsync(l => l.Id == linkId, cancellationToken);
@@ -406,7 +377,6 @@ internal sealed partial class IndexRepositoryHandler(
             await db.SaveChangesAsync(cancellationToken);
             if (error.Kind == RepositoryFailure.SbomNotReady)
             {
-                // The report is being built; ask again soon rather than in an hour.
                 await jobs.EnqueueAsync(new IndexRepository(linkId), IndexRepository.Options(linkId, link.OrganizationId, error.RetryAfter ?? TimeSpan.FromMinutes(2)), cancellationToken);
             }
 
@@ -420,7 +390,6 @@ internal sealed partial class IndexRepositoryHandler(
         if (link.UnavailableRaisedAt is null && now - link.FailingSince >= IndexRepository.UnavailableAfter)
         {
             link.UnavailableRaisedAt = now;
-            // The notification rules of phase 5 pick this event up; until then it is in the audit log.
             await audit.RecordAsync(new AuditEntry("repository.unavailable", "repository_link", linkId.ToString(),
                 new { link.Owner, link.Name, since = link.FailingSince, reason = link.StateReason }), cancellationToken);
         }
@@ -429,7 +398,6 @@ internal sealed partial class IndexRepositoryHandler(
         LogFailing(link.Owner, link.Name, error.Kind.ToString());
     }
 
-    /// <summary>Every link once an hour, spread over the hour by its id so that they do not all come at once.</summary>
     private static DateTimeOffset NextCheck(Guid linkId, DateTimeOffset now) =>
         now + IndexRepository.Interval + TimeSpan.FromSeconds(Math.Abs(linkId.GetHashCode()) % 600);
 
@@ -462,7 +430,6 @@ internal sealed partial class IndexRepositoryHandler(
         return output.ToArray();
     }
 
-    /// <summary>A finding as kept for a held-back state.</summary>
     private sealed record Stored(string Type, string Name, string? Version, bool Exact, DependencyScope Scope, DependencyRelation Relation, string? Path, int? Line, FindingSource Source)
     {
         public static Stored From(PackageFinding f) =>
@@ -479,7 +446,6 @@ internal sealed partial class IndexRepositoryHandler(
     private partial void LogFailing(string owner, string name, string kind);
 }
 
-/// <summary>Every five minutes: which links are due, across organisations, through the system function (master plan 9.2).</summary>
 internal sealed record ScheduleDueRepositories : IJob
 {
     public static string Kind => "assets.schedule-due-repositories";

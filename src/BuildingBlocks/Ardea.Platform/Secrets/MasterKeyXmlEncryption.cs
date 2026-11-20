@@ -5,11 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Platform.Secrets;
 
-/// <summary>
-/// The master key from <c>ARDEA_MASTER_KEY</c>: 32 bytes that never enter the database. It encrypts
-/// the Data Protection keys at rest, so a database dump alone cannot decrypt stored secrets
-/// (master plan 9.4, 12.5).
-/// </summary>
 public sealed class MasterKey
 {
     public MasterKey(byte[] key)
@@ -20,7 +15,6 @@ public sealed class MasterKey
         }
 
         Key = key;
-        // A short fingerprint lets operators see whether two instances share a key, without revealing it.
         Fingerprint = Convert.ToHexStringLower(SHA256.HashData(key))[..12];
     }
 
@@ -31,7 +25,6 @@ public sealed class MasterKey
     public static MasterKey FromBase64(string value) => new(Convert.FromBase64String(value));
 }
 
-/// <summary>Encrypts Data Protection key XML with AES-256-GCM under the master key.</summary>
 internal sealed class MasterKeyXmlEncryptor(MasterKey masterKey) : IXmlEncryptor
 {
     public const int NonceSize = 12;
@@ -57,7 +50,6 @@ internal sealed class MasterKeyXmlEncryptor(MasterKey masterKey) : IXmlEncryptor
     }
 }
 
-/// <summary>Created by Data Protection through its service provider.</summary>
 internal sealed class MasterKeyXmlDecryptor(IServiceProvider services) : IXmlDecryptor
 {
     public XElement Decrypt(XElement encryptedElement)

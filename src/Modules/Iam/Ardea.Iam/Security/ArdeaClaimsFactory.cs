@@ -6,7 +6,6 @@ using Microsoft.Extensions.Options;
 
 namespace Ardea.Iam.Security;
 
-/// <summary>Adds the instance-administrator claim; changing the flag changes the security stamp, so sessions follow.</summary>
 internal sealed class ArdeaClaimsFactory(UserManager<ArdeaUser> users, IOptions<IdentityOptions> options)
     : UserClaimsPrincipalFactory<ArdeaUser>(users, options)
 {

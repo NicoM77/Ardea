@@ -4,12 +4,10 @@ using System.Net.Http.Headers;
 
 namespace Ardea.Intel.Sources.Abstractions;
 
-/// <summary>Validators of the last response, kept by the adapter in its cursor.</summary>
 public sealed record HttpValidators(string? ETag, DateTimeOffset? LastModified)
 {
     public static readonly HttpValidators None = new(null, null);
 
-    /// <summary>A compact form for cursors: <c>etag|lastModified</c>.</summary>
     public override string ToString() =>
         $"{ETag}|{LastModified?.ToString("O", CultureInfo.InvariantCulture)}";
 
@@ -27,7 +25,6 @@ public sealed record HttpValidators(string? ETag, DateTimeOffset? LastModified)
     }
 }
 
-/// <summary>The result of a conditional request: unchanged, or the response with its new validators.</summary>
 public sealed class ConditionalResponse : IDisposable
 {
     private ConditionalResponse(HttpResponseMessage? response, HttpValidators validators)
@@ -36,7 +33,6 @@ public sealed class ConditionalResponse : IDisposable
         Validators = validators;
     }
 
-    /// <summary><c>null</c> when the source answered 304 Not Modified.</summary>
     public HttpResponseMessage? Response { get; }
 
     public HttpValidators Validators { get; }
@@ -52,11 +48,6 @@ public sealed class ConditionalResponse : IDisposable
     public void Dispose() => Response?.Dispose();
 }
 
-/// <summary>
-/// Step 1 of change detection (master plan 6.4): ask only for what changed, with
-/// <c>If-None-Match</c> and <c>If-Modified-Since</c>, and pass on what the source says about the next
-/// request (<c>Retry-After</c>, <c>Cache-Control: max-age</c>).
-/// </summary>
 public static class ConditionalRequests
 {
     public static async Task<ConditionalResponse> GetIfChangedAsync(
@@ -85,7 +76,6 @@ public static class ConditionalRequests
         return ConditionalResponse.Changed(response);
     }
 
-    /// <summary>Passes the source's wish for the next request on to the core.</summary>
     public static void Hint(SyncContext context, HttpResponseMessage response)
     {
         if (response.Headers.RetryAfter is { } retry)

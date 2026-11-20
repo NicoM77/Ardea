@@ -4,10 +4,6 @@ using Npgsql;
 
 namespace Ardea.Platform.Hosting;
 
-/// <summary>
-/// Writes the worker's heartbeat every 30 seconds; <c>ardea healthcheck worker</c> considers the worker
-/// healthy while the heartbeat is younger than two minutes (master plan 12.3).
-/// </summary>
 public sealed partial class WorkerHeartbeat(NpgsqlDataSource dataSource, WorkerIdentity worker, TimeProvider time, ILogger<WorkerHeartbeat> logger, string version)
     : BackgroundService
 {

@@ -118,7 +118,6 @@ namespace Ardea.Assets.Persistence.Migrations
                 table: "project",
                 columns: new[] { "organization_id", "name" });
 
-            // Organisation data: row-level security as the third layer (master plan 9.2, ADR 029).
             migrationBuilder.Sql("""
                 ALTER TABLE assets.project ENABLE ROW LEVEL SECURITY;
                 CREATE POLICY tenant ON assets.project

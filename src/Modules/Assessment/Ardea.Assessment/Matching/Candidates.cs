@@ -4,7 +4,6 @@ using Ardea.Intel.Contracts;
 
 namespace Ardea.Assessment.Matching;
 
-/// <summary>How an entry hit a component (master plan 7.2).</summary>
 internal static class MatchTypes
 {
     public const string Package = "package";
@@ -17,28 +16,13 @@ internal static class MatchTypes
     public static bool IsStrong(string matchType) => matchType is Package or Cpe or Product;
 }
 
-/// <summary>A hit through a learned catalogue entry: the key it came under and the raw keys of the sources the entry maps.</summary>
 internal sealed record LearnedHit(string ProductKey, IReadOnlyList<string> RawKeys);
 
-/// <summary>An entry's hit on one component, with the affected products that caused it.</summary>
-/// <param name="Component">The component hit.</param>
-/// <param name="MatchType">One of <see cref="MatchTypes"/>.</param>
-/// <param name="Keys">The component's keys that matched, e.g. <c>purl pkg:npm/lodash</c>.</param>
-/// <param name="Affected">For a strong hit, the entry's version statements about the matched product.</param>
 internal sealed record Candidate(ProfileComponent Component, string MatchType, IReadOnlyList<ProfileKey> Keys, IReadOnlyList<AffectedFacts> Affected)
 {
     public bool IsStrong => MatchTypes.IsStrong(MatchType);
 }
 
-/// <summary>
-/// The keys of an entry in the forms of <c>assets.component_key</c> (master plan 7.2): product keys, CPE
-/// pairs and packages of its affected products, and the platforms of affected plugins for the weak
-/// «ecosystem» hit.
-/// </summary>
-/// <param name="Direct">The strong keys of the affected products, with the statements behind each.</param>
-/// <param name="Platforms">Platforms of affected plugins, with the plugins.</param>
-/// <param name="LearnedOnly">Product keys that only a learned catalogue entry gave (master plan 6.9): every statement
-/// behind them resolved through one. A key a statement also gives without learning is not among them.</param>
 internal sealed record EntryKeys(
     IReadOnlyDictionary<ProfileKey, IReadOnlyList<AffectedFacts>> Direct,
     IReadOnlyDictionary<ProfileKey, IReadOnlyList<string>> Platforms,
@@ -70,7 +54,6 @@ internal sealed record EntryKeys(
                 (row.LearnedFrom is { Length: > 0 } ? learned : plain).Add(key);
             }
 
-            // A key from a learned entry keeps its raw key: a free entry that matched the raw key still does (master plan 6.9).
             if (row.LearnedFrom is { Length: > 0 } raw)
             {
                 var key = new ProfileKey("product", raw);
@@ -89,7 +72,6 @@ internal sealed record EntryKeys(
             }
         }
 
-        // A plugin's platform: a hit there is weak, «platform in use, component not in the profile».
         var platforms = new Dictionary<ProfileKey, List<string>>();
         foreach (var productKey in entry.Affected.Select(a => a.ProductKey).OfType<string>().Distinct(StringComparer.Ordinal))
         {
@@ -112,13 +94,6 @@ internal sealed record EntryKeys(
             learned);
     }
 
-    /// <summary>
-    /// How a strong hit came about through a learned catalogue entry, or <c>null</c> when the curated catalogue alone
-    /// gives it (master plan 6.9: «über gelernten Katalogeintrag»). It does when every key it matched under is a product
-    /// key only a learned entry gave, or belongs to a learned product the component is recorded as.
-    /// </summary>
-    /// <param name="candidate">The hit.</param>
-    /// <param name="learnedProducts">Keys of learned products in effect among the hit's keys and the component's product.</param>
     public LearnedHit? Learned(Candidate candidate, ISet<string> learnedProducts)
     {
         if (!candidate.IsStrong)
@@ -140,13 +115,6 @@ internal sealed record EntryKeys(
         return new LearnedHit(product, raw);
     }
 
-    /// <summary>
-    /// The candidates among the given components (master plan 7.2). A component hit under a strong key
-    /// is a strong candidate with the affected products of every strong key that matched; otherwise
-    /// a weak key gives a «variant» (a related catalogue product) or «name» (a free entry without
-    /// vendor) candidate. A platform whose plugin the entry names is a weak «ecosystem» candidate,
-    /// unless the project already has a strong hit for the entry.
-    /// </summary>
     public IReadOnlyList<Candidate> Match(IEnumerable<ProfileComponent> components, ISet<string> catalogKeys)
     {
         var result = new List<Candidate>();

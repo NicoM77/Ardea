@@ -6,7 +6,6 @@ using Npgsql;
 
 namespace Ardea.Platform.Tests.Jobs;
 
-/// <summary>Acceptance criteria of phase 0 for the job system (master plan 3.4, 14).</summary>
 public sealed class JobSystemTests(PostgresServer server)
 {
     private static readonly JobWorkerOptions Fast = new()
@@ -24,7 +23,6 @@ public sealed class JobSystemTests(PostgresServer server)
     {
         await using var host = await JobTestHost.CreateAsync(server, s => s.AddJob<EffectJob, EffectJobHandler>());
 
-        // Forced abort: the unit of work ends without commit after both writes.
         await host.InUnitOfWorkAsync(WriteCauseAndJobAsync, commit: false);
         Assert.Equal(0, await host.CountAsync("SELECT count(*) FROM public.test_business"));
         Assert.Equal(0, await host.CountAsync("SELECT count(*) FROM platform.job WHERE kind = 'test.effect'"));
@@ -60,7 +58,6 @@ public sealed class JobSystemTests(PostgresServer server)
         host.StartWorker("worker-b", Fast);
         await host.WaitForAsync("SELECT count(*) FROM platform.job WHERE state = 'succeeded'", total / 4, TimeSpan.FromSeconds(60), TestContext.Current.CancellationToken);
 
-        // Kill worker A in the middle of its work; a replacement joins.
         doomed.SimulateCrash();
         host.StartWorker("worker-c", Fast);
 
@@ -68,8 +65,6 @@ public sealed class JobSystemTests(PostgresServer server)
         Assert.Equal(total, await host.CountAsync("SELECT count(*) FROM public.test_effect"));
         Assert.Equal(total, await host.CountAsync("SELECT count(DISTINCT job_ref) FROM public.test_effect"));
         Assert.Equal(0, await host.CountAsync("SELECT count(*) FROM platform.job WHERE state <> 'succeeded'"));
-        // Whether the kill caught a job mid-flight depends on timing here; the gated test below
-        // proves deterministically that stranded jobs run again with their effect exactly once.
     }
 
     [Fact(Timeout = JobTestHost.TestTimeout)]
@@ -128,10 +123,6 @@ public sealed class JobSystemTests(PostgresServer server)
         await host.WaitForAsync("SELECT count(*) FROM platform.job WHERE state = 'succeeded'", 2, TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
     }
 
-    /// <summary>
-    /// ADR 038: a cause commits after the waiting job it coalesced onto. Without the share lock a worker could run the
-    /// job in between, miss what the cause wrote, and leave it unprocessed until the next enqueue.
-    /// </summary>
     [Fact(Timeout = JobTestHost.TestTimeout)]
     public async Task A_coalesced_enqueue_keeps_the_waiting_job_from_being_claimed_until_its_transaction_commits()
     {
@@ -140,7 +131,6 @@ public sealed class JobSystemTests(PostgresServer server)
         var keyed = new EnqueueOptions { CoalesceKey = "notify.evaluate:org" };
         await host.InUnitOfWorkAsync(s => s.GetRequiredService<IJobQueue>().EnqueueAsync(new EffectJob("waiting"), keyed));
 
-        // Two causes coalesce onto the waiting job at the same time; neither waits for the other.
         await using var a = host.Services.CreateAsyncScope();
         await using var b = host.Services.CreateAsyncScope();
         Assert.False(await a.ServiceProvider.GetRequiredService<IJobQueue>().EnqueueAsync(new EffectJob("a"), keyed, cancellation));
@@ -154,7 +144,6 @@ public sealed class JobSystemTests(PostgresServer server)
         Assert.Equal(1, await host.CountAsync("SELECT count(*) FROM platform.job"));
     }
 
-    /// <summary>A cause that coalesces while the waiting job is being claimed enqueues a new one instead of losing its work.</summary>
     [Fact(Timeout = JobTestHost.TestTimeout)]
     public async Task A_coalesced_enqueue_racing_a_claim_enqueues_a_new_job()
     {
@@ -163,7 +152,6 @@ public sealed class JobSystemTests(PostgresServer server)
         var keyed = new EnqueueOptions { CoalesceKey = "notify.evaluate:org" };
         await host.InUnitOfWorkAsync(s => s.GetRequiredService<IJobQueue>().EnqueueAsync(new EffectJob("waiting"), keyed));
 
-        // A worker's claim is in flight: it holds the row but has not committed yet.
         await using var claim = await host.DataSource.OpenConnectionAsync(cancellation);
         await using var transaction = await claim.BeginTransactionAsync(cancellation);
         await using (var update = new NpgsqlCommand("UPDATE platform.job SET state = 'running' WHERE state = 'pending'", claim, transaction))
@@ -233,8 +221,6 @@ public sealed class JobSystemTests(PostgresServer server)
         var worker = host.StartWorker("worker-a", Fast with { Lease = TimeSpan.FromMinutes(5) });
         await host.WaitForAsync("SELECT count(*) FROM platform.job WHERE state = 'running'", 1, TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
-        // Another claim takes the job over, as after a lease that ran out during a network partition;
-        // it may even be the same worker id (two processes on one host share it).
         await host.ExecuteAsync("UPDATE platform.job SET lease_token = gen_random_uuid(), lease_until = now() + interval '5 minutes'");
         gate.Open.SetResult();
         await WaitUntilIdleAsync(worker);

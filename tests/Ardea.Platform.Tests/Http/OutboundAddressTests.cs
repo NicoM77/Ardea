@@ -3,7 +3,6 @@ using Ardea.Platform.Http;
 
 namespace Ardea.Platform.Tests.Http;
 
-/// <summary>Which addresses outbound calls may reach (master plan 9.5, 16.9).</summary>
 public sealed class OutboundAddressTests
 {
     [Theory]

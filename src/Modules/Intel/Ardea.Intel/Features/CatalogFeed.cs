@@ -6,16 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Intel.Features;
 
-/// <summary>
-/// The unknown products of the entries for the catalogue that learns (master plan 6.5, 6.9 step 1): every product key of
-/// <c>entry_affected</c> the catalogue does not know, with the number of entries that name it, whether one of them is in
-/// KEV, and the statement the records make most often. Public data of the sources only.
-/// </summary>
 internal sealed class UnknownProductFeed(IntelDbContext db, IProductCatalog catalog) : IUnknownProductFeed
 {
     public async Task<UnknownProductCensus> CollectAsync(CancellationToken cancellationToken)
     {
-        // Rows a learned entry resolved carry a key of the catalogue; the rest are catalogue keys or raw keys.
         var keys = await db.Database.SqlQuery<KeyRow>($"""
             SELECT a.product_key AS key,
                    count(DISTINCT a.entry_id)::int AS records,
@@ -58,11 +52,6 @@ internal sealed class UnknownProductFeed(IntelDbContext db, IProductCatalog cata
     private sealed record KeyRow(string Key, int Records, bool InKev, string? Vendor, string? Product, string[] CpePairs, string? Purl);
 }
 
-/// <summary>
-/// Learned catalogue entries took effect or were withdrawn: the entries that name what they map are merged again (master
-/// plan 6.9 step 6). Any recomputation of the entry serves, also one already waiting: every unit of work reads the
-/// catalogue anew once a decision was made (ADR 040). New hits follow like any other change.
-/// </summary>
 internal sealed class LearnedEntriesSubscriber(IntelDbContext db, IJobQueue jobs) : ICatalogChangeSubscriber
 {
     public async Task OnLearnedEntriesChangedAsync(LearnedEntriesChanged change, CancellationToken cancellationToken)
@@ -91,7 +80,6 @@ internal sealed class LearnedEntriesSubscriber(IntelDbContext db, IJobQueue jobs
             return;
         }
 
-        // The key a recomputation starts from, as «intel recompute» chooses it.
         var aliases = await db.EntryAliases.AsNoTracking()
             .Where(a => ids.Contains(a.EntryId))
             .GroupBy(a => a.EntryId).Select(g => g.Min(a => a.Scheme + ":" + a.Value)!)

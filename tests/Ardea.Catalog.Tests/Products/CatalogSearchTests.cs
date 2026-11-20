@@ -5,21 +5,14 @@ using Npgsql;
 
 namespace Ardea.Catalog.Tests.Products;
 
-/// <summary>
-/// The acceptance of phase 2: for 50 inputs fixed in advance, spelling variants and typos included,
-/// the catalogue search puts the right product first (master plan 14, task 2.4). The search runs
-/// through <c>IProductCatalog.SearchAsync</c> over the repository catalogue as <c>migrate</c> loads it.
-/// </summary>
 public sealed class CatalogSearchTests(PostgresServer server)
 {
     private static readonly SemaphoreSlim Gate = new(1, 1);
     private static readonly CatalogCache Cache = new(TimeProvider.System);
     private static CatalogDatabase? _database;
 
-    /// <summary>What people type, and the product they mean.</summary>
     public static TheoryData<string, string> Inputs => new()
     {
-        // Databases and caches
         { "postgres", "postgresql" },
         { "Postgre SQL", "postgresql" },
         { "postgress", "postgresql" },
@@ -30,7 +23,6 @@ public sealed class CatalogSearchTests(PostgresServer server)
         { "elastic serach", "elasticsearch" },
         { "redis", "redis" },
 
-        // Runtimes and operating systems
         { "node", "nodejs" },
         { "NodeJS", "nodejs" },
         { ".net 8", "dotnet" },
@@ -43,7 +35,6 @@ public sealed class CatalogSearchTests(PostgresServer server)
         { "rhel 9", "rhel" },
         { "alpine", "alpine-linux" },
 
-        // Web servers, containers, messaging, virtualisation
         { "nginix", "nginx" },
         { "apache httpd", "apache-httpd" },
         { "IIS", "iis" },
@@ -56,7 +47,6 @@ public sealed class CatalogSearchTests(PostgresServer server)
         { "proxmox", "proxmox-ve" },
         { "hyperv", "hyper-v" },
 
-        // CMS, shops and frameworks
         { "wordpres", "wordpress" },
         { "typo 3", "typo3" },
         { "magento", "adobe-commerce" },
@@ -66,12 +56,10 @@ public sealed class CatalogSearchTests(PostgresServer server)
         { "vue js", "vue" },
         { "next.js", "nextjs" },
 
-        // Libraries
         { "log4j2", "log4j-core" },
         { "jackson databind", "jackson-databind" },
         { "newtonsoft", "newtonsoft-json" },
 
-        // Network appliances and tools
         { "fortigate", "fortios" },
         { "pulse secure", "ivanti-connect-secure" },
         { "citrix adc", "netscaler-adc" },
@@ -104,7 +92,6 @@ public sealed class CatalogSearchTests(PostgresServer server)
         Assert.True(hits.Count > 0 && hits[0].Key == key, $"'{input}' should find '{key}' first, found: {string.Join(", ", hits.Select(h => h.Key))}");
     }
 
-    /// <summary>The application's connection to one database the repository catalogue was migrated into, shared by every case.</summary>
     private async Task<NpgsqlConnection> OpenSeededAsync()
     {
         await Gate.WaitAsync(Ct);

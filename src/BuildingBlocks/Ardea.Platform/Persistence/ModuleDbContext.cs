@@ -4,18 +4,11 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Ardea.Platform.Persistence;
 
-/// <summary>A row that belongs to one organisation (master plan 4.1).</summary>
 public interface IOrganizationOwned
 {
     Guid OrganizationId { get; set; }
 }
 
-/// <summary>
-/// Base of every module context. It writes inside the unit of work's transaction and applies the
-/// second layer of tenant separation (master plan 9.2): a named query filter on every
-/// organisation-owned entity, and a write check. Without a tenant context, such data cannot be read
-/// or written; the context throws instead of returning everything.
-/// </summary>
 public abstract class ModuleDbContext : DbContext
 {
     public const string TenantFilter = "tenant";
@@ -29,10 +22,8 @@ public abstract class ModuleDbContext : DbContext
         Database.AutoTransactionBehavior = AutoTransactionBehavior.Never;
     }
 
-    /// <summary>Read by the query filters at execution time; throws without a tenant context.</summary>
     protected Guid CurrentOrganizationId => _tenant?.OrganizationId ?? throw new MissingTenantContextException();
 
-    /// <summary>Applies the tenant filter to every entity type that implements <see cref="IOrganizationOwned"/>.</summary>
     protected void ApplyTenantFilters(ModelBuilder modelBuilder)
     {
         foreach (var entity in modelBuilder.Model.GetEntityTypes().Where(e => typeof(IOrganizationOwned).IsAssignableFrom(e.ClrType)))
@@ -47,8 +38,6 @@ public abstract class ModuleDbContext : DbContext
         where T : class, IOrganizationOwned
     {
         modelBuilder.Entity<T>().HasQueryFilter(TenantFilter, e => e.OrganizationId == CurrentOrganizationId);
-        // Updates and deletes by key carry the organisation in their WHERE clause: a stub entity
-        // with a foreign id but the own organisation hits no row and fails as a concurrency conflict.
         modelBuilder.Entity<T>().Property(e => e.OrganizationId).IsConcurrencyToken();
     }
 

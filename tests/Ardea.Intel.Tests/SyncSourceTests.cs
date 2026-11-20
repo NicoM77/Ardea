@@ -4,7 +4,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Intel.Tests;
 
-/// <summary>Sync control and raw record storage (tasks 1.2, part of 1.5; master plan 5.2, 5.4, 6.4).</summary>
 public sealed class SyncSourceTests(PostgresServer server)
 {
     [Fact]
@@ -25,7 +24,6 @@ public sealed class SyncSourceTests(PostgresServer server)
         Assert.Equal("cursor-1", await host.ScalarAsync<string>("SELECT cursor FROM intel.source WHERE key = 'scripted'"));
         Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source_record"));
         Assert.Equal("failed", await host.ScalarAsync<string>("SELECT outcome FROM intel.source_run"));
-        // Every signed-in user reads the health reason; only the administrator's run log keeps the exception's text.
         Assert.Equal("The source could not be reached.", await host.ScalarAsync<string>("SELECT health_reason FROM intel.source WHERE key = 'scripted'"));
         Assert.Contains("source went away", await host.ScalarAsync<string>("SELECT error FROM intel.source_run"), StringComparison.Ordinal);
 
@@ -100,7 +98,6 @@ public sealed class SyncSourceTests(PostgresServer server)
 
         Assert.Equal("failing", await host.ScalarAsync<string>("SELECT health FROM intel.source WHERE key = 'scripted'"));
         Assert.Equal(3, await host.ScalarAsync<int>("SELECT consecutive_failures FROM intel.source WHERE key = 'scripted'"));
-        // The test clock stands still at 12:00: the third failure doubles the hour to eight, capped at six.
         Assert.True(await host.ScalarAsync<bool>(
             "SELECT next_sync_at BETWEEN '2026-11-18T18:00:00Z'::timestamptz AND '2026-11-18T18:10:00Z'::timestamptz FROM intel.source WHERE key = 'scripted'"));
 
@@ -122,7 +119,6 @@ public sealed class SyncSourceTests(PostgresServer server)
         Assert.Null(host.Provider.CursorSeen);
     }
 
-    /// <summary>Master plan 6.9: the catalogue learns after the first load, once its records had an hour to be merged; not after every run.</summary>
     [Fact]
     public async Task The_first_load_has_the_catalogue_learn_an_hour_later_and_a_later_run_does_not()
     {

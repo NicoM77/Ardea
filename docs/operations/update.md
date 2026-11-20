@@ -14,6 +14,18 @@ docker compose logs migrate      # "Migration finished: N migration(s) applied, 
 `migrate` takes a dump before it applies migrations and exits with code 70 if one fails; API and worker
 then stay stopped, on the old schema state of the dump.
 
+## Upgrading from a build before the stack
+
+The migration of phase 5a ([ADR 046](../adr/0046-stack-notices-and-reminders-without-deadline.md), decision 9)
+removes assignment, deadline and «in review» from actions, which are called reminders from now on and are open or
+done. Every organisation gets an empty stack. **Open actions on components without a version are moved to notices:**
+the reminder and its findings are closed with the reason `moved_to_notice` (numbers and history stay), and one open
+notice per entry takes their place on the *Notices* page, so the person who had the reminder finds the question there.
+Closed actions and actions on components with an exact version stay as they are; an open one on a component with a
+version line moves on its next assessment. Notices from the stack are generated from the first assessment after the
+upgrade, so the *Notices* page may hold more than the moved ones. The overview's figures do not count these closings
+as news. Read the release notes before upgrading a running instance.
+
 ## Going back
 
 The dump `migrate` wrote before the update holds the state before it. Restore it into an empty database: restoring

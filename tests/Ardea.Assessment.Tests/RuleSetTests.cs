@@ -161,9 +161,247 @@ public sealed class RuleSetTests
     [InlineData(0.0, "low")]
     [InlineData(3.9, "low")]
     [InlineData(4.0, "medium")]
+    [InlineData(6.9, "medium")]
     [InlineData(7.0, "high")]
+    [InlineData(8.9, "high")]
     [InlineData(9.0, "critical")]
+    [InlineData(10.0, "critical")]
     public void Severity_classes_follow_cvss(double? score, string severity) => Assert.Equal(severity, Rules.SeverityOf(score));
+
+    /// <summary>Every value of every factor the rule set file names, with the input that selects it.</summary>
+    public static TheoryData<string, string> FactorValues
+    {
+        get
+        {
+            var data = new TheoryData<string, string>();
+            foreach (var (factor, values) in Rules.Points)
+            {
+                foreach (var value in values.Keys)
+                {
+                    data.Add(factor, value);
+                }
+            }
+
+            return data;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(FactorValues))]
+    public void Every_value_of_every_factor_in_the_rule_set_file_counts_with_its_points(string factor, string value)
+    {
+        var input = factor switch
+        {
+            "severity" => Base with { CvssScore = value switch { "critical" => 9.5, "high" => 7.5, "medium" => 5.0, "low" => 2.0, _ => null } },
+            "exploitation" => Base with { Exploitation = value },
+            "affectedness" => value switch
+            {
+                "confirmed" => Base,
+                "unknown" => Base with { VersionVerdict = "unknown" },
+                _ => Base with { VersionVerdict = "unknown", HumanVerdict = value },
+            },
+            "criticality" => Base with { Criticality = value },
+            "exposure" => Base with { Exposure = value },
+            "protection" => Base with { Protection = value },
+            "authorityWarning" => Base with { AuthorityWarning = value == "yes" },
+            "epss" => Base with { EpssClass = value },
+            _ => throw new InvalidOperationException($"No input selects {factor}; the engine must learn the factor before the file names it."),
+        };
+
+        var result = RuleEngine.Evaluate(Rules, input);
+
+        var row = Assert.Single(result.Factors, f => f.Factor == factor);
+        Assert.Equal((value, Rules.PointsOf(factor, value)), (row.Value, row.Points));
+        Assert.Equal(result.Factors.Sum(f => f.Points), result.Points);
+        Assert.Equal(Rules.LevelOf(result.Points!.Value), result.PointsLevel);
+    }
+
+    [Theory]
+    [InlineData(20, 5)]
+    [InlineData(8, 5)]
+    [InlineData(7, 4)]
+    [InlineData(5, 4)]
+    [InlineData(4, 3)]
+    [InlineData(3, 2)]
+    [InlineData(-6, 2)]
+    public void The_sum_gives_the_level_of_the_table_at_its_edges(int points, int level) => Assert.Equal(level, Rules.LevelOf(points));
+
+    [Fact]
+    public void A_missing_epss_or_an_unknown_exploitation_counts_as_no_signal()
+    {
+        var result = RuleEngine.Evaluate(Rules, Base with { EpssClass = null, Exploitation = "unknown", Protection = "partial" });
+
+        Assert.Equal(
+            ["exploitation none 0", "protection none 0", "epss low 0"],
+            result.Factors.Where(f => f.Factor is "exploitation" or "protection" or "epss").Select(f => $"{f.Factor} {f.Value} {f.Points}"));
+        Assert.Equal(RuleEngine.Evaluate(Rules, Base).Level, result.Level);
+    }
+
+    [Fact]
+    public void An_unrated_entry_counts_as_medium_and_misses_the_floor_for_severe_flaws()
+    {
+        // Actively exploited in range on an internet system, but without a score: the floor of 5 asks for high or critical.
+        var unrated = RuleEngine.Evaluate(Rules, Base with { CvssScore = null, Exploitation = "active", Exposure = "internet" });
+
+        Assert.Equal(("severity", "unrated", "no score", 2), (unrated.Factors[0].Factor, unrated.Factors[0].Value, unrated.Factors[0].Evidence, unrated.Factors[0].Points));
+        Assert.Equal(4, unrated.Level);
+        Assert.DoesNotContain(unrated.Floors, f => f.Bound == "active_in_range_severe");
+
+        Assert.Equal(5, RuleEngine.Evaluate(Rules, Base with { CvssScore = 7.0, Exploitation = "active", Exposure = "internet", Criticality = "low", Protection = "effective" }).Level);
+    }
+
+    [Fact]
+    public void Each_exclusion_names_its_reason_and_the_order_is_fixed()
+    {
+        var all = Base with { StrongMatch = false, EntryWithdrawn = true, HumanExcluded = true, VersionVerdict = "out_of_range" };
+
+        Assert.Equal("weak_match", RuleEngine.Evaluate(Rules, all).Exclusion);
+        Assert.Equal("withdrawn", RuleEngine.Evaluate(Rules, all with { StrongMatch = true }).Exclusion);
+        Assert.Equal("human", RuleEngine.Evaluate(Rules, all with { StrongMatch = true, EntryWithdrawn = false }).Exclusion);
+        var outside = RuleEngine.Evaluate(Rules, all with { StrongMatch = true, EntryWithdrawn = false, HumanExcluded = false });
+        Assert.Equal(("out_of_range", 1, (int?)null, (int?)null), (outside.Exclusion, outside.Level, outside.Points, outside.LevelWithoutModel));
+        Assert.Empty(outside.Factors);
+    }
+
+    [Fact]
+    public void The_model_alone_never_gives_level_1()
+    {
+        // Everything speaks against the flaw and the model says «not affected»: the level stays at the lowest of the points (7.5).
+        var result = RuleEngine.Evaluate(Rules, Base with
+        {
+            VersionVerdict = "unknown",
+            CvssScore = 2.0,
+            Criticality = "low",
+            Exposure = "isolated",
+            Protection = "effective",
+            ModelVerdict = "not_affected",
+        });
+
+        Assert.Null(result.Exclusion);
+        Assert.Equal(2, result.Level);
+        Assert.Equal(("affectedness", "unlikely"), (result.Factors[2].Factor, result.Factors[2].Value));
+    }
+
+    [Fact]
+    public void Affected_from_the_model_does_not_lift_the_cap_that_reserves_critical_for_confirmed_affectedness()
+    {
+        // 9.8, a public exploit, a critical system on the internet: 8 points with the version unknown, 9 with the model's «affected».
+        var input = Base with { VersionVerdict = "unknown", CvssScore = 9.8, Exploitation = "poc", Criticality = "high", Exposure = "internet" };
+
+        var model = RuleEngine.Evaluate(Rules, input with { ModelVerdict = "affected" });
+        Assert.Equal((9, 4), (model.Points, model.Level));
+        Assert.Equal([new BoundRow("unconfirmed", 4)], model.Caps);
+        Assert.Equal(5, RuleEngine.Evaluate(Rules, input with { HumanVerdict = "likely" }).Level);
+    }
+
+    [Fact]
+    public void A_persons_verdict_is_not_held_by_the_floor_of_the_models_verdict()
+    {
+        // ADR 039: a person's «unlikely» counts in full; the same verdict of the model lowers by one level at most.
+        var input = Base with { VersionVerdict = "unknown", CvssScore = 9.0, Criticality = "high" };
+        Assert.Equal((5, 4), (RuleEngine.Evaluate(Rules, input).Points, RuleEngine.Evaluate(Rules, input).Level));
+
+        var person = RuleEngine.Evaluate(Rules, input with { HumanVerdict = "unlikely" });
+        Assert.Equal((3, 2), (person.Points, person.Level));
+        Assert.Null(person.LevelWithoutModel);
+        Assert.Empty(person.Floors);
+
+        var model = RuleEngine.Evaluate(Rules, input with { ModelVerdict = "unlikely" });
+        Assert.Equal((3, 3, 4), (model.Points, model.Level, model.LevelWithoutModel));
+        Assert.Equal([new BoundRow("model_max_drop", 3)], model.Floors);
+    }
+
+    [Fact]
+    public void The_models_verdict_does_not_undercut_the_floor_for_active_exploitation()
+    {
+        var input = Base with { VersionVerdict = "unknown", CvssScore = 2.0, Exploitation = "active", Exposure = "isolated", Criticality = "low" };
+
+        var result = RuleEngine.Evaluate(Rules, input with { ModelVerdict = "not_affected" });
+
+        Assert.Equal((0, 3, 3), (result.Points, result.Level, result.LevelWithoutModel));
+        Assert.Equal([new BoundRow("active", 3)], result.Floors);
+    }
+
+    [Fact]
+    public void Across_every_combination_the_bounds_hold_and_the_model_lowers_by_at_most_one_level()
+    {
+        // Master plan 7.6 steps 3 and 4 as properties: an upper bound is never exceeded without active exploitation, a lower
+        // bound is never undercut, the model moves the level by at most one below the result without it and excludes nothing.
+        double?[] scores = [null, 2.0, 5.0, 7.5, 9.0, 10.0];
+        (string? Human, string? Model)[] verdicts =
+            [(null, null), ("affected", null), ("likely", null), ("unlikely", null), (null, "affected"), (null, "likely"), (null, "uncertain"), (null, "unlikely"), (null, "not_affected")];
+        var inputs =
+            from score in scores
+            from exploitation in new[] { "none", "poc", "active" }
+            from version in new[] { "in_range", "unknown" }
+            from criticality in new[] { "high", "normal", "low" }
+            from exposure in new[] { "internet", "internal", "isolated" }
+            from protection in new[] { "none", "effective" }
+            from epss in new[] { null, "low", "high" }
+            from development in new[] { false, true }
+            from verdict in verdicts
+            select Base with
+            {
+                CvssScore = score,
+                Exploitation = exploitation,
+                VersionVerdict = version,
+                Criticality = criticality,
+                Exposure = exposure,
+                Protection = protection,
+                EpssClass = epss,
+                DevelopmentOnly = development,
+                HumanVerdict = verdict.Human,
+                ModelVerdict = verdict.Model,
+            };
+
+        var broken = new List<string>();
+        var count = 0;
+        foreach (var input in inputs)
+        {
+            count++;
+            var result = RuleEngine.Evaluate(Rules, input);
+            var level = result.Level;
+            var confirmed = input.VersionVerdict == "in_range" || input.HumanVerdict is "affected" or "likely";
+            var active = input.Exploitation == "active";
+            var severe = Rules.SeverityOf(input.CvssScore) is "high" or "critical" && input.Exposure != "isolated";
+            var withoutModel = input.ModelVerdict is null ? null : RuleEngine.Evaluate(Rules, input with { ModelVerdict = null });
+            string?[] problems =
+            [
+                result.Exclusion is null && level is >= 2 and <= 5 ? null : "level outside 2 to 5 or excluded",
+                active || confirmed || level <= Rules.Caps.Unconfirmed ? null : "cap for unconfirmed exceeded",
+                active || !input.DevelopmentOnly || level <= Rules.Caps.Development ? null : "cap for development exceeded",
+                !active || level >= Rules.Floors.Active ? null : "floor for active undercut",
+                !active || input.VersionVerdict != "in_range" || level >= Rules.Floors.ActiveInRange ? null : "floor for active in range undercut",
+                !active || input.VersionVerdict != "in_range" || !severe || level >= Rules.Floors.ActiveInRangeSevere ? null : "floor for severe undercut",
+                withoutModel is null
+                    ? result.LevelWithoutModel is null ? null : "a level without the model although none counted"
+                    : result.LevelWithoutModel != withoutModel.Level ? $"level without the model {result.LevelWithoutModel}, the rules alone give {withoutModel.Level}"
+                    : level < withoutModel.Level - Rules.Floors.ModelMaxDrop ? "the model lowered by more than one level"
+                    : null,
+                input.ModelVerdict != "not_affected" || level == RuleEngine.Evaluate(Rules, input with { ModelVerdict = "unlikely" }).Level ? null : "the model's not_affected counts other than unlikely",
+            ];
+            broken.AddRange(problems.OfType<string>().Select(p => $"{p}: {input}"));
+        }
+
+        Assert.Equal(34_992, count);
+        Assert.Empty(broken.Take(5));
+    }
+
+    [Fact]
+    public void The_explanation_names_the_evidence_of_each_factor()
+    {
+        static string? Affectedness(RuleInput input) => RuleEngine.Evaluate(Rules, input).Factors.Single(f => f.Factor == "affectedness").Evidence;
+
+        var unknown = Base with { VersionVerdict = "unknown", InstalledVersion = null };
+        Assert.Equal("version not recorded, affectedness unknown (no comparable range)", Affectedness(unknown));
+        Assert.Equal("version 1.0, affectedness unknown (range_not_readable); model: likely", Affectedness(unknown with { InstalledVersion = "1.0", VersionReason = "range_not_readable", ModelVerdict = "likely" }));
+        Assert.Equal("version not recorded, affectedness unknown (no comparable range); person: unlikely", Affectedness(unknown with { HumanVerdict = "unlikely", ModelVerdict = "likely" }));
+
+        var exploited = RuleEngine.Evaluate(Rules, Base with { Exploitation = "active", ExploitationSource = "ssvc", CvssVersion = null });
+        Assert.Equal("ssvc", exploited.Factors[1].Evidence);
+        Assert.Equal("CVSS ?: 7.5", exploited.Factors[0].Evidence);
+        Assert.Null(RuleEngine.Evaluate(Rules, Base with { Exploitation = "poc" }).Factors[1].Evidence);
+    }
 
     [Fact]
     public void A_broken_rule_set_is_refused_with_its_problems()

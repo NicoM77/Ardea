@@ -4,12 +4,13 @@ Ardea is Latin for heron: a bird that stands still for a long time and strikes o
 
 A self-hosted, open-source early-warning system for security vulnerabilities: it collects advisories and CVE records from trusted sources, merges them into one entry per vulnerability, and tells each organization which ones affect its projects, how urgent they are, and what to do.
 
-## Status: phase 3 (findings and remediations)
+## Status: hardening and release preparation
 
-The master plan is approved and implementation is under way. The tasks of phases 0 to 2 are done: an instance fetches and
-consolidates vulnerabilities from five sources and keeps organisations, projects and their technology profile,
-also read from GitHub repositories. Findings and remediations (phase 3) are in progress; there is no release
-yet. Progress follows chapter 14 of the plan (see the roadmap below).
+Phases 0 to 5 are done: an instance fetches and consolidates vulnerabilities from trusted sources, matches them
+to an organisation's stack and projects, raises notices and reminders with a level and reasoning, and notifies
+by channel. Phase 5a (stack and notices) is nearly done, with the notification part (5a.6) open. Hardening
+(phase 6) is mostly done; the release itself (phase 7) is open, and there is no release yet. Progress follows
+chapter 14 of the plan (see the roadmap below).
 
 ## Roadmap
 
@@ -171,10 +172,10 @@ A hardened, reviewed and documented instance.
 | 6.4 | Indexes checked against query plans; memory and response times observed on the project's own instance | ⬜ |
 | 6.5 | Fast integration test: restore a small pre-release dump, migrate to 1.0, restore again | ✅ |
 | 6.6 | Maintenance commands: recover access, load full dataset, export and delete an organisation; self-warnings; operations metrics | ✅ |
-| 6.7 | Documentation: install, configure, operate, update, «Add a source»; `SECURITY.md` | ⬜ |
+| 6.7 | Documentation: install, configure, operate, update, «Add a source»; `SECURITY.md` | ✅ |
 | 6.8 | SBOM and licence file in the build; the project's own instance, fed from its own repository | ⬜ |
 
-Rows stay ⬜ where a part is open: **6.4** the indexes are checked (plan tests for every list and search query of phases 3 to 5, three new indexes), memory and response times on the project's own instance are not observed yet; **6.7** the guides are complete, `SECURITY.md` belongs to task 6.1; **6.8** SBOM and licence file are in the build and the image ([ADR 042](docs/adr/0042-sbom-and-third-party-notices.md)), the project's own instance needs the owner's infrastructure.
+Rows stay ⬜ where a part is open: **6.4** the indexes are checked (plan tests for every list and search query of phases 3 to 5, three new indexes), memory and response times on the project's own instance are not observed yet; **6.8** SBOM and licence file are in the build and the image ([ADR 042](docs/adr/0042-sbom-and-third-party-notices.md)), the project's own instance needs the owner's infrastructure.
 
 ### Phase 7 · Clean-up and release 1.0 (4–5 weeks)
 
@@ -216,8 +217,8 @@ In this order (master plan, chapter 14):
 
 ## Try it
 
-Look at Ardea with sample data: an organisation, three projects, real CVE records of the week of
-11 to 17 November 2026 and the actions and notifications the pipeline makes of them. No GitHub token, no
+Look at Ardea with sample data: an organisation with a stack, three projects, real CVE records of the week of
+11 to 17 November 2026 and the stack, notices, reminders and notifications the pipeline makes of them. No GitHub token, no
 initial load, no access to any source. With Docker Compose and an image (built with
 `docker build -f deploy/Dockerfile -t ardea:dev .` until the first release):
 

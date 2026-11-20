@@ -63,6 +63,9 @@ public sealed class NoticeTests(PostgresServer server)
     [InlineData("only_important", false, 5.0, "poc", false, null, false)]
     [InlineData("only_important", false, 5.0, "none", true, null, true)]
     [InlineData("only_important", false, 5.0, "none", false, "high", true)]
+    [InlineData("only_important", false, 8.9, "poc", false, "low", false)]
+    [InlineData("only_important", false, null, "none", false, null, false)]
+    [InlineData("only_important", false, 10.0, "none", false, null, true)]
     [InlineData("only_important", true, 9.8, "none", false, "high", false)]
     [InlineData("only_important", true, 4.3, "active", false, null, true)]
     [InlineData("only_important", true, 4.3, "none", true, null, true)]
@@ -273,6 +276,70 @@ public sealed class NoticeTests(PostgresServer server)
         await host.RunJobsAsync();
         Assert.Equal(["CVE-2026-8601\topen\t1\tFalse"], await host.RowsAsync(Notices));
         Assert.Equal(["closed\tmoved_to_notice"], await host.RowsAsync("SELECT status, close_reason FROM assess.remediation"));
+    }
+
+    [Fact]
+    public async Task A_line_set_later_withdraws_the_notices_it_rules_out_and_taking_it_back_raises_them_again()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        var (stack, postgres) = await StackAsync(host, acme, "postgresql", "database");
+        await EntryAsync(host, "CVE-2026-9101", 9.8, introduced: "16.0", fixedAt: "16.11");
+        await EntryAsync(host, "CVE-2026-9102", 9.8, introduced: "17.0", fixedAt: "17.7");
+        Assert.Equal(["CVE-2026-9101\topen\t1\tFalse", "CVE-2026-9102\topen\t1\tFalse"], await host.RowsAsync(Notices));
+
+        // none → line 17: only 16 is affected by the first entry, so its notice goes; the findings stay the notices'.
+        await host.ChangeComponentAsync(acme, postgres, c => (c.Version, c.VersionPrecision) = ("17", "line"));
+        await host.ProfileChangedAsync(acme, stack);
+        await host.RunJobsAsync();
+        Assert.Equal(["CVE-2026-9101\twithdrawn\t1\tFalse", "CVE-2026-9102\topen\t1\tFalse"], await host.RowsAsync(Notices));
+        Assert.Equal(
+            ["CVE-2026-9101\t1\t-\tnot_affected\tmoved_to_notice\t1", "CVE-2026-9102\t1\t-\tnot_affected\tmoved_to_notice\t1"],
+            await host.RowsAsync("""
+                SELECT a.entry_key, a.level, coalesce(a.number::text, '-'), f.status, f.status_reason, f.level
+                FROM assess.finding f JOIN assess.alert a ON a.id = f.alert_id ORDER BY 1
+                """));
+
+        // line → none: nothing narrows the first entry any more, and its notice is raised again.
+        await host.ChangeComponentAsync(acme, postgres, c => (c.Version, c.VersionPrecision) = (null, "none"));
+        await host.ProfileChangedAsync(acme, stack);
+        await host.RunJobsAsync();
+        Assert.Equal(["CVE-2026-9101\topen\t1\tTrue", "CVE-2026-9102\topen\t1\tFalse"], await host.RowsAsync(Notices));
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation"));
+    }
+
+    [Fact]
+    public async Task A_reminder_handed_to_a_notice_comes_back_when_the_component_gets_its_exact_version_again()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        var shop = await host.AddProjectAsync(acme, "Shop");
+        var postgres = await host.AddComponentAsync(acme, shop, c => (c.ProductKey, c.Kind, c.Version) = ("postgresql", "database", "17.4"));
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+        await EntryAsync(host, "CVE-2026-9201", 9.1, introduced: "17.0", fixedAt: "17.7");
+        const string State = """
+            SELECT a.level, f.level, f.status, coalesce(f.status_reason, '-'), r.status, coalesce(r.close_reason, '-')
+            FROM assess.finding f JOIN assess.alert a ON a.id = f.alert_id LEFT JOIN assess.remediation r ON r.id = f.remediation_id
+            """;
+        Assert.Equal(["4\t4\topen\t-\topen\t-"], await host.RowsAsync(State));
+
+        // exact → none: the notice takes over, the alert falls to the level of its findings.
+        await host.ChangeComponentAsync(acme, postgres, c => c.Version = null);
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+        Assert.Equal(["CVE-2026-9201\topen\t1\tFalse"], await host.RowsAsync(Notices));
+        Assert.Equal(["1\t1\tnot_affected\tmoved_to_notice\tclosed\tmoved_to_notice"], await host.RowsAsync(State));
+
+        // none → exact: the precise path takes over again, the finding reopens and the reminder with it.
+        await host.ChangeComponentAsync(acme, postgres, c => c.Version = "17.4");
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+        Assert.Equal(["CVE-2026-9201\twithdrawn\t1\tFalse"], await host.RowsAsync(Notices));
+        Assert.Equal(["4\t4\topen\t-\topen\t-"], await host.RowsAsync(State));
+        Assert.Equal(
+            ["finding.closed\tmoved_to_notice", "finding.reopened\treassessed"],
+            await host.RowsAsync("SELECT kind, data->>'reason' FROM assess.assess_event WHERE kind IN ('finding.closed', 'finding.reopened') ORDER BY at, id"));
     }
 
     [Fact]

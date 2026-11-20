@@ -57,7 +57,8 @@ Ardea runs as one image in three roles (`migrate`, `api`, `worker`) next to Post
 4. In the administration: registration mode (by invitation is the default), SMTP for e-mail (with a test
    e-mail), the sources, and, if you want assessments by a language model, the providers
    ([Configuration](configuration.md), [Operation](operations.md#language-model)). Then create an organisation; its
-   setup wizard walks through the first project. Web Push needs nothing more than HTTPS
+   setup wizard starts with the stack (the products the organisation runs, coarsely) and then asks for projects and
+   repositories, both optional. Web Push needs nothing more than HTTPS
    ([Notifications](operations.md#notifications)).
 
 `docker compose ps` shows all three services healthy; `docker compose run --rm api doctor` checks the

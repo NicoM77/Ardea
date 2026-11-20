@@ -1,39 +1,34 @@
 # NOTES: Arbeitsstand und Wissen ausserhalb des Repositorys
 
-Stand: 20.11.2026, ca. 08:00 UTC, beim Abschalten. Abschnitt 0 zuerst lesen.
+Stand: 20.11.2026, Nachmittag (UTC), main = 4985227. Abschnitt 0 zuerst lesen.
 Umsetzung weiss und was nicht schon im Repository steht (README, Masterplan, ADR, Abnahmen, PR-Texte,
 Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 
-## 0. Beim Abschalten in Arbeit (zuerst lesen)
+## 0. Stand 20.11.2026 (zuerst lesen)
 
-Stand 20.11.2026, ca. 08:00 UTC, main = c018f07. Alle Agents werden mit der Sitzung abgeschaltet.
-
-- **#127 (7.2/7.3, ADR 0050) GEMERGT (main 77e8541):** alle 7 Review-Funde behoben (Tags erst nach Signatur, Merge-Betreff = Conventional PR-Titel + leerer Body, PR-Titel-Prüfung, Recovery per `workflow_dispatch tag`, exakte `--cert-identity`, Gate auf grünen `ci.yml`). Nichts davon ist je gelaufen. Ab jetzt mergen mit `gh pr merge N --merge --subject "<Conventional Titel> (#N)" --body "<branch>"`. Owner-Checkliste in CONTRIBUTING «Releases». 7.2/7.3 werden ✅ nach dem ersten echten Release.
-- **Dependabot-Sichtung (fertig, nichts gemergt/geschlossen):** PR **#130** (`ci/dependabot-ignores`) mit Ignore-Regeln, offen.
-  - Mergen (lokal geprüft): #117 (build-push-action 7), #118 (setup-buildx 4), #119 (setup-dotnet 6), #122 (jsdom 31), #123 (cyclonedx-npm 7).
-  - #124 (nuget-minor-patch): **Lock-Datei fehlt** (`tests/Ardea.Architecture.Tests/packages.lock.json` noch 10.11.0 → NU1004). Mit `dotnet restore Ardea.slnx --force-evaluate` auf dem PR-Branch neu erzeugen (LF!), dann ganze Suite grün (1 837 bestanden lokal).
-  - Nach #130 schliessen: #115 (node 26), #116/#120 (Playwright 1.65), #125 (dotnet-ef 11), #126 (Resilience 11), #128 (TimeProvider.Testing 11), #121 (Gruppe enthält Playwright; Dependabot öffnet sie ohne Playwright neu).
-  - #129 (NuGet.Versioning 8.0.0) nicht geprüft.
-  - Kombinierter lokaler Stand: `scratchpad/deps/wall` (Branch `combined-deps`, nicht gepusht).
-- **7.14 Branches:** Löschen der 90 gemergten Remote-Branches und von `feat/platform-crosscutting` (PR #5 geschlossen, Aufgaben 0.5/0.6 anders geliefert) hat der Sicherheitsfilter der Sitzung blockiert. Der Eigentümer führt aus:
+- **Repository öffentlich**, Actions auf Standard-Runnern damit kostenlos; Billing-Sperre erledigt. PR-CI wieder an (7.13, #114). Trotzdem sparsam: lokal prüfen, keine unnötigen Reruns.
+- **Einzige offene PR: #136 «chore(main): release 0.1.0»** (release-please). Eigentümer-Schritt: prüfen und mergen = erstes echtes Release (7.2/7.3), danach 7.11 Abnahme auf den Release-Images.
+- **Website veröffentlicht (7.9):** https://nicom77.github.io/Ardea/ (Pages, build_type workflow). `site.yml` läuft bei Releases, bei Push auf main unter `docs/**`, `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `openapi/**`, `site/**` und per Hand; der Job Publish nur auf main/bei Releases (#142), so dass `gh workflow run site.yml --ref <branch>` eine Site-Änderung ohne Deploy prüft. Änderungen an `.github/workflows/site.yml` selbst lösen nichts aus → nach Bumps der Pages-Actions einmal per Hand auf main starten.
+- **Site lokal nicht baubar** auf diesem Host (Astro/Node-Anforderungen, Image-Node zu alt); Satteri (Markdown-Compiler) läuft aber direkt mit Node 24, Plugins lassen sich so mit `markdownToHtml(src, { hastPlugins: [...] })` testen.
+- **Heute gemergt:** #137 (Testuhr nur vorwärts), #139 (Kommentare, E2E-Wizard), #140 (5 Sicherheitsmeldungen: Link-Checker auf `ultrahtml`, npm-`overrides` für minimatch/glob), #141 (`pending_event.seq` für stabile Reihenfolge), #138 (site.yml-Trigger), #129 (NuGet.Versioning 8), #142 (Task-List-Checkboxen mit `aria-label`), #132/#133/#134 (checkout 7, upload-pages-artifact 5, deploy-pages 5). Main-CI grün.
+- **Social Preview** (1280×640) liegt nur auf Branch `assets/social-preview` (`docs/design/brand/ardea-social-preview.png`); Eigentümer lädt sie unter Settings → General → Social preview hoch, Branch nach Wunsch mergen oder löschen.
+- **Ältere Dependabot-Sichtung** (#115–#130) ist erledigt (gemergt oder geschlossen).
+- **7.14 Branches:** ~105 Remote-Branches; Löschen bleibt Eigentümer-Schritt (Sitzungsfilter blockiert `git push --delete`). «Automatically delete head branches» ist noch aus.
   ```bash
   git fetch --prune origin && git branch -r --merged origin/main | sed 's/^ *//' | grep -vE "origin/(HEAD|main)$" | grep -v " -> " | sed 's#^origin/##' | xargs -n 15 git push origin --delete
   git push origin --delete feat/platform-crosscutting
   ```
   `NOTES` bleibt. Danach README-Zeile 7.14 ✅.
-- **Gemergt in dieser Runde:** #111 (#107), #112 (7.9 Bau), #113 (7.1 Dateien), #114 (7.13 ✅). PR-Läufe starten jetzt, scheitern aber an Billing.
+- **Lehren heute:** FakeTimeProvider startet bei echter Zeit → nie zurückstellen; `Guid.CreateVersion7()` ist innerhalb einer Millisekunde nicht monoton, nie danach sortieren; Kommentar-Prüfung (7.5) gilt auch für Testcode; Merge-Betreff immer `--subject "<Conventional Titel> (#N)"`.
 
-## 0a. Eigentümer-Schritte (Reihenfolge)
+## 0a. Eigentümer-Schritte (Reihenfolge, Stand 20.11. nachmittags)
 
-1. **Billing freigeben** → erster CI-Lauf auf main prüft alles seit #89 (bisher nur lokal geprüft); Rotes sofort fixen.
-2. **Code Security (Advanced Security)** für CodeQL im privaten Repo; **Dependabot** in den Settings aktivieren, falls aus.
-3. **Branch-Schutz** auf main mit Pflicht-Checks `Backend`, `Dependencies`, `Web`, `Web under CSP`, `End to end`, `Image` (nicht `Web visual comparison`); Lösung für Doku-PRs (CI übersprungen); Squash/Rebase-Merge abschalten.
-4. **Settings → Actions → «Allow GitHub Actions to create and approve pull requests»** (für release-please).
-5. **Markenrecherche E1**, dann Repository öffentlich (Attestierungen, Pages) oder Enterprise Cloud; Paket `ghcr.io/nicom77/ardea` öffentlich und verknüpft.
-6. Beschreibung, Topics, Social Preview; «Automatically delete head branches».
-7. Nach #127: Release-PR «release 0.1.0» einmal schliessen/öffnen (Checks), prüfen, mergen → dann 7.11 (Abnahme auf Release-Images amd64/arm64, `docs/acceptance/release-1.0.md`), 7.9 veröffentlichen (Pages + Trigger in `site.yml`), 7.12 (Masterplan ins Englische übernehmen, dann löschen).
-8. Bestätigen: E26-Rhythmus und 08:00; Masterplan-Änderungen aus #96; 5a.3-Entscheide; Mockup-Fragen; Lizenz-Ausnahmen in `site/license-exceptions.json`.
-9. Menschen/Infrastruktur: 6.2, 6.3, 6.4/6.8 (eigene Instanz).
+1. ~~Billing~~, ~~öffentlich~~, ~~Website~~: erledigt.
+2. **#136 prüfen und mergen** (Release 0.1.0); vorher CONTRIBUTING «Releases»-Checkliste (Actions dürfen PRs anlegen, nur Merge-Commits, Paket `ghcr.io/nicom77/ardea` nach dem Release öffentlich und verknüpft).
+3. Danach 7.11 (Abnahme auf Release-Images amd64/arm64, `docs/acceptance/release-1.0.md`), 7.12 (Masterplan ins Englische übernehmen, dann löschen).
+4. Branch-Schutz auf main (Pflicht-Checks `Backend`, `Dependencies`, `Web`, `Web under CSP`, `End to end`, `Image`), «Automatically delete head branches», 7.14 Branches löschen, Social Preview hochladen, Topics.
+5. Bestätigen: E26-Rhythmus und 08:00; Masterplan-Änderungen aus #96; 5a.3-Entscheide; Mockup-Fragen; Lizenz-Ausnahmen in `site/license-exceptions.json`.
+6. Menschen/Infrastruktur: 6.2, 6.3, 6.4/6.8 (eigene Instanz).
 
 ## 1. Arbeitsstand
 

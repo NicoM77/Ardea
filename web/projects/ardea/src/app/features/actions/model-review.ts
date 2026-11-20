@@ -168,11 +168,11 @@ export interface ReviewChange {
               <p class="error" [id]="id + '-error'">{{ e | transloco }}</p>
             }
             <div class="buttons">
-              <button uiButton type="button" (click)="open.set(false)">
-                {{ 'actionDetail.reason.cancel' | transloco }}
-              </button>
               <button uiButton variant="primary" type="submit" [loading]="busy()">
                 {{ 'estimate.save' | transloco }}
+              </button>
+              <button uiButton variant="ghost" type="button" (click)="open.set(false)">
+                {{ 'actionDetail.reason.cancel' | transloco }}
               </button>
             </div>
           </form>

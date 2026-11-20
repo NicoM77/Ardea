@@ -101,9 +101,9 @@ Ausbaustufen: Vorlagen für Microsoft Teams und Slack auf Basis des Webhook-Kana
 Jede Nachricht beantwortet die drei Fragen in derselben Reihenfolge wie die Oberfläche.
 
 ```
-Subject:  [5 Critical] #143 Puppet Enterprise in Platform Ops
+Subject:  [Critical] #143 Puppet Enterprise in Platform Ops
 
-Level 5, Critical. Raised from level 4.
+Critical. Raised from High.
 
 What happened   CISA lists CVE-2026-115731 as actively exploited since 17 Nov 2026.
 Affected        Platform Ops runs Puppet Enterprise 2025.9.0, inside the affected range.

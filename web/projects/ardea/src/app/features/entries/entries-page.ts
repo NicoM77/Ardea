@@ -137,8 +137,8 @@ import {
                   <span class="title">{{ row.title ?? ('entries.untitled' | transloco) }}</span>
                   <span class="sub">
                     {{ kindLabel(row.kind) | transloco }}
-                    @if (row.aliases.length) {
-                      · <span class="aliases">{{ aliases(row) }}</span>
+                    @if (aliases(row); as others) {
+                      · <span class="aliases">{{ others }}</span>
                     }
                   </span>
                 </span>

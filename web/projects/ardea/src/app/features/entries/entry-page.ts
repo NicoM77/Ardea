@@ -1,16 +1,34 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideArrowLeft, LucideCompass, LucideExternalLink } from '@lucide/angular';
-import { UiButton, UiCard, UiEmptyState, UiLoader, UiNotice, UiPageHeader, UiPill } from 'ui';
+import { LucideChevronRight, LucideCompass, LucideExternalLink } from '@lucide/angular';
+import {
+  UiBackLink,
+  UiButton,
+  UiCard,
+  UiEmptyState,
+  UiLoader,
+  UiNotice,
+  UiPageHeader,
+  UiPill,
+} from 'ui';
 import {
   getEntryResource,
   listEntryChangesResource,
   listEntrySourcesResource,
+  type AffectedView,
 } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
-import { productName, versionRange, webUrl } from './entry-detail-format';
+import {
+  affectedStatusLabel,
+  CHANGE_LABELS,
+  FIELD_LABELS,
+  productName,
+  sourceLabel,
+  versionRange,
+  webUrl,
+} from './entry-detail-format';
 import { KIND_LABELS, score, SEVERITY_LABELS, signalPills, STATE_LABELS } from './entry-format';
 
 const OPERATOR_KINDS: Record<string, string> = {
@@ -26,9 +44,10 @@ const OPERATOR_KINDS: Record<string, string> = {
   imports: [
     RouterLink,
     TranslocoPipe,
-    LucideArrowLeft,
+    LucideChevronRight,
     LucideCompass,
     LucideExternalLink,
+    UiBackLink,
     UiButton,
     UiCard,
     UiEmptyState,
@@ -38,10 +57,7 @@ const OPERATOR_KINDS: Record<string, string> = {
     UiPill,
   ],
   template: `
-    <a class="back" routerLink="/entries">
-      <svg lucideArrowLeft aria-hidden="true"></svg>
-      {{ 'entryDetail.back' | transloco }}
-    </a>
+    <ui-back-link [label]="'entryDetail.back' | transloco" link="/entries" history />
 
     @if (detail.hasValue() && detail.value(); as d) {
       <ui-page-header [heading]="d.entry.title ?? d.entry.key" />
@@ -87,9 +103,9 @@ const OPERATOR_KINDS: Record<string, string> = {
 
           <ui-card [heading]="'entryDetail.affected' | transloco">
             <span uiCardMeta>{{
-              'entryDetail.affectedCount' | transloco: { count: d.affected.length }
+              'entryDetail.affectedCount' | transloco: { count: ranges().affected.length }
             }}</span>
-            @if (d.affected.length) {
+            @if (ranges().affected.length || showUnaffected()) {
               <div class="table-wrap">
                 <table [attr.aria-label]="'entryDetail.affected' | transloco">
                   <thead>
@@ -101,7 +117,7 @@ const OPERATOR_KINDS: Record<string, string> = {
                     </tr>
                   </thead>
                   <tbody>
-                    @for (a of d.affected; track $index) {
+                    @for (a of shownRanges(); track $index) {
                       <tr>
                         <td>
                           {{ product(a) }}
@@ -113,8 +129,11 @@ const OPERATOR_KINDS: Record<string, string> = {
                           @let range = rangeOf(a);
                           {{ range.key | transloco: range.params }}
                         </td>
-                        <td>{{ a.status }}</td>
-                        <td class="mono">{{ a.source }}</td>
+                        <td class="nowrap">{{ affectedStatus(a.status) | transloco }}</td>
+                        <td class="nowrap">
+                          @let from = source(a.source);
+                          {{ from.key ? (from.key | transloco) : from.name }}
+                        </td>
                       </tr>
                     }
                   </tbody>
@@ -122,6 +141,22 @@ const OPERATOR_KINDS: Record<string, string> = {
               </div>
             } @else {
               <p class="muted">{{ 'entryDetail.noAffected' | transloco }}</p>
+            }
+            @if (ranges().unaffected.length) {
+              <p class="more">
+                <button
+                  uiButton
+                  variant="ghost"
+                  type="button"
+                  [attr.aria-expanded]="showUnaffected()"
+                  (click)="showUnaffected.set(!showUnaffected())"
+                >
+                  {{
+                    (showUnaffected() ? 'entryDetail.hideUnaffected' : 'entryDetail.showUnaffected')
+                      | transloco: { count: ranges().unaffected.length }
+                  }}
+                </button>
+              </p>
             }
           </ui-card>
 
@@ -184,7 +219,7 @@ const OPERATOR_KINDS: Record<string, string> = {
             @if (d.cvssVector) {
               <p class="vector mono">{{ d.cvssVector }}</p>
             }
-            @if (d.metrics.length) {
+            @if (d.metrics.length > 1) {
               <dl class="pairs gap">
                 @for (m of d.metrics; track $index) {
                   <div>
@@ -222,7 +257,8 @@ const OPERATOR_KINDS: Record<string, string> = {
                 @for (e of d.exploitationEvidence; track $index) {
                   <li>
                     <span>
-                      <span class="mono">{{ e.source }}</span> · {{ e.state }}
+                      @let from = source(e.source);
+                      {{ from.key ? (from.key | transloco) : from.name }} · {{ e.state }}
                       @if (e.since) {
                         · <time [attr.datetime]="e.since">{{ when(e.since) }}</time>
                       }
@@ -266,24 +302,26 @@ const OPERATOR_KINDS: Record<string, string> = {
                   </li>
                 }
               </ul>
+              @if (provenance().length) {
+                <details class="fields">
+                  <summary>
+                    <span>{{ 'entryDetail.provenance' | transloco }}</span>
+                    <svg class="chevron" lucideChevronRight aria-hidden="true"></svg>
+                  </summary>
+                  <dl class="pairs gap">
+                    @for (p of provenance(); track p.field) {
+                      <div>
+                        <dt>{{ p.label | transloco }}</dt>
+                        <dd>{{ p.source.key ? (p.source.key | transloco) : p.source.name }}</dd>
+                      </div>
+                    }
+                  </dl>
+                </details>
+              }
             } @else if (sources.error()) {
               <p class="muted">{{ 'entryDetail.sourcesFailed' | transloco }}</p>
             } @else {
               <ui-loader [label]="'entryDetail.loadingPart' | transloco" />
-            }
-          </ui-card>
-
-          <ui-card [heading]="'entryDetail.provenance' | transloco">
-            <p class="muted small">{{ 'entryDetail.provenanceHint' | transloco }}</p>
-            @if (provenance().length) {
-              <dl class="pairs gap">
-                @for (p of provenance(); track p.field) {
-                  <div>
-                    <dt class="mono">{{ p.field }}</dt>
-                    <dd class="mono">{{ p.source }}</dd>
-                  </div>
-                }
-              </dl>
             }
           </ui-card>
 
@@ -304,11 +342,13 @@ const OPERATOR_KINDS: Record<string, string> = {
                         }
                       </span>
                       @if (c.kinds.length) {
-                        <span class="sub mono">{{ c.kinds.join(', ') }}</span>
+                        <span class="sub">{{ changeKinds(c.kinds) }}</span>
                       }
                       @if (c.triggeredBy) {
+                        @let from = source(c.triggeredBy);
                         <span class="sub">{{
-                          'entryDetail.triggeredBy' | transloco: { source: c.triggeredBy }
+                          'entryDetail.triggeredBy'
+                            | transloco: { source: from.key ? (from.key | transloco) : from.name }
                         }}</span>
                       }
                     </li>
@@ -348,20 +388,6 @@ const OPERATOR_KINDS: Record<string, string> = {
     }
   `,
   styles: `
-    .back {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-xs);
-      height: 24px;
-      margin: -4px 0 var(--space-sm) -4px;
-      padding: 0 6px 0 2px;
-      border-radius: var(--radius-control);
-      color: var(--muted);
-    }
-    .back:focus-visible {
-      outline: var(--focus-ring);
-      outline-offset: var(--focus-offset);
-    }
     .facts {
       display: flex;
       flex-wrap: wrap;
@@ -512,10 +538,53 @@ const OPERATOR_KINDS: Record<string, string> = {
       color: var(--muted);
       font-size: var(--fs-sub);
     }
+    .more {
+      margin-top: var(--space-md);
+    }
+    .nowrap {
+      white-space: nowrap;
+      overflow-wrap: normal;
+    }
+    .fields {
+      margin-top: var(--space-md);
+      border-top: 1px solid var(--rule);
+    }
+    .fields summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-md);
+      min-height: 40px;
+      padding-top: var(--space-md);
+      color: var(--muted);
+      cursor: pointer;
+      list-style: none;
+    }
+    .fields summary::-webkit-details-marker {
+      display: none;
+    }
+    .fields summary:focus-visible {
+      outline: var(--focus-ring);
+      outline-offset: var(--focus-offset);
+      border-radius: var(--radius-control);
+    }
+    .chevron {
+      width: 16px;
+      height: 16px;
+      color: var(--faint);
+      transition: transform var(--t-ui) var(--ease-out);
+    }
+    .fields[open] .chevron {
+      transform: rotate(90deg);
+    }
     @media (hover: hover) and (pointer: fine) {
-      .back:hover {
-        background: var(--raised);
+      .fields summary:hover {
         color: var(--text);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .chevron {
+        transition: none;
       }
     }
     @media (max-width: 1100px) {
@@ -542,12 +611,41 @@ export class EntryPage {
   protected readonly problem = computed(() =>
     problemMessageKey(this.detail.error(), { fallback: 'entryDetail.loadFailed' }),
   );
+  private readonly sourceNames = computed(
+    () =>
+      new Map(
+        (this.sources.hasValue() ? (this.sources.value() ?? []) : []).map((s) => [
+          s.source,
+          s.name,
+        ]),
+      ),
+  );
   protected readonly provenance = computed(() => {
     const value = this.detail.hasValue() ? this.detail.value()?.provenance : undefined;
+    const order = Object.keys(FIELD_LABELS);
     return Object.entries(value ?? {})
-      .map(([field, source]) => ({ field, source }))
-      .sort((a, b) => a.field.localeCompare(b.field));
+      .filter(([field]) => field in FIELD_LABELS)
+      .sort(([a], [b]) => order.indexOf(a) - order.indexOf(b))
+      .map(([field, source]) => ({
+        field,
+        label: FIELD_LABELS[field] ?? field,
+        source: sourceLabel(source, this.sourceNames()),
+      }));
   });
+  protected readonly showUnaffected = signal(false);
+  protected readonly ranges = computed(() => {
+    const all: AffectedView[] = this.detail.hasValue() ? (this.detail.value()?.affected ?? []) : [];
+    return {
+      affected: all.filter((a) => a.status !== 'unaffected'),
+      unaffected: all.filter((a) => a.status === 'unaffected'),
+    };
+  });
+  protected readonly shownRanges = computed(() =>
+    this.showUnaffected()
+      ? [...this.ranges().affected, ...this.ranges().unaffected]
+      : this.ranges().affected,
+  );
+  protected readonly affectedStatus = affectedStatusLabel;
 
   protected readonly score = score;
   protected readonly pills = signalPills;
@@ -565,6 +663,16 @@ export class EntryPage {
 
   protected kindLabel(kind: string): string {
     return KIND_LABELS[kind] ?? 'entries.kind.vulnerability';
+  }
+
+  protected source(value: string) {
+    return sourceLabel(value, this.sourceNames());
+  }
+
+  protected changeKinds(kinds: readonly string[]): string {
+    return kinds
+      .map((kind) => (CHANGE_LABELS[kind] ? this.transloco.translate(CHANGE_LABELS[kind]) : kind))
+      .join(', ');
   }
 
   protected operatorKind(kind: string): string {

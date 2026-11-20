@@ -6,6 +6,7 @@ import {
   isRhythm,
   matrixRow,
   REMINDER_LEVELS,
+  withoutLevelTag,
 } from './notify-format';
 import { isAppleMobile, keyBytes } from './push-device';
 
@@ -105,5 +106,15 @@ describe('notices and reminders by level (task 5a.6)', () => {
     expect(isRhythm('hourly')).toBe(false);
     expect(isRhythm(null)).toBe(false);
     expect(REMINDER_LEVELS.map((l) => l.level)).toEqual([5, 4, 3]);
+  });
+});
+
+describe('the inbox title (DESIGN: priority is never a numeral)', () => {
+  it('drops the level tag the server puts first, old numbered ones too', () => {
+    expect(withoutLevelTag('[High] #4 .NET in Customer Portal')).toBe('#4 .NET in Customer Portal');
+    expect(withoutLevelTag('[4 High] #4 .NET in Customer Portal')).toBe(
+      '#4 .NET in Customer Portal',
+    );
+    expect(withoutLevelTag('First assessment: Webshop')).toBe('First assessment: Webshop');
   });
 });

@@ -42,7 +42,7 @@ internal static class MessageRenderer
     private static string RemindersSubject(MessageContent content, MessageTexts texts)
     {
         var level = content.Level ?? 0;
-        return texts.Format("title.reminders", level, texts.LevelName(level), content.Items.Count, content.Organization.Name);
+        return texts.Format("title.reminders", texts.LevelName(level), content.Items.Count, content.Organization.Name);
     }
 
     public static EmailMessage Email(MessageContent content, string to, Uri settingsOrUnsubscribe, Uri? oneClick)
@@ -115,7 +115,7 @@ internal static class MessageRenderer
 
         var level = content.Level ?? 0;
         return PushPayload(
-            texts.Locale, content.DeliveryId, texts.Format("title.several", level, texts.LevelName(level), subjects.Count, content.Organization.Name),
+            texts.Locale, content.DeliveryId, texts.Format("title.several", texts.LevelName(level), subjects.Count, content.Organization.Name),
             string.Join("; ", subjects.Take(3).Select(g => texts.Title(g.OrderBy(i => i.At).Last()))), content.Link(inbox), content.Level, content.Organization.Slug);
     }
 
@@ -248,13 +248,13 @@ internal static class MessageRenderer
         {
             var items = subjects[0].OrderBy(i => i.At).ToList();
             var last = items[^1];
-            subject = minimal && last.Action is { } a ? texts.Format("title.action", a.Level, texts.LevelName(a.Level), a.Number, string.Empty).TrimEnd() : texts.Title(last);
+            subject = minimal && last.Action is { } a ? texts.Format("title.action", texts.LevelName(a.Level), a.Number, string.Empty).TrimEnd() : texts.Title(last);
             blocks.AddRange(Describe(items, content, texts, minimal));
         }
         else
         {
             var level = content.Level ?? 0;
-            subject = texts.Format("title.several", level, texts.LevelName(level), subjects.Count, content.Organization.Name);
+            subject = texts.Format("title.several", texts.LevelName(level), subjects.Count, content.Organization.Name);
             foreach (var group in subjects.OrderByDescending(g => g.Max(i => i.Level ?? 0)))
             {
                 var items = group.OrderBy(i => i.At).ToList();

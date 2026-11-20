@@ -105,8 +105,14 @@ export interface FindingChange {
           />
           <div class="actions">
             @if (f.alertNumber !== null) {
-              <a class="link" [routerLink]="['../../alerts', alertNumber(f)]">
-                {{ 'findings.alert' | transloco: { number: alertNumber(f) } }}
+              <a
+                class="link"
+                [routerLink]="['../../alerts', alertNumber(f)]"
+                [attr.aria-label]="
+                  'findings.alertLabel' | transloco: { number: alertNumber(f), entry: f.entry.key }
+                "
+              >
+                {{ 'findings.alert' | transloco }}
               </a>
             }
             @if (canEdit()) {

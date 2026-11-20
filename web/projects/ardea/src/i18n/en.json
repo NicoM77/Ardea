@@ -555,6 +555,13 @@
     "versions": "Versions",
     "status": "Status",
     "source": "Source",
+    "affectedStatus": {
+      "affected": "Affected",
+      "unaffected": "Not affected",
+      "unknown": "Unknown"
+    },
+    "showUnaffected": "{count, plural, one {Show # unaffected range} other {Show # unaffected ranges}}",
+    "hideUnaffected": "Hide the unaffected ranges",
     "range": {
       "exact": "{version}",
       "fromBefore": "from {from} before {to}",
@@ -577,10 +584,35 @@
     "sources": "Sources",
     "sourcesFailed": "The sources of this entry could not be loaded.",
     "provenance": "Where each field comes from",
-    "provenanceHint": "The source whose value the entry shows, field by field.",
+    "fields": {
+      "title": "Title",
+      "summary": "Summary",
+      "description": "Description",
+      "severity": "Severity",
+      "exploitation": "Exploitation",
+      "epss": "EPSS",
+      "authorityWarning": "National warning"
+    },
+    "derived": "Derived by Ardea",
     "history": "History",
     "revision": "Revision {revision}",
     "material": "Material change",
+    "changes": {
+      "created": "Created",
+      "state": "State",
+      "severity": "Severity",
+      "affected": "Affected products",
+      "exploitation": "Exploitation",
+      "fix": "Fix",
+      "authority": "National warning",
+      "aliases": "Identifiers",
+      "text": "Text",
+      "references": "References",
+      "weaknesses": "Weaknesses",
+      "remediation": "What helps",
+      "material": "Other material change",
+      "epss": "EPSS"
+    },
     "triggeredBy": "From {source}",
     "noChanges": "No changes recorded.",
     "changesFailed": "The history could not be loaded.",
@@ -1453,13 +1485,10 @@
     "reopen": "Reopen",
     "details": {
       "title": "Details",
-      "status": "Status",
-      "project": "Project",
       "component": "Component",
       "removed": "No longer in the profile",
       "version": "Version",
       "to": "to",
-      "number": "Number",
       "opened": "Opened"
     },
     "reason": {
@@ -1543,6 +1572,7 @@
     "tryAgain": "Try again",
     "more": "Show more",
     "show": "Show",
+    "sub": "Ardea asks when an entry names a technology of your stack without an exact version and is critical or exploited.",
     "view": {
       "new": "New",
       "answered": "Answered",
@@ -1594,9 +1624,7 @@
     "side": {
       "title": "Notices so far",
       "note": "One block per notice: new, earlier, and how they were answered.",
-      "blocks": "{total} notices: {fresh} new, {earlier} earlier, {affects} affect us, {not} do not",
-      "stackTitle": "From your stack",
-      "stackText": "A notice asks when an entry names a technology of your stack without an exact version and is critical or exploited. “Doesn’t affect us” is final; it comes back once if the entry gets exploited."
+      "blocks": "{total} notices: {fresh} new, {earlier} earlier, {affects} affect us, {not} do not"
     },
     "affects": "Affects us",
     "notAffected": "Doesn’t affect us",
@@ -1681,6 +1709,7 @@
       "yes": "Yes",
       "unknown": "Cannot tell yet",
       "no": "No",
+      "addVersion": "Add the installed version",
       "more": "{count, plural, one {And # more component} other {And # more components}}"
     },
     "check": {
@@ -1741,6 +1770,7 @@
     "note": "Note",
     "factorsOf": "Factors of {entry}",
     "alert": "Vulnerability details",
+    "alertLabel": "Vulnerability details #{number}, {entry}",
     "statusOf": "Set the outcome of {entry}",
     "change": "Set the outcome",
     "reopen": "Take the closing back",
@@ -2046,7 +2076,6 @@
       "saveFailed": "The reminders could not be saved. Try again."
     },
     "editor": {
-      "breadcrumb": "Breadcrumb",
       "titleNew": "New rule",
       "titleEdit": "Rule",
       "preset": "A default rule. Change it like any other.",

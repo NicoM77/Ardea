@@ -57,13 +57,13 @@ public sealed class ReminderTests(PostgresServer server)
         await RunAtAsync(host, first);
         var mail = Assert.Single(Reminders(host));
         Assert.Equal("owner@example.org", mail.To);
-        Assert.Equal("[5 Critical] 2 open reminder(s) in Acme", mail.Subject);
-        Assert.Contains("[5 Critical] #2 PostgreSQL in Platform Ops", mail.Text, StringComparison.Ordinal);
-        Assert.Contains("[4 High] #3 PostgreSQL in Platform Ops", mail.Text, StringComparison.Ordinal);
+        Assert.Equal("[Critical] 2 open reminder(s) in Acme", mail.Subject);
+        Assert.Contains("[Critical] #2 PostgreSQL in Platform Ops", mail.Text, StringComparison.Ordinal);
+        Assert.Contains("[High] #3 PostgreSQL in Platform Ops", mail.Text, StringComparison.Ordinal);
         Assert.Contains("https://ardea.test/o/acme/reminders/2", mail.Text, StringComparison.Ordinal);
         Assert.DoesNotContain("#4 ", mail.Text, StringComparison.Ordinal);
         Assert.DoesNotContain("#6 ", mail.Text, StringComparison.Ordinal);
-        Assert.Equal(["reminder.due|[5 Critical] 2 open reminder(s) in Acme|/o/acme/reminders"], await host.RowsAsync("SELECT kind || '|' || title || '|' || link FROM notify.notification"));
+        Assert.Equal(["reminder.due|[Critical] 2 open reminder(s) in Acme|/o/acme/reminders"], await host.RowsAsync("SELECT kind || '|' || title || '|' || link FROM notify.notification"));
         Assert.Equal(TimeSpan.FromHours(8), TimeZoneInfo.ConvertTime(await NextRunAsync(host), DigestSchedule.Zone("Europe/Zurich")).TimeOfDay);
 
         host.Time.Advance(TimeSpan.FromHours(1));
@@ -73,7 +73,7 @@ public sealed class ReminderTests(PostgresServer server)
 
         await RunAtAsync(host, await NextRunAsync(host));
         Assert.Equal(2, Reminders(host).Count);
-        Assert.Equal("[5 Critical] 1 open reminder(s) in Acme", Reminders(host)[1].Subject);
+        Assert.Equal("[Critical] 1 open reminder(s) in Acme", Reminders(host)[1].Subject);
         await host.ExecuteAsync($"UPDATE assess.remediation SET status = 'closed', closed_at = now(), close_reason = 'remediated' WHERE id = '{critical}'");
         await RunAtAsync(host, await NextRunAsync(host));
         Assert.Equal(2, Reminders(host).Count);

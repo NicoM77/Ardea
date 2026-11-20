@@ -26,7 +26,8 @@ public sealed class InAppTests(PostgresServer server)
         var mine = await NotifyTestHost.JsonAsync(await s.Owner.GetAsync($"{s.Path}/notifications"));
         Assert.Equal(1, mine.GetProperty("unread").GetInt32());
         var item = Assert.Single(mine.GetProperty("items").EnumerateArray());
-        Assert.Equal("[4 High] #2 PostgreSQL in Platform Ops", item.GetProperty("title").GetString());
+        Assert.Equal("[High] #2 PostgreSQL in Platform Ops", item.GetProperty("title").GetString());
+        Assert.Equal("High. New reminder.", item.GetProperty("body").GetString());
         Assert.Equal("/o/acme/reminders/2", item.GetProperty("link").GetString());
         var theirs = await NotifyTestHost.JsonAsync(await viewer.GetAsync($"{s.Path}/notifications"));
         Assert.NotEqual(item.GetProperty("id").GetGuid(), theirs.GetProperty("items")[0].GetProperty("id").GetGuid());

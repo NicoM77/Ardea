@@ -1,28 +1,16 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject, input } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { UiCard, UiStatus } from 'ui';
+import { UiCard } from 'ui';
 import type { ActionSummary } from '../../core/api/client';
-import { num, statusKindOf } from './action-format';
 
 @Component({
   selector: 'ardea-action-details',
-  imports: [RouterLink, TranslocoPipe, UiCard, UiStatus],
+  imports: [TranslocoPipe, UiCard],
   template: `
     @let a = action();
     <ui-card>
       <h2 class="sr-only">{{ 'actionDetail.details.title' | transloco }}</h2>
       <dl class="props">
-        <div>
-          <dt>{{ 'actionDetail.details.status' | transloco }}</dt>
-          <dd><ui-status [kind]="kind()" /></dd>
-        </div>
-        <div>
-          <dt>{{ 'actionDetail.details.project' | transloco }}</dt>
-          <dd>
-            <a class="link" [routerLink]="['../../projects', a.project.id]">{{ a.project.name }}</a>
-          </dd>
-        </div>
         <div>
           <dt>{{ 'actionDetail.details.component' | transloco }}</dt>
           <dd>
@@ -42,10 +30,6 @@ import { num, statusKindOf } from './action-format';
               <span class="id">{{ a.targetVersion }}</span>
             }
           </dd>
-        </div>
-        <div>
-          <dt>{{ 'actionDetail.details.number' | transloco }}</dt>
-          <dd class="id">#{{ number() }}</dd>
         </div>
         <div>
           <dt>{{ 'actionDetail.details.opened' | transloco }}</dt>
@@ -86,11 +70,6 @@ import { num, statusKindOf } from './action-format';
 export class ActionDetails {
   readonly action = input.required<ActionSummary>();
   private readonly transloco = inject(TranslocoService);
-
-  protected readonly kind = computed(() =>
-    statusKindOf(this.action().status, this.action().closeReason),
-  );
-  protected readonly number = computed(() => num(this.action().number));
 
   protected when(value: string): string {
     return new Intl.DateTimeFormat(this.transloco.getActiveLang(), {

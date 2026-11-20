@@ -10,8 +10,9 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideChevronRight, LucidePlus } from '@lucide/angular';
+import { LucidePlus } from '@lucide/angular';
 import {
+  UiBackLink,
   UiButton,
   UiCard,
   UiInput,
@@ -91,9 +92,9 @@ function newTarget(): TargetDraft {
   imports: [
     RouterLink,
     TranslocoPipe,
-    LucideChevronRight,
     LucidePlus,
     NotifyIcon,
+    UiBackLink,
     UiButton,
     UiCard,
     UiInput,
@@ -106,11 +107,7 @@ function newTarget(): TargetDraft {
   ],
   template: `
     @if (organization(); as org) {
-      <nav class="crumbs" [attr.aria-label]="'notify.editor.breadcrumb' | transloco">
-        <a [routerLink]="listUrl()">{{ 'nav.rules' | transloco }}</a>
-        <svg lucideChevronRight aria-hidden="true"></svg>
-        <span aria-current="page">{{ title() }}</span>
-      </nav>
+      <ui-back-link [label]="'nav.rules' | transloco" [link]="listUrl()" />
       <div class="title">
         <h1>{{ title() }}</h1>
         @if (manage() && ruleId() && rule.hasValue()) {
@@ -426,21 +423,6 @@ function newTarget(): TargetDraft {
   styles: `
     :host {
       display: block;
-    }
-    .crumbs {
-      display: flex;
-      align-items: center;
-      gap: var(--space-xs);
-      margin-bottom: var(--space-sm);
-      color: var(--muted);
-      font-size: var(--fs-sub);
-    }
-    .crumbs a {
-      color: var(--muted);
-    }
-    .crumbs svg {
-      width: 14px;
-      height: 14px;
     }
     .title {
       display: flex;

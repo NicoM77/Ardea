@@ -119,9 +119,15 @@ function pages(
           {{ summary().rest.key | transloco: summary().rest.params }}
         }
       </p>
+      <p class="sub">
+        {{ 'notices.sub' | transloco }}
+        <a class="stack-link" routerLink="../stack"
+          >{{ 'nav.stack' | transloco }}<svg lucideChevronRight aria-hidden="true"></svg
+        ></a>
+      </p>
     </header>
 
-    <div class="grid">
+    <div class="grid" [class.solo]="!total()">
       <div class="main">
         <div class="bar">
           <div class="segments" role="group" [attr.aria-label]="'notices.show' | transloco">
@@ -208,9 +214,11 @@ function pages(
             >
               <svg uiEmptyIcon lucideCircleCheck aria-hidden="true"></svg>
               {{ 'notices.calm.text' | transloco: { answered: answeredCount() } }}
-              <button uiEmptyActions uiButton type="button" (click)="show('answered')">
-                {{ 'notices.calm.answered' | transloco }}
-              </button>
+              @if (answered().length) {
+                <button uiEmptyActions uiButton type="button" (click)="show('answered')">
+                  {{ 'notices.calm.answered' | transloco }}
+                </button>
+              }
             </ui-empty-state>
           }
           @if (view() === 'new' ? newMore() : earlierMore()) {
@@ -309,43 +317,39 @@ function pages(
         }
       </div>
 
-      <div class="side">
-        <ui-card [heading]="'notices.side.title' | transloco">
-          <p class="figure">{{ total() }}</p>
-          <p class="figure-note">{{ 'notices.side.note' | transloco }}</p>
-          <div class="blocks" role="img" [attr.aria-label]="blocksLabel()">
-            @for (b of blocks(); track $index) {
-              <i [class]="'is-' + b"></i>
-            }
-          </div>
-          <div class="legend">
-            <div>
-              <span><i class="is-new"></i>{{ 'notices.view.new' | transloco }}</span
-              ><b>{{ freshCount() }}</b>
+      @if (total()) {
+        <div class="side">
+          <ui-card [heading]="'notices.side.title' | transloco">
+            <p class="figure">{{ total() }}</p>
+            <p class="figure-note">{{ 'notices.side.note' | transloco }}</p>
+            <div class="blocks" role="img" [attr.aria-label]="blocksLabel()">
+              @for (b of blocks(); track $index) {
+                <i [class]="'is-' + b"></i>
+              }
             </div>
-            @if (earlier().length) {
+            <div class="legend">
               <div>
-                <span><i class="is-earlier"></i>{{ 'notices.earlier.title' | transloco }}</span
-                ><b>{{ earlier().length }}</b>
+                <span><i class="is-new"></i>{{ 'notices.view.new' | transloco }}</span
+                ><b>{{ freshCount() }}</b>
               </div>
-            }
-            <div>
-              <span><i class="is-affects"></i>{{ 'notices.affects' | transloco }}</span
-              ><b>{{ affectsCount() }}</b>
+              @if (earlier().length) {
+                <div>
+                  <span><i class="is-earlier"></i>{{ 'notices.earlier.title' | transloco }}</span
+                  ><b>{{ earlier().length }}</b>
+                </div>
+              }
+              <div>
+                <span><i class="is-affects"></i>{{ 'notices.affects' | transloco }}</span
+                ><b>{{ affectsCount() }}</b>
+              </div>
+              <div>
+                <span><i class="is-not"></i>{{ 'notices.notAffected' | transloco }}</span
+                ><b>{{ notAffectedCount() }}</b>
+              </div>
             </div>
-            <div>
-              <span><i class="is-not"></i>{{ 'notices.notAffected' | transloco }}</span
-              ><b>{{ notAffectedCount() }}</b>
-            </div>
-          </div>
-        </ui-card>
-        <ui-card [heading]="'notices.side.stackTitle' | transloco">
-          <a uiCardMeta class="card-link" routerLink="../stack"
-            >{{ 'nav.stack' | transloco }}<svg lucideChevronRight aria-hidden="true"></svg
-          ></a>
-          <p class="figure-note">{{ 'notices.side.stackText' | transloco }}</p>
-        </ui-card>
-      </div>
+          </ui-card>
+        </div>
+      }
     </div>
 
     <ng-template #card let-n>
@@ -375,6 +379,12 @@ function pages(
       min-height: var(--lh-body);
       margin-top: var(--space-xs);
       color: var(--muted);
+    }
+    .sub {
+      margin-top: var(--space-xs);
+      color: var(--muted);
+      font-size: var(--fs-sub);
+      line-height: var(--lh-sub);
     }
     .summary strong {
       color: var(--text);
@@ -585,17 +595,20 @@ function pages(
     .legend b {
       font-weight: 500;
     }
-    .card-link {
+    .stack-link {
       display: inline-flex;
       align-items: center;
       gap: 2px;
-      color: var(--muted);
-      font-size: var(--fs-sub);
+      color: var(--text);
+      font-weight: 500;
+      white-space: nowrap;
     }
-    @media (hover: hover) and (pointer: fine) {
-      .card-link:hover {
-        color: var(--text);
-      }
+    .stack-link svg {
+      width: 14px;
+      height: 14px;
+    }
+    .grid.solo {
+      grid-template-columns: minmax(0, 1fr);
     }
     @media (hover: none), (pointer: coarse) {
       .keys {
@@ -726,7 +739,7 @@ export class NoticesPage {
   });
   protected readonly fresh = computed(() => freshNotices(this.all()).sort(noticeOrder));
   protected readonly earlier = computed(() => this.all().filter(isEarlier).sort(noticeOrder));
-  private readonly answered = computed(() =>
+  protected readonly answered = computed(() =>
     this.all().filter((n) => n.state === 'affects_us' || n.state === 'not_affected'),
   );
   protected readonly groups = computed(() => answeredGroups(this.answered()));

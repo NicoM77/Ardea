@@ -139,12 +139,14 @@ test('reminders list: filter by priority and project, search, and the done view'
   await expect(page.getByRole('status').filter({ hasText: 'open.' })).toHaveText(
     '4 open. 1 critical.',
   );
-  await expect(table.getByRole('columnheader')).toHaveText([
-    'Priority',
-    'Reminder',
-    'Since',
-    'Status',
-  ]);
+  await expect(table.getByRole('columnheader')).toHaveText(['Priority', 'Reminder', 'Since']);
+  const views = page.getByRole('group', { name: 'Show' });
+  await expect(views.getByRole('button', { name: /^Open/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(views.getByRole('button', { name: /^Open/ })).toHaveText(/Open\s*4/);
+  await expect(views.getByRole('button', { name: /^Done/ })).toHaveText(/Done\s*1/);
   await expect(page.getByRole('region', { name: 'Owners' })).toHaveCount(0);
   await expectAccessible(page, 'reminders');
 
@@ -179,9 +181,15 @@ test('reminders list: filter by priority and project, search, and the done view'
   );
 
   await page.goto(`${ORG}/reminders`);
-  await page.getByRole('navigation', { name: 'Show' }).getByRole('link', { name: 'Done' }).click();
+  await page.getByRole('group', { name: 'Show' }).getByRole('button', { name: /^Done/ }).click();
   await expect(page).toHaveURL(/view=closed/);
   const closed = page.getByRole('table', { name: 'Done reminders' });
+  await expect(closed.getByRole('columnheader')).toHaveText([
+    'Priority',
+    'Reminder',
+    'Done',
+    'Status',
+  ]);
   await expect(closed.getByRole('row')).toHaveCount(2);
   await expect(closed).toContainText('Update .NET runtime to 10.0.4');
   await expect(closed).toContainText('Remediated');
@@ -342,6 +350,8 @@ test('notices: the keyboard moves between cards and answers with 1 and 2, Esc cl
   await cards.first().focus();
   await page.keyboard.press('ArrowDown');
   await expect(cards.nth(1)).toBeFocused();
+  await expect(cards.nth(1).locator('ui-kbd').first()).toBeVisible();
+  await expect(cards.first().locator('ui-kbd').first()).toBeHidden();
   await page.keyboard.press('j');
   await expect(cards.nth(2)).toBeFocused();
   await page.keyboard.press('k');
@@ -524,6 +534,21 @@ test('notices on a quiet day: nothing to answer, said in the same place', async 
   await page.getByRole('button', { name: 'See answered' }).click();
   await expect(page).toHaveURL(/view=answered/);
   await expectAccessible(page, 'notices calm');
+  expect(problems).toEqual([]);
+});
+
+test('notices before the first one: no chart and nothing answered to look at', async ({ page }) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  await page.route('**/api/v1/orgs/*/notices?**', (route) =>
+    route.fulfill({ json: { items: [], nextCursor: null } }),
+  );
+  await page.goto(`${ORG}/notices`);
+  await expect(page.getByText('Nothing to answer')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'See answered' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Notices so far' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Stack', exact: true }).last()).toBeVisible();
+  await expectAccessible(page, 'notices before the first one');
   expect(problems).toEqual([]);
 });
 
@@ -824,7 +849,8 @@ test('the bell counts unread notifications; reading one in the inbox opens its r
   await expect(page.getByText('2 unread in Example Org')).toBeVisible();
   await expectAccessible(page, 'inbox');
 
-  await page.getByRole('link', { name: /\[5 Critical\] #143 Puppet Enterprise/ }).click();
+  await expect(page.getByText(/\[(Critical|High)\]/)).toHaveCount(0);
+  await page.getByRole('link', { name: /^Critical #143 Puppet Enterprise/ }).click();
   await expect(page).toHaveURL(/\/o\/example\/reminders\/143$/);
   await expect(page.getByRole('link', { name: 'Notifications, 1 unread' })).toBeVisible();
   const read = api.requests.find((r) => r.path.endsWith('/notifications/read'))!;

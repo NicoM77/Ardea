@@ -1,8 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideBell, LucideChevronRight } from '@lucide/angular';
-import { UiButton, UiCard, UiInput, UiLoader, UiNotice, UiStatus } from 'ui';
+import { LucideBell } from '@lucide/angular';
+import { UiBackLink, UiButton, UiCard, UiInput, UiLoader, UiNotice, UiStatus } from 'ui';
 import { firstValueFrom } from 'rxjs';
 import {
   getNotificationPreferencesResource,
@@ -28,11 +27,10 @@ const CHANNEL_HINTS: Readonly<Record<string, string>> = {
 @Component({
   selector: 'ardea-notification-settings-page',
   imports: [
-    RouterLink,
     TranslocoPipe,
     LucideBell,
-    LucideChevronRight,
     NotifyIcon,
+    UiBackLink,
     UiButton,
     UiCard,
     UiInput,
@@ -42,11 +40,7 @@ const CHANNEL_HINTS: Readonly<Record<string, string>> = {
   ],
   template: `
     @if (organization(); as org) {
-      <nav class="crumbs" [attr.aria-label]="'notify.editor.breadcrumb' | transloco">
-        <a [routerLink]="'/o/' + org.slug + '/settings'">{{ 'nav.settings' | transloco }}</a>
-        <svg lucideChevronRight aria-hidden="true"></svg>
-        <span aria-current="page">{{ 'notify.settings.title' | transloco }}</span>
-      </nav>
+      <ui-back-link [label]="'nav.settings' | transloco" [link]="'/o/' + org.slug + '/settings'" />
       <h1>{{ 'notify.settings.title' | transloco }}</h1>
       <p class="lead">{{ 'notify.settings.lead' | transloco: { name: org.name } }}</p>
 
@@ -270,21 +264,6 @@ const CHANNEL_HINTS: Readonly<Record<string, string>> = {
   styles: `
     :host {
       display: block;
-    }
-    .crumbs {
-      display: flex;
-      align-items: center;
-      gap: var(--space-xs);
-      margin-bottom: var(--space-sm);
-      color: var(--muted);
-      font-size: var(--fs-sub);
-    }
-    .crumbs a {
-      color: var(--muted);
-    }
-    .crumbs svg {
-      width: 14px;
-      height: 14px;
     }
     .lead {
       margin: var(--space-xs) 0 var(--space-xl);

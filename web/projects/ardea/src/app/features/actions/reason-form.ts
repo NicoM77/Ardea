@@ -31,11 +31,11 @@ import { UiButton, UiInput } from 'ui';
         <p class="error" [id]="id + '-error'">{{ 'actionDetail.reason.required' | transloco }}</p>
       }
       <div class="buttons">
-        <button uiButton type="button" (click)="dismiss.emit()">
-          {{ 'actionDetail.reason.cancel' | transloco }}
-        </button>
         <button uiButton variant="primary" type="submit" [loading]="busy()">
           {{ submitLabel() }}
+        </button>
+        <button uiButton variant="ghost" type="button" (click)="dismiss.emit()">
+          {{ 'actionDetail.reason.cancel' | transloco }}
         </button>
       </div>
     </form>
@@ -55,7 +55,6 @@ import { UiButton, UiInput } from 'ui';
     .buttons {
       display: flex;
       flex-wrap: wrap;
-      justify-content: flex-end;
       gap: var(--space-sm);
     }
   `,

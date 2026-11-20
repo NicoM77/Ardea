@@ -37,7 +37,9 @@ interface Row {
           <th scope="col">
             {{ (closed() ? 'actions.table.closedOn' : 'actions.table.since') | transloco }}
           </th>
-          <th scope="col">{{ 'actions.table.status' | transloco }}</th>
+          @if (closed()) {
+            <th scope="col">{{ 'actions.table.status' | transloco }}</th>
+          }
         </tr>
       </thead>
       <tbody>
@@ -68,9 +70,11 @@ interface Row {
               </span>
             </td>
             <td class="since">{{ row.since }}</td>
-            <td class="status">
-              <ui-status [kind]="status(row.action)" />
-            </td>
+            @if (closed()) {
+              <td class="status">
+                <ui-status [kind]="status(row.action)" />
+              </td>
+            }
           </tr>
         }
       </tbody>
@@ -96,8 +100,10 @@ interface Row {
     th:nth-child(3) {
       width: 136px;
     }
-    th:last-child {
+    th:nth-child(4) {
       width: 128px;
+    }
+    th:last-child {
       padding-right: 0;
     }
     tr {

@@ -1,8 +1,14 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { computed } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TRANSLOCO_TRANSPILER, TranslocoTestingModule } from '@jsverse/transloco';
+import { of } from 'rxjs';
 import en from '../../../i18n/en.json';
-import type { AnswersView } from '../../core/api/client';
+import type { AffectedItem, AnswersView } from '../../core/api/client';
 import { IcuTranspiler } from '../../core/i18n/icu-transpiler';
+import { Session, type Me } from '../../core/session/session';
 import { Answers } from './answers';
 import { quoteLang, rangePhrase } from './answers-format';
 
@@ -39,8 +45,19 @@ const ANSWERS: AnswersView = {
   },
 };
 
+const ORG = '0190a000-0000-7000-8000-0000000000aa';
+
 describe('the three answers', () => {
-  function render(answers: AnswersView) {
+  function render(answers: AnswersView, role = 'viewer') {
+    const user: Me = {
+      id: 'me',
+      email: 'me@example.org',
+      displayName: 'Me',
+      isInstanceAdmin: false,
+      twoFactorEnabled: true,
+      organizations: [{ id: ORG, slug: 'heron', name: 'Heron', role, mfaRequired: false }],
+    };
+    const params = convertToParamMap({ slug: 'heron' });
     TestBed.configureTestingModule({
       imports: [
         Answers,
@@ -50,7 +67,17 @@ describe('the three answers', () => {
           preloadLangs: true,
         }),
       ],
-      providers: [{ provide: TRANSLOCO_TRANSPILER, useClass: IcuTranspiler }],
+      providers: [
+        { provide: TRANSLOCO_TRANSPILER, useClass: IcuTranspiler },
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: Session, useValue: { user: computed(() => user) } },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: params }, paramMap: of(params), parent: null },
+        },
+      ],
     });
     const fixture = TestBed.createComponent(Answers);
     fixture.componentRef.setInput('answers', answers);
@@ -193,6 +220,48 @@ describe('the three answers', () => {
     TestBed.resetTestingModule();
     const failed = render({ ...ANSWERS, modelNote: 'without_model' });
     expect(text(failed.querySelector('.without'))).toContain('Without AI assessment');
+  });
+
+  it('offers members to add the installed version where it is missing: the stack or the project', async () => {
+    const unknown = (id: string, project: string): AffectedItem => ({
+      project: { id: project, name: project === 'stack' ? 'Stack' : 'Platform Ops' },
+      component: { id, name: 'PostgreSQL', version: null, removed: false },
+      level: 3,
+      versionVerdict: 'unknown',
+      versionReason: 'no_installed_version',
+      ranges: [],
+    });
+    const answers: AnswersView = {
+      ...ANSWERS,
+      affected: {
+        ...ANSWERS.affected,
+        verdict: 'unknown',
+        items: [unknown('c1', 'stack'), unknown('c2', 'p1'), ANSWERS.affected.items[0]],
+      },
+    };
+    const links = (element: HTMLElement) =>
+      [...element.querySelectorAll('[data-answer="affected"] a')].map((a) =>
+        a.getAttribute('href'),
+      );
+
+    const viewer = render(answers);
+    TestBed.inject(HttpTestingController).expectNone(`/api/v1/orgs/${ORG}/stack`);
+    expect(links(viewer)).toEqual([]);
+    TestBed.resetTestingModule();
+
+    const member = render(answers, 'member');
+    TestBed.inject(HttpTestingController)
+      .expectOne(`/api/v1/orgs/${ORG}/stack`)
+      .flush({ projectId: 'stack', components: [] });
+    await new Promise((resolve) => setTimeout(resolve));
+    TestBed.tick();
+    expect(links(member)).toEqual([
+      '/o/heron/stack',
+      '/o/heron/projects/p1/setup?step=technologies',
+    ]);
+    expect(text(member.querySelector('[data-answer="affected"] a'))).toBe(
+      'Add the installed version',
+    );
   });
 
   it('marks the English source text with its language when the interface speaks another', () => {

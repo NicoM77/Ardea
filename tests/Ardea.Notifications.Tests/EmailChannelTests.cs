@@ -47,7 +47,7 @@ public sealed class EmailChannelTests(PostgresServer server)
 
         using var http = new HttpClient { BaseAddress = new Uri($"http://{mailpit.Hostname}:{mailpit.GetMappedPublicPort(8025)}") };
         var message = (await http.GetFromJsonAsync<JsonElement>("/api/v1/messages", TestContext.Current.CancellationToken)).GetProperty("messages")[0];
-        Assert.Equal("[4 High] #2 PostgreSQL in Platform Ops", message.GetProperty("Subject").GetString());
+        Assert.Equal("[High] #2 PostgreSQL in Platform Ops", message.GetProperty("Subject").GetString());
         var id = message.GetProperty("ID").GetString();
         var full = await http.GetFromJsonAsync<JsonElement>($"/api/v1/message/{id}", TestContext.Current.CancellationToken);
         var text = full.GetProperty("Text").GetString()!;

@@ -293,8 +293,15 @@ import {
       margin-top: var(--space-lg);
     }
     .actions ui-kbd {
+      display: none;
       margin-left: var(--space-sm);
       margin-right: -4px;
+    }
+    @media (hover: hover) and (pointer: fine) and (min-width: 641px) {
+      .card:focus-visible .actions ui-kbd,
+      .card:has(:focus-visible) .actions ui-kbd {
+        display: inline;
+      }
     }
     .more {
       display: inline-flex;
@@ -322,11 +329,6 @@ import {
     @media (hover: hover) and (pointer: fine) {
       .more:hover {
         color: var(--text);
-      }
-    }
-    @media (hover: none), (pointer: coarse), (max-width: 640px) {
-      .actions ui-kbd {
-        display: none;
       }
     }
     @media (max-width: 640px) {

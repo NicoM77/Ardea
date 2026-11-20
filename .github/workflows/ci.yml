@@ -1,9 +1,11 @@
 name: CI
 
-# TEMPORARY (owner's decision of 19.11.2026, Actions minutes used up): CI runs only on main, never on pull
-# requests. Task 7.13 of the roadmap turns pull request runs back on. A pull request is verified locally before it is merged; changes to documentation alone run nothing.
-# The visual comparison and the arm64 image run on demand (Actions → CI → Run workflow on main).
+# Every pull request and every push to main runs the pipeline, except changes to documentation alone.
 on:
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   push:
     branches: [main]
     paths-ignore:
@@ -13,7 +15,7 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -135,7 +137,7 @@ jobs:
   # The same image as for local runs, so the committed baselines match pixel for pixel.
   web-visual:
     name: Web visual comparison
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
@@ -268,7 +270,7 @@ jobs:
       - name: Smoke test (compose up, healthy, doctor)
         run: build/smoke-test.sh ardea:ci
       - name: Build image (arm64, cross-compiled)
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v6
         with:
           context: .

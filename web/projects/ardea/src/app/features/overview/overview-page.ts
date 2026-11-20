@@ -9,6 +9,7 @@ import {
   getWizardStateResource,
   listActionsResource,
   listEntriesResource,
+  listNoticesResource,
   listSourcesResource,
   type ActionSummary,
   type NoticeView,
@@ -26,6 +27,8 @@ import { openByPriority, overviewFinding, projectBlocks } from './overview-forma
 import { PriorityRing } from './priority-ring';
 
 const WEEK = 7 * 86_400_000;
+
+type NoticeState = 'new' | 'earlier' | 'answered' | 'none' | 'unknown';
 
 @Component({
   selector: 'ardea-overview-page',
@@ -113,6 +116,57 @@ export class OverviewPage {
     countText(this.notices.count(), this.notices.more()),
   );
   protected readonly peek = computed(() => this.notices.fresh().slice(0, 3));
+
+  private readonly quietOrg = computed(() =>
+    this.noticesKnown() && this.noticeCount() === 0 ? this.orgId() : undefined,
+  );
+  private readonly answeredRead = listNoticesResource(
+    this.quietOrg,
+    signal({ state: 'answered', limit: 1 }),
+  );
+  private readonly earlierRead = listNoticesResource(
+    this.quietOrg,
+    signal({ state: 'earlier', limit: 1 }),
+  );
+  protected readonly noticeState = computed<NoticeState | null>(() => {
+    if (!this.noticesKnown()) return null;
+    if (this.noticeCount() > 0) return 'new';
+    if (this.answeredRead.error() || this.earlierRead.error()) return 'unknown';
+    if (!this.answeredRead.hasValue() || !this.earlierRead.hasValue()) return null;
+    if (this.earlierRead.value()?.items.length) return 'earlier';
+    if (this.answeredRead.value()?.items.length) return 'answered';
+    return 'none';
+  });
+
+  protected readonly noticeSub = computed(() => {
+    switch (this.noticeState()) {
+      case 'new':
+        return 'overview.notices.sub';
+      case 'answered':
+        return 'overview.notices.calm';
+      case 'none':
+        return 'overview.notices.none';
+      case 'earlier':
+      case 'unknown':
+        return 'overview.notices.nothingNew';
+      default:
+        return null;
+    }
+  });
+
+  private readonly reminderHistory = listActionsResource(
+    computed(() => (this.data() && this.total() === 0 ? this.orgId() : undefined)),
+    signal({ status: 'all', limit: 1 }),
+  );
+  protected readonly firstUse = computed<boolean | null>(() => {
+    if (!this.data()) return null;
+    if (this.total() > 0 || this.noticesFailed()) return false;
+    const notices = this.noticeState();
+    if (notices === null) return null;
+    if (notices !== 'none' || this.reminderHistory.error()) return false;
+    if (!this.reminderHistory.hasValue()) return null;
+    return !this.reminderHistory.value()?.items.length;
+  });
   protected peekProduct(n: NoticeView): string {
     return reasonComponent(n)?.name ?? '?';
   }

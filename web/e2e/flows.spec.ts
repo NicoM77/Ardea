@@ -53,6 +53,45 @@ test('overview on a busy day: the finding, the open reminders with their answers
   expect(problems).toEqual([]);
 });
 
+test('overview on first use: the setup prompt and one calm state instead of empty cards', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page, { empty: true });
+  await page.goto(`${ORG}/overview`);
+
+  await expect(page.getByText('Set up your organization')).toBeVisible();
+  await expect(page.getByText('Nothing to triage yet')).toBeVisible();
+  await expect(page.getByText('Notices and reminders appear here once')).toBeVisible();
+  for (const card of [
+    'Open reminders',
+    'Notices',
+    'By priority',
+    'Projects',
+    'Since yesterday',
+    'Warnings without an identifier',
+    'Sources',
+  ])
+    await expect(page.getByRole('region', { name: card, exact: true })).toHaveCount(0);
+  await expectAccessible(page, 'overview first use');
+  expect(problems).toEqual([]);
+});
+
+test('overview without notices yet says so and offers no answered list', async ({ page }) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  await page.route('**/api/v1/orgs/*/notices?**', (route) =>
+    route.fulfill({ json: { items: [], nextCursor: null } }),
+  );
+  await page.goto(`${ORG}/overview`);
+  const notices = page.getByRole('region', { name: 'Notices' });
+  await expect(notices).toContainText('No notice yet.');
+  await expect(notices).not.toContainText('every notice so far is answered');
+  await expect(notices.getByRole('link')).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Open reminders' })).toBeVisible();
+  expect(problems).toEqual([]);
+});
+
 test('overview on a quiet day keeps its cards and says nothing is urgent', async ({ page }) => {
   const problems = watchConsole(page);
   await flowsApi(page, { calm: true });
@@ -76,7 +115,11 @@ test('overview on a quiet day keeps its cards and says nothing is urgent', async
     'href',
     '/o/example/notices?view=answered',
   );
-  await expect(page.getByRole('region', { name: 'Sources' })).toBeVisible();
+  const sources = page.getByRole('region', { name: 'Sources' });
+  await expect(sources).toContainText('2 sources, 1 healthy.');
+  await expect(sources.getByRole('listitem')).toHaveCount(1);
+  await expect(sources.getByRole('listitem')).toContainText('BACS warnings');
+  await expect(sources.getByRole('listitem')).toContainText('Degraded');
   await expectAccessible(page, 'overview calm');
   expect(problems).toEqual([]);
 });

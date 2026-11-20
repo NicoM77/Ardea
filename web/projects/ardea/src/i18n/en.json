@@ -55,7 +55,7 @@
   "areas": {
     "overview": {
       "emptyHeading": "Nothing to triage yet",
-      "emptyText": "Once sources are synced and a project describes what it runs, open reminders and what to do about them appear here."
+      "emptyText": "Notices and reminders appear here once the sources are read and your stack or a project names what you run."
     },
     "actions": {
       "emptyHeading": "No open reminders",
@@ -1765,19 +1765,23 @@
       "title": "Warnings without an identifier",
       "meta": "National centres, 7 days",
       "note": "Campaigns and advisories with no CVE yet. They name no product of yours, so they raise no reminder.",
-      "national": "National centre",
-      "none": "No warning without an identifier in the last 7 days."
+      "national": "National centre"
     },
     "sources": {
       "title": "Sources",
       "all": "All sources",
-      "none": "No source has reported yet."
+      "none": "No source has reported yet.",
+      "healthy": "{count, plural, one {# source, healthy.} other {# sources, all healthy.}}",
+      "paused": "{count, plural, one {# source, paused.} other {# sources, all paused.}}",
+      "some": "{count, plural, one {# source} other {# sources}}, {healthy, plural, =0 {none healthy} other {# healthy}}."
     },
     "notices": {
       "title": "Notices",
       "word": "{count, plural, one {new notice} other {new notices}}",
       "sub": "might affect you. Answer each with “Affects us” or “Doesn’t affect us”.",
       "calm": "Nothing to answer: every notice so far is answered.",
+      "nothingNew": "Nothing new to answer.",
+      "none": "No notice yet. Ardea asks here when a new vulnerability may affect a product of your stack.",
       "answer": "Answer notices",
       "answered": "Answered notices",
       "peek": "Your stack names {product}",

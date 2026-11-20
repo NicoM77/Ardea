@@ -1,12 +1,13 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideChevronRight, LucideMegaphone } from '@lucide/angular';
 import { UiCard, type UiPriorityLevel } from 'ui';
 import type { ChangeCountView, EntrySummary, SourceStatus } from '../../core/api/client';
+import { Dates } from '../../core/format/dates';
 import { num } from '../actions/action-format';
 import { SourceHealth } from '../sources/source-health';
-import { warningSource } from './overview-format';
+import { sourceSummary, warningSource } from './overview-format';
 
 const ROWS = `
   .rows {
@@ -84,12 +85,6 @@ const ROWS = `
   }
 `;
 
-function formatWhen(lang: string, value: string): string {
-  return new Intl.DateTimeFormat(lang, { dateStyle: 'medium', timeStyle: 'short' }).format(
-    new Date(value),
-  );
-}
-
 @Component({
   selector: 'ardea-projects-card',
   imports: [RouterLink, TranslocoPipe, UiCard],
@@ -127,6 +122,18 @@ function formatWhen(lang: string, value: string): string {
       gap: 2px;
       width: 132px;
       flex: none;
+      transform-origin: left center;
+      animation: grow var(--t-draw) var(--ease-out) both;
+    }
+    @keyframes grow {
+      from {
+        transform: scaleX(0);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .blocks {
+        animation: none;
+      }
     }
     .blocks i {
       height: 12px;
@@ -176,22 +183,25 @@ const CHANGE_LABELS: Readonly<Record<string, string>> = {
   template: `
     <ui-card [heading]="'overview.changes.title' | transloco">
       <span uiCardMeta>{{ 'overview.changes.meta' | transloco: { count: total() } }}</span>
-      <ul class="rows">
-        @for (c of known(); track c.kind) {
-          <li>
-            <span class="row">
-              <span class="main"
-                ><b>{{ c.label | transloco: { count: c.count } }}</b></span
-              >
-            </span>
-          </li>
-        } @empty {
-          <li class="none">{{ 'overview.changes.none' | transloco }}</li>
-        }
-      </ul>
+      @if (known().length) {
+        <ul class="counts">
+          @for (c of known(); track c.kind) {
+            <li>{{ c.label | transloco: { count: c.count } }}</li>
+          }
+        </ul>
+      } @else {
+        <p class="none">{{ 'overview.changes.none' | transloco }}</p>
+      }
     </ui-card>
   `,
-  styles: ROWS,
+  styles:
+    ROWS +
+    `
+    .counts {
+      display: grid;
+      gap: var(--space-sm);
+    }
+  `,
 })
 export class ChangesCard {
   readonly changes = input.required<readonly ChangeCountView[]>();
@@ -219,13 +229,14 @@ export class ChangesCard {
                 <b>{{ w.title ?? w.key }}</b>
                 <small>{{ source(w.key) ?? ('overview.warnings.national' | transloco) }}</small>
               </span>
-              <time class="end" [attr.datetime]="w.changedAt">{{
-                when(w.publishedAt ?? w.changedAt)
-              }}</time>
+              <time
+                class="end"
+                [attr.datetime]="w.publishedAt ?? w.changedAt"
+                [title]="dates.dateTime(w.publishedAt ?? w.changedAt)"
+                >{{ dates.relative(w.publishedAt ?? w.changedAt) }}</time
+              >
             </a>
           </li>
-        } @empty {
-          <li class="none">{{ 'overview.warnings.none' | transloco }}</li>
         }
       </ul>
     </ui-card>
@@ -235,14 +246,10 @@ export class ChangesCard {
 export class WarningsCard {
   readonly warnings = input.required<readonly EntrySummary[]>();
   readonly sources = input<readonly SourceStatus[]>([]);
-  private readonly transloco = inject(TranslocoService);
+  protected readonly dates = inject(Dates);
 
   protected source(key: string): string | null {
     return warningSource(key, this.sources());
-  }
-
-  protected when(value: string): string {
-    return formatWhen(this.transloco.getActiveLang(), value);
   }
 }
 
@@ -254,39 +261,55 @@ export class WarningsCard {
       <a uiCardMeta class="card-link" routerLink="/sources"
         >{{ 'overview.sources.all' | transloco }}<svg lucideChevronRight aria-hidden="true"></svg
       ></a>
-      <ul class="rows">
-        @for (s of sources(); track s.key) {
-          <li>
-            <a routerLink="/sources">
-              <span class="main">
-                <b>{{ s.name }}</b>
-                <small
-                  ><ardea-source-health [health]="s.enabled ? s.health : 'disabled'" />
-                  @if (s.healthReason) {
-                    · {{ s.healthReason }}
+      @if (summary(); as s) {
+        <p class="summary">{{ s.key | transloco: s.params }}</p>
+        @if (s.attention.length) {
+          <ul class="rows">
+            @for (source of s.attention; track source.key) {
+              <li>
+                <a routerLink="/sources">
+                  <span class="main">
+                    <b>{{ source.name }}</b>
+                    <small
+                      ><ardea-source-health
+                        [health]="source.enabled ? source.health : 'disabled'"
+                      />
+                      @if (source.healthReason) {
+                        · {{ source.healthReason }}
+                      }
+                    </small>
+                  </span>
+                  @if (source.lastSuccessAt) {
+                    <time
+                      class="end"
+                      [attr.datetime]="source.lastSuccessAt"
+                      [title]="dates.dateTime(source.lastSuccessAt)"
+                      >{{ dates.relative(source.lastSuccessAt) }}</time
+                    >
                   }
-                </small>
-              </span>
-              @if (s.lastSuccessAt) {
-                <time class="end" [attr.datetime]="s.lastSuccessAt">{{
-                  when(s.lastSuccessAt)
-                }}</time>
-              }
-            </a>
-          </li>
-        } @empty {
-          <li class="none">{{ 'overview.sources.none' | transloco }}</li>
+                </a>
+              </li>
+            }
+          </ul>
         }
-      </ul>
+      } @else {
+        <p class="none">{{ 'overview.sources.none' | transloco }}</p>
+      }
     </ui-card>
   `,
-  styles: ROWS,
+  styles:
+    ROWS +
+    `
+    .summary {
+      color: var(--muted);
+    }
+    .summary + .rows {
+      margin-top: var(--space-sm);
+    }
+  `,
 })
 export class SourcesCard {
   readonly sources = input.required<readonly SourceStatus[]>();
-  private readonly transloco = inject(TranslocoService);
-
-  protected when(value: string): string {
-    return formatWhen(this.transloco.getActiveLang(), value);
-  }
+  protected readonly dates = inject(Dates);
+  protected readonly summary = computed(() => sourceSummary(this.sources()));
 }

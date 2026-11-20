@@ -1,5 +1,5 @@
 import type { ActionSummary, OverviewView, SourceStatus } from '../../core/api/client';
-import { overviewFinding, projectBlocks, warningSource } from './overview-format';
+import { overviewFinding, projectBlocks, sourceSummary, warningSource } from './overview-format';
 
 function action(
   number: number,
@@ -86,5 +86,28 @@ describe('overview format', () => {
     const sources = [{ key: 'bacs-warnings', name: 'BACS warnings' }] as SourceStatus[];
     expect(warningSource('bacs-warnings:42', sources)).toBe('BACS warnings');
     expect(warningSource('CVE-2026-1', sources)).toBeNull();
+  });
+
+  it('sums the sources up in one line and lists only those that need attention', () => {
+    const source = (key: string, enabled: boolean, health = 'healthy') =>
+      ({ key, name: key, enabled, health }) as SourceStatus;
+    expect(sourceSummary([])).toBeNull();
+    expect(sourceSummary([source('a', true), source('b', true)])).toEqual({
+      key: 'overview.sources.healthy',
+      params: { count: 2 },
+      attention: [],
+    });
+    expect(sourceSummary([source('a', false), source('b', false)])).toEqual({
+      key: 'overview.sources.paused',
+      params: { count: 2 },
+      attention: [],
+    });
+    const failing = source('c', true, 'failing');
+    const paused = source('d', false);
+    expect(sourceSummary([source('a', true), failing, paused])).toEqual({
+      key: 'overview.sources.some',
+      params: { count: 3, healthy: 1 },
+      attention: [failing, paused],
+    });
   });
 });

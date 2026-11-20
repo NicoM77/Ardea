@@ -167,4 +167,10 @@
   .notices-card {
     order: -1;
   }
+  .warnings {
+    order: 1;
+  }
+  .sources {
+    order: 2;
+  }
 }

@@ -1,0 +1,40 @@
+{
+  "$comment": "Production npm packages of the website whose licence is not on build/licenses/allowed-licenses.json. Each entry names the package (a trailing * matches every package with that prefix), its licence and why it is accepted. ../web/scripts/check-licenses.mjs fails on anything else, and on an entry that no longer matches.",
+  "exceptions": [
+    {
+      "package": "@img/sharp-*",
+      "license": "LGPL-3.0-or-later",
+      "reason": "libvips inside sharp's platform binaries, an optional dependency of astro for image optimisation. The site uses the passthrough image service, so sharp is never loaded and nothing of it reaches the published pages."
+    },
+    {
+      "package": "argparse",
+      "license": "Python-2.0",
+      "reason": "Pulled in by starlight-openapi -> @readme/openapi-parser -> js-yaml, which reads the OpenAPI document at build time. Never shipped. Python-2.0 is permissive; the web app accepts the same package."
+    },
+    {
+      "package": "common-ancestor-path",
+      "license": "BlueOak-1.0.0",
+      "reason": "Path helper of astro's compiler plugin, build time only. Blue Oak Model License 1.0.0 is a permissive, OSI-approved licence."
+    },
+    {
+      "package": "lru-cache",
+      "license": "BlueOak-1.0.0",
+      "reason": "Cache of astro's unstorage, build time only. Blue Oak Model License 1.0.0 is a permissive, OSI-approved licence."
+    },
+    {
+      "package": "sax",
+      "license": "BlueOak-1.0.0",
+      "reason": "XML parser of svgo (astro) and of the sitemap integration, build time only. Blue Oak Model License 1.0.0 is a permissive, OSI-approved licence."
+    },
+    {
+      "package": "mdn-data",
+      "license": "CC0-1.0",
+      "reason": "CSS data of css-tree, used by svgo at build time. CC0-1.0 is a public-domain dedication."
+    },
+    {
+      "package": "pause-stream",
+      "license": "Apache2",
+      "reason": "Stream helper of event-stream, used by httpsnippet in starlight-openapi to render the request examples at build time. Its package.json lists the licences MIT and Apache2, meant as MIT or Apache-2.0, both on the allow-list; Apache2 is not an SPDX identifier, so the checker cannot match it."
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "ardea-site",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "node scripts/sync-docs.mjs && astro dev",
+    "build": "node scripts/sync-docs.mjs && astro build",
+    "preview": "node scripts/serve.mjs",
+    "check:links": "node scripts/check-links.mjs",
+    "check:a11y": "playwright test",
+    "check:licenses": "node ../web/scripts/check-licenses.mjs ."
+  },
+  "packageManager": "npm@11.19.1",
+  "dependencies": {
+    "@astrojs/starlight": "0.43.1",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/ibm-plex-sans": "5.3.0",
+    "astro": "7.4.13",
+    "starlight-openapi": "0.27.1"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.56.1",
+    "license-checker-rseidelsohn": "5.0.1"
+  },
+  "overrides": {
+    "form-data": "4.0.6"
+  }
+}

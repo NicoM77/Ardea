@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { join } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const require = createRequire(import.meta.url);
+const web = fileURLToPath(new URL('..', import.meta.url));
+const start = resolve(process.argv[2] ?? web);
+const require = createRequire(join(start, 'package.json'));
 const checker = require('license-checker-rseidelsohn');
 
-const web = fileURLToPath(new URL('..', import.meta.url));
 const allowed = new Set(
   JSON.parse(readFileSync(join(web, '../build/licenses/allowed-licenses.json'), 'utf8')),
 );
-const { exceptions } = JSON.parse(readFileSync(join(web, 'license-exceptions.json'), 'utf8'));
+const { exceptions } = JSON.parse(readFileSync(join(start, 'license-exceptions.json'), 'utf8'));
+const lockfile = relative(join(web, '..'), join(start, 'package-lock.json')).replaceAll('\\', '/');
 
 function acceptable(expression, isAllowed) {
   const cleaned = expression.replace(/[()]/g, ' ').trim();
@@ -20,7 +22,13 @@ function acceptable(expression, isAllowed) {
     .every((part) => part.split(/\s+OR\s+/i).some((id) => isAllowed(id.trim())));
 }
 
-checker.init({ start: web, production: true, excludePrivatePackages: true }, (error, packages) => {
+function names(exception, name) {
+  return exception.package.endsWith('*')
+    ? name.startsWith(exception.package.slice(0, -1))
+    : exception.package === name;
+}
+
+checker.init({ start, production: true, excludePrivatePackages: true }, (error, packages) => {
   if (error) {
     console.error(error);
     process.exit(2);
@@ -32,7 +40,7 @@ checker.init({ start: web, production: true, excludePrivatePackages: true }, (er
     const licenses = [info.licenses ?? 'UNKNOWN'].flat().join(' AND ');
     if (acceptable(licenses, (l) => allowed.has(l))) continue;
     const exception = exceptions.find(
-      (e) => e.package === name && acceptable(licenses, (l) => l === e.license || allowed.has(l)),
+      (e) => names(e, name) && acceptable(licenses, (l) => l === e.license || allowed.has(l)),
     );
     if (exception) {
       usedExceptions.add(exception);
@@ -45,8 +53,7 @@ checker.init({ start: web, production: true, excludePrivatePackages: true }, (er
       `license-exceptions.json lists ${stale.package} (${stale.license}), which no production package needs any more`,
     );
   }
-  for (const p of problems)
-    console.error(`::error file=web/package-lock.json::Licence not allowed: ${p}`);
+  for (const p of problems) console.error(`::error file=${lockfile}::Licence not allowed: ${p}`);
   if (problems.length) process.exit(1);
   console.log(
     `Licences: ${Object.keys(packages).length} production packages checked, ${usedExceptions.size} listed exceptions.`,

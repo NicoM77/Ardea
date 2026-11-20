@@ -25,7 +25,7 @@ function classify(path) {
   if (outOfScope.some((p) => path.startsWith(p) || path.includes(p)) || generated.some((p) => path.startsWith(p))) {
     return null;
   }
-  const inScope = path.startsWith('web/') || path.startsWith('tests/e2e/') || path.startsWith('build/');
+  const inScope = path.startsWith('web/') || path.startsWith('site/') || path.startsWith('tests/e2e/') || path.startsWith('build/');
   if (!inScope) {
     return null;
   }
@@ -38,7 +38,7 @@ function classify(path) {
   if (path.startsWith('web/') && path.endsWith('.scss')) {
     return 'scss';
   }
-  if (path.startsWith('web/') && path.endsWith('.css')) {
+  if ((path.startsWith('web/') || path.startsWith('site/')) && path.endsWith('.css')) {
     return 'css';
   }
   return null;

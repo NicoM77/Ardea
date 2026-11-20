@@ -10,8 +10,14 @@ namespace Ardea.Assessment.Assessing;
 /// <param name="Scope">Every component the assessment looked at; a notice keeps the components outside it as they were.</param>
 /// <param name="Hit">Coarse components the entry hits strongly, within their line.</param>
 /// <param name="Raising">Of them, the ones whose threshold the entry meets.</param>
-/// <param name="Quiet">A reverse search: raised notices are announced once for all, not one by one (master plan 7.7).</param>
-internal sealed record CoarseHits(IReadOnlySet<Guid> Scope, IReadOnlySet<Guid> Hit, IReadOnlySet<Guid> Raising, bool Quiet);
+/// <param name="HandedOver">Of them, components whose open reminder or person's verdict the notice takes over now.</param>
+/// <param name="Quiet">A reverse search: raised notices are announced once for all, not one by one (master plan 7.7), unless
+/// they take over a reminder or a person's verdict: those stay in sight as new (ADR 047).</param>
+internal sealed record CoarseHits(IReadOnlySet<Guid> Scope, IReadOnlySet<Guid> Hit, IReadOnlySet<Guid> Raising, IReadOnlySet<Guid> HandedOver, bool Quiet)
+{
+    /// <summary>Raised quietly: in a reverse search, and taking over nobody's reminder or verdict.</summary>
+    public bool RaisesQuietly => Quiet && HandedOver.Count == 0;
+}
 
 /// <summary>
 /// Keeps the organisation's notice of an entry in step with the coarse hits (master plan 17.3; ADR 044, ADR 046, ADR 047).
@@ -52,12 +58,12 @@ internal sealed class Notices(AssessDbContext db, History history, TimeProvider 
                 ComponentIds = [.. hits.Raising.Order()],
                 CvssScore = entry.CvssScore,
                 Exploitation = entry.Exploitation,
-                IsBackfill = hits.Quiet,
+                IsBackfill = hits.RaisesQuietly,
                 RaisedAt = now,
                 ChangedAt = now,
             };
             db.Notices.Add(notice);
-            Raised(notice, entry, hits.Quiet);
+            Raised(notice, entry, hits.RaisesQuietly);
             return;
         }
 
@@ -78,9 +84,9 @@ internal sealed class Notices(AssessDbContext db, History history, TimeProvider 
                 // Raised anew by what raises it now: the components named before left the coarse path or the profile.
                 notice.State = Notice.Open;
                 notice.ComponentIds = [.. hits.Raising.Order()];
-                notice.IsBackfill = hits.Quiet;
+                notice.IsBackfill = hits.RaisesQuietly;
                 notice.RaisedAt = now;
-                Raised(notice, entry, hits.Quiet);
+                Raised(notice, entry, hits.RaisesQuietly);
                 break;
             case Notice.NotAffected when ids.Length > 0 && notice.ReappearedAt is null
                 && NoticeRules.ReappearReason(entry, notice.DecidedExploitation, notice.DecidedKev) is { } reason:
@@ -89,6 +95,13 @@ internal sealed class Notices(AssessDbContext db, History history, TimeProvider 
                 notice.ReappearedAt = now;
                 notice.ReappearedReason = reason;
                 history.Add(EventKinds.NoticeReappeared, new { entry = entry.Key, reason = notice.ReappearedReason, components = ids }, notice: notice.Id);
+                break;
+            case Notice.Open when notice.IsBackfill && hits.HandedOver.Count > 0:
+                // An earlier notice that now takes over a reminder or a person's verdict becomes new, so it stays in sight.
+                notice.ComponentIds = ids;
+                notice.IsBackfill = false;
+                notice.ChangedAt = now;
+                Raised(notice, entry, quiet: false);
                 break;
             case Notice.Withdrawn:
                 break;

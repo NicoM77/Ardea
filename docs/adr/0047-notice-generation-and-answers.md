@@ -31,7 +31,9 @@ what a version given with it does, and whether undo is a time window or a reopen
    path and the rules open the finding; when it loses it, the finding goes to the notice and its reminder is withdrawn
    (`action.withdrawn`, reason `moved_to_notice`). **Nothing is handed over silently (E25):** a finding the system closes
    as it moves to the coarse path while it is open (a reminder) or carries a person's verdict always raises the notice,
-   whatever the threshold and the line say. This covers the open actions on components with a line from before this
+   whatever the threshold and the line say, and such a notice is new with its `notice.raised` row, also when a reverse
+   search hands it over (an earlier notice that takes over a reminder becomes new): the person who had the reminder sees
+   it. This covers the open actions on components with a line from before this
    change (E25 had left them alone), which move on their next assessment, and repository components whose image tag
    becomes a line.
 2. **People's findings on the coarse path.** A finding a person opened by answering «affects us» stays open, at least at

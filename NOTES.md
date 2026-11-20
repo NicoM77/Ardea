@@ -1,8 +1,42 @@
 # NOTES: Arbeitsstand und Wissen ausserhalb des Repositorys
 
-Stand: 20.11.2026, ca. 06:30 UTC. Alles ohne Eigentümer Machbare ist gemergt (main 18c43ad); kein Agent läuft.
+Stand: 20.11.2026, ca. 08:00 UTC, beim Abschalten. Abschnitt 0 zuerst lesen.
 Umsetzung weiss und was nicht schon im Repository steht (README, Masterplan, ADR, Abnahmen, PR-Texte,
 Issues). Wo etwas im Repository steht, verweise ich nur darauf.
+
+## 0. Beim Abschalten in Arbeit (zuerst lesen)
+
+Stand 20.11.2026, ca. 08:00 UTC, main = c018f07. Alle Agents werden mit der Sitzung abgeschaltet.
+
+- **PR #127 (7.2/7.3, Branch `ci/release-pipeline`, ADR 0050):** release-please, Commit-Prüfung (`build/check-commits.mjs`, `.github/workflows/commits.yml`), `release.yml` (amd64/arm64, cosign keyless, Provenance, SBOM), `AppVersion`/`doctor`. Unabhängig geprüft: keine Code-Blocker, 7 Should-fix; an den Autor-Agent geschickt, **Stand der Korrektur unbekannt** (Branch ansehen). Zu beheben:
+  1. Owner-Voraussetzungen als Checkliste in PR und CONTRIBUTING.
+  2. Images nur per Digest pushen; Versions-Tags (`0.1.0`, `0.1`, `0`) erst in `publish` nach Signatur/Attest mit `docker buildx imagetools create`.
+  3. release-please verliert Branch-Commits, die älter sind als der letzte Release → Merge-Commit-Betreff = Conventional PR-Titel (`gh pr merge N --merge --subject "<titel> (#N)"`); kein Rebase (Owner-Regel); prüfen, dass release-please solche Merge-Commits liest; ADR 0050.
+  4. PR-Titel in `commits.yml` prüfen (via `env`), Squash/Rebase-Merge im Repo abschalten (Owner).
+  5. Wiederherstellung: nur Draft löschen, Tag behalten; «Re-run all jobs» tut nichts, nur «Re-run failed jobs»; `workflow_dispatch` mit Eingabe `tag`.
+  6. `gh attestation verify` mit exakter `--cert-identity https://github.com/NicoM77/Ardea/.github/workflows/release.yml@refs/heads/main` und `--deny-self-hosted-runners`.
+  7. Release wartet auf grünen `ci.yml`-Lauf des Release-SHA.
+  Nits: Bereich `HEAD^1..HEAD^2`, `Reapply "…"` erlauben, Test für die doctor-Versionszeile, Beispielkonfiguration anhängen. **Erst nach den Korrekturen mergen.**
+- **Dependabot-PRs #115–#126:** ein Agent sortierte sie (merge/defer/needs work) und sollte PR `ci/dependabot-ignores` mit Ignore-Regeln anlegen — Ergebnis offen. Regeln: .NET bleibt 10 (keine Microsoft.*/dotnet-ef 11.x), Node 24 (kein node 26), `@playwright/test` muss zum Image `v1.56.1-noble` passen (sonst CI, Baselines, Screenshots, Site mit anpassen), Actions-Hauptversionen (setup-dotnet 6, build-push 7, setup-buildx 4) gegen die Workflows prüfen. Nur lokal geprüft mergen.
+- **7.14 Branches:** Löschen der 90 gemergten Remote-Branches und von `feat/platform-crosscutting` (PR #5 geschlossen, Aufgaben 0.5/0.6 anders geliefert) hat der Sicherheitsfilter der Sitzung blockiert. Der Eigentümer führt aus:
+  ```bash
+  git fetch --prune origin && git branch -r --merged origin/main | sed 's/^ *//' | grep -vE "origin/(HEAD|main)$" | grep -v " -> " | sed 's#^origin/##' | xargs -n 15 git push origin --delete
+  git push origin --delete feat/platform-crosscutting
+  ```
+  `NOTES` bleibt. Danach README-Zeile 7.14 ✅.
+- **Gemergt in dieser Runde:** #111 (#107), #112 (7.9 Bau), #113 (7.1 Dateien), #114 (7.13 ✅). PR-Läufe starten jetzt, scheitern aber an Billing.
+
+## 0a. Eigentümer-Schritte (Reihenfolge)
+
+1. **Billing freigeben** → erster CI-Lauf auf main prüft alles seit #89 (bisher nur lokal geprüft); Rotes sofort fixen.
+2. **Code Security (Advanced Security)** für CodeQL im privaten Repo; **Dependabot** in den Settings aktivieren, falls aus.
+3. **Branch-Schutz** auf main mit Pflicht-Checks `Backend`, `Dependencies`, `Web`, `Web under CSP`, `End to end`, `Image` (nicht `Web visual comparison`); Lösung für Doku-PRs (CI übersprungen); Squash/Rebase-Merge abschalten.
+4. **Settings → Actions → «Allow GitHub Actions to create and approve pull requests»** (für release-please).
+5. **Markenrecherche E1**, dann Repository öffentlich (Attestierungen, Pages) oder Enterprise Cloud; Paket `ghcr.io/nicom77/ardea` öffentlich und verknüpft.
+6. Beschreibung, Topics, Social Preview; «Automatically delete head branches».
+7. Nach #127: Release-PR «release 0.1.0» einmal schliessen/öffnen (Checks), prüfen, mergen → dann 7.11 (Abnahme auf Release-Images amd64/arm64, `docs/acceptance/release-1.0.md`), 7.9 veröffentlichen (Pages + Trigger in `site.yml`), 7.12 (Masterplan ins Englische übernehmen, dann löschen).
+8. Bestätigen: E26-Rhythmus und 08:00; Masterplan-Änderungen aus #96; 5a.3-Entscheide; Mockup-Fragen; Lizenz-Ausnahmen in `site/license-exceptions.json`.
+9. Menschen/Infrastruktur: 6.2, 6.3, 6.4/6.8 (eigene Instanz).
 
 ## 1. Arbeitsstand
 

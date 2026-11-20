@@ -33,7 +33,7 @@ internal sealed partial class EvaluateEventsHandler(
         var organization = tenant.RequiredOrganizationId;
         await LockOrganizationAsync(db, organization, cancellationToken);
         var pending = await db.PendingEvents.AsNoTracking().Where(p => p.FailedAt == null)
-            .OrderBy(p => p.At).ThenBy(p => p.EventId).Take(EvaluateEvents.Batch).ToListAsync(cancellationToken);
+            .OrderBy(p => p.At).ThenBy(p => p.Seq).Take(EvaluateEvents.Batch).ToListAsync(cancellationToken);
         if (pending.Count == 0)
         {
             return;

@@ -8,7 +8,7 @@ what Ardea computes: **label without looking at Ardea's result for the pair.**
 ## Files
 
 - `records.jsonl`: the records, one CVE JSON 5 record per line, exactly as the CVE Program published them
-  in the week of 11 to 17 November 2026 (the spike week, `prototypes/relevance-funnel`). CVE® records
+  in the week of 11 to 17 November 2026 (the spike week, [`prototypes/relevance-funnel`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/prototypes/relevance-funnel)). CVE® records
   © The MITRE Corporation, used under the CVE Program Terms of Use.
 - `pairs.json`: the pairs. Each names a `record`, a `project` (criticality, exposure) and one `component`
   (catalogue product key or package, installed version, packaging). `group`, `subgroup` and `selection`

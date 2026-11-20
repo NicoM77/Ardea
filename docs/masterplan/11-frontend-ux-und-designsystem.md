@@ -7,8 +7,8 @@ Die visuelle Richtung ist gewählt und als Mockups ausgearbeitet.
 | Ergebnis | Ort |
 |---|---|
 | Produktgrundlage (Nutzer, Zweck, Prinzipien, bindende Vorgaben) | [`PRODUCT.md`](../../PRODUCT.md) |
-| Designsystem als verbindliche Referenz: Tokens, Komponenten, benannte Regeln | [`DESIGN.md`](../../DESIGN.md), maschinenlesbar in `.impeccable/design.json` |
-| Mockups des Kernflusses: Übersicht, Reminders, Reminder, Schwachstelle, Designsystem-Seite | [`docs/design/mockups/`](../design/mockups/) (statisches HTML, CSS und JavaScript; `overview.html` im Browser öffnen) |
+| Designsystem als verbindliche Referenz: Tokens, Komponenten, benannte Regeln | [`DESIGN.md`](../../DESIGN.md), maschinenlesbar in [`.impeccable/design.json`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/.impeccable/design.json) |
+| Mockups des Kernflusses: Übersicht, Reminders, Reminder, Schwachstelle, Designsystem-Seite | [`docs/design/mockups/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/design/mockups) (statisches HTML, CSS und JavaScript; `overview.html` im Browser öffnen) |
 
 **Wie die Richtung entstand.** Eine erste Richtung, das «Gefahrenbulletin» mit nummerierten Stufen und einer Gefahrenleiter, hat der Eigentümer am 18.11.2026 verworfen: zu wenig schlicht und nicht intuitiv genug. Die Mockups wurden gelöscht und neu gebaut, nach seiner Vorgabe: einfach, intuitiv, gestaltet wie eine professionelle Arbeitsanwendung nach den Gestaltungsrichtlinien von Apple, ohne eigene Bildsprache. Zwei weitere Festlegungen vom selben Tag: Die Priorität erscheint als Wort mit eigenem Symbol, ohne Ziffer; die Liste zeigt Reminders, die Schwachstelle ist die Detailansicht dahinter.
 
@@ -33,7 +33,7 @@ Jeder Bildschirm beantwortet seine eine Frage zuerst mit einem Bild und erst dan
 
 ## 11.3 Designsystem in Kürze
 
-Massgeblich ist `DESIGN.md`; die Tokens stehen in `docs/design/mockups/app.css`. Die wichtigsten Festlegungen:
+Massgeblich ist `DESIGN.md`; die Tokens stehen in [`docs/design/mockups/app.css`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/design/mockups/app.css). Die wichtigsten Festlegungen:
 
 | Bereich | Festlegung |
 |---|---|
@@ -46,7 +46,7 @@ Massgeblich ist `DESIGN.md`; die Tokens stehen in `docs/design/mockups/app.css`.
 | Arbeitszustände | Form und Wort (Kreis, halber Kreis, Haken, Fahne, durchgestrichener Kreis), neutral; nur der Haken für «Remediated» ist grün. |
 | Signale | Kleine Etiketten: «Exploited» hellrot mit rotem Punkt, «Fix available» hellgrün. |
 | Layout | Seitenleiste 228 px und Kopfzeile 48 px auf dem Rahmen, gewählter Eintrag grau hinterlegt; Raster mit 12 Spalten und 24 px Abstand, Inhalt bis 1240 px. Unter 900 px wird die Seitenleiste zum Menü hinter einer Schaltfläche. Unter 640 px werden Tabellenzeilen zu zweizeiligen Datensätzen. |
-| Ladeanzeige | Der Reiher zeichnet sich vom Schnabel her und löst sich wieder (Variante «Draw», Wahl des Eigentümers vom 18.11.2026), in 96, 20 und 16 px; am Ende des Ladens zeichnet sich die Marke einmal fertig. Erscheint erst nach 300 ms. Prototyp in `docs/design/loader/`, Regeln in `DESIGN.md`. |
+| Ladeanzeige | Der Reiher zeichnet sich vom Schnabel her und löst sich wieder (Variante «Draw», Wahl des Eigentümers vom 18.11.2026), in 96, 20 und 16 px; am Ende des Ladens zeichnet sich die Marke einmal fertig. Erscheint erst nach 300 ms. Prototyp in [`docs/design/loader/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/design/loader), Regeln in `DESIGN.md`. |
 | Ziele | 32 px am Desktop, 40 bis 44 px bei Telefonbreite; Fokusring 2 px in der Datenfarbe. |
 
 ## 11.4 Aufbau der Anwendung
@@ -81,7 +81,7 @@ Am Desktop liegt die Navigation in einer Seitenleiste mit Organisationswechsel, 
 
 ## 11.6 Setup-Wizard
 
-Mockup: [`docs/design/mockups/setup-wizard.html`](../design/mockups/setup-wizard.html) (Schritte 3 bis 5), Projektseite [`project.html`](../design/mockups/project.html).
+Mockup: [`docs/design/mockups/setup-wizard.html`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/design/mockups/setup-wizard.html) (Schritte 3 bis 5), Projektseite [`project.html`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/design/mockups/project.html).
 
 | Schritt | Inhalt | Regel |
 |---|---|---|
@@ -115,7 +115,7 @@ web/
 
 - Jeder Bereich wird verzögert geladen und besitzt seine Datendienste: `httpResource` für Lesen, `HttpClient` für Schreiben, danach gezieltes Neuladen. Kein globaler Store.
 - Ein Dienst hält die Verbindung für Server-Sent Events und löst das Neuladen betroffener Daten aus; so bleiben Zähler und Listen aktuell, ohne zu pollen.
-- Die Tokens aus `docs/design/mockups/app.css` werden zur Token-Datei der Bibliothek `ui`. Komponenten verwenden ausschliesslich Tokens.
+- Die Tokens aus [`docs/design/mockups/app.css`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/design/mockups/app.css) werden zur Token-Datei der Bibliothek `ui`. Komponenten verwenden ausschliesslich Tokens.
 - Jede Komponente der Bibliothek hat eine Seite mit allen Zuständen; diese Seiten sind zugleich die Grundlage der visuellen Regressionstests.
 - Texte liegen in Übersetzungsdateien; Englisch ist eingebaut, weitere Sprachen werden nachgeladen. Pluralformen über ICU von Beginn an. Server-Texte (Nachrichten, E-Mails) werden auf dem Server übersetzt.
 - Datum, Zahl und Zeitabstand über `Intl` in der Sprache des Benutzers; Zeiten in der Zeitzone der Organisation.

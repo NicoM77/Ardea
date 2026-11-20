@@ -1,6 +1,6 @@
 # 6 · Normalisierung, Zusammenführung und Datenqualität
 
-Dieses Kapitel beschreibt den Weg vom Rohdatensatz zum konsolidierten Eintrag. Die Zahlen stammen aus dem Daten-Spike vom 18.11.2026 (`prototypes/relevance-funnel/`).
+Dieses Kapitel beschreibt den Weg vom Rohdatensatz zum konsolidierten Eintrag. Die Zahlen stammen aus dem Daten-Spike vom 18.11.2026 ([`prototypes/relevance-funnel/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/prototypes/relevance-funnel)).
 
 ## 6.1 Normalisierung: vom Rohdatensatz zur Beobachtung
 

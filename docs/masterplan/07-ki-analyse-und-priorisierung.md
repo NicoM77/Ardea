@@ -4,7 +4,7 @@
 
 Die Bewertung ist ein Trichter aus billigen, deterministischen Schritten. Das Sprachmodell sieht nur einen kleinen Rest und vergibt keine Stufe; die berechnet ein Regelwerk.
 
-Was der Daten-Spike für eine Organisation mit den drei Beispielprojekten in einer Woche ergab (`prototypes/relevance-funnel/`):
+Was der Daten-Spike für eine Organisation mit den drei Beispielprojekten in einer Woche ergab ([`prototypes/relevance-funnel/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/prototypes/relevance-funnel)):
 
 | Schritt | Menge |
 |---|---:|

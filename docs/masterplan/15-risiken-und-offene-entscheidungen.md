@@ -72,13 +72,13 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | Der Katalog wächst selbständig mit Hilfe des Sprachmodells (Kapitel 6.9, Aufgaben 4.9 und 4.10) | Vorgabe des Eigentümers vom 18.11.2026 |
 | Bisher gezeigte Mockups freigegeben; weitere Mockups ohne Freigabe vorab, Korrektur im Nachhinein (E15) | Vorgabe des Eigentümers vom 18.11.2026 |
 | Abfrage der öffentlichen Schnittstelle des Cyber Security Hub und Speichern der Texte sind erlaubt; keine Anfrage beim BACS (E10) | Bestätigung des Eigentümers vom 18.11.2026 |
-| Ladeanzeige: Variante «Draw», der Reiher zeichnet sich vom Schnabel her; Prototyp in `docs/design/loader/` | Wahl des Eigentümers vom 18.11.2026 |
+| Ladeanzeige: Variante «Draw», der Reiher zeichnet sich vom Schnabel her; Prototyp in [`docs/design/loader/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/design/loader) | Wahl des Eigentümers vom 18.11.2026 |
 | Profil aus GitHub-Repositories im MVP, mit OSV als Paketquelle für npm, NuGet, Packagist, PyPI, Maven und Go und dem Verschmelzen von Einträgen | Vorgabe und Rückfrage vom 18.11.2026 |
 | Phase 7 «Aufräumen und Release 1.0» mit Umbenennung des Repositories, release-please, signierten Images, Dependabot, CodeQL, Demo-Befehl und Website auf GitHub Pages; Masterplan nach der Abnahme gelöscht (E20) | Vorgabe des Eigentümers vom 19.11.2026 |
 
 ## 15.4 Unabhängige Durchsicht des Plans
 
-Der erste vollständige Entwurf wurde von einer unabhängigen Instanz gegengelesen, die weder an der Planung beteiligt war noch deren Begründungen kannte. Ergebnis: 6 schwere, 28 mittlere und 18 leichte Befunde. Der Bericht liegt unter [`docs/research/2026-11-18-independent-plan-review.md`](../research/2026-11-18-independent-plan-review.md); seine Kapitelverweise beziehen sich auf den Entwurf.
+Der erste vollständige Entwurf wurde von einer unabhängigen Instanz gegengelesen, die weder an der Planung beteiligt war noch deren Begründungen kannte. Ergebnis: 6 schwere, 28 mittlere und 18 leichte Befunde. Der Bericht liegt unter [`docs/research/2026-11-18-independent-plan-review.md`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/research/2026-11-18-independent-plan-review.md); seine Kapitelverweise beziehen sich auf den Entwurf.
 
 **Die sechs schweren Befunde und was daraus wurde:**
 

@@ -41,9 +41,9 @@ Ardea/
 ├─ docs/
 │  ├─ masterplan/              dieser Plan
 │  ├─ adr/                     Entscheidungsregister
-│  ├─ design/mockups/          UI-Mockups der Planungsphase
+│  ├─ design/brand/            Logo und Markenelemente (die Mockups der Planungsphase liegen am Tag archive/planning-and-design)
 │  └─ guides/                  Installation, Konfiguration, Betrieb, «Eine Quelle hinzufügen»
-└─ prototypes/                 Wegwerf-Spikes der Planungsphase
+└─ (prototypes/ der Planungsphase: am Tag archive/planning-and-design)
 ```
 
 Ein einziges Host-Projekt statt getrennter API- und Worker-Projekte: Beide Rollen laden dieselben Module, und ein Image mit einem Programm ist einfacher zu bauen, zu versionieren und zu betreiben.

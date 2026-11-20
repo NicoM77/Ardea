@@ -164,7 +164,7 @@ Auch Ergebnisse mit Stufe 1 werden gespeichert: als Befund mit dem Status `not_a
 
 ## 4.10 Mengen und Aufbewahrung
 
-Gemessen am 18.11.2026 für das CVE Program (`prototypes/relevance-funnel/`): im Mittel 590 neue Records und 2 774 Änderungen pro Tag, Record-Grösse im Median 3,6 kB.
+Gemessen am 18.11.2026 für das CVE Program ([`prototypes/relevance-funnel/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/prototypes/relevance-funnel)): im Mittel 590 neue Records und 2 774 Änderungen pro Tag, Record-Grösse im Median 3,6 kB.
 
 | Grösse | Schätzung |
 |---|---|

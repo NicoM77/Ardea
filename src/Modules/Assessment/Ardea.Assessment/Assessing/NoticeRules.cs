@@ -37,12 +37,18 @@ internal static class NoticeRules
     }
 
     /// <summary>
-    /// Why an answered «doesn't affect us» comes back once (E22): <c>kev</c> when CISA lists the entry, <c>exploited</c> for
-    /// other evidence of active exploitation; <c>null</c> when the entry is not actively exploited.
+    /// Why an answered «doesn't affect us» comes back (E22, master plan 17.3 «aktiv ausgenutzt oder in KEV aufgenommen»):
+    /// <c>kev</c> when CISA listed the entry after the answer, <c>exploited</c> when it became actively exploited after the
+    /// answer otherwise; <c>null</c> when neither is new. The caller lets it come back once.
     /// </summary>
-    public static string? ReappearReason(EntryFacts entry)
+    /// <param name="entry">The entry now.</param>
+    /// <param name="answeredExploitation">The entry's exploitation when it was answered.</param>
+    /// <param name="answeredInKev">Whether it was in KEV when it was answered.</param>
+    public static string? ReappearReason(EntryFacts entry, string? answeredExploitation, bool answeredInKev)
     {
         ArgumentNullException.ThrowIfNull(entry);
-        return entry.Exploitation != "active" ? null : entry.ExploitationSource == "cisa-kev" ? "kev" : "exploited";
+        return entry.InKev && !answeredInKev ? "kev"
+            : entry.Exploitation == "active" && answeredExploitation != "active" ? "exploited"
+            : null;
     }
 }

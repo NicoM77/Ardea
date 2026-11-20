@@ -123,6 +123,10 @@ internal sealed class AlertAssessor(
         {
             byComponent.TryGetValue(candidate.Component.Id, out var known);
             var coarse = candidate.IsStrong && NoticeRules.IsCoarse(candidate.Component);
+
+            // A finding the system would close as it moves to the coarse path, while it is open (a reminder) or carries a
+            // person's verdict, always raises the notice: nobody's reminder or verdict disappears without one (E25, ADR 047).
+            var handedOver = coarse && known is { StatusChangedBy: null } && (known.Status == "open" || known.VerdictSource == "human");
             var outcome = Evaluate(entry, candidate, known, modelVerdicts.GetValueOrDefault(candidate.Component.Id), keys!.Learned(candidate, learnedProducts), coarse);
             if (byComponent.Remove(candidate.Component.Id, out var finding))
             {
@@ -134,11 +138,11 @@ internal sealed class AlertAssessor(
             }
 
             // The coarse path (master plan 17.2, 17.3): the product itself, within the line; then the entry's threshold.
-            if (coarse && LineNarrowing.Keeps(outcome.Statements, NoticeRules.Line(candidate.Component)))
+            if (handedOver || (coarse && LineNarrowing.Keeps(outcome.Statements, NoticeRules.Line(candidate.Component))))
             {
                 hit.Add(candidate.Component.Id);
                 var noisy = candidate.Component.ProductKey is { } product && (await catalog.FindByKeyAsync(product, cancellationToken))?.Noisy == true;
-                if (NoticeRules.Meets(candidate.Component.NoticeThreshold, noisy, entry))
+                if (handedOver || NoticeRules.Meets(candidate.Component.NoticeThreshold, noisy, entry))
                 {
                     raising.Add(candidate.Component.Id);
                 }

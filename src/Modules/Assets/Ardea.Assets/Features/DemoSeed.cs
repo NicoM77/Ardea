@@ -14,7 +14,8 @@ namespace Ardea.Assets.Features;
 /// under the names of the mockups, each with the versions installed before the spike week's security updates. Every
 /// component passes the checks of the profile endpoints, which take kind and version scheme from the catalogue, and each
 /// project queues its reverse search. The organisation's stack (master plan 17.2, task 5a.4) names what the agency runs
-/// besides the projects, as the wizard would: broad entries, two with a version line, the firewall with every entry.
+/// besides the projects, as the wizard would: broad entries, three with a version line, two with every entry; some of them
+/// the demo's records hit, which gives the Notices page its notices (task 5a.3).
 /// </summary>
 internal sealed class DemoSeed : IDemoSeedStep
 {
@@ -25,8 +26,9 @@ internal sealed class DemoSeed : IDemoSeedStep
     private sealed record StackEntry(string Key, string? Version = null, string? Precision = null, string? Threshold = null);
 
     /// <summary>
-    /// Eight entries, none named by the demo's records, so the stack adds no finding of its own until notices are raised
-    /// from it (task 5a.3). Ubuntu without the Linux kernel leaves the wizard's companion suggestion to show (ADR 044).
+    /// Twelve entries. Eight the demo's records do not name; Ubuntu without the Linux kernel leaves the wizard's companion
+    /// suggestion to show (ADR 044). Four the records hit (task 5a.3, ADR 047): PHP's two exploited entries, a critical MySQL
+    /// entry and, with «everything» and the line 17, the week's PostgreSQL entries raise the notices of the Notices page.
     /// </summary>
     private static readonly StackEntry[] Stack =
     [
@@ -38,6 +40,10 @@ internal sealed class DemoSeed : IDemoSeedStep
         new("angular"),
         new("redis"),
         new("fortios", Threshold: NoticeThresholds.Everything),
+        new("php"),
+        new("mysql"),
+        new("postgresql", "17", VersionPrecisions.Line, NoticeThresholds.Everything),
+        new("dotnet"),
     ];
 
     private static readonly Demo[] Projects =

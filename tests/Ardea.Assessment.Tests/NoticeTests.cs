@@ -317,6 +317,190 @@ public sealed class NoticeTests(PostgresServer server)
         Assert.Equal(["CVE-2026-8801\topen\t1\tTrue", "CVE-2026-8802\topen\t1\tTrue"], await host.RowsAsync(Notices));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'notice.raised'"));
         Assert.Equal([$"{stack}\t2"], await host.RowsAsync("SELECT project_id, data->>'notices' FROM assess.assess_event WHERE kind = 'notice.backfilled'"));
+
+        // They are open but not new: the list shows them as earlier ones (ADR 047).
+        Assert.Empty(await ListKeysAsync(host, acme, "new"));
+        Assert.Equal(["CVE-2026-8802", "CVE-2026-8801"], await ListKeysAsync(host, acme, "earlier"));
+
+        // An entry that arrives later is new.
+        await EntryAsync(host, "CVE-2026-8804", 9.3);
+        Assert.Equal(["CVE-2026-8804"], await ListKeysAsync(host, acme, "new"));
+    }
+
+    [Fact]
+    public async Task A_reminder_on_a_component_that_becomes_a_line_hands_over_to_a_notice_whatever_the_threshold()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        var shop = await host.AddProjectAsync(acme, "Shop");
+        var postgres = await host.AddComponentAsync(acme, shop, c => (c.ProductKey, c.Kind, c.Version) = ("postgresql", "database", "17.4"));
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+        await EntryAsync(host, "CVE-2026-9001", 7.5, introduced: "17.0", fixedAt: "17.7");
+        Assert.Equal(["open"], await host.RowsAsync("SELECT status FROM assess.remediation"));
+
+        // A person confirmed the finding; then the version is only a line, below the threshold of «only important».
+        await host.ScalarAsync<int>("UPDATE assess.finding SET verdict = 'affected', verdict_source = 'human' RETURNING 1");
+        await host.ChangeComponentAsync(acme, postgres, c => (c.Version, c.VersionPrecision) = ("17", "line"));
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+
+        // The reminder goes, but not silently: the notice asks (E25, ADR 047).
+        Assert.Equal(["closed\tmoved_to_notice"], await host.RowsAsync("SELECT status, close_reason FROM assess.remediation"));
+        Assert.Equal(["CVE-2026-9001\topen\t1\tTrue"], await host.RowsAsync(Notices));
+    }
+
+    [Fact]
+    public async Task A_notice_raised_anew_names_what_raises_it_now_and_the_answer_lands_there()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        var (stack, entryComponent) = await StackAsync(host, acme, "postgresql", "database");
+        await EntryAsync(host, "CVE-2026-9101", 9.1, introduced: "17.0", fixedAt: "17.7");
+        await host.ChangeComponentAsync(acme, entryComponent, c => c.Version = "16.2");
+        await host.ProfileChangedAsync(acme, stack);
+        await host.RunJobsAsync();
+        Assert.Equal(["withdrawn"], await host.RowsAsync("SELECT state FROM assess.notice"));
+
+        var shop = await host.AddProjectAsync(acme, "Shop");
+        var shopPostgres = await host.AddComponentAsync(acme, shop, c => (c.ProductKey, c.Kind) = ("postgresql", "database"));
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+        Assert.Equal([$"open\t{shopPostgres}"], await host.RowsAsync("SELECT state, array_to_string(component_ids, ',') FROM assess.notice"));
+
+        Assert.Null((await AnswerAsync(host, acme, await NoticeIdAsync(host), new AnswerNoticeRequest("affects_us", "open"))).Refusal);
+        Assert.Equal([$"{shopPostgres}\topen"], await host.RowsAsync("SELECT component_id, status FROM assess.remediation"));
+    }
+
+    [Fact]
+    public async Task A_version_for_a_component_a_repository_reads_is_refused_and_nothing_is_added()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        var shop = await host.AddProjectAsync(acme, "Shop");
+        await host.AddComponentAsync(acme, shop, c => (c.ProductKey, c.Kind, c.Version, c.Origin) = ("postgresql", "database", "17", "repository"));
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+        await EntryAsync(host, "CVE-2026-9201", 9.1, introduced: "17.0", fixedAt: "17.7");
+        var notice = await NoticeIdAsync(host);
+
+        var refused = await AnswerAsync(host, acme, notice, new AnswerNoticeRequest("affects_us", "open", shop, "17.4"));
+        Assert.Equal("invalid_answer", refused.Refusal?.Code);
+        Assert.Contains("version", refused.Refusal!.Errors!.Keys);
+        Assert.Equal(["repository\t17\tline"], await host.RowsAsync("SELECT origin, version, version_precision FROM assets.component"));
+        Assert.Equal(["open"], await host.RowsAsync("SELECT state FROM assess.notice"));
+
+        // Without a version the answer opens the reminder on the repository's component.
+        Assert.Null((await AnswerAsync(host, acme, notice, new AnswerNoticeRequest("affects_us", "open", shop))).Refusal);
+        Assert.Equal(["open\t1"], await host.RowsAsync("SELECT status, open_findings FROM assess.remediation"));
+    }
+
+    [Fact]
+    public async Task A_version_without_a_project_needs_one_when_the_notice_names_several_projects()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        foreach (var name in new[] { "Shop", "Billing" })
+        {
+            var project = await host.AddProjectAsync(acme, name);
+            await host.AddComponentAsync(acme, project, c => (c.ProductKey, c.Kind) = ("postgresql", "database"));
+            await host.ProfileChangedAsync(acme, project);
+        }
+
+        await host.RunJobsAsync();
+        await EntryAsync(host, "CVE-2026-9301", 9.1, introduced: "17.0", fixedAt: "17.7");
+
+        var refused = await AnswerAsync(host, acme, await NoticeIdAsync(host), new AnswerNoticeRequest("affects_us", "open", null, "17.4"));
+        Assert.Equal("invalid_answer", refused.Refusal?.Code);
+        Assert.Contains("projectId", refused.Refusal!.Errors!.Keys);
+        Assert.Equal(["-", "-"], await host.RowsAsync("SELECT coalesce(version, '-') FROM assets.component"));
+    }
+
+    [Fact]
+    public async Task Doesnt_affect_us_comes_back_once_when_the_entry_is_added_to_KEV_after_an_answer_while_exploited()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        await StackAsync(host, acme, "postgresql", "database");
+        var entry = await EntryAsync(host, "CVE-2026-9401", 7.5, exploitation: "active");
+        Assert.Null((await AnswerAsync(host, acme, await NoticeIdAsync(host), new AnswerNoticeRequest("not_affected", "open"))).Refusal);
+        Assert.Equal(["active\tFalse"], await host.RowsAsync("SELECT decided_exploitation, decided_kev FROM assess.notice"));
+
+        // CISA lists it now: the plan names KEV on its own (master plan 17.3), so it comes back once.
+        await host.ScalarAsync<int>($$"""
+            UPDATE intel.security_entry SET revision = 2,
+                exploitation_evidence = '[{"source": "cisa-kev", "state": "active", "evidence": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog", "since": null}]'
+            WHERE id = '{{entry}}' RETURNING 1
+            """);
+        await host.EntryChangedAsync(entry);
+        await host.RunJobsAsync();
+        Assert.Equal(["open\tkev"], await host.RowsAsync("SELECT state, reappeared_reason FROM assess.notice"));
+
+        // Answered again with KEV known, it stays.
+        Assert.Null((await AnswerAsync(host, acme, await NoticeIdAsync(host), new AnswerNoticeRequest("not_affected", "open"))).Refusal);
+        await ExploitAsync(host, entry, "active", revision: 3);
+        Assert.Equal(["not_affected\tTrue"], await host.RowsAsync("SELECT state, decided_kev FROM assess.notice"));
+    }
+
+    [Fact]
+    public async Task Taking_back_a_version_answer_withdraws_the_notice_its_component_left()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        await StackAsync(host, acme, "postgresql", "database");
+        await EntryAsync(host, "CVE-2026-9501", 9.1, introduced: "17.0", fixedAt: "17.7");
+        var notice = await NoticeIdAsync(host);
+
+        // The stack entry learns 17.4 and takes the precise path; the reminder is the precise one.
+        Assert.Null((await AnswerAsync(host, acme, notice, new AnswerNoticeRequest("affects_us", "open", null, "17.4"))).Refusal);
+        Assert.Equal(["17.4\texact"], await host.RowsAsync("SELECT version, version_precision FROM assets.component"));
+        Assert.Equal(["open"], await host.RowsAsync("SELECT status FROM assess.remediation"));
+
+        Assert.Null((await ReopenAsync(host, acme, notice, "affects_us")).Refusal);
+        Assert.Equal(["withdrawn"], await host.RowsAsync("SELECT state FROM assess.notice"));
+        Assert.Equal(["open"], await host.RowsAsync("SELECT status FROM assess.remediation"));
+    }
+
+    [Fact]
+    public async Task A_notice_is_withdrawn_when_its_project_is_archived()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        var shop = await host.AddProjectAsync(acme, "Shop");
+        await host.AddComponentAsync(acme, shop, c => (c.ProductKey, c.Kind) = ("postgresql", "database"));
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+        await EntryAsync(host, "CVE-2026-9601", 9.1);
+
+        await host.InOrganizationAsync(acme, async services =>
+        {
+            var db = services.GetRequiredService<Assets.Persistence.AssetsDbContext>();
+            db.Projects.Single(p => p.Id == shop).ArchivedAt = host.Clock.GetUtcNow();
+            await db.SaveChangesAsync();
+        });
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+
+        Assert.Equal(["CVE-2026-9601\twithdrawn\t1\tFalse"], await host.RowsAsync(Notices));
+    }
+
+    [Fact]
+    public async Task Two_answers_at_once_one_is_taken_and_the_other_sees_the_conflict()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        await StackAsync(host, acme, "postgresql", "database");
+        await EntryAsync(host, "CVE-2026-9701", 9.1);
+        var notice = await NoticeIdAsync(host);
+
+        var results = await Task.WhenAll(
+            AnswerAsync(host, acme, notice, new AnswerNoticeRequest("affects_us", "open"), Alice),
+            AnswerAsync(host, acme, notice, new AnswerNoticeRequest("not_affected", "open"), Bob));
+
+        Assert.Single(results, r => r.Refusal is null);
+        Assert.Single(results, r => r.Refusal?.Code == "status_conflict");
+        Assert.Single(await host.RowsAsync("SELECT state FROM assess.notice WHERE state <> 'open'"));
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'notice.answered'"));
     }
 
     [Fact]
@@ -417,6 +601,18 @@ public sealed class NoticeTests(PostgresServer server)
 
     private static async Task<Guid> NoticeIdAsync(AssessmentTestHost host, string? key = null) =>
         await host.ScalarAsync<Guid>(key is null ? "SELECT id FROM assess.notice" : $"SELECT id FROM assess.notice WHERE entry_key = '{key}'");
+
+    private static async Task<IReadOnlyList<string>> ListKeysAsync(AssessmentTestHost host, Guid organization, string state)
+    {
+        var keys = new List<string>();
+        await host.InOrganizationAsync(organization, async services =>
+        {
+            var result = await NoticeEndpoints.ListAsync(
+                services.GetRequiredService<AssessDbContext>(), services.GetRequiredService<NoticeReader>(), state, null, null, null, CancellationToken.None);
+            keys.AddRange(Assert.IsType<Microsoft.AspNetCore.Http.HttpResults.Ok<ListPage<NoticeView>>>(result).Value!.Items.Select(n => n.Entry.Key));
+        });
+        return keys;
+    }
 
     private static async Task<IReadOnlyList<Guid>> ComponentIdsAsync(AssessmentTestHost host) =>
         [.. (await host.RowsAsync("SELECT unnest(component_ids) FROM assess.notice")).Select(Guid.Parse)];

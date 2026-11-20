@@ -4,8 +4,8 @@ using Npgsql;
 namespace Ardea.Assessment.Tests;
 
 /// <summary>
-/// The lists of the actions page (actions, findings, alerts) read a page of rows in index order, within the
-/// organisation, most severe first (master plan 4.4, 10.2). Each query is written as EF Core sends it for the
+/// The lists of the actions page (actions, findings, alerts) and of the notices read a page of rows in index order,
+/// within the organisation, most severe first (master plan 4.4, 10.2). Each query is written as EF Core sends it for the
 /// endpoint's filters; the tenant filter is part of every query. The plan must name the index and must not
 /// sort the whole list.
 /// </summary>
@@ -23,13 +23,17 @@ public sealed class ListPlanTests(PostgresServer server)
     // Alerts: by level, then number; search by number or entry key.
     [InlineData("SELECT * FROM assess.alert a WHERE a.organization_id = @org AND a.number IS NOT NULL ORDER BY a.level DESC, a.number DESC LIMIT 51", "ix_alert_list")]
     [InlineData("SELECT * FROM assess.alert a WHERE a.organization_id = @org AND a.number IS NOT NULL AND a.level = ANY (@levels) ORDER BY a.level DESC, a.number DESC LIMIT 51", "ix_alert_list")]
+    // Notices (ADR 047): new and earlier ones, exploited first, then the score, then the newest; the cursor continues.
+    [InlineData("SELECT * FROM assess.notice n WHERE n.organization_id = @org AND n.state = 'open' AND NOT n.is_backfill ORDER BY n.exploited DESC, n.score_rank DESC, n.raised_at DESC, n.id DESC LIMIT 51", "ix_notice_list")]
+    [InlineData("SELECT * FROM assess.notice n WHERE n.organization_id = @org AND n.state = 'open' AND n.is_backfill ORDER BY n.exploited DESC, n.score_rank DESC, n.raised_at DESC, n.id DESC LIMIT 51", "ix_notice_list")]
+    [InlineData("SELECT * FROM assess.notice n WHERE n.organization_id = @org AND n.state = 'open' AND NOT n.is_backfill AND (NOT n.exploited OR (n.score_rank < @score)) ORDER BY n.exploited DESC, n.score_rank DESC, n.raised_at DESC, n.id DESC LIMIT 51", "ix_notice_list")]
     public async Task Lists_read_a_page_in_index_order(string sql, string index)
     {
         await using var host = await AssessmentTestHost.StartAsync(server);
         var plan = await QueryPlans.ExplainAsync(
             host.Database.OwnerConnectionString("tests"), sql, TestContext.Current.CancellationToken,
             new NpgsqlParameter("org", Guid.CreateVersion7()), new NpgsqlParameter("levels", new[] { 4, 5 }),
-            new NpgsqlParameter("number", 7), new NpgsqlParameter("level", 3), new NpgsqlParameter("id", Guid.CreateVersion7()));
+            new NpgsqlParameter("number", 7), new NpgsqlParameter("level", 3), new NpgsqlParameter("id", Guid.CreateVersion7()), new NpgsqlParameter("score", 9.1));
 
         Assert.True(plan.Any(line => index.Split('|').Any(name => line.Contains(name, StringComparison.Ordinal))), string.Join('\n', plan));
         Assert.False(QueryPlans.SortsEverything(plan), string.Join('\n', plan));

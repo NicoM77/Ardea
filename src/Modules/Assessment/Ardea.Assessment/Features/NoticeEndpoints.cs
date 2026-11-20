@@ -31,8 +31,9 @@ internal static class NoticeEndpoints
     }
 
     /// <summary>
-    /// Notices, actively exploited first, then by CVSS score, then newest (E23). <c>state</c>: <c>new</c> (default: open),
-    /// <c>answered</c> (affects us or doesn't), <c>withdrawn</c>; <c>component</c> narrows to the notices a stack entry or
+    /// Notices, actively exploited first, then by CVSS score, then newest (E23). <c>state</c>: <c>new</c> (default: open, raised
+    /// as an entry arrived), <c>earlier</c> (open, raised at once when a stack entry was added or changed, from the half year
+    /// before; ADR 047), <c>answered</c> (affects us or doesn't), <c>withdrawn</c>; <c>component</c> narrows to the notices a stack entry or
     /// another coarse component raised.
     /// </summary>
     internal static async Task<IResult> ListAsync(
@@ -40,9 +41,9 @@ internal static class NoticeEndpoints
     {
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);
         var after = Cursor(cursor, errors);
-        if (state is not (null or "new" or "answered" or "withdrawn"))
+        if (state is not (null or "new" or "earlier" or "answered" or "withdrawn"))
         {
-            errors["state"] = ["Choose new, answered or withdrawn."];
+            errors["state"] = ["Choose new, earlier, answered or withdrawn."];
         }
 
         if (errors.Count > 0)
@@ -53,7 +54,8 @@ internal static class NoticeEndpoints
         var query = db.Notices.AsNoTracking();
         query = (state ?? "new") switch
         {
-            "new" => query.Where(n => n.State == Notice.Open),
+            "new" => query.Where(n => n.State == Notice.Open && !n.IsBackfill),
+            "earlier" => query.Where(n => n.State == Notice.Open && n.IsBackfill),
             "answered" => query.Where(n => n.State == Notice.AffectsUs || n.State == Notice.NotAffected),
             _ => query.Where(n => n.State == Notice.Withdrawn),
         };
@@ -64,14 +66,15 @@ internal static class NoticeEndpoints
 
         if (after is { } c)
         {
-            query = query.Where(n => (n.Exploitation == "active" ? 1 : 0) < c.Exploited
-                || ((n.Exploitation == "active" ? 1 : 0) == c.Exploited && ((n.CvssScore ?? -1) < c.Score
-                    || ((n.CvssScore ?? -1) == c.Score && (n.RaisedAt < c.RaisedAt || (n.RaisedAt == c.RaisedAt && n.Id.CompareTo(c.Id) < 0))))));
+            var exploited = c.Exploited == 1;
+            query = query.Where(n => (exploited && !n.Exploited)
+                || (n.Exploited == exploited && (n.ScoreRank < c.Score
+                    || (n.ScoreRank == c.Score && (n.RaisedAt < c.RaisedAt || (n.RaisedAt == c.RaisedAt && n.Id.CompareTo(c.Id) < 0))))));
         }
 
         var size = Math.Clamp(limit ?? 50, 1, MaxLimit);
         var rows = await query
-            .OrderByDescending(n => n.Exploitation == "active" ? 1 : 0).ThenByDescending(n => n.CvssScore ?? -1).ThenByDescending(n => n.RaisedAt).ThenByDescending(n => n.Id)
+            .OrderByDescending(n => n.Exploited).ThenByDescending(n => n.ScoreRank).ThenByDescending(n => n.RaisedAt).ThenByDescending(n => n.Id)
             .Take(size + 1).ToListAsync(cancellationToken);
         var page = rows.Take(size).ToList();
         var next = rows.Count > size ? WriteCursor(page[^1]) : null;
@@ -108,7 +111,7 @@ internal static class NoticeEndpoints
 
     private static string WriteCursor(Notice n) => Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Create(
         CultureInfo.InvariantCulture,
-        $"{(n.Exploitation == "active" ? 1 : 0)}|{(n.CvssScore ?? -1).ToString("R", CultureInfo.InvariantCulture)}|{n.RaisedAt.UtcTicks}|{n.Id}")));
+        $"{(n.Exploited ? 1 : 0)}|{n.ScoreRank.ToString("R", CultureInfo.InvariantCulture)}|{n.RaisedAt.UtcTicks}|{n.Id}")));
 
     private static (int Exploited, double Score, DateTimeOffset RaisedAt, Guid Id)? Cursor(string? cursor, Dictionary<string, string[]> errors)
     {

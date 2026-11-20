@@ -186,7 +186,41 @@ public sealed class NoticeSpike(PostgresServer server)
             """)).Select(row => Raised.Parse(row, components)).ToList();
         var entries = await host.RowsAsync("SELECT state, count(*) FROM intel.security_entry GROUP BY state ORDER BY state");
 
+        // The backfill (ADR 047): the same stacks, set up after the week, get its notices from the reverse search at once.
+        var late = new Dictionary<Guid, Stack>();
+        foreach (var stack in Stacks.Where(s => s.Entries.Length == 10))
+        {
+            var organization = Guid.CreateVersion7();
+            var project = await host.AddProjectAsync(organization, stack.Name, new ReferenceProject("normal", "internet"), Project.StackKind);
+            foreach (var entry in stack.Entries)
+            {
+                foreach (var product in entry.Products)
+                {
+                    await host.AddComponentAsync(organization, project, c => Describe(c, product, entry.Line));
+                }
+            }
+
+            await host.ProfileChangedAsync(organization, project);
+            late[organization] = stack;
+        }
+
+        await host.RunJobsAsync();
+        var backfilled = (await host.RowsAsync("""
+            SELECT n.organization_id, count(*), count(*) FILTER (WHERE n.is_backfill AND n.state = 'open'),
+                   (SELECT count(*) FROM assess.assess_event e WHERE e.organization_id = n.organization_id AND e.kind = 'notice.backfilled'),
+                   (SELECT count(*) FROM assess.assess_event e WHERE e.organization_id = n.organization_id AND e.kind = 'notice.raised')
+            FROM assess.notice n GROUP BY n.organization_id
+            """)).Select(r => r.Split('\t')).Where(c => late.ContainsKey(Guid.Parse(c[0])))
+            .ToDictionary(c => late[Guid.Parse(c[0])], c => (Notices: int.Parse(c[1], CultureInfo.InvariantCulture), Quiet: int.Parse(c[2], CultureInfo.InvariantCulture),
+                Summaries: int.Parse(c[3], CultureInfo.InvariantCulture), Raised: int.Parse(c[4], CultureInfo.InvariantCulture)));
+
         var report = Report(records.Count, entries, hits, notices, watch.Elapsed);
+        report += Environment.NewLine + "## Backfill: the ten-entry stacks set up after the week" + Environment.NewLine + Environment.NewLine
+            + "| Stack | Notices | of them quiet (`is_backfill`, open) | `notice.backfilled` rows | `notice.raised` rows |" + Environment.NewLine
+            + "|---|--:|--:|--:|--:|" + Environment.NewLine
+            + string.Concat(late.Values.Select(s => backfilled.TryGetValue(s, out var b)
+                ? $"| {s.Name} | {b.Notices} | {b.Quiet} | {b.Summaries} | {b.Raised} |{Environment.NewLine}"
+                : $"| {s.Name} | 0 | 0 | 0 | 0 |{Environment.NewLine}"));
         var output = Path.Combine(AppContext.BaseDirectory, "notice-spike-report.md");
         await File.WriteAllTextAsync(output, report, TestContext.Current.CancellationToken);
         TestContext.Current.SendDiagnosticMessage($"Notice spike report: {output}");
@@ -198,6 +232,12 @@ public sealed class NoticeSpike(PostgresServer server)
         {
             var count = Generated(notices, stack).Count;
             Assert.True(count <= MaxNoticesPerWeek, $"{stack.Name}: {count} notices, at most {MaxNoticesPerWeek} (ADR 044).{Environment.NewLine}{report}");
+        }
+
+        // Set up after the week, a stack gets the same notices, all quiet, with one summary and no event each.
+        foreach (var (stack, b) in backfilled)
+        {
+            Assert.Equal((Generated(notices, stack).Count, Generated(notices, stack).Count, 1, 0), (b.Notices, b.Quiet, b.Summaries, b.Raised));
         }
     }
 

@@ -1,8 +1,8 @@
 # Installation
 
-> Images are published to `ghcr.io/nicom77/ardea` from the first release on (task 7.3). Until then, build
-> one from source: `docker build -f deploy/Dockerfile -t ardea:dev .` and set `ARDEA_IMAGE=ardea:dev`. Such a build
-> reports its version as `dev`; `--build-arg VERSION=0.1.0` gives it a version.
+> Release images are published to `ghcr.io/nicom77/ardea` (see the [releases](https://github.com/NicoM77/Ardea/releases)).
+> To run a build of your own, `docker build -f deploy/Dockerfile -t ardea:dev .` and set `ARDEA_IMAGE=ardea:dev`; such
+> a build reports its version as `dev`, and `--build-arg VERSION=X.Y.Z` gives it one.
 
 Ardea runs as one image in three roles (`migrate`, `api`, `worker`) next to PostgreSQL 18, described in
 [`deploy/compose.yaml`](../../deploy/compose.yaml).
@@ -41,7 +41,7 @@ start and after an update, with cosign 3 or later and the GitHub CLI (`gh`, sign
 
 ```bash
 image=ghcr.io/nicom77/ardea
-version=0.1.0
+version=0.1.1
 identity='^https://github\.com/NicoM77/Ardea/\.github/workflows/release\.yml@refs/heads/main$'
 issuer=https://token.actions.githubusercontent.com
 signer=https://github.com/NicoM77/Ardea/.github/workflows/release.yml@refs/heads/main
@@ -64,7 +64,7 @@ The first two commands check the multi-architecture index (what `docker pull` re
 SBOM; the loop checks the image of each architecture by its own digest. Each command fails unless the image was
 built and signed by `release.yml` on the main branch of `NicoM77/Ardea`, on a GitHub-hosted runner. An image tag is
 set only after its image was signed and attested, so a tag that fails these checks was not made by a release. To run exactly what you checked, pin the
-digest in `.env`: `ARDEA_IMAGE=ghcr.io/nicom77/ardea:0.1.0@sha256:…`.
+digest in `.env`: `ARDEA_IMAGE=ghcr.io/nicom77/ardea:0.1.1@sha256:…`.
 
 ## Steps
 

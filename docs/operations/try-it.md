@@ -12,8 +12,8 @@ image, and the instance fetches nothing.
 
 ## Steps
 
-You need Docker with Compose v2. Until the first release (task 7.3) build the image from a checkout and set
-`ARDEA_IMAGE`: `docker build -f deploy/Dockerfile -t ardea:dev .` and `export ARDEA_IMAGE=ardea:dev`.
+You need Docker with Compose v2. The Compose file uses the release image; to try a checkout instead, build it with
+`docker build -f deploy/Dockerfile -t ardea:dev .` and `export ARDEA_IMAGE=ardea:dev`.
 
 1. Create a folder with the Compose file and the generated secrets. The public address is plain HTTP on this
    machine, which is only for trying it out:

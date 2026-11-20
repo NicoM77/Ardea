@@ -265,11 +265,11 @@ public sealed class NoticeTests(PostgresServer server)
         Assert.Equal(["open"], await host.RowsAsync("SELECT status FROM assess.remediation"));
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'notice.withdrawn'"));
 
-        // Without the version again, the notice is raised anew and the reminder is withdrawn with the finding.
+        // Without the version again, the notice is raised anew, as a new one: it takes over the open reminder, which is withdrawn.
         await host.ChangeComponentAsync(acme, postgres, c => c.Version = null);
         await host.ProfileChangedAsync(acme, stack);
         await host.RunJobsAsync();
-        Assert.Equal(["CVE-2026-8601\topen\t1\tTrue"], await host.RowsAsync(Notices));
+        Assert.Equal(["CVE-2026-8601\topen\t1\tFalse"], await host.RowsAsync(Notices));
         Assert.Equal(["closed\tmoved_to_notice"], await host.RowsAsync("SELECT status, close_reason FROM assess.remediation"));
     }
 
@@ -345,9 +345,47 @@ public sealed class NoticeTests(PostgresServer server)
         await host.ProfileChangedAsync(acme, shop);
         await host.RunJobsAsync();
 
-        // The reminder goes, but not silently: the notice asks (E25, ADR 047).
+        // The reminder goes, but not silently: the notice asks (E25, ADR 047), as a new one although a reverse search raised
+        // it, with its event, so the person who had the reminder sees it.
         Assert.Equal(["closed\tmoved_to_notice"], await host.RowsAsync("SELECT status, close_reason FROM assess.remediation"));
-        Assert.Equal(["CVE-2026-9001\topen\t1\tTrue"], await host.RowsAsync(Notices));
+        Assert.Equal(["CVE-2026-9001\topen\t1\tFalse"], await host.RowsAsync(Notices));
+        Assert.Equal(["CVE-2026-9001"], await ListKeysAsync(host, acme, "new"));
+        Assert.Equal(["notice.raised"], await host.RowsAsync("SELECT kind FROM assess.assess_event WHERE kind LIKE 'notice.%'"));
+
+        // Reassessed later, it stays new and raises nothing more.
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+        Assert.Equal(["CVE-2026-9001\topen\t1\tFalse"], await host.RowsAsync(Notices));
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind LIKE 'notice.%'"));
+    }
+
+    [Fact]
+    public async Task An_earlier_notice_that_takes_over_a_reminder_becomes_new()
+    {
+        await using var host = await AssessmentTestHost.StartAsync(server);
+        var acme = AssessmentTestHost.NewOrganization();
+        var (stack, _) = await StackAsync(host, acme, "nginx", "network");
+        var shop = await host.AddProjectAsync(acme, "Shop");
+        var postgres = await host.AddComponentAsync(acme, shop, c => (c.ProductKey, c.Kind, c.Version) = ("postgresql", "database", "17.4"));
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+        await EntryAsync(host, "CVE-2026-9011", 9.1, introduced: "17.0", fixedAt: "17.7");
+        Assert.Equal(["open"], await host.RowsAsync("SELECT status FROM assess.remediation"));
+
+        // A stack entry added later raises the notice quietly, as an earlier one; the shop's reminder still stands.
+        await host.AddComponentAsync(acme, stack, c => (c.ProductKey, c.Kind) = ("postgresql", "database"));
+        await host.ProfileChangedAsync(acme, stack);
+        await host.RunJobsAsync();
+        Assert.Equal(["CVE-2026-9011"], await ListKeysAsync(host, acme, "earlier"));
+
+        // The shop's version becomes a line: its reminder hands over to that notice, which becomes new.
+        await host.ChangeComponentAsync(acme, postgres, c => (c.Version, c.VersionPrecision) = ("17", "line"));
+        await host.ProfileChangedAsync(acme, shop);
+        await host.RunJobsAsync();
+        Assert.Equal(["closed\tmoved_to_notice"], await host.RowsAsync("SELECT status, close_reason FROM assess.remediation"));
+        Assert.Equal(["CVE-2026-9011"], await ListKeysAsync(host, acme, "new"));
+        Assert.Empty(await ListKeysAsync(host, acme, "earlier"));
+        Assert.Equal(["notice.raised"], await host.RowsAsync("SELECT kind FROM assess.assess_event WHERE kind = 'notice.raised'"));
     }
 
     [Fact]

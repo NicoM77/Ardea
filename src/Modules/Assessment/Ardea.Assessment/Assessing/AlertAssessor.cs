@@ -119,6 +119,7 @@ internal sealed class AlertAssessor(
         var present = components.ToDictionary(c => c.Id);
         var hit = new HashSet<Guid>();
         var raising = new HashSet<Guid>();
+        var handed = new HashSet<Guid>();
         foreach (var candidate in candidates)
         {
             byComponent.TryGetValue(candidate.Component.Id, out var known);
@@ -127,6 +128,12 @@ internal sealed class AlertAssessor(
             // A finding the system would close as it moves to the coarse path, while it is open (a reminder) or carries a
             // person's verdict, always raises the notice: nobody's reminder or verdict disappears without one (E25, ADR 047).
             var handedOver = coarse && known is { StatusChangedBy: null } && (known.Status == "open" || known.VerdictSource == "human");
+            if (handedOver && known!.StatusReason != MovedToNotice)
+            {
+                // Handed over now: the notice is new, also in a reverse search, so the reminder stays in sight.
+                handed.Add(candidate.Component.Id);
+            }
+
             var outcome = Evaluate(entry, candidate, known, modelVerdicts.GetValueOrDefault(candidate.Component.Id), keys!.Learned(candidate, learnedProducts), coarse);
             if (byComponent.Remove(candidate.Component.Id, out var finding))
             {
@@ -167,7 +174,7 @@ internal sealed class AlertAssessor(
 
         // The notice of the entry, within what this assessment looked at; a reverse search raises quietly (master plan 7.7).
         var looked = components.Select(c => c.Id).Concat(existing.Select(f => f.ComponentId)).ToHashSet();
-        await notices.UpdateAsync(entry, new CoarseHits(looked, hit, raising, Quiet: scope.Project is not null), cancellationToken);
+        await notices.UpdateAsync(entry, new CoarseHits(looked, hit, raising, handed, Quiet: scope.Project is not null), cancellationToken);
 
         var findings = await db.Findings.Where(f => f.AlertId == alert.Id).Select(f => new { f.Level, f.Status }).ToListAsync(cancellationToken);
         var level = findings.Count == 0 ? 1 : findings.Max(f => f.Level);

@@ -8,6 +8,7 @@ import type { ConnectionView, SessionOrganization } from '../../core/api/client'
 import { AccessesCard } from './accesses-card';
 import { AiPolicyCard } from './ai-policy-card';
 import { AuditCard } from './audit-card';
+import { GeneralCard } from './general-card';
 
 const ORG = '0190a000-0000-7000-8000-0000000000aa';
 const organization: SessionOrganization = {
@@ -85,6 +86,27 @@ describe('AccessesCard', () => {
     await settle(fixture);
     expect(element.textContent).toContain('en.settings.accesses.errors.token');
     expect(token.getAttribute('aria-invalid')).toBe('true');
+  });
+});
+
+describe('GeneralCard', () => {
+  it('shows a member the values as plain text, not as disabled fields', async () => {
+    const { fixture, http } = setUp(GeneralCard);
+    fixture.componentRef.setInput('organization', { ...organization, role: 'member' });
+    await settle(fixture);
+    http.expectOne(`/api/v1/orgs/${ORG}`).flush({
+      ...organization,
+      locale: 'de',
+      timeZone: 'Europe/Zurich',
+      requireMfa: false,
+      aiPolicy: 'none',
+      createdAt: '2026-11-19T08:00:00Z',
+    });
+    await settle(fixture);
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('input, select, button')).toBeNull();
+    expect(element.querySelector('dl')?.textContent).toContain('Deutsch');
+    expect(element.querySelector('dl')?.textContent).toContain('Europe/Zurich');
   });
 });
 

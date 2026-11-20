@@ -38,7 +38,7 @@
   </ItemGroup>
   <ItemGroup Label="Catalog">
     <PackageVersion Include="Semver" Version="3.0.0" />
-    <PackageVersion Include="NuGet.Versioning" Version="7.9.0" />
+    <PackageVersion Include="NuGet.Versioning" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup Label="Tests">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />

@@ -138,9 +138,11 @@ internal sealed class UnitOfWork(NpgsqlDataSource dataSource, ITenantContext ten
     public async ValueTask DisposeAsync()
     {
         _completed = true;
-        if (_transaction is not null)
+        var transaction = _transaction;
+        _transaction = null;
+        if (transaction is not null)
         {
-            await _transaction.DisposeAsync();
+            await transaction.DisposeAsync();
         }
 
         await Connection.DisposeAsync();

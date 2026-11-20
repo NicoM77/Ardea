@@ -33,10 +33,10 @@ internal static class DemoJobRunner
         var total = 0;
         for (var round = 0; round < MaxRounds; round++)
         {
-            await BringForwardAsync(dataSource, cancellationToken);
             var ran = 0;
             foreach (var kind in Kinds)
             {
+                await BringForwardAsync(dataSource, cancellationToken);
                 foreach (var job in await JobStore.ClaimAsync(dataSource, "seed-demo", kind, 100, TimeSpan.FromMinutes(10), cancellationToken))
                 {
                     await RunAsync(job, registry, scopes, dataSource, cancellationToken);
@@ -57,13 +57,7 @@ internal static class DemoJobRunner
 
     private static async Task BringForwardAsync(NpgsqlDataSource dataSource, CancellationToken cancellationToken)
     {
-        await using var command = dataSource.CreateCommand(
-            """
-            UPDATE platform.job j
-            SET run_at = j.run_at - shift.by
-            FROM (SELECT max(run_at) - now() AS by FROM platform.job WHERE state = 'pending' AND run_at > now() AND kind = ANY($1)) shift
-            WHERE j.state = 'pending' AND j.run_at > now() AND j.kind = ANY($1)
-            """);
+        await using var command = dataSource.CreateCommand("UPDATE platform.job SET run_at = created_at WHERE state = 'pending' AND run_at <> created_at AND kind = ANY($1)");
         command.Parameters.Add(new NpgsqlParameter { Value = Kinds });
         await command.ExecuteNonQueryAsync(cancellationToken);
     }

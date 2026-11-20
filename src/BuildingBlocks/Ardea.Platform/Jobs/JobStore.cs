@@ -28,18 +28,18 @@ internal static class JobStore
                 ORDER BY priority, run_at, id
                 FOR UPDATE SKIP LOCKED
                 LIMIT $4)
-            RETURNING j.id, j.lease_token, j.kind, j.payload, j.attempts, j.max_attempts, j.timeout_seconds, j.org_id, j.trace_parent
+            RETURNING j.id, j.lease_token, j.kind, j.payload, j.attempts, j.max_attempts, j.timeout_seconds, j.org_id, j.trace_parent, j.priority, j.run_at
             """);
         command.Parameters.Add(new NpgsqlParameter { Value = workerId });
         command.Parameters.Add(new NpgsqlParameter { Value = lease });
         command.Parameters.Add(new NpgsqlParameter { Value = kind });
         command.Parameters.Add(new NpgsqlParameter { Value = limit });
 
-        var jobs = new List<ClaimedJob>();
+        var jobs = new List<(short Priority, DateTimeOffset RunAt, ClaimedJob Job)>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
-            jobs.Add(new ClaimedJob(
+            jobs.Add((reader.GetInt16(9), reader.GetFieldValue<DateTimeOffset>(10), new ClaimedJob(
                 reader.GetGuid(0),
                 reader.GetGuid(1),
                 reader.GetString(2),
@@ -48,10 +48,10 @@ internal static class JobStore
                 reader.GetInt32(5),
                 TimeSpan.FromSeconds(reader.GetInt32(6)),
                 reader.IsDBNull(7) ? null : reader.GetGuid(7),
-                reader.IsDBNull(8) ? null : reader.GetString(8)));
+                reader.IsDBNull(8) ? null : reader.GetString(8))));
         }
 
-        return jobs;
+        return [.. jobs.OrderBy(j => j.Priority).ThenBy(j => j.RunAt).ThenBy(j => j.Job.Id).Select(j => j.Job)];
     }
 
     public static async Task<bool> CompleteAsync(NpgsqlConnection connection, ClaimedJob job, CancellationToken cancellationToken)

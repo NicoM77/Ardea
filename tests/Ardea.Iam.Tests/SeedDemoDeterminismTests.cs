@@ -36,7 +36,7 @@ public sealed class SeedDemoDeterminismTests(PostgresServer server)
     {
         var first = await SeedAndDescribeAsync();
         var second = await SeedAndDescribeAsync();
-        Assert.Equal(first, second);
+        Assert.True(first == second, $"first seed:\n{first}\n\nsecond seed:\n{second}");
         Assert.Contains("CVE-", first, StringComparison.Ordinal);
     }
 

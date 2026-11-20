@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideBell, LucidePlus } from '@lucide/angular';
 import { UiButton, UiCard, UiEmptyState, UiLoader, UiNotice, UiPill, UiPriority } from 'ui';
@@ -26,7 +27,7 @@ import {
 } from './notify-format';
 import { ReminderRhythmCard } from './reminder-rhythm-card';
 import { ruleRequest } from './rule-request';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom } from 'rxjs';
 
 const CHANNEL_ICONS: Record<Channel, NotifyIconName | null> = {
   in_app: null,
@@ -109,9 +110,11 @@ const CHANNEL_ICONS: Record<Channel, NotifyIconName | null> = {
                     @for (r of rows(); track r.rule.id) {
                       <tr [class.off]="!r.rule.enabled">
                         <th scope="row" class="name">
-                          <a [routerLink]="'/o/' + org.slug + '/notification-rules/' + r.rule.id">{{
-                            r.rule.name
-                          }}</a>
+                          <a
+                            class="link"
+                            [routerLink]="'/o/' + org.slug + '/notification-rules/' + r.rule.id"
+                            >{{ r.rule.name }}</a
+                          >
                           <span class="meta">
                             <ui-priority [level]="r.priority" />
                             @if (r.priority !== 'critical') {
@@ -248,9 +251,7 @@ const CHANNEL_ICONS: Record<Channel, NotifyIconName | null> = {
       text-align: right;
     }
     .name a {
-      display: block;
-      color: var(--text);
-      font-weight: 500;
+      display: inline-block;
     }
     .name a:focus-visible {
       outline: var(--focus-ring);
@@ -371,6 +372,7 @@ const CHANNEL_ICONS: Record<Channel, NotifyIconName | null> = {
 export class RulesPage {
   private readonly api = inject(NotificationsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly router = inject(Router);
   protected readonly organization = injectOrganization().organization;
   private readonly adminOrgId = computed(() => {
     const org = this.organization();
@@ -409,6 +411,20 @@ export class RulesPage {
       off: rules.filter((r) => !r.enabled).length,
     });
   });
+
+  constructor() {
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe((event) => {
+        const slug = this.organization()?.slug;
+        const path = event.urlAfterRedirects.split(/[?#]/)[0];
+        if (slug && this.rules.hasValue() && path === `/o/${slug}/notification-rules`)
+          this.rules.reload();
+      });
+  }
 
   protected who(cell: MatrixCell): string {
     return cell.who

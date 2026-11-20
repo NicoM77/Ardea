@@ -7,7 +7,7 @@ import {
   type ListAuditEventsParams,
   type SessionOrganization,
 } from '../../core/api/client';
-import { actorKey, AUDIT_ACTIONS, dataSummary } from './audit-format';
+import { actorKey, describeAudit } from './audit-format';
 
 const PAGE = 50;
 
@@ -133,12 +133,13 @@ export class AuditCard {
   protected readonly actor = actorKey;
 
   protected label(event: AuditEventView): string {
-    const key = AUDIT_ACTIONS[event.action];
-    return key ? this.transloco.translate(key) : event.action;
+    const { key, params } = describeAudit(event).sentence;
+    return this.transloco.translate(key, params);
   }
 
   protected detail(event: AuditEventView): string {
-    return dataSummary(event.data);
+    const detail = describeAudit(event).detail;
+    return detail ? this.transloco.translate(detail.key, detail.params) : '';
   }
 
   protected when(value: string): string {

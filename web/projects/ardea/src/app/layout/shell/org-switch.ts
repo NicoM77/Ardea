@@ -93,6 +93,11 @@ import { ROLE_LABELS } from '../../features/organizations/org-format';
     .switch:active {
       transform: scale(0.98);
     }
+    @media (prefers-reduced-motion: reduce) {
+      .switch:active {
+        transform: none;
+      }
+    }
     .switch:focus-visible {
       outline: var(--focus-ring);
       outline-offset: var(--focus-offset);

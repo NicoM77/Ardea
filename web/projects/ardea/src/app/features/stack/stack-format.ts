@@ -10,8 +10,7 @@ export const THRESHOLDS: readonly { value: Threshold; label: string }[] = [
   { value: 'everything', label: 'stack.threshold.everything' },
 ];
 
-export const PRECISION_HINTS: Record<Precision, string> = {
-  none: 'stack.precision.noneHint',
+export const PRECISION_HINTS: Record<Exclude<Precision, 'none'>, string> = {
   line: 'stack.precision.lineHint',
   exact: 'stack.precision.exactHint',
 };

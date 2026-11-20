@@ -703,22 +703,35 @@ test('reminders by level: the rhythm per level is changed with the keyboard and 
   await expect(card.getByRole('combobox', { name: 'High' })).toHaveValue('weekly');
   await expect(card.getByRole('combobox', { name: 'Medium' })).toHaveValue('monthly');
   await expect(card.getByText('Low and Not relevant remind only in the digests.')).toBeVisible();
-  const save = card.getByRole('button', { name: 'Save reminders' });
-  await expect(save).toBeDisabled();
+  await expect(card.getByRole('button')).toHaveCount(0);
   await expectAccessible(page, 'reminders by level');
 
   await critical.focus();
   await page.keyboard.press('Tab');
   await expect(card.getByRole('combobox', { name: 'High' })).toBeFocused();
   await card.getByRole('combobox', { name: 'High' }).selectOption('off');
+  await expect(page.getByText('Reminders saved.')).toBeVisible();
   await card.getByRole('combobox', { name: 'Medium' }).selectOption('weekly');
-  await expect(save).toBeEnabled();
-  await save.focus();
-  await page.keyboard.press('Enter');
-  await expect(card.getByText('Reminders saved.')).toBeVisible();
-  const put = api.requests.find((r) => r.method === 'PUT' && r.path.includes('/reminder-rhythm'))!;
-  expect(put.body).toEqual({ level5: 'daily', level4: 'off', level3: 'weekly' });
-  await expect(save).toBeDisabled();
+  await expect
+    .poll(() =>
+      api.requests.filter((r) => r.method === 'PUT' && r.path.includes('/reminder-rhythm')),
+    )
+    .toHaveLength(2);
+  const puts = api.requests.filter(
+    (r) => r.method === 'PUT' && r.path.includes('/reminder-rhythm'),
+  );
+  expect(puts[0].body).toEqual({ level5: 'daily', level4: 'off', level3: 'monthly' });
+  expect(puts[1].body).toEqual({ level5: 'daily', level4: 'off', level3: 'weekly' });
+
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(card.getByRole('combobox', { name: 'Medium' })).toHaveValue('monthly');
+  await expect
+    .poll(() =>
+      api.requests.filter((r) => r.method === 'PUT' && r.path.includes('/reminder-rhythm')),
+    )
+    .toHaveLength(3);
+  await card.getByRole('combobox', { name: 'Medium' }).selectOption('weekly');
+  await expect(card.getByRole('combobox', { name: 'Medium' })).toHaveValue('weekly');
 
   await page.getByRole('link', { name: 'New rule' }).click();
   await expect(page.getByRole('checkbox', { name: /New notice/ })).toBeChecked();
@@ -1029,7 +1042,8 @@ test('stack page: suggestions with their reasons, a removal taken back, a versio
   const postgres = rows.filter({ hasText: 'PostgreSQL' });
   await postgres.getByRole('textbox', { name: 'Version of PostgreSQL' }).fill('');
   await postgres.getByRole('textbox', { name: 'Version of PostgreSQL' }).press('Enter');
-  await expect(postgres).toContainText('Any version');
+  await expect(postgres.getByRole('textbox', { name: 'Version of PostgreSQL' })).toHaveValue('');
+  await expect(postgres).not.toContainText('Checked exactly');
   await expect(postgres.getByRole('combobox')).toHaveCount(0);
   expect(stack.writes.map((w) => w.method)).toEqual(['DELETE', 'POST', 'PATCH']);
   expect(problems).toEqual([]);
@@ -1052,7 +1066,7 @@ test('stack page: a save that fails says so, and the row shows what is stored', 
   await version.press('Enter');
   await expect(page.getByText('The change could not be saved. Try again.')).toBeVisible();
   await expect(version).toHaveValue('');
-  await expect(ubuntu).toContainText('Any version');
+  await expect(ubuntu).not.toContainText('Only entries for this line');
 
   const postgres = rows.filter({ hasText: 'PostgreSQL' });
   const exactness = postgres.getByRole('combobox', { name: /How exact/ });

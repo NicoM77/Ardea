@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@axe-core/playwright": "4.14.0",
-    "@playwright/test": "1.56.1",
+    "@playwright/test": "1.65.1",
     "otpauth": "9.6.0"
   },
   "overrides": {

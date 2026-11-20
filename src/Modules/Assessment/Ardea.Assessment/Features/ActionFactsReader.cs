@@ -142,7 +142,7 @@ internal sealed class ActionFactsReader(AssessDbContext db, IProfileQueries prof
         {
             var component = components.GetValueOrDefault(a.ComponentId);
             var top = findings[a.Id]
-                .OrderByDescending(f => f.Status == "open").ThenByDescending(f => f.Level)
+                .OrderByDescending(f => f.Status == "open").ThenByDescending(f => f.Level).ThenBy(f => keys.GetValueOrDefault(f.EntryId, string.Empty), StringComparer.Ordinal)
                 .Select(f => new ActionEntryFacts(keys.GetValueOrDefault(f.EntryId, string.Empty), titles.GetValueOrDefault(f.EntryId), f.Level, f.Exploitation))
                 .DistinctBy(e => e.Key).Take(3).ToList();
             return new ActionFacts

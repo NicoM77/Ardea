@@ -147,7 +147,7 @@ internal sealed partial class NormalizeRecordsHandler(IUnitOfWorkFactory units, 
 
         await db.SaveChangesAsync(cancellationToken);
         var jobs = scope.ServiceProvider.GetRequiredService<IJobQueue>();
-        foreach (var key in correlate)
+        foreach (var key in correlate.Order(StringComparer.Ordinal))
         {
             await jobs.EnqueueAsync(new Correlation.CorrelateEntry(key), Correlation.CorrelateEntry.Options(key), cancellationToken);
         }

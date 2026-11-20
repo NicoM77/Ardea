@@ -245,7 +245,6 @@ import { SourceHealth } from './source-health';
       color: var(--muted);
     }
     .paused {
-      display: flex;
       margin-bottom: var(--space-lg);
     }
     .resume-all {

@@ -6,7 +6,7 @@ namespace Ardea.Host.Commands;
 
 internal static class DoctorCommand
 {
-    public static async Task<int> RunAsync(string[] args)
+    public static async Task<int> RunAsync()
     {
         var configuration = HostConfiguration.Load();
         var results = new List<(string Check, bool Ok, string Detail)>();

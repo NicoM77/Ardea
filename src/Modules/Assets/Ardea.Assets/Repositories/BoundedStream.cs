@@ -1,9 +1,6 @@
 namespace Ardea.Assets.Repositories;
 
-internal sealed class ContentTooLargeException(long limit) : IOException($"The content is larger than {limit} bytes.")
-{
-    public long Limit { get; } = limit;
-}
+internal sealed class ContentTooLargeException(long limit) : IOException($"The content is larger than {limit} bytes.");
 
 internal sealed class BoundedStream(Stream inner, long limit) : Stream
 {

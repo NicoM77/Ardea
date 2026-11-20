@@ -40,7 +40,7 @@ const GAP = 3;
       @for (p of priorities; track p) {
         <li>
           <a
-            routerLink="../actions"
+            routerLink="../reminders"
             [queryParams]="{ priority: p }"
             (pointerenter)="focused.emit(p)"
             (pointerleave)="focused.emit(null)"

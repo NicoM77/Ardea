@@ -1,24 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { problemMessageKey } from '../../core/api/problem';
-import { ACTION_PROBLEMS, isStale, mainMove, statusOptions, storedStatus } from './action-status';
+import { ACTION_PROBLEMS, isStale, storedStatus } from './action-status';
 
 describe('action status', () => {
-  it('offers open and the outcomes on an open action, and only the way back on a closed one', () => {
-    expect(statusOptions({ status: 'open', closeReason: null })).toEqual([
-      'open',
-      'remediated',
-      'risk_accepted',
-      'not_affected',
-    ]);
-    expect(statusOptions({ status: 'closed', closeReason: 'risk_accepted' })).toEqual([
-      'risk_accepted',
-      'open',
-    ]);
-  });
-
-  it('marks an open action remediated and takes a closing back, nothing in between', () => {
-    expect(mainMove('open')).toBe('resolve');
-    expect(mainMove('closed')).toBe('reopen');
+  it('stores every outcome as a closing and open as open', () => {
     expect(storedStatus('not_affected')).toBe('closed');
     expect(storedStatus('open')).toBe('open');
   });

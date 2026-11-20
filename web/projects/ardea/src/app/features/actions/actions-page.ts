@@ -35,7 +35,8 @@ function mergeActions(
 }
 
 /**
- * «Actions» (task 3.9, master plan 11.4, mockup actions.html): the organization's actions, open or
+ * «Reminders» (task 3.9, 5a.5; master plan 11.4, 17.5; mockups actions.html, reminders.html): the
+ * organization's reminders (the API's actions, ADR 046), open or
  * closed, filtered by priority and project and found by number, entry, component or project. The
  * filters live in the address. A reminder has no owner, no deadline and no time to close (master
  * plan 17.5), so the list stands alone.

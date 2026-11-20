@@ -2,9 +2,9 @@ import { Component, computed, inject, input, signal, viewChild } from '@angular/
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideChevronLeft } from '@lucide/angular';
+import { LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiInput, UiLoader, UiNotice, UiPill, UiPriority, UiToaster } from 'ui';
+import { UiButton, UiCard, UiLoader, UiNotice, UiPill, UiPriority, UiStatus, UiToaster } from 'ui';
 import {
   ActionsService,
   getActionResource,
@@ -17,47 +17,40 @@ import { injectOrganization } from '../organizations/current-organization';
 import { roleRank } from '../organizations/org-format';
 import {
   actionName,
-  isOutcome,
   num,
   priorityOf,
   shownStatus,
+  statusKindOf,
   type ActionStatus,
-  type Outcome,
 } from './action-format';
 import { ActionDetails } from './action-details';
 import { ActionHistory } from './action-history';
-import {
-  ACTION_PROBLEMS,
-  isStale,
-  mainMove,
-  STATUS_LABELS,
-  statusOptions,
-  storedStatus,
-} from './action-status';
+import { ACTION_PROBLEMS, isStale, storedStatus } from './action-status';
 import { AiAssessmentCard } from './ai-assessment-card';
 import { Answers } from './answers';
 import { FindingsList, type FindingChange } from './findings-list';
 import { historyLines } from './history-format';
 import { isStaleReview, REVIEW_PROBLEMS } from './model-format';
 import type { ReviewChange } from './model-review';
+import { OutcomeForm, type OtherClosing } from './outcome-form';
 
 interface Confirmation {
   key: string;
   params?: Record<string, string>;
   undo?: () => void;
-  /** The sentences for a refusal; the action's by default. */
+  /** The sentences for a refusal; the reminder's by default. */
   problems?: typeof ACTION_PROBLEMS;
 }
 
 /**
- * One action (task 3.10, master plan 11.4, mockup remediation.html): the three answers first, then
- * its findings, the details with status and the closing's reason, and the history with notes. A
- * reminder is open or done, without owner or deadline (master plan 17.5); the main move marks it
- * remediated. Every change is confirmed by a toast with Undo; a change someone else made meanwhile
- * (409) is said in a sentence and the page shows the current state. On phones the main move and the
- * status sit in a bar at the bottom. With the model's assessment (phase 4, mockup
- * remediation.html?ai) the answers carry its texts, each finding its verdict to confirm or
- * correct, and a card its preconditions, reasoning, sources and budget.
+ * One reminder (task 5a.5, master plan 17.5 and 17.7, mockup reminder.html; the API keeps «action»,
+ * ADR 046): its status and the three answers first, so at 390 × 844 they end above the action bar. A
+ * reminder is open or done, without owner, deadline or «in review». «Mark as remediated» needs no
+ * reason and confirms with Undo; «Other outcome» closes it as risk accepted or not affected with a
+ * short reason. The vulnerabilities it holds follow with their factors collapsed, then the history,
+ * collapsed too. A change someone else made meanwhile (409) is said in a sentence and the page shows
+ * the current state. With the model's assessment (phase 4) the answers carry its texts and a card its
+ * reasoning.
  */
 @Component({
   selector: 'ardea-action-page',
@@ -66,18 +59,20 @@ interface Confirmation {
     RouterLink,
     TranslocoPipe,
     LucideChevronLeft,
+    LucideChevronRight,
     UiButton,
     UiCard,
-    UiInput,
     UiLoader,
     UiNotice,
     UiPill,
     UiPriority,
+    UiStatus,
     ActionDetails,
     ActionHistory,
     AiAssessmentCard,
     Answers,
     FindingsList,
+    OutcomeForm,
   ],
   template: `
     <a class="crumb" routerLink="..">
@@ -102,7 +97,7 @@ interface Confirmation {
         </div>
         @if (canEdit()) {
           <div class="controls">
-            <ng-container *ngTemplateOutlet="controls; context: { id: 'action-status' }" />
+            <ng-container *ngTemplateOutlet="controls" />
           </div>
         }
       </header>
@@ -113,20 +108,34 @@ interface Confirmation {
 
       <div class="grid">
         <div class="stack">
-          <section class="answers-card" [attr.aria-label]="'answers.label' | transloco">
+          <section class="lead-card" [attr.aria-label]="'answers.label' | transloco">
+            <div class="status-band">
+              <ui-status [kind]="kind()" />
+              <p role="status">{{ stateLine().key | transloco: stateLine().params }}</p>
+            </div>
+            @if (closing()) {
+              <ardea-outcome-form
+                id="close-form"
+                class="close-form"
+                [busy]="busy()"
+                (save)="closeOther($event)"
+                (dismiss)="toggleOther(false)"
+              />
+            }
             @if (v.answers; as answers) {
               <ardea-answers [answers]="answers" [component]="a.component.name" />
             } @else {
               <p class="none">{{ 'answers.none' | transloco }}</p>
             }
           </section>
-          <ui-card [heading]="'findings.title' | transloco">
+          <ui-card [heading]="'actionDetail.vulnerabilities' | transloco">
             <span uiCardMeta>{{ 'findings.meta' | transloco: { count: openFindings() } }}</span>
             <ardea-findings-list
               [findings]="v.findings"
               [canEdit]="canEdit()"
               [busy]="busy()"
               [members]="members.value() ?? []"
+              [openFirst]="false"
               (outcome)="setFinding($event)"
               (review)="review($event)"
             />
@@ -134,57 +143,72 @@ interface Confirmation {
           @if (v.answers && v.answers.origin === 'model' && v.answers.model; as model) {
             <ardea-ai-assessment-card [model]="model" />
           }
+          <!-- A disclosure: the heading holds the button that opens it (WAI-ARIA disclosure pattern) -->
+          <section class="disclose" [class.is-open]="historyOpen()" aria-labelledby="history-title">
+            <h2>
+              <button
+                type="button"
+                aria-controls="history-body"
+                [attr.aria-expanded]="historyOpen()"
+                (click)="historyOpen.set(!historyOpen())"
+              >
+                <span class="disclose-title" id="history-title">{{
+                  'actionDetail.history.title' | transloco
+                }}</span>
+                <span class="disclose-meta">{{
+                  'actionDetail.historyMeta' | transloco: { count: lines().length }
+                }}</span>
+                <svg lucideChevronRight aria-hidden="true"></svg>
+              </button>
+            </h2>
+            <div class="disclose-body" id="history-body" [hidden]="!historyOpen()">
+              <ardea-action-history
+                bare
+                [lines]="lines()"
+                [canEdit]="canEdit()"
+                [busy]="busy()"
+                (note)="addNote($event)"
+              />
+            </div>
+          </section>
         </div>
         <div class="stack">
-          <ardea-action-details
-            [action]="a"
-            [busy]="busy()"
-            [pending]="pending()"
-            (reason)="close($event)"
-            (cancelReason)="pending.set(null)"
-          />
-          <ardea-action-history
-            [lines]="lines()"
-            [canEdit]="canEdit()"
-            [busy]="busy()"
-            (note)="addNote($event)"
-          />
+          <ardea-action-details [action]="a" />
         </div>
       </div>
 
       @if (canEdit()) {
         <div class="ui-actionbar actionbar">
-          <ng-container *ngTemplateOutlet="controls; context: { id: 'action-status-bar' }" />
+          <ng-container *ngTemplateOutlet="controls" />
         </div>
       }
 
-      <ng-template #controls let-id="id">
-        @switch (move()) {
-          @case ('resolve') {
-            <button
-              uiButton
-              variant="primary"
-              type="button"
-              [loading]="busy()"
-              (click)="choose('remediated')"
-            >
-              {{ 'actionDetail.resolve' | transloco }}
-            </button>
-          }
-          @default {
-            <button uiButton type="button" [loading]="busy()" (click)="choose('open')">
-              {{ 'actionDetail.reopen' | transloco }}
-            </button>
-          }
+      <ng-template #controls>
+        @if (isOpen()) {
+          <button
+            uiButton
+            variant="primary"
+            type="button"
+            [loading]="busy() && !closing()"
+            (click)="remediate()"
+          >
+            {{ 'actionDetail.resolve' | transloco }}
+          </button>
+          <button
+            uiButton
+            type="button"
+            aria-controls="close-form"
+            [attr.aria-expanded]="closing()"
+            [disabled]="busy()"
+            (click)="toggleOther(!closing())"
+          >
+            {{ 'actionDetail.other' | transloco }}
+          </button>
+        } @else {
+          <button uiButton type="button" [loading]="busy()" (click)="reopen()">
+            {{ 'actionDetail.reopen' | transloco }}
+          </button>
         }
-        <label class="sr-only" [for]="id">{{ 'actionDetail.details.status' | transloco }}</label>
-        <select uiInput [id]="id" [disabled]="busy()" (change)="chooseFrom($event)">
-          @for (option of options(); track option) {
-            <option [value]="option" [selected]="option === selected()">
-              {{ statusLabels[option] | transloco }}
-            </option>
-          }
-        </select>
       </ng-template>
     } @else if (detail.error()) {
       <ui-notice tone="error">{{ loadProblem() | transloco }}</ui-notice>
@@ -225,10 +249,6 @@ interface Confirmation {
       align-items: center;
       gap: var(--space-sm);
     }
-    .controls select,
-    .actionbar select {
-      width: auto;
-    }
     .problem {
       margin-bottom: var(--space-lg);
     }
@@ -243,14 +263,89 @@ interface Confirmation {
       gap: var(--gap);
       min-width: 0;
     }
-    .answers-card {
+    .lead-card {
       border: 1px solid var(--border);
       border-radius: var(--radius-card);
       background: var(--surface);
     }
+    .status-band {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm) var(--space-lg);
+      padding: 14px var(--card-pad);
+      border-bottom: 1px solid var(--border);
+    }
+    .status-band ui-status {
+      font-weight: 500;
+    }
+    .status-band p {
+      flex: 1;
+      min-width: 200px;
+      color: var(--muted);
+    }
+    .close-form {
+      display: block;
+      padding: var(--space-lg) var(--card-pad);
+      border-bottom: 1px solid var(--border);
+      background: var(--raised);
+    }
     .none {
       padding: var(--card-pad);
       color: var(--muted);
+    }
+    .disclose {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      background: var(--surface);
+    }
+    .disclose h2 {
+      font-size: var(--fs-section);
+      line-height: var(--lh-section);
+    }
+    .disclose h2 button {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      width: 100%;
+      min-height: 56px;
+      padding: 0 var(--card-pad);
+      border: 0;
+      border-radius: var(--radius-card);
+      background: none;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color var(--t-hover) ease;
+    }
+    .disclose h2 button:focus-visible {
+      outline: var(--focus-ring);
+      outline-offset: var(--focus-offset);
+    }
+    .disclose-title {
+      flex: 1;
+      min-width: 0;
+    }
+    .disclose-meta {
+      color: var(--faint);
+      font-size: var(--fs-small);
+      white-space: nowrap;
+    }
+    .disclose h2 svg {
+      width: 16px;
+      height: 16px;
+      color: var(--faint);
+      transition: transform var(--t-ui) var(--ease-out);
+    }
+    .disclose.is-open h2 svg {
+      transform: rotate(90deg);
+    }
+    .disclose.is-open h2 button {
+      border-radius: var(--radius-card) var(--radius-card) 0 0;
+    }
+    .disclose-body {
+      padding: var(--space-xs) var(--card-pad) var(--card-pad);
     }
     .wait {
       display: grid;
@@ -265,6 +360,14 @@ interface Confirmation {
         background: var(--raised);
         color: var(--text);
       }
+      .disclose h2 button:hover {
+        background: var(--raised);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .disclose h2 svg {
+        transition: none;
+      }
     }
     @media (max-width: 1100px) {
       .grid {
@@ -278,6 +381,10 @@ interface Confirmation {
       .controls {
         display: none;
       }
+      .status-band p {
+        flex-basis: 100%;
+        min-width: 0;
+      }
       .actionbar {
         position: fixed;
         left: 0;
@@ -289,8 +396,9 @@ interface Confirmation {
         border-top: 1px solid var(--border);
         background: var(--surface);
       }
-      .actionbar > :first-child {
+      .actionbar > * {
         flex: 1;
+        min-height: 44px;
       }
       :host {
         display: block;
@@ -327,22 +435,38 @@ export class ActionPage {
 
   protected readonly name = computed(() => {
     const a = this.action();
-    return a ? actionName(a) : { key: 'actions.title', params: {} };
+    return a ? actionName(a) : { key: 'actionDetail.title', params: {} };
   });
   protected readonly priority = computed(() => priorityOf(this.action()?.levelName));
   protected readonly openFindings = computed(() => num(this.action()?.openFindings));
-  protected readonly move = computed(() => mainMove(this.action()?.status ?? 'open'));
-  protected readonly options = computed(() => {
+  protected readonly isOpen = computed(() => (this.action()?.status ?? 'open') !== 'closed');
+  protected readonly kind = computed(() => {
     const a = this.action();
-    return a ? statusOptions(a) : [];
+    return a ? statusKindOf(a.status, a.closeReason) : 'open';
   });
-  /** The outcome waiting for its reason, shown in the status control meanwhile. */
-  protected readonly pending = signal<Outcome | null>(null);
-  protected readonly selected = computed(() => {
+  /** «Open since 13 Nov 2026.» or «Done on 18 Nov 2026: remediated. No more reminders.» */
+  protected readonly stateLine = computed(() => {
     const a = this.action();
-    return this.pending() ?? (a ? shownStatus(a) : 'open');
+    if (!a) return { key: 'actionDetail.state.open', params: { date: '' } };
+    if (a.status !== 'closed')
+      return { key: 'actionDetail.state.open', params: { date: this.day(a.openedAt) } };
+    const outcome = shownStatus(a);
+    const byPerson =
+      a.closeReason === 'remediated' ||
+      a.closeReason === 'risk_accepted' ||
+      a.closeReason === 'not_affected';
+    return {
+      key: 'actionDetail.state.done',
+      params: {
+        date: this.day(a.closedAt ?? a.openedAt),
+        status: byPerson || outcome !== 'remediated' ? outcome : 'system',
+      },
+    };
   });
-  protected readonly statusLabels = STATUS_LABELS;
+  /** The history is collapsed, one click away (master plan 17.7). */
+  protected readonly historyOpen = signal(false);
+  /** «Other outcome» is open: risk accepted or not affected, with a reason. */
+  protected readonly closing = signal(false);
   protected readonly lines = computed(() =>
     historyLines(
       this.view()?.events ?? [],
@@ -364,44 +488,50 @@ export class ActionPage {
     reloadOnLiveChange(this.detail);
   }
 
-  protected chooseFrom(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    const value = select.value as ActionStatus;
-    // The control shows the stored status until the change went through.
-    select.value = this.selected();
-    this.choose(value);
+  /** «Mark as remediated»: at once, without a reason, with Undo (mockup reminder.html). */
+  protected remediate(): void {
+    this.closing.set(false);
+    this.setStatus('remediated', null, 'actionDetail.toast.remediated');
   }
 
-  /** A status from the control: open applies at once, an outcome asks for its reason. */
-  protected choose(to: ActionStatus): void {
-    const a = this.action();
-    if (!a || to === this.selected()) return;
-    if (isOutcome(to)) {
-      if (a.status !== 'closed') this.pending.set(to);
-      return;
+  protected toggleOther(open: boolean): void {
+    this.closing.set(open);
+    if (!open) {
+      // Back to the button that opened the form, in the visible copy of the controls.
+      setTimeout(() => {
+        const buttons = Array.from(
+          document.querySelectorAll<HTMLElement>('ardea-action-page [aria-controls="close-form"]'),
+        );
+        buttons.find((b) => b.offsetParent !== null)?.focus();
+      });
     }
-    this.pending.set(null);
-    this.setStatus(to, null);
   }
 
-  protected close(note: string): void {
-    const outcome = this.pending();
-    if (outcome) this.setStatus(outcome, note);
+  protected closeOther(closing: OtherClosing): void {
+    this.setStatus(closing.outcome, closing.note, 'actionDetail.toast.closed');
   }
 
-  private setStatus(to: ActionStatus, note: string | null): void {
+  protected reopen(): void {
     const a = this.action();
     if (!a) return;
     const before = shownStatus(a);
-    const expected = a.status;
-    const reopening = expected === 'closed';
-    const confirmation: Confirmation = reopening
-      ? { key: 'actionDetail.toast.reopened' }
-      : { key: 'actionDetail.toast.closed', params: { status: to } };
-    void this.run(() => this.status(to, expected, note), {
-      ...confirmation,
+    void this.run(() => this.status('open', 'closed', null), {
+      key: 'actionDetail.toast.reopened',
       undo: () =>
-        void this.run(() => this.status(before, storedStatus(to), null), {
+        void this.run(() => this.status(before, 'open', null), {
+          key: 'actionDetail.toast.undone',
+        }),
+    });
+  }
+
+  private setStatus(to: ActionStatus, note: string | null, confirmation: string): void {
+    const a = this.action();
+    if (!a) return;
+    void this.run(() => this.status(to, a.status, note), {
+      key: confirmation,
+      params: { status: to },
+      undo: () =>
+        void this.run(() => this.status('open', storedStatus(to), null), {
           key: 'actionDetail.toast.undone',
         }),
     });
@@ -435,7 +565,7 @@ export class ActionPage {
           }),
         );
         this.findingsList()?.done();
-        // The action may have closed or changed level with it.
+        // The reminder may have closed or changed level with it.
         this.detail.reload();
         return null;
       },
@@ -467,7 +597,7 @@ export class ActionPage {
           }),
         );
         this.findingsList()?.done();
-        // The finding was assessed again; the action may have changed level or closed with it.
+        // The finding was assessed again; the reminder may have changed level or closed with it.
         this.detail.reload();
         return null;
       },
@@ -478,6 +608,12 @@ export class ActionPage {
   private status(status: ActionStatus, expectedStatus: string, note: string | null) {
     return firstValueFrom(
       this.api.setActionStatus(this.orgId()!, num(this.number()), { status, expectedStatus, note }),
+    );
+  }
+
+  private day(value: string): string {
+    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' }).format(
+      new Date(value),
     );
   }
 
@@ -492,7 +628,7 @@ export class ActionPage {
     try {
       const view = await work();
       if (view) this.detail.value.set(view);
-      this.pending.set(null);
+      this.closing.set(false);
       this.toaster.show({
         text: this.transloco.translate(confirmation.key, confirmation.params ?? {}),
         undo: confirmation.undo,
@@ -502,7 +638,7 @@ export class ActionPage {
       // Someone else changed it: show the state as it is now, and let the person decide again.
       const code = problemOf(error)?.code;
       if (isStale(code) || isStaleReview(code)) {
-        this.pending.set(null);
+        this.closing.set(false);
         this.detail.reload();
       }
     } finally {

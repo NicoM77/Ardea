@@ -1,4 +1,5 @@
-import { Component, inject, input, output } from '@angular/core';
+import { booleanAttribute, Component, inject, input, output } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { UiButton, UiCard, UiInput, UiPriority } from 'ui';
 import type { HistoryLine } from './history-format';
@@ -9,9 +10,16 @@ import type { HistoryLine } from './history-format';
  */
 @Component({
   selector: 'ardea-action-history',
-  imports: [TranslocoPipe, UiButton, UiCard, UiInput, UiPriority],
+  imports: [NgTemplateOutlet, TranslocoPipe, UiButton, UiCard, UiInput, UiPriority],
   template: `
-    <ui-card [heading]="'actionDetail.history.title' | transloco" headingId="action-history">
+    @if (bare()) {
+      <ng-container *ngTemplateOutlet="body" />
+    } @else {
+      <ui-card [heading]="'actionDetail.history.title' | transloco" headingId="action-history">
+        <ng-container *ngTemplateOutlet="body" />
+      </ui-card>
+    }
+    <ng-template #body>
       <ol class="activity">
         @for (line of lines(); track line.id) {
           <li>
@@ -64,7 +72,7 @@ import type { HistoryLine } from './history-format';
           </button>
         </form>
       }
-    </ui-card>
+    </ng-template>
   `,
   styles: `
     .activity li {
@@ -146,6 +154,8 @@ import type { HistoryLine } from './history-format';
 export class ActionHistory {
   readonly lines = input.required<readonly HistoryLine[]>();
   readonly canEdit = input(false);
+  /** Without its card, inside a disclosure that carries the heading (the reminder, master plan 17.7). */
+  readonly bare = input(false, { transform: booleanAttribute });
   readonly busy = input(false);
   readonly note = output<string>();
 

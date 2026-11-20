@@ -86,9 +86,71 @@
   margin-bottom: var(--gap);
 }
 
+/* The side column: the new notices lead, the priority ring follows (mockup overview.html) */
+.side {
+  display: grid;
+  gap: var(--gap);
+  align-content: start;
+  min-width: 0;
+}
+.figure-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+.figure {
+  font-size: var(--fs-kpi);
+  line-height: var(--lh-kpi);
+  font-weight: 500;
+}
+.figure-row span:not(.figure) {
+  color: var(--muted);
+  font-size: var(--fs-section);
+}
+.figure-sub {
+  margin: var(--space-xs) 0 var(--space-md);
+  color: var(--muted);
+}
+.peek {
+  display: grid;
+  margin: 0 0 var(--space-lg);
+}
+.peek li + li {
+  border-top: 1px solid var(--rule);
+}
+.peek a {
+  display: grid;
+  gap: 2px;
+  min-height: 44px;
+  margin: 0 calc(-1 * var(--space-sm));
+  padding: 6px var(--space-sm);
+  border-radius: var(--radius-control);
+}
+.peek b {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.peek small {
+  color: var(--muted);
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+}
+.notices-go {
+  align-self: flex-start;
+}
+.notices-wait {
+  display: grid;
+  place-items: center;
+  min-height: 72px;
+  margin-bottom: var(--space-md);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .card-link:hover {
     color: var(--text);
+  }
+  .peek a:hover {
+    background: var(--raised);
   }
 }
 
@@ -98,5 +160,15 @@
   .span-5,
   .span-4 {
     grid-column: 1 / -1;
+  }
+  /* The side column dissolves into the grid, and the notices move to the top */
+  .side {
+    display: contents;
+  }
+  .side > * {
+    grid-column: 1 / -1;
+  }
+  .notices-card {
+    order: -1;
   }
 }

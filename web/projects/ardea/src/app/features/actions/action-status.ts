@@ -1,6 +1,5 @@
-import type { ActionSummary } from '../../core/api/client';
 import type { ProblemMessages } from '../../core/api/problem';
-import { isOutcome, shownStatus, type ActionStatus, type Outcome } from './action-format';
+import { isOutcome, type ActionStatus, type Outcome } from './action-format';
 
 /**
  * What can be done with an action's status (master plan 7.4, 11.5, 17.5; task 3.10). A reminder is
@@ -8,13 +7,6 @@ import { isOutcome, shownStatus, type ActionStatus, type Outcome } from './actio
  * closing back. The API checks the status the person saw (`expectedStatus`) and answers 409
  * `status_conflict` when someone else changed it meanwhile.
  */
-
-export const STATUS_LABELS: Readonly<Record<ActionStatus, string>> = {
-  open: 'ui.status.open',
-  remediated: 'ui.status.remediated',
-  risk_accepted: 'ui.status.accepted',
-  not_affected: 'ui.status.notAffected',
-};
 
 /** The question a closing asks (mockup: «How was it remediated?»). */
 export const CLOSING_QUESTIONS: Readonly<Record<Outcome, string>> = {
@@ -49,23 +41,7 @@ export function isStale(code: string | undefined): boolean {
   );
 }
 
-/**
- * The statuses the control offers. A closed action keeps its outcome and offers the way back to
- * open; choosing another outcome would need the closing taken back first.
- */
-export function statusOptions(
-  action: Pick<ActionSummary, 'status' | 'closeReason'>,
-): ActionStatus[] {
-  if (action.status === 'closed') return [shownStatus(action), 'open'];
-  return ['open', 'remediated', 'risk_accepted', 'not_affected'];
-}
-
 /** The status the API stores after a change to `to`: outcomes close the action. */
 export function storedStatus(to: ActionStatus): 'open' | 'closed' {
   return isOutcome(to) ? 'closed' : to;
-}
-
-/** The main move of the moment: mark an open one remediated, or take a closing back. */
-export function mainMove(status: string): 'resolve' | 'reopen' {
-  return status === 'closed' ? 'reopen' : 'resolve';
 }

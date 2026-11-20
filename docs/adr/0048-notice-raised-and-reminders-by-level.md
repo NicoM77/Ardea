@@ -118,4 +118,5 @@ Reminder runs are not sent to webhooks.
 - E26 (the rhythm) stays a recommendation until the owner confirms it; the defaults can change without a migration of the
   rows that were saved (they hold what an admin chose).
 - A notice muted on a channel by a member is not delivered there, also an important one.
-- 5a.5's Notices page is the target of every notice message; until it is merged the link leads to the not-found page.
+- 5a.5's Notices page is the target of every notice message, its reminder page the target of every reminder line; with
+  5a.5 and 5a.6 merged, the release gate of ADR 046 decision 13 has nothing left to wait for.

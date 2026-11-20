@@ -1,5 +1,5 @@
-using Ardea.Assessment.Contracts;
 using System.Globalization;
+using Ardea.Assessment.Contracts;
 using Ardea.Notifications.Rules;
 
 namespace Ardea.Notifications.Messages;

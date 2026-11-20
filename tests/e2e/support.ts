@@ -27,6 +27,13 @@ export async function openFirstPage(page: Page, path: string): Promise<void> {
 }
 
 export async function expectAccessible(page: Page, label: string): Promise<void> {
+  await page.waitForFunction(
+    () => document.querySelector('ui-toast-host ui-toast') === null,
+    null,
+    {
+      timeout: 10_000,
+    },
+  );
   await page.waitForFunction(() =>
     document
       .getAnimations()

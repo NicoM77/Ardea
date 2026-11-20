@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Platform.Tests.Secrets;
 
-/// <summary>One real delivery through SMTP to a mail catcher; everything else uses a capturing sender.</summary>
 public sealed class SmtpEmailSenderTests(PostgresServer server)
 {
     [Fact]

@@ -2,7 +2,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Sync;
 
-/// <summary>Every adapter in the image, by source key (master plan 5.2: found at start, entered into <c>intel.source</c>).</summary>
 internal sealed class SourceRegistry
 {
     private readonly Dictionary<string, ISourceProvider> _providers;

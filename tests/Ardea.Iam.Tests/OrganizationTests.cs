@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>Organisations, memberships, roles, invitations and the MFA requirement (task 2.1; master plan 9.1, 9.3, 10.2).</summary>
 public sealed class OrganizationTests(PostgresServer server)
 {
     [Fact]
@@ -45,7 +44,6 @@ public sealed class OrganizationTests(PostgresServer server)
         await ExpectProblem(await stranger.PostAsync($"/api/v1/orgs/{orgId}/invitations", new { email = "x@example.org", role = "admin" }), HttpStatusCode.NotFound, "organization_not_found");
         await ExpectProblem(await stranger.GetAsync($"/api/v1/orgs/{Guid.NewGuid()}"), HttpStatusCode.NotFound, "organization_not_found");
 
-        // Each sees only their own organisation in lists.
         Assert.Equal([strangersOwn], (await Json(await stranger.GetAsync("/api/v1/orgs"))).EnumerateArray().Select(o => o.GetProperty("id").GetGuid()));
         Assert.Equal([orgId], (await Json(await owner.GetAsync("/api/v1/orgs"))).EnumerateArray().Select(o => o.GetProperty("id").GetGuid()));
         Assert.Equal(HttpStatusCode.Unauthorized, (await host.Client().GetAsync($"/api/v1/orgs/{orgId}")).StatusCode);
@@ -64,7 +62,6 @@ public sealed class OrganizationTests(PostgresServer server)
         var token = link[(link.LastIndexOf('/') + 1)..];
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM iam.invitation WHERE token_hash = '{token}'"));
 
-        // Anyone holding the link sees what it is for.
         var preview = await Json(await host.Client().GetAsync($"/api/v1/invitations/{token}"));
         Assert.Equal("Acme", preview.GetProperty("organizationName").GetString());
         Assert.Equal("member", preview.GetProperty("role").GetString());
@@ -82,7 +79,6 @@ public sealed class OrganizationTests(PostgresServer server)
         Assert.Equal(["owner", "member"], members.EnumerateArray().Select(m => m.GetProperty("role").GetString()));
         Assert.Equal(["userId", "displayName", "email", "role", "joinedAt"], members.EnumerateArray().First().EnumerateObject().Select(p => p.Name));
 
-        // The link is used up.
         await ExpectProblem(await member.PostAsync($"/api/v1/invitations/{token}/accept"), HttpStatusCode.NotFound, "invalid_invitation");
         Assert.Empty((await Json(await owner.GetAsync($"/api/v1/orgs/{orgId}/invitations"))).EnumerateArray());
         await ExpectProblem(await owner.PostAsync($"/api/v1/orgs/{orgId}/invitations", new { email = "member@example.org", role = "admin" }), HttpStatusCode.Conflict, "already_member");
@@ -99,7 +95,6 @@ public sealed class OrganizationTests(PostgresServer server)
         using var uninvited = host.Client();
         await ExpectProblem(await uninvited.PostAsync("/api/v1/auth/register", new { email = "else@example.org", displayName = "Else", password = ApiTestHost.Password }),
             HttpStatusCode.BadRequest, "invalid_invitation");
-        // The token is for one address only.
         await ExpectProblem(await uninvited.PostAsync("/api/v1/auth/register", new { invitationToken = token, email = "else@example.org", displayName = "Else", password = ApiTestHost.Password }),
             HttpStatusCode.BadRequest, "invalid_invitation");
 
@@ -124,20 +119,17 @@ public sealed class OrganizationTests(PostgresServer server)
         var viewerId = await UserIdAsync(host, "viewer@example.org");
         var adminId = await UserIdAsync(host, "admin@example.org");
 
-        // Members and viewers read, but neither invite nor change settings or roles.
         Assert.Equal(HttpStatusCode.OK, (await viewer.GetAsync($"/api/v1/orgs/{orgId}/members")).StatusCode);
         await ExpectProblem(await member.PostAsync($"/api/v1/orgs/{orgId}/invitations", new { email = "x@example.org", role = "viewer" }), HttpStatusCode.Forbidden, "insufficient_role");
         await ExpectProblem(await member.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}", new { name = "Renamed" }), HttpStatusCode.Forbidden, "insufficient_role");
         await ExpectProblem(await viewer.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/members/{memberId}", new { role = "viewer" }), HttpStatusCode.Forbidden, "insufficient_role");
         await ExpectProblem(await member.SendAsync(HttpMethod.Delete, $"/api/v1/orgs/{orgId}/members/{viewerId}"), HttpStatusCode.Forbidden, "insufficient_role");
 
-        // Administrators manage roles, but neither the owner's nor ownership itself.
         Assert.Equal(HttpStatusCode.OK, (await admin.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/members/{viewerId}", new { role = "member" })).StatusCode);
         await ExpectProblem(await admin.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/members/{ownerId}", new { role = "member" }), HttpStatusCode.Conflict, "owner_role");
         await ExpectProblem(await admin.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/members/{adminId}", new { role = "owner" }), HttpStatusCode.Forbidden, "insufficient_role");
         await ExpectProblem(await admin.PostAsync($"/api/v1/orgs/{orgId}/invitations", new { email = "x@example.org", role = "owner" }), HttpStatusCode.BadRequest, "validation_failed");
 
-        // The owner hands over and becomes an administrator; then may leave.
         await ExpectProblem(await owner.SendAsync(HttpMethod.Delete, $"/api/v1/orgs/{orgId}/members/{ownerId}"), HttpStatusCode.Conflict, "owner_role");
         Assert.Equal(HttpStatusCode.OK, (await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}/members/{adminId}", new { role = "owner" })).StatusCode);
         Assert.Equal("admin", await host.ScalarAsync<string>($"SELECT role FROM iam.membership WHERE user_id = '{ownerId}'"));
@@ -145,7 +137,6 @@ public sealed class OrganizationTests(PostgresServer server)
         Assert.Equal(HttpStatusCode.NoContent, (await owner.SendAsync(HttpMethod.Delete, $"/api/v1/orgs/{orgId}/members/{ownerId}")).StatusCode);
         await ExpectProblem(await owner.GetAsync($"/api/v1/orgs/{orgId}"), HttpStatusCode.NotFound, "organization_not_found");
 
-        // Members leave on their own; the new owner removes others.
         Assert.Equal(HttpStatusCode.NoContent, (await member.SendAsync(HttpMethod.Delete, $"/api/v1/orgs/{orgId}/members/{memberId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, (await admin.SendAsync(HttpMethod.Delete, $"/api/v1/orgs/{orgId}/members/{viewerId}")).StatusCode);
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM iam.membership"));
@@ -181,7 +172,6 @@ public sealed class OrganizationTests(PostgresServer server)
         var orgId = await CreateOrgAsync(owner, "Acme");
         using var member = await JoinAsync(host, owner, orgId, "member@example.org", "member");
 
-        // Nothing leaves the operator's control until the organisation allows it (master plan 7.8).
         Assert.Equal("local_only", (await Json(await owner.GetAsync($"/api/v1/orgs/{orgId}"))).GetProperty("aiPolicy").GetString());
         await ExpectProblem(await owner.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}", new { aiPolicy = "everywhere" }), HttpStatusCode.BadRequest, "validation_failed");
         await ExpectProblem(await member.SendAsync(HttpMethod.Patch, $"/api/v1/orgs/{orgId}", new { aiPolicy = "cloud_allowed" }), HttpStatusCode.Forbidden, "insufficient_role");
@@ -190,7 +180,6 @@ public sealed class OrganizationTests(PostgresServer server)
         Assert.Equal("cloud_allowed", updated.GetProperty("aiPolicy").GetString());
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.audit_event WHERE action = 'org.settings_changed' AND data->>'aiPolicy' = 'cloud_allowed'"));
 
-        // Other modules read it through the contract, inside the organisation's unit of work.
         await using var scope = host.Services.CreateAsyncScope();
         scope.ServiceProvider.GetRequiredService<Ardea.Platform.Tenancy.TenantContext>().SetOrganization(orgId);
         var profile = await scope.ServiceProvider.GetRequiredService<Ardea.Iam.Contracts.IOrganizationProfiles>().FindAsync(orgId, TestContext.Current.CancellationToken);
@@ -222,7 +211,6 @@ public sealed class OrganizationTests(PostgresServer server)
                 "int" => "1",
                 _ => "x",
             });
-            // A stream that starts instead of being refused must not hang the test.
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             var response = await member.SendAsync(new HttpMethod(method), path, method == "GET" ? null : new { }, cancellationToken: timeout.Token);
             var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);

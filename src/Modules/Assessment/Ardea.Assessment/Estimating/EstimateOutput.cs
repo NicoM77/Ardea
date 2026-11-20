@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 
 namespace Ardea.Assessment.Estimating;
 
-/// <summary>A verdict on affectedness (master plan 7.5, 4.6).</summary>
 internal enum ModelVerdict
 {
     Affected,
@@ -28,10 +27,6 @@ internal enum ConditionState
     Unknown,
 }
 
-/// <summary>
-/// The answer of the model exactly as master plan 7.5 fixes it, the type of <c>GetResponseAsync&lt;T&gt;</c>: its JSON
-/// schema goes to providers that enforce one. Names are snake_case; unknown fields make the answer invalid.
-/// </summary>
 internal sealed record EstimateAnswer(
     [property: Description("Exactly one verdict for every component of the data block.")] IReadOnlyList<ComponentVerdict> Verdicts,
     Likelihood Likelihood,
@@ -59,10 +54,6 @@ internal sealed record ReasoningStep(
     [property: Description("Numbers of the sources the sentence rests on.")] IReadOnlyList<int> Sources,
     [property: Description("References of the components the sentence rests on.")] IReadOnlyList<string> Components);
 
-/// <summary>
-/// The checked output as <c>assessment.output</c> stores it (master plan 4.6): the answer with real component ids in
-/// place of the placeholders, and the numbered sources its numbers refer to.
-/// </summary>
 internal sealed record StoredEstimate(
     IReadOnlyList<StoredVerdict> Verdicts,
     Likelihood Likelihood,
@@ -82,7 +73,6 @@ internal sealed record StoredEstimate(
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         RespectNullableAnnotations = true,
         RespectRequiredConstructorParameters = true,
-        // GetResponseAsync<T> makes the options read-only, which needs an explicit resolver.
         TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver(),
     };
 
@@ -91,7 +81,6 @@ internal sealed record StoredEstimate(
     public static StoredEstimate? Read(JsonDocument output) =>
         output.RootElement.TryGetProperty("verdicts", out _) ? output.RootElement.Deserialize<StoredEstimate>(Json) : null;
 
-    /// <summary>The verdicts per component id as the rule engine takes them, with the component's context when asked.</summary>
     public static IReadOnlyDictionary<Guid, StoredVerdict> VerdictsOf(JsonDocument output) =>
         Read(output)?.Verdicts.ToDictionary(v => v.ComponentId) ?? new Dictionary<Guid, StoredVerdict>();
 
@@ -99,14 +88,10 @@ internal sealed record StoredEstimate(
         where T : struct, Enum => JsonSerializer.Serialize(value, Json).Trim('"');
 }
 
-/// <param name="ComponentId">The component.</param>
-/// <param name="Verdict">The model's verdict on it.</param>
-/// <param name="Context">The component's <see cref="EstimateInput.Context"/> when the model was asked; the verdict counts only while it matches.</param>
 internal sealed record StoredVerdict(Guid ComponentId, ModelVerdict Verdict, string Context);
 
 internal sealed record StoredReasoning(string Sentence, IReadOnlyList<int> Sources, IReadOnlyList<Guid> Components);
 
-/// <summary>A failed attempt: no text of the model, only why (master plan 7.5 «ohne KI-Einschätzung»).</summary>
 internal sealed record FailedEstimate(string Note, string Reason, int Attempts)
 {
     public const string WithoutModel = "without_model";

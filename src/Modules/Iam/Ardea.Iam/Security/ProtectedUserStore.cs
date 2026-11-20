@@ -6,11 +6,6 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Ardea.Iam.Security;
 
-/// <summary>
-/// Identity's user store with every user token encrypted at rest: the authenticator key and the
-/// recovery codes go through <see cref="GetTokenAsync"/> and <see cref="SetTokenAsync"/>
-/// (master plan 9.4: MFA keys additionally encrypted).
-/// </summary>
 internal sealed class ProtectedUserStore(IamDbContext context, ISecretProtector secrets, IdentityErrorDescriber? describer = null)
     : UserOnlyStore<ArdeaUser, IamDbContext, Guid>(context, describer)
 {

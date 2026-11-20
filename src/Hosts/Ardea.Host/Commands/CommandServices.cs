@@ -5,7 +5,6 @@ using Ardea.Platform.Secrets;
 
 namespace Ardea.Host.Commands;
 
-/// <summary>The services a command that works on the data needs: the application role, every module, no web server and no worker.</summary>
 internal static class CommandServices
 {
     public static ServiceProvider Build(IConfiguration configuration, string role, LogLevel minimumLevel = LogLevel.Information)

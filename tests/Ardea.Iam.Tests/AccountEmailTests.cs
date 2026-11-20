@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>Task 0.9: reset and confirmation by e-mail, and the behaviour without SMTP (master plan 12.4).</summary>
 public sealed class AccountEmailTests(PostgresServer server)
 {
     private const string Email = "first@example.org";

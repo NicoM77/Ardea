@@ -17,11 +17,6 @@ using Npgsql;
 
 namespace Ardea.Assessment.Tests;
 
-/// <summary>
-/// Catalogue, Assets, Intel and Assessment on a freshly migrated database, the way the worker composes
-/// them. Profiles are written through Assets' own key computation, entries through Intel's tables, and
-/// jobs run like the worker runs them: one scope, the job's tenant, one committed unit of work each.
-/// </summary>
 internal sealed class AssessmentTestHost : IAsyncDisposable
 {
     private AssessmentTestHost(ServiceProvider services, DatabaseOptions database, FakeTimeProvider clock, Guid sourceId)
@@ -38,15 +33,10 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
 
     public FakeTimeProvider Clock { get; }
 
-    /// <summary>The source every test entry comes from.</summary>
     public Guid SourceId { get; }
 
-    /// <summary>The organisations' language and AI data policy; <c>local_only</c> unless a test sets another.</summary>
     public Estimating.TestOrganizations Organizations => Services.GetRequiredService<Estimating.TestOrganizations>();
 
-    /// <param name="server">The database server.</param>
-    /// <param name="configure">Replaces services after the modules registered theirs, e.g. the AI providers.</param>
-    /// <param name="settings">Configuration values, e.g. the AI limits.</param>
     public static async Task<AssessmentTestHost> StartAsync(
         PostgresServer server, Action<IServiceCollection>? configure = null, IReadOnlyDictionary<string, string?>? settings = null)
     {
@@ -116,7 +106,6 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
         return new AssessmentTestHost(built, database, clock, sourceId);
     }
 
-    /// <summary>An organisation id; organisations live in Iam, which this host leaves out.</summary>
     public static Guid NewOrganization() => Guid.CreateVersion7();
 
     public async Task<Guid> AddProjectAsync(Guid organization, string name = "Portal", string criticality = "normal", string exposure = "internal")
@@ -131,7 +120,6 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
         return id;
     }
 
-    /// <summary>The organisation's stack (master plan 17.2), the system project Assets creates with the organisation.</summary>
     public async Task<Guid> AddStackAsync(Guid organization)
     {
         var id = Guid.CreateVersion7();
@@ -144,7 +132,6 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
         return id;
     }
 
-    /// <summary>Adds a component and its search keys as the profile endpoints do.</summary>
     public async Task<Guid> AddComponentAsync(Guid organization, Guid project, Action<Component> configure)
     {
         var id = Guid.CreateVersion7();
@@ -161,7 +148,6 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
         return id;
     }
 
-    /// <summary>Changes a component and its keys as the profile endpoints do.</summary>
     public Task ChangeComponentAsync(Guid organization, Guid component, Action<Component> change) =>
         InOrganizationAsync(organization, async services =>
         {
@@ -173,7 +159,6 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
             await ComponentKeys.RefreshAsync(db, services.GetRequiredService<IProductCatalog>(), [row], CancellationToken.None);
         });
 
-    /// <summary>The precision that follows from the version, as the profile endpoints set it, unless the test set one that fits (ADR 046).</summary>
     internal static void WithPrecision(Component component)
     {
         if (!VersionPrecisions.Fits(component.VersionPrecision, component.Version))
@@ -182,7 +167,6 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
         }
     }
 
-    /// <summary>Writes a consolidated entry with its affected products, as the correlation would.</summary>
     public async Task<Guid> AddEntryAsync(TestEntry entry)
     {
         var id = Guid.CreateVersion7();
@@ -238,17 +222,14 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
         return id;
     }
 
-    /// <summary>Intel's material change, as <c>NotifyEntryChanged</c> tells the subscribers.</summary>
     public Task EntryChangedAsync(Guid entryId) =>
         InSystemAsync(services => services.GetRequiredService<Intel.Correlation.NotifyEntryChangedHandler>()
             .HandleAsync(new Intel.Correlation.NotifyEntryChanged(entryId), Context(null, "intel.notify-entry-changed"), CancellationToken.None));
 
-    /// <summary>Assets' profile change, as <c>ProjectProfileChanged</c> tells the subscribers.</summary>
     public Task ProfileChangedAsync(Guid organization, Guid project) =>
         InOrganizationAsync(organization, services => services.GetRequiredService<ProjectProfileChangedHandler>()
             .HandleAsync(new ProjectProfileChanged(project), Context(organization, ProjectProfileChanged.Kind), CancellationToken.None));
 
-    /// <summary>Runs every waiting job of the assessment, the way the worker would, until none is left.</summary>
     public async Task RunJobsAsync()
     {
         for (var round = 0; round < 10; round++)
@@ -293,7 +274,6 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
         return (T)(await command.ExecuteScalarAsync())!;
     }
 
-    /// <summary>Rows of a query as tab-separated text, for compact assertions.</summary>
     public async Task<IReadOnlyList<string>> RowsAsync(string sql)
     {
         await using var connection = new NpgsqlConnection(Database.OwnerConnectionString("tests"));
@@ -311,7 +291,6 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
 
     public async Task InOrganizationAsync(Guid organization, Func<IServiceProvider, Task> work)
     {
-        // Every unit of work happens a moment after the previous one, so the history has an order.
         Clock.Advance(TimeSpan.FromSeconds(1));
         await using var scope = Services.CreateAsyncScope();
         scope.ServiceProvider.GetRequiredService<TenantContext>().SetOrganization(organization);
@@ -356,7 +335,6 @@ internal sealed class AssessmentTestHost : IAsyncDisposable
     }
 }
 
-/// <summary>An entry for a test: severity, exploitation and the affected products.</summary>
 internal sealed record TestEntry(string Key, params TestAffected[] Affected)
 {
     public string State { get; init; } = "published";
@@ -376,7 +354,6 @@ internal sealed record TestEntry(string Key, params TestAffected[] Affected)
     public IReadOnlyList<string> Solutions { get; init; } = [];
 }
 
-/// <summary>One version statement about an affected product.</summary>
 internal sealed record TestAffected
 {
     public Guid? SourceId { get; init; }

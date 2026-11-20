@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Platform.Jobs;
 
-/// <summary>Every job kind the process knows, with its options and how to invoke its handler.</summary>
 public sealed class JobRegistry
 {
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -41,7 +40,6 @@ public sealed class JobRegistry
 
 public static class JobServiceCollectionExtensions
 {
-    /// <summary>Registers a job kind with its handler. The handler is resolved from the job's own scope.</summary>
     public static IServiceCollection AddJob<TJob, THandler>(this IServiceCollection services, JobKindOptions? options = null)
         where TJob : IJob
         where THandler : class, IJobHandler<TJob>

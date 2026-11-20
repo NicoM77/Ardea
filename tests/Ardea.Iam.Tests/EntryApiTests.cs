@@ -5,7 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>Entries and sources over the API (task 1.10, master plan 10.2).</summary>
 public sealed class EntryApiTests(PostgresServer server)
 {
     [Fact]
@@ -36,7 +35,6 @@ public sealed class EntryApiTests(PostgresServer server)
         var second = await Page(user, "/api/v1/entries?limit=2&cursor=" + Uri.EscapeDataString(first.GetProperty("nextCursor").GetString()!));
         Assert.Equal(1, second.GetProperty("items").GetArrayLength());
         Assert.Equal(JsonValueKind.Null, second.GetProperty("nextCursor").ValueKind);
-        // The merged entry is never listed.
         Assert.DoesNotContain(first.GetProperty("items").EnumerateArray().Concat(second.GetProperty("items").EnumerateArray()), e => e.GetProperty("key").GetString() == "GHSA-old-merged");
     }
 
@@ -68,7 +66,6 @@ public sealed class EntryApiTests(PostgresServer server)
         Assert.Contains(list.EnumerateArray(), s => s.GetProperty("key").GetString() == "ncsc-hub" && s.GetProperty("operatorKind").GetString() == "authority");
         Assert.Equal(HttpStatusCode.Forbidden, (await member.SendAsync(HttpMethod.Patch, "/api/v1/instance/sources/ncsc-hub", new { enabled = false })).StatusCode);
 
-        // No adapter declares this key in the test, so the default minimum of 15 minutes applies.
         Assert.Equal(HttpStatusCode.BadRequest, (await admin.SendAsync(HttpMethod.Patch, "/api/v1/instance/sources/ncsc-hub", new { intervalMinutes = 5 })).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await admin.SendAsync(HttpMethod.Patch, "/api/v1/instance/sources/ncsc-hub", new { intervalMinutes = 60 })).StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync("/api/v1/instance/sources/ncsc-hub/sync")).StatusCode);

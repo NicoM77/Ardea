@@ -4,12 +4,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Versions;
 
-/// <summary>
-/// Packagist versions as Composer reads them (<c>VersionParser</c>, then PHP <c>version_compare</c>):
-/// SemVer-like, but with up to four numbers, an optional <c>v</c>, and stability suffixes in the order
-/// dev &lt; alpha (a) &lt; beta (b) &lt; RC &lt; stable &lt; patch (p, pl), case-insensitive. A trailing
-/// <c>-dev</c> sorts before the same version without it. Branches (<c>dev-main</c>, <c>2.x-dev</c>) are no versions.
-/// </summary>
 internal sealed partial class ComposerScheme : IVersionScheme
 {
     public string Name => VersionSchemeNames.Packagist;
@@ -46,7 +40,6 @@ internal sealed partial class ComposerScheme : IVersionScheme
         var dev = match.Groups["dev"].Success;
         if (stability == Stability.Stable && dev && stabilityNumbers.Length == 0)
         {
-            // «1.0.0-dev»: the development stability of the version itself.
             stability = Stability.Dev;
             dev = false;
         }
@@ -111,7 +104,6 @@ internal sealed partial class ComposerScheme : IVersionScheme
                 return c;
             }
 
-            // beta < beta1 < beta1.1 < beta2: a missing number sorts first, as in version_compare.
             for (var i = 0; i < Math.Max(stabilityNumbers.Length, o.StabilityNumbers.Length); i++)
             {
                 if (i >= stabilityNumbers.Length || i >= o.StabilityNumbers.Length)

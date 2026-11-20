@@ -4,11 +4,6 @@ using Ardea.Catalog.Versions;
 
 namespace Ardea.Catalog.Tests.Versions;
 
-/// <summary>
-/// Phase 1 acceptance (master plan 14): for the six ecosystems the version check gives the expected
-/// result on ten recorded records each. The cases sit in <c>Recorded/osv-version-checks.json</c> with
-/// the ranges as the OSV record writes them, so the OSV adapter can reuse the file.
-/// </summary>
 public sealed class RecordedOsvVersionCheckTests
 {
     private static readonly string[] Ecosystems = ["npm", "NuGet", "Packagist", "PyPI", "Maven", "Go"];
@@ -50,7 +45,6 @@ public sealed class RecordedOsvVersionCheckTests
         ranges.AddRange(c.GetProperty("versions").EnumerateArray().Select(v => VersionRange.ExactVersion(v.GetString()!)));
         var scheme = VersionSchemeRegistry.Instance.ForEcosystem(ecosystem);
 
-        // OSV names no default status for unnamed versions.
         var check = VersionCheck.Evaluate(scheme, installed, ranges, VersionStatus.Unknown);
 
         var verdict = expected switch

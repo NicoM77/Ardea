@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>Detection rules for platform files with the shipped catalogue (task 2.12; master plan 16.3, 16.9).</summary>
 public sealed class PlatformDetectionTests(PostgresServer server)
 {
     [Fact]
@@ -66,7 +65,6 @@ public sealed class PlatformDetectionTests(PostgresServer server)
         Assert.Equal(
             ["aspnetcore 10.0", "dotnet 10.0", "dotnet-framework 4.8", "go 1.23", "nodejs 22", "nodejs 24", "php 8.3", "postgresql 17", "redis 7.4"],
             suggestions.Select(s => $"{s.ProductKey} {s.VersionLine}"));
-        // global.json and the project file both say .NET 10.0: one suggestion with both as evidence.
         Assert.Equal(["global.json", "src/Web/Web.csproj"], suggestions.Single(s => s.ProductKey == "dotnet").Evidence.Select(e => e.File).Order());
         Assert.Equal(3, suggestions.Single(s => s.ProductKey == "postgresql").Evidence.Single().Line);
     }

@@ -4,7 +4,6 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
 namespace Ardea.Platform.Persistence;
 
-/// <summary>Common EF Core setup for every module: snake_case names, migrations history in the module schema.</summary>
 public static class DbContextOptionsExtensions
 {
     public const string MigrationsHistoryTable = "__ef_migrations_history";

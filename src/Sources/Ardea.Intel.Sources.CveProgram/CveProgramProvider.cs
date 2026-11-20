@@ -8,19 +8,6 @@ using Ardea.Intel.Sources.Formats.CveJson5;
 
 namespace Ardea.Intel.Sources.CveProgram;
 
-/// <summary>
-/// The CVE Program (master plan 5.5, task 1.4).
-/// <list type="bullet">
-/// <item><b>Incremental:</b> the change log <c>deltaLog.json</c> (30 days, newest first; about 1.8 MB with
-/// gzip, and nothing at all while its ETag holds). Every log entry newer than the cursor is processed
-/// oldest first; every changed record is fetched once per run; a checkpoint follows each entry.</item>
-/// <item><b>First start or a pause longer than the log:</b> the daily full archive, streamed to the
-/// working volume and read without unpacking it to many files; only records published or changed in
-/// the backfill window are kept. The cursor then stands at the archive's midnight, and the next run
-/// continues from the change log.</item>
-/// <item><b>Single:</b> one record from the CVE Services API.</item>
-/// </list>
-/// </summary>
 public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
 {
     public const string Key = "cve-program";
@@ -30,7 +17,6 @@ public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
-    /// <summary>Bounds for unpacking the full archive; tests set small ones.</summary>
     internal ArchiveLimits ArchiveLimits { get; init; } = ArchiveLimits.Default;
 
     public SourceDescriptor Descriptor { get; } = new()
@@ -52,11 +38,8 @@ public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
             "cveawg.mitre.org",
         ],
         Attribution = "CVE® records © The MITRE Corporation, used under the CVE Program Terms of Use.",
-        // A changed record per request; the change log itself is one request.
         RequestsPerMinute = 600,
-        // The change log is about 31 MB unpacked.
         MaxResponseBytes = 100L * 1024 * 1024,
-        // The full archive is about 670 MB.
         MaxBackfillBytes = 2L * 1024 * 1024 * 1024,
         ParserVersion = CveRecordReader.ParserVersion,
     };
@@ -74,7 +57,6 @@ public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
         return cursor is null ? FetchArchiveAsync(context, cancellationToken) : FetchDeltasAsync(context, cursor, cancellationToken);
     }
 
-    /// <summary>The 30-day change log as the reference for the completeness check (master plan 6.8).</summary>
     public async IAsyncEnumerable<ChangedRecord> ListChangesAsync(SyncContext context, DateTimeOffset since, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var log = await context.Http.GetFromJsonAsync<List<DeltaEntry>>(new Uri(DeltaLogUrl), Json, cancellationToken) ?? [];
@@ -114,7 +96,6 @@ public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
         var plan = DeltaPlan.Create(log, cursor.Through);
         if (plan.GapTooLong)
         {
-            // The cursor is older than the log reaches: only the full archive closes the gap.
             await foreach (var item in FetchArchiveAsync(context, cancellationToken))
             {
                 yield return item;
@@ -140,7 +121,6 @@ public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
 
         if (plan.Steps.Count == 0)
         {
-            // Nothing new, but remember the log's validators for the next conditional request.
             yield return new Checkpoint(new CveCursor(cursor.Through, validators).ToString());
         }
     }
@@ -151,7 +131,6 @@ public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
         using var response = await context.Http.GetAsync(url, cancellationToken);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            // Listed in the log but gone from the repository; the completeness check reports it.
             return null;
         }
 
@@ -179,7 +158,6 @@ public sealed class CveProgramProvider : ISourceProvider, IChangeLogSource
         yield return new Checkpoint(new CveCursor(release.Midnight, null).ToString());
     }
 
-    /// <summary>The newest release with a full archive; its name carries the midnight it was taken at.</summary>
     private static async Task<(Uri Url, DateTimeOffset Midnight)> LatestArchiveAsync(SyncContext context, CancellationToken cancellationToken)
     {
         var releases = await context.Http.GetFromJsonAsync<List<Release>>(new Uri(ReleasesUrl), Json, cancellationToken) ?? [];

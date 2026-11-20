@@ -24,7 +24,6 @@ internal sealed record InstanceStatusView(
 
 internal static class InstanceEndpoints
 {
-    /// <summary>The system's warnings about itself and the operating figures (master plan 12.7; task 6.6).</summary>
     private static async Task<InstanceStatusView> StatusAsync(
         IEnumerable<Platform.Status.IInstanceStatusContributor> contributors, Platform.Status.InstanceWarningLedger ledger, TimeProvider time,
         CancellationToken cancellationToken)
@@ -33,7 +32,6 @@ internal static class InstanceEndpoints
         return new InstanceStatusView(status.Warnings, status.Metrics, time.GetUtcNow(), await ledger.NotifiedAsync(cancellationToken));
     }
 
-    /// <summary>Only the warnings, without figures: whether the data shown is current.</summary>
     private static async Task<IReadOnlyList<Platform.Status.StatusWarning>> WarningsAsync(
         IEnumerable<Platform.Status.IInstanceStatusContributor> contributors, CancellationToken cancellationToken) =>
         (await CollectAsync(contributors, cancellationToken)).Warnings;
@@ -62,7 +60,6 @@ internal static class InstanceEndpoints
         instance.MapGet("/jobs", ListJobsAsync).WithName("listAbandonedJobs");
         instance.MapGet("/status", StatusAsync).WithName("getInstanceStatus").Produces<InstanceStatusView>();
 
-        // Every signed-in user sees whether the data is current (master plan 12.7: «Stand von 02:10, Quelle nicht erreichbar»).
         api.MapGet("/status", WarningsAsync).WithTags("Administration").WithName("getStatusWarnings").RequireAuthorization().Produces<IReadOnlyList<Platform.Status.StatusWarning>>();
         instance.MapPost("/jobs/{jobId:guid}/retry", RetryJobAsync).WithName("retryJob").NoContent().Problems(404);
     }
@@ -115,7 +112,6 @@ internal static class InstanceEndpoints
         var changes = new List<(SettingDefinition Definition, string? Value)>();
         void Change(SettingDefinition definition, string? value)
         {
-            // Absent leaves a setting as it is; an empty string removes the stored value.
             if (value is not null)
             {
                 changes.Add((definition, value.Length == 0 ? null : value.Trim()));
@@ -144,7 +140,6 @@ internal static class InstanceEndpoints
 
         if (changes.Count > 0)
         {
-            // Names only: the audit protocol never holds a secret.
             await audit.RecordAsync(
                 new AuditEntry("instance.settings_changed", "setting", null, new { keys = changes.Select(c => c.Definition.Key).ToArray() }) { InstanceEvent = true },
                 cancellationToken);
@@ -155,11 +150,6 @@ internal static class InstanceEndpoints
         return Results.Ok(result);
     }
 
-    /// <summary>
-    /// Asks the provider for a one-word answer (master plan 14, task 4.1). The request opens no transaction while
-    /// it waits for the provider; the audit entry is written in its own short one. The result names the kind of
-    /// failure, never the key or the request.
-    /// </summary>
     private static async Task<IResult> TestAiProviderAsync(string name, IAiProviders providers, IUnitOfWorkFactory units, CancellationToken cancellationToken)
     {
         if (await providers.TestAsync(name, cancellationToken) is not { } result)
@@ -174,7 +164,6 @@ internal static class InstanceEndpoints
         return Results.Ok(result);
     }
 
-    /// <summary>Sends a test mail now. The request opens no transaction: the sender reads its settings in its own short one.</summary>
     private static async Task<IResult> TestSmtpAsync(TestEmailRequest request, IEmailSender email, IUnitOfWorkFactory units, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.To) || !System.Net.Mail.MailAddress.TryCreate(request.To, out _))

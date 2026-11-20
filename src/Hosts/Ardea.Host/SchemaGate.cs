@@ -4,7 +4,6 @@ using Npgsql;
 
 namespace Ardea.Host;
 
-/// <summary>API and worker start only on a schema at least as new as their build (master plan 4.11).</summary>
 internal static class SchemaGate
 {
     public static async Task<IReadOnlyList<string>> FindBehindAsync(NpgsqlDataSource dataSource, DatabaseOptions options, CancellationToken cancellationToken)

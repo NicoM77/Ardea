@@ -3,19 +3,16 @@ using Npgsql;
 
 namespace Ardea.Platform.Jobs;
 
-/// <summary>A job that gave up, for the administration (master plan 3.4, task 0.13). Identifiers only, no payload.</summary>
 public sealed record AbandonedJob(Guid Id, string Kind, string State, int Attempts, int MaxAttempts, string? LastError, DateTimeOffset CreatedAt, DateTimeOffset? FinishedAt);
 
 public sealed record JobCounts(long Pending, long Running, long Dead, long Failed);
 
-/// <summary>What the instance administrator sees of the job system and may do with it.</summary>
 public interface IJobAdministration
 {
     Task<IReadOnlyList<AbandonedJob>> ListAbandonedAsync(int limit, CancellationToken cancellationToken);
 
     Task<JobCounts> CountAsync(CancellationToken cancellationToken);
 
-    /// <summary>Puts a dead or failed job back to pending with fresh attempts; <c>false</c> when there is no such job.</summary>
     Task<bool> RetryAsync(Guid jobId, CancellationToken cancellationToken);
 }
 

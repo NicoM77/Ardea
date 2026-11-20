@@ -10,13 +10,6 @@ using Microsoft.AspNetCore.Routing;
 
 namespace Ardea.Assessment.Features;
 
-/// <summary>
-/// The live stream of an organisation (master plan 10.2 «Live», 11.4; task 3.11): Server-Sent Events that
-/// tell the web app to reload what it shows. <c>ready</c> when the stream starts, <c>changed</c> when actions,
-/// findings or counts changed, <c>resync</c> when signals may have been lost, <c>ping</c> every 25 seconds so
-/// proxies keep the connection. The events carry no data: the reload goes through the API and its checks.
-/// The stream holds no transaction (master plan 9.2): access is checked, then the unit of work ends.
-/// </summary>
 internal static class LiveEndpoints
 {
     internal static TimeSpan PingInterval { get; set; } = TimeSpan.FromSeconds(25);

@@ -6,12 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assessment.Features;
 
-/// <summary>
-/// «Einschätzung korrigieren» (master plan 7.7, 7.9; task 4.7): a person confirms the model's estimate of a finding,
-/// which makes it a person's verdict, or corrects the verdict or the level with a reason. Either is stored as feedback
-/// and in the history, and only this finding is assessed again. A person's verdict is no longer the model's: the floor
-/// «at most one level below the result without the model» (master plan 7.6) no longer binds it.
-/// </summary>
 internal sealed class VerdictReviews(
     AssessDbContext db,
     AlertAssessor assessor,
@@ -89,8 +83,6 @@ internal sealed class VerdictReviews(
             return Refusal.NotFound("finding_not_found", "No such finding.");
         }
 
-        // The verdict the caller saw is compared under the alert's and the component's locks, taken in the order the
-        // jobs take them, so a reassessment cannot change it between the check and the write.
         await assessor.LockAsync(finding.EntryId, cancellationToken);
         await remediations.LockAsync(finding.ComponentId, cancellationToken);
         await db.Entry(finding).ReloadAsync(cancellationToken);
@@ -153,7 +145,6 @@ internal sealed class VerdictReviews(
             finding.VerdictSource = "human";
             finding.ChangedAt = now;
 
-            // A person's «not affected» is an exclusion (master plan 7.5, 7.6 step 1): the proposal becomes the outcome.
             if (newVerdict == "not_affected")
             {
                 commands.Conclude(finding, "not_affected", user, reason, now);
@@ -162,7 +153,6 @@ internal sealed class VerdictReviews(
 
         await db.SaveChangesAsync(cancellationToken);
 
-        // Only this finding, with the person's verdict as an input of the rules (master plan 7.7).
         var touched = new HashSet<Guid> { finding.ComponentId };
         if (await entries.FindAsync(finding.EntryId, cancellationToken) is { } entry)
         {

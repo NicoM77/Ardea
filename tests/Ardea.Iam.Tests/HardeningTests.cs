@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>The security pass of task 6.1 along the threat table of master plan 9.7, where the API pipeline is the proof.</summary>
 public sealed class HardeningTests(PostgresServer server)
 {
     private const string Email = "first@example.org";
@@ -22,7 +21,6 @@ public sealed class HardeningTests(PostgresServer server)
             services => services.AddScoped<Platform.Persistence.IUnitOfWork>(_ => throw new InvalidOperationException(Internal)));
         using var browser = host.Client();
 
-        // The exception handler clears the response before it writes its problem; the headers must survive that.
         var failed = await browser.GetAsync("/api/v1/setup/status");
         Assert.Equal(HttpStatusCode.InternalServerError, failed.StatusCode);
         Assert.DoesNotContain(Internal, await failed.Content.ReadAsStringAsync(), StringComparison.Ordinal);
@@ -64,7 +62,6 @@ public sealed class HardeningTests(PostgresServer server)
         Assert.Contains("; path=/", cookie, StringComparison.Ordinal);
         Assert.DoesNotContain("domain=", cookie, StringComparison.Ordinal);
 
-        // Someone who copied the cookie (a stolen session) acts as the user until the user signs out, not after.
         using var thief = host.Client();
         var stolen = browser.Cookies.GetCookies(new Uri("https://localhost")).Single(c => c.Name == "__Host-ardea");
         thief.Cookies.Add(new Uri("https://localhost"), new Cookie(stolen.Name, stolen.Value, "/"));
@@ -86,7 +83,6 @@ public sealed class HardeningTests(PostgresServer server)
         using var admin = host.Client();
         await admin.PostAsync("/api/v1/setup", new { setupToken = ApiTestHost.SetupTokenValue, email = Email, displayName = "First Person", password = ApiTestHost.Password });
 
-        // The test e-mail without SMTP answers at once; the limit counts the attempts all the same.
         var statuses = new List<HttpStatusCode>();
         for (var i = 0; i < 3; i++)
         {
@@ -96,7 +92,6 @@ public sealed class HardeningTests(PostgresServer server)
         Assert.DoesNotContain(HttpStatusCode.TooManyRequests, statuses[..2]);
         Assert.Equal(HttpStatusCode.TooManyRequests, statuses[2]);
 
-        // The unsubscribe links of external addresses carry their own token: no session, but a limit per client.
         using var stranger = host.Client();
         var links = new List<HttpStatusCode>();
         for (var i = 0; i < 7; i++)
@@ -108,10 +103,6 @@ public sealed class HardeningTests(PostgresServer server)
         Assert.Equal(HttpStatusCode.TooManyRequests, links[6]);
     }
 
-    /// <summary>
-    /// The only changing endpoints without the CSRF check: links in e-mails to external addresses, which carry their
-    /// own token and no session (<c>AuthenticatedByToken</c>). A new exemption must be added here on purpose.
-    /// </summary>
     private static readonly string[] TokenAuthenticated =
     [
         "POST /api/v1/notify/addresses/confirm",

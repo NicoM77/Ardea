@@ -4,10 +4,6 @@ using Npgsql;
 
 namespace Ardea.Platform.Secrets;
 
-/// <summary>
-/// Keeps Data Protection keys in <c>platform.data_protection_key</c>, so every API and worker
-/// instance shares them. Uses its own short connections: the key ring loads outside any unit of work.
-/// </summary>
 internal sealed class DatabaseXmlRepository(NpgsqlDataSource dataSource) : IXmlRepository
 {
     public IReadOnlyCollection<XElement> GetAllElements()

@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace Ardea.Assets.Persistence;
 
-/// <summary>Schema <c>assets</c>: organisation data (master plan 4.1, 4.5).</summary>
 internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options, ITenantContext tenant) : ModuleDbContext(options, tenant)
 {
     public const string Schema = "assets";
@@ -42,7 +41,6 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
             project.Property(p => p.Criticality).HasMaxLength(10);
             project.Property(p => p.Exposure).HasMaxLength(10);
             project.HasIndex(p => new { p.OrganizationId, p.Name }).HasDatabaseName("ix_project_org_name");
-            // Exactly one stack per organisation (master plan 17.2): created with the organisation, never a second.
             project.HasIndex(p => p.OrganizationId).IsUnique().HasFilter("kind = 'organization_stack'").HasDatabaseName("ux_project_stack");
         });
 
@@ -60,7 +58,6 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
                 t.HasCheckConstraint("ck_component_origin", "origin IN ('manual', 'repository')");
                 t.HasCheckConstraint("ck_component_scope", "dependency_scope IS NULL OR dependency_scope IN ('runtime', 'development', 'unknown')");
                 t.HasCheckConstraint("ck_component_relation", "dependency_relation IS NULL OR dependency_relation IN ('direct', 'transitive', 'unknown')");
-                // «none» exactly when there is no version (ADR 046).
                 t.HasCheckConstraint("ck_component_version_precision",
                     "version_precision IN ('none', 'line', 'exact') AND (version_precision = 'none') = (version IS NULL OR version ~ '^[[:space:]]*$')");
                 t.HasCheckConstraint("ck_component_notice_threshold", "notice_threshold IN ('only_important', 'everything')");
@@ -104,7 +101,6 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
             key.Property(k => k.KeyValue).HasMaxLength(500);
             key.Property(k => k.Strength).HasMaxLength(10);
             key.HasIndex(k => new { k.ComponentId, k.KeyType, k.KeyValue }).IsUnique().HasDatabaseName("ux_component_key");
-            // The forward search asks by key across projects: entry → components (master plan 7.2).
             key.HasIndex(k => new { k.KeyType, k.KeyValue }).HasDatabaseName("ix_component_key_value");
             key.HasOne<Component>().WithMany().HasForeignKey(k => k.ComponentId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -139,7 +135,6 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
             link.Property(l => l.PendingShrinkCommit).HasMaxLength(64);
             link.Property(l => l.HeadEtag).HasMaxLength(200);
             link.HasIndex(l => new { l.ProjectId, l.ConnectionId, l.Owner, l.Name, l.Path }).IsUnique().AreNullsDistinct(false).HasDatabaseName("ux_repository_link");
-            // The schedule's question across organisations (master plan 9.2): which links are due.
             link.HasIndex(l => l.NextCheckAt).HasDatabaseName("ix_repository_link_due");
             link.HasOne<Project>().WithMany().HasForeignKey(l => l.ProjectId).OnDelete(DeleteBehavior.Cascade);
             link.HasOne<RepositoryConnection>().WithMany().HasForeignKey(l => l.ConnectionId).OnDelete(DeleteBehavior.Cascade);
@@ -161,7 +156,6 @@ internal sealed class AssetsDbContext(DbContextOptions<AssetsDbContext> options,
             suggestion.HasOne<Component>().WithMany().HasForeignKey(s => s.ComponentId).OnDelete(DeleteBehavior.SetNull);
         });
 
-        // A repository component belongs to its link: removing the link removes it (master plan 10.2).
         modelBuilder.Entity<Component>().HasOne<RepositoryLink>().WithMany().HasForeignKey(c => c.RepositoryLinkId).OnDelete(DeleteBehavior.Cascade);
 
         ApplyTenantFilters(modelBuilder);

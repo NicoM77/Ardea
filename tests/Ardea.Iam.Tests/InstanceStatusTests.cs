@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>The system warns about itself; the administration shows the operating figures (task 6.6; master plan 12.7).</summary>
 public sealed class InstanceStatusTests(PostgresServer server)
 {
     [Fact]
@@ -37,7 +36,6 @@ public sealed class InstanceStatusTests(PostgresServer server)
         Assert.Equal(1, metrics["jobs/intel.correlate-entry.pending"]);
         Assert.True(metrics["jobs/intel.correlate-entry.oldest_wait"] >= 290);
 
-        // Users see whether the data is current, not the figures.
         Assert.Equal(HttpStatusCode.Forbidden, (await member.GetAsync("/api/v1/instance/status")).StatusCode);
         var userWarnings = await (await member.GetAsync("/api/v1/status")).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Contains(userWarnings.EnumerateArray(), w => w.GetProperty("code").GetString() == "source_stale");

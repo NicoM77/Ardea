@@ -4,7 +4,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Tests;
 
-/// <summary>The platform's HTTP client for adapters (task 1.3, master plan 5.2, 9.5).</summary>
 public sealed class SourceHttpTests
 {
     private static readonly SourceDescriptor Source = new()

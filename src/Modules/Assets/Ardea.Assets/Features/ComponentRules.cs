@@ -3,12 +3,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Assets.Features;
 
-/// <summary>
-/// A component as the API takes it; <see cref="Ref"/> and <see cref="ParentRef"/> link new items within one request.
-/// <see cref="VersionPrecision"/> (<c>none</c>, <c>line</c>, <c>exact</c>) follows from the version when left out;
-/// <see cref="NoticeThreshold"/> (<c>only_important</c>, <c>everything</c>) is <c>only_important</c> when left out
-/// (master plan 17.2, ADR 044, ADR 046).
-/// </summary>
 internal sealed record ComponentInput(
     Guid? Id,
     string? Ref,
@@ -27,7 +21,6 @@ internal sealed record ComponentInput(
     string? VersionPrecision = null,
     string? NoticeThreshold = null);
 
-/// <summary>The checked values of a component, ready to write.</summary>
 internal sealed record ComponentValues(
     string? ProductKey,
     string? CustomVendor,
@@ -43,7 +36,6 @@ internal sealed record ComponentValues(
     string VersionPrecision,
     string NoticeThreshold)
 {
-    /// <summary>What identifies a component without its id when a profile is replaced (master plan 4.9).</summary>
     public string Identity => ProductKey ?? $"custom:{Normalize(CustomVendor)}/{Normalize(CustomName)}";
 
     public static string IdentityOf(Component c) => c.ProductKey ?? $"custom:{Normalize(c.CustomVendor)}/{Normalize(c.CustomName)}";
@@ -74,7 +66,6 @@ internal sealed record ComponentValues(
     private static string Normalize(string? value) => (value ?? string.Empty).Trim().ToLowerInvariant();
 }
 
-/// <summary>Checks component input against the catalogue (master plan 4.5).</summary>
 internal static class ComponentRules
 {
     public static readonly string[] Kinds = [.. Enum.GetValues<ProductKind>().Select(k => k.ToString().ToLowerInvariant())];
@@ -83,11 +74,6 @@ internal static class ComponentRules
     public static readonly string[] Criticalities = ["low", "normal", "high"];
     public static readonly string[] Protections = ["none", "effective"];
 
-    /// <summary>
-    /// The checked values, or field errors under <paramref name="prefix"/>. A catalogue product brings
-    /// its kind and version scheme; a product the catalogue does not know needs a name and a kind.
-    /// Services have no version (master plan 4.5).
-    /// </summary>
     public static async Task<ComponentValues?> CheckAsync(
         ComponentInput input, IProductCatalog catalog, Dictionary<string, string[]> errors, string prefix, CancellationToken cancellationToken)
     {
@@ -174,7 +160,6 @@ internal static class ComponentRules
             Error("protectionNote", "Use at most 1000 characters.");
         }
 
-        // A stated precision must fit the version; without one it follows from the version (ADR 046).
         var precision = Empty(input.VersionPrecision) ?? VersionPrecisions.Of(version, null, "manual");
         if (!VersionPrecisions.All.Contains(precision))
         {

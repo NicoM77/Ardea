@@ -5,14 +5,8 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Sources.Ncsc;
 
-/// <summary>Small helpers shared by both readers; they only talk through the platform's HTTP client.</summary>
 internal static class NcscHttp
 {
-    /// <summary>
-    /// GETs a JSON document; <c>null</c> for 404. A wish of the server for a pause (<c>Retry-After</c>) is
-    /// passed on before any error is raised. A response that is not JSON (e.g. an HTML maintenance page)
-    /// fails the run, which marks the source degraded instead of storing nonsense.
-    /// </summary>
     public static async Task<string?> GetJsonAsync(SyncContext context, Uri uri, CancellationToken cancellationToken)
     {
         using var response = await context.Http.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);

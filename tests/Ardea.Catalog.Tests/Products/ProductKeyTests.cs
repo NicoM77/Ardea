@@ -2,7 +2,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Tests.Products;
 
-/// <summary>Product keys (master plan 6.5): spellings of one product give one key.</summary>
 public sealed class ProductKeyTests
 {
     [Theory]
@@ -36,7 +35,6 @@ public sealed class ProductKeyTests
     [InlineData("unspecified")]
     public void Missing_or_na_vendor_is_ignored(string? vendor)
     {
-        // CVE records for PostgreSQL often name vendor «n/a» (master plan 6.5).
         var key = ProductKey.Create(vendor, "PostgreSQL");
 
         Assert.Equal("postgresql", key.Value);

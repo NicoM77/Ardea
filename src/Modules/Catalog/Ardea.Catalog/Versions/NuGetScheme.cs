@@ -4,11 +4,6 @@ using NuGet.Versioning;
 
 namespace Ardea.Catalog.Versions;
 
-/// <summary>
-/// NuGet versions through NuGet.Versioning, the client's own implementation: up to four numbers,
-/// SemVer 2.0 pre-release labels compared without regard to case, metadata ignored, normalised as
-/// NuGet does (<c>1.0</c> → <c>1.0.0</c>, <c>1.0.0.0</c> → <c>1.0.0</c>, <c>01.2</c> → <c>1.2.0</c>).
-/// </summary>
 internal sealed class NuGetScheme : IVersionScheme
 {
     public string Name => VersionSchemeNames.NuGet;

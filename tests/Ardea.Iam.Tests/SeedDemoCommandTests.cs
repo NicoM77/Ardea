@@ -11,10 +11,8 @@ using Npgsql;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary><c>ardea seed-demo</c> (task 7.6): the sample data of the mockups in an empty instance, through the real pipeline.</summary>
 public sealed class SeedDemoCommandTests(PostgresServer server)
 {
-    /// <summary>One row in a table that marks a used instance; each must refuse the command on its own.</summary>
     public static TheoryData<string, string> UsedInstances => new()
     {
         { "iam.\"user\"", """INSERT INTO iam."user" (display_name, is_instance_admin, email_confirmed, phone_number_confirmed, two_factor_enabled, lockout_enabled, access_failed_count) VALUES ('Someone', false, false, false, false, false, 0)""" },
@@ -36,7 +34,6 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
             VALUES ('vulnerability', 'CVE-2026-0001', 'published', now(), 1, 'm', 'r', 'none', false, '{}', false, '{}')
             """
         },
-        // A worker that started first: it registers and may queue a source sync before any record is stored.
         { "platform.worker_heartbeat", "INSERT INTO platform.worker_heartbeat (worker_id, started_at, beat_at) VALUES ('worker-1', now(), now())" },
         { "platform.job", "INSERT INTO platform.job (kind, payload, run_at, priority, state, attempts, max_attempts, timeout_seconds) VALUES ('intel.sync-source', '{}', now(), 0, 'pending', 0, 1, 60)" },
     };
@@ -55,15 +52,11 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
         TestContext.Current.SendDiagnosticMessage($"seed-demo took {elapsed.TotalSeconds:F1} s");
         Assert.True(elapsed < TimeSpan.FromMinutes(2), $"seed-demo took {elapsed}");
 
-        // The sample data of the mockups: one organisation, three people, three projects, and what the pipeline made of the records.
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM iam.organization WHERE settings -> 'setup' ->> 'completedAt' IS NOT NULL"));
         Assert.Equal(3L, await host.ScalarAsync<long>("SELECT count(*) FROM iam.membership"));
         Assert.Equal(3L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.project WHERE kind = 'project'"));
         Assert.Equal(11L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component c JOIN assets.project p ON p.id = c.project_id WHERE p.kind = 'project'"));
 
-        // The organisation has its stack from its creation on (master plan 17.2) with eight broad entries as the wizard adds
-        // them (task 5a.4), two with a version line and the firewall with every entry, and four the demo's records hit (task
-        // 5a.3); the projects' versions are releases, and the managed Azure SQL has none (ADR 046).
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.project WHERE kind = 'organization_stack'"));
         Assert.Equal("exact 10, none 1", await host.ScalarAsync<string>(
             "SELECT string_agg(version_precision || ' ' || n, ', ' ORDER BY version_precision) FROM (SELECT version_precision, count(*) AS n FROM assets.component c JOIN assets.project p ON p.id = c.project_id WHERE p.kind = 'project' GROUP BY 1) p"));
@@ -71,7 +64,6 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
             "SELECT string_agg(version_precision || ' ' || n, ', ' ORDER BY version_precision) FROM (SELECT version_precision, count(*) AS n FROM assets.component c JOIN assets.project p ON p.id = c.project_id WHERE p.kind = 'organization_stack' GROUP BY 1) p"));
         Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component WHERE notice_threshold = 'everything'"));
 
-        // The stack's notices (task 5a.3): raised by the pipeline, one answered each way, the rest new for the Notices page.
         Assert.Equal("affects_us 1, not_affected 1, open 5", await host.ScalarAsync<string>(
             "SELECT string_agg(state || ' ' || n, ', ' ORDER BY state) FROM (SELECT state, count(*) AS n FROM assess.notice GROUP BY 1) s"));
         Assert.Equal(1L, await host.ScalarAsync<long>(
@@ -80,10 +72,8 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
         Assert.Equal(16L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.security_entry"));
         Assert.True(await host.ScalarAsync<long>("SELECT count(*) FROM assess.finding WHERE level >= 3") >= 10);
 
-        // Open and done only (master plan 17.5); the retired columns of assignment and deadline stay unwritten (ADR 046).
         Assert.InRange(await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation WHERE status = 'open'"), 3, 6);
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation WHERE assigned_to IS NOT NULL OR due_at IS NOT NULL OR due_at_manual"));
-        // Done once by a person, once by the pipeline after the profile follows the .NET update.
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation WHERE status = 'closed' AND close_reason = 'not_affected'"));
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.remediation WHERE status = 'closed' AND close_reason = 'fixed_by_update'"));
         Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'action.note_added'"));
@@ -91,9 +81,6 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
         Assert.True(await host.ScalarAsync<long>("SELECT count(*) FROM notify.notification") >= 2);
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.audit_event WHERE origin <> 'command:seed-demo'"));
 
-        // Nothing that reaches out is left switched on or queued: no fetch, no repository reading, no language model,
-        // and with SMTP configured no e-mail or push to the invented people, neither now nor in a later digest or reminder run
-        // (the reminders by level reach only the targets of enabled rules, ADR 048).
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source WHERE enabled"));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM notify.rule_target t JOIN notify.rule r ON r.id = t.rule_id WHERE r.enabled AND t.channel <> 'in_app'"));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM notify.digest_item"));
@@ -104,7 +91,6 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
         Assert.Equal(0L, await host.ScalarAsync<long>(
             "SELECT count(*) FROM platform.job WHERE state = 'pending' AND kind LIKE ANY (ARRAY['intel.sync%', 'intel.check%', 'assets.index%', 'assess.estimate%', 'iam.%'])"));
 
-        // The printed credentials sign in, and the organisation shows its actions.
         var password = output.ToString().Split("password  ")[1].Split(Environment.NewLine)[0].Trim();
         using var client = host.Client();
         Assert.Equal(HttpStatusCode.OK, (await client.PostAsync("/api/v1/auth/login", new { email = "nina.meier@example.org", password })).StatusCode);
@@ -117,7 +103,6 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
         var unread = await (await client.GetAsync($"{path}/notifications/unread-count")).Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
         Assert.True(unread.GetProperty("unread").GetInt32() >= 1);
 
-        // A database with data is refused, and nothing changes.
         var before = await host.ScalarAsync<long>(Fingerprint);
         var error = new StringWriter();
         Assert.Equal(1, await SeedDemoCommand.SeedAsync(services, TextWriter.Null, error, TestContext.Current.CancellationToken));
@@ -150,7 +135,6 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM iam.membership"));
     }
 
-    /// <summary>Rows in the tables any step of the seed writes to; equal before and after means nothing changed.</summary>
     private const string Fingerprint = """
         SELECT (SELECT count(*) FROM iam."user") + (SELECT count(*) FROM iam.organization) + (SELECT count(*) FROM assets.project)
              + (SELECT count(*) FROM intel.source) + (SELECT count(*) FROM intel.source_record) + (SELECT count(*) FROM intel.security_entry)
@@ -170,7 +154,6 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
             ["MASTER_KEY"] = masterKey,
             ["PUBLIC_URL"] = "https://localhost",
             ["PASSWORD_HASH_ITERATIONS"] = "1000",
-            // With SMTP the default rules would e-mail the demo's invented addresses; the command must leave nothing to send.
             ["SMTP:HOST"] = "smtp.invalid",
             ["SMTP:FROM"] = "ardea@example.org",
         }).Build(),

@@ -9,20 +9,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Intel.Sync;
 
-/// <summary>Daily: every record a source's change log lists must be stored in its current state (master plan 6.8).</summary>
 internal sealed record CheckCompleteness : IJob
 {
     public static string Kind => "intel.check-completeness";
 
-    /// <summary>How far back the check looks; the CVE change log reaches 30 days.</summary>
     public static readonly TimeSpan Window = TimeSpan.FromDays(7);
 }
 
-/// <summary>
-/// Lists the changes the source reports, without an open transaction, and compares them with the
-/// stored records: missing ones and ones stored in an older state are fetched one by one. Duplicate
-/// and repeated log entries count once; gaps between deltas close here.
-/// </summary>
 internal sealed partial class CheckCompletenessHandler(
     IUnitOfWorkFactory units, IJobQueue jobs, SourceRegistry registry, SourceHttpFactory http, TimeProvider time, ILogger<CheckCompletenessHandler> logger)
     : IJobHandler<CheckCompleteness>
@@ -87,7 +80,6 @@ internal sealed partial class CheckCompletenessHandler(
                 .ToDictionaryAsync(r => r.ExternalId, r => r.SourceModifiedAt, StringComparer.Ordinal, cancellationToken);
             foreach (var id in chunk)
             {
-                // Missing, or stored in a state older than the one the log reports (a second of tolerance).
                 if (!stored.TryGetValue(id, out var modified)
                     || (expected[id] is { } logged && (modified is null || modified < logged - TimeSpan.FromSeconds(1))))
                 {

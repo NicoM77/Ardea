@@ -4,12 +4,6 @@ using System.Text.Json.Serialization;
 
 namespace Ardea.Assessment.Rules;
 
-/// <summary>
-/// A version of the rule set (master plan 7.6, 4.9): a file in the image under <c>data/rules/</c>,
-/// <c>ruleset-{version}.json</c>. The highest version in the folder is in effect; its number is stored with
-/// every finding's factors. Loaded and checked once per process: a broken file stops the assessment
-/// with a clear message instead of computing wrong levels.
-/// </summary>
 internal sealed record RuleSet
 {
     public const string Folder = "rules";
@@ -25,32 +19,22 @@ internal sealed record RuleSet
 
     public string? Description { get; init; }
 
-    /// <summary>The lowest CVSS score of each severity class.</summary>
     public required Dictionary<string, double> SeverityClasses { get; init; }
 
-    /// <summary>Points per factor and value.</summary>
     public required Dictionary<string, Dictionary<string, int>> Points { get; init; }
 
-    /// <summary>Levels from the sum, highest first; the last one has no minimum.</summary>
     public required List<LevelStep> Levels { get; init; }
 
     public required CapRules Caps { get; init; }
 
     public required FloorRules Floors { get; init; }
 
-    /// <summary>
-    /// The deadlines per level of rule sets written before the reminder lost its deadline (master plan 17.5, ADR 046). An
-    /// <c>ARDEA_DATA_DIR</c> of the previous version may still carry them; they are read and ignored for one version, then
-    /// refused like any unknown member.
-    /// </summary>
     [JsonPropertyName("deadlineHours")]
     public JsonElement? RetiredDeadlineHours { get; init; }
 
-    /// <summary>The factors of version 1, in the order they are shown.</summary>
     public static readonly IReadOnlyList<string> Factors =
         ["severity", "exploitation", "affectedness", "criticality", "exposure", "protection", "authorityWarning", "epss"];
 
-    /// <summary>The highest version in <c>{dataDirectory}/rules</c>.</summary>
     public static RuleSet Load(string dataDirectory)
     {
         var folder = Path.Combine(dataDirectory, Folder);
@@ -83,10 +67,8 @@ internal sealed record RuleSet
 
     public int PointsOf(string factor, string value) => Points[factor][value];
 
-    /// <summary>The level of a sum of points.</summary>
     public int LevelOf(int points) => Levels.First(l => l.MinPoints is null || points >= l.MinPoints).Level;
 
-    /// <summary>The severity class of a CVSS score; <c>unrated</c> without one.</summary>
     public string SeverityOf(double? score) =>
         score is not { } value ? "unrated"
         : SeverityClasses.Where(c => value >= c.Value).OrderByDescending(c => c.Value).Select(c => c.Key).FirstOrDefault() ?? "low";
@@ -159,8 +141,6 @@ internal sealed record RuleSet
 
 internal sealed record LevelStep(int? MinPoints, int Level);
 
-/// <summary>Upper bounds (master plan 7.6 step 3).</summary>
 internal sealed record CapRules(int Unconfirmed, int Development);
 
-/// <summary>Lower bounds (master plan 7.6 step 4).</summary>
 internal sealed record FloorRules(int Active, int ActiveInRange, int ActiveInRangeSevere, int ModelMaxDrop);

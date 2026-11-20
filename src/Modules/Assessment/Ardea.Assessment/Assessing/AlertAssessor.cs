@@ -12,33 +12,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assessment.Assessing;
 
-/// <summary>
-/// What the assessment looks at: every project of the organisation, one project (the reverse search), or given components.
-/// <see cref="Backfill"/> names the components whose new findings belong to a first fill (master plan 7.7).
-/// </summary>
 internal sealed record AssessmentScope(ProjectProfile? Project, IReadOnlySet<Guid> Backfill, IReadOnlySet<Guid>? Components = null)
 {
     public static readonly AssessmentScope Organization = new(null, new HashSet<Guid>());
 
     public static AssessmentScope ForProject(ProjectProfile project, IReadOnlySet<Guid>? backfill = null) => new(project, backfill ?? new HashSet<Guid>());
 
-    /// <summary>One component's finding of the entry, after a person reviewed its assessment (master plan 7.7: «dieser Befund»).</summary>
     public static AssessmentScope ForComponent(Guid componentId) => ForComponents(new HashSet<Guid> { componentId });
 
-    /// <summary>The findings of the entry on these components, where a person's answer to a notice placed it (ADR 047).</summary>
     public static AssessmentScope ForComponents(IReadOnlySet<Guid> componentIds) => new(null, new HashSet<Guid>(), componentIds);
 }
 
-/// <summary>
-/// Computes the findings of one entry in the current organisation (master plan 3.3 <c>AssessAlert</c>,
-/// 7.2, 7.3, 7.6): candidates through the component keys, version check per strong candidate, the level
-/// from the rule set, findings written only where something changed. The same input changes nothing.
-/// A strong hit on a component without an exact version takes the coarse path (master plan 17.1, ADR 047): its finding
-/// stays closed with the reason <c>moved_to_notice</c> at level 1, and the organisation's notice of the entry asks
-/// instead (<see cref="Notices"/>), unless a person's «affects us» opened it.
-/// Runs in the tenant context of the job or request; a transaction-level advisory lock serialises work
-/// on the same alert. The caller brings the actions in step afterwards (<see cref="Remediations"/>).
-/// </summary>
 internal sealed class AlertAssessor(
     AssessDbContext db,
     IProfileQueries profiles,
@@ -52,10 +36,6 @@ internal sealed class AlertAssessor(
     ITenantContext tenant,
     TimeProvider time)
 {
-    /// <summary>
-    /// The reason of a finding on a component without an exact version: a notice asks instead (ADR 047). The migration of
-    /// ADR 046 used it first, for the open actions it turned into notices.
-    /// </summary>
     internal const string MovedToNotice = "moved_to_notice";
 
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -64,7 +44,6 @@ internal sealed class AlertAssessor(
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower) },
     };
 
-    /// <returns>The components whose findings changed.</returns>
     public async Task<IReadOnlyCollection<Guid>> AssessAsync(EntryFacts entry, AssessmentScope scope, CancellationToken cancellationToken)
     {
         await LockAsync(entry.Id, cancellationToken);
@@ -125,12 +104,9 @@ internal sealed class AlertAssessor(
             byComponent.TryGetValue(candidate.Component.Id, out var known);
             var coarse = candidate.IsStrong && NoticeRules.IsCoarse(candidate.Component);
 
-            // A finding the system would close as it moves to the coarse path, while it is open (a reminder) or carries a
-            // person's verdict, always raises the notice: nobody's reminder or verdict disappears without one (E25, ADR 047).
             var handedOver = coarse && known is { StatusChangedBy: null } && (known.Status == "open" || known.VerdictSource == "human");
             if (handedOver && known!.StatusReason != MovedToNotice)
             {
-                // Handed over now: the notice is new, also in a reverse search, so the reminder stays in sight.
                 handed.Add(candidate.Component.Id);
             }
 
@@ -144,7 +120,6 @@ internal sealed class AlertAssessor(
                 db.Findings.Add(Create(alert, entry, candidate, outcome, scope.Backfill.Contains(candidate.Component.Id), coarse, now));
             }
 
-            // The coarse path (master plan 17.2, 17.3): the product itself, within the line; then the entry's threshold.
             if (handedOver || (coarse && LineNarrowing.Keeps(outcome.Statements, NoticeRules.Line(candidate.Component))))
             {
                 hit.Add(candidate.Component.Id);
@@ -156,7 +131,6 @@ internal sealed class AlertAssessor(
             }
         }
 
-        // What no longer matches closes, with the reason (master plan 6.7, 7.4, 4.9).
         foreach (var finding in byComponent.Values)
         {
             var reason = !relevant ? (entry.State == "merged" ? "merged" : "withdrawn")
@@ -172,7 +146,6 @@ internal sealed class AlertAssessor(
             .ToHashSet();
         await db.SaveChangesAsync(cancellationToken);
 
-        // The notice of the entry, within what this assessment looked at; a reverse search raises quietly (master plan 7.7).
         var looked = components.Select(c => c.Id).Concat(existing.Select(f => f.ComponentId)).ToHashSet();
         await notices.UpdateAsync(entry, new CoarseHits(looked, hit, raising, handed, Quiet: scope.Project is not null), cancellationToken);
 
@@ -186,7 +159,6 @@ internal sealed class AlertAssessor(
             alert.ChangedAt = now;
         }
 
-        // The alert gets its number once one of its findings reaches level 2 (master plan 4.6).
         if (alert.Number is null && findings.Exists(f => f.Status == "open"))
         {
             alert.Number = await numbers.NextAsync(cancellationToken);
@@ -198,18 +170,9 @@ internal sealed class AlertAssessor(
         return touched;
     }
 
-    /// <summary>
-    /// Takes the alert's lock until the unit of work ends. Work on the alert takes it before the component locks of
-    /// <see cref="Remediations.LockAsync"/>, so a person's review and a job lock in the same order. Re-entrant.
-    /// </summary>
     public async Task LockAsync(Guid entryId, CancellationToken cancellationToken) =>
         await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"assess.alert:" + tenant.RequiredOrganizationId + ":" + entryId}, 0))", cancellationToken);
 
-    /// <summary>
-    /// The verdicts per component of the alert's current assessment by the model, when it was made for this
-    /// revision of the entry (master plan 7.1 property 2: the stored verdict is an input of the rules). Each verdict
-    /// carries the component's context when asked; <see cref="Evaluate"/> uses it only while that still holds.
-    /// </summary>
     private async Task<IReadOnlyDictionary<Guid, Estimating.StoredVerdict>> ModelVerdictsAsync(Alert alert, EntryFacts entry, CancellationToken cancellationToken)
     {
         if (alert.CurrentAssessmentId is not { } id)
@@ -223,11 +186,6 @@ internal sealed class AlertAssessor(
         return current is null ? new Dictionary<Guid, Estimating.StoredVerdict>() : Estimating.StoredEstimate.VerdictsOf(current);
     }
 
-    /// <summary>
-    /// The components to look at: in a project's reverse search the project's own; otherwise those of
-    /// the organisation that carry one of the entry's keys. Both add the components of existing findings,
-    /// so a finding whose component left the profile is seen and closed.
-    /// </summary>
     private async Task<IReadOnlyList<ProfileComponent>> ComponentsAsync(EntryKeys? keys, IReadOnlyList<Finding> existing, AssessmentScope scope, CancellationToken cancellationToken)
     {
         if (scope.Project is { } project)
@@ -249,11 +207,6 @@ internal sealed class AlertAssessor(
         return await profiles.FindComponentsAsync(ids, cancellationToken);
     }
 
-    /// <summary>
-    /// A project's first look, and a newly connected repository's, belong to its first fill (master plan
-    /// 7.7): the forward search leaves such components to the reverse search, which marks their findings
-    /// and sends a single <c>backfill.completed</c>. It queues that search, should none be waiting.
-    /// </summary>
     private async Task<IReadOnlyList<Candidate>> WithoutFirstFillAsync(IReadOnlyList<Candidate> candidates, IReadOnlyList<Finding> existing, CancellationToken cancellationToken)
     {
         var known = existing.Select(f => f.ComponentId).ToHashSet();
@@ -290,11 +243,6 @@ internal sealed class AlertAssessor(
         return kept;
     }
 
-    /// <summary>
-    /// Match, version check and rule set for one candidate (master plan 7.2, 7.3, 7.6). A strong hit on a component without an
-    /// exact version (<paramref name="coarse"/>) is checked without its version: a line is not a release, and narrows the notice
-    /// instead (ADR 047).
-    /// </summary>
     private Outcome Evaluate(EntryFacts entry, Candidate candidate, Finding? known, Estimating.StoredVerdict? modelVerdict, LearnedHit? learned, bool coarse)
     {
         var evidence = new Dictionary<string, object?>
@@ -304,7 +252,6 @@ internal sealed class AlertAssessor(
         };
         if (learned is not null)
         {
-            // «über gelernten Katalogeintrag» (master plan 6.9): the hit names the learned entry, which can be withdrawn.
             evidence["learned"] = new { productKey = learned.ProductKey, rawKeys = learned.RawKeys };
         }
 
@@ -317,9 +264,6 @@ internal sealed class AlertAssessor(
 
         var human = known is { VerdictSource: "human" } ? known.Verdict : null;
 
-        // The model's verdict is a factor only where the version check could not decide (master plan 7.5, 7.6;
-        // task 4.5); a person's verdict comes first. A verdict made for another version, exposure, criticality or
-        // protection of the component no longer counts: the rules alone apply until the model is asked again.
         var model = version?.Verdict == VersionVerdicts.Unknown && human is null
             && modelVerdict is { } stored && stored.Context == Estimating.EstimateInput.Context(component, version.Verdict)
             ? Estimating.StoredEstimate.Name(stored.Verdict)
@@ -331,8 +275,6 @@ internal sealed class AlertAssessor(
             VersionReason = version?.Reason,
             InstalledVersion = component.Version,
             HumanExcluded = known is { StatusChangedBy: not null, Status: "not_affected" },
-            // A person's «not affected» (task 4.7) closes the finding; should the level rise beyond it and reopen the
-            // finding (master plan 6.7), it counts like «unlikely», as the model's does.
             HumanVerdict = human is "affected" or "likely" or "unlikely" ? human : human == "not_affected" ? "unlikely" : null,
             CvssScore = entry.CvssScore,
             CvssVersion = entry.CvssVersion,
@@ -349,11 +291,8 @@ internal sealed class AlertAssessor(
         };
         var result = RuleEngine.Evaluate(rules, input);
 
-        // What the rules say without a person's «not affected»: whether a reassessment reopens it (master plan 6.7).
         var withoutPerson = input.HumanExcluded ? RuleEngine.Evaluate(rules, input with { HumanExcluded = false }) : result;
 
-        // The verdict without a model (master plan 4.9); the model's where it counted. Its «not_affected» stays a
-        // proposal on an open finding until a person confirms it (master plan 7.5).
         var verdict = version?.Verdict switch
         {
             VersionVerdicts.InRange => "affected",
@@ -374,7 +313,6 @@ internal sealed class AlertAssessor(
 
     private Finding Create(Alert alert, EntryFacts entry, Candidate candidate, Outcome outcome, bool backfill, bool coarse, DateTimeOffset now)
     {
-        // A coarse hit is the notice's: closed from the start, at level 1 (ADR 047).
         var (level, factors, status, reason) = coarse ? (1, Routed(outcome), "not_affected", MovedToNotice)
             : outcome.Level >= 2 ? (outcome.Level, outcome.Factors, "open", null)
             : (outcome.Level, outcome.Factors, "not_affected", outcome.ExclusionReason);
@@ -405,28 +343,18 @@ internal sealed class AlertAssessor(
         };
     }
 
-    /// <summary>The factors of a coarse hit: level 1, excluded because a notice asks, with the level the rules give it.</summary>
     private JsonDocument Routed(Outcome outcome) =>
         Document(new RuleResult { RulesetVersion = rules.Version, Level = 1, Exclusion = MovedToNotice, PreciseLevel = outcome.Level });
 
-    /// <summary>Writes a new result into an existing finding, only where it differs.</summary>
-    /// <param name="finding">The stored finding.</param>
-    /// <param name="outcome">The result of this assessment.</param>
-    /// <param name="coarse">A strong hit on a component without an exact version: the coarse path (ADR 047).</param>
-    /// <param name="now">When.</param>
     private void Apply(Finding finding, Outcome outcome, bool coarse, DateTimeOffset now)
     {
         var installedBefore = finding.Evidence.RootElement.TryGetProperty("installed", out var before) ? before.GetString() : null;
         var installedNow = outcome.Evidence.RootElement.TryGetProperty("installed", out var after) ? after.GetString() : null;
         var personClosed = finding.StatusChangedBy is not null && finding.Status is "remediated" or "risk_accepted" or "not_affected";
 
-        // On the coarse path the notice decides (ADR 047): a finding of the system stays closed with the notice, whatever a
-        // later closing wrote; one a person opened by answering «affects us» stays open, at least at level 2, until a person
-        // closes it; one a person closed stays closed, and only the notice comes back on exploitation (E22).
         var routed = coarse && finding.StatusChangedBy is null;
         var personOpened = coarse && finding is { StatusChangedBy: not null, Status: "open" };
 
-        // A finding a person closed opens again only when its level rises or the version check says «in range» again (master plan 6.7).
         string? reopen = !personClosed || coarse ? null
             : outcome.ReopenLevel > (finding.ClosedLevel ?? finding.Level) && outcome.ReopenLevel >= 2 ? "level_raised"
             : outcome.VersionVerdict == VersionVerdicts.InRange && finding.ClosedVersionVerdict != VersionVerdicts.InRange && outcome.ReopenLevel >= 2 ? "in_range_again"
@@ -483,7 +411,6 @@ internal sealed class AlertAssessor(
         var open = finding.Status == "open";
         var (status, reason) = outcome.Level >= 2
             ? (open ? finding.Status : "open", (string?)null)
-            // A raised version in the profile closes what it fixes, «fixed by update» (master plan 7.4).
             : open && outcome.ExclusionReason == "out_of_range" && installedBefore != installedNow ? ("remediated", "fixed_by_update")
             : finding.Status == "remediated" && finding.StatusReason == "fixed_by_update" && outcome.ExclusionReason == "out_of_range" ? ("remediated", "fixed_by_update")
             : ("not_affected", outcome.ExclusionReason);
@@ -510,7 +437,6 @@ internal sealed class AlertAssessor(
         }
     }
 
-    /// <summary>Sets a status of the system; closing an open finding is part of its action's history.</summary>
     private void SetStatus(Finding finding, string status, string? reason, DateTimeOffset now)
     {
         if (finding.Status == status && finding.StatusReason == reason)
@@ -532,7 +458,6 @@ internal sealed class AlertAssessor(
 
     private static JsonDocument Document(object value) => JsonSerializer.SerializeToDocument(value, Json);
 
-    /// <summary>The result for one finding.</summary>
     private sealed record Outcome(
         string MatchType, string? VersionVerdict, string? VersionReason, string? FixedVersion, string Verdict, string VerdictSource, int Level, string? ExclusionReason,
         JsonDocument Evidence, JsonDocument Factors, string Exploitation, bool FixAvailable, int ReopenLevel, JsonDocument ReopenFactors,

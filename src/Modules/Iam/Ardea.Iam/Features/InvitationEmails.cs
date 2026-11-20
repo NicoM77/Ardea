@@ -8,17 +8,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Features;
 
-/// <summary>Sends an invitation; the job carries only the invitation's id and runs in its organisation.</summary>
 internal sealed record SendInvitationEmail(Guid InvitationId) : IJob
 {
     public static string Kind => "iam.send-invitation";
 }
 
-/// <summary>
-/// The database keeps only the token's hash, so the job issues a fresh token, stores its hash in a
-/// short unit of work of its own and then sends the link without an open transaction. A repeated
-/// job sends a new link; the previous one stops working.
-/// </summary>
 internal sealed class InvitationEmailHandler(IUnitOfWorkFactory units, IEmailSender email, IConfiguration configuration) : IJobHandler<SendInvitationEmail>
 {
     public async Task HandleAsync(SendInvitationEmail job, JobContext context, CancellationToken cancellationToken)
@@ -32,7 +26,6 @@ internal sealed class InvitationEmailHandler(IUnitOfWorkFactory units, IEmailSen
             var invitation = await db.Invitations.SingleOrDefaultAsync(i => i.Id == job.InvitationId, cancellationToken);
             if (invitation is null)
             {
-                // Revoked or accepted in the meantime.
                 return;
             }
 

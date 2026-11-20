@@ -253,7 +253,6 @@ namespace Ardea.Intel.Persistence.Migrations
                 column: "primary_key",
                 unique: true);
 
-            // Full-text search over entries (master plan 4.4): the key exactly, title and text in English.
             migrationBuilder.Sql("""
                 ALTER TABLE intel.security_entry ADD COLUMN search tsvector GENERATED ALWAYS AS (
                     setweight(to_tsvector('simple', coalesce(primary_key, '')), 'A') ||

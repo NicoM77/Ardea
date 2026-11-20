@@ -3,13 +3,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Versions;
 
-/// <summary>
-/// Maven's <c>ComparableVersion</c> (the algorithm of Maven 3, which OSV also follows): the version is
-/// split at <c>.</c>, <c>-</c> and at changes between digits and letters into numbers, qualifiers and
-/// sub-lists; trailing zeros and empty qualifiers are dropped. Qualifiers order as
-/// alpha (a) &lt; beta (b) &lt; milestone (m) &lt; rc (cr) &lt; snapshot &lt; release (ga, final, release, empty) &lt; sp,
-/// unknown qualifiers after them in lexical order.
-/// </summary>
 internal sealed class MavenScheme : IVersionScheme
 {
     public string Name => VersionSchemeNames.Maven;
@@ -112,7 +105,6 @@ internal sealed class MavenScheme : IVersionScheme
     {
         public abstract bool IsNull { get; }
 
-        /// <summary>Compares with another item, or with «nothing» when <paramref name="other"/> is <c>null</c>.</summary>
         public abstract int CompareTo(Item? other);
     }
 
@@ -126,9 +118,9 @@ internal sealed class MavenScheme : IVersionScheme
 
         public override int CompareTo(Item? other) => other switch
         {
-            null => IsNull ? 0 : 1, // 1.0 == 1, 1.1 > 1
+            null => IsNull ? 0 : 1,
             IntItem i => NumericText.Compare(digits, i.Digits),
-            _ => 1, // 1.1 > 1-sp, 1.1 > 1-1
+            _ => 1,
         };
 
         public override string ToString() => digits;
@@ -167,14 +159,13 @@ internal sealed class MavenScheme : IVersionScheme
 
         public override int CompareTo(Item? other) => other switch
         {
-            null => Math.Sign(string.CompareOrdinal(Comparable(Value), ReleaseIndex)), // 1-rc < 1, 1-sp > 1
+            null => Math.Sign(string.CompareOrdinal(Comparable(Value), ReleaseIndex)),
             StringItem s => Math.Sign(string.CompareOrdinal(Comparable(Value), Comparable(s.Value))),
-            _ => -1, // 1.any < 1.1, 1.any < 1-1
+            _ => -1,
         };
 
         public override string ToString() => Value;
 
-        /// <summary>Known qualifiers by their position, unknown ones after all of them in lexical order.</summary>
         private static string Comparable(string qualifier)
         {
             var index = Array.IndexOf(Qualifiers, qualifier);
@@ -192,7 +183,6 @@ internal sealed class MavenScheme : IVersionScheme
 
         public void Add(Item item) => _items.Add(item);
 
-        /// <summary>Drops trailing «null» items (0, release qualifiers, empty lists) up to the last sub-list.</summary>
         public void Normalize()
         {
             for (var i = _items.Count - 1; i >= 0; i--)
@@ -224,9 +214,9 @@ internal sealed class MavenScheme : IVersionScheme
 
                     return 0;
                 case IntItem:
-                    return -1; // 1-1 < 1.0.x
+                    return -1;
                 case StringItem:
-                    return 1; // 1-1 > 1-sp
+                    return 1;
             }
 
             var list = (ListItem)other;

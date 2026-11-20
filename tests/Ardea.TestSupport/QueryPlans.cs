@@ -2,12 +2,6 @@ using Npgsql;
 
 namespace Ardea.TestSupport;
 
-/// <summary>
-/// Reads the plan PostgreSQL chooses for a query written the way the code sends it (master plan 4.4). With
-/// sequential scans and full sorts disabled the plan names an index whenever one can serve the query, which proves the
-/// query's expressions match the index; <see cref="SortsEverything"/> shows whether the index also gives
-/// the order, so that a page of a list reads a page of rows and not the whole list.
-/// </summary>
 public static class QueryPlans
 {
     public static async Task<IReadOnlyList<string>> ExplainAsync(string connectionString, string sql, CancellationToken cancellationToken, params NpgsqlParameter[] parameters)
@@ -35,7 +29,6 @@ public static class QueryPlans
         return plan;
     }
 
-    /// <summary>True when a node sorts all rows it receives, as opposed to reading them in index order (an incremental sort only orders ties).</summary>
     public static bool SortsEverything(IReadOnlyList<string> plan) =>
         plan.Any(line => line.TrimStart(' ', '-', '>').StartsWith("Sort  (", StringComparison.Ordinal));
 }

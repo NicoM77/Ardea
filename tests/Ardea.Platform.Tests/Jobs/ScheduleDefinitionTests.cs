@@ -21,7 +21,6 @@ public sealed class ScheduleDefinitionTests
     [Fact]
     public void Run_in_a_skipped_hour_moves_to_the_next_valid_time()
     {
-        // 02:30 does not exist in Zurich on 29 March 2026; Cronos runs it at 03:00 local.
         var schedule = Daily("30 2 * * *", "Europe/Zurich");
 
         var next = schedule.NextAfter(new DateTimeOffset(2026, 3, 28, 12, 0, 0, TimeSpan.Zero));

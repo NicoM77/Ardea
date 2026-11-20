@@ -234,7 +234,6 @@ namespace Ardea.Assessment.Persistence.Migrations
                 onDelete: ReferentialAction.SetNull);
 
             migrationBuilder.Sql("""
-                -- Alerts from before this migration get their entry's key; new ones carry it from the start.
                 UPDATE assess.alert a SET entry_key = e.primary_key FROM intel.security_entry e WHERE e.id = a.entry_id;
 
                 ALTER TABLE assess.remediation ENABLE ROW LEVEL SECURITY;

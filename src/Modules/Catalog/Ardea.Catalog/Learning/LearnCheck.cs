@@ -4,12 +4,6 @@ using Ardea.Catalog.Products;
 
 namespace Ardea.Catalog.Learning;
 
-/// <summary>
-/// Checks the model's answer before anything of it is stored (master plan 6.9 step 4): the schema without unknown or
-/// missing fields and with the exact values of the fixed lists; every key from the candidate list, every CPE pair from
-/// the input; a new product that is well formed and whose name no entry has (<see cref="ProductDrafts"/>). A failed
-/// check names the rule, never the text.
-/// </summary>
 internal static class LearnCheck
 {
     public static (LearnedProposal? Proposal, string? Problem) Check(string? text, LearnInput input, CatalogLayers catalog, ISet<string> keys)
@@ -111,7 +105,6 @@ internal static class LearnCheck
     public static string Name<T>(T value)
         where T : struct, Enum => JsonSerializer.Serialize(value, LearnAnswer.Json).Trim('"');
 
-    /// <summary>The fixed lists take exactly their snake_case names; the enum converter alone would also take <c>Alias</c> or <c>alias, new</c>.</summary>
     private static bool ExactValues(JsonElement root)
     {
         static bool Exact<T>(JsonElement parent, string property)
@@ -122,7 +115,6 @@ internal static class LearnCheck
         return Exact<LearnDecision>(root, "decision") && Exact<LearnConfidence>(root, "confidence");
     }
 
-    /// <summary>Some models wrap the JSON in a Markdown fence despite the schema; the fence is not part of the answer.</summary>
     private static string Unfence(string text)
     {
         var trimmed = text.Trim();

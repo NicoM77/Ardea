@@ -17,7 +17,6 @@ namespace Ardea.Assessment.Persistence.Migrations
                 table: "finding",
                 type: "jsonb",
                 nullable: false,
-                // Findings from before the rule set carry no explanation until their next assessment.
                 defaultValueSql: "'{}'::jsonb");
         }
 

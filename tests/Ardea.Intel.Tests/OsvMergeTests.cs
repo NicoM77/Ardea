@@ -6,13 +6,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Intel.Tests;
 
-/// <summary>
-/// Phase 1 acceptance (master plan 14): «Ein OSV-Record, der zuerst nur mit GHSA-Kennung kommt und dessen
-/// CVE-Record schon einen Eintrag erzeugt hat, ergibt nach Eintreffen der CVE-ID genau einen Eintrag; der
-/// andere Schlüssel leitet weiter.» With recorded real data and the real adapters' normalisation: the
-/// ZITADEL advisory GHSA-pfrf-9r5f-73f5 was published on 8 Dec 2025 without CVE id; CVE-2026-29067 was
-/// published on 7 Mar 2026 and added to the advisory on 9 Mar 2026.
-/// </summary>
 public sealed class OsvMergeTests(PostgresServer server)
 {
     private static readonly string[] Pipeline = ["intel.normalize-records", "intel.correlate-entry"];
@@ -35,7 +28,6 @@ public sealed class OsvMergeTests(PostgresServer server)
         Assert.Equal("merged", await host.ScalarAsync<string>("SELECT state FROM intel.security_entry WHERE primary_key = 'GHSA-pfrf-9r5f-73f5'"));
         Assert.True(await host.ScalarAsync<bool>(
             "SELECT m.merged_into_id = w.id FROM intel.security_entry m, intel.security_entry w WHERE m.primary_key = 'GHSA-pfrf-9r5f-73f5' AND w.primary_key = 'CVE-2026-29067'"));
-        // The surviving entry knows all three identifiers and the package from OSV.
         Assert.Equal(3L, await host.ScalarAsync<long>(
             "SELECT count(*) FROM intel.entry_alias a JOIN intel.security_entry e ON e.id = a.entry_id WHERE e.primary_key = 'CVE-2026-29067'"));
         Assert.True(await host.ScalarAsync<bool>(
@@ -51,7 +43,6 @@ public sealed class OsvMergeTests(PostgresServer server)
         await host.RunJobsAsync(Pipeline);
     }
 
-    /// <summary>A real adapter whose fetch replays recorded records; its key and normalisation are its own.</summary>
     private sealed class Replay(ISourceProvider adapter) : ISourceProvider
     {
         public List<FetchItem> Items { get; } = [];

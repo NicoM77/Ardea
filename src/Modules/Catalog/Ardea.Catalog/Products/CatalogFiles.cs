@@ -4,11 +4,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Products;
 
-/// <summary>
-/// The curated catalogue in <c>data/catalog/</c>: one JSON file per vendor, named after it, with that
-/// vendor's products. Comments and trailing commas are allowed; unknown fields are errors, so a typo
-/// cannot silently drop data. The format is described in <c>data/catalog.schema.json</c>.
-/// </summary>
 internal static class CatalogFiles
 {
     public const string Folder = "catalog";
@@ -21,7 +16,6 @@ internal static class CatalogFiles
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
     };
 
-    /// <summary>Reads every <c>*.json</c> file of the folder in name order; problems are returned, not thrown.</summary>
     public static CatalogLoad Load(string directory)
     {
         var products = new List<CatalogProduct>();
@@ -148,7 +142,6 @@ internal static class CatalogFiles
 
         public string? Name { get; set; }
 
-        /// <summary>Only when it differs from the file's vendor.</summary>
         public string? Vendor { get; set; }
 
         public string? Kind { get; set; }
@@ -167,7 +160,6 @@ internal static class CatalogFiles
 
         public List<string>? Images { get; set; }
 
-        /// <summary>Notices only for exploited entries (ADR 044 decision 3).</summary>
         public bool Noisy { get; set; }
     }
 

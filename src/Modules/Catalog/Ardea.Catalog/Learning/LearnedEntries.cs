@@ -6,30 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Catalog.Learning;
 
-/// <summary>
-/// Decisions about learned entries inside the caller's unit of work (master plan 6.9 steps 5 and 6, task 4.10): a
-/// proposal takes effect, is rejected, or an entry in effect is withdrawn. Every decision is checked against the
-/// catalogue in effect again, writes an event for the measures, and has the entries concerned computed again. Nothing
-/// here touches a curated row: a learned entry is a new row, or a raw key's mapping.
-/// </summary>
 internal sealed class LearnedEntries(CatalogDbContext db, ProductCatalog catalog, IEnumerable<ICatalogChangeSubscriber> subscribers, TimeProvider time)
 {
-
-    /// <summary>Every key of <c>catalog.product</c>, also of withdrawn learned entries: a key is never given twice.</summary>
     public async Task<HashSet<string>> KeysAsync(CancellationToken cancellationToken) =>
         (await db.Products.AsNoTracking().Select(p => p.Key).ToListAsync(cancellationToken)).ToHashSet(StringComparer.Ordinal);
 
-    /// <summary>
-    /// The proposal takes effect: the raw key becomes an alias of an entry in effect, or a new learned entry. Returns the
-    /// rule that failed, or <c>null</c>. <paramref name="actor"/> is the administrator who confirmed it, <c>null</c> for
-    /// the system.
-    /// </summary>
-    /// <param name="row">The raw key.</param>
-    /// <param name="proposal">What takes effect.</param>
-    /// <param name="actor">The administrator, or <c>null</c> for the system.</param>
-    /// <param name="cancellationToken">Cancels the work.</param>
-    /// <param name="layers">The catalogue to check against; by default read anew in this unit of work.</param>
-    /// <param name="keys">Every key of <c>catalog.product</c>; by default read anew.</param>
     public async Task<string?> AdoptAsync(
         UnknownProductRow row, LearnedProposal proposal, Guid? actor, CancellationToken cancellationToken, CatalogLayers? layers = null, ISet<string>? keys = null)
     {
@@ -98,7 +79,6 @@ internal sealed class LearnedEntries(CatalogDbContext db, ProductCatalog catalog
         return null;
     }
 
-    /// <summary>A proposal, or a raw key nobody could map, waits for a person; nothing takes effect.</summary>
     public async Task HoldAsync(UnknownProductRow row, LearnedProposal proposal, CancellationToken cancellationToken)
     {
         row.Outcome = proposal.Decision == Decisions.Unclear ? UnknownProductRow.Unclear : UnknownProductRow.Pending;
@@ -107,7 +87,6 @@ internal sealed class LearnedEntries(CatalogDbContext db, ProductCatalog catalog
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    /// <summary>Rejected: never proposed again. Only what is not in effect can be rejected; an entry in effect is withdrawn.</summary>
     public async Task<string?> RejectAsync(UnknownProductRow row, Guid actor, CancellationToken cancellationToken)
     {
         if (row.Outcome is not (UnknownProductRow.Open or UnknownProductRow.Pending or UnknownProductRow.Unclear))
@@ -125,11 +104,6 @@ internal sealed class LearnedEntries(CatalogDbContext db, ProductCatalog catalog
         return null;
     }
 
-    /// <summary>
-    /// Takes an entry in effect back (task 4.10): an alias stops mapping its raw key; a new learned entry is withdrawn
-    /// together with the aliases that point to it. The entries concerned are computed again; what the curated catalogue
-    /// found before is what they find again.
-    /// </summary>
     public async Task<string?> WithdrawAsync(UnknownProductRow row, Guid? actor, CancellationToken cancellationToken)
     {
         if (row.Outcome is not (UnknownProductRow.Alias or UnknownProductRow.New) || row.ProductKey is not { } key)

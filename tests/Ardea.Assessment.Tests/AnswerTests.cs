@@ -6,10 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Assessment.Tests;
 
-/// <summary>
-/// The three answers from templates, without a language model (task 3.6; master plan 7.5): what happened
-/// in the source's words, whether the installed version lies in a stated range, and what to do.
-/// </summary>
 public sealed class AnswerTests(PostgresServer server)
 {
     [Fact]
@@ -41,7 +37,6 @@ public sealed class AnswerTests(PostgresServer server)
         var answers = await AnswersAsync(host, acme);
         Assert.Equal("template", answers.Origin);
 
-        // What happened: the highest finding's entry, its description cut at a sentence end, quoted with its source.
         Assert.Equal("CVE-2026-116303", answers.WhatHappened.EntryKey);
         Assert.Equal(
             "A missing authorization check in PostgreSQL lets an authenticated user read another user's large objects. Versions before 18.7, 17.12, 16.16 and 15.20 are affected.",
@@ -49,13 +44,11 @@ public sealed class AnswerTests(PostgresServer server)
         Assert.Equal("Test source", answers.WhatHappened.Source);
         Assert.Equal(1, answers.WhatHappened.MoreEntries);
 
-        // Are we affected: 17.11 against the one range it lies in.
         Assert.Equal("affected", answers.Affected.Verdict);
         var item = Assert.Single(answers.Affected.Items);
         Assert.Equal(("Platform Ops", "17.11", "in_range"), (item.Project.Name, item.Component.Version, item.VersionVerdict));
         Assert.Equal([new AffectedRange("17", "17.12", null, null)], item.Ranges);
 
-        // What to do: the fix of that range.
         Assert.Equal(("update", "17.12", "17.11"), (answers.ToDo.Kind, answers.ToDo.TargetVersion, answers.ToDo.InstalledVersion));
     }
 
@@ -76,7 +69,6 @@ public sealed class AnswerTests(PostgresServer server)
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
 
-        // Without a version the entry raises a notice; «affects us» makes it a reminder (master plan 17.3, ADR 047).
         await host.InOrganizationAsync(acme, async services =>
         {
             var notice = await services.GetRequiredService<AssessDbContext>().Notices.SingleAsync();

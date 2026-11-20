@@ -4,11 +4,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Products;
 
-/// <summary>
-/// The lookups of the catalogue over entries in effect: by key, CPE pair, package, image and name
-/// pattern. Curated entries are indexed first and win over learned ones (master plan 6.9). The same
-/// index tells the validator which spellings, CPE pairs, packages or images two entries share.
-/// </summary>
 internal sealed class CatalogIndex
 {
     private static readonly TimeSpan PatternTimeout = TimeSpan.FromMilliseconds(50);
@@ -24,8 +19,6 @@ internal sealed class CatalogIndex
     private readonly List<string> _conflicts = [];
     private readonly CatalogSearch _search;
 
-    /// <param name="products">Entries in effect.</param>
-    /// <param name="learnedAliases">Raw keys the instance has mapped to a catalogue key (<c>unknown_product</c> with outcome <c>alias</c>).</param>
     public CatalogIndex(IEnumerable<CatalogProduct> products, IReadOnlyDictionary<string, string>? learnedAliases = null)
     {
         _learnedAliases = new Dictionary<string, string>(learnedAliases ?? new Dictionary<string, string>(), StringComparer.Ordinal);
@@ -83,10 +76,8 @@ internal sealed class CatalogIndex
         _search = new CatalogSearch(Products);
     }
 
-    /// <summary>Entries in effect, curated first.</summary>
     public List<CatalogProduct> Products { get; } = [];
 
-    /// <summary>Spellings, CPE pairs, packages or images that two entries of the same origin share.</summary>
     public IReadOnlyList<string> Conflicts => _conflicts;
 
     public CatalogProduct? FindByKey(string key) => _byKey.GetValueOrDefault(key.Trim());
@@ -109,10 +100,8 @@ internal sealed class CatalogIndex
             match = Pick(Candidates(nameKey is null ? null : _byVendorAndName.GetValueOrDefault((vendorKey, nameKey)), vendorKey, light));
         }
 
-        // Names listed without vendor match whatever vendor a source gives.
         match ??= Pick(Candidates(nameKey is null ? null : _byVendorAndName.GetValueOrDefault((string.Empty, nameKey)), null, light));
 
-        // Without a vendor, any spelling matches as long as only one product has it (master plan 6.5).
         if (vendorKey is null)
         {
             match ??= Pick(Candidates(nameKey is null ? null : _byName.GetValueOrDefault(nameKey), null, light, anyVendor: true));
@@ -127,10 +116,6 @@ internal sealed class CatalogIndex
         return match;
     }
 
-    /// <summary>
-    /// Whether some entry already has this spelling, under any vendor: as name, alias, CPE product or through a name
-    /// pattern. A learned entry may not take a spelling that is taken (master plan 6.9 step 4).
-    /// </summary>
     public bool NameTaken(string name)
     {
         var nameKey = ProductKey.NormalizeProduct(name);
@@ -148,13 +133,10 @@ internal sealed class CatalogIndex
         return _patterns.Exists(p => p.Pattern.IsMatch(light));
     }
 
-    /// <summary>The raw keys the instance has mapped to a catalogue key.</summary>
     public IReadOnlyDictionary<string, string> LearnedAliases => _learnedAliases;
 
-    /// <summary>Products for what someone types, best first (<see cref="CatalogSearch"/>).</summary>
     public IReadOnlyList<CatalogProduct> Search(string text, int limit) => _search.Search(text, limit);
 
-    /// <summary>Image without registry <c>docker.io</c>, <c>library/</c>, tag and digest, in lower case.</summary>
     public static string NormalizeImage(string image)
     {
         var name = image.Trim().ToLowerInvariant();
@@ -183,11 +165,9 @@ internal sealed class CatalogIndex
 
     public static bool IsPattern(string name) => name.Contains('*', StringComparison.Ordinal) || name.Contains('{', StringComparison.Ordinal);
 
-    /// <summary>Lower case with single spaces: what alias patterns are matched against.</summary>
     public static string Light(string text) =>
         string.Join(' ', text.ToLowerInvariant().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
-    /// <summary>A pattern as an anchored expression; <c>null</c> for unknown placeholders.</summary>
     public static Regex? CompilePattern(string pattern)
     {
         var text = Light(pattern);
@@ -250,7 +230,6 @@ internal sealed class CatalogIndex
         }
     }
 
-    /// <summary>The one product the candidates name, curated first; <c>null</c> when none or ambiguous.</summary>
     private static ProductMatch? Pick(IEnumerable<ProductMatch> candidates)
     {
         var list = candidates.ToList();
@@ -296,8 +275,6 @@ internal sealed class CatalogIndex
 
         list.Add(product);
 
-        // A learned single word under a vendor («Agent» of Grafana) finds the entry only with that vendor: without one it
-        // is too generic to stand for the product (ADR 040).
         if (product.Origin == ProductOrigin.Learned && vendorKey is not null && !Light(name).Contains(' ', StringComparison.Ordinal))
         {
             return;

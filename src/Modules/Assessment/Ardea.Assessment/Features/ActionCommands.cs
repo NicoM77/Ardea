@@ -9,12 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assessment.Features;
 
-/// <summary>
-/// What people do with actions and findings (master plan 7.4, 4.9, 10.2, 17.5): an outcome for all findings of an
-/// action, the outcome of a single finding, taking a closing back, notes. An action is open or done; nobody is
-/// assigned and there is no deadline (ADR 046). Every change checks the status the caller saw, is audited and
-/// written to the history.
-/// </summary>
 internal sealed class ActionCommands(
     AssessDbContext db, Remediations remediations, History history, RuleSet rules, IAuditLog audit, IJobQueue jobs, ITenantContext tenant, TimeProvider time)
 {
@@ -61,7 +55,6 @@ internal sealed class ActionCommands(
                 return Refusal.Conflict("action_open", "The action is open already.");
             }
 
-            // Taking a closing back: the outcomes people set return to the action (master plan 3.10 «Rücknahme»).
             if (await db.Remediations.AnyAsync(r => r.ComponentId == action.ComponentId && r.Status != "closed", cancellationToken))
             {
                 return Refusal.Conflict("action_superseded", "A newer action for this component is open; work there.");
@@ -130,7 +123,6 @@ internal sealed class ActionCommands(
             return Refusal.NotFound("finding_not_found", "No such finding.");
         }
 
-        // The status the caller saw is compared under the component's lock, so two changes cannot both pass.
         await remediations.LockAsync(finding.ComponentId, cancellationToken);
         await db.Entry(finding).ReloadAsync(cancellationToken);
 
@@ -148,7 +140,6 @@ internal sealed class ActionCommands(
                 return Refusal.Conflict("finding_open", "The finding is open already.");
             }
 
-            // It joins the open action of its component or opens a new one; the rules compute its level again.
             Reopen(finding, user, now);
             finding.RemediationId = await db.Remediations.Where(r => r.ComponentId == finding.ComponentId && r.Status != "closed")
                 .Select(r => (Guid?)r.Id).SingleOrDefaultAsync(cancellationToken);
@@ -192,10 +183,6 @@ internal sealed class ActionCommands(
         return row;
     }
 
-    /// <summary>
-    /// The action, read again after taking its component's lock: a check against the status the caller saw
-    /// then holds until the unit of work commits, and a concurrent change waits instead of being overwritten.
-    /// </summary>
     private async Task<Remediation?> LockedActionAsync(int number, CancellationToken cancellationToken)
     {
         var action = await db.Remediations.SingleOrDefaultAsync(r => r.Number == number, cancellationToken);
@@ -230,7 +217,6 @@ internal sealed class ActionCommands(
         finding.ChangedAt = now;
     }
 
-    /// <summary>A person's outcome; «not affected» is an exclusion and gives level 1 (master plan 7.6 step 1).</summary>
     internal void Conclude(Finding finding, string outcome, Guid user, string? note, DateTimeOffset now)
     {
         if (finding.Status == "open")
@@ -249,12 +235,10 @@ internal sealed class ActionCommands(
 
     private static void Reopen(Finding finding, Guid user, DateTimeOffset now, string? note = null)
     {
-        // Until the rules compute it again, it keeps the level it had when it closed, at least level 2.
         finding.Level = Math.Max(finding.ClosedLevel ?? finding.Level, 2);
         finding.ClosedLevel = null;
         finding.ClosedVersionVerdict = null;
 
-        // A person's «not affected» goes with the closing it came with (task 4.7); the rules give the verdict again.
         if (finding is { VerdictSource: "human", Verdict: "not_affected" })
         {
             finding.Verdict = finding.VersionVerdict switch

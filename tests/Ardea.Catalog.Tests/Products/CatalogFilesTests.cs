@@ -5,7 +5,6 @@ using Ardea.Platform.Persistence;
 
 namespace Ardea.Catalog.Tests.Products;
 
-/// <summary>The curated catalogue in <c>data/catalog/</c> loads without error (what <c>migrate</c> requires).</summary>
 public sealed class CatalogFilesTests
 {
     public static string RepositoryCatalog => Path.Combine(MasterDataOptions.FindDefault(), CatalogFiles.Folder);
@@ -91,7 +90,6 @@ public sealed class CatalogFilesTests
 
 internal static class TempCatalog
 {
-    /// <summary>A fresh folder with the given files; returns its path.</summary>
     public static string Write(Dictionary<string, string> files)
     {
         var directory = Path.Combine(Path.GetTempPath(), "ardea-catalog-" + Guid.NewGuid().ToString("N"));

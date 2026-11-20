@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assessment.Features;
 
-/// <summary>Builds the views of actions, findings and alerts with names from Assets and titles from Intel.</summary>
 internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles, IEntryQueries entries)
 {
     public async Task<IReadOnlyList<ActionSummary>> SummariesAsync(IReadOnlyList<Remediation> actions, CancellationToken cancellationToken)
@@ -88,11 +87,9 @@ internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles,
             counts[a.Id].Count(), a.FirstRaisedAt, a.ChangedAt))];
     }
 
-    /// <summary>The three answers for an action's or an alert's findings (master plan 7.5; task 3.6).</summary>
     public async Task<AnswersView?> AnswersAsync(IReadOnlyList<Finding> findings, string? targetVersion, CancellationToken cancellationToken) =>
         findings.Count == 0 ? null : (await AnswersAsync([(findings, targetVersion)], cancellationToken))[0];
 
-    /// <summary>The answers for several actions at once: one query per kind of data, not per action.</summary>
     public async Task<IReadOnlyList<AnswersView>> AnswersAsync(
         IReadOnlyList<(IReadOnlyList<Finding> Findings, string? TargetVersion)> sets, CancellationToken cancellationToken)
     {
@@ -103,10 +100,6 @@ internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles,
         return [.. sets.Select(s => AnswerTemplates.For(s.Findings, texts, f => Refs(components, f.ComponentId, f.ProjectId), s.TargetVersion, assessments))];
     }
 
-    /// <summary>
-    /// The current assessment per alert, where it was made for the revision of the entry the findings come from; an
-    /// older one no longer speaks for the alert, and the templates answer until the model looks again.
-    /// </summary>
     private async Task<IReadOnlyDictionary<Guid, AlertAssessment>> CurrentAssessmentsAsync(IEnumerable<Guid> alertIds, CancellationToken cancellationToken)
     {
         var ids = alertIds.Distinct().ToArray();
@@ -119,7 +112,6 @@ internal sealed class ActionReader(AssessDbContext db, IProfileQueries profiles,
         return current.ToDictionary(a => a.AlertId);
     }
 
-    /// <summary>The history of an action, without the rows of assignment and review written before ADR 046.</summary>
     public async Task<IReadOnlyList<ActionEventView>> EventsAsync(Guid remediationId, CancellationToken cancellationToken) =>
         (await db.Events.AsNoTracking().Where(e => e.RemediationId == remediationId && e.Kind != EventKinds.LegacyActionAssigned)
             .OrderBy(e => e.At).ThenBy(e => e.Id).ToListAsync(cancellationToken))

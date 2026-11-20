@@ -7,7 +7,6 @@ namespace Ardea.Platform.Hosting;
 
 public static class PlatformServices
 {
-    /// <summary>Registers what every long-running role needs: clock, database options and the application data source.</summary>
     public static IServiceCollection AddArdeaPlatform(this IServiceCollection services, IConfiguration configuration, string role)
     {
         var database = DatabaseOptions.FromConfiguration(configuration);

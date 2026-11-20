@@ -5,10 +5,6 @@ using Ardea.Platform.Persistence;
 
 namespace Ardea.Assessment.Tests;
 
-/// <summary>
-/// The rule set file (master plan 7.6, 4.9; ADR 034): the highest version in the folder is in effect, and a broken file stops the
-/// assessment with a message that names each problem instead of computing wrong levels.
-/// </summary>
 public sealed class RuleSetFileTests : IDisposable
 {
     private static readonly string Shipped = File.ReadAllText(Path.Combine(MasterDataOptions.FindDefault(), RuleSet.Folder, "ruleset-1.json"));

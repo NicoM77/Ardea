@@ -7,7 +7,6 @@ using Npgsql;
 
 namespace Ardea.Platform.Tests.Persistence;
 
-/// <summary>What only the real database can show: roles, rights and the migration path (master plan 9.2, 12.2).</summary>
 public sealed class DatabaseMigratorTests(PostgresServer server)
 {
     [Fact]
@@ -105,7 +104,6 @@ public sealed class DatabaseMigratorTests(PostgresServer server)
         Assert.All(seeding.Directories, d => Assert.Equal("/master-data", d));
     }
 
-    /// <summary>The platform schema with a seed that records what it saw.</summary>
     private sealed class SeedingDatabase : IModuleDatabase
     {
         public List<bool> SawMigratedSchema { get; } = [];

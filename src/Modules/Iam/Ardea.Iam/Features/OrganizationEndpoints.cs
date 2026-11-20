@@ -19,14 +19,6 @@ namespace Ardea.Iam.Features;
 
 internal sealed record CreateOrganizationRequest(string? Name, string? Slug);
 
-/// <summary>Changes the organisation's settings; a field left out stays as it is.</summary>
-/// <param name="Name">The name.</param>
-/// <param name="Locale">The language of e-mails and analyses.</param>
-/// <param name="TimeZone">The IANA time zone for digests and reminders.</param>
-/// <param name="RequireMfa">Whether members must use two-factor authentication.</param>
-/// <param name="AiPolicy">The data policy for language models: <c>none</c>, <c>local_only</c> (the default) or <c>cloud_allowed</c>.</param>
-/// <param name="EmailContent">How much notification e-mails say: <c>full</c> (the default) or <c>minimal</c> (level, number and link).</param>
-/// <param name="AllowMuteCritical">Whether members may mute a channel for level 5 too.</param>
 internal sealed record UpdateOrganizationRequest(
     string? Name, string? Locale, string? TimeZone, bool? RequireMfa, string? AiPolicy, string? EmailContent = null, bool? AllowMuteCritical = null);
 
@@ -40,23 +32,16 @@ internal sealed record UpdateMemberRequest(string? Role);
 
 internal sealed record CreateInvitationRequest(string? Email, string? Role);
 
-/// <summary>An invitation; <see cref="Link"/> only right after creating it on an instance without SMTP, to pass on by hand.</summary>
 internal sealed record InvitationView(Guid Id, string Email, string Role, DateTimeOffset ExpiresAt, bool Expired, string InvitedBy, DateTimeOffset CreatedAt, string? Link = null);
 
 internal sealed record InvitationPreview(string OrganizationName, string Email, string Role, string InvitedBy, DateTimeOffset ExpiresAt);
 
 internal sealed record AcceptInvitationResponse(Guid OrganizationId, string Slug, string Name);
 
-/// <summary>
-/// Organisations, members and invitations (master plan 9.1, 10.2; task 2.1). Every endpoint below
-/// <c>/orgs/{orgId}</c> passes the platform's membership check first.
-/// </summary>
 internal static class OrganizationEndpoints
 {
-    /// <summary>Languages the web app and the e-mails speak.</summary>
     private static readonly string[] Locales = ["en", "de", "fr", "it"];
 
-    /// <summary>Shown for an inviter who has left the organisation.</summary>
     internal const string FormerMember = "A former member";
 
     public static void Map(IEndpointRouteBuilder api)
@@ -90,7 +75,6 @@ internal static class OrganizationEndpoints
     private static async Task<IReadOnlyList<OrganizationSummary>> ListAsync(IamDbContext db, ITenantContext tenant, CancellationToken cancellationToken) =>
         await OrganizationDirectory.ForUserAsync(db, tenant.UserId!.Value, cancellationToken);
 
-    /// <summary>Any signed-in user may found an organisation and becomes its owner.</summary>
     private static async Task<IResult> CreateAsync(
         CreateOrganizationRequest request, IamDbContext db, TenantContext tenant, IUnitOfWork unitOfWork, IAuditLog audit, TimeProvider time,
         IEnumerable<Contracts.IOrganizationCreatedSubscriber> subscribers, CancellationToken cancellationToken)
@@ -106,7 +90,6 @@ internal static class OrganizationEndpoints
             return IamErrors.Validation(errors.Errors);
         }
 
-        // The new organisation is the tenant of this unit of work from its first statement on.
         var organizationId = Guid.CreateVersion7();
         var userId = tenant.UserId!.Value;
         tenant.SetOrganization(organizationId);
@@ -159,7 +142,6 @@ internal static class OrganizationEndpoints
         var access = http.OrganizationAccess();
         if (request.RequireMfa == true && !access.UserHasMfa)
         {
-            // Whoever turns the requirement on must meet it, or they would lock themselves out.
             return IamErrors.Conflict("mfa_required_for_you", "Turn on two-factor authentication for your own account first.");
         }
 
@@ -202,7 +184,6 @@ internal static class OrganizationEndpoints
         return Results.Ok(View(organization, access.Role.ToApi()));
     }
 
-    /// <summary>The member directory: name, e-mail address and role, nothing else (master plan 9.2).</summary>
     private static async Task<IReadOnlyList<MemberView>> MembersAsync(IamDbContext db, CancellationToken cancellationToken)
     {
         var members = await db.Memberships
@@ -212,10 +193,6 @@ internal static class OrganizationEndpoints
             .ThenBy(m => m.DisplayName, StringComparer.CurrentCultureIgnoreCase)];
     }
 
-    /// <summary>
-    /// Changes a member's role. Setting <c>owner</c> transfers ownership: only the owner may, and
-    /// becomes an administrator. The owner's own role changes only by such a transfer.
-    /// </summary>
     private static async Task<IResult> UpdateMemberAsync(
         Guid userId, UpdateMemberRequest request, HttpContext http, IamDbContext db, IUnitOfWork unitOfWork, IAuditLog audit, CancellationToken cancellationToken)
     {
@@ -242,7 +219,6 @@ internal static class OrganizationEndpoints
             if (userId != access.UserId)
             {
                 var self = await db.Memberships.SingleAsync(m => m.UserId == access.UserId, cancellationToken);
-                // The old owner steps down first: the database allows one owner at a time.
                 self.Role = "admin";
                 await db.SaveChangesAsync(cancellationToken);
                 member.Role = "owner";
@@ -270,7 +246,6 @@ internal static class OrganizationEndpoints
         return Results.Ok(new MemberView(userId, user.DisplayName, user.Email!, member.Role, member.CreatedAt));
     }
 
-    /// <summary>Administrators remove members; every member may leave. The owner leaves only after a transfer.</summary>
     private static async Task<IResult> RemoveMemberAsync(
         Guid userId, HttpContext http, IamDbContext db, IUnitOfWork unitOfWork, IAuditLog audit, CancellationToken cancellationToken)
     {
@@ -301,7 +276,6 @@ internal static class OrganizationEndpoints
     private static async Task<IReadOnlyList<InvitationView>> InvitationsAsync(IamDbContext db, TimeProvider time, CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
-        // An inviter who has left is no longer visible to the organisation (row-level security).
         var rows = await db.Invitations
             .Select(i => new { Invitation = i, DisplayName = db.Users.Where(u => u.Id == i.InvitedBy).Select(u => u.DisplayName).FirstOrDefault() })
             .OrderByDescending(x => x.Invitation.CreatedAt)
@@ -309,10 +283,6 @@ internal static class OrganizationEndpoints
         return [.. rows.Select(x => View(x.Invitation, x.DisplayName ?? FormerMember, now))];
     }
 
-    /// <summary>
-    /// Invites an address with a role. With SMTP the mail carries the link; without it the answer
-    /// does, once, for the administrator to pass on. A new invitation for the same address replaces the open one.
-    /// </summary>
     private static async Task<IResult> InviteAsync(
         CreateInvitationRequest request, HttpContext http, IamDbContext db, UserManager<ArdeaUser> users, IEmailSender email, IJobQueue jobs,
         IUnitOfWork unitOfWork, IAuditLog audit, IConfiguration configuration, TimeProvider time, CancellationToken cancellationToken)
@@ -379,7 +349,6 @@ internal static class OrganizationEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>What the invitation page shows before sign-in or registration; the token is the authorisation.</summary>
     private static async Task<IResult> PreviewAsync(
         string token, NpgsqlDataSource dataSource, TenantContext tenant, IamDbContext db, CancellationToken cancellationToken)
     {
@@ -399,7 +368,6 @@ internal static class OrganizationEndpoints
             : Results.Ok(new InvitationPreview(name, preview.Email, preview.Role, preview.Inviter ?? FormerMember, preview.ExpiresAt));
     }
 
-    /// <summary>The signed-in user joins with the invited role; the invitation is for their address only.</summary>
     private static async Task<IResult> AcceptAsync(
         string token, NpgsqlDataSource dataSource, TenantContext tenant, IamDbContext db, IUnitOfWork unitOfWork,
         IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
@@ -433,7 +401,6 @@ internal static class OrganizationEndpoints
         db.Invitations.Remove(invitation);
         if (!user.EmailConfirmed)
         {
-            // The link came to this address, so the address is confirmed.
             user.EmailConfirmed = true;
         }
 

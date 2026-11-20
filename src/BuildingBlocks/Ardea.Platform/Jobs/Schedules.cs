@@ -6,17 +6,12 @@ using Npgsql;
 
 namespace Ardea.Platform.Jobs;
 
-/// <summary>
-/// A recurring task of the instance (master plan 3.4): cleaning up, finding due sources and digest
-/// targets. When a single source or digest target is due is stored on its own row, not here.
-/// </summary>
 public sealed record ScheduleDefinition(string Key, string JobKind, string Cron, string TimeZone, Func<IJobQueue, CancellationToken, Task> Enqueue)
 {
     public CronExpression Expression { get; } = CronExpression.Parse(Cron);
 
     public TimeZoneInfo Zone { get; } = TimeZoneInfo.FindSystemTimeZoneById(TimeZone);
 
-    /// <summary>Next run strictly after <paramref name="after"/>, in the schedule's time zone.</summary>
     public DateTimeOffset NextAfter(DateTimeOffset after) =>
         Expression.GetNextOccurrence(after, Zone)
         ?? throw new InvalidOperationException($"Schedule {Key} ({Cron}) has no future occurrence.");
@@ -24,7 +19,6 @@ public sealed record ScheduleDefinition(string Key, string JobKind, string Cron,
 
 public static class ScheduleServiceCollectionExtensions
 {
-    /// <summary>Runs <typeparamref name="TJob"/> on a cron schedule; one waiting run at most.</summary>
     public static IServiceCollection AddSchedule<TJob>(this IServiceCollection services, string key, string cron, TJob job, string timeZone = "UTC")
         where TJob : IJob
     {
@@ -35,10 +29,6 @@ public static class ScheduleServiceCollectionExtensions
     }
 }
 
-/// <summary>
-/// One worker at a time is the leader (session advisory lock on a dedicated connection) and enqueues
-/// due schedule runs together with the schedule's next due time, in one transaction.
-/// </summary>
 internal sealed partial class ScheduleLeader(
     NpgsqlDataSource dataSource,
     IServiceScopeFactory scopes,
@@ -46,7 +36,7 @@ internal sealed partial class ScheduleLeader(
     TimeProvider time,
     ILogger<ScheduleLeader> logger) : BackgroundService
 {
-    private const long LockKey = 0x41524445_41534348; // "ARDEASCH"
+    private const long LockKey = 0x41524445_41534348;
     internal static readonly TimeSpan Interval = TimeSpan.FromSeconds(30);
 
     private readonly IReadOnlyList<ScheduleDefinition> _definitions = [.. definitions];
@@ -67,7 +57,6 @@ internal sealed partial class ScheduleLeader(
                 {
                     LogLeading();
                     await SyncDefinitionsAsync(stoppingToken);
-                    // A dropped leader session ends the lock; the probe notices it and leadership is contested again.
                     while (!stoppingToken.IsCancellationRequested && await IsAliveAsync(leader, stoppingToken))
                     {
                         await RunDueAsync(stoppingToken);
@@ -104,7 +93,6 @@ internal sealed partial class ScheduleLeader(
         return (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
     }
 
-    /// <summary>Inserts new schedules and updates changed cron expressions; keeps last runs.</summary>
     internal async Task SyncDefinitionsAsync(CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
@@ -138,7 +126,6 @@ internal sealed partial class ScheduleLeader(
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // One broken schedule (e.g. an unregistered job kind) must not stop the others.
                 LogScheduleFailed(ex, definition.Key);
             }
         }

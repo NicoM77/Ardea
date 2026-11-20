@@ -1,20 +1,9 @@
 namespace Ardea.Intel.Sources.Formats.Osv;
 
-/// <summary>
-/// What the OSV reader needs to know about an ecosystem: its package URL type and the version scheme
-/// that compares its versions (master plan 6.6). The scheme names are those of the catalogue's
-/// <c>VersionSchemeNames</c>; this assembly may not reference the catalogue, so they are repeated here.
-/// </summary>
 public static class OsvEcosystems
 {
-    /// <summary>The six ecosystems of the MVP (master plan 5.6, 16.3), as OSV names them.</summary>
     public static readonly IReadOnlyList<string> Mvp = ["npm", "NuGet", "Packagist", "PyPI", "Maven", "Go"];
 
-    /// <summary>
-    /// The version scheme of an ecosystem. Ecosystems the MVP cannot compare yet keep their own name in
-    /// lower case (<c>crates.io</c>, <c>debian</c>), which no scheme answers, so their versions give
-    /// «unknown» instead of a guess by the numeric fallback.
-    /// </summary>
     public static string? Scheme(string? ecosystem) => Base(ecosystem)?.ToLowerInvariant() switch
     {
         null => null,
@@ -27,7 +16,6 @@ public static class OsvEcosystems
         var other => other,
     };
 
-    /// <summary>The package URL type of an ecosystem (purl spec); <c>null</c> when there is none.</summary>
     public static string? PurlType(string? ecosystem) => Base(ecosystem)?.ToLowerInvariant() switch
     {
         "npm" => "npm",
@@ -45,10 +33,6 @@ public static class OsvEcosystems
         _ => null,
     };
 
-    /// <summary>
-    /// A package URL without version from ecosystem and name, for records that carry none
-    /// (the GitHub Advisory Database writes no <c>purl</c>; OSV.dev adds it when it imports).
-    /// </summary>
     public static string? PackageUrl(string? ecosystem, string? name)
     {
         var type = PurlType(ecosystem);
@@ -68,7 +52,6 @@ public static class OsvEcosystems
         };
     }
 
-    /// <summary>OSV qualifies some ecosystems with a release, e.g. <c>Debian:12</c>; the part before the colon.</summary>
     private static string? Base(string? ecosystem)
     {
         var trimmed = ecosystem?.Trim();

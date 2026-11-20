@@ -1,6 +1,5 @@
 namespace Ardea.Catalog.Contracts;
 
-/// <summary>Kind of a product; the same list as <c>assets.component.kind</c> (master plan 4.5).</summary>
 public enum ProductKind
 {
     Os,
@@ -18,17 +17,13 @@ public enum ProductKind
     Other,
 }
 
-/// <summary>Where a catalogue entry comes from (master plan 6.9).</summary>
 public enum ProductOrigin
 {
-    /// <summary>Curated in <c>data/catalog/</c> and shipped with the image; always in effect.</summary>
     Curated,
 
-    /// <summary>Learned in the instance; in effect only while <see cref="ProductState.Active"/>.</summary>
     Learned,
 }
 
-/// <summary>State of a catalogue entry; curated entries are always active.</summary>
 public enum ProductState
 {
     Active,
@@ -46,13 +41,8 @@ public enum ProductState
 /// </summary>
 public sealed record ProductAlias(string? Vendor, IReadOnlyList<string> Names);
 
-/// <summary>A package a product is distributed as: purl type and name with namespace, e.g. <c>maven</c>, <c>org.apache.logging.log4j/log4j-core</c>.</summary>
 public sealed record PackageCoordinate(string Type, string Name)
 {
-    /// <summary>
-    /// Reads a package URL (<c>pkg:npm/%40angular/core@18.0.0</c>) into type and name; version,
-    /// qualifiers and subpath are dropped. Names are normalised as in <see cref="Normalize"/>.
-    /// </summary>
     public static bool TryParsePurl(string? purl, out PackageCoordinate coordinate, out string? version)
     {
         coordinate = new PackageCoordinate(string.Empty, string.Empty);
@@ -90,11 +80,6 @@ public sealed record PackageCoordinate(string Type, string Name)
         return coordinate.Name.Length > 0;
     }
 
-    /// <summary>
-    /// The comparable form: lower case; Maven's <c>group:artifact</c> as <c>group/artifact</c>;
-    /// PyPI names per PEP 503; OSV ecosystem names as purl types (<c>Go</c> → <c>golang</c>,
-    /// <c>Packagist</c> → <c>composer</c>).
-    /// </summary>
     public static PackageCoordinate Normalize(string type, string name)
     {
         var t = type.Trim().ToLowerInvariant() switch
@@ -115,14 +100,11 @@ public sealed record PackageCoordinate(string Type, string Name)
         return new PackageCoordinate(t, n);
     }
 
-    /// <summary>The package URL without version, e.g. <c>pkg:npm/@angular/core</c>.</summary>
     public override string ToString() => $"pkg:{Type}/{Name}";
 }
 
-/// <summary>A product of the catalogue (<c>catalog.product</c>).</summary>
 public sealed record CatalogProduct
 {
-    /// <summary>The key components and entries refer to, e.g. <c>postgresql</c>.</summary>
     public required string Key { get; init; }
 
     public required string Name { get; init; }
@@ -137,22 +119,14 @@ public sealed record CatalogProduct
 
     public IReadOnlyList<ProductAlias> Aliases { get; init; } = [];
 
-    /// <summary>One of <see cref="VersionSchemeNames"/>.</summary>
     public required string VersionScheme { get; init; }
 
-    /// <summary>For plugins: the key of the platform they run on.</summary>
     public string? PlatformKey { get; init; }
 
-    /// <summary>Keys of related, independent products.</summary>
     public IReadOnlyList<string> RelatedKeys { get; init; } = [];
 
-    /// <summary>Container images the product is recognised from, e.g. <c>postgres</c>, <c>mcr.microsoft.com/dotnet/aspnet</c>.</summary>
     public IReadOnlyList<string> ImageNames { get; init; } = [];
 
-    /// <summary>
-    /// A vendor ships large releases on a fixed cycle that update by themselves, as the browsers do (ADR 044 decision 3): for
-    /// such a product «only important» means actively exploited or warned about by an authority. Curated data, never learned.
-    /// </summary>
     public bool Noisy { get; init; }
 
     public ProductOrigin Origin { get; init; } = ProductOrigin.Curated;
@@ -160,74 +134,31 @@ public sealed record CatalogProduct
     public ProductState State { get; init; } = ProductState.Active;
 }
 
-/// <summary>How a product was found by name.</summary>
-/// <param name="Product">The product.</param>
-/// <param name="VersionLine">The version line the name pattern captured, e.g. <c>10.0</c>.</param>
-/// <param name="Platform">The platform the name pattern captured, e.g. <c>linux</c>.</param>
-/// <param name="Learned">The spelling is known only through a learned entry (master plan 6.9): a learned product, or a
-/// raw key the instance has mapped to a catalogue key. The curated catalogue alone would not have found it.</param>
 public sealed record ProductMatch(CatalogProduct Product, string? VersionLine = null, string? Platform = null, bool Learned = false);
 
-/// <summary>The key of an affected product (master plan 6.5) and whether a learned entry gave it (6.9).</summary>
-/// <param name="Key">The catalogue key, or the raw key when the catalogue does not know the product.</param>
-/// <param name="LearnedFrom">The raw key when <see cref="Key"/> comes from a learned entry; <c>null</c> when the curated
-/// catalogue gave it or the product is unknown. The raw key keeps finding what it found before the entry was learned.</param>
 public sealed record ResolvedProduct(ProductKey Key, string? LearnedFrom);
 
-/// <summary>
-/// The technology catalogue (master plan 4.5, 6.5): global data every role may read. Only entries in
-/// effect take part: every curated entry, learned entries only while active (master plan 6.9).
-/// When a curated and a learned entry would both match, the curated one wins: every lookup asks the curated entries
-/// first and the learned ones only when those know nothing.
-/// </summary>
 public interface IProductCatalog
 {
     Task<CatalogProduct?> FindByKeyAsync(string key, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// The product a source means by vendor and product name, through the alias patterns. Without a
-    /// usable vendor (missing, <c>n/a</c>) a name matches only when exactly one product has it.
-    /// </summary>
     Task<ProductMatch?> FindByNameAsync(string? vendor, string product, CancellationToken cancellationToken);
 
     Task<CatalogProduct?> FindByCpeAsync(CpePair pair, CancellationToken cancellationToken);
 
-    /// <summary>The product distributed as this package; type and name as in <see cref="PackageCoordinate.Normalize"/>.</summary>
     Task<CatalogProduct?> FindByPackageAsync(string type, string name, CancellationToken cancellationToken);
 
-    /// <summary>The product a container image stands for; registry <c>docker.io</c>, <c>library/</c>, tag and digest are ignored.</summary>
     Task<CatalogProduct?> FindByImageAsync(string image, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// The key an affected product of a source gets (master plan 6.5): the catalogue key when the
-    /// catalogue knows the product by CPE pair, package or name, otherwise the raw <see cref="ProductKey"/>;
-    /// <c>null</c> when nothing matches and the name has no letter or digit.
-    /// </summary>
     Task<ProductKey?> ResolveKeyAsync(string? vendor, string product, CpePair? cpe, PackageCoordinate? package, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// As <see cref="ResolveKeyAsync"/>, and says whether a learned entry gave the key. The curated catalogue is asked
-    /// first, by package, CPE pair and name; learned entries only when it knows nothing (master plan 6.9): a learned
-    /// entry never changes a key the curated catalogue gives.
-    /// </summary>
     Task<ResolvedProduct?> ResolveAsync(string? vendor, string product, CpePair? cpe, PackageCoordinate? package, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// The raw keys a learned entry was learned from or that were mapped to it (master plan 6.9), also after it was
-    /// withdrawn; empty for a key nothing was learned for. A component recorded under a learned entry keeps finding what
-    /// these raw keys find, whatever becomes of the entry.
-    /// </summary>
     Task<IReadOnlyList<string>> LearnedFromAsync(string key, CancellationToken cancellationToken);
 
-    /// <summary>Whether some product in effect names <paramref name="platformKey"/> as its platform, i.e. the platform has plugins.</summary>
     Task<bool> HasPluginsAsync(string platformKey, CancellationToken cancellationToken);
 
-    /// <summary>The plugins and packages the catalogue lists for a platform (<c>platform_key</c>), e.g. WordPress plugins.</summary>
     Task<IReadOnlyList<CatalogProduct>> PluginsOfAsync(string platformKey, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Products for what someone types into the input help, best match first: spaces, punctuation, case,
-    /// trailing version numbers and small typos do not matter (<c>Postgre SQL</c>, <c>.net 8</c>, <c>kubernets</c>).
-    /// </summary>
     Task<IReadOnlyList<CatalogProduct>> SearchAsync(string text, int limit, CancellationToken cancellationToken);
 }

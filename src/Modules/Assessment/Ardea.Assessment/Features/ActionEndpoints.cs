@@ -13,7 +13,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assessment.Features;
 
-/// <summary>Why a command did not run, as problem details (master plan 10.1).</summary>
 internal sealed record Refusal(string Code, int Status, string Title, Dictionary<string, string[]>? Errors = null)
 {
     public static Refusal Validation(string code, string title, Dictionary<string, string[]> errors) => new(code, StatusCodes.Status400BadRequest, title, errors);
@@ -25,7 +24,6 @@ internal sealed record Refusal(string Code, int Status, string Title, Dictionary
     public IResult ToResult() => ApiProblems.Problem(Code, Status, Title, Errors);
 }
 
-/// <summary>A command's value or why it was refused.</summary>
 internal readonly record struct CommandResult<T>(T? Value, Refusal? Refusal)
 {
     public static implicit operator CommandResult<T>(T value) => new(value, null);
@@ -33,12 +31,6 @@ internal readonly record struct CommandResult<T>(T? Value, Refusal? Refusal)
     public static implicit operator CommandResult<T>(Refusal refusal) => new(default, refusal);
 }
 
-/// <summary>
-/// Actions and alerts (master plan 10.2 «Massnahmen und Meldungen»): the read side the overview, the list
-/// and the details build on (tasks 3.8 to 3.10), status changes with the expected starting status, and notes.
-/// An action is open or closed; it has no assignee and no deadline (master plan 17.5, ADR 046). Every member
-/// reads; members and up change.
-/// </summary>
 internal static class ActionEndpoints
 {
     private const int MaxLimit = 100;
@@ -65,11 +57,6 @@ internal static class ActionEndpoints
             .Produces<AssessmentRequestView>(StatusCodes.Status202Accepted).Problems(403, 404, 409, 429);
     }
 
-    /// <summary>
-    /// A person asks for the model's assessment of an alert (master plan 7.5; task 4.3): without threshold and
-    /// without the actions' quota, but within the daily token quotas and the daily cap on requests by people. The job runs
-    /// before every waiting assessment of the system, under a key of its own, so a waiting system job never swallows it.
-    /// </summary>
     private static async Task<IResult> RequestAssessmentAsync(
         int number, HttpContext http, AssessDbContext db, Estimating.EstimateTrigger trigger, IJobQueue jobs, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
@@ -98,11 +85,6 @@ internal static class ActionEndpoints
         return Results.Accepted((string?)null, new AssessmentRequestView(queued));
     }
 
-    /// <summary>
-    /// Actions, highest level first. <c>status</c>: <c>active</c> (default, the same as <c>open</c>), <c>open</c>,
-    /// <c>closed</c>, <c>all</c>; <c>level</c> and <c>project</c> take comma-separated values;
-    /// <c>q</c> finds a number, an entry key or a component, package or project name.
-    /// </summary>
     private static async Task<IResult> ListAsync(
         AssessDbContext db, ActionReader reader, IProfileQueries profiles, string? status, string? level, string? project, string? q, int? limit, string? cursor,
         CancellationToken cancellationToken)
@@ -191,7 +173,6 @@ internal static class ActionEndpoints
         return Results.Created((string?)null, ActionReader.View(result.Value!));
     }
 
-    /// <summary>Findings, highest level first, also those of level 1 for the view «Not relevant».</summary>
     private static async Task<IResult> FindingsAsync(
         AssessDbContext db, ActionReader reader, string? level, string? project, string? status, int? limit, string? cursor, CancellationToken cancellationToken)
     {
@@ -253,10 +234,6 @@ internal static class ActionEndpoints
         return Results.Ok(view);
     }
 
-    /// <summary>
-    /// A person confirms the model's estimate of a finding or corrects its verdict or level (task 4.7, master plan 7.9).
-    /// The finding is assessed again in the same unit of work; the answer is the finding as it is then.
-    /// </summary>
     private static async Task<IResult> ReviewFindingAsync(
         Guid findingId, ReviewVerdictRequest request, HttpContext http, VerdictReviews reviews, ActionReader reader, IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)
@@ -272,7 +249,6 @@ internal static class ActionEndpoints
         return Results.Ok(view);
     }
 
-    /// <summary>Alerts with a number (a finding reached level 2 once), highest level first; <c>q</c> finds an entry key.</summary>
     private static async Task<IResult> AlertsAsync(
         AssessDbContext db, ActionReader reader, string? level, string? q, int? limit, string? cursor, CancellationToken cancellationToken)
     {
@@ -338,7 +314,6 @@ internal static class ActionEndpoints
         var now = time.GetUtcNow();
         var open = await db.Remediations.AsNoTracking().Where(r => r.Status != "closed").ToListAsync(cancellationToken);
         var byLevel = new[] { 5, 4, 3, 2 }.Select(l => new LevelCountView(l, Levels.Name(l), open.Count(r => r.Level == l))).ToList();
-        // Highest level first; within a level, what has waited longest at it (master plan 17.5: no deadlines).
         var urgent = open.OrderByDescending(r => r.Level).ThenBy(r => r.LevelRaisedAt ?? r.OpenedAt).ThenBy(r => r.Number).Take(5).ToList();
 
         var names = (await profiles.FindComponentsAsync([.. open.Select(r => r.ComponentId).Distinct()], cancellationToken))
@@ -348,15 +323,12 @@ internal static class ActionEndpoints
             .OrderByDescending(p => p.Level).ThenBy(p => p.Project.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
 
         var since = now.AddDays(-1);
-        // Without the rows the history no longer shows (ADR 046) and without the migration's closings, which are no change
-        // anyone made: the overview shows no burst after the upgrade.
         var changes = (await db.Events.AsNoTracking()
                 .Where(e => e.At >= since && ((e.Kind.StartsWith("action.") && e.Kind != Assessing.EventKinds.LegacyActionAssigned) || e.Kind == "backfill.completed"))
                 .Select(e => new { e.Kind, e.Data })
                 .ToListAsync(cancellationToken))
             .Where(e => !Assessing.LegacyHistory.Hidden(e.Kind, e.Data.RootElement) && !Assessing.LegacyHistory.ByMigration(e.Kind, e.Data.RootElement))
             .GroupBy(e => e.Kind, StringComparer.Ordinal).Select(g => new ChangeCountView(g.Key, g.Count())).ToList();
-        // The urgent actions open with their three answers (master plan 11.2, phase 3 acceptance).
         var urgentIds = urgent.Select(r => (Guid?)r.Id).ToArray();
         var urgentFindings = (await db.Findings.AsNoTracking().Where(f => urgentIds.Contains(f.RemediationId)).ToListAsync(cancellationToken)).ToLookup(f => f.RemediationId!.Value);
         var answers = await reader.AnswersAsync([.. urgent.Select(r => ((IReadOnlyList<Finding>)[.. urgentFindings[r.Id]], r.TargetVersion))], cancellationToken);

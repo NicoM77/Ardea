@@ -5,11 +5,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Sources.Signals;
 
-/// <summary>
-/// CISA's catalogue of known exploited vulnerabilities (master plan 4.4, 5.5, decision E3): one file
-/// of about 1,800 entries. CISA ignores the ETag but honours <c>If-Modified-Since</c> (measured
-/// 18 Nov 2026), so an unchanged catalogue costs one request with an empty answer.
-/// </summary>
 public sealed class CisaKevProvider : ISignalProvider
 {
     public const string Key = "cisa-kev";
@@ -32,7 +27,6 @@ public sealed class CisaKevProvider : ISignalProvider
     public async IAsyncEnumerable<Signal> FetchSignalsAsync(SyncContext context, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var validators = HttpValidators.Parse(context.Cursor);
-        // Only Last-Modified counts here; CISA answers 200 to If-None-Match.
         using var response = await context.GetIfChangedAsync(new Uri(Url), validators with { ETag = null }, cancellationToken);
         if (response.NotModified)
         {

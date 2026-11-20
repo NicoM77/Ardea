@@ -10,9 +10,6 @@ namespace Ardea.Iam.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Third layer of tenant separation (master plan 9.2, ADR 029). Writes only within the
-            // organisation of the transaction; the user rules let a user see their own memberships and
-            // the organisations behind them before an organisation is chosen.
             migrationBuilder.Sql("""
                 ALTER TABLE iam.organization ENABLE ROW LEVEL SECURITY;
                 CREATE POLICY tenant ON iam.organization
@@ -30,8 +27,6 @@ namespace Ardea.Iam.Persistence.Migrations
                     USING (organization_id = platform.current_organization_id())
                     WITH CHECK (organization_id = platform.current_organization_id());
 
-                -- System operation "accept an invitation" (master plan 9.2): which organisation an open
-                -- invitation token belongs to, optionally only for one address. Returns an id, nothing else.
                 CREATE FUNCTION iam.invitation_organization(p_token_hash text, p_normalized_email text)
                     RETURNS uuid
                     LANGUAGE sql STABLE SECURITY DEFINER

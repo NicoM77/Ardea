@@ -8,7 +8,6 @@ using Ardea.Intel.Sources.CveProgram;
 
 namespace Ardea.Sources.Tests.CveProgram;
 
-/// <summary>Fetching from the CVE Program against recorded responses (task 1.4, master plan 5.5).</summary>
 public sealed class CveProgramProviderTests : IDisposable
 {
     private readonly string _work = Directory.CreateTempSubdirectory("ardea-cve-").FullName;
@@ -18,7 +17,6 @@ public sealed class CveProgramProviderTests : IDisposable
     {
         var log = TestData.Read("cve-program", "deltaLog-trimmed.json");
         var http = new RecordedHttp().On("deltaLog.json", () => Json(log, etag: "\"log-1\""));
-        // The cursor stands at the oldest entry: only the two newer ones are due.
         var context = Context(http, new CveCursor(DateTimeOffset.Parse("2026-11-18T19:58:28.347Z", System.Globalization.CultureInfo.InvariantCulture), null).ToString());
 
         var items = await Collect(new CveProgramProvider(), context);
@@ -39,7 +37,6 @@ public sealed class CveProgramProviderTests : IDisposable
         entries[1].Updated!.Add(duplicate);
         entries[1].New!.Add(duplicate);
 
-        // The log is newest first; the cursor stands at the oldest entry.
         var plan = DeltaPlan.Create(entries, entries[2].FetchTime);
 
         Assert.Equal(1, plan.Steps.SelectMany(s => s.Changes).Count(c => c.CveId == duplicate.CveId));
@@ -59,7 +56,6 @@ public sealed class CveProgramProviderTests : IDisposable
             changes.Add(change);
         }
 
-        // The two entries after `since`, two new and two updated records each; the oldest entry is left out.
         Assert.Equal(8, changes.Count);
         Assert.All(changes, c => Assert.Matches("^CVE-\\d{4}-\\d+$", c.ExternalId));
         Assert.All(changes, c => Assert.NotNull(c.ModifiedAt));
@@ -102,8 +98,6 @@ public sealed class CveProgramProviderTests : IDisposable
 
         var items = await Collect(new CveProgramProvider(), context);
 
-        // Log4Shell was last updated in 2025-10, Spring4Shell before; only the 2026 record and the
-        // records updated inside the window come through.
         var ids = items.OfType<RawRecord>().Select(r => r.ExternalId).ToList();
         Assert.Contains("CVE-2026-119725", ids);
         Assert.DoesNotContain("CVE-2022-22965", ids);
@@ -196,7 +190,6 @@ public sealed class CveProgramProviderTests : IDisposable
         return response;
     }
 
-    /// <summary>The archive's shape in small: an outer zip around a zip of record files.</summary>
     private static byte[] ZipOfZip(params (string Path, string Content)[] files)
     {
         using var innerStream = new MemoryStream();
@@ -219,7 +212,6 @@ public sealed class CveProgramProviderTests : IDisposable
         return outerStream.ToArray();
     }
 
-    /// <summary>Answers recorded responses; any record URL on GitHub gets the recorded record if there is one.</summary>
     private sealed class RecordedHttp : HttpMessageHandler
     {
         private readonly List<(string Match, Func<HttpResponseMessage> Respond)> _routes = [];

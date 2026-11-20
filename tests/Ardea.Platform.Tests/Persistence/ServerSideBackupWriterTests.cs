@@ -3,10 +3,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Platform.Tests.Persistence;
 
-/// <summary>
-/// Experiment 0.7 (ADR 0003): the database server writes the dump before a migration with the
-/// pg_dump of its own image, and keeps the newest three.
-/// </summary>
 public sealed class ServerSideBackupWriterTests(PostgresServer server)
 {
     [Fact]
@@ -45,7 +41,6 @@ public sealed class ServerSideBackupWriterTests(PostgresServer server)
             await db.Migrator().MigrateAsync(owner, TestContext.Current.CancellationToken);
         }
 
-        // The application role stands in for the owner of a database the operator brings along.
         await using var app = await db.OpenAppAsync();
         var path = await db.Backup().WriteAsync(app, TestContext.Current.CancellationToken);
 

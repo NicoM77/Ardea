@@ -6,7 +6,6 @@ using Npgsql;
 
 namespace Ardea.Platform.Tests.Persistence;
 
-/// <summary>The hand-off before the commit (ADR 038): it writes in the same transaction, and when it fails nothing commits.</summary>
 public sealed class UnitOfWorkTests(PostgresServer server)
 {
     [Fact]

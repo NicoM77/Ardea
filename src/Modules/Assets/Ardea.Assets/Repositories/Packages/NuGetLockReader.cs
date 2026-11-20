@@ -4,20 +4,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Assets.Repositories.Packages;
 
-/// <summary>
-/// Reads NuGet's <c>packages.lock.json</c> (master plan 16.3, ADR 032 decision 4), which GitHub's
-/// dependency graph does not resolve: per target framework (and runtime), the resolved version of
-/// every package. <c>Direct</c> is direct; <c>Transitive</c> and <c>CentralTransitive</c> (a transitive
-/// package pinned by central package management) are transitive; <c>Project</c> references are the
-/// repository's own code and skipped. The same package and version under several target frameworks is
-/// one finding, direct if it is direct in any.
-/// <para>
-/// The lockfile does not say whether its project is shipped. Heuristic: a lockfile under a folder named
-/// <c>test</c> or <c>tests</c>, or in a folder whose name ends in <c>.Tests</c>, <c>.Test</c> or a
-/// similar suffix (<c>.UnitTests</c>, <c>.IntegrationTest</c>), belongs to a test project: development.
-/// Everything else is runtime.
-/// </para>
-/// </summary>
 internal static partial class NuGetLockReader
 {
     public static PackageReadResult Read(ReadOnlyMemory<byte> utf8, string path)
@@ -75,7 +61,6 @@ internal static partial class NuGetLockReader
         }
     }
 
-    /// <summary>The heuristic above, on the folders of <paramref name="path"/> (the file name itself does not count).</summary>
     public static bool IsTestProject(string path)
     {
         var folders = path.Split('/');
@@ -85,7 +70,6 @@ internal static partial class NuGetLockReader
     private static string? String(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 
-    /// <summary><c>.Tests</c>, <c>.Test</c>, <c>.UnitTests</c>, <c>.IntegrationTest</c>; capital T, so <c>.Contest</c> is no test.</summary>
     [GeneratedRegex(@"\.(?:[A-Z][A-Za-z]*)?Tests?$")]
     private static partial Regex TestSuffix();
 }

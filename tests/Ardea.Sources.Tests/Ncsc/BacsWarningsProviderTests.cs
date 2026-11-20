@@ -5,7 +5,6 @@ using Ardea.Intel.Sources.Ncsc;
 
 namespace Ardea.Sources.Tests.Ncsc;
 
-/// <summary>The BACS website reader against recorded responses (task 1.9, master plan 5.5).</summary>
 public sealed class BacsWarningsProviderTests
 {
     private static readonly string[] Slugs = ["warnung-java-2-en", "warnung-java-en", "warnung-php-en", "warnung-estv-en"];
@@ -47,7 +46,6 @@ public sealed class BacsWarningsProviderTests
         Assert.Equal("https://www.bacs.admin.ch/en/warnung-java-2-en", java.Url!.AbsoluteUri);
         Assert.Equal(DateTimeOffset.Parse("2026-11-18T06:33:15.645Z", System.Globalization.CultureInfo.InvariantCulture), java.ModifiedAt);
 
-        // The terms forbid keeping the page: the raw record holds only these fields and no body text.
         using var stored = JsonDocument.Parse(java.Content);
         Assert.Equal(
             ["documentId", "groupId", "hubPosts", "lang", "publishedAt", "summary", "title", "updatedAt", "url"],
@@ -93,7 +91,6 @@ public sealed class BacsWarningsProviderTests
         var items = await NcscTest.Collect(Provider, NcscTest.Context("bacs-warnings", http, cursor, new FixedClock(NcscTest.Today.AddMinutes(30))));
 
         Assert.Equal(["/api/collector/en/current-incidents.json", "/api/collector/en/warnung-estv-en.json"], http.Paths);
-        // The page's own updatedAt did not move, so nothing is delivered; the new teaser is remembered.
         Assert.Empty(items.OfType<RawRecord>());
         Assert.Single(items.OfType<Checkpoint>());
     }
@@ -206,7 +203,6 @@ public sealed class BacsWarningsProviderTests
         return result.Observation!;
     }
 
-    /// <summary>The recorded overview reduced to the given pages (all four recorded ones by default), with optional later edits.</summary>
     private static string Overview(string[] slugs, string? updatedAt, Dictionary<string, string>? teaserDescription)
     {
         var node = JsonNode.Parse(TestData.Read("bacs-warnings", "current-incidents.json"))!;

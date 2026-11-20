@@ -6,15 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Platform.Http;
 
-/// <summary>The role an organisation endpoint needs; without it, every member (viewer and up) may call it.</summary>
 public sealed record RequiredOrganizationRole(OrganizationRole Role);
 
-/// <summary>
-/// The group <c>/orgs/{orgId}</c> every module maps its organisation endpoints into (master plan
-/// 9.2, 10.1). Before any handler runs, its filter sets the organisation as the tenant of the unit
-/// of work, checks the membership, the role the endpoint needs and the organisation's MFA
-/// requirement. An organisation the user does not belong to does not exist for them (404).
-/// </summary>
 public static class OrganizationEndpoints
 {
     private const string AccessItem = "ardea.organization-access";
@@ -24,12 +17,10 @@ public static class OrganizationEndpoints
             .RequireAuthorization()
             .AddEndpointFilter(CheckAccessAsync);
 
-    /// <summary>Requires at least <paramref name="role"/> in the organisation of the route.</summary>
     public static TBuilder RequireOrganizationRole<TBuilder>(this TBuilder builder, OrganizationRole role)
         where TBuilder : IEndpointConventionBuilder =>
         builder.WithMetadata(new RequiredOrganizationRole(role));
 
-    /// <summary>The checked access of the current request; only inside the organisation group.</summary>
     public static OrganizationAccess OrganizationAccess(this HttpContext http) =>
         http.Items[AccessItem] as OrganizationAccess ?? throw new InvalidOperationException("Not an organisation endpoint.");
 

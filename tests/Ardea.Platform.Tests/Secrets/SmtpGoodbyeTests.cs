@@ -10,10 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Platform.Tests.Secrets;
 
-/// <summary>
-/// Once the server accepted the message with its answer to DATA, the message is sent (ADR 038): a failure while
-/// saying goodbye must not make the caller send it again.
-/// </summary>
 public sealed class SmtpGoodbyeTests(PostgresServer server)
 {
     [Fact(Timeout = JobTestHost.TestTimeout)]
@@ -41,7 +37,6 @@ public sealed class SmtpGoodbyeTests(PostgresServer server)
         await serving;
     }
 
-    /// <summary>A minimal SMTP server that accepts one message and then closes the connection instead of answering QUIT.</summary>
     private static async Task ServeAsync(TcpListener listener, TaskCompletionSource accepted, CancellationToken cancellationToken)
     {
         using var client = await listener.AcceptTcpClientAsync(cancellationToken);

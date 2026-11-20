@@ -8,14 +8,8 @@ using Npgsql;
 
 namespace Ardea.Host.Tests;
 
-/// <summary>
-/// Task 5a.2 (master plan 17.2, 17.5, 17.6 E25; ADR 046): an instance with organisations, components and actions from
-/// before is migrated. Every organisation gets its stack, every component its precision, «in review» becomes open, and an
-/// open action on a component without a version becomes notices and closes saying so; everything else stays.
-/// </summary>
 public sealed class StackNoticeMigrationTests(PostgresServer server)
 {
-    /// <summary>The migrations of tasks 5a.2 and 5a.3; the state before them is the old state.</summary>
     private static readonly string[] Added = ["_StackAndPrecision", "_NoticesAndOpenOrDone", "_WithoutAssignment", "_NoisyProducts", "_NoticeGeneration"];
 
     [Fact]
@@ -27,7 +21,6 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
         await owner.OpenAsync(ct);
         var migrator = new DatabaseMigrator(options, Modules.Databases, new NoDump(), NullLogger<DatabaseMigrator>.Instance);
         await migrator.EnsureAppRoleAsync(owner, ct);
-        // Later migrations (e.g. task 5a.6) come after them: they stay unapplied too, and run with them.
         var pending = 0;
         foreach (var database in Modules.Databases)
         {
@@ -67,8 +60,6 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
                 ('01900000-0000-7000-8000-000000000041', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000031', 'CVE-2026-0031', 1, 4, 1, now(), now()),
                 ('01900000-0000-7000-8000-000000000042', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000032', 'CVE-2026-0032', 2, 3, 1, now(), now()),
                 ('01900000-0000-7000-8000-000000000043', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000033', 'CVE-2026-0033', 3, 4, 1, now(), now());
-            -- Without a version: one in review (two entries), one open (one entry shared with the first), one closed before.
-            -- With a version: one in review, assigned and with a deadline.
             INSERT INTO assess.remediation (id, organization_id, project_id, component_id, number, level, open_findings, exploitation, fix_available, status, assigned_to, due_at, due_at_manual, opened_at, closed_at, close_reason, is_backfill, changed_at) VALUES
                 ('01900000-0000-7000-8000-000000000051', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000010', '01900000-0000-7000-8000-000000000021', 4, 4, 2, 'none', false, 'in_review', NULL, NULL, false, '2026-11-01', NULL, NULL, false, now()),
                 ('01900000-0000-7000-8000-000000000052', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000010', '01900000-0000-7000-8000-000000000022', 5, 4, 1, 'none', false, 'open', NULL, NULL, false, '2026-11-05', NULL, NULL, false, now()),
@@ -88,17 +79,14 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
         Assert.Equal(pending, outcome.Applied);
         Assert.True(pending >= Added.Length);
 
-        // Every organisation has its stack.
         Assert.Equal("Acme Stack, Empty Stack", await ScalarAsync<string>(owner,
             "SELECT string_agg(o.name || ' ' || p.name, ', ' ORDER BY o.name) FROM assets.project p JOIN iam.organization o ON o.id = p.organization_id WHERE p.kind = 'organization_stack'", ct));
         Assert.Equal("project", await ScalarAsync<string>(owner, "SELECT kind FROM assets.project WHERE id = '01900000-0000-7000-8000-000000000010'", ct));
 
-        // Every component has the precision that follows from its version.
         Assert.Equal("21 none, 22 none, 23 exact, 24 line, 25 line, 26 exact", await ScalarAsync<string>(owner,
             "SELECT string_agg(right(id::text, 2) || ' ' || version_precision, ', ' ORDER BY id) FROM assets.component", ct));
         Assert.Equal(0L, await ScalarAsync<long>(owner, "SELECT count(*) FROM assets.component WHERE notice_threshold <> 'only_important'", ct));
 
-        // Open actions without a version became notices, one per entry, naming every component that raised it.
         Assert.Equal(
             "CVE-2026-0031 open {01900000-0000-7000-8000-000000000021,01900000-0000-7000-8000-000000000022} 2026-11-01; CVE-2026-0032 open {01900000-0000-7000-8000-000000000021} 2026-11-01",
             await ScalarAsync<string>(owner,
@@ -107,11 +95,9 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
                 FROM assess.notice WHERE decided_at IS NULL AND remediation_id IS NULL
                 """, ct));
 
-        // They carry their entry's exploitation for the order of the list (task 5a.3, ADR 047).
         Assert.Equal("CVE-2026-0031 poc, CVE-2026-0032 none", await ScalarAsync<string>(owner,
             "SELECT string_agg(entry_key || ' ' || exploitation, ', ' ORDER BY entry_key) FROM assess.notice", ct));
 
-        // Their actions closed saying so; their findings too, at level 1, and both histories say it.
         Assert.Equal("4 closed moved_to_notice 0, 5 closed moved_to_notice 0, 6 closed risk_accepted 0, 7 open - 1", await ScalarAsync<string>(owner,
             "SELECT string_agg(number || ' ' || status || ' ' || coalesce(close_reason, '-') || ' ' || open_findings, ', ' ORDER BY number) FROM assess.remediation", ct));
         Assert.Equal("61 not_affected moved_to_notice 1, 62 not_affected moved_to_notice 1, 63 not_affected moved_to_notice 1, 64 open - 4", await ScalarAsync<string>(owner,
@@ -121,17 +107,12 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
             "SELECT string_agg(kind || ' ' || n, ', ' ORDER BY kind) FROM (SELECT kind, count(*) AS n FROM assess.assess_event WHERE data->>'reason' = 'moved_to_notice' GROUP BY kind) e", ct));
         Assert.Equal("1 1, 2 1, 3 4", await ScalarAsync<string>(owner, "SELECT string_agg(number || ' ' || level, ', ' ORDER BY number) FROM assess.alert", ct));
 
-        // The action with a version stays, open instead of in review; its retired columns keep what they held, unread.
         Assert.Equal(0L, await ScalarAsync<long>(owner, "SELECT count(*) FROM assess.remediation WHERE status = 'in_review'", ct));
         Assert.True(await ScalarAsync<bool>(owner, "SELECT due_at_manual AND assigned_to IS NOT NULL FROM assess.remediation WHERE number = 7", ct));
 
-        // Rules no longer name the assignment.
-        // A rule that named only the assignment would match nothing and could not be saved again: it is gone (ADR 046).
         Assert.Equal(0L, await ScalarAsync<long>(owner, "SELECT count(*) FROM notify.rule WHERE name = 'Assignments only'", ct));
         Assert.Equal("{action.note_added}", await ScalarAsync<string>(owner, "SELECT events::text FROM notify.rule WHERE name = 'Team'", ct));
 
-        // During the upgrade the previous API and worker still run (master plan 4.11): what they write is accepted. A
-        // component with a version but without a precision gets the one that follows from it, «in review» is stored as open.
         await ExecuteAsync(owner, """
             INSERT INTO assets.component (id, organization_id, project_id, product_key, custom_name, kind, version, packaging, protection, origin, purl, created_at, changed_at) VALUES
                 ('01900000-0000-7000-8000-000000000027', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000010', 'nginx', NULL, 'network', '1.27', 'unknown', 'none', 'manual', NULL, now(), now()),
@@ -145,7 +126,6 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
         Assert.Equal("open open", await ScalarAsync<string>(owner,
             "SELECT r.status || ' ' || f.status FROM assess.remediation r JOIN assess.finding f ON f.remediation_id = r.id WHERE r.number = 7", ct));
 
-        // An organisation the previous API creates during the upgrade gets its stack from the next migrate (ADR 046).
         await ExecuteAsync(owner, "INSERT INTO iam.organization (id, name, slug, locale, time_zone, settings, created_at) VALUES ('01900000-0000-7000-8000-000000000003', 'Late', 'late', 'en', 'UTC', '{}', now())", ct);
         Assert.Equal(0, (await migrator.MigrateAsync(owner, ct)).Applied);
         Assert.Equal(1L, await ScalarAsync<long>(owner, "SELECT count(*) FROM assets.project WHERE organization_id = '01900000-0000-7000-8000-000000000003' AND kind = 'organization_stack'", ct));

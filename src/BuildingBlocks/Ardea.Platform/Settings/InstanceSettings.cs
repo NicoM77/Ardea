@@ -8,10 +8,6 @@ using NpgsqlTypes;
 
 namespace Ardea.Platform.Settings;
 
-/// <summary>
-/// A setting of the instance that may be changed at runtime (SMTP, AI providers, sources, limits).
-/// A set environment variable takes precedence and locks the field (master plan 12.4).
-/// </summary>
 public sealed record SettingDefinition(string Key, string? ConfigurationKey = null, bool IsSecret = false, string? Default = null);
 
 public enum SettingSource
@@ -21,10 +17,8 @@ public enum SettingSource
     Environment,
 }
 
-/// <summary>The effective value. For secrets, <see cref="Value"/> is the plaintext for internal use only.</summary>
 public sealed record SettingValue(string Key, string? Value, SettingSource Source)
 {
-    /// <summary>Set by an environment variable: the UI shows it read-only with a hint.</summary>
     public bool Locked => Source == SettingSource.Environment;
 }
 
@@ -32,7 +26,6 @@ public interface IInstanceSettings
 {
     Task<SettingValue> GetAsync(SettingDefinition definition, CancellationToken cancellationToken);
 
-    /// <summary>Stores a value in the unit of work; <c>null</c> removes it. Fails for a locked setting.</summary>
     Task SetAsync(SettingDefinition definition, string? value, Guid? changedBy, CancellationToken cancellationToken);
 }
 

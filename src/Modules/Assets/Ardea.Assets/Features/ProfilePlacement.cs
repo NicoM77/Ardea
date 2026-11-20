@@ -7,10 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Assets.Features;
 
-/// <summary>
-/// Where a technology runs, as an answer «affects us» states it (master plan 17.3, ADR 047). Writes like the component
-/// endpoints: the checks of <see cref="ComponentRules"/>, the search keys, an audit entry and the project's reverse search.
-/// </summary>
 internal sealed class ProfilePlacement(AssetsDbContext db, IProductCatalog catalog, IAuditLog audit, IJobQueue jobs, TimeProvider time) : IProfilePlacement
 {
     public async Task<PlacementResult> PlaceAsync(Guid projectId, Guid likeComponentId, string? version, CancellationToken cancellationToken)
@@ -27,7 +23,6 @@ internal sealed class ProfilePlacement(AssetsDbContext db, IProductCatalog catal
             return new PlacementResult("archived");
         }
 
-        // Two answers placing the same product in the same project take turns, so the second finds what the first added.
         var identity = ComponentValues.IdentityOf(like);
         await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"assets.place:" + projectId + ":" + identity}, 0))", cancellationToken);
 
@@ -50,7 +45,6 @@ internal sealed class ProfilePlacement(AssetsDbContext db, IProductCatalog catal
                 return new PlacementResult("found", exact.Id);
             }
 
-            // The coarse entry the person meant learns its version.
             if (same.Find(c => c.Origin == "manual" && c.VersionPrecision != VersionPrecisions.Exact) is { } coarse)
             {
                 var values = await CheckAsync(coarse, wanted, cancellationToken);
@@ -62,7 +56,6 @@ internal sealed class ProfilePlacement(AssetsDbContext db, IProductCatalog catal
                 return new PlacementResult("version_set", coarse.Id);
             }
 
-            // A repository's component belongs to its repository (16.5): a hand-entered one beside it would duplicate the product.
             if (same.Find(c => c.Origin == "repository") is { } read)
             {
                 return new PlacementResult("repository", read.Id);
@@ -80,7 +73,6 @@ internal sealed class ProfilePlacement(AssetsDbContext db, IProductCatalog catal
         return new PlacementResult("added", component.Id);
     }
 
-    /// <summary>The component's product with the new version, through the checks of the endpoints; a new one takes the project's context.</summary>
     private async Task<ComponentValues> CheckAsync(Component source, string? version, CancellationToken cancellationToken, bool fresh = false)
     {
         var errors = new Dictionary<string, string[]>(StringComparer.Ordinal);

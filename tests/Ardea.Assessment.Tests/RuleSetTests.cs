@@ -5,12 +5,10 @@ using Ardea.Platform.Persistence;
 
 namespace Ardea.Assessment.Tests;
 
-/// <summary>Rule set version 1 (task 3.4; master plan 7.6): factors, bounds and the worked examples.</summary>
 public sealed class RuleSetTests
 {
     private static readonly RuleSet Rules = RuleSet.Load(MasterDataOptions.FindDefault());
 
-    /// <summary>A strong hit in range on a normal, internal system without signals; each case changes what it names.</summary>
     private static RuleInput Base => new()
     {
         StrongMatch = true,
@@ -24,7 +22,6 @@ public sealed class RuleSetTests
         Protection = "none",
     };
 
-    /// <summary>The worked examples of master plan 7.6 (phase 3 acceptance): summands severity, exploitation, affectedness, criticality, exposure.</summary>
     public static TheoryData<string, double, string, string, string, int, int> Examples => new()
     {
         { "Puppet Enterprise, CVE-2026-115731", 9.4, "active", "high", "internal", 9, 5 },
@@ -50,7 +47,6 @@ public sealed class RuleSetTests
     [Fact]
     public void A_variant_is_level_1_without_computation()
     {
-        // SQL Server, CVE-2026-67374: Azure SQL is a variant and not named as affected.
         var result = RuleEngine.Evaluate(Rules, Base with { StrongMatch = false, VersionVerdict = null, CvssScore = 9.8, Exploitation = "active" });
 
         Assert.Equal(1, result.Level);
@@ -91,7 +87,6 @@ public sealed class RuleSetTests
         Assert.Equal(2, quiet.Level);
         Assert.Equal([new BoundRow("development", 2)], quiet.Caps);
 
-        // An actively exploited tool on the build server is a real risk (master plan 16.5).
         var exploited = RuleEngine.Evaluate(Rules, Base with { DevelopmentOnly = true, CvssScore = 9.8, Exploitation = "active", Exposure = "internal" });
         Assert.Equal(5, exploited.Level);
         Assert.Contains(new BoundRow("active_in_range_severe", 5), exploited.Floors);
@@ -100,7 +95,6 @@ public sealed class RuleSetTests
     [Fact]
     public void Floors_for_active_exploitation_hold_against_every_other_factor()
     {
-        // Low severity, isolated, low criticality, protected: points say 2.
         var low = Base with { CvssScore = 2.0, Exposure = "isolated", Criticality = "low", Protection = "effective", Exploitation = "active" };
 
         Assert.Equal(4, RuleEngine.Evaluate(Rules, low).Level);
@@ -147,8 +141,6 @@ public sealed class RuleSetTests
     [Fact]
     public void A_rule_set_names_no_deadlines_and_an_old_file_with_them_still_loads()
     {
-        // Reminders have no deadline (master plan 17.5, ADR 046). A data folder of the previous version still names them:
-        // for one version they are read and ignored, and the levels stay the same.
         var text = File.ReadAllText(Path.Combine(MasterDataOptions.FindDefault(), RuleSet.Folder, "ruleset-1.json"));
         Assert.DoesNotContain("deadline", text, StringComparison.OrdinalIgnoreCase);
         var withDeadlines = RuleSet.Parse(text.TrimEnd().TrimEnd('}') + ", \"deadlineHours\": { \"5\": 48, \"4\": 168, \"3\": 720, \"2\": 2160 } }");
@@ -168,7 +160,6 @@ public sealed class RuleSetTests
     [InlineData(10.0, "critical")]
     public void Severity_classes_follow_cvss(double? score, string severity) => Assert.Equal(severity, Rules.SeverityOf(score));
 
-    /// <summary>Every value of every factor the rule set file names, with the input that selects it.</summary>
     public static TheoryData<string, string> FactorValues
     {
         get
@@ -240,7 +231,6 @@ public sealed class RuleSetTests
     [Fact]
     public void An_unrated_entry_counts_as_medium_and_misses_the_floor_for_severe_flaws()
     {
-        // Actively exploited in range on an internet system, but without a score: the floor of 5 asks for high or critical.
         var unrated = RuleEngine.Evaluate(Rules, Base with { CvssScore = null, Exploitation = "active", Exposure = "internet" });
 
         Assert.Equal(("severity", "unrated", "no score", 2), (unrated.Factors[0].Factor, unrated.Factors[0].Value, unrated.Factors[0].Evidence, unrated.Factors[0].Points));
@@ -266,7 +256,6 @@ public sealed class RuleSetTests
     [Fact]
     public void The_model_alone_never_gives_level_1()
     {
-        // Everything speaks against the flaw and the model says «not affected»: the level stays at the lowest of the points (7.5).
         var result = RuleEngine.Evaluate(Rules, Base with
         {
             VersionVerdict = "unknown",
@@ -285,7 +274,6 @@ public sealed class RuleSetTests
     [Fact]
     public void Affected_from_the_model_does_not_lift_the_cap_that_reserves_critical_for_confirmed_affectedness()
     {
-        // 9.8, a public exploit, a critical system on the internet: 8 points with the version unknown, 9 with the model's «affected».
         var input = Base with { VersionVerdict = "unknown", CvssScore = 9.8, Exploitation = "poc", Criticality = "high", Exposure = "internet" };
 
         var model = RuleEngine.Evaluate(Rules, input with { ModelVerdict = "affected" });
@@ -297,7 +285,6 @@ public sealed class RuleSetTests
     [Fact]
     public void A_persons_verdict_is_not_held_by_the_floor_of_the_models_verdict()
     {
-        // ADR 039: a person's «unlikely» counts in full; the same verdict of the model lowers by one level at most.
         var input = Base with { VersionVerdict = "unknown", CvssScore = 9.0, Criticality = "high" };
         Assert.Equal((5, 4), (RuleEngine.Evaluate(Rules, input).Points, RuleEngine.Evaluate(Rules, input).Level));
 
@@ -325,8 +312,6 @@ public sealed class RuleSetTests
     [Fact]
     public void Across_every_combination_the_bounds_hold_and_the_model_lowers_by_at_most_one_level()
     {
-        // Master plan 7.6 steps 3 and 4 as properties: an upper bound is never exceeded without active exploitation, a lower
-        // bound is never undercut, the model moves the level by at most one below the result without it and excludes nothing.
         double?[] scores = [null, 2.0, 5.0, 7.5, 9.0, 10.0];
         (string? Human, string? Model)[] verdicts =
             [(null, null), ("affected", null), ("likely", null), ("unlikely", null), (null, "affected"), (null, "likely"), (null, "uncertain"), (null, "unlikely"), (null, "not_affected")];

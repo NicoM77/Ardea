@@ -12,10 +12,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Intel.Features;
 
-/// <summary>
-/// Consolidated entries, the same for every organisation (master plan 10.2 "Einträge und Quellen"):
-/// the base of the search and of the page «Entries».
-/// </summary>
 internal static class EntryEndpoints
 {
     private const int MaxLimit = 100;
@@ -29,10 +25,6 @@ internal static class EntryEndpoints
         entries.MapGet("/{key}/sources", SourcesAsync).WithName("listEntrySources").Produces<IReadOnlyList<EntrySourceView>>().Problems(404);
     }
 
-    /// <summary>
-    /// Newest changes first. <c>q</c> is an identifier (exact, through every alias) or words (full text);
-    /// <c>changedSince</c> limits to recent changes; merged entries never appear.
-    /// </summary>
     private static async Task<IResult> ListAsync(
         IntelDbContext db, string? q, DateTimeOffset? changedSince, string? kind, int? limit, string? cursor, CancellationToken cancellationToken)
     {
@@ -154,7 +146,6 @@ internal static class EntryEndpoints
             .ToList());
     }
 
-    /// <summary>By primary key or any alias; a merged entry leads to the one it was merged into (master plan 4.4).</summary>
     internal static async Task<(EntryRow? Entry, string? RedirectedFrom)> ResolveAsync(IntelDbContext db, string key, CancellationToken cancellationToken)
     {
         var value = key.Trim();
@@ -182,7 +173,6 @@ internal static class EntryEndpoints
 
     private static readonly string[] IdentifierPrefixes = ["CVE-", "GHSA-", "PYSEC-", "GO-", "OSV-", "EUVD-", "RUSTSEC-", "GSD-"];
 
-    /// <summary>A single token like <c>CVE-2026-1234</c> or <c>GHSA-xxxx-xxxx-xxxx</c>, or a source key such as <c>bacs-warnings:42</c>.</summary>
     private static bool LooksLikeIdentifier(string q) =>
         q.Length <= 64 && !q.Contains(' ', StringComparison.Ordinal) && q.Contains('-', StringComparison.Ordinal)
         && (IdentifierPrefixes.Any(p => q.StartsWith(p, StringComparison.OrdinalIgnoreCase)) || q.Contains(':', StringComparison.Ordinal) || q.Any(char.IsAsciiDigit));

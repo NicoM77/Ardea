@@ -4,20 +4,12 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Sources.Formats.Osv;
 
-/// <summary>The fields of an OSV record the fetch needs before it reads the whole record.</summary>
 public sealed record OsvMetadata(string Id, DateTimeOffset? Published, DateTimeOffset Modified, bool Withdrawn);
 
-/// <summary>
-/// Reads a record of the OSV schema 1.x (master plan 5.3) into an observation with one claim block:
-/// the record's own id and its <c>aliases</c> as aliases, <c>related</c> and <c>upstream</c> as related
-/// identifiers, CVSS vectors, affected packages with package URL and version ranges, references and
-/// CWEs. Only what the record says; nothing is guessed (master plan 6.1).
-/// </summary>
 public static class OsvRecordReader
 {
     public const int ParserVersion = 1;
 
-    /// <summary>OSV reference types as tags in the vocabulary of the CVE reader where one fits.</summary>
     private static readonly Dictionary<string, string> ReferenceTags = new(StringComparer.OrdinalIgnoreCase)
     {
         ["ADVISORY"] = "advisory",
@@ -74,7 +66,6 @@ public static class OsvRecordReader
         }
     }
 
-    /// <summary>Id and dates of a record, or <c>null</c> when it has no id or no valid <c>modified</c>.</summary>
     public static OsvMetadata? Metadata(string json)
     {
         try
@@ -91,11 +82,6 @@ public static class OsvRecordReader
         }
     }
 
-    /// <summary>
-    /// The identifier of an OSV id or alias: CVE and GHSA under their own schemes; every other id of
-    /// the OSV namespace (<c>PYSEC-</c>, <c>GO-</c>, <c>DRUPAL-</c>, <c>OSV-</c>, <c>BIT-</c>, …) as <c>OSV</c>,
-    /// which ranks after GHSA when the core picks the primary key (master plan 6.2).
-    /// </summary>
     public static Identifier Identify(string id) =>
         id.StartsWith("CVE-", StringComparison.OrdinalIgnoreCase) ? new Identifier("CVE", id.ToUpperInvariant())
         : id.StartsWith("GHSA-", StringComparison.OrdinalIgnoreCase) ? new Identifier("GHSA", "GHSA-" + id[5..].ToLowerInvariant())
@@ -159,13 +145,6 @@ public static class OsvRecordReader
         };
     }
 
-    /// <summary>
-    /// One product per <c>affected</c> entry with a package. Ranges of type <c>ECOSYSTEM</c> and
-    /// <c>SEMVER</c> are compared with the ecosystem's scheme (Go writes SEMVER without the <c>v</c> its
-    /// scheme also reads); <c>GIT</c> ranges keep their commits under the scheme <c>git</c>, which is
-    /// stored but never evaluated. The explicit <c>versions</c> list repeats what the ranges say and can
-    /// run to hundreds of entries, so it is kept only when the entry has no comparable range.
-    /// </summary>
     private static IEnumerable<AffectedProduct> Affected(JsonElement root)
     {
         foreach (var entry in Objects(root, "affected"))
@@ -196,12 +175,6 @@ public static class OsvRecordReader
         }
     }
 
-    /// <summary>
-    /// The events of one range in record order: each <c>introduced</c> opens a range, the next
-    /// <c>fixed</c> (exclusive) or <c>last_affected</c> (inclusive) closes it; <c>introduced: "0"</c> has
-    /// no lower bound. <c>limit</c> only bounds a search in a git history and says nothing about
-    /// affectedness. A range left open is affected upwards without end.
-    /// </summary>
     private static IEnumerable<VersionRange> Ranges(JsonElement range, string? ecosystem, string? ecosystemScheme)
     {
         var type = Text(range, "type");
@@ -248,7 +221,6 @@ public static class OsvRecordReader
         }
     }
 
-    /// <summary>CVSS vectors; the qualitative Ubuntu severity has no place in a CVSS metric and is left out.</summary>
     private static IEnumerable<SeverityMetric> Metrics(JsonElement element, string? assigner)
     {
         foreach (var severity in Objects(element, "severity"))
@@ -268,7 +240,6 @@ public static class OsvRecordReader
             };
             if (version is not null)
             {
-                // OSV carries the vector only; the score is left to whoever computes it from the vector.
                 yield return new SeverityMetric("CVSS", version, vector, null) { Assigner = assigner };
             }
         }
@@ -287,7 +258,6 @@ public static class OsvRecordReader
         }
     }
 
-    /// <summary>The database a record comes from, by its id; it assigned the record's CVSS vectors.</summary>
     private static string? Origin(string id) => id[..Math.Max(0, id.IndexOf('-', StringComparison.Ordinal))].ToUpperInvariant() switch
     {
         "GHSA" => "GitHub",
@@ -319,10 +289,6 @@ public static class OsvRecordReader
         Text(element, property) is { } text && OsvTimestamp.TryParse(text, out var date) ? date : null;
 }
 
-/// <summary>
-/// RFC 3339 timestamps as OSV writes them, with up to nine fractional digits
-/// (<c>2026-11-18T19:45:04.566522493Z</c>); <see cref="DateTimeOffset"/> keeps seven, the rest is cut.
-/// </summary>
 public static class OsvTimestamp
 {
     public static bool TryParse(string? text, out DateTimeOffset value)

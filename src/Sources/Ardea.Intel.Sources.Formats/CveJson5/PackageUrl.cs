@@ -1,9 +1,5 @@
 namespace Ardea.Intel.Sources.Formats.CveJson5;
 
-/// <summary>
-/// Derives a package URL (without version) from the <c>collectionURL</c> and <c>packageName</c> of a
-/// CVE record, for the registries of the MVP's ecosystems (master plan 16.3). Anything else: none.
-/// </summary>
 public static class PackageUrl
 {
     public static string? From(string? collectionUrl, string? packageName)

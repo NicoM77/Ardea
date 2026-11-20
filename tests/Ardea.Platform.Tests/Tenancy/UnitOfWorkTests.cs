@@ -26,7 +26,6 @@ public sealed class UnitOfWorkTests(PostgresServer server)
     public async Task Disposing_a_committed_unit_of_work_leaves_the_connection_to_its_next_user_alone()
     {
         await using var host = await JobTestHost.CreateAsync(server, _ => { });
-        // One physical connection: the second unit of work gets exactly the one the first has given back.
         var connectionString = new NpgsqlConnectionStringBuilder(host.Database.Options.AppConnectionString("uow-reuse")) { MaxPoolSize = 1 };
         await using var dataSource = NpgsqlDataSource.Create(connectionString);
 
@@ -37,7 +36,6 @@ public sealed class UnitOfWorkTests(PostgresServer server)
         var second = new UnitOfWork(dataSource, new TenantContext());
         var connection = await second.GetConnectionAsync(CancellationToken.None);
 
-        // Disposing the first must not roll back, close or otherwise act on the connection the second now uses.
         await first.DisposeAsync();
 
         await using var command = new NpgsqlCommand("SELECT 42", connection);

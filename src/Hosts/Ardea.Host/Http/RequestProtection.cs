@@ -7,21 +7,13 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 namespace Ardea.Host.Http;
 
-/// <summary>Cross-cutting protection of every request (master plan 9.3, 9.6).</summary>
 internal static class RequestProtection
 {
-    /// <summary>
-    /// Behind the bundled proxy or a tunnel, client address and scheme arrive in forwarded headers.
-    /// They are trusted only from loopback, plus the addresses or CIDR ranges in
-    /// <c>ARDEA_TRUSTED_PROXIES</c> (comma-separated). Trusting more would let anything that reaches
-    /// the API from there choose its client address, and so its rate-limit bucket.
-    /// </summary>
     public static void ConfigureForwardedHeaders(IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-            // Walk back through every trusted proxy, so a chain of two still yields the real client.
             options.ForwardLimit = null;
             options.KnownIPNetworks.Clear();
             options.KnownProxies.Clear();
@@ -50,18 +42,8 @@ internal static class RequestProtection
         });
     }
 
-    /// <summary>
-    /// The largest request body the API takes: no endpoint accepts a file, and the largest JSON (a project's
-    /// component list) stays far below it. Kestrel enforces it on the wire; <see cref="LimitBody"/> answers a
-    /// declared length above it with a problem before anything reads the body.
-    /// </summary>
     public const long MaxRequestBodyBytes = 1024 * 1024;
 
-    /// <summary>
-    /// Header set of master plan 9.6 on every response. It is set when the response starts, so error pages of the
-    /// exception handler (which clears the headers first), status code pages, rejections of the rate limiter,
-    /// static files and the single-page fallback carry it too. HSTS is the proxy's job.
-    /// </summary>
     public static Task SecurityHeaders(HttpContext context, RequestDelegate next)
     {
         context.Response.OnStarting(
@@ -87,12 +69,10 @@ internal static class RequestProtection
         headers["Cross-Origin-Opener-Policy"] = "same-origin";
         if (context.Request.Path.StartsWithSegments("/api"))
         {
-            // API answers hold personal data and secrets (MFA keys, recovery codes): never cache them.
             headers.CacheControl = "no-store";
         }
     }
 
-    /// <summary>A request that declares a body above <see cref="MaxRequestBodyBytes"/> is refused before it is read.</summary>
     public static Task LimitBody(HttpContext context, RequestDelegate next)
     {
         if (context.Request.ContentLength > MaxRequestBodyBytes)
@@ -104,10 +84,6 @@ internal static class RequestProtection
         return next(context);
     }
 
-    /// <summary>
-    /// An instance with an HTTPS public address takes API calls only over HTTPS, normally through its
-    /// proxy (master plan 12.2). A plain request gets a clear answer instead of failing deep inside.
-    /// </summary>
     public static RequestDelegate RequireHttps(RequestDelegate next, bool required) => context =>
     {
         if (required && !context.Request.IsHttps && context.Request.Path.StartsWithSegments("/api"))
@@ -121,7 +97,6 @@ internal static class RequestProtection
         return next(context);
     };
 
-    /// <summary>The signed-in user becomes part of the tenant context before any data access.</summary>
     public static Task TenantUser(HttpContext context, RequestDelegate next)
     {
         if (context.User.Identity?.IsAuthenticated == true
@@ -133,10 +108,6 @@ internal static class RequestProtection
         return next(context);
     }
 
-    /// <summary>
-    /// CSRF protection for every changing API request (master plan 9.3): browser fetch metadata and
-    /// origin must point to this instance, and the antiforgery token must be in the header.
-    /// </summary>
     public static RequestDelegate Csrf(RequestDelegate next, string publicOrigin) => async context =>
     {
         if (!context.Request.Path.StartsWithSegments("/api") || HttpMethods.IsGet(context.Request.Method)

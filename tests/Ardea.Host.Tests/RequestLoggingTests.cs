@@ -2,10 +2,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Host.Tests;
 
-/// <summary>
-/// Request lines name the query string, and some links carry a token there (the RFC 8058 one-click address of an
-/// e-mail, ADR 041): no role writes them, whatever the endpoint.
-/// </summary>
 public sealed class RequestLoggingTests
 {
     [Fact]

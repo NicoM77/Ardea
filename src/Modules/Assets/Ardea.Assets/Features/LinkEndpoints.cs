@@ -41,10 +41,6 @@ internal sealed record SuggestionView(Guid Id, Guid LinkId, string ProductKey, s
 
 internal sealed record DecideSuggestionRequest(string? Decision, string? Version);
 
-/// <summary>
-/// Repositories that feed a project, and the suggestions their platform files give (master plan
-/// 10.2, 16.2, 16.5, 16.6; task 2.13). Members connect repositories and decide suggestions.
-/// </summary>
 internal static class LinkEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
@@ -94,7 +90,6 @@ internal static class LinkEndpoints
             return ProjectNotFound();
         }
 
-        // The stack is coarse by design; a repository makes a project precise (master plan 17.4).
         if (kind == Project.StackKind)
         {
             return ApiProblems.Problem("stack_project", StatusCodes.Status409Conflict, "Connect repositories to a project; the stack names technologies only.");
@@ -153,7 +148,6 @@ internal static class LinkEndpoints
         };
         db.RepositoryLinks.Add(link);
         await db.SaveChangesAsync(cancellationToken);
-        // Newly linked: read at once (master plan 16.2).
         await http.RequestServices.GetRequiredService<IJobQueue>().EnqueueAsync(
             new Repositories.Indexing.IndexRepository(link.Id), Repositories.Indexing.IndexRepository.Options(link.Id, http.OrganizationAccess().OrganizationId), cancellationToken);
         await audit.RecordAsync(new AuditEntry("repository_link.created", "repository_link", link.Id.ToString(), new { projectId, owner, name, reference, path }), cancellationToken);
@@ -161,7 +155,6 @@ internal static class LinkEndpoints
         return Results.Created($"projects/{projectId}/repositories/{link.Id}", View(link, connection.Name, 0));
     }
 
-    /// <summary>Another branch or subfolder is a new state to read; the link is due at once.</summary>
     private static async Task<IResult> UpdateAsync(
         Guid projectId, Guid linkId, UpdateLinkRequest request, AssetsDbContext db, IUnitOfWork unitOfWork, IAuditLog audit, TimeProvider time,
         CancellationToken cancellationToken)
@@ -193,7 +186,6 @@ internal static class LinkEndpoints
         return Results.Ok(View(link, connection, components));
     }
 
-    /// <summary>Removing a link removes its components (master plan 10.2): the repository no longer vouches for them.</summary>
     private static async Task<IResult> DeleteAsync(
         Guid projectId, Guid linkId, AssetsDbContext db, IUnitOfWork unitOfWork, IAuditLog audit, IJobQueue jobs, CancellationToken cancellationToken)
     {
@@ -216,7 +208,6 @@ internal static class LinkEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>"Read now" (master plan 16.6): the link is due at once and its branch head is asked again.</summary>
     private static async Task<IResult> SyncAsync(
         Guid projectId, Guid linkId, AssetsDbContext db, IJobQueue jobs, IUnitOfWork unitOfWork, TimeProvider time, CancellationToken cancellationToken)
     {
@@ -233,7 +224,6 @@ internal static class LinkEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>Takes over a much smaller state that a reading held back (master plan 16.5).</summary>
     private static async Task<IResult> ConfirmShrinkAsync(
         Guid projectId, Guid linkId, AssetsDbContext db, IJobQueue jobs, IUnitOfWork unitOfWork, IAuditLog audit, CancellationToken cancellationToken)
     {
@@ -273,10 +263,6 @@ internal static class LinkEndpoints
         return Results.Ok(views);
     }
 
-    /// <summary>
-    /// Confirms a suggestion, with a corrected version where needed: it becomes a component from the
-    /// repository with its evidence (16.5). A dismissed one is not suggested again while the file says the same.
-    /// </summary>
     private static async Task<IResult> DecideAsync(
         Guid projectId, Guid id, DecideSuggestionRequest request, HttpContext http, AssetsDbContext db, IProductCatalog catalog, IUnitOfWork unitOfWork,
         IAuditLog audit, IJobQueue jobs, TimeProvider time, CancellationToken cancellationToken)
@@ -348,11 +334,9 @@ internal static class LinkEndpoints
         new(l.Id, l.ConnectionId, connection, l.Owner, l.Name, l.Ref, l.Path, l.State, l.StateReason, l.FailingSince, l.LastCommitSha, l.LastIndexedAt,
             l.NextCheckAt, l.PendingShrink is not null, components);
 
-    /// <summary>Owners and repositories: letters, digits, <c>-</c>, <c>_</c> and <c>.</c>, as GitHub allows.</summary>
     private static bool IsGitHubName(string? value) =>
         value is { Length: > 0 and <= 100 } && value.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.') && value is not ("." or "..");
 
-    /// <summary>A subfolder as a relative path with forward slashes; <c>..</c> and absolute paths are refused (16.9).</summary>
     private static string? NormalizePath(string? value, Dictionary<string, string[]> errors)
     {
         var path = Optional(value)?.Replace('\\', '/').Trim('/');

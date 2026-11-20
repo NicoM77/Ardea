@@ -6,7 +6,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Correlation;
 
-/// <summary>What one observation contributes to one entry: the claim blocks that share its aliases.</summary>
 internal sealed record Contribution(
     Guid SourceId,
     string SourceKey,
@@ -21,13 +20,8 @@ internal sealed record AffectedData(
     string? PurlType, string? PurlName, string? VersionScheme, string? Introduced, string? Fixed, string? LastAffected,
     string? Exact, string Status, string DefaultStatus)
 {
-    /// <summary>The raw key when <see cref="ProductKey"/> comes from a learned catalogue entry (master plan 6.9).</summary>
     public string? LearnedFrom { get; init; }
 
-    /// <summary>
-    /// The row as the fingerprints and the change detection compare it. A learned key adds its raw key; without one the
-    /// text is what it was before learned entries existed, so no existing entry looks changed.
-    /// </summary>
     public string Compared => string.Join('|', ProductKey, CpeVendor, CpeProduct, PurlType, PurlName, VersionScheme, Introduced, Fixed, LastAffected, Exact, Status, DefaultStatus)
         + (LearnedFrom is null ? string.Empty : "|learned:" + LearnedFrom);
 }
@@ -36,7 +30,6 @@ internal sealed record SourceLink(Guid SourceId, Guid? SourceRecordId, string Re
 
 internal sealed record ExploitationEvidence(string Source, string State, string? Evidence, DateTimeOffset? Since);
 
-/// <summary>The computed entry (master plan 6.3): every field with the source it came from.</summary>
 internal sealed record EntryProjection
 {
     public required string Kind { get; init; }
@@ -85,13 +78,10 @@ internal sealed record EntryProjection
 
     public IReadOnlyList<string> Workarounds { get; init; } = [];
 
-    /// <summary>The versions the description and solutions name as fixes (<see cref="FixVersionText"/>).</summary>
     public IReadOnlyList<string> FixVersionsInText { get; init; } = [];
 
-    /// <summary>From the signals (task 1.8): <c>high</c>, <c>low</c> or none.</summary>
     public string? EpssClass { get; init; }
 
-    /// <summary>Hash over the fields that can change an assessment (master plan 6.4 step 4).</summary>
     public string MaterialFingerprint(string? epssClass) => Hash(
         State,
         SeverityClass(CvssScore),
@@ -103,7 +93,6 @@ internal sealed record EntryProjection
         epssClass ?? string.Empty,
         string.Join('\n', FixVersionsInText));
 
-    /// <summary>Hash over what tells people what to do: a new workaround updates the answer without reassessment.</summary>
     public string RemediationFingerprint() => Hash(
         string.Join('\n', Solutions.Order(StringComparer.Ordinal)),
         string.Join('\n', Workarounds.Order(StringComparer.Ordinal)),
@@ -123,13 +112,8 @@ internal sealed record EntryProjection
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join('\u001f', parts))));
 }
 
-/// <summary>
-/// Computes an entry from all observations that share its aliases, with the fixed precedence rules
-/// of master plan 6.3. Deterministic: the same observations give the same entry.
-/// </summary>
 internal static class Projection
 {
-    /// <summary>Fixed ranking of sources in the MVP (master plan 6.3): the identifier's issuer first.</summary>
     private static readonly Dictionary<string, int> SourceRank = new(StringComparer.Ordinal)
     {
         ["cve-program"] = 0,
@@ -147,7 +131,6 @@ internal static class Projection
 
         if (warningKey is not null)
         {
-            // A warning without identifier stays bound to its one source (master plan 6.2 rule 6).
             var warning = ordered[0];
             provenance["title"] = warning.SourceKey;
             return new EntryProjection
@@ -174,7 +157,6 @@ internal static class Projection
             .ToList();
         var primary = aliases.FirstOrDefault() ?? throw new InvalidOperationException("An entry needs at least one alias.");
 
-        // Text: records that describe the vulnerability before documents that mention it.
         var describing = ordered.Where(c => c.Observation.Kind == ObservationKind.Vulnerability).ToList();
         var mentioning = ordered.Where(c => c.Observation.Kind != ObservationKind.Vulnerability).ToList();
         var textSources = describing.Concat(mentioning).ToList();
@@ -182,7 +164,6 @@ internal static class Projection
         var description = First(textSources, c => c.Claims.Select(b => b.Description).FirstOrDefault(t => !string.IsNullOrWhiteSpace(t)) ?? (c.Observation.Kind == ObservationKind.Vulnerability ? c.Observation.Description : null), "description", provenance);
         var summary = First(mentioning, c => c.Observation.Summary, "summary", provenance);
 
-        // The issuer withdrawing overrules everything else.
         var issuerStates = describing.Where(c => Rank(c) == 0).SelectMany(c => c.Claims).Select(b => b.State).ToList();
         var allStates = ordered.SelectMany(c => c.Claims).Select(b => b.State).ToList();
         var state = issuerStates.Contains(VulnerabilityState.Rejected) ? "rejected"
@@ -255,7 +236,6 @@ internal static class Projection
         };
     }
 
-    /// <summary>A title when no source gives one (25 % of records): built from product and weakness, never invented.</summary>
     private static string? DerivedTitle(IReadOnlyList<AffectedData> affected, string? weakness, Dictionary<string, string> provenance)
     {
         var product = affected.Select(a => string.Join(' ', new[] { a.Vendor, a.Product }.Where(p => !string.IsNullOrWhiteSpace(p)))).FirstOrDefault(p => p.Length > 0);
@@ -270,15 +250,12 @@ internal static class Projection
 
     private static IEnumerable<AffectedData> Rows(Guid sourceId, AffectedProduct product)
     {
-        // CPE pair and package in the catalogue's canonical forms, so the candidate search compares like with like.
         var cpe = product.Cpes.Select(c => Cpe.TryParse(c, out var parsed) ? parsed : null).FirstOrDefault(c => c is not null && c.Vendor is not (Cpe.Any or Cpe.NotApplicable));
         var package = PackageCoordinate.TryParsePurl(product.Purl, out var coordinate, out _) ? coordinate : null;
-        // The raw key; the correlation replaces it with the catalogue's key where the catalogue knows the product.
         var key = ProductKey.TryCreate(product.Vendor, product.Product ?? package?.Name, out var raw) ? raw.Value : null;
         var defaultStatus = Status(product.DefaultStatus) ?? "unknown";
         if (product.Versions.Count == 0)
         {
-            // No versions named: the default status says it all; without it, unknown.
             yield return new AffectedData(sourceId, product.Vendor, product.Product, key, cpe?.Vendor, cpe?.Product, package?.Type, package?.Name,
                 product.VersionScheme, null, null, null, null, Status(product.DefaultStatus) ?? "unknown", defaultStatus);
             yield break;
@@ -286,7 +263,6 @@ internal static class Projection
 
         foreach (var stated in product.Versions)
         {
-            // Placeholders, ranges in one field and open bounds are resolved here, once, for every source (master plan 6.6).
             var range = VersionRanges.Normalize(new Catalog.Contracts.VersionRange
             {
                 Introduced = stated.Introduced,
@@ -312,7 +288,6 @@ internal static class Projection
             _ => 6,
         };
 
-    /// <summary>The issuer's CNA first, then CISA's enrichment, then NVD, then the rest by source rank (master plan 6.3).</summary>
     private static int MetricGroup(Contribution c, SeverityMetric m)
     {
         var adp = m.Assigner is { } a && AdpAssigners.Contains(a, StringComparer.OrdinalIgnoreCase);

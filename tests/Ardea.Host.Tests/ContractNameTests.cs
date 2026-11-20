@@ -1,9 +1,5 @@
 namespace Ardea.Host.Tests;
 
-/// <summary>
-/// OpenAPI names a schema after its type's simple name. Two API types with the same name in different
-/// modules would silently share one schema, and the generated web client would lose fields.
-/// </summary>
 public sealed class ContractNameTests
 {
     private static readonly string[] Suffixes = ["View", "Request", "Response", "Preview", "Summary", "Ref"];

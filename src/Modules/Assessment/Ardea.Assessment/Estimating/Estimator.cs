@@ -6,27 +6,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Assessment.Estimating;
 
-/// <summary>What came of asking the model: a checked answer, or why there is none, with the tokens spent either way.</summary>
 internal sealed record EstimateResult(StoredEstimate? Estimate, string? Failure, AiProviderInfo? Provider, int Attempts, int TokensIn, int TokensOut, long DurationMs);
 
-/// <summary>
-/// Asks the language model for one alert (master plan 7.5, 7.8; tasks 4.2, 4.6). Two attempts at most: an answer that
-/// fails the check is asked again once; a provider that does not answer gives way to the next allowed one, local ones
-/// first. Only the providers the organisation's data policy allows are ever called, also when all of them fail.
-/// The model has no tools; the time limit holds per call. A call without a usage report (a failure, a timeout, a
-/// provider that reports none) is charged its estimated cost: the prompt's length in characters / 4 plus the most
-/// output tokens it may produce. Metrics count calls, tokens, duration, errors and retries; logs never carry prompt or
-/// answer texts.
-/// </summary>
 internal sealed partial class Estimator(IAiProviders providers, AiLimits limits, ILogger<Estimator> logger)
 {
     public const int Attempts = 2;
     public const int MaxOutputTokens = 2000;
 
-    /// <param name="input">The alert's input.</param>
-    /// <param name="allowed">The providers the organisation's policy allows, in order.</param>
-    /// <param name="budget">Calls left in the quota of the alert's actions; at most <see cref="Attempts"/> are made.</param>
-    /// <param name="cancellationToken">Cancels the job.</param>
     public async Task<EstimateResult> EstimateAsync(EstimateInput input, IReadOnlyList<AiProviderInfo> allowed, int budget, CancellationToken cancellationToken)
     {
         var messages = EstimatePrompt.Messages(input);
@@ -104,7 +90,6 @@ internal sealed partial class Estimator(IAiProviders providers, AiLimits limits,
     private partial void LogProviderFailed(string provider, string error, int attempt);
 }
 
-/// <summary>The assessment's measurements (master plan 7.8 «Telemetrie»): counts, tokens and durations, never texts.</summary>
 internal static class EstimateMetrics
 {
     public const string MeterName = "Ardea.Assessment.Ai";
@@ -121,7 +106,6 @@ internal static class EstimateMetrics
 
     public static readonly Counter<long> Retries = Meter.CreateCounter<long>("ardea.ai.retries", description: "Second attempts after an invalid answer or a failed call.");
 
-    /// <summary>Assessments by outcome: <c>stored</c>, <c>without_model</c>, or why none was asked for.</summary>
     public static readonly Counter<long> Estimates = Meter.CreateCounter<long>("ardea.ai.estimates", description: "Assessments of alerts by outcome.");
 
     public static void Call(string provider, string outcome, TimeSpan elapsed)

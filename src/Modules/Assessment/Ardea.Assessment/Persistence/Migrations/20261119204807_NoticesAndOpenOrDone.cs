@@ -5,12 +5,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Ardea.Assessment.Persistence.Migrations
 {
-    /// <summary>
-    /// Task 5a.2 (master plan 17.5, 17.6; ADR 046): the table of notices; actions and findings are open or done, without
-    /// «in review»; open actions on components without a version become notices. The columns <c>assigned_to</c>,
-    /// <c>due_at</c> and <c>due_at_manual</c> of <c>assess.remediation</c> are no longer mapped, written or read; by the
-    /// compatibility rule of master plan 4.11 a migration of the next version drops them.
-    /// </summary>
     public partial class NoticesAndOpenOrDone : Migration
     {
         /// <inheritdoc />
@@ -26,16 +20,12 @@ namespace Ardea.Assessment.Persistence.Migrations
                 schema: "assess",
                 table: "finding");
 
-            // «In review» is gone: what was in review is open (master plan 17.5).
             migrationBuilder.Sql("""
                 UPDATE assess.remediation SET status = 'open' WHERE status = 'in_review';
                 UPDATE assess.finding SET status = 'open' WHERE status = 'in_review';
 
-                -- Unused from now on; inserts no longer name it (master plan 4.11: dropped one version later).
                 ALTER TABLE assess.remediation ALTER COLUMN due_at_manual SET DEFAULT false;
 
-                -- For this version only (master plan 4.11): the API of the previous version may still take an action into
-                -- review during the upgrade; what it writes as «in review» is stored as open. The next version drops it.
                 CREATE FUNCTION assess.open_instead_of_review()
                     RETURNS trigger LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
                     AS $$
@@ -112,19 +102,13 @@ namespace Ardea.Assessment.Persistence.Migrations
                     WITH CHECK (organization_id = platform.current_organization_id());
                 """);
 
-            // E25 (master plan 17.6, ADR 046): an open action on a component without a version becomes a notice per entry of
-            // its open findings, with the component as the reason. The findings close with the reason «moved_to_notice» at
-            // level 1, the action closes with it, and both histories say so. Closed actions and actions on components with a
-            // version stay as they are. Assets migrates before Assess (master plan 4.11), so the precision is there.
             migrationBuilder.Sql("""
                 DO $$
                 BEGIN
-                    -- A test database with the Assess schema but without Assets has no components, and nothing to move.
                     IF to_regclass('assets.component') IS NULL THEN
                         RETURN;
                     END IF;
 
-                    -- Cross-schema read (ADR 046): Assets must have migrated first (Modules.cs order, master plan 4.11).
                     IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                                    WHERE table_schema = 'assets' AND table_name = 'component' AND column_name = 'version_precision') THEN
                         RAISE EXCEPTION 'assets.component.version_precision is missing: migrate Assets (StackAndPrecision) before Assess (NoticesAndOpenOrDone)';
@@ -158,7 +142,6 @@ namespace Ardea.Assessment.Persistence.Migrations
                             'factors', '[]'::jsonb, 'caps', '[]'::jsonb, 'floors', '[]'::jsonb)
                     FROM moved_finding m WHERE m.id = f.id;
 
-                    -- History only: rows written here reach no notification (only the units of work hand events on).
                     INSERT INTO assess.assess_event (organization_id, remediation_id, at, kind, data)
                     SELECT organization_id, id, now(), 'action.withdrawn', '{"reason":"moved_to_notice"}'::jsonb
                     FROM moved_action;
@@ -191,7 +174,6 @@ namespace Ardea.Assessment.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // The notices and the closed actions stay closed; a restore of the dump «migrate» wrote brings the old state back.
             migrationBuilder.DropTable(
                 name: "notice",
                 schema: "assess");

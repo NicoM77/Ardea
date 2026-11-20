@@ -3,10 +3,6 @@ using Npgsql;
 
 namespace Ardea.Platform.Persistence;
 
-/// <summary>
-/// Two database roles (master plan 9.2): <c>ardea_migrator</c> owns the tables and is only used by
-/// <c>migrate</c> and maintenance commands; <c>ardea_app</c> is used by API and worker.
-/// </summary>
 public sealed record DatabaseOptions
 {
     public const string OwnerPasswordKey = "DB_OWNER_PASSWORD";
@@ -49,9 +45,7 @@ public sealed record DatabaseOptions
         Username = user,
         Password = password,
         ApplicationName = applicationName,
-        // Each transaction sets its own context (master plan 9.2); nothing is kept per connection.
         NoResetOnClose = false,
-        // The image has no Kerberos libraries; without this Npgsql probes for them on every start.
         GssEncryptionMode = GssEncryptionMode.Disable,
     }.ConnectionString;
 }

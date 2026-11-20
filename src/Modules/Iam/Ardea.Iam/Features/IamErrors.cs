@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Ardea.Iam.Features;
 
-/// <summary>Error codes of the Iam endpoints; the web app maps each to a message.</summary>
 internal static class IamErrors
 {
     public static IResult InvalidCredentials() =>
@@ -49,7 +48,6 @@ internal static class IamErrors
     public static IResult Validation(Dictionary<string, string[]> errors) =>
         ApiProblems.Validation("validation_failed", "Some values are missing or not valid.", errors);
 
-    /// <summary>Identity's password errors as field errors with the code <c>weak_password</c>.</summary>
     public static IResult WeakPassword(IdentityResult result, string field = "password") =>
         ApiProblems.Validation("weak_password", "The password does not meet the rules.", new Dictionary<string, string[]>
         {
@@ -57,7 +55,6 @@ internal static class IamErrors
         });
 }
 
-/// <summary>Small checks on request fields; collects every problem at once.</summary>
 internal sealed class FieldErrors
 {
     private readonly Dictionary<string, string[]> _errors = new(StringComparer.Ordinal);

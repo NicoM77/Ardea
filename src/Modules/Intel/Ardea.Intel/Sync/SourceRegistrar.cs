@@ -9,12 +9,6 @@ using Microsoft.Extensions.Hosting;
 
 namespace Ardea.Intel.Sync;
 
-/// <summary>
-/// At worker start: every adapter in the image gets its row in <c>intel.source</c>. Master data of
-/// the descriptor is updated; operator settings (enabled, interval, configuration) and sync state stay.
-/// Records an older parser version read are queued to be read again, so a parser correction applies to
-/// what is already stored without fetching it again (master plan 6.1, 6.8).
-/// </summary>
 internal sealed class SourceRegistrar(IServiceScopeFactory scopes, SourceRegistry registry, TimeProvider time) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken) => await RegisterAsync(cancellationToken);
@@ -45,7 +39,6 @@ internal sealed class SourceRegistrar(IServiceScopeFactory scopes, SourceRegistr
                     Interval = descriptor.DefaultInterval,
                     ParserVersion = descriptor.ParserVersion,
                     Health = descriptor.EnabledByDefault ? SourceHealth.Healthy : SourceHealth.Disabled,
-                    // A first run soon, spread a little so instances started together do not meet.
                     NextSyncAt = now + Spread(TimeSpan.FromMinutes(2)),
                 };
                 db.Sources.Add(row);
@@ -71,11 +64,6 @@ internal sealed class SourceRegistrar(IServiceScopeFactory scopes, SourceRegistr
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// Sets the records of each source that a parser older than the adapter's read back to «pending» and queues
-    /// their normalisation. Parsed and quarantined records alike: a quarantined record waits for a fixed parser.
-    /// The normalisation correlates only observations that come out different (master plan 6.4).
-    /// </summary>
     private async Task QueueOutdatedRecordsAsync(IntelDbContext db, IJobQueue jobs, CancellationToken cancellationToken)
     {
         var sources = await db.Sources.AsNoTracking().ToDictionaryAsync(s => s.Key, s => s.Id, StringComparer.Ordinal, cancellationToken);
@@ -97,7 +85,6 @@ internal sealed class SourceRegistrar(IServiceScopeFactory scopes, SourceRegistr
         }
     }
 
-    /// <summary>A random offset in [0, max): instances do not hit a source at the same moment (master plan 5.4).</summary>
     internal static TimeSpan Spread(TimeSpan max) => TimeSpan.FromMilliseconds(RandomNumberGenerator.GetInt32((int)Math.Max(1, max.TotalMilliseconds)));
 
     internal static string Kind(SourceKind kind) => kind switch

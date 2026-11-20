@@ -15,11 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Catalog.Tests.Learning;
 
-/// <summary>
-/// The job <c>GrowCatalog</c> on the real database with recorded answers (master plan 6.9; tasks 4.9, 4.10; phase 4
-/// acceptance): without a provider only the rules map; manipulated answers and product names with instructions lead to
-/// no adoption; confident answers take effect, the rest waits; decisions stand; the quota holds; the export loads.
-/// </summary>
 public sealed class GrowCatalogTests(PostgresServer server)
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -52,13 +47,10 @@ public sealed class GrowCatalogTests(PostgresServer server)
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM catalog.learning_event WHERE kind = 'asked'"));
         Assert.Equal(curated, await host.CuratedAsync());
 
-        // The entries that name the raw keys are computed again, after every process has read the new catalogue.
         Assert.Equal(["acme/kevthing", "acme/widgetserver24", "postgresql/postgresql172"], host.Recomputed.RawKeys);
 
-        // Every proposal of the round is counted, the last one too (review finding).
         Assert.Equal(["adopted\t3", "learned\t3"], await host.RowsAsync("SELECT kind, count(*) FROM catalog.learning_event WHERE kind IN ('learned', 'adopted') GROUP BY kind ORDER BY kind"));
 
-        // The records' spellings now find the learned entries, and say so.
         var resolved = await host.InScopeAsync(s => s.GetRequiredService<IProductCatalog>().ResolveAsync("Acme Corp.", "Widget Server 2.4", null, null, Ct));
         Assert.Equal(("widget-server", "acme/widgetserver24"), (resolved?.Key.Value, resolved?.LearnedFrom));
     }
@@ -66,7 +58,6 @@ public sealed class GrowCatalogTests(PostgresServer server)
     [Fact]
     public async Task Product_names_with_embedded_instructions_lead_to_no_invalid_adoption()
     {
-        // Every manipulated answer for an inconspicuous name, and valid answers for names that carry instructions.
         var manipulated = new[]
         {
             "injected-alias-outside.json", "injected-extra-field.json", "injected-missing-field.json", "injected-casing.json",
@@ -84,7 +75,6 @@ public sealed class GrowCatalogTests(PostgresServer server)
         var curated = await host.CuratedAsync();
         for (var i = 0; i < manipulated.Length; i++)
         {
-            // A name alone: no rule maps it, the model is asked. The CPE pairs the answers name are not in the input.
             host.Feed.Add("Acme", $"Gadget {i}", records: 20 - i);
         }
 
@@ -94,19 +84,16 @@ public sealed class GrowCatalogTests(PostgresServer server)
         await host.GrowAsync();
         await host.GrowAsync(collect: false);
 
-        // No answer took effect: nothing learned, no curated row changed, nothing to recompute.
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM catalog.product WHERE origin = 'learned'"));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM catalog.unknown_product WHERE outcome IN ('alias', 'new')"));
         Assert.Equal(curated, await host.CuratedAsync());
         Assert.Empty(host.Recomputed.Changes);
 
-        // Refused answers were asked again once and then left to the administrator; the instructions wait for a person.
         Assert.Equal(
             Enumerable.Repeat("unclear\tinvalid_output\t2", manipulated.Length).Concat(["pending\tsuspicious_input\t1", "pending\tsuspicious_input\t1"]),
             await host.RowsAsync("SELECT outcome, proposal ->> 'hold', attempts FROM catalog.unknown_product ORDER BY outcome DESC, raw_key"));
         Assert.Equal((manipulated.Length * 2) + 2, model.Requests.Count);
 
-        // No source text closes the data block.
         Assert.All(model.Requests, r => Assert.Equal(1, r[r.LastIndexOf("<source_data>", StringComparison.Ordinal)..].Split("</source_data>").Length - 1));
     }
 
@@ -144,7 +131,6 @@ public sealed class GrowCatalogTests(PostgresServer server)
         var gizmo = model.Requests.Single(r => r.Contains("\"product\":\"Gizmo Manager\"", StringComparison.Ordinal));
         Assert.Equal(3, Unknown(gizmo).GetProperty("titles").GetArrayLength());
 
-        // The administrator rejects what waits; neither a rejected nor a waiting key is asked again, also another day.
         var lite = await host.ScalarAsync<Guid>("SELECT id FROM catalog.unknown_product WHERE raw_key = 'acme/gizmolite'");
         var admin = Guid.CreateVersion7();
         Assert.Null(await host.InScopeAsync(async s =>
@@ -157,7 +143,6 @@ public sealed class GrowCatalogTests(PostgresServer server)
         Assert.Equal(4, model.Requests.Count);
         Assert.Equal("rejected", await host.ScalarAsync<string>("SELECT outcome FROM catalog.unknown_product WHERE raw_key = 'acme/gizmolite'"));
 
-        // Withdrawn with one click: the learned entry leaves the catalogue, and the entries it reached are computed again.
         host.Recomputed.Changes.Clear();
         var manager = await host.ScalarAsync<Guid>("SELECT id FROM catalog.unknown_product WHERE raw_key = 'acme/gizmomanager'");
         Assert.Null(await host.InScopeAsync(async s =>
@@ -171,7 +156,6 @@ public sealed class GrowCatalogTests(PostgresServer server)
         Assert.Equal(["gizmo-manager"], change.ProductKeys);
         Assert.Null(await host.InScopeAsync(s => s.GetRequiredService<IProductCatalog>().FindByKeyAsync("gizmo-manager", Ct)));
 
-        // The measures: this week's learned, adopted, rejected and withdrawn entries, the calls of today.
         var status = await host.InScopeAsync(s => LearningEndpoints.ReadStatusAsync(
             s.GetRequiredService<CatalogDbContext>(), s.GetRequiredService<IInstanceSettings>(), s.GetRequiredService<IAiProviders>(),
             s.GetRequiredService<LearningOptions>(), host.Clock, Ct));
@@ -263,10 +247,6 @@ public sealed class GrowCatalogTests(PostgresServer server)
         }
     }
 
-    /// <summary>
-    /// Review finding: a decision made in another process is read by the next unit of work, however fresh this process's
-    /// copy of the catalogue is, so a recomputation that joins a waiting one never works with the catalogue from before it.
-    /// </summary>
     [Fact]
     public async Task A_decision_made_elsewhere_is_seen_by_the_next_unit_of_work()
     {
@@ -277,7 +257,6 @@ public sealed class GrowCatalogTests(PostgresServer server)
         await host.GrowAsync();
         Assert.NotNull(await Lookup(host, "widget-server"));
 
-        // Withdrawn in a unit of work that clears no cache, as another process would: the next lookup no longer finds it.
         await using (var scope = host.Services.CreateAsyncScope())
         {
             var row = await scope.ServiceProvider.GetRequiredService<CatalogDbContext>().UnknownProducts.SingleAsync(u => u.RawKey == "acme/widgetserver24", Ct);
@@ -302,7 +281,6 @@ public sealed class GrowCatalogTests(PostgresServer server)
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM catalog.product WHERE origin = 'learned'"));
     }
 
-    /// <summary>Review finding: after a large first load the mapping without a model works in batches, each kept when the run ends.</summary>
     [Fact]
     public async Task The_mapping_without_a_model_works_in_batches_and_hands_the_rest_on()
     {
@@ -327,7 +305,6 @@ public sealed class GrowCatalogTests(PostgresServer server)
         Assert.Equal(5L, await host.ScalarAsync<long>("SELECT count(*) FROM catalog.unknown_product WHERE outcome = 'new'"));
     }
 
-    /// <summary>A lookup in a unit of work of its own that clears no cache: what any later unit of work of this process sees.</summary>
     private static async Task<CatalogProduct?> Lookup(LearningHost host, string key)
     {
         await using var scope = host.Services.CreateAsyncScope();
@@ -338,7 +315,6 @@ public sealed class GrowCatalogTests(PostgresServer server)
 
     private static JsonElement Data(string request)
     {
-        // The system message names the tags too; the data block is the last one.
         var start = request.LastIndexOf("<source_data>", StringComparison.Ordinal) + "<source_data>".Length;
         var end = request.LastIndexOf("</source_data>", StringComparison.Ordinal);
         return JsonDocument.Parse(request[start..end]).RootElement.Clone();

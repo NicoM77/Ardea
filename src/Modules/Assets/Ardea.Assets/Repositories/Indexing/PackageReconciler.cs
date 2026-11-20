@@ -3,7 +3,6 @@ using Ardea.Assets.Repositories.Packages;
 
 namespace Ardea.Assets.Repositories.Indexing;
 
-/// <summary>What a reading changes in the components of one link.</summary>
 internal sealed class PackageChanges
 {
     public List<(Component Component, PackageFinding Finding)> Created { get; } = [];
@@ -17,13 +16,6 @@ internal sealed class PackageChanges
     public bool Any => Created.Count + Updated.Count + Removed.Count > 0;
 }
 
-/// <summary>
-/// The package components of a link follow the repository (master plan 16.5): first matched by
-/// package and version, then whatever is left is paired per package, so a raised version changes the
-/// same component instead of removing it and adding a new one. Exposure, criticality and protection,
-/// which a person sets, are never touched. Components of the link without a package (accepted
-/// platform suggestions) and manual components are outside this reconcile.
-/// </summary>
 internal static class PackageReconciler
 {
     public static PackageChanges Reconcile(IReadOnlyList<Component> existing, IReadOnlyList<PackageFinding> findings)
@@ -32,7 +24,6 @@ internal static class PackageReconciler
         var unmatched = existing.Where(c => c.Purl is not null).OrderBy(c => c.CreatedAt).ThenBy(c => c.Id).ToList();
         var open = new List<PackageFinding>();
 
-        // Same package, same version: the component stays; scope, relation or evidence may change.
         foreach (var finding in findings)
         {
             var match = unmatched.FirstOrDefault(c => PackageOf(c) == Key(finding) && c.Version == finding.Version);
@@ -53,7 +44,6 @@ internal static class PackageReconciler
             }
         }
 
-        // Same package, other version: the version changed. Pairs in version order, so 1.2 → 1.3 and 2.0 → 2.1.
         foreach (var group in open.GroupBy(Key).ToList())
         {
             var candidates = unmatched.Where(c => PackageOf(c) == group.Key).OrderBy(c => c.Version, StringComparer.Ordinal).ToList();
@@ -90,7 +80,6 @@ internal static class PackageReconciler
         _ => "unknown",
     };
 
-    /// <summary><c>pkg:type/name</c> of a stored purl, without version.</summary>
     private static string? PackageOf(Component c) =>
         Catalog.Contracts.PackageCoordinate.TryParsePurl(c.Purl, out var coordinate, out _) ? coordinate.ToString() : null;
 }

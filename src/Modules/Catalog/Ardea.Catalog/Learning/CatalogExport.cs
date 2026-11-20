@@ -8,12 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Catalog.Learning;
 
-/// <summary>
-/// The learned entries in effect in the format of the curated files (master plan 6.9 «Zurück ins Projekt», ADR 030): a
-/// zip with one <c>{vendor}.learned.json</c> per vendor, with comments that say where each entry comes from, and a
-/// <c>README.txt</c> with the learned spellings of existing entries, which belong into those entries' files. Dropped
-/// into <c>data/catalog/</c>, the files load as they are; a curator reviews them first. Nothing is sent anywhere.
-/// </summary>
 internal static class CatalogExport
 {
     private const string NoVendor = "unknown-vendor";
@@ -59,7 +53,6 @@ internal static class CatalogExport
         return buffer.ToArray();
     }
 
-    /// <summary>One vendor's learned products as a curated file; references to entries that are not in the catalogue of the project are left out.</summary>
     public static string VendorFile(string? vendor, IReadOnlyList<ProductRow> products, IReadOnlyList<UnknownProductRow> rows, ISet<string> exported, ISet<string> curated, DateTimeOffset now)
     {
         var known = new HashSet<string>(exported.Concat(curated), StringComparer.Ordinal);
@@ -151,7 +144,6 @@ internal static class CatalogExport
 
     private static string Str(string value) => JsonSerializer.Serialize(value, Json);
 
-    /// <summary>A text as one comment line: no line breaks, no control characters.</summary>
     private static string Comment(string text) => new([.. text.Select(c => char.IsControl(c) ? ' ' : c)]);
 
     private static string FileName(string? vendor)

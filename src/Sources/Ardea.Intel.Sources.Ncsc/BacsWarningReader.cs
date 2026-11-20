@@ -7,17 +7,11 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Sources.Ncsc;
 
-/// <summary>
-/// What the adapter keeps of a BACS warning page. The website's terms require written consent for
-/// reproducing texts, so the raw record holds metadata only: title, lead, link, dates, ids, and the
-/// numbers of Cyber Security Hub posts the page links to. The page body is never stored.
-/// </summary>
 internal sealed record BacsWarning
 {
     [JsonPropertyName("documentId")]
     public long DocumentId { get; init; }
 
-    /// <summary>Shared by all language versions of the page; the stable key.</summary>
     [JsonPropertyName("groupId")]
     public string? GroupId { get; init; }
 
@@ -43,7 +37,6 @@ internal sealed record BacsWarning
     public List<long> HubPosts { get; init; } = [];
 }
 
-/// <summary>Translates a stored <see cref="BacsWarning"/> into a warning or, when it names CVEs, an advisory.</summary>
 internal static partial class BacsWarningReader
 {
     public const int ParserVersion = 1;
@@ -56,7 +49,6 @@ internal static partial class BacsWarningReader
 
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = false };
 
-    /// <summary>Lead text as plain text: tags removed, entities decoded, white space collapsed.</summary>
     public static string? PlainText(string? html) =>
         string.IsNullOrWhiteSpace(html) ? null : Whitespace().Replace(WebUtility.HtmlDecode(Tags().Replace(html, " ")), " ").Trim();
 
@@ -99,8 +91,6 @@ internal static partial class BacsWarningReader
             .Select(id => new Identifier("NCSC-HUB", id.ToString(CultureInfo.InvariantCulture))).ToList();
         if (cves.Count == 0)
         {
-            // A warning has no claim block to hold a related identifier; the link to the hub post
-            // travels as a reference so a reader can follow it.
             references.AddRange(warning.HubPosts.Distinct().Order().Select(id => new Reference(new Uri(NcscHubProvider.PostUrl(id))) { Tags = ["related"] }));
             return NormalizationResult.Success(observation with { References = references });
         }

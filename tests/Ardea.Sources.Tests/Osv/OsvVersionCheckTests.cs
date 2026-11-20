@@ -9,12 +9,6 @@ using CatalogRange = Ardea.Catalog.Contracts.VersionRange;
 
 namespace Ardea.Sources.Tests.Osv;
 
-/// <summary>
-/// Phase 1 acceptance (master plan 14): for the six ecosystems the version check gives the expected
-/// result on ten recorded records each. The cases of <c>Ardea.Catalog.Tests/Recorded/osv-version-checks.json</c>
-/// are run here on the adapter's output: the whole recorded record goes through the reader, and its
-/// ranges and version scheme for the package reach the catalogue's check the way the core stores them.
-/// </summary>
 public sealed class OsvVersionCheckTests
 {
     private static readonly IVersionSchemes Schemes = VersionSchemesOfTheCatalogue();
@@ -32,13 +26,11 @@ public sealed class OsvVersionCheckTests
         var products = Products(ecosystem, record, c.GetProperty("package").GetString()!);
         var ranges = products.SelectMany(p => p.Versions).Select(ToCatalog).ToList();
 
-        // The scheme the adapter names is the one the catalogue gives the ecosystem.
         var schemeName = Assert.Single(products.Select(p => p.VersionScheme).Distinct());
         var scheme = Schemes.Find(schemeName);
         Assert.NotNull(scheme);
         Assert.Equal(Schemes.ForEcosystem(ecosystem)!.Name, scheme.Name);
 
-        // OSV names no default status for unnamed versions.
         var check = VersionCheck.Evaluate(scheme, installed, ranges, VersionStatus.Unknown);
 
         var expected = c.GetProperty("expected").GetString() switch
@@ -74,7 +66,6 @@ public sealed class OsvVersionCheckTests
         Assert.All(OsvEcosystems.Mvp, e => Assert.Equal(10, counts.GetValueOrDefault(e)));
     }
 
-    /// <summary>The products of the recorded record for the case's package, matched by package URL as the catalogue compares them.</summary>
     private static List<AffectedProduct> Products(string ecosystem, string record, string package)
     {
         var result = OsvRecordReader.Read(TestData.Read("osv", $"{ecosystem}.{record}.json"));
@@ -87,7 +78,6 @@ public sealed class OsvVersionCheckTests
         return products;
     }
 
-    /// <summary>As the core stores an affected range (<c>entry_affected</c>) and the assessment reads it back.</summary>
     private static CatalogRange ToCatalog(Intel.Sources.Abstractions.VersionRange range) => new()
     {
         Introduced = range.Introduced,

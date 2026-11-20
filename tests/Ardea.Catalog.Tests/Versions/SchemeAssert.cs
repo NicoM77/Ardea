@@ -13,7 +13,6 @@ internal static class SchemeAssert
         return version;
     }
 
-    /// <summary>Every version is lower than the next one, in both directions of the comparison.</summary>
     public static void Ascending(string scheme, string ascending)
     {
         var versions = ascending.Split(" < ").Select(v => Parse(scheme, v)).ToList();

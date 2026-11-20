@@ -4,15 +4,8 @@ using NpgsqlTypes;
 
 namespace Ardea.Intel.Sync;
 
-/// <summary>
-/// Writes signals in bulk (master plan 4.4, 6.4): a batch goes into a temporary table with COPY and is
-/// merged into <c>entry_signal</c> in one statement, which returns only the identifiers whose EPSS
-/// class or KEV listing changed — the daily EPSS run touches no other entry. A provider only sets its
-/// own fields; the other source's values stay.
-/// </summary>
 internal static class SignalStore
 {
-    /// <summary>The EPSS class changes only after the score crossed 50 % by more than five points.</summary>
     public const double HighAbove = 0.55;
     public const double LowBelow = 0.45;
 

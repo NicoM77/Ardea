@@ -3,12 +3,6 @@ using System.Text.RegularExpressions;
 
 namespace Ardea.Assessment.Estimating;
 
-/// <summary>
-/// Checks an answer before anything of it is stored (master plan 7.5 «Schutz gegen manipulierte Quelltexte» and
-/// «Längen»; task 4.2): the schema without unknown fields, the length limits, references only to components and
-/// sources of the input, exactly one verdict per component, and no addresses in the texts. A failed check names the
-/// rule, never the text.
-/// </summary>
 internal static partial class EstimateCheck
 {
     public const int WhatHappenedLength = 240;
@@ -25,7 +19,6 @@ internal static partial class EstimateCheck
             return (null, "empty");
         }
 
-        // Bidirectional control characters could turn a text around in a reader's eyes; they never carry meaning here.
         var json = StripBidi(Unfence(text));
         EstimateAnswer? answer;
         try
@@ -69,10 +62,6 @@ internal static partial class EstimateCheck
             input.Sources), null);
     }
 
-    /// <summary>
-    /// The fixed lists of 7.5 take exactly their snake_case names: the enum converter alone would also take
-    /// <c>Affected</c> or a comma list such as <c>uncertain, likely</c> and turn it into another or an undefined value.
-    /// </summary>
     private static bool ExactValues(JsonElement root)
     {
         static bool Exact<T>(JsonElement parent, string property)
@@ -93,7 +82,6 @@ internal static partial class EstimateCheck
 
     private static string StripBidi(string text) => text.Any(IsBidi) ? new string([.. text.Where(c => !IsBidi(c))]) : text;
 
-    /// <summary>Arabic letter mark, left-to-right and right-to-left marks, embeddings, overrides and isolates.</summary>
     private static bool IsBidi(char c) => c is '؜' or '‎' or '‏' or (>= '‪' and <= '‮') or (>= '⁦' and <= '⁩');
 
     private static string? Problem(EstimateAnswer answer, EstimateInput input)
@@ -112,7 +100,6 @@ internal static partial class EstimateCheck
             return "schema";
         }
 
-        // Every component of the input exactly once, and none that was not in it.
         if (answer.Verdicts.Any(v => !input.ComponentIds.ContainsKey(v.Component))
             || answer.Reasoning.Any(r => r.Components.Any(c => !input.ComponentIds.ContainsKey(c))))
         {
@@ -136,7 +123,6 @@ internal static partial class EstimateCheck
             return "count";
         }
 
-        // Each step names its source or is marked as an own recommendation; each reason rests on something.
         if (answer.Actions.Any(a => a.Sources.Count == 0 && !a.Own) || answer.Reasoning.Any(r => r.Sources.Count == 0 && r.Components.Count == 0))
         {
             return "unreferenced";
@@ -156,7 +142,6 @@ internal static partial class EstimateCheck
             return "length";
         }
 
-        // Links come from the source list only; a text with an address or markup may carry an injected instruction.
         if (Texts(answer).Any(t => Address().IsMatch(t) || t.Any(c => char.IsControl(c) && c is not '\n')))
         {
             return "address_in_text";
@@ -174,7 +159,6 @@ internal static partial class EstimateCheck
 
     private static bool Blank(string? text) => string.IsNullOrWhiteSpace(text);
 
-    /// <summary>Some models wrap the JSON in a Markdown fence despite the schema; the fence is not part of the answer.</summary>
     private static string Unfence(string text)
     {
         var trimmed = text.Trim();

@@ -8,42 +8,27 @@ using Ardea.Platform.Http;
 
 namespace Ardea.Assets.Repositories;
 
-/// <summary>Bounds of one reading (master plan 16.3, 16.9; ADR 032).</summary>
 internal sealed record RepositoryHostLimits
 {
     public static readonly RepositoryHostLimits Default = new();
 
-    /// <summary>ADR 032, decision 2.</summary>
     public long MaxSbomBytes { get; init; } = 64L * 1024 * 1024;
 
-    /// <summary>Requests to <c>fetch-report</c> per call; GitHub counts them against the <c>dependency_sbom</c> bucket of 100 per hour.</summary>
     public int MaxSbomPolls { get; init; } = 20;
 
-    /// <summary>How long one call waits for GitHub to build the SBOM before it answers <see cref="RepositoryFailure.SbomNotReady"/>.</summary>
     public TimeSpan MaxSbomWait { get; init; } = TimeSpan.FromMinutes(2);
 
-    /// <summary>The longest single wait between two polls, whatever <c>Retry-After</c> says.</summary>
     public TimeSpan MaxSbomPollDelay { get; init; } = TimeSpan.FromSeconds(30);
 
-    /// <summary>The download of the finished SBOM, beyond the client's timeout for the response headers.</summary>
     public TimeSpan SbomDownloadTimeout { get; init; } = TimeSpan.FromMinutes(5);
 
-    /// <summary>The recursive tree; GitHub itself cuts at 100 000 entries and about 7 MB.</summary>
     public long MaxTreeBytes { get; init; } = 32L * 1024 * 1024;
 
-    /// <summary>Files listed per tree, counted after the subfolder filter.</summary>
     public int MaxTreeEntries { get; init; } = 50_000;
 }
 
-/// <summary>
-/// <see cref="IRepositoryHost"/> for github.com and GitHub Enterprise Server (master plan 16.4, ADR 032).
-/// Every request goes through the <c>ardea-github</c> client, which checks the addresses and follows
-/// no redirect. Only two kinds of hosts are reached: the API host of the connection, and for the SBOM
-/// the declared download hosts, which never see the token.
-/// </summary>
 internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvider time, RepositoryHostLimits? limits = null) : IRepositoryHost
 {
-    /// <summary>Where github.com redirects for the finished SBOM (ADR 032).</summary>
     public const string GitHubComSbomHost = "dgpproduction.blob.core.windows.net";
 
     private const int MaxSmallResponseBytes = 64 * 1024;
@@ -52,13 +37,8 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
 
     private readonly RepositoryHostLimits _limits = limits ?? RepositoryHostLimits.Default;
 
-    /// <summary>The wait between two polls; replaced in tests.</summary>
     internal Func<TimeSpan, CancellationToken, Task> Delay { get; init; } = (delay, cancellationToken) => Task.Delay(delay, time, cancellationToken);
 
-    /// <summary>
-    /// The hosts the SBOM may be downloaded from. For an Enterprise Server only the server itself: where
-    /// its export redirects is unverified (master plan 16.4), so anything else is refused until it is known.
-    /// </summary>
     public static IReadOnlyList<string> SbomDownloadHosts(GitHubHost host) =>
         host.Id is null ? [GitHubComSbomHost] : [host.ApiBase.IdnHost];
 
@@ -69,8 +49,6 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
             return RepositoryResult<BranchHead>.Fail(invalid);
         }
 
-        // commits/{ref} accepts branch names with slashes and HEAD for the default branch, and answers
-        // with an ETag; with this media type the body is only the SHA.
         var reference = repository.Ref is null ? "HEAD" : RepositoryPaths.Escape(repository.Ref);
         using var request = GitHubHttp.Get(repository.Host, $"{RepositoryPath(repository)}/commits/{reference}", repository.Token, "application/vnd.github.sha");
         if (etag is not null)
@@ -132,8 +110,6 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
                 switch ((int)response.StatusCode)
                 {
                     case 202:
-                        // Still being built: "not yet", never an empty SBOM (ADR 032, decision 1). Retry-After
-                        // is honoured; the waits grow so a slow export does not use up the bucket.
                         var delay = TimeSpan.FromSeconds(Math.Max(response.Headers.RetryAfter?.Delta?.TotalSeconds ?? 1, attempt));
                         delay = delay > _limits.MaxSbomPollDelay ? _limits.MaxSbomPollDelay : delay;
                         if (attempt == _limits.MaxSbomPolls || time.GetElapsedTime(started) + delay > _limits.MaxSbomWait)
@@ -146,7 +122,6 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
                     case 301 or 302 or 303 or 307 or 308:
                         return await DownloadSbomAsync(repository.Host, response.Headers.Location, read, cancellationToken);
                     case 200:
-                        // Not seen on github.com, but harmless: the SBOM straight from the API host.
                         return await ReadSbomAsync(response, read, cancellationToken);
                     default:
                         return RepositoryResult<T>.Fail(Failure(response));
@@ -217,8 +192,6 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
             var truncated = tree.Truncated;
             foreach (var entry in tree.Tree)
             {
-                // Files only: no directories, no submodules ("commit") and no symbolic links (mode 120000),
-                // whose target Ardea would otherwise have to resolve.
                 if (entry.Type != "blob" || entry.Mode == "120000" || !RepositoryPaths.IsValidPath(entry.Path) || !RepositoryPaths.IsWithin(entry.Path, folder))
                 {
                     continue;
@@ -264,7 +237,6 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
                 return RepositoryResult<byte[]>.Fail(Failure(response));
             }
 
-            // For a directory GitHub ignores the raw media type and lists the entries as JSON.
             if (response.Content.Headers.ContentType?.MediaType == "application/json")
             {
                 return RepositoryResult<byte[]>.Fail(RepositoryFailure.NotAFile, $"{path} is not a file.");
@@ -289,7 +261,6 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
         }
     }
 
-    /// <summary><c>generate-report</c>: the address to poll, which must lie on the API host under this repository.</summary>
     private async Task<RepositoryResult<Uri>> RequestSbomAsync(RepositoryRef repository, CancellationToken cancellationToken)
     {
         var basePath = $"{RepositoryPath(repository)}/dependency-graph/sbom";
@@ -334,7 +305,6 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
         }
     }
 
-    /// <summary><c>null</c> when <c>GET /repos/{owner}/{repo}</c> answers 200, otherwise why not.</summary>
     private async Task<RepositoryError?> RepositoryVisibleAsync(RepositoryRef repository, CancellationToken cancellationToken)
     {
         using var request = GitHubHttp.Get(repository.Host, RepositoryPath(repository), repository.Token);
@@ -345,10 +315,6 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
         }
     }
 
-    /// <summary>
-    /// Follows the redirect of <c>fetch-report</c> by hand: HTTPS, a declared host, no credentials in the
-    /// address, and no <c>Authorization</c> header (ADR 032). The signed address is never put in a message.
-    /// </summary>
     private async Task<RepositoryResult<T>> DownloadSbomAsync<T>(GitHubHost host, Uri? location, Func<Stream, CancellationToken, Task<T>> read, CancellationToken cancellationToken)
     {
         if (location is null || !location.IsAbsoluteUri)
@@ -428,7 +394,6 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
         }
         catch (HttpRequestException ex)
         {
-            // The message would name the address, which for the download carries a signature.
             return (null, new RepositoryError(RepositoryFailure.Unavailable, $"{request.RequestUri?.IdnHost} could not be reached ({ex.HttpRequestError})."));
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -437,7 +402,6 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
         }
     }
 
-    /// <summary>A failure for an answer that is not the expected one.</summary>
     private RepositoryError Failure(HttpResponseMessage response)
     {
         var status = (int)response.StatusCode;
@@ -459,10 +423,6 @@ internal sealed class GitHubRepositoryHost(IHttpClientFactory clients, TimeProvi
         };
     }
 
-    /// <summary>
-    /// How long a rate limit lasts: <c>Retry-After</c> for a secondary limit, the reset time when
-    /// <c>x-ratelimit-remaining</c> is 0; <c>null</c> when the 403 is no rate limit.
-    /// </summary>
     private TimeSpan? RateLimit(HttpResponseMessage response)
     {
         if (response.Headers.RetryAfter is { } retryAfter)

@@ -5,13 +5,8 @@ using Ardea.Platform.Settings;
 
 namespace Ardea.Assets.GitHub;
 
-/// <summary>A GitHub Enterprise Server the instance administrator registered (master plan 4.5, 16.4).</summary>
 internal sealed record EnterpriseHost(string Id, string Name, string ApiUrl);
 
-/// <summary>
-/// The GitHub Enterprise Server hosts of the instance, a global setting only the instance administrator
-/// changes. Organisations choose from it; they cannot enter an address (master plan 16.9).
-/// </summary>
 internal sealed class GitHubHosts(IInstanceSettings settings)
 {
     public static readonly SettingDefinition Setting = new("assets.github_enterprise_hosts");
@@ -26,7 +21,6 @@ internal sealed class GitHubHosts(IInstanceSettings settings)
     public async Task SaveAsync(IReadOnlyList<EnterpriseHost> hosts, Guid? changedBy, CancellationToken cancellationToken) =>
         await settings.SetAsync(Setting, hosts.Count == 0 ? null : JsonSerializer.Serialize(hosts, Json), changedBy, cancellationToken);
 
-    /// <summary>The host of a connection: github.com without an id, otherwise the registered server; <c>null</c> when it is gone.</summary>
     public async Task<GitHubHost?> ResolveAsync(string? hostId, CancellationToken cancellationToken)
     {
         if (hostId is null)
@@ -38,11 +32,6 @@ internal sealed class GitHubHosts(IInstanceSettings settings)
         return host is null ? null : new GitHubHost(host.Id, new Uri(host.ApiUrl));
     }
 
-    /// <summary>
-    /// Checks an API address like a webhook target (master plan 9.5): HTTPS, no credentials, query or
-    /// fragment, and a host that resolves to no forbidden address (loopback, link-local, metadata).
-    /// Private addresses are allowed: registering the server is the administrator's decision.
-    /// </summary>
     public static async Task<(Uri? Url, string? Error)> CheckAddressAsync(string? text, CancellationToken cancellationToken)
     {
         if (!Uri.TryCreate(text?.Trim(), UriKind.Absolute, out var url) || url.Scheme != Uri.UriSchemeHttps)

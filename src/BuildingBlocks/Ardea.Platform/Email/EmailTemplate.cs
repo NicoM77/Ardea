@@ -2,10 +2,6 @@ using System.Net;
 
 namespace Ardea.Platform.Email;
 
-/// <summary>
-/// One plain layout for every system e-mail: a greeting, a few sentences, one link and a footer.
-/// Values are HTML-encoded; links point to the instance's public address only.
-/// </summary>
 public static class EmailTemplate
 {
     public static EmailMessage Render(string to, string subject, string greeting, IReadOnlyList<string> paragraphs, string actionLabel, Uri actionUrl, string footer)

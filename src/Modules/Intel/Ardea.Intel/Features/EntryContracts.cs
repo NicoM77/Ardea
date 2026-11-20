@@ -15,7 +15,6 @@ internal sealed record EntrySummary(
     DateTimeOffset ChangedAt,
     IReadOnlyList<string> Aliases);
 
-/// <summary>A page of a list (master plan 10.1: cursor pagination).</summary>
 internal sealed record Page<T>(IReadOnlyList<T> Items, string? NextCursor);
 
 internal sealed record AffectedView(

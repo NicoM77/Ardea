@@ -8,12 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Features;
 
-/// <summary>
-/// The people of the demo (<c>ardea seed-demo</c>, task 7.6): the organisation of the mockups with its owner, an
-/// administrator and a member, on addresses of the domain reserved for examples. Only the owner's generated password
-/// is shown, once; the others cannot sign in until an owner resets their passwords. Each person is one unit of work,
-/// because an account is visible only to itself.
-/// </summary>
 internal sealed class DemoSeed : IDemoSeedStep
 {
     public const string OrganizationName = "Example Digital AG";
@@ -65,8 +59,6 @@ internal sealed class DemoSeed : IDemoSeedStep
         var db = services.GetRequiredService<IamDbContext>();
         if (role == "owner")
         {
-            // The wizard counts as done, so the overview shows the data instead of offering the setup. No language model
-            // sees the demo: on an instance with one, the policy «none» keeps estimates from being queued for the worker.
             db.Organizations.Add(new Organization
             {
                 OrganizationId = organizationId,

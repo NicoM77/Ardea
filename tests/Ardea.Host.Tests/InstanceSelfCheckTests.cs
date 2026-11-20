@@ -16,11 +16,6 @@ using Npgsql;
 
 namespace Ardea.Host.Tests;
 
-/// <summary>
-/// The instance tells its administrators when it warns about itself (master plan 12.7, task 6.6, ADR 043): rounds of
-/// the self-check against a migrated database, with a fake clock and a capturing mail sender. The timer of the hosted
-/// service is taken out; the tests run the rounds themselves.
-/// </summary>
 public sealed class InstanceSelfCheckTests(PostgresServer server)
 {
     private static readonly DateTimeOffset Start = new(2026, 11, 19, 8, 0, 0, TimeSpan.Zero);
@@ -93,7 +88,6 @@ public sealed class InstanceSelfCheckTests(PostgresServer server)
     [Fact]
     public async Task Without_smtp_a_round_sends_nothing_fails_nothing_and_keeps_the_warning()
     {
-        // The real sender: no SMTP settings in the environment or the database.
         await using var host = await SelfCheckHost.StartAsync(server, mail: null);
         await host.AddUserAsync("admin@example.org", admin: true, confirmed: true);
 
@@ -278,12 +272,8 @@ public sealed class InstanceSelfCheckTests(PostgresServer server)
 
         public FakeTimeProvider Time { get; }
 
-        /// <summary>Whether the API role registered the self-check's hosted service.</summary>
         public bool ApiRunsTheSelfCheck { get; }
 
-        /// <param name="server">The test server.</param>
-        /// <param name="mail">The capturing sender; null keeps the real one.</param>
-        /// <param name="shared">A database another host already uses, as a second process would.</param>
         public static async Task<SelfCheckHost> StartAsync(PostgresServer server, CapturingEmailSender? mail, DatabaseOptions? shared = null)
         {
             var database = shared ?? await MigrateAsync(server);
@@ -335,7 +325,6 @@ public sealed class InstanceSelfCheckTests(PostgresServer server)
             """,
             key, name, Time.GetUtcNow(), Time.GetUtcNow().AddHours(-7));
 
-        /// <summary>A worker's heartbeat at the fake clock's now, shifted by <paramref name="offset"/>.</summary>
         public Task BeatAsync(TimeSpan offset = default) => ExecuteAsync(
             """
             INSERT INTO platform.worker_heartbeat (worker_id, started_at, beat_at, version) VALUES ('worker-1', $1, $1, 'test')
@@ -408,13 +397,10 @@ public sealed class InstanceSelfCheckTests(PostgresServer server)
             }
         }
 
-        /// <summary>When set, sending throws this instead, as a broken mail server would.</summary>
         public Func<Exception>? Failure { get; set; }
 
-        /// <summary>How long the mail server takes to accept a message.</summary>
         public TimeSpan Delay { get; init; }
 
-        /// <summary>Addresses the mail server refuses every time.</summary>
         public HashSet<string> Refused { get; } = new(StringComparer.Ordinal);
 
         public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken) => Task.FromResult(true);

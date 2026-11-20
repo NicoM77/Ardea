@@ -2,7 +2,6 @@ using Ardea.Platform.Persistence;
 
 namespace Ardea.Platform.Jobs;
 
-/// <summary>Removes finished jobs after their retention (master plan 3.4).</summary>
 public sealed record CleanUpJobs : IJob
 {
     public static string Kind => "platform.clean-up-jobs";

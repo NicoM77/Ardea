@@ -73,9 +73,6 @@ namespace Ardea.Assessment.Persistence.Migrations
                     USING (organization_id = platform.current_organization_id())
                     WITH CHECK (organization_id = platform.current_organization_id());
 
-                -- System operation "quality of the model" (master plan 7.9, 9.2, ADR 029; task 4.7): per provider, model
-                -- and prompt version over all organisations, how many assessments and verdicts there are and how many of
-                -- the verdicts people confirmed or corrected. Counts only.
                 CREATE FUNCTION assess.model_feedback_counts()
                     RETURNS TABLE (provider text, model text, prompt_version text, assessments bigint, verdicts bigint, confirmed bigint, corrected bigint)
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
@@ -91,8 +88,6 @@ namespace Ardea.Assessment.Persistence.Migrations
                         GROUP BY a.provider, a.model, a.prompt_version
                     $$;
 
-                -- Live signals (task 3.11) also when the model's assessment arrives or a finding changes without a
-                -- history row, e.g. its verdict: the pages show the model's answers as soon as they are stored.
                 CREATE TRIGGER signal_organization_changed AFTER INSERT ON assess.assessment
                     FOR EACH ROW EXECUTE FUNCTION assess.signal_organization_changed();
                 CREATE TRIGGER signal_organization_changed AFTER INSERT OR UPDATE ON assess.finding

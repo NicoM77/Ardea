@@ -5,7 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>Coverage hints: what Ardea can check in a profile and what not (task 2.8; master plan 10.2, 11.6, 16.3).</summary>
 public sealed class CoverageTests(PostgresServer server)
 {
     [Fact]
@@ -20,10 +19,10 @@ public sealed class CoverageTests(PostgresServer server)
         {
             components = new object[]
             {
-                new { productKey = "wordpress" },                                       // no version, a platform without plugins
-                new { productKey = "php", version = "8.3.12" },                         // fine
+                new { productKey = "wordpress" },
+                new { productKey = "php", version = "8.3.12" },
                 new { productKey = "nginx", version = "1.24.0", packaging = "distribution" },
-                new { customName = "Billing engine", kind = "other", version = "3.1" }, // not in the catalogue
+                new { customName = "Billing engine", kind = "other", version = "3.1" },
             },
         });
         var connectionId = (await Json(await client.PostAsync($"/api/v1/orgs/{orgId}/repository-connections", new { name = "Public" }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
@@ -55,11 +54,9 @@ public sealed class CoverageTests(PostgresServer server)
         Assert.All(hints.Values, h => Assert.Equal(1, h.GetProperty("count").GetInt32()));
         Assert.Equal("cargo", hints["ecosystem_not_checkable"].GetProperty("examples")[0].GetProperty("detail").GetString());
         Assert.Equal("wordpress", hints["platform_without_plugins"].GetProperty("examples")[0].GetProperty("name").GetString());
-        // 8 components; wordpress, nginx, billing, express, serde and dotnet 10.0 have a gap: php and lodash are fully checkable.
         Assert.Equal(8, coverage.GetProperty("components").GetInt32());
         Assert.Equal(2, coverage.GetProperty("fullyCheckable").GetInt32());
 
-        // A plugin under the platform closes that gap.
         var wordpress = await host.ScalarAsync<Guid>($"SELECT id FROM assets.component WHERE product_key = 'wordpress'");
         await client.PostAsync($"/api/v1/orgs/{orgId}/projects/{projectId}/components", new { productKey = "woocommerce", version = "9.3.1", parentId = wordpress });
         var after = await Json(await client.GetAsync($"/api/v1/orgs/{orgId}/profile/coverage?projectId={projectId}"));

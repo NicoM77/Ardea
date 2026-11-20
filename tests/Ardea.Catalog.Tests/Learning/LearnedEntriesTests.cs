@@ -4,17 +4,10 @@ using Ardea.Catalog.Tests.Products;
 
 namespace Ardea.Catalog.Tests.Learning;
 
-/// <summary>
-/// Phase 4 acceptance, the fast test: a learned catalogue entry changes no curated entry and removes no existing hit
-/// (master plan 6.9 «Warum das sicher genug ist»). The worst case is assumed: learned entries that claim every spelling,
-/// CPE pair, package and image of the curated catalogue, and learned mappings of raw keys to the wrong entries. Every
-/// lookup the curated catalogue answers must answer the same; only what it did not know may change.
-/// </summary>
 public sealed class LearnedEntriesTests
 {
     private static readonly IReadOnlyList<CatalogProduct> Curated = CatalogFiles.Load(CatalogFilesTests.RepositoryCatalog).Products;
 
-    /// <summary>For every curated product a learned twin with all of its spellings, CPE pairs, packages and images.</summary>
     private static readonly IReadOnlyList<CatalogProduct> Twins =
     [
         .. Curated.Select(p => p with
@@ -87,10 +80,8 @@ public sealed class LearnedEntriesTests
     [Fact]
     public void A_raw_key_keeps_finding_what_it_found_and_a_learned_one_says_so()
     {
-        // Unknown to the curated catalogue: the raw key, and no learned note.
         Assert.Equal(new ResolvedProduct(ProductKey.Create("Acme", "Widget"), null), CuratedOnly.Resolve("Acme", "Widget", null, null));
 
-        // Learned: the learned key, with the raw key it came from, so that what found the raw key still finds it.
         var learned = new CatalogLayers(
             Curated.Append(new CatalogProduct
             {

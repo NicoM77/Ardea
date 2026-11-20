@@ -1,8 +1,5 @@
 namespace Ardea.Iam.Features;
 
-// Request and response bodies of the Iam endpoints. Nullable inputs: the handlers validate them and
-// answer with problem details instead of a binding error.
-
 internal sealed record SetupStatusResponse(bool SetupRequired);
 
 internal sealed record SetupRequest(string? SetupToken, string? Email, string? DisplayName, string? Password);

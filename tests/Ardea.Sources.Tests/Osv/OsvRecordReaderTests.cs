@@ -5,7 +5,6 @@ using Ardea.Intel.Sources.Formats.Osv;
 
 namespace Ardea.Sources.Tests.Osv;
 
-/// <summary>The OSV reader against recorded real records of the six ecosystems; the output is a reviewed snapshot.</summary>
 public sealed class OsvRecordReaderTests
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -38,9 +37,7 @@ public sealed class OsvRecordReaderTests
     [Fact]
     public void A_ghsa_record_first_without_and_later_with_its_cve_id_carries_the_cve_as_alias()
     {
-        // As published on 8 Dec 2025 in the GitHub Advisory Database: no CVE id yet, no purl.
         var first = Read("Go.GHSA-pfrf-9r5f-73f5.ghsa-only.json");
-        // As OSV.dev serves it since March 2026: CVE-2026-29067 and the Go database's id beside it.
         var later = Read("Go.GHSA-pfrf-9r5f-73f5.json");
 
         Assert.Equal([new Identifier("GHSA", "GHSA-pfrf-9r5f-73f5")], first.Aliases);
@@ -62,7 +59,6 @@ public sealed class OsvRecordReaderTests
             server.Versions.Select(v => (v.Introduced, v.Fixed)));
         Assert.Equal("8.0.0-20260518160100-9bd77d3fc4d2", Assert.Single(v8.Versions).Fixed);
         Assert.All(claim.Affected.SelectMany(a => a.Versions), v => Assert.Equal("go", v.Scheme));
-        // «introduced: 0» without fix: every version of the module, no lower bound named.
         var v5 = claim.Affected.Single(a => a.Product == "github.com/mattermost/mattermost-server/v5");
         Assert.Equal(new VersionRange { Scheme = "go", Raw = v5.Versions[0].Raw }, Assert.Single(v5.Versions));
         Assert.Equal([new Identifier("OSV", "GO-2026-6547"), new Identifier("CVE", "CVE-2026-8823"), new Identifier("GHSA", "GHSA-xmfh-3ccg-c9fx")], claim.Aliases);
@@ -76,7 +72,6 @@ public sealed class OsvRecordReaderTests
 
         Assert.Equal("1.37.0", Assert.Single(envoy[0].Versions).Exact);
         Assert.Equal(("1.36.0", "1.36.4"), (envoy[1].Versions[0].Introduced, envoy[1].Versions[0].LastAffected));
-        // PyPA lists seven versions beside the range; the range says it all.
         Assert.DoesNotContain(invokeai.Versions, v => v.Exact is not null);
         Assert.Equal(
             [("git", null, "756008dc5899081c5aa51e5bd8f24c1b3975a59e"), ("pep440", "5.3.1", "5.4.3rc1")],

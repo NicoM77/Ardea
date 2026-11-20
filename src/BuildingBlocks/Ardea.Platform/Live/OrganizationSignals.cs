@@ -7,23 +7,11 @@ using Npgsql;
 
 namespace Ardea.Platform.Live;
 
-/// <summary>
-/// «Something changed in this organisation» for the live stream (master plan 3.1, 10.2 «Live»): PostgreSQL
-/// sends a notification on channel <see cref="OrganizationSignals.Channel"/> with the organisation id as
-/// payload when a transaction that changed it commits; every API instance listens and wakes its open
-/// streams. The signal carries no data, so it needs no tenant check of its own: a stream reloads through
-/// the API, which checks access as for every request.
-/// </summary>
 public interface IOrganizationSignals
 {
-    /// <summary>A subscription to the organisation's signals until it is disposed.</summary>
     OrganizationSubscription Subscribe(Guid organizationId);
 }
 
-/// <summary>
-/// The signals of one organisation for one stream. Signals that arrive while the reader is busy
-/// collapse into one: the stream only needs to know that it must reload.
-/// </summary>
 public sealed class OrganizationSubscription : IDisposable
 {
     private readonly Action<OrganizationSubscription> _unsubscribe;
@@ -41,7 +29,6 @@ public sealed class OrganizationSubscription : IDisposable
 
     public Guid OrganizationId { get; }
 
-    /// <summary><c>changed</c>, or <c>resync</c> after the listener lost its connection and may have missed some.</summary>
     public ChannelReader<string> Reader => _channel.Reader;
 
     internal void Signal(string kind) => _channel.Writer.TryWrite(kind);
@@ -53,7 +40,6 @@ public sealed class OrganizationSubscription : IDisposable
     }
 }
 
-/// <summary>The listener: one connection per API process, reconnecting after a failure (master plan 3.6).</summary>
 internal sealed partial class OrganizationSignals(Persistence.DatabaseOptions database, TimeProvider time, ILogger<OrganizationSignals> logger)
     : BackgroundService, IOrganizationSignals
 {
@@ -77,8 +63,6 @@ internal sealed partial class OrganizationSignals(Persistence.DatabaseOptions da
         {
             try
             {
-                // A connection of its own, outside the pool: it listens for good, and a connector that carried a
-                // LISTEN or was interrupted while notifications arrived must never be handed to a unit of work (#69).
                 await using var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(database.AppConnectionString("ardea-live"))
                 {
                     Pooling = false,
@@ -93,7 +77,6 @@ internal sealed partial class OrganizationSignals(Persistence.DatabaseOptions da
 
                 if (reconnect)
                 {
-                    // Notifications sent while no one listened are lost: every stream reloads once.
                     foreach (var organization in _subscribers.Keys)
                     {
                         Publish(organization.ToString(), "resync");
@@ -147,7 +130,6 @@ internal sealed partial class OrganizationSignals(Persistence.DatabaseOptions da
 
 public static class OrganizationSignalServices
 {
-    /// <summary>The listener for live streams; registered by the modules that offer one, in the API role.</summary>
     public static IServiceCollection AddOrganizationSignals(this IServiceCollection services)
     {
         if (services.Any(d => d.ServiceType == typeof(OrganizationSignals)))

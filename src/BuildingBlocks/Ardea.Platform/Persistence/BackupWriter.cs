@@ -3,20 +3,11 @@ using Npgsql;
 
 namespace Ardea.Platform.Persistence;
 
-/// <summary>Writes a dump before a migration (master plan 12.2, ADR 024).</summary>
 public interface IBackupWriter
 {
-    /// <summary>Returns the path of the dump on the database server, or <c>null</c> when none was written.</summary>
     Task<string?> WriteAsync(NpgsqlConnection owner, CancellationToken cancellationToken);
 }
 
-/// <summary>
-/// The application image contains no <c>pg_dump</c>. The database server writes the dump itself with
-/// <c>COPY ... TO PROGRAM</c>, using the <c>pg_dump</c> of the database image, into <c>backup/</c> next
-/// to its data directory; the newest three dumps are kept. This needs a role that may run server
-/// programs, which the bundled database's owner role is. With any other database the step is skipped
-/// with a clear warning, and backups are the operator's job.
-/// </summary>
 public sealed partial class ServerSideBackupWriter(DatabaseOptions options, TimeProvider time, ILogger<ServerSideBackupWriter> logger) : IBackupWriter
 {
     public const string Directory = "/var/lib/postgresql/backup";

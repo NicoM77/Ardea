@@ -13,30 +13,19 @@ namespace Ardea.Platform.Jobs;
 
 public sealed record JobWorkerOptions
 {
-    /// <summary>Jobs running at the same time in this process, over all kinds.</summary>
     public int Concurrency { get; init; } = 8;
 
-    /// <summary>Fallback when no NOTIFY arrives (master plan 3.4: a slow poll remains).</summary>
     public TimeSpan PollInterval { get; init; } = TimeSpan.FromSeconds(5);
 
-    /// <summary>How long a claimed job stays reserved without renewal; renewed every third of it.</summary>
     public TimeSpan Lease { get; init; } = TimeSpan.FromSeconds(30);
 
     public TimeSpan WatchdogInterval { get; init; } = TimeSpan.FromSeconds(15);
 
-    /// <summary>Delay before the second attempt; doubles with every further one (master plan 3.4).</summary>
     public TimeSpan BackoffBase { get; init; } = Backoff.Base;
 
-    /// <summary>On shutdown, running jobs get this long before they are cancelled and given back.</summary>
     public TimeSpan ShutdownGrace { get; init; } = TimeSpan.FromSeconds(20);
 }
 
-/// <summary>
-/// The worker side of the job system (master plan 3.4): claims due jobs with <c>SKIP LOCKED</c>,
-/// keeps their leases alive, runs each in its own scope and unit of work with the job's tenant
-/// context, completes it in the same transaction as its effect, retries with back-off, and
-/// reclaims jobs of workers that died.
-/// </summary>
 internal sealed partial class JobProcessor(
     NpgsqlDataSource dataSource,
     IServiceScopeFactory scopes,
@@ -52,12 +41,10 @@ internal sealed partial class JobProcessor(
     private readonly ConcurrentDictionary<string, int> _runningByKind = new(StringComparer.Ordinal);
     private readonly CancellationTokenSource _crash = new();
 
-    /// <summary>Cancelled when the grace period after a stop request has run out: running jobs stop then.</summary>
     private readonly CancellationTokenSource _hardStop = new();
     private CancellationToken _stopping;
     private int _runningTotal;
 
-    /// <summary>Test hook: behaves like a killed process. Nothing is recorded; leases simply expire.</summary>
     internal void SimulateCrash() => _crash.Cancel();
 
     internal int RunningCount => _runningTotal;
@@ -126,7 +113,6 @@ internal sealed partial class JobProcessor(
     {
         Interlocked.Increment(ref _runningTotal);
         _runningByKind.AddOrUpdate(kind.Kind, 1, (_, n) => n + 1);
-        // The task waits until it is registered, so a quick job cannot remove itself before it is added.
         var registered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         _running[job.Id] = Task.Run(async () =>
         {
@@ -167,7 +153,6 @@ internal sealed partial class JobProcessor(
                 scope.ServiceProvider.GetRequiredService<TenantContext>().SetOrganization(organization);
             }
 
-            // The job system commits the job's unit of work together with the completion.
             var unitOfWork = scope.ServiceProvider.GetRequiredService<UnitOfWork>();
             unitOfWork.ReserveCommitForOwner();
 
@@ -188,7 +173,6 @@ internal sealed partial class JobProcessor(
         }
         catch (Exception) when (_crash.IsCancellationRequested)
         {
-            // A killed process records nothing; its transaction is rolled back with the connection.
         }
         catch (Exception) when (leaseLost.IsCancellationRequested)
         {
@@ -214,7 +198,6 @@ internal sealed partial class JobProcessor(
         }
     }
 
-    /// <summary>Records the outcome; if that fails too, the lease runs out and the watchdog settles the job.</summary>
     private async Task Settle(Func<Task> record, ClaimedJob job)
     {
         try
@@ -264,7 +247,6 @@ internal sealed partial class JobProcessor(
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // Never let the watchdog die: without it, jobs of dead workers would never run again.
                 LogWatchdogFailed(ex);
             }
 
@@ -312,10 +294,6 @@ internal sealed partial class JobProcessor(
         }
     }
 
-    /// <summary>
-    /// After a stop request no new job is claimed; running jobs get the grace period to finish, then
-    /// they are cancelled and given back without counting the attempt.
-    /// </summary>
     private async Task DrainAsync()
     {
         var running = _running.Values.ToArray();

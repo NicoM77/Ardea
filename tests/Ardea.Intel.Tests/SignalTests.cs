@@ -3,7 +3,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Intel.Tests;
 
-/// <summary>KEV and EPSS as signals per identifier (task 1.8, master plan 4.4, 6.4).</summary>
 public sealed class SignalTests(PostgresServer server)
 {
     [Fact]
@@ -30,7 +29,6 @@ public sealed class SignalTests(PostgresServer server)
         await EpssAsync(host, ("CVE-2026-1", 0.70), ("CVE-2026-2", 0.10), ("CVE-2026-3", 0.20), ("CVE-2026-999", 0.90));
         Assert.Equal("high", await host.ScalarAsync<string>("SELECT epss_class FROM intel.security_entry WHERE primary_key = 'CVE-2026-1'"));
 
-        // Next day: one entry crosses clearly, one stays inside the band, one barely moves.
         var revisions = await host.ScalarAsync<long>("SELECT sum(revision) FROM intel.security_entry");
         await EpssAsync(host, ("CVE-2026-1", 0.52), ("CVE-2026-2", 0.56), ("CVE-2026-3", 0.21), ("CVE-2026-999", 0.95));
 
@@ -39,7 +37,6 @@ public sealed class SignalTests(PostgresServer server)
         Assert.Equal("high", await host.ScalarAsync<string>("SELECT epss_class FROM intel.security_entry WHERE primary_key = 'CVE-2026-2'"));
         Assert.Equal("epss", await host.ScalarAsync<string>(
             "SELECT c.change_kinds[1] FROM intel.entry_change c JOIN intel.security_entry e ON e.id = c.entry_id WHERE e.primary_key = 'CVE-2026-2' ORDER BY c.revision DESC LIMIT 1"));
-        // A signal for an identifier without entry is kept for later and creates nothing.
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.security_entry WHERE primary_key = 'CVE-2026-999'"));
         Assert.Equal(0.95, await host.ScalarAsync<double>("SELECT epss_score FROM intel.entry_signal WHERE value = 'CVE-2026-999'"));
     }

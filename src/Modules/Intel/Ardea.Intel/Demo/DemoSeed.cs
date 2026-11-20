@@ -10,15 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Intel.Demo;
 
-/// <summary>
-/// The security records of the demo (<c>ardea seed-demo</c>, task 7.6): a small, curated set of real CVE records of the
-/// spike week (11 to 17 November 2026), stored as the CVE Program source would store them, and queued for normalisation.
-/// Nothing is fetched. The adapters get their source rows as the worker would give them, but switched off, so a worker
-/// that starts next does not load the world into a demo; an operator turns the sources on in the administration.
-/// </summary>
 internal sealed class DemoSeed(IServiceScopeFactory scopes, SourceRegistry registry, TimeProvider time) : IDemoSeedStep
 {
-    /// <summary>The key of the CVE Program adapter; the records are in its format.</summary>
     internal const string SourceKey = "cve-program";
 
     private const string ResourceName = "Ardea.Intel.Demo.records.jsonl";

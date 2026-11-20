@@ -7,7 +7,6 @@ namespace Ardea.Catalog.Features;
 
 internal sealed record CatalogProductView(string Key, string Name, string? Vendor, string Kind, string VersionScheme, string? PlatformKey);
 
-/// <summary>The catalogue search for the input help in the wizard and the project profile (master plan 10.2, 11.6).</summary>
 internal static class CatalogEndpoints
 {
     public static void Map(IEndpointRouteBuilder api) =>

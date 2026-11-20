@@ -12,7 +12,6 @@ using Npgsql;
 
 namespace Ardea.Host.Commands;
 
-/// <summary>The <c>api</c> role: REST API, sign-in, web app and live events (master plan 3.1).</summary>
 internal static partial class ApiRole
 {
     public static async Task<int> RunAsync(string[] args)
@@ -35,11 +34,6 @@ internal static partial class ApiRole
         return 0;
     }
 
-    /// <summary>Builds the API application; <c>null</c> when the configuration is invalid.</summary>
-    /// <param name="args">Command-line arguments after the role.</param>
-    /// <param name="check">The configuration check; inspect it when the result is <c>null</c>.</param>
-    /// <param name="configure">Runs first: configuration and web host (tests use a test server).</param>
-    /// <param name="overrideServices">Runs after every registration, so tests can replace a service.</param>
     public static WebApplication? Build(
         string[] args, out ConfigurationCheck check, Action<WebApplicationBuilder>? configure = null, Action<IServiceCollection>? overrideServices = null)
     {

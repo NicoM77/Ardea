@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Licence gate for NuGet dependencies (master plan 13.5): every direct and transitive package
-# must carry a licence from build/licenses/allowed-licenses.json.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 dotnet tool restore >/dev/null

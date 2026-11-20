@@ -3,12 +3,6 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Ardea.Platform.Persistence;
 
-/// <summary>
-/// Binds EF Core to the unit of work: when a context wants to open its connection, the unit of
-/// work begins its transaction instead, and the context never closes the shared connection.
-/// Contexts run with <c>AutoTransactionBehavior.Never</c>, so <c>SaveChanges</c> writes inside the
-/// unit of work's transaction instead of starting its own.
-/// </summary>
 internal sealed class UnitOfWorkInterceptor(UnitOfWork unitOfWork) : DbConnectionInterceptor
 {
     public override InterceptionResult ConnectionOpening(DbConnection connection, ConnectionEventData eventData, InterceptionResult result)

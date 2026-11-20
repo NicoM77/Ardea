@@ -5,11 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>
-/// The API of actions and alerts (task 3.5; master plan 10.2 «Massnahmen und Meldungen»): lists with
-/// filters, details with findings and history, status changes with the expected starting status.
-/// The assessment itself is tested in Ardea.Assessment.Tests; here its rows are written directly.
-/// </summary>
 public sealed class ActionApiTests(PostgresServer server)
 {
     [Fact]
@@ -41,7 +36,6 @@ public sealed class ActionApiTests(PostgresServer server)
         var detail = await Json(await client.GetAsync($"{path}/actions/2"));
         Assert.Equal(finding, detail.GetProperty("findings")[0].GetProperty("id").GetGuid());
 
-        // The three answers come first, from templates without a language model (task 3.6).
         var answers = detail.GetProperty("answers");
         Assert.Equal("template", answers.GetProperty("origin").GetString());
         Assert.Equal("CVE-2026-0001", answers.GetProperty("whatHappened").GetProperty("entryKey").GetString());
@@ -54,7 +48,6 @@ public sealed class ActionApiTests(PostgresServer server)
         Assert.Equal("CVE-2026-0001", (await Json(await client.GetAsync($"{path}/alerts/1"))).GetProperty("answers").GetProperty("whatHappened").GetProperty("entryKey").GetString());
         Assert.Equal(1, detail.GetProperty("findings")[0].GetProperty("alertNumber").GetInt32());
 
-        // A reminder is open or done: no assignee, no deadline, no «in review» (master plan 17.5, ADR 046).
         foreach (var gone in new[] { "assignedTo", "dueAt", "overdue" })
         {
             Assert.False(item.TryGetProperty(gone, out var value), $"{gone}: {value}");
@@ -67,13 +60,11 @@ public sealed class ActionApiTests(PostgresServer server)
         await ExpectProblem(await client.PostAsync($"{path}/actions/2/status", new { status = "in_review", expectedStatus = "open" }), HttpStatusCode.BadRequest, "invalid_status_change");
         await ExpectProblem(await client.GetAsync($"{path}/actions?status=in_review"), HttpStatusCode.BadRequest, "invalid_filter");
 
-        // The status the caller saw must still hold.
         await ExpectProblem(await client.PostAsync($"{path}/actions/2/status", new { status = "risk_accepted", expectedStatus = "closed" }), HttpStatusCode.Conflict, "status_conflict");
 
         var note = await Json(await client.PostAsync($"{path}/actions/2/notes", new { text = "Window on Friday" }), HttpStatusCode.Created);
         Assert.Equal("action.note_added", note.GetProperty("kind").GetString());
 
-        // A review names what the caller saw and why; only the model's estimate can be confirmed (task 4.7).
         var review = $"{path}/findings/{finding}/review";
         await ExpectProblem(await client.PostAsync(review, new { decision = "correct", expectedVerdict = "affected", expectedSource = "rules", verdict = "unlikely" }), HttpStatusCode.BadRequest, "invalid_review");
         await ExpectProblem(await client.PostAsync(review, new { decision = "confirm", expectedVerdict = "likely", expectedSource = "model" }), HttpStatusCode.Conflict, "verdict_conflict");
@@ -81,7 +72,6 @@ public sealed class ActionApiTests(PostgresServer server)
         await ExpectProblem(await client.PostAsync($"{path}/findings/{Guid.CreateVersion7()}/review", new { decision = "confirm", expectedVerdict = "affected", expectedSource = "model" }), HttpStatusCode.NotFound, "finding_not_found");
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assessment_feedback"));
 
-        // The outcome of the single finding closes the action.
         var closed = await Json(await client.SendAsync(HttpMethod.Patch, $"{path}/findings/{finding}", new { status = "remediated", expectedStatus = "open" }));
         Assert.Equal("remediated", closed.GetProperty("status").GetString());
         var after = await Json(await client.GetAsync($"{path}/actions/2"));
@@ -98,7 +88,6 @@ public sealed class ActionApiTests(PostgresServer server)
         Assert.Equal(2, alert.GetProperty("actions")[0].GetProperty("number").GetInt32());
         Assert.Single((await Json(await client.GetAsync($"{path}/alerts"))).GetProperty("items").EnumerateArray());
 
-        // Without a provider nobody can ask the model; the request queues nothing (task 4.3).
         await ExpectProblem(await client.PostAsync($"{path}/alerts/1/assessment", null), HttpStatusCode.Conflict, "ai_not_available");
         await ExpectProblem(await client.PostAsync($"{path}/alerts/99/assessment", null), HttpStatusCode.NotFound, "alert_not_found");
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.job WHERE kind = 'assess.estimate-alert'"));
@@ -125,7 +114,6 @@ public sealed class ActionApiTests(PostgresServer server)
         await SeedAsync(host, org, project, component);
         var action = await host.ScalarAsync<Guid>($"SELECT id FROM assess.remediation WHERE organization_id = '{org}'");
 
-        // Rows as the history held them before ADR 046: assigned, taken into review, given back, closed from review, reopened into review.
         await host.ScalarAsync<int>($$"""
             INSERT INTO assess.assess_event (organization_id, remediation_id, at, kind, data) VALUES
                 ('{{org}}', '{{action}}', now() - interval '5 minutes', 'action.assigned', '{"from": null, "to": "{{Guid.CreateVersion7()}}"}'),
@@ -155,7 +143,6 @@ public sealed class ActionApiTests(PostgresServer server)
             .GetProperty("id").GetGuid();
         await SeedAsync(host, org, project, component);
 
-        // Several people decide at once from what they all saw: open. One decision wins, the others reload.
         var responses = await Task.WhenAll(Enumerable.Range(0, 6).Select(i => client.PostAsync(
             $"/api/v1/orgs/{org}/actions/2/status",
             new { status = (i % 3) switch { 0 => "remediated", 1 => "risk_accepted", _ => "not_affected" }, expectedStatus = "open" })));
@@ -164,7 +151,6 @@ public sealed class ActionApiTests(PostgresServer server)
         Assert.Equal(1, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'action.status_changed'"));
     }
 
-    /// <summary>An alert, an action and a finding as the assessment would have written them.</summary>
     private static async Task<Guid> SeedAsync(ApiTestHost host, Guid org, Guid project, Guid component)
     {
         var entry = await host.ScalarAsync<Guid>("""

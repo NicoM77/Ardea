@@ -2,7 +2,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Versions;
 
-/// <summary>The six schemes of the MVP (master plan 6.6) behind <see cref="IVersionSchemes"/>; stateless.</summary>
 internal sealed class VersionSchemeRegistry : IVersionSchemes
 {
     public static readonly VersionSchemeRegistry Instance = new();
@@ -26,7 +25,6 @@ internal sealed class VersionSchemeRegistry : IVersionSchemes
         All = all;
         var named = all.ToDictionary(s => s.Name, StringComparer.OrdinalIgnoreCase);
 
-        // Version types as records write them (CVE JSON 5 versionType, OSV range types).
         _byName = new Dictionary<string, IVersionScheme>(named, StringComparer.OrdinalIgnoreCase)
         {
             ["npm"] = named[VersionSchemeNames.SemVer],
@@ -40,7 +38,6 @@ internal sealed class VersionSchemeRegistry : IVersionSchemes
             ["string"] = named[VersionSchemeNames.Numeric],
         };
 
-        // OSV ecosystem names and purl types; Debian, Alpine and other schemes without comparison stay out.
         _byEcosystem = new Dictionary<string, IVersionScheme>(StringComparer.OrdinalIgnoreCase)
         {
             ["npm"] = named[VersionSchemeNames.SemVer],
@@ -83,7 +80,6 @@ internal sealed class VersionSchemeRegistry : IVersionSchemes
             return null;
         }
 
-        // OSV qualifies some ecosystems with a release, e.g. «Red Hat:enterprise_linux:9» or «openSUSE:Leap 15.5».
         var colon = trimmed.IndexOf(':', StringComparison.Ordinal);
         return _byEcosystem.GetValueOrDefault(colon > 0 ? trimmed[..colon] : trimmed);
     }

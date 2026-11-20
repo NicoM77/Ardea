@@ -2,22 +2,13 @@ using System.Globalization;
 
 namespace Ardea.Catalog.Contracts;
 
-/// <summary>What a record says about a range of versions (<c>entry_affected.status</c>).</summary>
 public enum VersionStatus
 {
-    /// <summary>The record says nothing definite; also the default when a record names no default status.</summary>
     Unknown,
     Affected,
     Unaffected,
 }
 
-/// <summary>
-/// One version range of an affected product, as in <c>intel.entry_affected</c> (master plan 4.4):
-/// either an <see cref="Exact"/> version, or a range from <see cref="Introduced"/> (inclusive; <c>null</c>
-/// when the record names no lower bound) up to <see cref="Fixed"/> (exclusive) or
-/// <see cref="LastAffected"/> (inclusive); without either it is open upwards. Bounds are kept as the
-/// record writes them, after the normalisation of <see cref="VersionRanges"/>.
-/// </summary>
 public sealed record VersionRange
 {
     public string? Introduced { get; init; }
@@ -30,40 +21,22 @@ public sealed record VersionRange
 
     public VersionStatus Status { get; init; } = VersionStatus.Affected;
 
-    /// <summary>The version type the record names for this range, if any; <c>git</c> ranges are never evaluated.</summary>
     public string? Scheme { get; init; }
 
-    /// <summary>
-    /// Whether this range states Git commits, which cannot be compared without the repository (master plan 6.6):
-    /// version type <c>git</c> and a bound that is a commit hash, or no bound at all. Publishers also tag plain
-    /// version numbers as <c>git</c> (Symfony: <c>0</c> to before <c>5.4.56</c>); such a range is compared as versions.
-    /// </summary>
     public bool IsCommitRange =>
         string.Equals(Scheme, VersionSchemeNames.Git, StringComparison.OrdinalIgnoreCase)
         && (Bounds.Any(VersionRanges.IsCommitHash) || Bounds.All(VersionRanges.IsOpenLowerBound));
 
-    /// <summary>
-    /// Whether the range names no version at all: an exact «version» that is an open bound alone, <c>0</c>, <c>*</c>,
-    /// <c>n/a</c>, <c>unspecified</c>. VulnCheck writes <c>{"version": "0", "status": "affected"}</c> for products whose
-    /// versions it does not know. Read as a version, <c>0</c> put every real version above the range and «out of
-    /// range»; such a statement says nothing comparable (master plan 6.6: not evaluable is unknown, never «not affected»).
-    /// </summary>
     public bool NamesNoVersion => Exact is not null && Introduced is null && Fixed is null && LastAffected is null && VersionRanges.IsOpenLowerBound(Exact);
 
     private IEnumerable<string?> Bounds => [Introduced, Fixed, LastAffected, Exact];
 
-    /// <summary>Whether the record names a lower bound: an exact version, or a non-open <see cref="Introduced"/>.</summary>
     public bool HasExplicitLowerBound => Exact is not null || Introduced is not null;
 
     public static VersionRange ExactVersion(string version, VersionStatus status = VersionStatus.Affected, string? scheme = null) =>
         new() { Exact = version, Status = status, Scheme = scheme };
 }
 
-/// <summary>
-/// Turns version statements of records into <see cref="VersionRange"/>s and resolves the known
-/// peculiarities (master plan 6.6): placeholders like <c>8.2.*</c>, ranges in one field like
-/// <c>8.4.0-8.4.13</c>, open bounds like <c>0</c> and <c>*</c>, and comparison prefixes like <c>&lt;= 2.1</c>.
-/// </summary>
 public static class VersionRanges
 {
     private static readonly HashSet<string> OpenWords = new(StringComparer.OrdinalIgnoreCase)
@@ -71,23 +44,16 @@ public static class VersionRanges
         "", "*", "-", "x", "n/a", "na", "unspecified", "unknown", "all", "any",
     };
 
-    /// <summary>Whether the text is a Git commit hash: 7 to 40 hexadecimal digits.</summary>
     public static bool IsCommitHash(string? text)
     {
         var trimmed = text?.Trim();
         return trimmed is { Length: >= 7 and <= 40 } && trimmed.All(char.IsAsciiHexDigit);
     }
 
-    /// <summary>Whether a lower bound means «from the beginning»: missing, <c>0</c>, <c>*</c>, <c>unspecified</c>, ….</summary>
     public static bool IsOpenLowerBound(string? text) => text is null || OpenWords.Contains(text.Trim()) || text.Trim() == "0";
 
-    /// <summary>Whether an upper bound means «no end»: missing, <c>*</c>, <c>unspecified</c>, ….</summary>
     public static bool IsOpenUpperBound(string? text) => text is null || OpenWords.Contains(text.Trim());
 
-    /// <summary>
-    /// Expands a placeholder version like <c>8.2.*</c> or <c>8.x</c> into its lowest version
-    /// (<c>8.2</c>) and the exclusive bound after it (<c>8.3</c>).
-    /// </summary>
     public static bool TryExpandWildcard(string? text, out string lower, out string upperExclusive)
     {
         lower = upperExclusive = string.Empty;
@@ -108,7 +74,6 @@ public static class VersionRanges
         }
 
         var parts = prefix.TrimStart('v', 'V').Split('.');
-        // At most 18 digits a part, as in NumericParts: a longer number does not fit a long and is no version anyway.
         if (parts.Any(p => p.Length is 0 or > 18 || !p.All(char.IsAsciiDigit)) || parts.Length > 6)
         {
             return false;
@@ -120,11 +85,6 @@ public static class VersionRanges
         return true;
     }
 
-    /// <summary>
-    /// Splits a range written in one field, <c>8.4.0-8.4.13</c> or <c>8.4.0 - 8.4.13</c>, into its two
-    /// ends. Only numeric dot sequences with the same number of parts (at least two) count, so pre-release
-    /// versions (<c>1.0.0-rc.1</c>) and RPM releases (<c>1.2-4</c>) are not split.
-    /// </summary>
     public static bool TrySplitRange(string? text, out string from, out string to)
     {
         from = to = string.Empty;
@@ -155,10 +115,6 @@ public static class VersionRanges
         return false;
     }
 
-    /// <summary>
-    /// One version statement of a CVE record (CVE JSON 5: <c>version</c>, <c>lessThan</c>,
-    /// <c>lessThanOrEqual</c>, <c>status</c>, <c>versionType</c>) as a range.
-    /// </summary>
     public static VersionRange FromCve(string? version, string? lessThan, string? lessThanOrEqual, VersionStatus status, string? versionType = null)
     {
         var range = new VersionRange { Status = status, Scheme = string.IsNullOrWhiteSpace(versionType) ? null : versionType.Trim() };
@@ -167,20 +123,6 @@ public static class VersionRanges
             : FromSingleField(version, status, range.Scheme);
     }
 
-    /// <summary>
-    /// Resolves the known peculiarities (master plan 6.6) in a range a source reader has already split into
-    /// its fields, as <c>intel.entry_affected</c> stores it:
-    /// <list type="bullet">
-    /// <item>an exact version that is itself a range (<c>8.4.0-8.4.13</c>, <c>8.2.*</c>, <c>&lt; 2.1</c>) becomes that range;
-    /// an open word alone (<c>*</c>, <c>unspecified</c>, <c>n/a</c>) stays as written, because most publishers mean «not stated» by it, not «every version»;</item>
-    /// <item>an open lower bound (<c>0</c>, <c>*</c>, <c>unspecified</c>) becomes none, a placeholder lower bound its lowest version;</item>
-    /// <item><c>lessThanOrEqual 6.12.*</c> ends after the 6.12 line; <c>lessThan 6.12.*</c> also does when the lower bound
-    /// lies in that line, and otherwise ends where the doubt cannot make a version «out of range» (see
-    /// <c>PlaceholderEnd</c>); any other upper bound with a wildcard (<c>*</c>, <c>log4j-core*</c>) names no end.</item>
-    /// </list>
-    /// A range whose lower bound equals its fix stays as written; the version check reads it
-    /// (<see cref="VersionCheckReason.BeforeEmptyRange"/>). Applying it twice gives the same range.
-    /// </summary>
     public static VersionRange Normalize(VersionRange range)
     {
         ArgumentNullException.ThrowIfNull(range);
@@ -216,11 +158,6 @@ public static class VersionRanges
         return range with { Introduced = introduced, Fixed = fixedVersion, LastAffected = lastAffected };
     }
 
-    /// <summary>
-    /// A single version field that may itself be a range: <c>8.2.*</c>, <c>8.4.0-8.4.13</c>,
-    /// <c>&lt; 2.1</c>, <c>&lt;= 2.1</c>, <c>&gt;= 2.1</c>; anything else is an exact version.
-    /// <c>*</c> or <c>unspecified</c> alone stands for all versions.
-    /// </summary>
     public static VersionRange FromSingleField(string? version, VersionStatus status, string? scheme = null)
     {
         var range = new VersionRange { Status = status, Scheme = scheme };
@@ -253,11 +190,6 @@ public static class VersionRanges
         return range with { Exact = text };
     }
 
-    /// <summary>
-    /// The events of an OSV range (<c>introduced</c>, <c>fixed</c>, <c>last_affected</c>, <c>limit</c>),
-    /// in record order, as affected ranges. Each <c>introduced</c> opens a range; the next
-    /// <c>fixed</c> or <c>last_affected</c> closes it. <c>introduced: "0"</c> has no lower bound.
-    /// </summary>
     public static IReadOnlyList<VersionRange> FromOsvEvents(IEnumerable<KeyValuePair<string, string>> events, string? scheme = null)
     {
         var ranges = new List<VersionRange>();
@@ -283,7 +215,6 @@ public static class VersionRanges
                     open = null;
                     break;
                 default:
-                    // «limit» only bounds the search in a git history; it says nothing about affectedness.
                     break;
             }
         }
@@ -317,14 +248,6 @@ public static class VersionRanges
         return splitAllowed && TrySplitRange(text, out var from, out _) ? from : text;
     }
 
-    /// <summary>
-    /// Where a range «to before <c>6.12.*</c>» ends. Publishers mean two things by it: «before the 6.12 line» and
-    /// «up to the end of the 6.12 line». A lower bound in the line (<c>6.12.0</c> to before <c>6.12.*</c>,
-    /// <c>2.0</c> to before <c>2.x</c>) leaves only the second reading, as the first would be empty. Below the line
-    /// or without a lower bound both readings are possible; the wider one is taken for an affected range and
-    /// the narrower one for an unaffected range, so the doubt never makes a version «out of range». A lower
-    /// bound without leading numbers cannot be placed: the bound stays as written and the range unreadable.
-    /// </summary>
     private static string PlaceholderEnd(string? introduced, string written, string lineStart, string lineEnd, VersionStatus status)
     {
         var narrow = status == VersionStatus.Unaffected;
@@ -348,7 +271,6 @@ public static class VersionRanges
         return VersionLines.CompareNumbers(lower, start) < 0 && !narrow ? lineEnd : lineStart;
     }
 
-    /// <summary>An upper bound as text, or <c>null</c> when it names no end: missing, an open word, or a wildcard that is no placeholder version.</summary>
     private static string? UpperText(string? text)
     {
         if (IsOpenUpperBound(text))

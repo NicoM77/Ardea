@@ -3,7 +3,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Intel.Tests;
 
-/// <summary>From raw record to observation, with quarantine (task 1.5, master plan 6.1, 6.8).</summary>
 public sealed class NormalizationTests(PostgresServer server)
 {
     [Fact]

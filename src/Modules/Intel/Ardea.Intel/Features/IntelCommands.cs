@@ -9,10 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Intel.Features;
 
-/// <summary>Maintenance commands of master plan 12.8 (task 1.11); the worker does the work through jobs.</summary>
 internal static class IntelCommands
 {
-    /// <summary><c>ardea intel renormalize --source &lt;key&gt;</c>: read every stored record of a source again with the current parser.</summary>
     public static readonly MaintenanceCommand Renormalize = new(
         "intel-renormalize",
         "intel renormalize --source <key>",
@@ -37,10 +35,6 @@ internal static class IntelCommands
             return 0;
         });
 
-    /// <summary>
-    /// <c>ardea intel import --full [--source &lt;key&gt;]</c>: the whole inventory of a source instead of
-    /// the look-back window, by default the CVE Program (master plan 12.8; about 10 GB more, 12.9).
-    /// </summary>
     public static readonly MaintenanceCommand ImportFull = new(
         "intel-import",
         "intel import --full [--source <key>]",
@@ -65,7 +59,6 @@ internal static class IntelCommands
             return 0;
         });
 
-    /// <summary><c>ardea intel recompute</c>: build every entry again from its observations, e.g. after new precedence rules.</summary>
     public static readonly MaintenanceCommand Recompute = new(
         "intel-recompute",
         "intel recompute",

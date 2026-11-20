@@ -2,12 +2,6 @@ using System.Runtime.CompilerServices;
 
 namespace Ardea.Sources.Tests;
 
-/// <summary>
-/// Reviewed snapshots of adapter output (master plan 13.6: "Ausgabe als Snapshot"). The expected
-/// output lives next to the test as <c>*.verified.json</c>; a difference fails the test and writes
-/// <c>*.received.json</c> beside it for review. <c>ARDEA_UPDATE_SNAPSHOTS=1</c> accepts the new output.
-/// (Verify, the usual library, enforces a maintenance-fee licence since version 33; see master plan 2.6.)
-/// </summary>
 internal static class Snapshot
 {
     public static void Match(string actual, string name, [CallerFilePath] string testFile = "")
@@ -36,7 +30,6 @@ internal static class Snapshot
             : $"Output differs from snapshot {name}. Compare {received} with {verified}; accept intended changes with ARDEA_UPDATE_SNAPSHOTS=1.");
     }
 
-    /// <summary>CI builds are deterministic and record source paths as <c>/_/…</c>; map them back to the checkout.</summary>
     private static string SourcePath(string compiledPath)
     {
         if (!compiledPath.StartsWith("/_/", StringComparison.Ordinal))

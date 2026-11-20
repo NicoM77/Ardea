@@ -3,7 +3,6 @@ using Ardea.Catalog.Versions;
 
 namespace Ardea.Catalog.Tests.Versions;
 
-/// <summary>Known peculiarities of version statements, resolved while normalising (master plan 6.6).</summary>
 public sealed class VersionRangesTests
 {
     [Theory]
@@ -18,18 +17,15 @@ public sealed class VersionRangesTests
     }
 
     [Theory]
-    // A lower bound in the placeholder's line leaves only «to the end of that line»; read as «before the line» it would be empty.
     [InlineData("6.12.0", "6.12.*", VersionStatus.Affected, "6.12.0", "6.13")]
     [InlineData("5.10", "5.10.*", VersionStatus.Affected, "5.10", "5.11")]
     [InlineData("2.0", "2.x", VersionStatus.Affected, "2.0", "3")]
     [InlineData("6.12.*", "6.12.*", VersionStatus.Affected, "6.12", "6.13")]
     [InlineData("6.12.116", "6.12.*", VersionStatus.Unaffected, "6.12.116", "6.13")]
-    // Below the line or without a lower bound: the wider reading when affected, the narrower when unaffected.
     [InlineData("4.0", "6.12.*", VersionStatus.Affected, "4.0", "6.13")]
     [InlineData("4.0", "6.12.*", VersionStatus.Unaffected, "4.0", "6.12")]
     [InlineData("0", "6.12.*", VersionStatus.Affected, null, "6.13")]
     [InlineData("0", "6.12.*", VersionStatus.Unaffected, null, "6.12")]
-    // A lower bound above the line gives an inverted range; one without numbers cannot be placed and stays unreadable.
     [InlineData("6.13.0", "6.12.*", VersionStatus.Affected, "6.13.0", "6.12")]
     [InlineData("NOT_YET_AVAILABLE", "6.12.*", VersionStatus.Affected, "NOT_YET_AVAILABLE", "6.12.*")]
     public void Less_than_a_placeholder_ends_where_the_lower_bound_allows(string introduced, string lessThan, VersionStatus status, string? expectedIntroduced, string expectedFixed)
@@ -55,7 +51,6 @@ public sealed class VersionRangesTests
     [Fact]
     public void A_placeholder_with_an_oversized_part_is_no_placeholder_and_does_not_throw()
     {
-        // A part beyond 18 digits overflowed long.Parse inside the correlation, which then failed instead of degrading.
         Assert.False(VersionRanges.TryExpandWildcard("99999999999999999999.*", out _, out _));
         var range = VersionRanges.Normalize(new VersionRange { Introduced = "1.0", LastAffected = "99999999999999999999.*" });
         Assert.Equal((null, null), (range.Fixed, range.LastAffected));
@@ -108,7 +103,6 @@ public sealed class VersionRangesTests
     [Fact]
     public void Cve_less_than_or_equal_to_a_placeholder_ends_before_the_next_line()
     {
-        // Linux kernel: {"version": "5.10.200", "lessThanOrEqual": "5.10.*", "status": "unaffected"}.
         var range = VersionRanges.FromCve("5.10.200", null, "5.10.*", VersionStatus.Unaffected, "semver");
 
         Assert.Equal(new VersionRange { Introduced = "5.10.200", Fixed = "5.11", Status = VersionStatus.Unaffected, Scheme = "semver" }, range);
@@ -139,7 +133,6 @@ public sealed class VersionRangesTests
     [Fact]
     public void Osv_events_open_and_close_ranges_in_order()
     {
-        // GHSA-jfh8-c2jp-5v3q (log4j-core): two branches in one range.
         KeyValuePair<string, string>[] events =
         [
             new("introduced", "2.0-beta9"), new("fixed", "2.3.1"),
@@ -167,19 +160,15 @@ public sealed class VersionRangesTests
     }
 
     [Theory]
-    // Oracle: "Supported versions that are affected are MySQL Server: 8.4.0-8.4.13" (CVE-2026-114949).
     [InlineData(null, null, null, "8.4.0-8.4.13", "8.4.0", null, "8.4.13", null)]
     [InlineData(null, null, null, "8.2.*", "8.2", "8.3", null, null)]
     [InlineData(null, null, null, "< 2.1", null, "2.1", null, null)]
     [InlineData(null, null, null, "2.4.49", null, null, null, "2.4.49")]
-    // An open word alone names no version; it is not read as «every version».
     [InlineData(null, null, null, "unspecified", null, null, null, "unspecified")]
-    // Linux kernel: {"version": "6.12.116", "lessThanOrEqual": "6.12.*", "status": "unaffected"}.
     [InlineData("6.12.116", null, "6.12.*", null, "6.12.116", "6.13", null, null)]
     [InlineData("7.4-rc1", null, "*", null, "7.4-rc1", null, null, null)]
     [InlineData("0", "2.0", null, null, null, "2.0", null, null)]
     [InlineData("unspecified", "2.0", null, null, null, "2.0", null, null)]
-    // Log4Shell: {"version": "2.0-beta9", "lessThan": "log4j-core*"}.
     [InlineData("2.15.0", "log4j-core*", null, null, "2.15.0", null, null, null)]
     [InlineData("1.0", null, "1.4.2", null, "1.0", null, "1.4.2", null)]
     public void Stored_range_is_normalised(
@@ -195,7 +184,6 @@ public sealed class VersionRangesTests
     }
 
     [Theory]
-    // Google, «Chrome prior to 157.0.8103.50»; Microsoft, «Visual Studio 2026 version 18.12»; a plain one; one with a «v».
     [InlineData("157.0.8103.50", "157.0.8103.50")]
     [InlineData("18.12.0", "18.12.0")]
     [InlineData("v2.0.1", "2.0.1")]
@@ -225,8 +213,6 @@ public sealed class VersionRangesTests
     [Fact]
     public void Kernel_stable_line_after_normalising_no_longer_swallows_later_lines()
     {
-        // CVE-2026-100082 as stored: affected by default from 4.5; each stable line unaffected from its fix to the end of that line.
-        // Before normalising, «5.10.274 to 5.10.*» read as «5.10.274 and everything above», which contained 6.12.1.
         VersionRange[] stored =
         [
             VersionRange.ExactVersion("4.5"),
@@ -246,7 +232,6 @@ public sealed class VersionRangesTests
     [Fact]
     public void Normalised_kernel_record_gives_the_expected_verdicts()
     {
-        // The shape of Linux kernel CVE records: one affected version, unaffected below it and on fixed stable branches.
         VersionRange[] ranges =
         [
             VersionRanges.FromCve("5.4", null, null, VersionStatus.Affected, "semver"),

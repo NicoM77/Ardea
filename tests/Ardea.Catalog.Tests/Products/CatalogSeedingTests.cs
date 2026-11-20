@@ -7,10 +7,6 @@ using Npgsql;
 
 namespace Ardea.Catalog.Tests.Products;
 
-/// <summary>
-/// What only the real database shows: <c>migrate</c> loads the curated catalogue idempotently, never
-/// touches learned entries, and the application role reads only entries in effect (master plan 4.11, 6.9).
-/// </summary>
 public sealed class CatalogSeedingTests(PostgresServer server)
 {
     private static readonly IModuleDatabase Catalog = CatalogDatabase.Module;

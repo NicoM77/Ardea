@@ -2,10 +2,6 @@ using System.Security.Cryptography;
 
 namespace Ardea.Host.Commands;
 
-/// <summary>
-/// <c>ardea init-env</c> writes the mandatory values (master plan 12.4): <c>.env</c> for database and
-/// migration, <c>.env.app</c> for API and worker, which never sees the owner password.
-/// </summary>
 internal static class InitEnvCommand
 {
     public static int Run(string[] args)
@@ -35,7 +31,6 @@ internal static class InitEnvCommand
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
         {
-            // The image runs as an unprivileged user; a mounted folder of the host user is not writable for it.
             Console.Error.WriteLine($"Cannot write to {directory}: {ex.Message}");
             Console.Error.WriteLine("Run the command as your own user: docker run --rm --user \"$(id -u):$(id -g)\" -v \"$PWD:/out\" … init-env --dir /out");
             return 73;
@@ -55,7 +50,6 @@ internal static class InitEnvCommand
         }
     }
 
-    /// <summary>URL- and shell-safe random secret.</summary>
     internal static string Secret(int bytes) =>
         Convert.ToBase64String(RandomNumberGenerator.GetBytes(bytes)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 

@@ -3,11 +3,6 @@ using Npgsql;
 
 namespace Ardea.Intel.Tests;
 
-/// <summary>
-/// The hot queries of the first load use their indexes (phase 1 acceptance: first load under an hour
-/// on 2 vCPU). Each query is written exactly as EF Core or the job store sends it; with sequential
-/// scans disabled the plan must name the index, which proves the expression matches.
-/// </summary>
 public sealed class QueryPlanTests(PostgresServer server)
 {
     [Theory]
@@ -37,7 +32,6 @@ public sealed class QueryPlanTests(PostgresServer server)
         Assert.Contains(plan, line => line.Contains(index, StringComparison.Ordinal));
         if (index == "ix_job_due")
         {
-            // The kind is part of the index condition, not a filter over every pending job.
             Assert.Contains(plan, line => line.Contains("Index Cond", StringComparison.Ordinal) && line.Contains("kind", StringComparison.Ordinal));
         }
     }

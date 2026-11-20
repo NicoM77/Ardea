@@ -5,16 +5,10 @@ using Microsoft.Extensions.AI;
 
 namespace Ardea.Assessment.Tests.Estimating;
 
-/// <summary>
-/// A language model that answers with recorded answers and keeps every request it receives (master plan 7.9: the
-/// integration is tested with recorded answers, never with a real model). The answer may depend on the request's
-/// data block, e.g. on the entry key.
-/// </summary>
 internal sealed class RecordedModel(Func<RecordedRequest, string> answer, int tokensIn = 1800, int tokensOut = 400) : IChatClient
 {
     private readonly List<RecordedRequest> _requests = [];
 
-    /// <summary>A model that is down: every call fails like an unreachable endpoint.</summary>
     public static RecordedModel Unreachable() => new(_ => throw new HttpRequestException("connection refused"));
 
     public static RecordedModel Always(string answer, int tokensIn = 1800, int tokensOut = 400) => new(_ => answer, tokensIn, tokensOut);
@@ -55,13 +49,10 @@ internal sealed class RecordedModel(Func<RecordedRequest, string> answer, int to
     }
 }
 
-/// <summary>One request as the provider received it.</summary>
 internal sealed record RecordedRequest(IReadOnlyList<ChatMessage> Messages, ChatOptions? Options)
 {
-    /// <summary>Everything the provider saw as text.</summary>
     public string Text => string.Join("\n", Messages.Select(m => m.Text));
 
-    /// <summary>The data block of the user message, parsed.</summary>
     public JsonElement Data
     {
         get
@@ -76,7 +67,6 @@ internal sealed record RecordedRequest(IReadOnlyList<ChatMessage> Messages, Chat
     public string EntryKey => Data.GetProperty("entry").GetProperty("key").GetString()!;
 }
 
-/// <summary>The configured providers of a test: name, whether local, and the recorded model behind each.</summary>
 internal sealed class RecordedProviders(params (string Name, bool Local, RecordedModel Model)[] providers) : IAiProviders
 {
     public IReadOnlyList<AiProviderInfo> All { get; } = [.. providers.Select(p => new AiProviderInfo(p.Name, p.Local ? "ollama" : "anthropic", p.Name + "-model", p.Local, null))];
@@ -86,7 +76,6 @@ internal sealed class RecordedProviders(params (string Name, bool Local, Recorde
     public Task<AiConnectionResult?> TestAsync(string name, CancellationToken cancellationToken) => Task.FromResult<AiConnectionResult?>(null);
 }
 
-/// <summary>Organisations live in Iam, which the test hosts leave out: language and data policy per organisation.</summary>
 internal sealed class TestOrganizations : IOrganizationProfiles
 {
     private readonly Dictionary<Guid, OrganizationProfile> _profiles = [];
@@ -110,12 +99,10 @@ internal sealed class TestOrganizations : IOrganizationProfiles
     }
 }
 
-/// <summary>Recorded answers in <c>Estimating/Recorded</c>; <c>{C}</c> stands for the verdict list a test fills in.</summary>
 internal static class Recorded
 {
     public static string Load(string name) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Estimating", "Recorded", name));
 
-    /// <summary>A recorded answer with one verdict per component reference of the request.</summary>
     public static string For(string name, RecordedRequest request, string verdict)
     {
         var verdicts = request.Data.GetProperty("components").EnumerateArray()

@@ -7,12 +7,6 @@ using Ardea.Intel.Sources.Abstractions;
 
 namespace Ardea.Intel.Http;
 
-/// <summary>
-/// The HTTP client the platform hands to adapters (master plan 5.2, 5.4, 9.5, task 1.3). An adapter
-/// cannot get around it: identifying user agent, only the source's declared hosts (also after
-/// redirects, HTTPS only), a rate limit per host and worker process, a size limit per response,
-/// and — through the resilience pipeline of the named client — timeouts and a few retries.
-/// </summary>
 internal static class SourceHttp
 {
     public const string ClientName = "ardea-source";
@@ -25,7 +19,6 @@ internal static class SourceHttp
     public static readonly ProductInfoHeaderValue UserAgentComment = new("(+https://github.com/NicoM77/Ardea)");
 }
 
-/// <summary>Per-host token buckets shared by every source of the process.</summary>
 internal sealed class HostRateLimits : IDisposable
 {
     private readonly ConcurrentDictionary<string, RateLimiter> _limiters = new(StringComparer.OrdinalIgnoreCase);
@@ -50,7 +43,6 @@ internal sealed class HostRateLimits : IDisposable
     }
 }
 
-/// <summary>Host allow-list, redirects, user agent, rate limit and size limit for one source.</summary>
 internal sealed class SourceGuardHandler(SourceDescriptor descriptor, long maxResponseBytes, HostRateLimits limits) : DelegatingHandler
 {
     private const int MaxRedirects = 5;
@@ -128,7 +120,6 @@ internal sealed class SourceGuardHandler(SourceDescriptor descriptor, long maxRe
     }
 }
 
-/// <summary>Stops reading once a response grows past the limit, also without a Content-Length.</summary>
 internal sealed class LimitedContent(HttpContent inner, long limit, string host) : HttpContent
 {
     protected override async Task SerializeToStreamAsync(Stream stream, TransportContext? context) =>

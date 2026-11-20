@@ -37,10 +37,6 @@ namespace Ardea.Assets.Persistence.Migrations
                 nullable: false,
                 defaultValue: "none");
 
-            // The rule of VersionPrecisions.Of (ADR 046) in SQL: the backfill of the components there are, and, for this version
-            // only, a trigger that fills the precision when a writer leaves it unfitting. The API and worker of the previous
-            // version write components without it during the upgrade (master plan 4.11); the next version drops the trigger.
-            // Blank and trimmed mean what C# trims ([[:space:]]: spaces, tabs, line breaks), as in the check constraint.
             migrationBuilder.Sql("""
                 CREATE FUNCTION assets.version_precision_of(version text, purl text, origin text)
                     RETURNS text LANGUAGE sql IMMUTABLE SET search_path = pg_catalog, pg_temp
@@ -69,9 +65,6 @@ namespace Ardea.Assets.Persistence.Migrations
                 CREATE TRIGGER component_fill_precision BEFORE INSERT OR UPDATE ON assets.component
                     FOR EACH ROW EXECUTE FUNCTION assets.component_fill_precision();
                 """);
-
-            // Every organisation's stack (master plan 17.2) comes from the module's master-data step, which runs after every
-            // migrate (AssetsModule): organisations the previous API creates during the upgrade get theirs on the next one.
 
             migrationBuilder.CreateIndex(
                 name: "ux_project_stack",

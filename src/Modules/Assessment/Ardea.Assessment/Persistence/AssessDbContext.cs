@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace Ardea.Assessment.Persistence;
 
-/// <summary>Schema <c>assess</c>: organisation data (master plan 4.1, 4.6).</summary>
 internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options, ITenantContext tenant) : ModuleDbContext(options, tenant)
 {
     public const string Schema = "assess";
@@ -38,11 +37,9 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             alert.HasKey(a => a.Id);
             alert.Property(a => a.Id).HasDefaultValueSql("uuidv7()");
             alert.HasIndex(a => new { a.OrganizationId, a.EntryId }).IsUnique().HasDatabaseName("ux_alert_entry");
-            // The system operation «reassessment» asks across organisations: who has an alert for this entry (master plan 9.2).
             alert.HasIndex(a => a.EntryId).HasDatabaseName("ix_alert_entry");
             alert.Property(a => a.EntryKey).HasMaxLength(300);
             alert.HasIndex(a => new { a.OrganizationId, a.Number }).IsUnique().HasDatabaseName("ux_alert_number");
-            // The alert list: most severe first, then newest number, a page at a time (master plan 10.2).
             alert.HasIndex(a => new { a.OrganizationId, a.Level, a.Number }).HasDatabaseName("ix_alert_list");
         });
 
@@ -73,11 +70,9 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             finding.Property(f => f.Exploitation).HasMaxLength(10);
             finding.Property(f => f.ClosedVersionVerdict).HasMaxLength(20);
             finding.HasIndex(f => f.RemediationId).HasDatabaseName("ix_finding_remediation");
-            // The finding list: most severe first, then newest id; the id in the index lets a page stop after its rows.
             finding.HasIndex(f => new { f.OrganizationId, f.Level, f.Id }).HasDatabaseName("ix_finding_org_level");
             finding.HasOne<Remediation>().WithMany().HasForeignKey(f => f.RemediationId).OnDelete(DeleteBehavior.SetNull);
             finding.HasIndex(f => new { f.AlertId, f.ComponentId }).IsUnique().HasDatabaseName("ux_finding_component");
-            // The reverse search re-evaluates what a project already has (master plan 7.7).
             finding.HasIndex(f => new { f.ProjectId, f.EntryId }).HasDatabaseName("ix_finding_project_entry");
             finding.HasIndex(f => f.ComponentId).HasDatabaseName("ix_finding_component");
             finding.HasOne<Alert>().WithMany().HasForeignKey(f => f.AlertId).OnDelete(DeleteBehavior.Cascade);
@@ -98,11 +93,8 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             remediation.Property(r => r.Status).HasMaxLength(20);
             remediation.Property(r => r.CloseReason).HasMaxLength(40);
             remediation.HasIndex(r => new { r.OrganizationId, r.Number }).IsUnique().HasDatabaseName("ux_remediation_number");
-            // At most one action per component is not closed (master plan 4.6).
             remediation.HasIndex(r => r.ComponentId).IsUnique().HasFilter("status <> 'closed'").HasDatabaseName("ux_remediation_component_open");
-            // The list: by status, level and number within the organisation (master plan 10.2).
             remediation.HasIndex(r => new { r.OrganizationId, r.Status, r.Level, r.Number }).HasDatabaseName("ix_remediation_list");
-            // The list of «active» and «all», which no status narrows: most severe first, then newest number.
             remediation.HasIndex(r => new { r.OrganizationId, r.Level, r.Number }).HasDatabaseName("ix_remediation_level");
         });
 
@@ -115,7 +107,6 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             e.Property(x => x.Data).HasColumnType("jsonb");
             e.HasIndex(x => new { x.RemediationId, x.At }).HasDatabaseName("ix_assess_event_remediation");
             e.HasIndex(x => x.FindingId).HasDatabaseName("ix_assess_event_finding");
-            // The history of a notice (ADR 047).
             e.HasIndex(x => new { x.NoticeId, x.At }).HasDatabaseName("ix_assess_event_notice");
             e.HasIndex(x => new { x.OrganizationId, x.At }).HasDatabaseName("ix_assess_event_org_at");
         });
@@ -151,7 +142,6 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             assessment.Property(a => a.Language).HasMaxLength(20);
             assessment.Property(a => a.Output).HasColumnType("jsonb");
             assessment.HasIndex(a => a.AlertId).HasDatabaseName("ix_assessment_alert");
-            // The quotas: tokens of the day, assessments of an action in seven days (master plan 7.5, 7.8).
             assessment.HasIndex(a => new { a.OrganizationId, a.CreatedAt }).HasDatabaseName("ix_assessment_org_created");
             assessment.HasOne<Alert>().WithMany().HasForeignKey(a => a.AlertId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -164,7 +154,6 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
                 t.HasCheckConstraint("ck_assessment_feedback_source", "verdict_source IN ('rules', 'model', 'human')");
                 t.HasCheckConstraint("ck_assessment_feedback_verdicts", "verdict_before IN ('affected', 'likely', 'uncertain', 'unlikely', 'not_affected') AND (verdict IS NULL OR verdict IN ('affected', 'likely', 'uncertain', 'unlikely', 'not_affected'))");
                 t.HasCheckConstraint("ck_assessment_feedback_levels", "level_before BETWEEN 1 AND 5 AND (expected_level IS NULL OR expected_level BETWEEN 1 AND 5)");
-                // A correction names what is wrong and why (master plan 7.9).
                 t.HasCheckConstraint("ck_assessment_feedback_correction", "kind = 'confirmed' OR ((verdict IS NOT NULL OR expected_level IS NOT NULL) AND reason IS NOT NULL)");
             });
             feedback.HasKey(f => f.Id);
@@ -175,7 +164,6 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             feedback.Property(f => f.Verdict).HasMaxLength(20);
             feedback.Property(f => f.Reason).HasMaxLength(2000);
             feedback.HasIndex(f => new { f.FindingId, f.CreatedAt }).HasDatabaseName("ix_assessment_feedback_finding");
-            // The correction rate per model and prompt version (master plan 7.9).
             feedback.HasIndex(f => f.AssessmentId).HasDatabaseName("ix_assessment_feedback_assessment");
             feedback.HasOne<Finding>().WithMany().HasForeignKey(f => f.FindingId).OnDelete(DeleteBehavior.Cascade);
             feedback.HasOne<AlertAssessment>().WithMany().HasForeignKey(f => f.AssessmentId).OnDelete(DeleteBehavior.Cascade);
@@ -186,7 +174,6 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             notice.ToTable("notice", t =>
             {
                 t.HasCheckConstraint("ck_notice_state", "state IN ('open', 'affects_us', 'not_affected', 'withdrawn')");
-                // An answer names who gave it and when (master plan 17.3).
                 t.HasCheckConstraint("ck_notice_decided", "state IN ('open', 'withdrawn') OR (decided_by IS NOT NULL AND decided_at IS NOT NULL)");
                 t.HasCheckConstraint("ck_notice_exploitation", "exploitation IN ('none', 'poc', 'active') AND (decided_exploitation IS NULL OR decided_exploitation IN ('none', 'poc', 'active'))");
                 t.HasCheckConstraint("ck_notice_reappeared", "reappeared_reason IS NULL OR reappeared_reason IN ('exploited', 'kev')");
@@ -198,12 +185,9 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             notice.Property(n => n.ReappearedReason).HasMaxLength(20);
             notice.Property(n => n.DecidedExploitation).HasMaxLength(10);
             notice.Property(n => n.Exploitation).HasMaxLength(10).HasDefaultValue("none");
-            // The list's order (E23): exploited first, then the score, then the newest; computed, so no writer can disagree.
             notice.Property(n => n.Exploited).HasComputedColumnSql("exploitation = 'active'", stored: true);
             notice.Property(n => n.ScoreRank).HasComputedColumnSql("coalesce(cvss_score, -1)", stored: true);
-            // One notice per organisation and entry (master plan 17.3).
             notice.HasIndex(n => new { n.OrganizationId, n.EntryId }).IsUnique().HasDatabaseName("ux_notice_entry");
-            // The inbox in its order (E23), per state and backfill: new notices, earlier ones, answered, withdrawn (task 5a.5).
             notice.HasIndex(n => new { n.OrganizationId, n.State, n.IsBackfill, n.Exploited, n.ScoreRank, n.RaisedAt, n.Id })
                 .IsDescending(false, false, false, true, true, true, true).HasDatabaseName("ix_notice_list");
             notice.HasIndex(n => n.RemediationId).HasDatabaseName("ix_notice_remediation");

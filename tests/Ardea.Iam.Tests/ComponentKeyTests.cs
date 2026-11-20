@@ -5,7 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>The search index <c>component_key</c> with match strength (task 2.5; master plan 7.2).</summary>
 public sealed class ComponentKeyTests(PostgresServer server)
 {
     [Fact]
@@ -35,7 +34,6 @@ public sealed class ComponentKeyTests(PostgresServer server)
         var (client, path) = await ProjectAsync(host);
         using var _ = client;
 
-        // An alias of the catalogue is the product itself.
         var postgres = await AddAsync(client, path, new { customName = "Postgres", kind = "database", version = "16" });
         Assert.Contains("product postgresql strong", await KeysAsync(host, postgres));
 

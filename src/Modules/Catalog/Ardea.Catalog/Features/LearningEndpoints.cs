@@ -16,11 +16,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Catalog.Features;
 
-/// <summary>
-/// The catalogue that learns, for the instance administrator (master plan 6.9, 11.4; tasks 4.9, 4.10): the review list
-/// next to the quarantine on the page «Sources» with confirm, change and reject; withdrawal of an entry in effect; the
-/// export in the format of the curated files; the measures; the provider the catalogue asks.
-/// </summary>
 internal static class LearningEndpoints
 {
     private static readonly string[] Views = ["review", "open", "in_effect", "decided"];
@@ -60,7 +55,6 @@ internal static class LearningEndpoints
             unknown = json.RootElement.TryGetProperty("unknown", out var u) ? u.GetInt32() : null;
         }
 
-        // Eight weeks, Monday to Monday in UTC, the current one last.
         var monday = day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
         var since = monday.AddDays(-7 * 7);
         var events = await db.LearningEvents.AsNoTracking()
@@ -110,7 +104,6 @@ internal static class LearningEndpoints
         return Results.Ok(status);
     }
 
-    /// <summary>Starts the job now, e.g. after the first fill; a waiting run is not doubled.</summary>
     private static async Task<IResult> RunAsync(IJobQueue jobs, IAuditLog audit, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
         await jobs.EnqueueAsync(new GrowCatalog(), GrowCatalog.Options, cancellationToken);
@@ -130,7 +123,6 @@ internal static class LearningEndpoints
         var rows = db.UnknownProducts.AsNoTracking();
         if (rawKey is { Length: > 0 } key)
         {
-            // The link from a hit names the raw key, whatever became of it since.
             rows = rows.Where(u => u.RawKey == key);
         }
         else
@@ -152,10 +144,6 @@ internal static class LearningEndpoints
         return Results.Ok(list.Select(r => LearningViewMapping.View(r, k => layers.FindByKey(k)?.Name)).ToList());
     }
 
-    /// <summary>
-    /// Confirm, change or map by hand. The decision is checked against the catalogue of now as a proposal of the model
-    /// is: an entry that exists, or a new product whose key and spellings no entry has.
-    /// </summary>
     private static async Task<IResult> AdoptAsync(
         Guid id, AdoptLearnedRequest? request, CatalogDbContext db, ProductCatalog catalog, LearnedEntries entries, CatalogCache cache, IAuditLog audit,
         IUnitOfWork unitOfWork, ITenantContext tenant, CancellationToken cancellationToken)
@@ -238,7 +226,6 @@ internal static class LearningEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>Takes a learned entry in effect back with one click (master plan 6.9); the entries concerned are computed again.</summary>
     private static async Task<IResult> WithdrawAsync(
         Guid id, CatalogDbContext db, LearnedEntries entries, CatalogCache cache, IAuditLog audit, IUnitOfWork unitOfWork, ITenantContext tenant,
         CancellationToken cancellationToken)
@@ -261,7 +248,6 @@ internal static class LearningEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>The learned entries in effect as curated files (master plan 6.9 «Zurück ins Projekt»), one per vendor, in a zip.</summary>
     private static async Task<IResult> ExportAsync(CatalogDbContext db, TimeProvider time, CancellationToken cancellationToken)
     {
         var bytes = await CatalogExport.WriteAsync(db, time.GetUtcNow(), cancellationToken);

@@ -3,14 +3,12 @@ using Ardea.Platform.Status;
 
 namespace Ardea.Platform.Tests.Status;
 
-/// <summary>When the instance administrators hear about a warning of the instance (master plan 12.7, ADR 043).</summary>
 public sealed class InstanceWarningRulesTests
 {
     private static readonly DateTimeOffset Start = new(2026, 11, 19, 8, 0, 0, TimeSpan.Zero);
     private static readonly StatusWarning Stalled = new("worker_stalled", "critical", "The worker has stopped: nothing is fetched or assessed.");
     private static readonly StatusWarning Stale = new("source_stale", "warning", "OSV has not been fetched since it was added.", Subject: "osv");
 
-    /// <summary>The table between rounds.</summary>
     private readonly List<InstanceWarningRow> _rows = [];
 
     private WarningMail Round(TimeSpan after, bool claim, params StatusWarning[] current)
@@ -58,7 +56,6 @@ public sealed class InstanceWarningRulesTests
         var over = Round(Minutes(10), claim: true);
         Assert.Equal("worker_stalled", Assert.Single(over.Resolved).Code);
 
-        // The round after the «resolved» mail removes the row; nothing more is sent.
         Assert.True(Round(Minutes(15), claim: true).IsEmpty);
         Assert.Empty(_rows);
     }
@@ -72,7 +69,6 @@ public sealed class InstanceWarningRulesTests
         Assert.True(Round(Minutes(10), claim: true, Stalled).IsEmpty);
         Assert.True(Round(Minutes(15), claim: true).IsEmpty);
 
-        // A second process's round a moment later does not count as a round of staying clear.
         Assert.True(Round(Minutes(16), claim: true).IsEmpty);
         Assert.Single(Round(Minutes(20), claim: true).Resolved);
     }

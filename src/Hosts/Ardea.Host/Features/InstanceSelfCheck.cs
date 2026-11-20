@@ -7,31 +7,20 @@ using Npgsql;
 
 namespace Ardea.Host.Features;
 
-/// <summary>
-/// The instance tells its administrators when it warns about itself (master plan 12.7, task 6.6, ADR 043). A round
-/// computes the status through the modules' contributors, brings <c>platform.instance_warning</c> in line with it
-/// and claims what to mail in one short unit of work, commits, and only then talks to the mail server; a mail that
-/// could not be sent to anyone gives its claim back in a new short unit of work, so the next round tries again. It
-/// runs in the <c>api</c> and the <c>worker</c> role and needs no job: a stalled worker cannot report itself. One
-/// process at a time reconciles: a transaction-level advisory try-lock in the reconciling unit of work (skip the
-/// round if taken), which ends with that transaction; no lock and no connection is held while the mail is sent.
-/// </summary>
 internal sealed partial class InstanceSelfCheck(
     IServiceScopeFactory scopes, TimeProvider time, IConfiguration configuration, ILogger<InstanceSelfCheck> logger)
 {
     public static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
 
-    internal const long LockKey = 0x41524445_53454C46; // "ARDESELF"
+    internal const long LockKey = 0x41524445_53454C46;
 
     private bool _toldNoSmtp;
     private bool _toldNoRecipients;
 
-    /// <summary>One round; false when another process is reconciling right now.</summary>
     public async Task<bool> RunRoundAsync(CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
 
-        // Who can be told: outside any transaction (the sender and the directory read in short units of work of their own).
         await using var outside = scopes.CreateAsyncScope();
         var email = outside.ServiceProvider.GetRequiredService<IEmailSender>();
         var configured = await email.IsConfiguredAsync(cancellationToken);
@@ -39,7 +28,6 @@ internal sealed partial class InstanceSelfCheck(
             ? await outside.ServiceProvider.GetRequiredService<IInstanceAdministrators>().ListReachableAsync(cancellationToken)
             : [];
 
-        // Status, state and claim in one short unit of work. The result is built before the commit.
         WarningMail mail;
         int active;
         await using (var scope = scopes.CreateAsyncScope())
@@ -69,7 +57,6 @@ internal sealed partial class InstanceSelfCheck(
             return true;
         }
 
-        // No transaction and no lock is held from here on.
         var delivered = 0;
         try
         {
@@ -94,18 +81,14 @@ internal sealed partial class InstanceSelfCheck(
 
         if (delivered == 0)
         {
-            // Nobody got it: the next round tries again.
             await ReleaseAsync(mail);
             return true;
         }
 
-        // Somebody got it: the claim stands, so one address the mail server refuses for good does not make the
-        // others get the same mail every five minutes. The ones it failed for hear of the warning with the reminder.
         LogMailed(delivered, recipients.Count, mail.Raised.Count, mail.Reminded.Count, mail.Resolved.Count);
         return true;
     }
 
-    /// <summary>Gives a claim back; with no token, so a stopping process still does it.</summary>
     private async Task ReleaseAsync(WarningMail mail)
     {
         await using var scope = scopes.CreateAsyncScope();
@@ -115,7 +98,6 @@ internal sealed partial class InstanceSelfCheck(
         await unitOfWork.CommitAsync(CancellationToken.None);
     }
 
-    /// <summary>The transaction-level lock of the self-check's state: it ends with the unit of work's transaction.</summary>
     private static async Task<bool> LockAsync(IUnitOfWork unitOfWork, bool wait, CancellationToken cancellationToken)
     {
         var connection = await unitOfWork.GetConnectionAsync(cancellationToken);
@@ -124,7 +106,6 @@ internal sealed partial class InstanceSelfCheck(
         return (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
     }
 
-    /// <summary>Without a mail server or an administrator with a confirmed address the warnings stay on the overview; said once.</summary>
     private void TellWhyNobodyHears(int active, bool configured, int recipients)
     {
         if (!configured)
@@ -153,7 +134,6 @@ internal sealed partial class InstanceSelfCheck(
         _toldNoRecipients = false;
     }
 
-    /// <summary>Plain and short: what the status shows, a link to the administration, nothing else.</summary>
     internal EmailMessage Render(InstanceAdministrator recipient, WarningMail mail)
     {
         var publicUrl = PublicUrl();
@@ -220,7 +200,6 @@ internal sealed partial class InstanceSelfCheck(
     private partial void LogSendFailed(Guid userId, string error);
 }
 
-/// <summary>Runs a self-check round every five minutes; the first one an interval after the start, when a worker started together with it has beaten.</summary>
 internal sealed partial class InstanceSelfCheckService(InstanceSelfCheck check, TimeProvider time, ILogger<InstanceSelfCheckService> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -245,7 +224,6 @@ internal sealed partial class InstanceSelfCheckService(InstanceSelfCheck check, 
 
 internal static class InstanceSelfCheckServices
 {
-    /// <summary>In both long-running roles (ADR 043).</summary>
     public static IServiceCollection AddInstanceSelfCheck(this IServiceCollection services)
     {
         services.AddSingleton<InstanceSelfCheck>();

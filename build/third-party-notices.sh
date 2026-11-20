@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Writes THIRD-PARTY-NOTICES.md: the licence of every NuGet and production npm package the image ships
-# (master plan 12, 13.5). Needs the restored solution (NuGet) and installed web packages (npm).
-# Usage: [NPM_NOTICES=file] build/third-party-notices.sh [output file]   (default artifacts/THIRD-PARTY-NOTICES.md)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 out="${1:-artifacts/THIRD-PARTY-NOTICES.md}"
@@ -16,7 +13,6 @@ dotnet nuget-license \
   --override-package-information build/licenses/overrides.json \
   --output Markdown > "$tmp/nuget.md"
 
-# NPM_NOTICES names a file the web stage of the image build already wrote; otherwise it is made here.
 if [ -n "${NPM_NOTICES:-}" ]; then
   cp "$NPM_NOTICES" "$tmp/npm.md"
 elif [ -d web/node_modules ]; then

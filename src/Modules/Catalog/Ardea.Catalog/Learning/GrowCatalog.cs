@@ -11,11 +11,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Ardea.Catalog.Learning;
 
-/// <summary>
-/// The catalogue grows by itself (master plan 6.9): once a day, after a source's first load, on request of the
-/// administrator, and continued by itself while keys and calls are left. <see cref="Collect"/> is <c>false</c> for a
-/// continuation, which skips step 1; <see cref="RulesAfter"/> is the raw key the mapping without a model goes on after.
-/// </summary>
 internal sealed record GrowCatalog(bool Collect = true, string? RulesAfter = null) : IJob
 {
     public static string Kind => "catalog.grow";
@@ -23,15 +18,6 @@ internal sealed record GrowCatalog(bool Collect = true, string? RulesAfter = nul
     public static EnqueueOptions Options => new() { CoalesceKey = "catalog.grow", Priority = JobPriority.Background };
 }
 
-/// <summary>
-/// The steps of master plan 6.9, each in a unit of work of its own (ADR 023): collect the unknown products with their
-/// records; map without a model what rules can map; then, with a provider and calls left, ask the model about one key
-/// after the other, most frequent first: read in a short unit of work, call without an open transaction, write the
-/// outcome in another. The job's own unit of work stays unused, so no transaction is open while the model thinks.
-/// The mapping without a model works in batches of its own units of work, so a run that ends early keeps what it did;
-/// after <see cref="LearningOptions.RuleBatchesPerRun"/> batches the run hands the rest to a continuation, before the
-/// model is asked. The kind has one attempt: a repeated run would ask the model again.
-/// </summary>
 internal sealed partial class GrowCatalogHandler(
     IUnitOfWorkFactory units, Learner learner, CatalogCache cache, IAiProviders providers, LearningOptions options, TimeProvider time,
     ILogger<GrowCatalogHandler> logger)
@@ -56,10 +42,6 @@ internal sealed partial class GrowCatalogHandler(
         LogRun(mapped, asked, rulesAfter is not null || more);
     }
 
-    /// <summary>
-    /// Step 1: every product key of the entries the catalogue does not know, with its records and KEV listing. New keys
-    /// are added as open; for known ones only the counts and the statement change, never a decision.
-    /// </summary>
     private async Task CollectAsync(CancellationToken cancellationToken)
     {
         await using var scope = units.CreateScope();
@@ -102,12 +84,6 @@ internal sealed partial class GrowCatalogHandler(
         LogCollected(census.ProductKeys, unknown);
     }
 
-    /// <summary>
-    /// Step 2, without a model: what rules map takes effect at once; a suspicious statement waits for a person. Keys in
-    /// raw key order, a batch per unit of work; each batch checks against the catalogue as the batches before left it,
-    /// and a spelling two keys of one batch would take is left to the next run. Returns the keys mapped and, when the run's
-    /// batches are used up, the raw key to go on after.
-    /// </summary>
     private async Task<(int Mapped, string? After)> MapByRulesAsync(string? after, CancellationToken cancellationToken)
     {
         var mapped = 0;
@@ -185,20 +161,14 @@ internal sealed partial class GrowCatalogHandler(
                 }
             }
 
-            // The last event is not written by an adoption's own save: save before the commit.
             await db.SaveChangesAsync(cancellationToken);
             await services.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
         }
 
-        // Every process reads what this one wrote at its next unit of work (ADR 040); this one at once.
         cache.Invalidate();
         return (changed, last, count);
     }
 
-    /// <summary>
-    /// Step 3 to 5 with the model: the most frequent open keys first, KEV before all, keys that failed on a provider
-    /// before today again. Returns the keys asked about and whether keys and calls are left for a continuation.
-    /// </summary>
     private async Task<(int Asked, bool More)> AskModelAsync(CancellationToken cancellationToken)
     {
         AiProviderInfo? provider;
@@ -207,7 +177,6 @@ internal sealed partial class GrowCatalogHandler(
         var day = AiLimits.DayStart(time.GetUtcNow());
         if (providers.All.Count == 0)
         {
-            // Without a provider the mapping without a model runs, and nothing else (master plan 6.9 «Ohne KI»).
             return (0, false);
         }
 
@@ -247,7 +216,6 @@ internal sealed partial class GrowCatalogHandler(
         return (asked, callsLeft > 0 && due.Count > asked && asked > 0);
     }
 
-    /// <summary>One key: read, call, write (ADR 023). Returns the calls made.</summary>
     private async Task<int> AskAsync(Guid id, AiProviderInfo provider, int callsLeft, CancellationToken cancellationToken)
     {
         LearnInput input;
@@ -281,11 +249,9 @@ internal sealed partial class GrowCatalogHandler(
             entries.Event(LearningEventRow.Asked, row.RawKey, null, null, now, result.Attempts, result.Tokens);
             var outcome = "failed";
 
-            // Someone may have decided while the model thought; a decision of a person stands.
             if (row.Outcome == UnknownProductRow.Open)
             {
                 var proposal = result.Proposal;
-                // Two answers that failed the check: on the review list. A single one (the day's last call) is asked again tomorrow.
                 if (proposal is null && result.Failure == Holds.InvalidOutput && result.Attempts >= Learner.Attempts)
                 {
                     proposal = new LearnedProposal(Decisions.Unclear, null, null, "low", null, LearnedBy.Model, provider.Name, provider.Model, LearnPrompt.Version, Holds.InvalidOutput);
@@ -298,7 +264,6 @@ internal sealed partial class GrowCatalogHandler(
                         entries.Event(LearningEventRow.Learned, row.RawKey, proposal.AliasOf ?? proposal.NewProduct?.Key, null, now);
                     }
 
-                    // Step 5: in effect at once only with high confidence, a checked answer and an inconspicuous statement.
                     var hold = proposal.Decision == Decisions.Unclear ? proposal.Hold ?? Holds.Unclear
                         : input.Suspicious ? Holds.SuspiciousInput
                         : proposal.Confidence != "high" ? Holds.Confidence
@@ -309,7 +274,6 @@ internal sealed partial class GrowCatalogHandler(
                     }
                     else
                     {
-                        // Held, or the write's own check against the catalogue of now found what the model's did not.
                         await entries.HoldAsync(row, proposal with { Hold = hold ?? Holds.Check }, cancellationToken);
                         outcome = row.Outcome;
                     }
@@ -326,7 +290,6 @@ internal sealed partial class GrowCatalogHandler(
         return result.Attempts;
     }
 
-    /// <summary>Open keys from <see cref="LearningOptions.MinRecords"/> records on, or at once when one record is in KEV (master plan 6.9 step 1).</summary>
     private IQueryable<UnknownProductRow> Due(IQueryable<UnknownProductRow> rows) =>
         rows.Where(u => u.Outcome == UnknownProductRow.Open && (u.RecordCount >= options.MinRecords || u.InKev));
 
@@ -345,7 +308,6 @@ internal sealed partial class GrowCatalogHandler(
     private partial void LogRun(int mapped, int asked, bool more);
 }
 
-/// <summary>Queues a run of <see cref="GrowCatalog"/> in the caller's unit of work, e.g. after a source's first load (master plan 6.9).</summary>
 internal sealed class CatalogGrowth(IJobQueue jobs) : ICatalogGrowth
 {
     public Task RequestAsync(TimeSpan delay, CancellationToken cancellationToken) =>

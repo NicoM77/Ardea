@@ -35,10 +35,6 @@ internal sealed record SourceRunView(DateTimeOffset StartedAt, DateTimeOffset? F
 
 internal sealed record QuarantinedRecord(string ExternalId, string? Url, string? Reason, DateTimeOffset LastSeenAt, int Revision);
 
-/// <summary>
-/// The page «Sources» (master plan 10.2, 11.4): the state of every source for every signed-in user;
-/// switching, interval, a manual run, the run log and the quarantine list for the instance administrator.
-/// </summary>
 internal static class SourceEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
@@ -77,7 +73,6 @@ internal static class SourceEndpoints
         {
             if (TimeSpan.FromMinutes(minutes) < minimum || minutes > 7 * 24 * 60)
             {
-                // The minimum protects the source (master plan 5.5: no shorter interval than 30 minutes for the NCSC).
                 return ApiProblems.Validation("validation_failed", "The interval is out of range.", new Dictionary<string, string[]>
                 {
                     ["intervalMinutes"] = [$"Choose between {(int)minimum.TotalMinutes} minutes and 7 days."],
@@ -104,7 +99,6 @@ internal static class SourceEndpoints
         return Results.Ok(Status(source, (0, 0)));
     }
 
-    /// <summary>Makes the source due now; the schedule enqueues the run within a minute.</summary>
     private static async Task<IResult> SyncNowAsync(string key, IntelDbContext db, IUnitOfWork unitOfWork, IAuditLog audit, TimeProvider time, CancellationToken cancellationToken)
     {
         var source = await db.Sources.SingleOrDefaultAsync(s => s.Key == key, cancellationToken);
@@ -138,7 +132,6 @@ internal static class SourceEndpoints
         return Results.Ok(runs.Select(r => new SourceRunView(r.StartedAt, r.FinishedAt, r.Mode, r.Outcome, r.Fetched, r.Changed, r.Checkpoints, r.Error)).ToList());
     }
 
-    /// <summary>The review list of master plan 6.8: records that could not be read, with their reason.</summary>
     private static async Task<IResult> QuarantineAsync(string key, int? limit, IntelDbContext db, CancellationToken cancellationToken)
     {
         var source = await db.Sources.AsNoTracking().SingleOrDefaultAsync(s => s.Key == key, cancellationToken);

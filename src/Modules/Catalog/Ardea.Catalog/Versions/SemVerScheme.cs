@@ -4,12 +4,6 @@ using Semver;
 
 namespace Ardea.Catalog.Versions;
 
-/// <summary>
-/// Semantic Versioning 2.0 precedence, through the Semver library. Used for <c>semver</c> (npm) and
-/// <c>go</c>: a leading <c>v</c>, leading zeros and missing minor or patch numbers are accepted; build
-/// metadata such as Go's <c>+incompatible</c> does not count; Go pseudo-versions
-/// (<c>v0.0.0-20220127200216-cd36cc0744dd</c>) are pre-releases and order correctly as such.
-/// </summary>
 internal sealed class SemVerScheme(string name) : IVersionScheme
 {
     public string Name => name;

@@ -4,11 +4,6 @@ using Xunit;
 
 namespace Ardea.TestSupport;
 
-/// <summary>
-/// One PostgreSQL 18 server per test run. Tests that need an empty database create their own from
-/// it in milliseconds (<see cref="CreateDatabaseAsync"/>) instead of starting another container.
-/// The owner role mirrors the bundled compose setup: <c>ardea_migrator</c> as the image's superuser.
-/// </summary>
 public sealed class PostgresServer : IAsyncLifetime
 {
     public const string Image = "postgres:18";
@@ -19,7 +14,6 @@ public sealed class PostgresServer : IAsyncLifetime
         .WithUsername(OwnerUser)
         .WithPassword(OwnerPassword)
         .WithDatabase("postgres_admin")
-        // Every test host has its own pools; with tests in parallel the default of 100 runs out.
         .WithCommand("-c", "max_connections=500")
         .Build();
 
@@ -35,7 +29,6 @@ public sealed class PostgresServer : IAsyncLifetime
 
     public async ValueTask DisposeAsync() => await _container.DisposeAsync();
 
-    /// <summary>Creates a fresh, empty database and returns its name.</summary>
     public async Task<string> CreateDatabaseAsync(string prefix = "ardea")
     {
         var name = $"{prefix}_{Interlocked.Increment(ref _counter)}_{Guid.NewGuid():N}";

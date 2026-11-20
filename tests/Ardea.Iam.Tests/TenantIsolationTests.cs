@@ -8,14 +8,8 @@ using Npgsql;
 
 namespace Ardea.Iam.Tests;
 
-/// <summary>
-/// Tenant separation (task 2.2; master plan 4.1, 9.2): every table has one kind with its rule in the
-/// database, and no organisation endpoint leads to another organisation's data, neither through the
-/// organisation in the path nor through ids of its objects.
-/// </summary>
 public sealed class TenantIsolationTests(PostgresServer server)
 {
-    /// <summary>The three kinds of master plan 4.1; a new table must be added to exactly one.</summary>
     private static readonly Dictionary<string, string> TableKinds = new(StringComparer.Ordinal)
     {
         ["platform.job"] = "global",
@@ -40,28 +34,19 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["assess.assessment_feedback"] = "organization",
     };
 
-    /// <summary>Schemas whose every table is global: intelligence and catalogue are the same for all (master plan 4.1).</summary>
     private static readonly string[] GlobalSchemas = ["intel", "catalog"];
 
-    /// <summary>Schemas whose every table is organisation data (master plan 4.1).</summary>
     private static readonly string[] OrganizationSchemas = ["assets", "assess", "notify"];
 
-    /// <summary>Bob's objects that Alice tries to reach.</summary>
     private sealed record Foreign(
         Guid User, Guid Invitation, Guid Project, Guid Component, Guid Connection, Guid Link, Guid Suggestion, int Action, int Alert, Guid Finding,
         Guid Rule, Guid Endpoint, Guid Address, Guid Notice);
 
-    /// <summary>A valid rule whose targets may name foreign recipients.</summary>
     private static object Rule(object target, Guid[]? projects = null) =>
         new { name = "Planted", minLevel = 2, events = new[] { "action.raised" }, projectIds = projects ?? [], targets = new[] { target } };
 
     private static object RoleTarget => new { channel = "in_app", recipientKind = "role", recipientRef = "owner", mode = "immediate" };
 
-    /// <summary>
-    /// Every organisation endpoint with a request body that passes validation, so a foreign id is what
-    /// the handler meets; bodies may carry foreign ids themselves. A new endpoint fails the test until
-    /// it is listed here.
-    /// </summary>
     private static readonly Dictionary<string, Func<Foreign, object?>> Bodies = new(StringComparer.Ordinal)
     {
         ["GET /api/v1/orgs/{orgId}/"] = _ => null,
@@ -146,7 +131,6 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["POST /api/v1/orgs/{orgId}/alerts/{number}/assessment"] = _ => null,
     };
 
-    /// <summary>Bob's object a route parameter names: <c>{id}</c> is the object of the path segment before it.</summary>
     private static string? ForeignId(string route, string parameter, Foreign foreign) => parameter switch
     {
         "number" when route.Contains("/actions/{number}", StringComparison.Ordinal) => foreign.Action.ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -234,7 +218,6 @@ public sealed class TenantIsolationTests(PostgresServer server)
             INSERT INTO assets.component_suggestion (organization_id, project_id, repository_link_id, product_key, version, evidence, fingerprint, state, created_at)
             VALUES ('{bobOrg}', '{bobsProject}', '{bobsLink}', 'nginx', '1.27', '[]', 'f', 'open', now()) RETURNING id
             """);
-        // An action of Bob's with its alert and finding, as the assessment writes them (task 3.5).
         var bobsEntry = await host.ScalarAsync<Guid>("""
             INSERT INTO intel.security_entry (kind, primary_key, state, changed_at, revision, material_fingerprint, remediation_fingerprint, exploitation, fix_available, cwe_ids, authority_warning, provenance)
             VALUES ('vulnerability', 'CVE-2026-0001', 'published', now(), 1, 'm', 'r', 'none', false, '{}', false, '{}') RETURNING id
@@ -251,12 +234,10 @@ public sealed class TenantIsolationTests(PostgresServer server)
             INSERT INTO assess.finding (organization_id, alert_id, entry_id, project_id, component_id, remediation_id, match_type, version_verdict, verdict, verdict_source, level, evidence, factors, status, status_changed_at, is_backfill, created_at, changed_at, exploitation, fix_available)
             VALUES ('{bobOrg}', '{bobsAlert}', '{bobsEntry}', '{bobsProject}', '{bobsComponent}', '{bobsAction}', 'product', 'in_range', 'affected', 'rules', 4, jsonb_build_object(), jsonb_build_object(), 'open', now(), false, now(), now(), 'none', false) RETURNING id
             """);
-        // A notice of Bob's for his WordPress (task 5a.3), as the assessment writes it.
         var bobsNotice = await host.ScalarAsync<Guid>($"""
             INSERT INTO assess.notice (organization_id, entry_id, entry_key, state, component_ids, raised_at, changed_at)
             VALUES ('{bobOrg}', '{bobsEntry}', 'CVE-2026-0001', 'open', ARRAY['{bobsComponent}'::uuid], now(), now()) RETURNING id
             """);
-        // Bob's notification settings and recipients (task 5.1): his default rule, a webhook target, an external address, a notification.
         var bobsRule = await host.ScalarAsync<Guid>($"SELECT id FROM notify.rule WHERE organization_id = '{bobOrg}' AND preset = 'critical'");
         var bobsEndpoint = await host.ScalarAsync<Guid>($"""
             INSERT INTO notify.endpoint (organization_id, name, url_enc, secret_enc, enabled, created_at) VALUES ('{bobOrg}', 'Bob''s SIEM', 'x', 'x', true, now()) RETURNING id
@@ -299,16 +280,13 @@ public sealed class TenantIsolationTests(PostgresServer server)
 
             var bobs = parameters.ToDictionary(p => p, p => ForeignId(route, p, foreign)!);
 
-            // 1. Bob's organisation in the path: it does not exist for Alice.
             await ExpectHiddenAsync(problems, $"{key} with Bob's organisation", await alice.SendAsync(new HttpMethod(method), Fill(route, bobOrg, bobs), body), notFoundOnly: true);
 
-            // 2. Alice's own organisation with ids of Bob's objects: not found either.
             if (parameters.Count > 0)
             {
                 await ExpectHiddenAsync(problems, $"{key} with Bob's objects", await alice.SendAsync(new HttpMethod(method), Fill(route, aliceOrg, bobs), body), notFoundOnly: true);
             }
 
-            // 3. Alice's own project with Bob's other objects, in the path or in the body.
             if (route.Contains("{projectId}", StringComparison.Ordinal))
             {
                 var mixed = new Dictionary<string, string>(bobs) { ["projectId"] = aliceProject.ToString() };
@@ -317,14 +295,11 @@ public sealed class TenantIsolationTests(PostgresServer server)
                 var response = await alice.SendAsync(new HttpMethod(method), Fill(route, aliceOrg, mixed), body);
                 if (parameters.Count > 1 || foreignInBody)
                 {
-                    // A foreign id in the body is a validation error naming it as not found; never a success.
                     await ExpectHiddenAsync(problems, $"{key} in Alice's project", response, notFoundOnly: parameters.Count > 1);
                 }
             }
         }
 
-        // Foreign ids in the body of Alice's own requests: a rule naming Bob's project or Bob's recipients is invalid,
-        // and marking Bob's notification read changes nothing.
         foreach (var body in new[]
         {
             Rule(RoleTarget, [foreign.Project]),
@@ -336,7 +311,6 @@ public sealed class TenantIsolationTests(PostgresServer server)
             await ExpectHiddenAsync(problems, $"POST rules with Bob's ids {JsonSerializer.Serialize(body)}", await alice.PostAsync($"/api/v1/orgs/{aliceOrg}/rules", body), notFoundOnly: false);
         }
 
-        // Alice answers her own notice «affects us» naming Bob's project: not found, and nothing lands in Bob's profile.
         var alicesComponent = (await Json(await alice.PostAsync($"/api/v1/orgs/{aliceOrg}/projects/{aliceProject}/components", new { productKey = "wordpress" }), HttpStatusCode.Created))
             .GetProperty("id").GetGuid();
         var alicesNotice = await host.ScalarAsync<Guid>($"""
@@ -349,7 +323,6 @@ public sealed class TenantIsolationTests(PostgresServer server)
         await alice.PostAsync($"/api/v1/orgs/{aliceOrg}/notifications/read", new { ids = new[] { bobsNotification } });
         Assert.Empty(problems);
 
-        // Bob's data is untouched.
         Assert.Equal(3L, await host.ScalarAsync<long>($"SELECT count(*) FROM notify.rule WHERE organization_id = '{bobOrg}'"));
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM notify.rule WHERE name = 'Planted'"));
         Assert.Equal("Bob's SIEM", await host.ScalarAsync<string>($"SELECT name FROM notify.endpoint WHERE id = '{bobsEndpoint}'"));
@@ -394,7 +367,6 @@ public sealed class TenantIsolationTests(PostgresServer server)
         await CreateOrgAsync(alice, "Alice Corp");
         await alice.PostAsync($"/api/v1/orgs/{await host.ScalarAsync<Guid>("SELECT id FROM iam.organization")}/invitations", new { email = "x@example.org", role = "viewer" });
 
-        // Plain SQL as the application role, with no tenant set: the third layer hides everything.
         await using var dataSource = NpgsqlDataSource.Create(host.Database.AppConnectionString("tests"));
         foreach (var table in new[] { "iam.organization", "iam.membership", "iam.invitation", "platform.audit_event", "iam.\"user\"", "iam.session", "iam.user_token", "notify.rule", "notify.rule_target" })
         {
@@ -424,7 +396,6 @@ public sealed class TenantIsolationTests(PostgresServer server)
         await using var sessions = new NpgsqlCommand($"SELECT count(*) FILTER (WHERE user_id <> '{aliceId}') FROM iam.session", connection, transaction);
         Assert.Equal(0L, await sessions.ExecuteScalarAsync());
 
-        // Writing another account is refused by the policy.
         await using var write = new NpgsqlCommand("UPDATE iam.\"user\" SET display_name = 'x' WHERE normalized_email = 'BOB@EXAMPLE.ORG'", connection, transaction);
         Assert.Equal(0, await write.ExecuteNonQueryAsync());
     }

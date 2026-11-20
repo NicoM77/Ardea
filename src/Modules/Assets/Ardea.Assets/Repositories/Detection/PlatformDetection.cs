@@ -5,30 +5,16 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Assets.Repositories.Detection;
 
-/// <summary>A file of the repository at the read commit; paths are compared, never resolved (master plan 16.9).</summary>
 internal sealed record FileContent(string Path, string Content);
 
-/// <summary>Where a suggestion comes from: file, line (1-based) and the value read, e.g. <c>FROM mcr.microsoft.com/dotnet/aspnet:10.0</c>.</summary>
 internal sealed record Evidence(string File, int Line, string Value);
 
-/// <summary>
-/// A platform the repository suggests (master plan 16.3): a catalogue product with a version line
-/// such as <c>10.0</c> or <c>18</c>, never an exact version; the user confirms, changes or dismisses it.
-/// </summary>
 internal sealed record PlatformSuggestion(string ProductKey, string? VersionLine, IReadOnlyList<Evidence> Evidence);
 
-/// <summary>
-/// Detection rules for platform files (master plan 16.3; task 2.12): <c>FROM</c> in Dockerfiles,
-/// <c>image</c> in Compose files, <c>global.json</c>, <c>TargetFramework</c> in project files,
-/// <c>engines</c> and <c>.nvmrc</c>, <c>require.php</c> in <c>composer.json</c> and the <c>go</c>
-/// directive in <c>go.mod</c>. Images and products go through the catalogue; what it does not know
-/// is not suggested. The rules only read text: nothing is executed, no entity is resolved.
-/// </summary>
 internal static partial class PlatformDetection
 {
     private static readonly JsonDocumentOptions JsonOptions = new() { MaxDepth = 64, CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
 
-    /// <summary>Whether a path of the tree is a file the rules read; the job fetches only these.</summary>
     public static bool IsCandidate(string path)
     {
         var name = FileName(path);
@@ -47,7 +33,6 @@ internal static partial class PlatformDetection
             || name.Equals("go.mod", StringComparison.Ordinal);
     }
 
-    /// <summary>Applies every rule; one suggestion per product and version line, with all its evidence.</summary>
     public static async Task<IReadOnlyList<PlatformSuggestion>> DetectAsync(IEnumerable<FileContent> files, IProductCatalog catalog, CancellationToken cancellationToken)
     {
         var found = new List<(string Key, string? Line, Evidence Evidence)>();
@@ -79,11 +64,6 @@ internal static partial class PlatformDetection
             .OrderBy(s => s.ProductKey, StringComparer.Ordinal).ThenBy(s => s.VersionLine, StringComparer.Ordinal)];
     }
 
-    /// <summary>
-    /// The version line of an image tag or a version: the leading numbers, at most major.minor
-    /// (<c>10.0-noble</c> → <c>10.0</c>, <c>18-alpine</c> → <c>18</c>, <c>8.4.3-fpm</c> → <c>8.4</c>,
-    /// <c>v20.11.1</c> → <c>20.11</c>); <c>null</c> for <c>latest</c> and names.
-    /// </summary>
     public static string? VersionLine(string? text)
     {
         var match = text is null ? null : LeadingVersion().Match(text.Trim());
@@ -114,7 +94,6 @@ internal static partial class PlatformDetection
                 stages.Add(from.Groups["stage"].Value);
             }
 
-            // ${VERSION} from an ARG with a default; unresolved variables give no suggestion.
             var reference = VariableReference().Replace(from.Groups["image"].Value, m => args.GetValueOrDefault(m.Groups["name"].Value) ?? m.Value);
             if (reference.Contains('$', StringComparison.Ordinal) || reference.Equals("scratch", StringComparison.OrdinalIgnoreCase) || stages.Contains(reference))
             {
@@ -152,7 +131,6 @@ internal static partial class PlatformDetection
         var frameworks = new List<string>();
         try
         {
-            // No DTD, no external entities: a project file is data here (master plan 16.9).
             using var reader = XmlReader.Create(new StringReader(file.Content), new XmlReaderSettings
             {
                 DtdProcessing = DtdProcessing.Prohibit,
@@ -208,7 +186,6 @@ internal static partial class PlatformDetection
     {
         var node = ReadJson(file, root => root.TryGetProperty("engines", out var engines) && engines.ValueKind == JsonValueKind.Object
             && engines.TryGetProperty("node", out var n) && n.ValueKind == JsonValueKind.String ? n.GetString() : null);
-        // engines is a range (">=20", "^22.11"); its lowest major is the line the project builds for.
         return node is null || VersionLine(RangeStart().Match(node).Value) is not { } line
             ? []
             : [("nodejs", false, line.Split('.')[0], new Evidence(file.Path, LineOf(file.Content, node), $"engines.node {node}"))];
@@ -217,7 +194,6 @@ internal static partial class PlatformDetection
     private static IEnumerable<(string, bool, string?, Evidence)> NodeVersionFile(FileContent file)
     {
         var text = Lines(file.Content).FirstOrDefault(l => l.Trim().Length > 0)?.Trim();
-        // lts/iron and similar aliases name no version.
         return VersionLine(text) is { } line ? [("nodejs", false, line.Split('.')[0], new Evidence(file.Path, 1, text!))] : [];
     }
 
@@ -257,7 +233,6 @@ internal static partial class PlatformDetection
         }
     }
 
-    /// <summary>Image and tag; registry port and digest are kept apart (<c>host:5000/app:1.2@sha256:…</c>).</summary>
     private static (string Image, string? Tag) SplitImage(string reference)
     {
         var withoutDigest = reference.Split('@')[0];

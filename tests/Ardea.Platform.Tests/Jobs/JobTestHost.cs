@@ -10,7 +10,6 @@ using Npgsql;
 
 namespace Ardea.Platform.Tests.Jobs;
 
-/// <summary>A migrated database with the job system wired as in the worker, and helper tables for effects.</summary>
 internal sealed class JobTestHost : IAsyncDisposable
 {
     private readonly List<JobProcessor> _workers = [];
@@ -21,10 +20,6 @@ internal sealed class JobTestHost : IAsyncDisposable
         Services = services;
     }
 
-    /// <summary>
-    /// Upper bound for a job-system test (ms). A hang in worker shutdown or a lock wait then fails the one
-    /// test by name instead of stalling the whole run (seen twice on CI runners, never locally).
-    /// </summary>
     public const int TestTimeout = 120_000;
 
     public MigrationDatabase Database { get; }
@@ -74,7 +69,6 @@ internal sealed class JobTestHost : IAsyncDisposable
         return worker;
     }
 
-    /// <summary>Runs <paramref name="work"/> in its own unit of work and commits it.</summary>
     public async Task InUnitOfWorkAsync(Func<IServiceProvider, Task> work, bool commit = true)
     {
         await using var scope = Services.CreateAsyncScope();
@@ -91,7 +85,6 @@ internal sealed class JobTestHost : IAsyncDisposable
         return Convert.ToInt64(await command.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Counts as the owner role, which row-level security does not limit (ADR 029).</summary>
     public async Task<long> CountAsOwnerAsync(string sql)
     {
         await using var connection = new NpgsqlConnection(Database.Options.OwnerConnectionString("tests"));
@@ -106,7 +99,6 @@ internal sealed class JobTestHost : IAsyncDisposable
         await command.ExecuteNonQueryAsync();
     }
 
-    /// <summary>Waits until <paramref name="sql"/> counts at least <paramref name="expected"/>.</summary>
     public async Task WaitForAsync(string sql, long expected, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
         var deadline = DateTime.UtcNow + timeout;
@@ -137,7 +129,6 @@ internal sealed class JobTestHost : IAsyncDisposable
     }
 }
 
-/// <summary>Writes one effect row in the job's unit of work: the effect commits with the job's completion.</summary>
 internal sealed record EffectJob(string Ref) : IJob
 {
     public static string Kind => "test.effect";
@@ -154,7 +145,6 @@ internal sealed class EffectJobHandler(IUnitOfWork unitOfWork) : IJobHandler<Eff
     }
 }
 
-/// <summary>Writes its effect, then waits for <see cref="Gate"/>: lets a test kill a worker mid-job.</summary>
 internal sealed record GatedJob(string Ref) : IJob
 {
     public static string Kind => "test.gated";
@@ -210,7 +200,6 @@ internal sealed class HangingJobHandler : IJobHandler<HangingJob>
         Task.Delay(Timeout.Infinite, cancellationToken);
 }
 
-/// <summary>Tries to commit the job's own unit of work, which only the job system may do.</summary>
 internal sealed record SelfCommittingJob(string Ref) : IJob
 {
     public static string Kind => "test.self-committing";

@@ -4,14 +4,6 @@ using Ardea.Catalog.Contracts;
 
 namespace Ardea.Catalog.Versions;
 
-/// <summary>
-/// The tolerant fallback for numeric dot sequences (master plan 6.6), used for <c>custom</c> and
-/// missing version types: numbers compared one by one with missing ones as zero (<c>2.4</c> = <c>2.4.0</c>),
-/// an optional <c>v</c>. What follows the numbers is a suffix: a pre-release word (dev, alpha, beta,
-/// milestone, pre, preview, rc) sorts before the plain version, anything else after it, such as
-/// OpenSSL's letters (<c>1.1.1w</c>), <c>p1</c>, <c>-sp2</c> or <c>-update3</c>. Build metadata after
-/// <c>+</c> does not count. Text that does not start with a number is no version.
-/// </summary>
 internal sealed partial class NumericScheme : IVersionScheme
 {
     private static readonly Dictionary<string, int> PreReleaseWords = new(StringComparer.Ordinal)
@@ -49,7 +41,6 @@ internal sealed partial class NumericScheme : IVersionScheme
         var tokens = Tokens().Matches(suffixText).Select(t => t.Value).ToArray();
         if (tokens is ["x"])
         {
-            // «2.4.x» is a placeholder, not a version; it is resolved when ranges are normalised.
             return false;
         }
 
@@ -74,7 +65,6 @@ internal sealed partial class NumericScheme : IVersionScheme
 
         private string[] Suffix => suffix;
 
-        /// <summary>Pre-release below the plain version, the plain version, other suffixes above it.</summary>
         private int Kind => suffix.Length == 0 ? 0 : preRank is null ? 1 : -1;
 
         protected override int CompareToSameScheme(ParsedVersion other)

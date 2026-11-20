@@ -129,6 +129,14 @@ internal sealed class NotifyTestHost : IAsyncDisposable
 
     public ApiClient Client() => new(_app.GetTestServer(), "https://ardea.test");
 
+    /// <summary>Runs <c>migrate</c> again, as an upgrade does: nothing to migrate, every module's step after it runs.</summary>
+    public async Task MigrateAgainAsync()
+    {
+        await using var owner = new NpgsqlConnection(Database.OwnerConnectionString("tests"));
+        await owner.OpenAsync();
+        await new DatabaseMigrator(Database, Modules.Databases, NoBackup.Instance, NullLogger<DatabaseMigrator>.Instance).MigrateAsync(owner, CancellationToken.None);
+    }
+
     /// <summary>A plain client without cookies or CSRF token, as a mail client's server is.</summary>
     public HttpClient RawClient()
     {
@@ -195,6 +203,20 @@ internal sealed class NotifyTestHost : IAsyncDisposable
         return action;
     }
 
+    /// <summary>An open notice naming the components, as the assessment writes it (ADR 047).</summary>
+    public async Task<Guid> NoticeAsync(Guid organization, Guid[] components, string key, string exploitation = "none", double score = 9.8, bool backfill = false)
+    {
+        var entry = await ScalarAsync<Guid>($$"""
+            INSERT INTO intel.security_entry (kind, primary_key, title, state, changed_at, revision, material_fingerprint, remediation_fingerprint, exploitation, fix_available, cwe_ids, authority_warning, provenance)
+            VALUES ('vulnerability', '{{key}}', 'PostgreSQL: remote code execution', 'published', now(), 1, 'm', 'r', '{{exploitation}}', true, '{}', false, '{}') RETURNING id
+            """);
+        return await ScalarAsync<Guid>($"""
+            INSERT INTO assess.notice (id, organization_id, entry_id, entry_key, state, component_ids, cvss_score, exploitation, is_backfill, raised_at, changed_at)
+            VALUES (uuidv7(), '{organization}', '{entry}', '{key}', 'open', ARRAY[{string.Join(", ", components.Select(c => $"'{c}'::uuid"))}], {score.ToString(System.Globalization.CultureInfo.InvariantCulture)}, '{exploitation}', {(backfill ? "true" : "false")}, now(), now())
+            RETURNING id
+            """);
+    }
+
     /// <summary>Changes an action as the assessment would, before the event that reports it.</summary>
     public Task SetActionAsync(Guid action, int level, string exploitation = "none") =>
         ExecuteAsync($"UPDATE assess.remediation SET level = {level}, exploitation = '{exploitation}' WHERE id = '{action}'");
@@ -203,12 +225,12 @@ internal sealed class NotifyTestHost : IAsyncDisposable
     /// A history row and its place in <c>notify.pending_event</c>, as the hand-off from Assessment writes them
     /// in one transaction (ADR 038). Returns the event's id.
     /// </summary>
-    public async Task<Guid> EventAsync(Guid organization, string kind, Guid? action = null, Guid? project = null, string data = "{}")
+    public async Task<Guid> EventAsync(Guid organization, string kind, Guid? action = null, Guid? project = null, string data = "{}", Guid? notice = null)
     {
         var id = Guid.CreateVersion7();
         await ExecuteAsync($"""
-            INSERT INTO assess.assess_event (id, organization_id, remediation_id, project_id, at, kind, data)
-            VALUES ('{id}', '{organization}', {Sql(action)}, {Sql(project)}, '{Time.GetUtcNow():O}', '{kind}', '{data}');
+            INSERT INTO assess.assess_event (id, organization_id, remediation_id, project_id, notice_id, at, kind, data)
+            VALUES ('{id}', '{organization}', {Sql(action)}, {Sql(project)}, {Sql(notice)}, '{Time.GetUtcNow():O}', '{kind}', '{data}');
             INSERT INTO notify.pending_event (event_id, organization_id, kind, at) VALUES ('{id}', '{organization}', '{kind}', '{Time.GetUtcNow():O}');
             """);
         return id;

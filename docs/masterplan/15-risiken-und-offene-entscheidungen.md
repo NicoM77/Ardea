@@ -56,7 +56,7 @@ Jede Zeile nennt die Empfehlung dieses Plans. Die Freigabe des Plans bedeutet Zu
 | E23 | Priorität von Hinweisen | keine eigene Stufe; sortiert nach Schweregrad und Ausnutzung (Empfehlung) | Kapitel 17.3 |
 | E24 | Zuweisung, Frist, Eskalation | **entschieden am 19.11.2026:** entfallen; Ardea ist eine Hinweis- und Alert-Anwendung, die Massnahme heisst Reminder | Kapitel 17.5 |
 | E25 | Offene Massnahmen ohne Version bei der Migration | **entschieden am 19.11.2026:** werden zu Hinweisen | Kapitel 17.6 |
-| E26 | Erinnerungsrhythmus und Umfang breiter Einträge | Empfehlung: Stufe 5 täglich, 4 wöchentlich, 3 monatlich; breite Einträge nur für das Produkt selbst | Kapitel 17.2, 17.5 |
+| E26 | Erinnerungsrhythmus und Umfang breiter Einträge | Empfehlung: Stufe 5 täglich, 4 wöchentlich, 3 monatlich; breite Einträge nur für das Produkt selbst. Der Rhythmus ist als Vorgabe umgesetzt und je Organisation einstellbar ([ADR 048](../adr/0048-notice-raised-and-reminders-by-level.md)) | Kapitel 17.2, 17.5 |
 
 ## 15.3 Bereits entschieden
 

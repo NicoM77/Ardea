@@ -72,18 +72,18 @@ internal sealed record AddressSubscriptionView(string OrganizationName, string A
 
 /// <summary>One message of the delivery log (master plan 8.6).</summary>
 /// <param name="Id">The delivery.</param>
-/// <param name="Kind"><c>immediate</c> or <c>digest</c>.</param>
+/// <param name="Kind"><c>immediate</c>, <c>digest</c>, or <c>reminder</c> for a run of the reminders by level (ADR 048).</param>
 /// <param name="Channel">The channel.</param>
 /// <param name="Recipient">Who it went to.</param>
 /// <param name="State"><c>pending</c>, <c>sending</c>, <c>sent</c>, <c>failed</c> (retrying), <c>dead</c> or <c>suppressed</c>.</param>
 /// <param name="Attempts">Attempts so far.</param>
 /// <param name="LastError">Why the last attempt failed or why it was suppressed.</param>
-/// <param name="Events">For immediate messages: how many events it covers.</param>
+/// <param name="Events">For immediate messages: how many events it covers; for a reminder run: how many reminders it names.</param>
 /// <param name="SendAfter">When it goes out at the earliest.</param>
 /// <param name="SentAt">When it went out.</param>
 /// <param name="CreatedAt">When it was created.</param>
-/// <param name="PeriodStart">For digests: the start of the period.</param>
-/// <param name="PeriodEnd">For digests: the end of the period.</param>
+/// <param name="PeriodStart">For digests: the start of the period; for a reminder run, the previous run.</param>
+/// <param name="PeriodEnd">For digests: the end of the period; for a reminder run, the run.</param>
 internal sealed record DeliveryView(
     Guid Id, string Kind, string Channel, DeliveryRecipientView Recipient, string State, int Attempts, string? LastError, int Events,
     DateTimeOffset SendAfter, DateTimeOffset? SentAt, DateTimeOffset CreatedAt, DateTimeOffset? PeriodStart, DateTimeOffset? PeriodEnd);

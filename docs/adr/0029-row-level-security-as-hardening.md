@@ -88,6 +88,7 @@ Every query bypasses the EF filter, so only the database separates tenants.
   | `assets.claim_due_repository_links(limit, hold)` | read repositories: claims the links that are due by moving their due time, organisation and link ids only; the reading runs as a job in the link's organisation (task 2.13) |
   | `assess.model_usage_since(since)` | instance status: calls to language models and their tokens per provider since a point in time, counts only (task 6.6) |
   | `notify.delivery_counts_since(since)` | instance status: deliveries per state since a point in time, counts only (task 6.6) |
+  | `notify.due_reminder_runs(now)` | reminders by level: the organisations whose run is due, or that have rules but no schedule yet, ids only (ADR 048) |
 
 - `TenantIsolationTests` checks that every table has exactly one kind and the matching policy, and calls
   every organisation endpoint with foreign organisations and foreign object ids. It also checks that every

@@ -40,6 +40,7 @@ function defaultRules(): Json[] {
     'action.level_lowered',
     'action.withdrawn',
     'backfill.completed',
+    'notice.raised',
   ];
   const rule = (
     name: string,
@@ -86,6 +87,8 @@ export interface NotifyState {
   notifications: Json[];
   devices: Json[];
   preferences: { mutedChannels: string[]; locale: string | null; canMuteCritical: boolean };
+  /** The reminders by level (task 5a.6). */
+  reminders: { level5: string; level4: string; level3: string; nextRunAt: string | null };
   /** The external address behind the link token `link-token`. */
   link: { state: string };
   requests: { method: string; path: string; body: unknown }[];
@@ -137,6 +140,7 @@ export async function notifyApi(
     ],
     devices: [],
     preferences: { mutedChannels: [], locale: null, canMuteCritical: false },
+    reminders: { level5: 'daily', level4: 'weekly', level3: 'monthly', nextRunAt: at(20 * HOUR) },
     link: { state: 'pending' },
     requests: [],
   };
@@ -231,6 +235,21 @@ export async function notifyApi(
               periodStart: null,
               periodEnd: null,
             },
+            {
+              id: id('e01'),
+              kind: 'reminder',
+              channel: 'email',
+              recipient: { kind: 'user', id: USER_ID, label: 'Sample Person' },
+              state: 'sent',
+              attempts: 1,
+              lastError: null,
+              events: 3,
+              sendAfter: at(-2 * HOUR),
+              sentAt: at(-2 * HOUR),
+              createdAt: at(-2 * HOUR),
+              periodStart: at(-26 * HOUR),
+              periodEnd: at(-2 * HOUR),
+            },
           ],
           nextCursor: null,
         },
@@ -251,6 +270,17 @@ export async function notifyApi(
         : (body!['ids'] as string[]);
       for (const n of state.notifications) if (marked.includes(n['id'])) n['readAt'] ??= at(0);
       return route.fulfill({ json: { unread: unread() } });
+    }
+    if (path === `${base}/reminder-rhythm/` || path === `${base}/reminder-rhythm`) {
+      if (method === 'PUT') {
+        state.reminders = {
+          ...state.reminders,
+          level5: String(body!['level5']),
+          level4: String(body!['level4']),
+          level3: String(body!['level3']),
+        };
+      }
+      return route.fulfill({ json: state.reminders });
     }
     if (path === `${base}/notification-preferences`) {
       if (method === 'PUT') {

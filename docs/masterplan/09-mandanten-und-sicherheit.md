@@ -76,7 +76,7 @@ Keine Transaktion bleibt über einen Aufruf nach aussen offen, und Zeilensperren
 | Neubewertung, Rückzug eines Eintrags | Welche Organisationen haben Befunde zu diesem Eintrag? |
 | Neues Regelwerk | Welche Organisationen haben offene Befunde? |
 | Warnung ohne Kennung | Welche Organisationen haben eine Regel für Warnungen? |
-| Sammelnachrichten, Eskalation | Welche Ziele sind jetzt fällig? |
+| Sammelnachrichten, Erinnerungen nach Stufe | Welche Ziele und welche Erinnerungsläufe sind jetzt fällig? |
 | Repositories einlesen | Welche Verknüpfungen sind jetzt fällig? |
 | Anmeldung | Welches Konto gehört zu dieser E-Mail-Adresse, und welchen Organisationen gehört es an? (benutzerbezogene Regel auf `membership`) |
 | Einladung annehmen | Zu welcher Organisation gehört dieser Token? |

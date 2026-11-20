@@ -1893,6 +1893,7 @@
     "events": {
       "groups": {
         "actions": "Reminders",
+        "notices": "Notices",
         "team": "Team work",
         "other": "Other"
       },
@@ -1913,7 +1914,9 @@
       "warning": "Warning without an identifier",
       "backfill": "First assessment done",
       "backfillHint": "One message per project",
-      "repository": "Repository unavailable"
+      "repository": "Repository unavailable",
+      "notice": "New notice",
+      "noticeHint": "No priority of its own: exploited or in KEV counts as Critical, any other as Low"
     },
     "rules": {
       "new": "New rule",
@@ -1938,6 +1941,22 @@
       },
       "emailOffPill": "E-mail is off",
       "saveFailed": "The rule could not be saved. Try again."
+    },
+    "reminders": {
+      "title": "Reminders by level",
+      "meta": "Weekdays at 08:00, organization time zone",
+      "lead": "An open reminder reminds the people its rules name until it is done, in one message per person and run.",
+      "rhythms": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "off": "Off"
+      },
+      "below": "Low and Not relevant remind only in the digests.",
+      "next": "Next run: {date}",
+      "save": "Save reminders",
+      "saved": "Reminders saved.",
+      "saveFailed": "The reminders could not be saved. Try again."
     },
     "editor": {
       "breadcrumb": "Breadcrumb",
@@ -2064,6 +2083,9 @@
       "message": "Message",
       "detail": "Detail",
       "events": "{count, plural, one {# event} other {# events}}",
+      "reminders": "Reminders by level",
+      "reminderCount": "{count, plural, one {# reminder} other {# reminders}}",
+      "run": "run of {date}",
       "attempt": "Attempt {count} of 12",
       "more": "Show older",
       "none": "No message matches.",

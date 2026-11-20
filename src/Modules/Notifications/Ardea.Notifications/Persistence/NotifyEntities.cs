@@ -149,7 +149,7 @@ internal sealed class Delivery : IOrganizationOwned
 
     public Guid OrganizationId { get; set; }
 
-    /// <summary><c>immediate</c> or <c>digest</c>.</summary>
+    /// <summary><c>immediate</c>, <c>digest</c>, or <c>reminder</c> for a run of the reminders by level (ADR 048).</summary>
     public required string Kind { get; set; }
 
     public required string Channel { get; set; }
@@ -200,10 +200,50 @@ internal sealed class DeliveryEvent : IOrganizationOwned
 
     public Guid? ProjectId { get; set; }
 
-    /// <summary>The level the event was evaluated at; <c>null</c> for warnings.</summary>
+    /// <summary>The notice of <c>notice.raised</c> or <c>notice.reappeared</c>: announced once per recipient and channel (ADR 048).</summary>
+    public Guid? NoticeId { get; set; }
+
+    /// <summary>The level the event was evaluated at; <c>null</c> for warnings and notices.</summary>
     public int? Level { get; set; }
 
+    /// <summary>When it happened; for a line of the reminders by level, since when the reminder stands at its level.</summary>
     public DateTimeOffset OccurredAt { get; set; }
+}
+
+/// <summary>
+/// How often the organisation's open reminders remind, by level (master plan 8.7, 17.5; ADR 048), and when the next run
+/// is. One row per organisation, written by its first run with the defaults or by the settings.
+/// </summary>
+internal sealed class ReminderSchedule : IOrganizationOwned
+{
+    public Guid OrganizationId { get; set; }
+
+    /// <summary><c>daily</c>, <c>weekly</c>, <c>monthly</c> or <c>off</c>.</summary>
+    public string Level5 { get; set; } = Delivering.ReminderRhythms.Daily;
+
+    public string Level4 { get; set; } = Delivering.ReminderRhythms.Weekly;
+
+    public string Level3 { get; set; } = Delivering.ReminderRhythms.Monthly;
+
+    /// <summary>The next run, weekdays at 08:00 in the organisation's time zone; <c>null</c> until the first run schedules it.</summary>
+    public DateTimeOffset? NextRunAt { get; set; }
+
+    public DateTimeOffset? LastRunAt { get; set; }
+
+    public DateTimeOffset ChangedAt { get; set; }
+}
+
+/// <summary>
+/// When an open reminder last reminded its recipients (master plan 8.7, ADR 048); the rhythm counts from it. A run deletes
+/// the rows of reminders that are done or below level 3.
+/// </summary>
+internal sealed class ReminderState : IOrganizationOwned
+{
+    public Guid OrganizationId { get; set; }
+
+    public Guid RemediationId { get; set; }
+
+    public DateTimeOffset LastRemindedAt { get; set; }
 }
 
 /// <summary>An event noted for a digest target (master plan 4.7, 8.4); target and event are unique together.</summary>

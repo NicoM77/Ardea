@@ -29,7 +29,10 @@ public sealed class NotificationsModule : IModule
     public static IReadOnlyList<string> ConfigurationErrors(IConfiguration configuration) => PushConfiguration.Errors(configuration);
 
     public IModuleDatabase? Database { get; } =
-        new ModuleDatabase<NotifyDbContext>(NotifyDbContext.Schema, options => new NotifyDbContext(options, new TenantContext()));
+        new ModuleDatabase<NotifyDbContext>(
+            NotifyDbContext.Schema,
+            options => new NotifyDbContext(options, new TenantContext()),
+            seed: (db, _, cancellationToken) => DefaultRules.NameNoticesAsync(db, cancellationToken));
 
     public void AddServices(IServiceCollection services, IConfiguration configuration)
     {
@@ -65,6 +68,7 @@ public sealed class NotificationsModule : IModule
         services.AddJob<ReceiveWarning, ReceiveWarningHandler>(new JobKindOptions { MaxConcurrency = 2, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(1) });
         services.AddJob<FindDueDigests, FindDueDigestsHandler>(new JobKindOptions { MaxConcurrency = 1, MaxAttempts = 1, Timeout = TimeSpan.FromMinutes(1), Priority = JobPriority.Urgent });
         services.AddJob<SendDigest, SendDigestHandler>(new JobKindOptions { MaxConcurrency = 2, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(2) });
+        services.AddJob<SendReminders, SendRemindersHandler>(new JobKindOptions { MaxConcurrency = 2, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(2) });
         services.AddJob<SendAddressConfirmation, SendAddressConfirmationHandler>(new JobKindOptions { MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(1) });
         // Due digests are found every minute; when a single target is due stands on the target (master plan 3.4, 8.4).
         services.AddSchedule("notify.find-due-digests", "* * * * *", new FindDueDigests());
@@ -78,5 +82,6 @@ public sealed class NotificationsModule : IModule
         DeliveryEndpoints.Map(endpoints);
         InboxEndpoints.Map(endpoints);
         PushEndpoints.Map(endpoints);
+        ReminderEndpoints.Map(endpoints);
     }
 }

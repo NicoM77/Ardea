@@ -273,7 +273,7 @@ In dieser Reihenfolge, weil sie in dieser Reihenfolge Nutzen bringen:
 1. **Erste Quellenwelle** mit generischem CSAF-Leser und OSV für Distributionen und weitere Ökosysteme; damit werden auch Pakete aus RubyGems, crates.io und GitHub Actions prüfbar.
 2. **Mehr Wege ins Profil:** GitHub App mit Webhooks, Hochladen von SBOM-Dateien (CycloneDX, SPDX), weitere Lockdateien; danach GitLab und Azure DevOps.
 3. **Deutsch** in der Oberfläche und in Nachrichten.
-4. **Eskalation** in Schritten; Vorlagen für Teams und Slack.
+4. **Vorlagen für Teams und Slack** auf dem Webhook-Kanal. Eskalation in Schritten entfällt: Reminder erinnern nach Stufe (Kapitel 17.5, [ADR 048](../adr/0048-notice-raised-and-reminders-by-level.md)).
 5. **Passkeys und OIDC-Anmeldung;** API-Tokens.
 6. **Produkte aus Freitext** durch ein Sprachmodell; Korrekturen als Kontext; Gewichte je Organisation.
 7. **Capacitor-App,** nach Entscheidung über das Push-Relay.

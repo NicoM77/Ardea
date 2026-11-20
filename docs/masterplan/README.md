@@ -54,7 +54,7 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | 5 | [Quellen und Synchronisation](05-quellen-und-synchronisation.md) | Provider-SDK, Abrufstrategie, Quellenkatalog mit 54 Quellen und ihrer Trägerschaft |
 | 6 | [Normalisierung, Zusammenführung, Datenqualität](06-korrelation-und-datenqualitaet.md) | Identität, Vorrangregeln, Änderungserkennung, Versionen |
 | 7 | [Relevanzprüfung, KI-Analyse, Priorisierung](07-ki-analyse-und-priorisierung.md) | Trichter, Reminder, Einschätzung, Regelwerk, Qualitätsmessung |
-| 8 | [Benachrichtigungen und Eskalation](08-benachrichtigungen.md) | Ereignisse, Regeln, Benachrichtigungsstand, Kanäle |
+| 8 | [Benachrichtigungen und Erinnerungen](08-benachrichtigungen.md) | Ereignisse, Regeln, Benachrichtigungsstand, Kanäle |
 | 9 | [Mandantenfähigkeit und Sicherheit](09-mandanten-und-sicherheit.md) | Rollen, Trennung, Anmeldung, Datenschutz, Bedrohungen |
 | 10 | [Schnittstellen der API](10-api.md) | Konventionen, Ressourcen, Beispiel |
 | 11 | [Frontend, UX und Designsystem](11-frontend-ux-und-designsystem.md) | Gewählte Richtung, Aufbau, Abläufe, Zugänglichkeit, Telefon |

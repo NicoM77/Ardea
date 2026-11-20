@@ -20,7 +20,7 @@ export const CHANNEL_LABELS: Readonly<Record<string, string>> = {
 /** The channels a member can mute for themselves (webhooks are not people). */
 export const PERSONAL_CHANNELS: readonly Channel[] = ['in_app', 'email', 'push'];
 
-/** The events of master plan 8.2 in three groups, each with a word and a hint. */
+/** The events of master plan 8.2 in four groups, each with a word and a hint. */
 export interface EventOption {
   value: string;
   label: string;
@@ -60,6 +60,12 @@ export const EVENT_GROUPS: readonly { label: string; events: readonly EventOptio
     ],
   },
   {
+    label: 'notify.events.groups.notices',
+    events: [
+      { value: 'notice.raised', label: 'notify.events.notice', hint: 'notify.events.noticeHint' },
+    ],
+  },
+  {
     label: 'notify.events.groups.team',
     events: [
       {
@@ -96,6 +102,7 @@ export const DEFAULT_EVENTS: readonly string[] = [
   'action.level_lowered',
   'action.withdrawn',
   'backfill.completed',
+  'notice.raised',
 ];
 
 /** A rule's threshold: level 2 to 5 shown as the priority it reports from. */
@@ -248,4 +255,35 @@ export function notificationPriority(
   level: number | string | null | undefined,
 ): UiPriorityLevel | null {
   return level === null || level === undefined ? null : priorityOfLevel(num(level));
+}
+
+/** How often open reminders remind, by level (master plan 8.7, 17.5; ADR 048). */
+export type ReminderRhythm = 'daily' | 'weekly' | 'monthly' | 'off';
+export const REMINDER_RHYTHMS: readonly ReminderRhythm[] = ['daily', 'weekly', 'monthly', 'off'];
+
+export const REMINDER_RHYTHM_LABELS: Readonly<Record<ReminderRhythm, string>> = {
+  daily: 'notify.reminders.rhythms.daily',
+  weekly: 'notify.reminders.rhythms.weekly',
+  monthly: 'notify.reminders.rhythms.monthly',
+  off: 'notify.reminders.rhythms.off',
+};
+
+export type ReminderLevelField = 'level5' | 'level4' | 'level3';
+
+/** The levels that remind; below level 3 only the digests name a reminder. */
+export const REMINDER_LEVELS: readonly { level: 5 | 4 | 3; field: ReminderLevelField }[] = [
+  { level: 5, field: 'level5' },
+  { level: 4, field: 'level4' },
+  { level: 3, field: 'level3' },
+];
+
+/** The rhythm each level starts with. */
+export const DEFAULT_RHYTHMS: Readonly<Record<ReminderLevelField, ReminderRhythm>> = {
+  level5: 'daily',
+  level4: 'weekly',
+  level3: 'monthly',
+};
+
+export function isRhythm(value: string | null | undefined): value is ReminderRhythm {
+  return REMINDER_RHYTHMS.includes(value as ReminderRhythm);
 }

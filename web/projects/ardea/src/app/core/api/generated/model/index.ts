@@ -148,6 +148,8 @@ export * from './quarantinedRecord';
 export * from './recoveryCodesResponse';
 export * from './referenceView';
 export * from './registerRequest';
+export * from './reminderRhythmRequest';
+export * from './reminderRhythmView';
 export * from './reopenNoticeRequest';
 export * from './replaceComponentsRequest';
 export * from './replaceComponentsResponse';

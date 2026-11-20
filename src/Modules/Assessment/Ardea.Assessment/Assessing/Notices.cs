@@ -38,6 +38,9 @@ internal sealed class Notices(AssessDbContext db, History history, TimeProvider 
     /// <summary>The notices a reverse search raised in this unit of work, for its single summary.</summary>
     public IReadOnlyList<Guid> QuietlyRaised => _quietlyRaised;
 
+    /// <summary>Of them, those whose entry is actively exploited or listed in KEV: the summary is high-signal when there are any (ADR 048).</summary>
+    public int QuietlyRaisedImportant { get; private set; }
+
     public async Task UpdateAsync(EntryFacts entry, CoarseHits hits, CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
@@ -70,6 +73,7 @@ internal sealed class Notices(AssessDbContext db, History history, TimeProvider 
         // The reason, within what this assessment looked at: the components still hit, and those that raise it now.
         var ids = notice.ComponentIds.Where(id => !hits.Scope.Contains(id) || hits.Hit.Contains(id)).Union(hits.Raising).Order().ToArray();
         var before = (notice.State, notice.EntryKey, notice.CvssScore, notice.Exploitation, Ids: notice.ComponentIds);
+        var raisedNow = false;
         notice.EntryKey = entry.Key;
         notice.CvssScore = entry.CvssScore;
         notice.Exploitation = entry.Exploitation;
@@ -102,6 +106,7 @@ internal sealed class Notices(AssessDbContext db, History history, TimeProvider 
                 notice.IsBackfill = false;
                 notice.ChangedAt = now;
                 Raised(notice, entry, quiet: false);
+                raisedNow = true;
                 break;
             case Notice.Withdrawn:
                 break;
@@ -112,6 +117,16 @@ internal sealed class Notices(AssessDbContext db, History history, TimeProvider 
                 }
 
                 break;
+        }
+
+        // An open notice nobody answered yet that becomes actively exploited (KEV included) is announced at once, once per
+        // notice (master plan 8.2, ADR 048); a notice that comes back or is raised now says so itself.
+        if (before.State == Notice.Open && notice.State == Notice.Open && !raisedNow
+            && before.Exploitation != "active" && entry.Exploitation == "active"
+            && !db.Events.Local.Any(e => e.NoticeId == notice.Id && e.Kind == EventKinds.NoticeExploited)
+            && !await db.Events.AnyAsync(e => e.NoticeId == notice.Id && e.Kind == EventKinds.NoticeExploited, cancellationToken))
+        {
+            history.Add(EventKinds.NoticeExploited, new { entry = entry.Key, components = notice.ComponentIds, kev = entry.InKev }, notice: notice.Id);
         }
 
         if (before.State != notice.State || before.EntryKey != notice.EntryKey || before.CvssScore != notice.CvssScore
@@ -126,6 +141,11 @@ internal sealed class Notices(AssessDbContext db, History history, TimeProvider 
         if (quiet)
         {
             _quietlyRaised.Add(notice.Id);
+            if (entry.Exploitation == "active" || entry.InKev)
+            {
+                QuietlyRaisedImportant++;
+            }
+
             return;
         }
 

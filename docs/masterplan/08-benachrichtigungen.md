@@ -1,4 +1,4 @@
-# 8 · Benachrichtigungen und Eskalation
+# 8 · Benachrichtigungen und Erinnerungen
 
 ## 8.1 Grundsatz
 
@@ -30,11 +30,11 @@ Diese Tabelle ist die einzige Liste der Ereignisse; andere Kapitel verweisen hie
 | `reminder.level_lowered`, `reminder.withdrawn` | Entwarnung | In-App; per E-Mail oder Push einmal, wenn zuvor dorthin gemeldet wurde |
 | `reminder.done`, `reminder.note_added` | Bearbeitung durch das Team | nur In-App |
 | `warning.published` | neue Warnung ohne Schwachstellenkennung, etwa eine Phishing-Warnung des BACS oder ein Advisory des NCSC, dem noch keine CVE zugeordnet ist | In-App und in der wöchentlichen Sammelnachricht; sofort nur, wenn eine Regel es verlangt |
-| `notice.raised` | neuer Hinweis «könnte euch betreffen» zu einem Stack-Eintrag | nur In-App und Sammelnachricht; sofort nur bei aktiver Ausnutzung oder KEV |
+| `notice.raised` | neuer Hinweis «könnte euch betreffen» zu einem Stack-Eintrag; steht auch für einen offenen, unbeantworteten Hinweis, der aktiv ausgenutzt wird (einmal), die einmalige Wiederkehr nach «betrifft uns nicht» und die eine Sammelmeldung einer Rückwärtssuche | In-App an alle Mitglieder und Sammelnachricht; sofort nur bei aktiver Ausnutzung oder KEV. Ein Hinweis hat keine Stufe: ausgenutzt oder in KEV erreicht er jede Schwelle, sonst nur Stufe 2 ([ADR 048](../adr/0048-notice-raised-and-reminders-by-level.md)) |
 | `backfill.completed` | Ersteinschätzung eines neuen Projekts oder eines neu verbundenen Repositorys fertig | eine Sammelnachricht statt Einzelalarme |
 | `repository.unavailable` | ein verbundenes Repository lässt sich seit 3 Tagen nicht einlesen, oder das Token seines Zugangs läuft in 14 Tagen ab (Kapitel 16.6) | In-App an Owner und Admins; per E-Mail, wenn eine Regel es verlangt; je Verknüpfung und Ursache einmal |
 
-Jedes Ereignis trägt eine eindeutige Kennung, die der Auslöser in derselben Transaktion vergibt wie die Änderung selbst; bei Reminders ist es die Kennung der Verlaufszeile. Sein Gegenstand ist ein Reminder, bei `warning.published` ein Eintrag, bei `backfill.completed` und `repository.unavailable` ein Projekt. `warning.published` entsteht einmal für die Instanz und wird je Organisation ausgewertet, die eine Regel dafür hat.
+Jedes Ereignis trägt eine eindeutige Kennung, die der Auslöser in derselben Transaktion vergibt wie die Änderung selbst; bei Reminders ist es die Kennung der Verlaufszeile. Sein Gegenstand ist ein Reminder, bei `warning.published` ein Eintrag, bei `notice.raised` ein Hinweis (die Sammelmeldung: ein Projekt), bei `backfill.completed` und `repository.unavailable` ein Projekt. `warning.published` entsteht einmal für die Instanz und wird je Organisation ausgewertet, die eine Regel dafür hat.
 
 Kein Ereignis und damit nie eine Benachrichtigung: weitere Befunde in einer Reminder ohne Anstieg von Stufe oder Ausnutzungsstand, geänderte Beschreibungen, neue Verweise, EPSS-Bewegungen innerhalb einer Klasse, Neubewertungen mit gleichem Ergebnis.
 
@@ -58,7 +58,7 @@ Jede neue Organisation startet mit drei Regeln:
 2. **High:** ab Stufe 4, an alle Mitglieder, In-App sofort und E-Mail gesammelt werktags um 08:00.
 3. **Weekly summary:** ab Stufe 2 und Warnungen, an alle Mitglieder, per E-Mail montags um 08:00, auch wenn nichts vorliegt. Die leere Sammelnachricht sagt, dass geprüft wurde und nichts anstand.
 
-Die Regeln überschneiden sich absichtlich; dass daraus keine doppelten Nachrichten werden, regelt 8.4. Externe E-Mail-Adressen erhalten erst nach Bestätigung durch den Empfänger Nachrichten. Benutzer können für sich einzelne Kanäle stummschalten; für Stufe 5 nur, wenn die Organisation das erlaubt.
+Alle drei nennen auch `notice.raised` (8.2). Die Regeln überschneiden sich absichtlich; dass daraus keine doppelten Nachrichten werden, regelt 8.4. Ein Hinweis wird je Empfänger und Kanal einmal gemeldet, seine Wiederkehr einmal mehr. Externe E-Mail-Adressen erhalten erst nach Bestätigung durch den Empfänger Nachrichten. Benutzer können für sich einzelne Kanäle stummschalten; für Stufe 5 nur, wenn die Organisation das erlaubt.
 
 ## 8.4 Nie zweimal dasselbe
 
@@ -125,7 +125,9 @@ Bei einer Reminder mit vielen Befunden nennt die Nachricht die Anzahl und die dr
 
 ## 8.7 Erinnerung statt Eskalation
 
-Ardea plant keine Arbeit: Es gibt keine Zuweisung, keine Frist und keine Eskalationskette. Ein offener Reminder erinnert stattdessen in einem Rhythmus, der von seiner Stufe abhängt: Stufe 5 täglich, Stufe 4 wöchentlich, Stufe 3 monatlich, darunter nur in der Sammelnachricht (Kapitel 7.6, 17.5). Technisch ist jede Erinnerung ein Job mit Fälligkeit (`next_reminder_at`); er prüft bei Ausführung den Zustand und tut nichts, wenn der Reminder erledigt ist. Der Rhythmus je Stufe ist je Organisation einstellbar. Neue Hinweise (Kapitel 17) lösen `notice.raised` aus.
+**Eskalation entfällt** (Kapitel 17.5, E24). Ardea plant keine Arbeit: Es gibt keine Zuweisung, keine Frist und keine Eskalationskette. Ein offener Reminder erinnert stattdessen in einem Rhythmus, der von seiner Stufe abhängt: Stufe 5 täglich, Stufe 4 wöchentlich, Stufe 3 monatlich, darunter nur in der Sammelnachricht (Kapitel 7.6, 17.5). Der Rhythmus je Stufe ist je Organisation einstellbar, auch «aus».
+
+Umgesetzt in Aufgabe 5a.6 ([ADR 048](../adr/0048-notice-raised-and-reminders-by-level.md)): ein Lauf je Organisation werktags um 08:00 in ihrer Zeitzone. Fällig ist ein Reminder einen Rhythmus nach dem Erreichen seiner Stufe oder nach seiner letzten Erinnerung. Er erreicht die Empfänger der Regeln, die ihn melden, in der App, per E-Mail und per Push, nicht per Webhook, und jeder erhält je Kanal und Lauf eine Nachricht mit allen fälligen Remindern. Erledigte Reminder erinnern nie; sinkt die Stufe, gilt ihr Rhythmus. Neue Hinweise (Kapitel 17) lösen `notice.raised` aus (8.2).
 
 ## 8.8 Abnahmekriterien
 
@@ -134,7 +136,9 @@ Ardea plant keine Arbeit: Es gibt keine Zuweisung, keine Frist und keine Eskalat
 - Steigt die Stufe einer bereits gemeldeten Reminder, wird erneut benachrichtigt; kommen nur Befunde hinzu oder ändert sich eine Beschreibung, nicht.
 - Anstieg, Absinken und erneuter Anstieg ergeben zwei Nachrichten über den Anstieg, auch für einen Empfänger, der die Entwarnung dazwischen nicht erhalten hat.
 - Drei Ereignisse für denselben Empfänger innerhalb von zwei Minuten ergeben eine Nachricht.
-- Ein neu angelegtes Projekt mit 40 Treffern im Rückblick erzeugt genau eine Nachricht.
+- Ein neu angelegtes Projekt mit 40 Treffern im Rückblick erzeugt genau eine Nachricht; ein nachträglich ergänzter Stack-Eintrag mit vielen früheren Hinweisen ebenso.
+- Ein Hinweis erscheint bei jedem Mitglied einmal In-App; sofort per E-Mail nur, wenn er aktiv ausgenutzt wird oder in KEV steht.
+- Offene Reminder erinnern nach Stufe in einer Nachricht je Empfänger und Kanal; ein erledigter erinnert nicht mehr.
 - Eine Warnung ohne Kennung erscheint bei jeder Organisation einmal In-App und einmal in der nächsten Sammelnachricht.
 - Sammelnachricht: Sie kommt zur eingestellten Zeit in der Zeitzone der Organisation, enthält alles seit der letzten und kommt auch leer, wenn die Regel das vorsieht.
 - E-Mail: Ein nicht erreichbarer SMTP-Server verzögert die Zustellung, verliert sie aber nicht.

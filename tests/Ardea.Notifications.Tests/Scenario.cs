@@ -70,8 +70,18 @@ internal sealed class Scenario
 
     public Task SetActionAsync(Guid action, int level, string exploitation = "none") => Host.SetActionAsync(action, level, exploitation);
 
-    public Task<Guid> EventAsync(string kind, Guid? action = null, string data = "{}", Guid? project = null) =>
-        Host.EventAsync(Organization, kind, action, project, data);
+    public Task<Guid> EventAsync(string kind, Guid? action = null, string data = "{}", Guid? project = null, Guid? notice = null) =>
+        Host.EventAsync(Organization, kind, action, project, data, notice);
+
+    /// <summary>The organisation's stack (ADR 046) and an entry in it without a version, e.g. «PostgreSQL».</summary>
+    public async Task<(Guid Stack, Guid Component)> StackEntryAsync(string product = "postgresql")
+    {
+        var stack = (await NotifyTestHost.JsonAsync(await Owner.GetAsync($"{Path}/stack"))).GetProperty("projectId").GetGuid();
+        var component = (await NotifyTestHost.JsonAsync(
+            await Owner.PostAsync($"{Path}/projects/{stack}/components", new { productKey = product }), HttpStatusCode.Created)).GetProperty("id").GetGuid();
+        await Host.ExecuteAsync("DELETE FROM platform.job WHERE kind LIKE 'assets.%' OR kind LIKE 'assess.%'");
+        return (stack, component);
+    }
 
     public Task EvaluateAsync() => Host.EvaluateAsync(Organization);
 

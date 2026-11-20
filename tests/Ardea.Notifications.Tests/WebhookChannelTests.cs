@@ -81,7 +81,7 @@ public sealed class WebhookChannelTests(PostgresServer server)
         var item = payload.GetProperty("events")[0];
         Assert.Equal("action.raised", item.GetProperty("event").GetString());
         Assert.Equal(5, item.GetProperty("action").GetProperty("level").GetInt32());
-        Assert.Equal("https://ardea.test/o/acme/actions/2", item.GetProperty("url").GetString());
+        Assert.Equal("https://ardea.test/o/acme/reminders/2", item.GetProperty("url").GetString());
         Assert.Equal("sent", await host.ScalarAsync<string>("SELECT state FROM notify.delivery WHERE channel = 'webhook'"));
         Assert.Equal("200", await host.ScalarAsync<string>("SELECT last_status FROM notify.endpoint"));
 

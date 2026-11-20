@@ -92,7 +92,8 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM platform.audit_event WHERE origin <> 'command:seed-demo'"));
 
         // Nothing that reaches out is left switched on or queued: no fetch, no repository reading, no language model,
-        // and with SMTP configured no e-mail or push to the invented people, neither now nor in a later digest.
+        // and with SMTP configured no e-mail or push to the invented people, neither now nor in a later digest or reminder run
+        // (the reminders by level reach only the targets of enabled rules, ADR 048).
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source WHERE enabled"));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM notify.rule_target t JOIN notify.rule r ON r.id = t.rule_id WHERE r.enabled AND t.channel <> 'in_app'"));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM notify.digest_item"));

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Ardea.Assessment.Assessing;
 using Ardea.Assessment.Contracts;
 using Ardea.Assessment.Persistence;
@@ -21,7 +22,68 @@ internal sealed class ActionFactsReader(AssessDbContext db, IProfileQueries prof
         var rows = await db.Events.AsNoTracking().Where(e => ids.Contains(e.Id)).ToListAsync(cancellationToken);
         // Rows of the assignment and the review state from before ADR 046 announce nothing.
         return [.. rows.Where(e => EventKinds.IsNotifiable(e.Kind) && !LegacyHistory.Hidden(e.Kind, e.Data.RootElement))
-            .Select(e => new ActionEventFacts(e.Id, e.Kind, e.At, e.RemediationId, e.ProjectId, e.Actor, LegacyHistory.Shown(e.Data.RootElement)))];
+            .Select(e => new ActionEventFacts(e.Id, e.Kind, e.At, e.RemediationId, e.ProjectId, e.Actor, LegacyHistory.Shown(e.Data.RootElement), e.NoticeId))];
+    }
+
+    public async Task<IReadOnlyList<NoticeFacts>> NoticesAsync(IReadOnlyCollection<Guid> noticeIds, CancellationToken cancellationToken)
+    {
+        if (noticeIds.Count == 0)
+        {
+            return [];
+        }
+
+        var ids = noticeIds.ToArray();
+        var notices = await db.Notices.AsNoTracking().Where(n => ids.Contains(n.Id)).ToListAsync(cancellationToken);
+        if (notices.Count == 0)
+        {
+            return [];
+        }
+
+        var facts = (await entries.FindManyAsync([.. notices.Select(n => n.EntryId).Distinct()], cancellationToken)).ToDictionary(e => e.Id);
+        var components = (await profiles.FindComponentsAsync([.. notices.SelectMany(n => n.ComponentIds).Distinct()], cancellationToken)).ToDictionary(c => c.Id);
+        return [.. notices.Select(n =>
+        {
+            var entry = facts.GetValueOrDefault(n.EntryId);
+            return new NoticeFacts
+            {
+                Id = n.Id,
+                State = n.State,
+                EntryKey = n.EntryKey,
+                EntryTitle = entry?.Title,
+                CvssScore = n.CvssScore,
+                Exploitation = n.Exploitation,
+                InKev = entry?.InKev ?? false,
+                ReappearedReason = n.ReappearedReason,
+                // A component removed since is no reason any more; the notice is withdrawn with the next assessment.
+                Components = [.. n.ComponentIds.Select(components.GetValueOrDefault).OfType<ProfileComponent>()
+                    .Select(c => new NoticeComponentFacts(c.Name, c.Version, c.ProjectId, c.ProjectName, c.ProjectKind == "organization_stack"))],
+            };
+        })];
+    }
+
+    public async Task<IReadOnlyList<OpenReminder>> OpenRemindersAsync(int minLevel, CancellationToken cancellationToken)
+    {
+        var open = await db.Remediations.AsNoTracking().Where(r => r.Status != "closed" && r.Level >= minLevel)
+            .Select(r => new { r.Id, r.Level, r.ProjectId, r.OpenedAt, r.LevelRaisedAt }).ToListAsync(cancellationToken);
+        if (open.Count == 0)
+        {
+            return [];
+        }
+
+        // A reminder a person took back from «done» counts from that moment (ADR 048): the last status change to «open».
+        var ids = open.Select(r => r.Id).ToArray();
+        var reopened = (await db.Events.AsNoTracking()
+                .Where(e => e.Kind == EventKinds.ActionStatusChanged && e.RemediationId != null && ids.Contains(e.RemediationId.Value))
+                .Select(e => new { RemediationId = e.RemediationId!.Value, e.At, e.Data })
+                .ToListAsync(cancellationToken))
+            .Where(e => e.Data.RootElement.TryGetProperty("to", out var to) && to.ValueKind == JsonValueKind.String && to.GetString() == "open")
+            .GroupBy(e => e.RemediationId)
+            .ToDictionary(g => g.Key, g => g.Max(e => e.At));
+        return [.. open.Select(r =>
+        {
+            var since = new[] { r.OpenedAt, r.LevelRaisedAt ?? r.OpenedAt, reopened.GetValueOrDefault(r.Id, r.OpenedAt) }.Max();
+            return new OpenReminder(r.Id, r.Level, r.ProjectId, since);
+        })];
     }
 
     public async Task<IReadOnlyList<ActionFacts>> ActionsAsync(IReadOnlyCollection<Guid> remediationIds, CancellationToken cancellationToken)

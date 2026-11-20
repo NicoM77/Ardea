@@ -43,8 +43,9 @@ internal static class EventKinds
     public const string FindingVerdictCorrected = "finding.verdict_corrected";
 
     /// <summary>
-    /// A notice was raised (ADR 047): the seam for the event <c>notice.raised</c> of task 5a.6. History only until then, as
-    /// are the other <c>notice.*</c> kinds.
+    /// A notice was raised (ADR 047): the event <c>notice.raised</c> of master plan 8.2 (task 5a.6, ADR 048). With
+    /// <c>notice.reappeared</c> and <c>notice.backfilled</c> it is handed to the notifications; the other <c>notice.*</c> kinds
+    /// are history only.
     /// </summary>
     public const string NoticeRaised = "notice.raised";
 
@@ -60,11 +61,23 @@ internal static class EventKinds
     /// <summary>A notice answered «doesn't affect us» came back once, the entry being exploited now (E22).</summary>
     public const string NoticeReappeared = "notice.reappeared";
 
+    /// <summary>
+    /// An open notice, still unanswered, whose entry became actively exploited (KEV included) after it was raised: announced at
+    /// once like an important new one (master plan 8.2), once per notice (ADR 048).
+    /// </summary>
+    public const string NoticeExploited = "notice.exploited";
+
     /// <summary>An open notice nothing coarse names any more: the precise path took over, or its components left.</summary>
     public const string NoticeWithdrawn = "notice.withdrawn";
 
-    /// <summary>The events of master plan 8.2 the notifications hear about; the other kinds are history only.</summary>
-    public static bool IsNotifiable(string kind) => kind.StartsWith("action.", StringComparison.Ordinal) || kind == BackfillCompleted;
+    /// <summary>
+    /// The events of master plan 8.2 the notifications hear about; the other kinds are history only. A notice is announced
+    /// when it is raised, when an open one becomes actively exploited, when an answered «doesn't affect us» comes back, and
+    /// once for all a reverse search raised (ADR 048).
+    /// </summary>
+    public static bool IsNotifiable(string kind) =>
+        kind.StartsWith("action.", StringComparison.Ordinal)
+        || kind is BackfillCompleted or NoticeRaised or NoticeReappeared or NoticeExploited or NoticeBackfilled;
 }
 
 /// <summary>

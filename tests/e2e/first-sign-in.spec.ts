@@ -28,10 +28,10 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await page.getByLabel('Password', { exact: true }).fill(person.password);
   await page.getByRole('button', { name: 'Create account' }).click();
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Welcome' })).toBeVisible();
+  await expect(page).toHaveURL(/\/organizations\/new$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Create organization' })).toBeVisible();
   const navigation = page.getByRole('navigation', { name: 'Main' });
   await expect(navigation.getByRole('link', { name: 'Administration' })).toBeVisible();
-  await expectAccessible(page, 'no organization');
 
   await page.getByRole('button', { name: `Account: ${person.name}` }).click();
   await page.getByRole('menuitem', { name: 'Two-factor authentication' }).click();
@@ -80,6 +80,7 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await page.getByRole('button', { name: 'Verify' }).click();
 
   await expect(page.getByRole('heading', { level: 1, name: 'Welcome' })).toBeVisible();
+  await expectAccessible(page, 'no organization');
   await expect(navigation.getByRole('link', { name: 'Administration' })).toBeVisible();
   await navigation.getByRole('link', { name: 'Administration' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Administration' })).toBeVisible();

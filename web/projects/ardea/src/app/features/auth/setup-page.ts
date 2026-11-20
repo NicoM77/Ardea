@@ -129,7 +129,7 @@ export class SetupPage {
               this.setupApi.completeSetup({ ...value, setupToken: value.setupToken.trim() }),
             );
             await this.session.refresh();
-            await this.router.navigateByUrl('/');
+            await this.router.navigateByUrl('/organizations/new');
           } catch (error) {
             const weak = weakPasswordError(error, this.setup.password);
             if (weak) {

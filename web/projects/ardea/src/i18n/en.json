@@ -2030,7 +2030,6 @@
       "saveFailed": "The reminders could not be saved. Try again."
     },
     "editor": {
-      "breadcrumb": "Breadcrumb",
       "titleNew": "New rule",
       "titleEdit": "Rule",
       "preset": "A default rule. Change it like any other.",

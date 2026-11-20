@@ -2,9 +2,19 @@ import { Component, computed, inject, input, signal, viewChild } from '@angular/
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
+import { LucideChevronRight } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiLoader, UiNotice, UiPill, UiPriority, UiStatus, UiToaster } from 'ui';
+import {
+  UiBackLink,
+  UiButton,
+  UiCard,
+  UiLoader,
+  UiNotice,
+  UiPill,
+  UiPriority,
+  UiStatus,
+  UiToaster,
+} from 'ui';
 import {
   ActionsService,
   getActionResource,
@@ -47,8 +57,8 @@ interface Confirmation {
     NgTemplateOutlet,
     RouterLink,
     TranslocoPipe,
-    LucideChevronLeft,
     LucideChevronRight,
+    UiBackLink,
     UiButton,
     UiCard,
     UiLoader,
@@ -64,9 +74,7 @@ interface Confirmation {
     OutcomeForm,
   ],
   template: `
-    <a class="crumb" routerLink="..">
-      <svg lucideChevronLeft aria-hidden="true"></svg>{{ 'actions.title' | transloco }}
-    </a>
+    <ui-back-link [label]="'actions.title' | transloco" link=".." />
     @if (view(); as v) {
       @let a = v.action;
       <header class="head">
@@ -74,7 +82,7 @@ interface Confirmation {
           <h1>{{ name().key | transloco: name().params }}</h1>
           <p class="meta">
             <ui-priority [level]="priority()" />
-            <span>{{ a.project.name }}</span>
+            <a class="link" [routerLink]="['../../projects', a.project.id]">{{ a.project.name }}</a>
             <span class="id">#{{ number() }}</span>
             @if (a.exploitation === 'active') {
               <ui-pill tone="alert">{{ 'actions.pill.exploited' | transloco }}</ui-pill>
@@ -205,16 +213,6 @@ interface Confirmation {
     }
   `,
   styles: `
-    .crumb {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      height: 24px;
-      margin: -4px 0 var(--space-sm) -4px;
-      padding: 0 6px 0 2px;
-      border-radius: var(--radius-control);
-      color: var(--muted);
-    }
     .head {
       display: flex;
       flex-wrap: wrap;
@@ -344,10 +342,6 @@ interface Confirmation {
       display: none;
     }
     @media (hover: hover) and (pointer: fine) {
-      .crumb:hover {
-        background: var(--raised);
-        color: var(--text);
-      }
       .disclose h2 button:hover {
         background: var(--raised);
       }

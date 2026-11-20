@@ -1411,13 +1411,10 @@
     "reopen": "Reopen",
     "details": {
       "title": "Details",
-      "status": "Status",
-      "project": "Project",
       "component": "Component",
       "removed": "No longer in the profile",
       "version": "Version",
       "to": "to",
-      "number": "Number",
       "opened": "Opened"
     },
     "reason": {
@@ -1639,6 +1636,7 @@
       "yes": "Yes",
       "unknown": "Cannot tell yet",
       "no": "No",
+      "addVersion": "Add the installed version",
       "more": "{count, plural, one {And # more component} other {And # more components}}"
     },
     "check": {
@@ -1699,6 +1697,7 @@
     "note": "Note",
     "factorsOf": "Factors of {entry}",
     "alert": "Vulnerability details",
+    "alertLabel": "Vulnerability details #{number}, {entry}",
     "statusOf": "Set the outcome of {entry}",
     "change": "Set the outcome",
     "reopen": "Take the closing back",

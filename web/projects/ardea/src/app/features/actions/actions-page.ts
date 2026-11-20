@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideListChecks, LucideSearch } from '@lucide/angular';
 import { UiButton, UiEmptyState, UiInput, UiLoader, UiNotice, UiPriority } from 'ui';
@@ -36,7 +36,6 @@ function mergeActions(
 @Component({
   selector: 'ardea-actions-page',
   imports: [
-    RouterLink,
     TranslocoPipe,
     LucideListChecks,
     LucideSearch,
@@ -87,20 +86,16 @@ function mergeActions(
     </header>
 
     <div class="list">
-      <nav class="tabs" [attr.aria-label]="'actions.filters.view' | transloco">
-        <a
-          routerLink="."
-          [queryParams]="viewQuery('open')"
-          [attr.aria-current]="filters().view === 'open' ? 'page' : null"
-          >{{ 'actions.view.open' | transloco }}</a
-        >
-        <a
-          routerLink="."
-          [queryParams]="viewQuery('closed')"
-          [attr.aria-current]="filters().view === 'closed' ? 'page' : null"
-          >{{ 'actions.view.closed' | transloco }}</a
-        >
-      </nav>
+      <div class="segments" role="group" [attr.aria-label]="'actions.filters.view' | transloco">
+        @for (v of views; track v) {
+          <button type="button" [attr.aria-pressed]="filters().view === v" (click)="setView(v)">
+            {{ viewLabels[v] | transloco }}
+            @if (viewCount(v); as count) {
+              <span class="count">{{ count }}</span>
+            }
+          </button>
+        }
+      </div>
 
       <div class="chips" role="group" [attr.aria-label]="'actions.filters.priority' | transloco">
         @for (p of priorities; track p) {
@@ -195,23 +190,39 @@ function mergeActions(
     .query input {
       padding-left: 32px;
     }
-    .tabs {
-      display: flex;
-      gap: var(--gap);
-      border-bottom: 1px solid var(--border);
+    .segments {
+      display: inline-flex;
+      gap: 2px;
+      padding: var(--space-xs);
+      border-radius: var(--radius-card);
+      background: var(--raised);
     }
-    .tabs a {
+    .segments button {
       display: inline-flex;
       align-items: center;
-      height: 40px;
-      margin-bottom: -1px;
-      border-bottom: 2px solid transparent;
+      justify-content: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 var(--space-md);
+      border: 0;
+      border-radius: var(--radius-control);
+      background: none;
       color: var(--muted);
+      cursor: pointer;
     }
-    .tabs a[aria-current='page'] {
-      border-bottom-color: var(--text);
+    .segments button[aria-pressed='true'] {
+      background: var(--surface);
+      box-shadow: inset 0 0 0 1px var(--border);
       color: var(--text);
       font-weight: 500;
+    }
+    .segments button:focus-visible {
+      outline: var(--focus-ring);
+      outline-offset: var(--focus-offset);
+    }
+    .count {
+      color: var(--faint);
+      font-weight: 400;
     }
     .chips {
       display: flex;
@@ -260,7 +271,7 @@ function mergeActions(
       margin-top: var(--space-lg);
     }
     @media (hover: hover) and (pointer: fine) {
-      .tabs a:hover,
+      .segments button:hover,
       .chip:hover {
         color: var(--text);
       }
@@ -270,6 +281,13 @@ function mergeActions(
       .query,
       .finders label {
         width: 100%;
+      }
+      .segments {
+        display: flex;
+      }
+      .segments button {
+        flex: 1;
+        height: 36px;
       }
     }
   `,
@@ -285,6 +303,11 @@ export class ActionsPage {
   private readonly organization = injectOrganization().organization;
   private readonly orgId = computed(() => this.organization()?.id);
 
+  protected readonly views: readonly ActionFilters['view'][] = ['open', 'closed'];
+  protected readonly viewLabels: Record<ActionFilters['view'], string> = {
+    open: 'actions.view.open',
+    closed: 'actions.view.closed',
+  };
   protected readonly priorities = ACTION_PRIORITIES;
   protected readonly priorityLabels: Record<ActionPriority, string> = {
     critical: 'ui.priority.critical',
@@ -332,16 +355,25 @@ export class ActionsPage {
     problemMessageKey(this.page.error(), { fallback: 'actions.loadFailed' }),
   );
 
-  private readonly counts = listActionsResource(
+  private readonly openCounts = listActionsResource(
     this.orgId,
-    computed(() => actionCountParams(this.filters())),
+    computed(() => actionCountParams({ ...this.filters(), view: 'open' })),
   );
-  private readonly countRows = computed(() =>
-    this.counts.hasValue() ? (this.counts.value()?.items ?? []) : null,
+  private readonly closedCounts = listActionsResource(
+    this.orgId,
+    computed(() => actionCountParams({ ...this.filters(), view: 'closed' })),
   );
-  private readonly countsComplete = computed(
-    () => this.counts.hasValue() && !this.counts.value()?.nextCursor,
+  private readonly counts = computed(() =>
+    this.filters().view === 'open' ? this.openCounts : this.closedCounts,
   );
+  private readonly countRows = computed(() => {
+    const counts = this.counts();
+    return counts.hasValue() ? (counts.value()?.items ?? []) : null;
+  });
+  private readonly countsComplete = computed(() => {
+    const counts = this.counts();
+    return counts.hasValue() && !counts.value()?.nextCursor;
+  });
   protected readonly chipCounts = computed(() => {
     const rows = this.countRows();
     return rows && this.countsComplete() ? countByPriority(rows) : null;
@@ -408,12 +440,20 @@ export class ActionsPage {
           return true;
         },
       },
-      this.counts,
+      this.openCounts,
+      this.closedCounts,
     );
   }
 
-  protected viewQuery(view: 'open' | 'closed'): Record<string, string | null> {
-    return actionFiltersQuery({ ...this.filters(), view });
+  protected viewCount(view: ActionFilters['view']): string | null {
+    const counts = view === 'open' ? this.openCounts : this.closedCounts;
+    if (!counts.hasValue()) return null;
+    const page = counts.value();
+    return `${page?.items.length ?? 0}${page?.nextCursor ? '+' : ''}`;
+  }
+
+  protected setView(view: ActionFilters['view']): void {
+    if (view !== this.filters().view) void this.apply({ ...this.filters(), view });
   }
 
   protected toggle(priority: ActionPriority): void {

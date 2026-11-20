@@ -9,9 +9,18 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideChevronLeft, LucideChevronRight, LucideSparkles } from '@lucide/angular';
+import { LucideChevronRight, LucideSparkles } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiLoader, UiNotice, UiPill, UiPriority, UiToaster } from 'ui';
+import {
+  UiBackLink,
+  UiButton,
+  UiCard,
+  UiLoader,
+  UiNotice,
+  UiPill,
+  UiPriority,
+  UiToaster,
+} from 'ui';
 import {
   ActionsService,
   getAlertResource,
@@ -40,9 +49,9 @@ import { ModelReview, type ReviewChange } from './model-review';
   imports: [
     RouterLink,
     TranslocoPipe,
-    LucideChevronLeft,
     LucideChevronRight,
     LucideSparkles,
+    UiBackLink,
     UiButton,
     UiCard,
     UiLoader,
@@ -58,14 +67,12 @@ import { ModelReview, type ReviewChange } from './model-review';
   template: `
     @if (view(); as v) {
       @if (v.actions[0]; as first) {
-        <a class="crumb" [routerLink]="['../../reminders', actionNumber(first.number)]">
-          <svg lucideChevronLeft aria-hidden="true"></svg
-          >{{ 'alert.back' | transloco: { number: actionNumber(first.number) } }}
-        </a>
+        <ui-back-link
+          [label]="'alert.back' | transloco: { number: actionNumber(first.number) }"
+          [link]="['../../reminders', actionNumber(first.number)]"
+        />
       } @else {
-        <a class="crumb" routerLink="../../reminders">
-          <svg lucideChevronLeft aria-hidden="true"></svg>{{ 'actions.title' | transloco }}
-        </a>
+        <ui-back-link [label]="'actions.title' | transloco" link="../../reminders" />
       }
       <header class="head">
         <div class="title">
@@ -301,15 +308,6 @@ import { ModelReview, type ReviewChange } from './model-review';
     }
   `,
   styles: `
-    .crumb {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      height: 24px;
-      margin: -4px 0 var(--space-sm) -4px;
-      padding: 0 6px 0 2px;
-      color: var(--muted);
-    }
     .head {
       margin-bottom: var(--space-xl);
     }

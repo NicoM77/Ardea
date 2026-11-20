@@ -58,11 +58,11 @@ export interface OtherClosing {
         <p class="error" [id]="uid + '-error'">{{ 'actionDetail.reason.required' | transloco }}</p>
       }
       <div class="buttons">
-        <button uiButton type="button" (click)="dismiss.emit()">
-          {{ 'actionDetail.reason.cancel' | transloco }}
-        </button>
         <button uiButton variant="primary" type="submit" [loading]="busy()">
           {{ 'actionDetail.outcome.submit' | transloco }}
+        </button>
+        <button uiButton variant="ghost" type="button" (click)="dismiss.emit()">
+          {{ 'actionDetail.reason.cancel' | transloco }}
         </button>
       </div>
     </form>
@@ -120,7 +120,6 @@ export interface OtherClosing {
     .buttons {
       display: flex;
       flex-wrap: wrap;
-      justify-content: flex-end;
       gap: var(--space-sm);
     }
     @media (max-width: 640px) {

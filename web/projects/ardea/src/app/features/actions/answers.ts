@@ -1,8 +1,16 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideExternalLink } from '@lucide/angular';
 import { UiCopyButton } from 'ui';
-import type { AffectedItem, AnswersView, ModelVerdictView } from '../../core/api/client';
+import {
+  getStackResource,
+  type AffectedItem,
+  type AnswersView,
+  type ModelVerdictView,
+} from '../../core/api/client';
+import { injectOrganization } from '../organizations/current-organization';
+import { roleRank } from '../organizations/org-format';
 import { num } from './action-format';
 import { webUrl } from '../entries/entry-detail-format';
 import { refs } from './model-format';
@@ -15,9 +23,13 @@ import {
   TODO_LABELS,
 } from './answers-format';
 
+function lacksVersion(item: AffectedItem): boolean {
+  return item.versionVerdict === 'unknown' && !item.component.version && !item.component.removed;
+}
+
 @Component({
   selector: 'ardea-answers',
-  imports: [TranslocoPipe, LucideExternalLink, UiCopyButton],
+  imports: [RouterLink, TranslocoPipe, LucideExternalLink, UiCopyButton],
   template: `
     @let a = answers();
     @let m = a.origin === 'model' ? a.model : null;
@@ -73,6 +85,13 @@ import {
               @if (v.proposal) {
                 &ngsp;<span class="proposal">{{ 'answers.model.proposal' | transloco }}</span>
               }
+            }
+            @if (versionLink(item); as to) {
+              <span class="add"
+                ><a class="link" [routerLink]="to.path" [queryParams]="to.query">{{
+                  'answers.affected.addVersion' | transloco
+                }}</a></span
+              >
             }
           </li>
         }
@@ -267,6 +286,10 @@ import {
     .items li + li {
       margin-top: 2px;
     }
+    .add {
+      display: block;
+      margin-top: 2px;
+    }
     .items b {
       color: var(--text);
       font-weight: 500;
@@ -344,12 +367,31 @@ export class Answers {
   protected readonly moreEntries = computed(() => num(this.answers().whatHappened.moreEntries));
   protected readonly moreItems = computed(() => num(this.answers().affected.moreItems));
   protected readonly numbers = refs;
+  private readonly organization = injectOrganization().organization;
+  private readonly versionMissing = computed(
+    () =>
+      roleRank(this.organization()?.role) >= roleRank('member') &&
+      this.answers().affected.items.some(lacksVersion),
+  );
+  private readonly stack = getStackResource(
+    computed(() => (this.versionMissing() ? this.organization()?.id : undefined)),
+  );
   private readonly verdicts = computed(() => {
     const a = this.answers();
     return new Map(
       (a.origin === 'model' ? (a.model?.verdicts ?? []) : []).map((v) => [v.component.id, v]),
     );
   });
+
+  protected versionLink(
+    item: AffectedItem,
+  ): { path: string[]; query: Record<string, string> | null } | null {
+    if (!this.versionMissing() || !lacksVersion(item) || !this.stack.hasValue()) return null;
+    const org = ['/o', this.organization()?.slug ?? ''];
+    return this.stack.value()?.projectId === item.project.id
+      ? { path: [...org, 'stack'], query: null }
+      : { path: [...org, 'projects', item.project.id, 'setup'], query: { step: 'technologies' } };
+  }
 
   protected verdictOf(item: AffectedItem): ModelVerdictView | null {
     return this.verdicts().get(item.component.id) ?? null;

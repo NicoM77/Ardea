@@ -139,12 +139,14 @@ test('reminders list: filter by priority and project, search, and the done view'
   await expect(page.getByRole('status').filter({ hasText: 'open.' })).toHaveText(
     '4 open. 1 critical.',
   );
-  await expect(table.getByRole('columnheader')).toHaveText([
-    'Priority',
-    'Reminder',
-    'Since',
-    'Status',
-  ]);
+  await expect(table.getByRole('columnheader')).toHaveText(['Priority', 'Reminder', 'Since']);
+  const views = page.getByRole('group', { name: 'Show' });
+  await expect(views.getByRole('button', { name: /^Open/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(views.getByRole('button', { name: /^Open/ })).toHaveText(/Open\s*4/);
+  await expect(views.getByRole('button', { name: /^Done/ })).toHaveText(/Done\s*1/);
   await expect(page.getByRole('region', { name: 'Owners' })).toHaveCount(0);
   await expectAccessible(page, 'reminders');
 
@@ -179,9 +181,15 @@ test('reminders list: filter by priority and project, search, and the done view'
   );
 
   await page.goto(`${ORG}/reminders`);
-  await page.getByRole('navigation', { name: 'Show' }).getByRole('link', { name: 'Done' }).click();
+  await page.getByRole('group', { name: 'Show' }).getByRole('button', { name: /^Done/ }).click();
   await expect(page).toHaveURL(/view=closed/);
   const closed = page.getByRole('table', { name: 'Done reminders' });
+  await expect(closed.getByRole('columnheader')).toHaveText([
+    'Priority',
+    'Reminder',
+    'Done',
+    'Status',
+  ]);
   await expect(closed.getByRole('row')).toHaveCount(2);
   await expect(closed).toContainText('Update .NET runtime to 10.0.4');
   await expect(closed).toContainText('Remediated');

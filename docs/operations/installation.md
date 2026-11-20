@@ -36,8 +36,8 @@ line of `ardea doctor` and the administration show the version that runs.
 
 Every release image is signed with [cosign](https://docs.sigstore.dev/) without a key, by the identity of the
 repository's release workflow, and has its build provenance and SBOM attested on GitHub. Check them before the first
-start and after an update, with cosign 3 or later and the GitHub CLI (`gh`, signed in with any account). Set
-`version` to the release you pull:
+start and after an update, with cosign 3 or later and the GitHub CLI 2.49 or later (`gh`, which brought
+`gh attestation`, signed in with any account). Set `version` to the release you pull:
 
 ```bash
 image=ghcr.io/nicom77/ardea

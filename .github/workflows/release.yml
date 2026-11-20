@@ -282,6 +282,7 @@ jobs:
       packages: write
       id-token: write
       attestations: write
+      actions: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -358,3 +359,7 @@ jobs:
             } >> notes.md
           fi
           gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file notes.md --draft=false
+      - name: Republish the website
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run site.yml --repo "$GITHUB_REPOSITORY" --ref main

@@ -148,7 +148,7 @@ internal static class SeedDemoCommand
         output.WriteLine();
         output.WriteLine($"Demo instance ready in {elapsed.TotalSeconds:F0} s: {await CountAsync("iam.organization")} organisation, {await CountAsync("assets.project WHERE kind = 'project'")} projects, "
             + $"{await CountAsync("intel.security_entry")} entries, {await CountAsync("assess.finding WHERE level >= 2")} relevant findings, "
-            + $"{await CountAsync("assess.remediation WHERE status <> 'closed'")} open and {await CountAsync("assess.remediation WHERE status = 'closed'")} done actions, "
+            + $"{await CountAsync("assess.remediation WHERE status <> 'closed'")} open and {await CountAsync("assess.remediation WHERE status = 'closed'")} done reminders, "
             + $"{await CountAsync("notify.notification")} notifications in the app.");
         if (context.Credentials is { } credentials)
         {

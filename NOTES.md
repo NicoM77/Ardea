@@ -17,7 +17,12 @@ Stand 20.11.2026, ca. 08:00 UTC, main = c018f07. Alle Agents werden mit der Sitz
   6. `gh attestation verify` mit exakter `--cert-identity https://github.com/NicoM77/Ardea/.github/workflows/release.yml@refs/heads/main` und `--deny-self-hosted-runners`.
   7. Release wartet auf grünen `ci.yml`-Lauf des Release-SHA.
   Nits: Bereich `HEAD^1..HEAD^2`, `Reapply "…"` erlauben, Test für die doctor-Versionszeile, Beispielkonfiguration anhängen. **Erst nach den Korrekturen mergen.**
-- **Dependabot-PRs #115–#126:** ein Agent sortierte sie (merge/defer/needs work) und sollte PR `ci/dependabot-ignores` mit Ignore-Regeln anlegen — Ergebnis offen. Regeln: .NET bleibt 10 (keine Microsoft.*/dotnet-ef 11.x), Node 24 (kein node 26), `@playwright/test` muss zum Image `v1.56.1-noble` passen (sonst CI, Baselines, Screenshots, Site mit anpassen), Actions-Hauptversionen (setup-dotnet 6, build-push 7, setup-buildx 4) gegen die Workflows prüfen. Nur lokal geprüft mergen.
+- **Dependabot-Sichtung (fertig, nichts gemergt/geschlossen):** PR **#130** (`ci/dependabot-ignores`) mit Ignore-Regeln, offen.
+  - Mergen (lokal geprüft): #117 (build-push-action 7), #118 (setup-buildx 4), #119 (setup-dotnet 6), #122 (jsdom 31), #123 (cyclonedx-npm 7).
+  - #124 (nuget-minor-patch): **Lock-Datei fehlt** (`tests/Ardea.Architecture.Tests/packages.lock.json` noch 10.11.0 → NU1004). Mit `dotnet restore Ardea.slnx --force-evaluate` auf dem PR-Branch neu erzeugen (LF!), dann ganze Suite grün (1 837 bestanden lokal).
+  - Nach #130 schliessen: #115 (node 26), #116/#120 (Playwright 1.65), #125 (dotnet-ef 11), #126 (Resilience 11), #128 (TimeProvider.Testing 11), #121 (Gruppe enthält Playwright; Dependabot öffnet sie ohne Playwright neu).
+  - #129 (NuGet.Versioning 8.0.0) nicht geprüft.
+  - Kombinierter lokaler Stand: `scratchpad/deps/wall` (Branch `combined-deps`, nicht gepusht).
 - **7.14 Branches:** Löschen der 90 gemergten Remote-Branches und von `feat/platform-crosscutting` (PR #5 geschlossen, Aufgaben 0.5/0.6 anders geliefert) hat der Sicherheitsfilter der Sitzung blockiert. Der Eigentümer führt aus:
   ```bash
   git fetch --prune origin && git branch -r --merged origin/main | sed 's/^ *//' | grep -vE "origin/(HEAD|main)$" | grep -v " -> " | sed 's#^origin/##' | xargs -n 15 git push origin --delete

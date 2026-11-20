@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Ardea.Notifications.Delivering;
 using Ardea.Platform.Http;
 using Ardea.TestSupport;
 using Microsoft.AspNetCore.Builder;
@@ -100,6 +101,40 @@ public sealed class WebhookChannelTests(PostgresServer server)
         host.Time.Advance(TimeSpan.FromSeconds(30));
         Assert.Empty(await host.RunJobsAsync());
         Assert.Equal("dead|The endpoint answered 410.", await host.ScalarAsync<string>("SELECT state || '|' || last_error FROM notify.delivery WHERE channel = 'webhook' ORDER BY created_at DESC LIMIT 1"));
+
+        var rotated = (await NotifyTestHost.JsonAsync(await s.Owner.PutAsync($"{s.Path}/endpoints/{endpoint}", new { rotateSecret = true }))).GetProperty("secret").GetString()!;
+        Assert.NotEqual(secret, rotated);
+        await s.EventAsync("action.raised", await s.ActionAsync(4, level: 4));
+        await s.EvaluateAsync();
+        await s.DeliverAsync();
+        Assert.True(Verify(receiver.Requests.Last(), rotated));
+        Assert.False(Verify(receiver.Requests.Last(), secret));
+    }
+
+    [Fact]
+    public async Task The_connection_follows_no_redirect_gives_up_on_a_slow_endpoint_and_reaches_a_private_host_only_when_released()
+    {
+        var address = PrivateAddress();
+        await using var receiver = await Receiver.StartAsync(address);
+        var url = new Uri($"http://{address}:{receiver.Port}/hooks/in");
+        var channel = new WebhookChannel(new GuardedClients(TimeSpan.FromMilliseconds(500)), TimeProvider.System);
+        Task<SendResult> PostAsync(Uri to, bool released) => channel.PostAsync(to, "whsec_test", "{}", Guid.CreateVersion7(), released, CancellationToken.None);
+
+        receiver.Answers.Enqueue(307);
+        var redirected = await PostAsync(url, released: true);
+        Assert.Equal((SendOutcome.Permanent, "307"), (redirected.Outcome, redirected.Status));
+        Assert.Single(receiver.Requests);
+
+        receiver.Delay = TimeSpan.FromSeconds(10);
+        var slow = await PostAsync(url, released: true);
+        Assert.Equal((SendOutcome.Transient, "timeout"), (slow.Outcome, slow.Status));
+        receiver.Delay = TimeSpan.Zero;
+
+        Assert.Equal((SendOutcome.Permanent, "blocked"), Pair(await PostAsync(url, released: false)));
+        Assert.Equal((SendOutcome.Permanent, "blocked"), Pair(await PostAsync(new Uri($"http://127.0.0.1:{receiver.Port}/hooks/in"), released: true)));
+        Assert.Equal(2, receiver.Requests.Count);
+
+        static (SendOutcome, string?) Pair(SendResult result) => (result.Outcome, result.Status);
     }
 
     /// <summary>What a receiver does: HMAC-SHA256 over «{t}.{body}» with the shared secret, compared in constant time.</summary>
@@ -121,6 +156,11 @@ public sealed class WebhookChannelTests(PostgresServer server)
 
     private sealed record Received(string Signature, string Body);
 
+    private sealed class GuardedClients(TimeSpan timeout) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new(OutboundAddresses.CreateHandler()) { Timeout = timeout };
+    }
+
     /// <summary>A local HTTP listener that records what it receives and answers with the queued status codes, else 200.</summary>
     private sealed class Receiver : IAsyncDisposable
     {
@@ -138,6 +178,8 @@ public sealed class WebhookChannelTests(PostgresServer server)
 
         public ConcurrentQueue<int> Answers { get; } = new();
 
+        public TimeSpan Delay { get; set; }
+
         public static async Task<Receiver> StartAsync(IPAddress address)
         {
             var builder = WebApplication.CreateSlimBuilder();
@@ -145,11 +187,26 @@ public sealed class WebhookChannelTests(PostgresServer server)
             builder.WebHost.UseKestrel(k => k.Listen(address, 0, o => o.Protocols = HttpProtocols.Http1));
             var app = builder.Build();
             Receiver? self = null;
-            app.MapPost("/{**path}", async (HttpRequest request) =>
+            app.MapPost("/{**path}", async (HttpRequest request, HttpResponse response) =>
             {
                 using var reader = new StreamReader(request.Body);
                 self!.Requests.Enqueue(new Received(request.Headers["Ardea-Signature"].ToString(), await reader.ReadToEndAsync()));
-                return Results.StatusCode(self.Answers.TryDequeue(out var status) ? status : 200);
+                try
+                {
+                    await Task.Delay(self.Delay, request.HttpContext.RequestAborted);
+                }
+                catch (OperationCanceledException)
+                {
+                    return Results.Empty;
+                }
+
+                var status = self.Answers.TryDequeue(out var queued) ? queued : 200;
+                if (status is >= 300 and < 400)
+                {
+                    response.Headers.Location = "http://127.0.0.1:9/elsewhere";
+                }
+
+                return Results.StatusCode(status);
             });
             await app.StartAsync();
             var port = new Uri(app.Urls.First()).Port;

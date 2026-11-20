@@ -31,6 +31,10 @@ internal sealed class NotifyTestHost : IAsyncDisposable
     public const string SetupTokenValue = "test-setup-token";
     public const string Password = "correct horse battery staple";
 
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<PostgresServer, Task<string>> Templates = new();
+
+    private static int _databases;
+
     private readonly WebApplication _app;
 
     private NotifyTestHost(WebApplication app, DatabaseOptions database, FakeTimeProvider time, CapturingEmailSender? mail, CapturingLogs logs)
@@ -56,28 +60,19 @@ internal sealed class NotifyTestHost : IAsyncDisposable
 
     /// <param name="server">The test run's database server.</param>
     /// <param name="settings">Further configuration, e.g. SMTP for a real mail server.</param>
-    /// <param name="captureMail">Replace SMTP by a capturing sender that is always configured.</param>
+    /// <param name="captureMail">Replace SMTP by a capturing sender, configured unless the test turns it off.</param>
     /// <param name="start">The fake clock's start; now by default. Sessions are checked against the database's clock, so the API is used before the clock moves far.</param>
     /// <param name="services">Replaces services after every registration.</param>
     public static async Task<NotifyTestHost> StartAsync(
         PostgresServer server, Dictionary<string, string?>? settings = null, bool captureMail = true, DateTimeOffset? start = null,
         Action<IServiceCollection>? services = null)
     {
-        var name = await server.CreateDatabaseAsync("notify");
-        var database = new DatabaseOptions
-        {
-            Host = server.Host,
-            Port = server.Port,
-            Database = name,
-            OwnerUser = PostgresServer.OwnerUser,
-            OwnerPassword = PostgresServer.OwnerPassword,
-            AppPassword = "app-test-password",
-        };
+        var database = Options(server, await CloneAsync(server, await Templates.GetValue(server, MigrateTemplateAsync)));
         await using (var owner = new NpgsqlConnection(database.OwnerConnectionString("tests")))
         {
             await owner.OpenAsync();
             await new DatabaseMigrator(database, Modules.Databases, NoBackup.Instance, NullLogger<DatabaseMigrator>.Instance)
-                .MigrateAsync(owner, CancellationToken.None);
+                .EnsureAppRoleAsync(owner, CancellationToken.None);
         }
 
         var values = new Dictionary<string, string?>
@@ -367,6 +362,52 @@ internal sealed class NotifyTestHost : IAsyncDisposable
 
     private static string Sql(Guid? id) => id is { } value ? $"'{value}'" : "NULL";
 
+    private static DatabaseOptions Options(PostgresServer server, string name) => new()
+    {
+        Host = server.Host,
+        Port = server.Port,
+        Database = name,
+        OwnerUser = PostgresServer.OwnerUser,
+        OwnerPassword = PostgresServer.OwnerPassword,
+        AppPassword = "app-test-password",
+    };
+
+    private static async Task<string> MigrateTemplateAsync(PostgresServer server)
+    {
+        var database = Options(server, await server.CreateDatabaseAsync("notify_template"));
+        await using (var owner = new NpgsqlConnection(database.OwnerConnectionString("tests")))
+        {
+            await owner.OpenAsync();
+            await new DatabaseMigrator(database, Modules.Databases, NoBackup.Instance, NullLogger<DatabaseMigrator>.Instance)
+                .MigrateAsync(owner, CancellationToken.None);
+        }
+
+        foreach (var application in new[] { "tests", "ardea-migrate-lock" })
+        {
+            await using var pooled = new NpgsqlConnection(database.OwnerConnectionString(application));
+            NpgsqlConnection.ClearPool(pooled);
+        }
+
+        await using var admin = new NpgsqlConnection(server.OwnerConnectionString("postgres_admin"));
+        await admin.OpenAsync();
+        await using var close = new NpgsqlCommand($"""
+            ALTER DATABASE "{database.Database}" WITH ALLOW_CONNECTIONS false;
+            SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{database.Database}';
+            """, admin);
+        await close.ExecuteNonQueryAsync();
+        return database.Database;
+    }
+
+    private static async Task<string> CloneAsync(PostgresServer server, string template)
+    {
+        var name = $"notify_{Interlocked.Increment(ref _databases)}_{Guid.NewGuid():N}"[..40];
+        await using var admin = new NpgsqlConnection(server.OwnerConnectionString("postgres_admin"));
+        await admin.OpenAsync();
+        await using var create = new NpgsqlCommand($"CREATE DATABASE \"{name}\" TEMPLATE \"{template}\"", admin);
+        await create.ExecuteNonQueryAsync();
+        return name;
+    }
+
     private sealed class NoBackup : IBackupWriter
     {
         public static readonly NoBackup Instance = new();
@@ -375,7 +416,7 @@ internal sealed class NotifyTestHost : IAsyncDisposable
     }
 }
 
-/// <summary>Takes the e-mails instead of a mail server; always configured.</summary>
+/// <summary>Takes the e-mails instead of a mail server; configured unless a test turns SMTP off.</summary>
 internal sealed class CapturingEmailSender : IEmailSender
 {
     private readonly List<EmailMessage> _sent = [];
@@ -394,7 +435,9 @@ internal sealed class CapturingEmailSender : IEmailSender
     /// <summary>When set, sending throws this instead, as a broken mail server would.</summary>
     public Func<Exception>? Failure { get; set; }
 
-    public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken) => Task.FromResult(true);
+    public Func<bool> Configured { get; set; } = () => true;
+
+    public Task<bool> IsConfiguredAsync(CancellationToken cancellationToken) => Task.FromResult(Configured());
 
     public Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
     {

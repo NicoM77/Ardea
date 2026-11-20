@@ -61,7 +61,7 @@ jobs:
             site/playwright-report
             site/test-results
           if-no-files-found: ignore
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site/dist
 

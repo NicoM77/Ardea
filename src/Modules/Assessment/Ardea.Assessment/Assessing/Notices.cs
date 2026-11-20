@@ -21,8 +21,8 @@ internal sealed record CoarseHits(IReadOnlySet<Guid> Scope, IReadOnlySet<Guid> H
 /// raised it. Once raised it stays while one of them is still hit, whatever later changes of the entry do to the score.</item>
 /// <item>An open notice no component names any more is withdrawn: they got an exact version and the precise path took
 /// over, or they left the profile, or the entry no longer names the product. It is raised anew when a threshold is met again.</item>
-/// <item>An answered «doesn't affect us» comes back once (E22): when the entry is actively exploited (KEV included) and was
-/// not when it was answered, while a component still names it.</item>
+/// <item>An answered «doesn't affect us» comes back once (E22): when the entry became actively exploited, or was added to KEV,
+/// after it was answered, while a component still names it.</item>
 /// </list>
 /// </summary>
 internal sealed class Notices(AssessDbContext db, History history, TimeProvider time)
@@ -75,18 +75,19 @@ internal sealed class Notices(AssessDbContext db, History history, TimeProvider 
                 history.Add(EventKinds.NoticeWithdrawn, new { entry = entry.Key, components = notice.ComponentIds }, notice: notice.Id);
                 break;
             case Notice.Withdrawn when hits.Raising.Count > 0:
+                // Raised anew by what raises it now: the components named before left the coarse path or the profile.
                 notice.State = Notice.Open;
-                notice.ComponentIds = ids;
+                notice.ComponentIds = [.. hits.Raising.Order()];
                 notice.IsBackfill = hits.Quiet;
                 notice.RaisedAt = now;
                 Raised(notice, entry, hits.Quiet);
                 break;
-            case Notice.NotAffected when ids.Length > 0 && notice.ReappearedAt is null && entry.Exploitation == "active"
-                && notice.DecidedExploitation != "active":
+            case Notice.NotAffected when ids.Length > 0 && notice.ReappearedAt is null
+                && NoticeRules.ReappearReason(entry, notice.DecidedExploitation, notice.DecidedKev) is { } reason:
                 notice.ComponentIds = ids;
                 notice.State = Notice.Open;
                 notice.ReappearedAt = now;
-                notice.ReappearedReason = NoticeRules.ReappearReason(entry);
+                notice.ReappearedReason = reason;
                 history.Add(EventKinds.NoticeReappeared, new { entry = entry.Key, reason = notice.ReappearedReason, components = ids }, notice: notice.Id);
                 break;
             case Notice.Withdrawn:

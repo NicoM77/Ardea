@@ -7,15 +7,21 @@ namespace Ardea.Assessment.Persistence.Migrations
 {
     /// <summary>
     /// Task 5a.3 (master plan 17.3, ADR 047): notices are written by the assessment. A notice keeps the entry's score and
-    /// exploitation for the order of the list, the exploitation when it was answered (E22: it comes back only when the entry is
-    /// exploited later), whether a reverse search raised it, and may be withdrawn; history rows name their notice. New columns
-    /// have defaults and the checks only widen, so the previous build keeps working during the upgrade (master plan 4.11).
+    /// exploitation, with the list's order computed from them and indexed, the exploitation and KEV listing when it was
+    /// answered (E22: it comes back only when one of them is new), whether a reverse search raised it, and may be withdrawn;
+    /// history rows name their notice. New columns have defaults or are computed and the checks only widen, so the previous
+    /// build keeps working during the upgrade (master plan 4.11).
     /// </summary>
     public partial class NoticeGeneration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "ix_notice_list",
+                schema: "assess",
+                table: "notice");
+
             migrationBuilder.DropCheckConstraint(
                 name: "ck_notice_decided",
                 schema: "assess",
@@ -41,6 +47,14 @@ namespace Ardea.Assessment.Persistence.Migrations
                 maxLength: 10,
                 nullable: true);
 
+            migrationBuilder.AddColumn<bool>(
+                name: "decided_kev",
+                schema: "assess",
+                table: "notice",
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
+
             migrationBuilder.AddColumn<string>(
                 name: "exploitation",
                 schema: "assess",
@@ -64,6 +78,31 @@ namespace Ardea.Assessment.Persistence.Migrations
                 table: "assess_event",
                 type: "uuid",
                 nullable: true);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "exploited",
+                schema: "assess",
+                table: "notice",
+                type: "boolean",
+                nullable: false,
+                computedColumnSql: "exploitation = 'active'",
+                stored: true);
+
+            migrationBuilder.AddColumn<double>(
+                name: "score_rank",
+                schema: "assess",
+                table: "notice",
+                type: "double precision",
+                nullable: false,
+                computedColumnSql: "coalesce(cvss_score, -1)",
+                stored: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_notice_list",
+                schema: "assess",
+                table: "notice",
+                columns: new[] { "organization_id", "state", "is_backfill", "exploited", "score_rank", "raised_at", "id" },
+                descending: new[] { false, false, false, true, true, true, true });
 
             migrationBuilder.AddCheckConstraint(
                 name: "ck_notice_decided",
@@ -106,6 +145,14 @@ namespace Ardea.Assessment.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // The earlier checks know no withdrawn notice: it is open again, as before this migration.
+            migrationBuilder.Sql("UPDATE assess.notice SET state = 'open' WHERE state = 'withdrawn';");
+
+            migrationBuilder.DropIndex(
+                name: "ix_notice_list",
+                schema: "assess",
+                table: "notice");
+
             migrationBuilder.DropCheckConstraint(
                 name: "ck_notice_decided",
                 schema: "assess",
@@ -127,12 +174,27 @@ namespace Ardea.Assessment.Persistence.Migrations
                 table: "assess_event");
 
             migrationBuilder.DropColumn(
+                name: "exploited",
+                schema: "assess",
+                table: "notice");
+
+            migrationBuilder.DropColumn(
+                name: "score_rank",
+                schema: "assess",
+                table: "notice");
+
+            migrationBuilder.DropColumn(
                 name: "cvss_score",
                 schema: "assess",
                 table: "notice");
 
             migrationBuilder.DropColumn(
                 name: "decided_exploitation",
+                schema: "assess",
+                table: "notice");
+
+            migrationBuilder.DropColumn(
+                name: "decided_kev",
                 schema: "assess",
                 table: "notice");
 
@@ -150,6 +212,12 @@ namespace Ardea.Assessment.Persistence.Migrations
                 name: "notice_id",
                 schema: "assess",
                 table: "assess_event");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_notice_list",
+                schema: "assess",
+                table: "notice",
+                columns: new[] { "organization_id", "state", "raised_at" });
 
             migrationBuilder.AddCheckConstraint(
                 name: "ck_notice_decided",

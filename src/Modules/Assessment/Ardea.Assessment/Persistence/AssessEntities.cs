@@ -248,6 +248,9 @@ internal sealed class Notice : IOrganizationOwned
     /// </summary>
     public string? DecidedExploitation { get; set; }
 
+    /// <summary>The entry was in CISA's KEV catalogue when it was answered: a later KEV listing brings «doesn't affect us» back (E22).</summary>
+    public bool DecidedKev { get; set; }
+
     /// <summary>The reminder «affects us» opened; <c>null</c> otherwise.</summary>
     public Guid? RemediationId { get; set; }
 
@@ -265,6 +268,12 @@ internal sealed class Notice : IOrganizationOwned
 
     /// <summary>The entry's exploitation: <c>none</c>, <c>poc</c> or <c>active</c>, kept like the score.</summary>
     public string Exploitation { get; set; } = "none";
+
+    /// <summary>Computed by the database: actively exploited, the first key of the list's order (E23).</summary>
+    public bool Exploited { get; private set; }
+
+    /// <summary>Computed by the database: the score, <c>-1</c> without one, the second key of the list's order.</summary>
+    public double ScoreRank { get; private set; }
 
     /// <summary>Raised by a reverse search, when a stack entry was added or changed: announced once for all (master plan 7.7).</summary>
     public bool IsBackfill { get; set; }

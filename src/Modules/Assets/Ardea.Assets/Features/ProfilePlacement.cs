@@ -13,17 +13,25 @@ namespace Ardea.Assets.Features;
 /// </summary>
 internal sealed class ProfilePlacement(AssetsDbContext db, IProductCatalog catalog, IAuditLog audit, IJobQueue jobs, TimeProvider time) : IProfilePlacement
 {
-    public async Task<PlacedComponent?> PlaceAsync(Guid projectId, Guid likeComponentId, string? version, CancellationToken cancellationToken)
+    public async Task<PlacementResult> PlaceAsync(Guid projectId, Guid likeComponentId, string? version, CancellationToken cancellationToken)
     {
         var like = await db.Components.AsNoTracking().SingleOrDefaultAsync(c => c.Id == likeComponentId, cancellationToken);
         var project = await db.Projects.AsNoTracking().SingleOrDefaultAsync(p => p.Id == projectId, cancellationToken);
-        if (like is null || project is null || project.ArchivedAt is not null)
+        if (like is null || project is null)
         {
-            return null;
+            return new PlacementResult("not_found");
         }
 
-        var wanted = string.IsNullOrWhiteSpace(version) ? null : version.Trim();
+        if (project.ArchivedAt is not null)
+        {
+            return new PlacementResult("archived");
+        }
+
+        // Two answers placing the same product in the same project take turns, so the second finds what the first added.
         var identity = ComponentValues.IdentityOf(like);
+        await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"assets.place:" + projectId + ":" + identity}, 0))", cancellationToken);
+
+        var wanted = string.IsNullOrWhiteSpace(version) ? null : version.Trim();
         var same = (await db.Components.Where(c => c.ProjectId == projectId).OrderBy(c => c.Id).ToListAsync(cancellationToken))
             .Where(c => ComponentValues.IdentityOf(c) == identity).ToList();
 
@@ -32,17 +40,17 @@ internal sealed class ProfilePlacement(AssetsDbContext db, IProductCatalog catal
             var found = same.Find(c => c.Id == like.Id) ?? same.Find(c => c.VersionPrecision != VersionPrecisions.Exact) ?? same.FirstOrDefault();
             if (found is not null)
             {
-                return new PlacedComponent(found.Id, "none");
+                return new PlacementResult("found", found.Id);
             }
         }
         else
         {
             if (same.Find(c => string.Equals(c.Version, wanted, StringComparison.OrdinalIgnoreCase)) is { } exact)
             {
-                return new PlacedComponent(exact.Id, "none");
+                return new PlacementResult("found", exact.Id);
             }
 
-            // The coarse entry the person meant learns its version; a repository's component belongs to its repository (16.5).
+            // The coarse entry the person meant learns its version.
             if (same.Find(c => c.Origin == "manual" && c.VersionPrecision != VersionPrecisions.Exact) is { } coarse)
             {
                 var values = await CheckAsync(coarse, wanted, cancellationToken);
@@ -51,7 +59,13 @@ internal sealed class ProfilePlacement(AssetsDbContext db, IProductCatalog catal
                 await db.SaveChangesAsync(cancellationToken);
                 await ComponentKeys.RefreshAsync(db, catalog, [coarse], cancellationToken);
                 await ChangedAsync("component.changed", coarse.Id, projectId, values, cancellationToken);
-                return new PlacedComponent(coarse.Id, "version_set");
+                return new PlacementResult("version_set", coarse.Id);
+            }
+
+            // A repository's component belongs to its repository (16.5): a hand-entered one beside it would duplicate the product.
+            if (same.Find(c => c.Origin == "repository") is { } read)
+            {
+                return new PlacementResult("repository", read.Id);
             }
         }
 
@@ -63,7 +77,7 @@ internal sealed class ProfilePlacement(AssetsDbContext db, IProductCatalog catal
         await db.SaveChangesAsync(cancellationToken);
         await ComponentKeys.RefreshAsync(db, catalog, [component], cancellationToken);
         await ChangedAsync("component.added", component.Id, projectId, added, cancellationToken);
-        return new PlacedComponent(component.Id, "added");
+        return new PlacementResult("added", component.Id);
     }
 
     /// <summary>The component's product with the new version, through the checks of the endpoints; a new one takes the project's context.</summary>

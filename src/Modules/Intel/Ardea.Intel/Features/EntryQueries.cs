@@ -92,7 +92,8 @@ internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
 
     private static EntryFacts Facts(EntryRow entry, IEnumerable<EntryAffectedRow> affected)
     {
-        var evidence = Evidence(entry.ExploitationEvidence)
+        var all = Evidence(entry.ExploitationEvidence).ToList();
+        var evidence = all
             .Where(e => e.State == entry.Exploitation)
             .OrderBy(e => e.Since ?? DateTimeOffset.MaxValue)
             .FirstOrDefault();
@@ -113,6 +114,7 @@ internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
             Exploitation = entry.Exploitation,
             ExploitationSource = entry.Exploitation == "none" ? null : evidence?.Source,
             ExploitationSince = entry.Exploitation == "none" ? null : evidence?.Since,
+            InKev = entry.Exploitation == "active" && all.Exists(IsKev),
             EpssClass = entry.EpssClass,
             FixAvailable = entry.FixAvailable,
             AuthorityWarning = entry.AuthorityWarning,
@@ -138,6 +140,14 @@ internal sealed class EntryQueries(IntelDbContext db) : IEntryQueries
             })],
         };
     }
+
+    /// <summary>
+    /// CISA's catalogue of known exploited vulnerabilities backs the evidence: its own feed (<c>cisa-kev</c>) or the KEV
+    /// entry of a CVE record's CISA-ADP container, which names the catalogue as its reference.
+    /// </summary>
+    private static bool IsKev(Correlation.ExploitationEvidence evidence) =>
+        evidence.State == "active" && (evidence.Source == "cisa-kev"
+            || (evidence.Evidence is { } text && (text.Contains("known-exploited", StringComparison.OrdinalIgnoreCase) || text.Contains("KEV", StringComparison.Ordinal))));
 
     private static IEnumerable<Correlation.ExploitationEvidence> Evidence(JsonDocument? document)
     {

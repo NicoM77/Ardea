@@ -56,10 +56,10 @@ internal sealed class DemoSeed : IDemoSeedStep
             answered++;
         }
 
-        if (notices.TryGetValue("CVE-2026-89788", out var kernelNotice))
+        if (notices.TryGetValue("CVE-2026-114952", out var mysqlNotice))
         {
             await ActAsync<NoticeCommands>(context, "marc", async (commands, user) => Check(await commands.AnswerAsync(
-                kernelNotice, new AnswerNoticeRequest(Notice.AffectsUs, Notice.Open), user, cancellationToken)), cancellationToken);
+                mysqlNotice, new AnswerNoticeRequest(Notice.AffectsUs, Notice.Open), user, cancellationToken)), cancellationToken);
             answered++;
         }
 

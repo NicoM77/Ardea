@@ -62,17 +62,17 @@ public sealed class SeedDemoCommandTests(PostgresServer server)
         Assert.Equal(11L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component c JOIN assets.project p ON p.id = c.project_id WHERE p.kind = 'project'"));
 
         // The organisation has its stack from its creation on (master plan 17.2) with eight broad entries as the wizard adds
-        // them (task 5a.4), two with a version line and the firewall with every entry, and five the demo's records hit (task
+        // them (task 5a.4), two with a version line and the firewall with every entry, and four the demo's records hit (task
         // 5a.3); the projects' versions are releases, and the managed Azure SQL has none (ADR 046).
         Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.project WHERE kind = 'organization_stack'"));
         Assert.Equal("exact 10, none 1", await host.ScalarAsync<string>(
             "SELECT string_agg(version_precision || ' ' || n, ', ' ORDER BY version_precision) FROM (SELECT version_precision, count(*) AS n FROM assets.component c JOIN assets.project p ON p.id = c.project_id WHERE p.kind = 'project' GROUP BY 1) p"));
-        Assert.Equal("line 3, none 10", await host.ScalarAsync<string>(
+        Assert.Equal("line 3, none 9", await host.ScalarAsync<string>(
             "SELECT string_agg(version_precision || ' ' || n, ', ' ORDER BY version_precision) FROM (SELECT version_precision, count(*) AS n FROM assets.component c JOIN assets.project p ON p.id = c.project_id WHERE p.kind = 'organization_stack' GROUP BY 1) p"));
         Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM assets.component WHERE notice_threshold = 'everything'"));
 
         // The stack's notices (task 5a.3): raised by the pipeline, one answered each way, the rest new for the Notices page.
-        Assert.Equal("affects_us 1, not_affected 1, open 6", await host.ScalarAsync<string>(
+        Assert.Equal("affects_us 1, not_affected 1, open 5", await host.ScalarAsync<string>(
             "SELECT string_agg(state || ' ' || n, ', ' ORDER BY state) FROM (SELECT state, count(*) AS n FROM assess.notice GROUP BY 1) s"));
         Assert.Equal(1L, await host.ScalarAsync<long>(
             "SELECT count(*) FROM assess.notice n JOIN assess.remediation r ON r.id = n.remediation_id JOIN assets.project p ON p.id = r.project_id WHERE p.kind = 'organization_stack' AND r.status = 'open'"));

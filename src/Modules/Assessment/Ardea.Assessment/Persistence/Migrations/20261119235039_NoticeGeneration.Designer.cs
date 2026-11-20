@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ardea.Assessment.Persistence.Migrations
 {
     [DbContext(typeof(AssessDbContext))]
-    [Migration("20261119224656_NoticeGeneration")]
+    [Migration("20261119235039_NoticeGeneration")]
     partial class NoticeGeneration
     {
         /// <inheritdoc />
@@ -608,6 +608,10 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .HasColumnType("character varying(10)")
                         .HasColumnName("decided_exploitation");
 
+                    b.Property<bool>("DecidedKev")
+                        .HasColumnType("boolean")
+                        .HasColumnName("decided_kev");
+
                     b.Property<Guid>("EntryId")
                         .HasColumnType("uuid")
                         .HasColumnName("entry_id");
@@ -625,6 +629,12 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .HasColumnType("character varying(10)")
                         .HasDefaultValue("none")
                         .HasColumnName("exploitation");
+
+                    b.Property<bool>("Exploited")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("boolean")
+                        .HasColumnName("exploited")
+                        .HasComputedColumnSql("exploitation = 'active'", true);
 
                     b.Property<bool>("IsBackfill")
                         .HasColumnType("boolean")
@@ -652,6 +662,12 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("remediation_id");
 
+                    b.Property<double>("ScoreRank")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("double precision")
+                        .HasColumnName("score_rank")
+                        .HasComputedColumnSql("coalesce(cvss_score, -1)", true);
+
                     b.Property<string>("State")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -668,7 +684,8 @@ namespace Ardea.Assessment.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_notice_entry");
 
-                    b.HasIndex("OrganizationId", "State", "RaisedAt")
+                    b.HasIndex("OrganizationId", "State", "IsBackfill", "Exploited", "ScoreRank", "RaisedAt", "Id")
+                        .IsDescending(false, false, false, true, true, true, true)
                         .HasDatabaseName("ix_notice_list");
 
                     b.ToTable("notice", "assess", t =>

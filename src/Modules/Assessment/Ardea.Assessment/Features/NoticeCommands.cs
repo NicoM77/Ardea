@@ -178,18 +178,18 @@ internal sealed class NoticeCommands(
         notice.DecidedBy = null;
         notice.DecidedAt = null;
         notice.DecidedExploitation = null;
+        notice.DecidedKev = false;
         notice.RemediationId = null;
         notice.ChangedAt = now;
         await db.SaveChangesAsync(cancellationToken);
         history.Add(EventKinds.NoticeReopened, new { from, entry = entry.Key }, actor: user, notice: notice.Id);
-        if (returned.Count > 0)
-        {
-            // The system closes them with the notice; a reminder left without open findings is withdrawn with them.
-            var back = returned.Select(f => f.ComponentId).ToHashSet();
-            var touched = new HashSet<Guid>(await assessor.AssessAsync(entry, AssessmentScope.ForComponents(back), cancellationToken));
-            touched.UnionWith(back);
-            await remediations.SyncAsync(touched, actor: null, cancellationToken);
-        }
+
+        // The findings it named and those the answer opened are assessed again: these return to the notice (their reminder is
+        // withdrawn when nothing else keeps it open), and a notice whose components got an exact version since is withdrawn.
+        var back = returned.Select(f => f.ComponentId).ToHashSet();
+        var touched = new HashSet<Guid>(await assessor.AssessAsync(entry, AssessmentScope.ForComponents(back.Union(notice.ComponentIds).ToHashSet()), cancellationToken));
+        touched.UnionWith(back);
+        await remediations.SyncAsync(touched, actor: null, cancellationToken);
 
         await db.SaveChangesAsync(cancellationToken);
         await audit.RecordAsync(new AuditEntry("notice.reopened", "notice", notice.Id.ToString(), new { from, entry = entry.Key }), cancellationToken);
@@ -230,16 +230,10 @@ internal sealed class NoticeCommands(
     /// </summary>
     private async Task<CommandResult<HashSet<Guid>>> PlaceAsync(Notice notice, Guid? projectId, string? version, CancellationToken cancellationToken)
     {
-        var named = await profiles.FindComponentsAsync(notice.ComponentIds, cancellationToken);
-        if (named.Count == 0)
+        // The project first: one of another organisation, or none, is not found, whatever the notice names.
+        if (projectId is { } chosen)
         {
-            return Refusal.Conflict("notice_without_component", "The components the notice named left the profile; nothing is left to remind about.");
-        }
-
-        IReadOnlyList<ProfileComponent> places;
-        if (projectId is { } id)
-        {
-            var project = await profiles.FindProjectAsync(id, cancellationToken);
+            var project = await profiles.FindProjectAsync(chosen, cancellationToken);
             if (project is null)
             {
                 return Refusal.NotFound("project_not_found", "No such project.");
@@ -249,13 +243,33 @@ internal sealed class NoticeCommands(
             {
                 return Refusal.Conflict("project_archived", "The project is archived.");
             }
+        }
 
+        // Only components still on the coarse path: one that got an exact version since takes the precise path by itself.
+        var named = (await profiles.FindComponentsAsync(notice.ComponentIds, cancellationToken)).Where(c => NoticeRules.IsCoarse(c) && !c.ProjectArchived).ToList();
+        if (named.Count == 0)
+        {
+            return Refusal.Conflict("notice_without_component", "The components the notice named left the profile or have an exact version now; nothing is left to remind about.");
+        }
+
+        IReadOnlyList<ProfileComponent> places;
+        if (projectId is { } id)
+        {
             places = [named.FirstOrDefault(c => c.ProjectId == id) ?? named[0]];
         }
         else
         {
             var stack = named.Where(c => c.ProjectKind == "organization_stack").ToList();
             places = stack.Count > 0 ? stack : named;
+
+            // A version belongs to one place: across several projects the person says which (ADR 047).
+            if (version is not null && places.Count(c => c.ProjectKind != "organization_stack") > 1)
+            {
+                return Refusal.Validation("invalid_answer", "The answer is not valid.", new(StringComparer.Ordinal)
+                {
+                    ["projectId"] = ["The notice names several projects: choose the project the version is for."],
+                });
+            }
         }
 
         if (version is not null && places.Any(c => c.Kind == "service"))
@@ -267,12 +281,21 @@ internal sealed class NoticeCommands(
         foreach (var like in places)
         {
             var placed = await placement.PlaceAsync(projectId ?? like.ProjectId, like.Id, version, cancellationToken);
-            if (placed is null)
+            switch (placed.Outcome)
             {
-                return Refusal.NotFound("project_not_found", "No such project.");
+                case "archived":
+                    return Refusal.Conflict("project_archived", "The project is archived.");
+                case "repository":
+                    // Master plan 16.5: the repository's component takes its version from the repository.
+                    return Refusal.Validation("invalid_answer", "The answer is not valid.", new(StringComparer.Ordinal)
+                    {
+                        ["version"] = ["A repository reads this product in the project: its version comes from there. Answer without a version, or detach the component first."],
+                    });
+                case not ("found" or "version_set" or "added"):
+                    return Refusal.NotFound("project_not_found", "No such project.");
             }
 
-            targets.Add(placed.ComponentId);
+            targets.Add(placed.ComponentId!.Value);
         }
 
         return targets;
@@ -284,6 +307,7 @@ internal sealed class NoticeCommands(
         notice.DecidedBy = user;
         notice.DecidedAt = now;
         notice.DecidedExploitation = entry.Exploitation;
+        notice.DecidedKev = entry.InKev;
         notice.ChangedAt = now;
     }
 

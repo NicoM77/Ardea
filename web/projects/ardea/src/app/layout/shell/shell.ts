@@ -12,12 +12,13 @@ import {
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideKeyRound } from '@lucide/angular';
 import { UiToastHost } from 'ui';
-import { filter, firstValueFrom, map } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
 import { AuthenticationService } from '../../core/api/client';
+import { CurrentOrganization } from '../../core/session/current-organization';
 import { Session } from '../../core/session/session';
 import { ICON_CONFIG } from '../../core/icons';
 import { AREA_ICONS } from '../../features/areas/area-icons';
@@ -29,8 +30,6 @@ import { SearchDialog, SearchDialogData } from '../search/search-dialog';
 import { opensSearch, SearchItem } from '../search/search';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
-
-const SLUG = /^\/o\/([^/?#]+)/;
 
 @Component({
   selector: 'ardea-shell',
@@ -200,19 +199,7 @@ export class Shell {
   );
   protected readonly menuOpen = signal(false);
 
-  private readonly url = toSignal(
-    this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      map((event) => event.urlAfterRedirects),
-    ),
-    { initialValue: this.router.url },
-  );
-
-  protected readonly organization = computed(() => {
-    const orgs = this.session.user()?.organizations ?? [];
-    const slug = SLUG.exec(this.url())?.[1];
-    return orgs.find((org) => org.slug === slug) ?? orgs[0] ?? null;
-  });
+  protected readonly organization = inject(CurrentOrganization).organization;
 
   private readonly notices = inject(NoticeCount);
   protected readonly noticeCount = computed(() =>

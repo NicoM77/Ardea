@@ -28,7 +28,7 @@ Zu einem Eintrag, der ein Produkt des Stacks trifft, entsteht ein Hinweis (`asse
 
 Kein Sprachmodell für Hinweise, ausser auf Anforderung. Die Zahl der Hinweise je Woche für einen typischen Stack ist vor dem Bau zu messen (17.9).
 
-Umgesetzt in Aufgabe 5a.3 ([ADR 047](../adr/0047-notice-generation-and-answers.md)): Ein Treffer auf eine grobe Komponente schreibt einen geschlossenen Befund zum Hinweis; ein offener Hinweis, den keine grobe Komponente mehr nennt, wird zurückgezogen. Ein nachträglich ergänzter Stack-Eintrag bringt seine Hinweise der letzten 180 Tage still und mit einem einzigen Sammelereignis. «Betrifft uns» mit Version trägt die Version beim Produkt am genannten Ort ein, das danach genau geprüft wird. Rückgängig machen ist ein einfaches Wiedereröffnen, ohne Zeitfenster.
+Umgesetzt in Aufgabe 5a.3 ([ADR 047](../adr/0047-notice-generation-and-answers.md)): Ein Treffer auf eine grobe Komponente schreibt einen geschlossenen Befund zum Hinweis; ein offener Hinweis, den keine grobe Komponente mehr nennt, wird zurückgezogen. Ein nachträglich ergänzter Stack-Eintrag bringt seine Hinweise der letzten 180 Tage still, mit einem einzigen Sammelereignis und als «frühere» statt neue Hinweise. Ein Reminder oder ein Urteil einer Person, das auf den groben Weg wechselt, bringt den Hinweis immer. «Betrifft uns» mit Version trägt die Version beim Produkt am genannten Ort ein, das danach genau geprüft wird. Rückgängig machen ist ein einfaches Wiedereröffnen, ohne Zeitfenster. «Betrifft uns nicht» kehrt einmal zurück, wenn die Lücke danach aktiv ausgenutzt oder in KEV aufgenommen wird.
 
 ## 17.4 Genau bleibt genau
 

@@ -278,6 +278,8 @@ internal sealed class PendingEvent : IOrganizationOwned
 {
     public Guid EventId { get; set; }
 
+    public long Seq { get; set; }
+
     public Guid OrganizationId { get; set; }
 
     public required string Kind { get; set; }

@@ -1,5 +1,11 @@
 import type { AffectedView, EntrySummary } from '../../core/api/client';
-import { versionRange, webUrl } from './entry-detail-format';
+import {
+  affectedStatusLabel,
+  productName,
+  sourceLabel,
+  versionRange,
+  webUrl,
+} from './entry-detail-format';
 import { filtersFrom, listParams, mergePage, signalPills } from './entry-format';
 
 const entry = (key: string, extra: Partial<EntrySummary> = {}): EntrySummary => ({
@@ -109,5 +115,47 @@ describe('webUrl', () => {
     expect(webUrl('javascript:alert(1)')).toBeNull();
     expect(webUrl('not a url')).toBeNull();
     expect(webUrl(null)).toBeNull();
+  });
+});
+
+describe('the affected products and the sources in words', () => {
+  const named = (vendor: string | null, product: string | null) =>
+    productName({
+      vendor,
+      product,
+      productKey: null,
+      cpe: null,
+      purl: null,
+      versionScheme: null,
+      introduced: null,
+      fixed: null,
+      lastAffected: null,
+      exact: null,
+      status: 'affected',
+      defaultStatus: 'unknown',
+      source: 'cve-program',
+    });
+
+  it('names a product once when the vendor repeats it', () => {
+    expect(named('Linux', 'Linux')).toBe('Linux');
+    expect(named('Microsoft', 'Microsoft Exchange Server')).toBe('Microsoft Exchange Server');
+    expect(named('Oracle', 'MySQL')).toBe('Oracle MySQL');
+    expect(named(null, 'nginx')).toBe('nginx');
+  });
+
+  it('writes the status of a range as a word', () => {
+    expect(affectedStatusLabel('unaffected')).toBe('entryDetail.affectedStatus.unaffected');
+    expect(affectedStatusLabel('something new')).toBe('entryDetail.affectedStatus.unknown');
+  });
+
+  it('names a source by its name, with the assigner after it, and says when Ardea derived a value', () => {
+    const names = new Map([['cve-program', 'CVE Program']]);
+    expect(sourceLabel('cve-program', names)).toEqual({ key: null, name: 'CVE Program' });
+    expect(sourceLabel('cve-program/Linux', names)).toEqual({
+      key: null,
+      name: 'CVE Program · Linux',
+    });
+    expect(sourceLabel('cisa-kev', names)).toEqual({ key: null, name: 'cisa-kev' });
+    expect(sourceLabel('derived', names).key).toBe('entryDetail.derived');
   });
 });

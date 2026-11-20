@@ -74,6 +74,27 @@ describe('EntriesPage', () => {
     expect(element.querySelector('.more')).toBeNull();
   });
 
+  it('lists only the other identifiers of an entry, and no separator when there are none', async () => {
+    const { fixture, http } = await render();
+    http
+      .expectOne((r) => r.url === '/api/v1/entries')
+      .flush({
+        items: [
+          { ...summary('CVE-2026-1'), aliases: ['CVE-2026-1'] },
+          { ...summary('CVE-2026-2'), aliases: ['CVE-2026-2', 'GHSA-xxxx-yyyy-zzzz'] },
+        ],
+        nextCursor: null,
+      });
+    await settle(fixture);
+    const subs = [...(fixture.nativeElement as HTMLElement).querySelectorAll('.row .sub')].map(
+      (node) => node.textContent?.replace(/\s+/g, ' ').trim(),
+    );
+    expect(subs).toEqual([
+      'en.entries.kind.vulnerability',
+      'en.entries.kind.vulnerability · GHSA-xxxx-yyyy-zzzz',
+    ]);
+  });
+
   it('says so when a search finds nothing, and offers to clear it', async () => {
     const { fixture, http } = await render({ q: 'nothing like this' });
     http.expectOne((r) => r.url === '/api/v1/entries').flush({ items: [], nextCursor: null });

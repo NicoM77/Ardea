@@ -44,7 +44,7 @@
     "@angular/cli": "^22.2.7",
     "@angular/compiler-cli": "^22.2.0",
     "@axe-core/playwright": "4.14.0",
-    "@cyclonedx/cyclonedx-npm": "4.2.1",
+    "@cyclonedx/cyclonedx-npm": "7.0.1",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "1.56.1",
     "angular-eslint": "22.8.0",

@@ -9,7 +9,7 @@ internal static class DoctorCommand
     public static async Task<int> RunAsync()
     {
         var configuration = HostConfiguration.Load();
-        var results = new List<(string Check, bool Ok, string Detail)>();
+        var results = new List<(string Check, bool Ok, string Detail)> { ("version", true, AppVersion.Current) };
 
         var config = HostConfiguration.CheckApplication(configuration);
         results.Add(("configuration", config.IsValid, config.IsValid ? "complete" : string.Join(" ", config.Errors)));

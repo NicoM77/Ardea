@@ -11,14 +11,14 @@ Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 - **Website veröffentlicht (7.9):** https://nicom77.github.io/Ardea/ (Pages, build_type workflow). `site.yml` läuft bei Releases, bei Push auf main unter `docs/**`, `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `openapi/**`, `site/**` und per Hand; der Job Publish nur auf main/bei Releases (#142), so dass `gh workflow run site.yml --ref <branch>` eine Site-Änderung ohne Deploy prüft. Änderungen an `.github/workflows/site.yml` selbst lösen nichts aus → nach Bumps der Pages-Actions einmal per Hand auf main starten.
 - **Site lokal nicht baubar** auf diesem Host (Astro/Node-Anforderungen, Image-Node zu alt); Satteri (Markdown-Compiler) läuft aber direkt mit Node 24, Plugins lassen sich so mit `markdownToHtml(src, { hastPlugins: [...] })` testen.
 - **Heute gemergt:** #137 (Testuhr nur vorwärts), #139 (Kommentare, E2E-Wizard), #140 (5 Sicherheitsmeldungen: Link-Checker auf `ultrahtml`, npm-`overrides` für minimatch/glob), #141 (`pending_event.seq` für stabile Reihenfolge), #138 (site.yml-Trigger), #129 (NuGet.Versioning 8), #142 (Task-List-Checkboxen mit `aria-label`), #132/#133/#134 (checkout 7, upload-pages-artifact 5, deploy-pages 5). Main-CI grün.
-- **Social Preview** (1280×640) liegt nur auf Branch `assets/social-preview` (`docs/design/brand/ardea-social-preview.png`); Eigentümer lädt sie unter Settings → General → Social preview hoch, Branch nach Wunsch mergen oder löschen.
+- **Social Preview** (1280×640) ist auf main (#135, `docs/design/brand/ardea-social-preview.png`); Eigentümer lädt sie unter Settings → General → Social preview hoch.
 - **Ältere Dependabot-Sichtung** (#115–#130) ist erledigt (gemergt oder geschlossen).
-- **7.14 Branches:** ~105 Remote-Branches; Löschen bleibt Eigentümer-Schritt (Sitzungsfilter blockiert `git push --delete`). «Automatically delete head branches» ist noch aus.
+- **7.14 Branches (Entscheidliste 20.11.):** 102 in main gemergte Branches → löschen. Nicht gemergt: `NOTES` → behalten (Arbeitsnotizen, nie mergen); `assets/social-preview` → löschen (Inhalt per #135 auf main); `feat/platform-crosscutting` → löschen (PR #5 geschlossen, 0.5/0.6 anders geliefert); `release-please--branches--main` → gehört zu #136, nicht anfassen; Branches offener PRs bleiben. Löschen bleibt Eigentümer-Schritt (Sitzungsfilter blockiert `git push --delete`). «Automatically delete head branches» ist noch aus.
   ```bash
   git fetch --prune origin && git branch -r --merged origin/main | sed 's/^ *//' | grep -vE "origin/(HEAD|main)$" | grep -v " -> " | sed 's#^origin/##' | xargs -n 15 git push origin --delete
   git push origin --delete feat/platform-crosscutting
   ```
-  `NOTES` bleibt. Danach README-Zeile 7.14 ✅.
+  `NOTES` bleibt. plus `git push origin --delete assets/social-preview`. Danach README-Zeile 7.14 ✅.
 - **Lehren heute:** FakeTimeProvider startet bei echter Zeit → nie zurückstellen; `Guid.CreateVersion7()` ist innerhalb einer Millisekunde nicht monoton, nie danach sortieren; Kommentar-Prüfung (7.5) gilt auch für Testcode; Merge-Betreff immer `--subject "<Conventional Titel> (#N)"`.
 
 ## 0a. Eigentümer-Schritte (Reihenfolge, Stand 20.11. nachmittags)

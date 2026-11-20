@@ -4,7 +4,7 @@
 # arm64 image needs no emulation (master plan 13.7).
 
 # The web app does not depend on the target architecture: built once on the build machine.
-FROM --platform=$BUILDPLATFORM node:24-bookworm-slim AS web
+FROM --platform=$BUILDPLATFORM node:26-bookworm-slim AS web
 WORKDIR /src/web
 COPY web/package.json web/package-lock.json ./
 RUN --mount=type=cache,id=npm,target=/root/.npm npm ci --no-audit --no-fund

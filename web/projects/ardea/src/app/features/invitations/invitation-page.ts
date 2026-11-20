@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { UiButton, UiLoader, UiNotice } from 'ui';
 import {
@@ -9,6 +9,7 @@ import {
   previewInvitationResource,
 } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { Session } from '../../core/session/session';
 import { ROLE_HINTS, sameEmail } from '../organizations/org-format';
 
@@ -157,7 +158,7 @@ export class InvitationPage {
   private readonly auth = inject(AuthenticationService);
   private readonly session = inject(Session);
   private readonly router = inject(Router);
-  private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
 
   protected readonly roleHints = ROLE_HINTS;
   protected readonly preview = previewInvitationResource(this.token);
@@ -196,9 +197,7 @@ export class InvitationPage {
   }
 
   protected when(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'long' }).format(
-      new Date(value),
-    );
+    return this.dates.date(value, 'long');
   }
 
   private async step(work: () => Promise<void>): Promise<void> {

@@ -29,6 +29,7 @@ import {
   type FindingView,
 } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { reloadOnLiveChange } from '../../core/live/live-events';
 import { webUrl } from '../entries/entry-detail-format';
 import { score } from '../entries/entry-format';
@@ -470,6 +471,7 @@ export class AlertPage {
   readonly number = input.required<string>();
 
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   private readonly api = inject(ActionsService);
   private readonly toaster = inject(UiToaster);
   private readonly organization = injectOrganization().organization;
@@ -578,9 +580,6 @@ export class AlertPage {
   }
 
   protected when(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value));
+    return this.dates.dateTime(value);
   }
 }

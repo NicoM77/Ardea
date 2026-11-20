@@ -22,6 +22,7 @@ import {
   type ActionDetailView,
 } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { reloadOnLiveChange } from '../../core/live/live-events';
 import { injectOrganization } from '../organizations/current-organization';
 import { roleRank } from '../organizations/org-format';
@@ -395,6 +396,7 @@ export class ActionPage {
   private readonly api = inject(ActionsService);
   private readonly toaster = inject(UiToaster);
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   private readonly organization = injectOrganization().organization;
   private readonly orgId = computed(() => this.organization()?.id);
   private readonly findingsList = viewChild(FindingsList);
@@ -585,9 +587,7 @@ export class ActionPage {
   }
 
   private day(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' }).format(
-      new Date(value),
-    );
+    return this.dates.date(value);
   }
 
   private async run(

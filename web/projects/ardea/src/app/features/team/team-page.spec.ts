@@ -4,6 +4,7 @@ import { computed, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
+import { UiToaster } from 'ui';
 import { of } from 'rxjs';
 import type { InvitationView, MemberView } from '../../core/api/client';
 import { Session, type Me } from '../../core/session/session';
@@ -111,7 +112,87 @@ describe('TeamPage', () => {
     expect(refresh).toHaveBeenCalled();
     http.expectOne(`/api/v1/orgs/${ORG_ID}/members`).flush([member('ada', 'owner')]);
     await settle(fixture);
-    expect(element.textContent).toContain('en.team.members.transferred');
+    expect(TestBed.inject(UiToaster).current()?.text).toBe('en.team.members.transferred');
+    expect(TestBed.inject(UiToaster).current()?.undo).toBeUndefined();
+  });
+
+  it('confirms a role change with a toast whose Undo gives the old role back', async () => {
+    const { fixture, http, element } = await render('owner');
+    http.expectOne(`/api/v1/orgs/${ORG_ID}/invitations`).flush([]);
+    await settle(fixture);
+
+    const select = element.querySelectorAll<HTMLSelectElement>('select[aria-label]')[1];
+    select.value = 'member';
+    select.dispatchEvent(new Event('change'));
+    await settle(fixture);
+    const change = http.expectOne(`/api/v1/orgs/${ORG_ID}/members/vic`);
+    expect(change.request.body).toEqual({ role: 'member' });
+    change.flush(member('vic', 'member'));
+    await settle(fixture);
+    http
+      .expectOne(`/api/v1/orgs/${ORG_ID}/members`)
+      .flush([member('me', 'owner'), member('ada', 'admin'), member('vic', 'member')]);
+    await settle(fixture);
+    const toaster = TestBed.inject(UiToaster);
+    expect(toaster.current()?.text).toBe('en.team.members.roleChanged');
+    expect(element.querySelector('ui-notice')).toBeNull();
+
+    toaster.undo();
+    await settle(fixture);
+    const undo = http.expectOne(`/api/v1/orgs/${ORG_ID}/members/vic`);
+    expect(undo.request.body).toEqual({ role: 'viewer' });
+    undo.flush(member('vic', 'viewer'));
+    await settle(fixture);
+    http
+      .expectOne(`/api/v1/orgs/${ORG_ID}/members`)
+      .flush([member('me', 'owner'), member('ada', 'admin'), member('vic', 'viewer')]);
+    await settle(fixture);
+    expect(select.value).toBe('viewer');
+    expect(toaster.current()).toBeNull();
+  });
+
+  it('says so in the card when the Undo of a role change fails', async () => {
+    const { fixture, http, element } = await render('owner');
+    http.expectOne(`/api/v1/orgs/${ORG_ID}/invitations`).flush([]);
+    await settle(fixture);
+
+    const select = element.querySelectorAll<HTMLSelectElement>('select[aria-label]')[0];
+    select.value = 'viewer';
+    select.dispatchEvent(new Event('change'));
+    await settle(fixture);
+    http.expectOne(`/api/v1/orgs/${ORG_ID}/members/ada`).flush(member('ada', 'viewer'));
+    await settle(fixture);
+    http.expectOne(`/api/v1/orgs/${ORG_ID}/members`).flush([member('ada', 'viewer')]);
+    await settle(fixture);
+
+    TestBed.inject(UiToaster).undo();
+    await settle(fixture);
+    const undo = http.expectOne(`/api/v1/orgs/${ORG_ID}/members/ada`);
+    expect(undo.request.body).toEqual({ role: 'admin' });
+    undo.flush(null, { status: 500, statusText: 'Server Error' });
+    await settle(fixture);
+    expect(element.querySelector('ui-notice[tone="error"]')?.textContent).toContain(
+      'en.errors.server',
+    );
+  });
+
+  it('confirms an invitation sent by e-mail with a toast', async () => {
+    const { fixture, http, element } = await render('admin');
+    http.expectOne(`/api/v1/orgs/${ORG_ID}/invitations`).flush([]);
+    await settle(fixture);
+
+    const email = element.querySelector<HTMLInputElement>('ardea-invite-card input[type=email]')!;
+    email.value = 'new@example.org';
+    email.dispatchEvent(new Event('input'));
+    element.querySelector<HTMLButtonElement>('ardea-invite-card button[type=submit]')!.click();
+    await settle(fixture);
+    http.expectOne(`/api/v1/orgs/${ORG_ID}/invitations`).flush(invitation());
+    await settle(fixture);
+    http.expectOne(`/api/v1/orgs/${ORG_ID}/invitations`).flush([invitation()]);
+    await settle(fixture);
+
+    expect(TestBed.inject(UiToaster).current()?.text).toBe('en.team.invite.sent');
+    expect(element.querySelector('ardea-invite-card ui-notice')).toBeNull();
   });
 
   it('shows a viewer the directory, a way to leave, and nothing to manage', async () => {

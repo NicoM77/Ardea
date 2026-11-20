@@ -1,7 +1,8 @@
 import { Component, inject, input } from '@angular/core';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { UiCard } from 'ui';
 import type { ActionSummary } from '../../core/api/client';
+import { Dates } from '../../core/format/dates';
 
 @Component({
   selector: 'ardea-action-details',
@@ -69,12 +70,9 @@ import type { ActionSummary } from '../../core/api/client';
 })
 export class ActionDetails {
   readonly action = input.required<ActionSummary>();
-  private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
 
   protected when(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value));
+    return this.dates.dateTime(value);
   }
 }

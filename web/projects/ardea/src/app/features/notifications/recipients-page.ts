@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, type WritableSignal } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   UiButton,
@@ -11,6 +11,7 @@ import {
   UiNotice,
   UiOverflowMenu,
   UiPill,
+  UiToaster,
 } from 'ui';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -21,6 +22,7 @@ import {
   type WebhookEndpointView,
 } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { injectOrganization } from '../organizations/current-organization';
 import { canManage } from '../organizations/org-format';
 import { NotifyFrame } from './notify-frame';
@@ -40,6 +42,12 @@ const ADDRESS_PROBLEMS = {
   smtp_not_configured: 'notify.addresses.errors.smtp',
   address_in_use: 'notify.addresses.errors.inUse',
 };
+
+interface Notice {
+  tone: 'success' | 'error';
+  key: string;
+  params?: Record<string, unknown>;
+}
 
 @Component({
   selector: 'ardea-recipients-page',
@@ -382,6 +390,8 @@ const ADDRESS_PROBLEMS = {
 export class RecipientsPage {
   private readonly api = inject(NotificationsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
+  private readonly dates = inject(Dates);
   protected readonly organization = injectOrganization().organization;
   private readonly orgId = computed(() => {
     const org = this.organization();
@@ -393,16 +403,8 @@ export class RecipientsPage {
   protected readonly stateLabels = ADDRESS_STATE_LABELS;
   protected readonly busy = signal<string | null>(null);
   protected readonly secret = signal<string | null>(null);
-  protected readonly hookNotice = signal<{
-    tone: 'success' | 'error';
-    key: string;
-    params?: Record<string, unknown>;
-  } | null>(null);
-  protected readonly addressNotice = signal<{
-    tone: 'success' | 'error';
-    key: string;
-    params?: Record<string, unknown>;
-  } | null>(null);
+  protected readonly hookNotice = signal<Notice | null>(null);
+  protected readonly addressNotice = signal<Notice | null>(null);
 
   protected readonly endpointList = computed(() =>
     this.endpoints.hasValue() ? (this.endpoints.value() ?? null) : null,
@@ -412,12 +414,7 @@ export class RecipientsPage {
   );
 
   protected when(value: string | null | undefined): string {
-    return value
-      ? new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        }).format(new Date(value))
-      : '';
+    return value ? this.dates.dateTime(value) : '';
   }
 
   protected resendable(a: ExternalAddressView): boolean {
@@ -450,7 +447,7 @@ export class RecipientsPage {
       this.secret.set(created.secret ?? null);
       (event.target as HTMLFormElement).reset();
       this.endpoints.reload();
-      return { tone: 'success', key: 'notify.webhooks.added', params: { name: created.name } };
+      return this.confirmed('notify.webhooks.added', { name: created.name });
     });
   }
 
@@ -487,7 +484,7 @@ export class RecipientsPage {
         }),
       );
       this.secret.set(changed.secret ?? null);
-      return { tone: 'success', key: 'notify.webhooks.rotated', params: { name: endpoint.name } };
+      return this.confirmed('notify.webhooks.rotated', { name: endpoint.name });
     });
   }
 
@@ -497,7 +494,7 @@ export class RecipientsPage {
     await this.run('delete:' + endpoint.id, this.hookNotice, ENDPOINT_PROBLEMS, async () => {
       await firstValueFrom(this.api.deleteWebhookEndpoint(org.id, endpoint.id));
       this.endpoints.reload();
-      return { tone: 'success', key: 'notify.webhooks.deleted', params: { name: endpoint.name } };
+      return this.confirmed('notify.webhooks.deleted', { name: endpoint.name });
     });
   }
 
@@ -511,7 +508,7 @@ export class RecipientsPage {
       );
       (event.target as HTMLFormElement).reset();
       this.addresses.reload();
-      return { tone: 'success', key: 'notify.addresses.added', params: { address: added.address } };
+      return this.confirmed('notify.addresses.added', { address: added.address });
     });
   }
 
@@ -521,11 +518,7 @@ export class RecipientsPage {
     await this.run('resend:' + address.id, this.addressNotice, ADDRESS_PROBLEMS, async () => {
       await firstValueFrom(this.api.resendAddressConfirmation(org.id, address.id));
       this.addresses.reload();
-      return {
-        tone: 'success',
-        key: 'notify.addresses.resent',
-        params: { address: address.address },
-      };
+      return this.confirmed('notify.addresses.resent', { address: address.address });
     });
   }
 
@@ -535,29 +528,20 @@ export class RecipientsPage {
     await this.run('remove:' + address.id, this.addressNotice, ADDRESS_PROBLEMS, async () => {
       await firstValueFrom(this.api.deleteExternalAddress(org.id, address.id));
       this.addresses.reload();
-      return {
-        tone: 'success',
-        key: 'notify.addresses.removed',
-        params: { address: address.address },
-      };
+      return this.confirmed('notify.addresses.removed', { address: address.address });
     });
+  }
+
+  private confirmed(key: string, params: Record<string, unknown>): null {
+    this.toaster.show({ text: this.transloco.translate(key, params) });
+    return null;
   }
 
   private async run(
     id: string,
-    notice: ReturnType<
-      typeof signal<{
-        tone: 'success' | 'error';
-        key: string;
-        params?: Record<string, unknown>;
-      } | null>
-    >,
+    notice: WritableSignal<Notice | null>,
     codes: Record<string, string>,
-    work: () => Promise<{
-      tone: 'success' | 'error';
-      key: string;
-      params?: Record<string, unknown>;
-    }>,
+    work: () => Promise<Notice | null>,
   ): Promise<void> {
     this.busy.set(id);
     notice.set(null);

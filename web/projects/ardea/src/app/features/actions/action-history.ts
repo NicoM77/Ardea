@@ -2,6 +2,7 @@ import { booleanAttribute, Component, inject, input, output } from '@angular/cor
 import { NgTemplateOutlet } from '@angular/common';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { UiButton, UiCard, UiInput, UiPriority } from 'ui';
+import { Dates } from '../../core/format/dates';
 import type { HistoryLine } from './history-format';
 
 @Component({
@@ -155,6 +156,7 @@ export class ActionHistory {
   readonly note = output<string>();
 
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
 
   protected params(line: HistoryLine): HistoryLine['params'] {
     return line.params['who'] === 'someone'
@@ -163,10 +165,7 @@ export class ActionHistory {
   }
 
   protected when(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value));
+    return this.dates.dateTime(value);
   }
 
   protected add(event: Event, field: HTMLTextAreaElement): void {

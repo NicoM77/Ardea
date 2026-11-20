@@ -1,9 +1,10 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideChevronRight, LucideLayers, LucideRotateCcw } from '@lucide/angular';
 import { UiButton, UiKbd, UiPill } from 'ui';
 import type { ActionSummary, NoticeView } from '../../core/api/client';
+import { Dates } from '../../core/format/dates';
 import { NoticeFollowUp, type FollowUpAnswer } from './notice-follow-up';
 import {
   affectNote,
@@ -375,7 +376,7 @@ export class NoticeCard {
   readonly follow = output<FollowUpAnswer>();
   readonly dismiss = output();
 
-  private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
 
   protected readonly exploited = computed(() => isExploited(this.notice()));
   protected readonly score = computed(() => cvssText(this.notice()));
@@ -387,8 +388,6 @@ export class NoticeCard {
 
   protected day(value: string | null): string {
     if (!value) return '';
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' }).format(
-      new Date(value),
-    );
+    return this.dates.date(value);
   }
 }

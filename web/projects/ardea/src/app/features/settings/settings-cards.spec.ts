@@ -1,10 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Type } from '@angular/core';
+import { type Provider, Type } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
+import { UiToaster } from 'ui';
 import type { ConnectionView, SessionOrganization } from '../../core/api/client';
+import { Session } from '../../core/session/session';
 import { AccessesCard } from './accesses-card';
 import { AiPolicyCard } from './ai-policy-card';
 import { AuditCard } from './audit-card';
@@ -25,10 +27,13 @@ async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
   fixture.detectChanges();
 }
 
-function setUp<T>(type: Type<T>): { fixture: ComponentFixture<T>; http: HttpTestingController } {
+function setUp<T>(
+  type: Type<T>,
+  providers: Provider[] = [],
+): { fixture: ComponentFixture<T>; http: HttpTestingController } {
   TestBed.configureTestingModule({
     imports: [type, TranslocoTestingModule.forRoot({ langs: { en: {} } })],
-    providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+    providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), ...providers],
   });
   const fixture = TestBed.createComponent(type);
   fixture.componentRef.setInput('organization', organization);
@@ -110,6 +115,61 @@ describe('GeneralCard', () => {
   });
 });
 
+describe('GeneralCard saving', () => {
+  it('confirms with a toast whose Undo stores the earlier values again', async () => {
+    const refresh = vi.fn(async () => undefined);
+    const { fixture, http } = setUp(GeneralCard, [{ provide: Session, useValue: { refresh } }]);
+    await settle(fixture);
+    const stored = {
+      ...organization,
+      locale: 'en',
+      timeZone: 'Europe/Zurich',
+      requireMfa: false,
+      aiPolicy: 'none',
+      createdAt: '2026-11-19T08:00:00Z',
+    };
+    http.expectOne(`/api/v1/orgs/${ORG}`).flush(stored);
+    await settle(fixture);
+    const element = fixture.nativeElement as HTMLElement;
+    const name = element.querySelector<HTMLInputElement>('form input')!;
+    name.value = 'Heron Works';
+    name.dispatchEvent(new Event('input'));
+    element.querySelector<HTMLButtonElement>('form button[type=submit]')!.click();
+    await settle(fixture);
+    const save = http.expectOne((r) => r.method === 'PATCH');
+    expect(save.request.body).toEqual({
+      name: 'Heron Works',
+      locale: 'en',
+      timeZone: 'Europe/Zurich',
+      requireMfa: null,
+      aiPolicy: null,
+    });
+    save.flush({ ...stored, name: 'Heron Works' });
+    await settle(fixture);
+    http.expectOne((r) => r.method === 'GET').flush({ ...stored, name: 'Heron Works' });
+    await settle(fixture);
+    const toaster = TestBed.inject(UiToaster);
+    expect(toaster.current()?.text).toBe('en.settings.general.saved');
+
+    toaster.undo();
+    await settle(fixture);
+    const undo = http.expectOne((r) => r.method === 'PATCH');
+    expect(undo.request.body).toEqual({
+      name: 'Heron',
+      locale: 'en',
+      timeZone: 'Europe/Zurich',
+      requireMfa: null,
+      aiPolicy: null,
+    });
+    undo.flush(stored);
+    await settle(fixture);
+    http.expectOne((r) => r.method === 'GET').flush(stored);
+    await settle(fixture);
+    expect(name.value).toBe('Heron');
+    expect(refresh).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('AuditCard', () => {
   it('adds older pages below the ones already shown', async () => {
     const { fixture, http } = setUp(AuditCard);
@@ -179,6 +239,18 @@ describe('AiPolicyCard', () => {
     });
     patch.flush({ ...view, aiPolicy: 'none' });
     await settle(fixture);
-    expect(element.textContent).toContain('en.settings.ai.saved');
+    const toaster = TestBed.inject(UiToaster);
+    expect(toaster.current()?.text).toBe('en.settings.ai.saved');
+    expect(element.querySelector('ui-notice')).toBeNull();
+    expect(radios[0].checked).toBe(true);
+
+    toaster.undo();
+    await settle(fixture);
+    const undo = http.expectOne((r) => r.method === 'PATCH');
+    expect(undo.request.body).toMatchObject({ aiPolicy: 'local_only' });
+    undo.flush(view);
+    await settle(fixture);
+    expect(radios[1].checked).toBe(true);
+    expect(save.disabled).toBe(true);
   });
 });

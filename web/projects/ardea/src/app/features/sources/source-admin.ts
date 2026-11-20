@@ -1,11 +1,12 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { UiLoader } from 'ui';
 import {
   listQuarantineResource,
   listSourceRunsResource,
   type SourceStatus,
 } from '../../core/api/client';
+import { Dates } from '../../core/format/dates';
 import { webUrl } from '../entries/entry-detail-format';
 import { count } from './source-format';
 
@@ -160,7 +161,7 @@ import { count } from './source-format';
 export class SourceAdmin {
   readonly source = input.required<SourceStatus>();
 
-  private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
 
   private readonly key = computed(() => this.source().key);
   private readonly limit = signal({ limit: 10 });
@@ -179,15 +180,7 @@ export class SourceAdmin {
     return labels[outcome] ?? 'sources.outcome.running';
   }
 
-  private readonly format = computed(
-    () =>
-      new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }),
-  );
-
   protected when(value: string): string {
-    return this.format().format(new Date(value));
+    return this.dates.dateTime(value);
   }
 }

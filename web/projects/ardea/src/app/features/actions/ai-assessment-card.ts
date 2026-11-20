@@ -1,7 +1,8 @@
 import { Component, computed, inject, input, output } from '@angular/core';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiCard } from 'ui';
 import type { ModelAnswersView } from '../../core/api/client';
+import { Dates } from '../../core/format/dates';
 import { webUrl } from '../entries/entry-detail-format';
 import { budget, refs } from './model-format';
 
@@ -236,15 +237,10 @@ export class AiAssessmentCard {
   readonly busy = input(false);
   readonly again = output();
 
-  private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   protected readonly numbers = refs;
   protected readonly web = webUrl;
   protected readonly figures = computed(() => budget(this.model()));
   protected readonly rulesetVersion = computed(() => String(this.model().rulesetVersion));
-  protected readonly when = computed(() =>
-    new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(this.model().createdAt)),
-  );
+  protected readonly when = computed(() => this.dates.dateTime(this.model().createdAt));
 }

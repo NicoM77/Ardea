@@ -2,13 +2,14 @@ import { Component, computed, ElementRef, inject, input, output, signal } from '
 import { form, FormField, FormRoot, type TreeValidationResult } from '@angular/forms/signals';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiCopyButton, UiField, UiInput, UiNotice } from 'ui';
+import { UiButton, UiCard, UiCopyButton, UiField, UiInput, UiNotice, UiToaster } from 'ui';
 import {
   OrganizationsService,
   type InvitationView,
   type SessionOrganization,
 } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { fieldProblems } from '../admin/admin-errors';
 import { EMAIL_ERRORS, emailRules, fieldErrorKey } from '../auth/auth-forms';
 import { focusFirstInvalid } from '../auth/focus-invalid';
@@ -32,18 +33,12 @@ import { TEAM_PROBLEMS } from './team-problems';
     <ui-card [heading]="'team.invite.title' | transloco">
       <div class="live" role="status">
         @if (sent(); as invitation) {
-          @if (invitation.link) {
-            <ui-notice tone="success" [heading]="'team.invite.linkHeading' | transloco">
-              {{
-                'team.invite.linkText'
-                  | transloco: { email: invitation.email, until: when(invitation.expiresAt) }
-              }}
-            </ui-notice>
-          } @else {
-            <ui-notice tone="success">{{
-              'team.invite.sent' | transloco: { email: invitation.email }
-            }}</ui-notice>
-          }
+          <ui-notice tone="success" [heading]="'team.invite.linkHeading' | transloco">
+            {{
+              'team.invite.linkText'
+                | transloco: { email: invitation.email, until: when(invitation.expiresAt) }
+            }}
+          </ui-notice>
         }
       </div>
       @if (sent()?.link; as link) {
@@ -136,6 +131,8 @@ export class InviteCard {
 
   private readonly api = inject(OrganizationsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
+  private readonly dates = inject(Dates);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
   protected readonly fieldErrorKey = fieldErrorKey;
@@ -163,13 +160,17 @@ export class InviteCard {
           const invitation = await firstValueFrom(
             this.api.createInvitation(this.organization().id, { email: email.trim(), role }),
           );
-          this.sent.set(invitation);
           this.invite().reset({ email: '', role });
           this.invited.emit(invitation);
           if (invitation.link) {
+            this.sent.set(invitation);
             setTimeout(() =>
               this.host.querySelector<HTMLInputElement>('#invitation-link')?.select(),
             );
+          } else {
+            this.toaster.show({
+              text: this.transloco.translate('team.invite.sent', { email: invitation.email }),
+            });
           }
           return undefined;
         } catch (error) {
@@ -196,8 +197,6 @@ export class InviteCard {
   });
 
   protected when(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' }).format(
-      new Date(value),
-    );
+    return this.dates.date(value);
   }
 }

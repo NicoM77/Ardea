@@ -7,6 +7,7 @@ import {
   type ListAuditEventsParams,
   type SessionOrganization,
 } from '../../core/api/client';
+import { Dates } from '../../core/format/dates';
 import { actorKey, describeAudit } from './audit-format';
 
 const PAGE = 50;
@@ -109,6 +110,7 @@ export class AuditCard {
   readonly organization = input.required<SessionOrganization>();
 
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   protected readonly cursor = signal<string | null>(null);
   private readonly params = computed<ListAuditEventsParams>(() =>
     this.cursor() ? { limit: PAGE, cursor: this.cursor()! } : { limit: PAGE },
@@ -143,9 +145,6 @@ export class AuditCard {
   }
 
   protected when(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value));
+    return this.dates.dateTime(value);
   }
 }

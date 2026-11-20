@@ -1297,7 +1297,7 @@
       "lastError": "Last check failed: {error}",
       "test": "Test",
       "testOk": "{name} works.",
-      "testFailed": "{name} does not work; see the error above.",
+      "testFailed": "{name} does not work; its row shows the error.",
       "delete": "Delete",
       "confirmDelete": "Delete {name}? Repositories read through it stop being read until another access is chosen.",
       "deleted": "{name} is deleted.",

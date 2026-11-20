@@ -4,6 +4,7 @@ import { UiCard, UiInput, UiLoader, UiNotice, UiPriority, UiToaster } from 'ui';
 import { firstValueFrom } from 'rxjs';
 import { getReminderRhythmResource, NotificationsService } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { priorityOfLevel } from '../actions/action-format';
 import {
   DEFAULT_RHYTHMS,
@@ -112,6 +113,7 @@ import {
 export class ReminderRhythmCard {
   private readonly api = inject(NotificationsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   private readonly toaster = inject(UiToaster);
   private queue: Promise<void> = Promise.resolve();
   private pending = 0;
@@ -138,12 +140,7 @@ export class ReminderRhythmCard {
 
   protected readonly nextRun = computed(() => {
     const next = this.rhythm.hasValue() ? this.rhythm.value()?.nextRunAt : null;
-    return next
-      ? new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-          dateStyle: 'full',
-          timeStyle: 'short',
-        }).format(new Date(next))
-      : null;
+    return next ? this.dates.dateTime(next, 'full') : null;
   });
 
   constructor() {

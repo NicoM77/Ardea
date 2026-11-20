@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideCircleCheck } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiField, UiInput, UiLoader, UiNotice, UiPill } from 'ui';
+import { UiButton, UiCard, UiField, UiInput, UiLoader, UiNotice, UiPill, UiToaster } from 'ui';
 import {
   CatalogService,
   getCatalogLearningResource,
@@ -150,11 +150,6 @@ import {
         <ui-notice tone="error">{{ 'catalogLearning.loadFailed' | transloco }}</ui-notice>
       }
 
-      <div class="live" role="status">
-        @if (done()) {
-          <ui-notice tone="success">{{ done()! | transloco: { key: doneKey() } }}</ui-notice>
-        }
-      </div>
       @if (problem()) {
         <ui-notice class="gap" tone="error">{{ problem() | transloco }}</ui-notice>
       }
@@ -457,10 +452,6 @@ import {
       height: 16px;
       color: var(--positive);
     }
-    .live:empty {
-      display: none;
-    }
-    .live,
     .gap {
       display: block;
       margin-bottom: var(--space-md);
@@ -557,6 +548,7 @@ export class CatalogLearning {
 
   private readonly api = inject(CatalogService);
   private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
   protected readonly dates = inject(Dates);
   protected readonly active = weeksWithActivity;
 
@@ -572,8 +564,6 @@ export class CatalogLearning {
   );
 
   protected readonly busy = signal<string | null>(null);
-  protected readonly done = signal<string | null>(null);
-  protected readonly doneKey = signal('');
   protected readonly problem = signal<string | null>(null);
 
   protected readonly editing = signal<string | null>(null);
@@ -659,8 +649,16 @@ export class CatalogLearning {
 
   protected setProvider(event: Event): Promise<void> {
     const provider = (event.target as HTMLSelectElement).value;
-    return this.act('provider', provider, 'catalogLearning.providerNotice', () =>
-      firstValueFrom(this.api.updateCatalogLearning({ provider })),
+    const before = this.status.value()?.provider.setting ?? '';
+    return this.act(
+      'provider',
+      provider,
+      'catalogLearning.providerNotice',
+      () => firstValueFrom(this.api.updateCatalogLearning({ provider })),
+      () =>
+        void this.act('provider', before, null, () =>
+          firstValueFrom(this.api.updateCatalogLearning({ provider: before })),
+        ),
     );
   }
 
@@ -687,16 +685,15 @@ export class CatalogLearning {
   private async act(
     busy: string,
     key: string,
-    notice: string,
+    notice: string | null,
     work: () => Promise<unknown>,
+    undo?: () => void,
   ): Promise<void> {
     this.busy.set(busy);
-    this.done.set(null);
     this.problem.set(null);
     try {
       await work();
-      this.doneKey.set(key);
-      this.done.set(notice);
+      if (notice) this.toaster.show({ text: this.transloco.translate(notice, { key }), undo });
       this.editing.set(null);
     } catch (error) {
       this.problem.set(

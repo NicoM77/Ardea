@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiNotice } from 'ui';
+import { UiButton, UiCard, UiNotice, UiToaster } from 'ui';
 import {
   getOrganizationResource,
   OrganizationsService,
@@ -27,11 +27,6 @@ const AI_POLICIES: readonly ChoiceOption[] = [
   template: `
     <ui-card [heading]="'settings.ai.title' | transloco">
       <p class="intro">{{ 'settings.ai.intro' | transloco }}</p>
-      <div class="live" role="status">
-        @if (saved()) {
-          <ui-notice tone="success">{{ 'settings.ai.saved' | transloco }}</ui-notice>
-        }
-      </div>
       @if (problem(); as key) {
         <ui-notice class="gap" tone="error">{{ key | transloco }}</ui-notice>
       }
@@ -71,10 +66,6 @@ const AI_POLICIES: readonly ChoiceOption[] = [
     .hint {
       margin-top: var(--space-md);
     }
-    .live:empty {
-      display: none;
-    }
-    .live,
     .gap {
       margin-bottom: var(--space-md);
     }
@@ -87,6 +78,8 @@ export class AiPolicyCard {
   readonly organization = input.required<SessionOrganization>();
 
   private readonly api = inject(OrganizationsService);
+  private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
   protected readonly options = AI_POLICIES;
   protected readonly current = getOrganizationResource(computed(() => this.organization().id));
   private readonly stored = computed(() =>
@@ -96,12 +89,19 @@ export class AiPolicyCard {
   protected readonly policy = linkedSignal<string | null>(() => this.stored() ?? 'local_only');
   protected readonly changed = computed(() => this.loaded() && this.policy() !== this.stored());
   protected readonly busy = signal(false);
-  protected readonly saved = signal(false);
   protected readonly problem = signal<string | null>(null);
 
   protected async save(): Promise<void> {
+    const before = this.stored();
+    if (!(await this.apply(this.policy()))) return;
+    this.toaster.show({
+      text: this.transloco.translate('settings.ai.saved'),
+      undo: before ? () => void this.apply(before) : undefined,
+    });
+  }
+
+  private async apply(aiPolicy: string | null): Promise<boolean> {
     this.busy.set(true);
-    this.saved.set(false);
     this.problem.set(null);
     try {
       const view = await firstValueFrom(
@@ -110,15 +110,16 @@ export class AiPolicyCard {
           locale: null,
           timeZone: null,
           requireMfa: null,
-          aiPolicy: this.policy(),
+          aiPolicy,
         }),
       );
       this.current.set(view);
-      this.saved.set(true);
+      return true;
     } catch (error) {
       this.problem.set(
         problemMessageKey(error, { codes: TEAM_PROBLEMS, fallback: 'team.errors.failed' }),
       );
+      return false;
     } finally {
       this.busy.set(false);
     }

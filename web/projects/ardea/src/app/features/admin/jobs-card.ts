@@ -1,8 +1,8 @@
 import { Component, inject, input, output, signal } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideCircleCheck, LucideRotateCw } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiLoader, UiNotice } from 'ui';
+import { UiButton, UiCard, UiLoader, UiNotice, UiToaster } from 'ui';
 import { AdministrationService, type AbandonedJobResponse } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { Dates } from '../../core/format/dates';
@@ -17,13 +17,6 @@ import { count } from './settings-patch';
         <span uiCardMeta>{{ 'admin.jobs.count' | transloco: { count: jobs()!.length } }}</span>
       }
 
-      <div class="live" role="status">
-        @if (retried()) {
-          <ui-notice tone="success">{{
-            'admin.jobs.retried' | transloco: { kind: retried() }
-          }}</ui-notice>
-        }
-      </div>
       @if (problem()) {
         <ui-notice class="gap" tone="error">{{ problem() | transloco }}</ui-notice>
       }
@@ -117,12 +110,6 @@ import { count } from './settings-patch';
     .gap {
       display: block;
       margin-top: var(--space-md);
-    }
-    .live:empty {
-      display: none;
-    }
-    .live {
-      margin-bottom: var(--space-md);
     }
     .wait {
       min-height: 24px;
@@ -242,11 +229,12 @@ export class JobsCard {
   readonly reload = output();
 
   private readonly admin = inject(AdministrationService);
+  private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
   protected readonly dates = inject(Dates);
 
   protected readonly number = count;
   protected readonly retrying = signal<string | null>(null);
-  protected readonly retried = signal<string | null>(null);
   protected readonly problem = signal<string | null>(null);
   protected stateLabel(state: string): string {
     return state === 'dead' ? 'admin.jobs.dead' : 'admin.jobs.failed';
@@ -254,11 +242,12 @@ export class JobsCard {
 
   protected async retry(job: AbandonedJobResponse): Promise<void> {
     this.problem.set(null);
-    this.retried.set(null);
     this.retrying.set(job.id);
     try {
       await firstValueFrom(this.admin.retryJob(job.id));
-      this.retried.set(job.kind);
+      this.toaster.show({
+        text: this.transloco.translate('admin.jobs.retried', { kind: job.kind }),
+      });
     } catch (error) {
       this.problem.set(
         problemMessageKey(error, {

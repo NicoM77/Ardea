@@ -1,9 +1,9 @@
 import { HttpResourceRef } from '@angular/common/http';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideFileCode } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiInput, UiLoader, UiNotice } from 'ui';
+import { UiButton, UiCard, UiInput, UiLoader, UiNotice, UiToaster } from 'ui';
 import { RepositoriesService, type SuggestionView } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
@@ -22,11 +22,6 @@ import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
         }}</span>
       }
       <p class="intro">{{ 'projects.suggestions.intro' | transloco }}</p>
-      <div class="live" role="status">
-        @if (done(); as message) {
-          <ui-notice tone="success">{{ message.key | transloco: message.params }}</ui-notice>
-        }
-      </div>
       @if (problem()) {
         <ui-notice class="gap" tone="error">{{ problem() | transloco }}</ui-notice>
       }
@@ -116,10 +111,6 @@ import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
     .intro {
       margin-bottom: var(--space-md);
     }
-    .live:empty {
-      display: none;
-    }
-    .live,
     .gap {
       display: block;
       margin-bottom: var(--space-md);
@@ -197,6 +188,8 @@ export class SuggestionsList {
   readonly decided = output<void>();
 
   private readonly api = inject(RepositoriesService);
+  private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
 
   protected readonly open = computed(() => {
     const s = this.suggestions();
@@ -206,7 +199,6 @@ export class SuggestionsList {
   protected readonly changing = signal<string | null>(null);
   protected readonly version = signal('');
   protected readonly problem = signal<string | null>(null);
-  protected readonly done = signal<{ key: string; params: Record<string, string> } | null>(null);
 
   protected openChange(s: SuggestionView): void {
     this.version.set(s.version ?? '');
@@ -220,7 +212,6 @@ export class SuggestionsList {
   ): Promise<void> {
     this.busy.set(s.id);
     this.problem.set(null);
-    this.done.set(null);
     try {
       await firstValueFrom(
         this.api.decideSuggestion(this.orgId(), this.projectId(), s.id, {
@@ -229,12 +220,13 @@ export class SuggestionsList {
         }),
       );
       this.changing.set(null);
-      this.done.set({
-        key:
+      this.toaster.show({
+        text: this.transloco.translate(
           decision === 'accept'
             ? 'projects.suggestions.confirmed'
             : 'projects.suggestions.dismissed',
-        params: { name: s.productName },
+          { name: s.productName },
+        ),
       });
       this.suggestions().reload();
       this.decided.emit();

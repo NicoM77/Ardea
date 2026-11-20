@@ -9,9 +9,9 @@ import {
 } from '@angular/core';
 import { form, FormField, FormRoot, maxLength, required } from '@angular/forms/signals';
 import type { TreeValidationResult } from '@angular/forms/signals';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiField, UiInput, UiNotice } from 'ui';
+import { UiButton, UiCard, UiField, UiInput, UiNotice, UiToaster } from 'ui';
 import {
   getOrganizationResource,
   OrganizationsService,
@@ -63,11 +63,6 @@ function timeZones(): string[] {
         <p class="hint">{{ 'settings.adminsOnly' | transloco }}</p>
       } @else {
         <form class="form" [formRoot]="general">
-          <div class="live" role="status">
-            @if (saved()) {
-              <ui-notice tone="success">{{ 'settings.general.saved' | transloco }}</ui-notice>
-            }
-          </div>
           @if (problem()) {
             <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
           }
@@ -116,9 +111,6 @@ function timeZones(): string[] {
       display: grid;
       gap: var(--space-lg);
     }
-    .live:empty {
-      display: none;
-    }
     .hint {
       color: var(--muted);
       font-size: var(--fs-sub);
@@ -154,6 +146,8 @@ export class GeneralCard {
   private readonly api = inject(OrganizationsService);
   private readonly session = inject(Session);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
 
   protected readonly fieldErrorKey = fieldErrorKey;
   protected readonly nameErrors = {
@@ -168,7 +162,6 @@ export class GeneralCard {
   protected readonly localeName = computed(
     () => LOCALES.find((l) => l.value === this.model().locale)?.name ?? this.model().locale,
   );
-  protected readonly saved = signal(false);
   protected readonly problem = signal<string | null>(null);
 
   private readonly current = getOrganizationResource(computed(() => this.organization().id));
@@ -191,21 +184,16 @@ export class GeneralCard {
       submission: {
         action: async (): Promise<TreeValidationResult> => {
           this.problem.set(null);
-          this.saved.set(false);
-          const m = this.model();
+          const stored = this.current.hasValue() ? this.current.value() : undefined;
+          const before = stored
+            ? { name: stored.name, locale: stored.locale, timeZone: stored.timeZone }
+            : null;
           try {
-            await firstValueFrom(
-              this.api.updateOrganization(this.organization().id, {
-                name: m.name.trim(),
-                locale: m.locale,
-                timeZone: m.timeZone,
-                requireMfa: null,
-                aiPolicy: null,
-              }),
-            );
-            this.saved.set(true);
-            this.current.reload();
-            await this.session.refresh();
+            await this.apply({ ...this.model(), name: this.model().name.trim() });
+            this.toaster.show({
+              text: this.transloco.translate('settings.general.saved'),
+              undo: before ? () => void this.restore(before) : undefined,
+            });
             return undefined;
           } catch (error) {
             const onField = fieldProblems(error, {
@@ -227,4 +215,27 @@ export class GeneralCard {
       },
     },
   );
+
+  private async apply(values: { name: string; locale: string; timeZone: string }): Promise<void> {
+    await firstValueFrom(
+      this.api.updateOrganization(this.organization().id, {
+        ...values,
+        requireMfa: null,
+        aiPolicy: null,
+      }),
+    );
+    this.current.reload();
+    await this.session.refresh();
+  }
+
+  private async restore(values: { name: string; locale: string; timeZone: string }): Promise<void> {
+    this.problem.set(null);
+    try {
+      await this.apply(values);
+    } catch (error) {
+      this.problem.set(
+        problemMessageKey(error, { codes: TEAM_PROBLEMS, fallback: 'team.errors.failed' }),
+      );
+    }
+  }
 }

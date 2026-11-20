@@ -9,9 +9,19 @@ import {
   LucideGitBranch,
 } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiLoader, UiMenu, UiMenuItem, UiNotice, UiOverflowMenu } from 'ui';
+import {
+  UiButton,
+  UiCard,
+  UiLoader,
+  UiMenu,
+  UiMenuItem,
+  UiNotice,
+  UiOverflowMenu,
+  UiToaster,
+} from 'ui';
 import { RepositoriesService, type LinkView } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
 import { isReading, LINK_STATE_LABELS, repositoryName } from './link-format';
 
@@ -37,11 +47,6 @@ import { isReading, LINK_STATE_LABELS, repositoryName } from './link-format';
       [heading]="(compact() ? 'projects.links.reading' : 'projects.links.title') | transloco"
       [attr.aria-busy]="links().isLoading()"
     >
-      <div class="live" role="status">
-        @if (done(); as message) {
-          <ui-notice tone="success">{{ message.key | transloco: message.params }}</ui-notice>
-        }
-      </div>
       @if (problem()) {
         <ui-notice class="gap" tone="error">{{ problem() | transloco }}</ui-notice>
       }
@@ -205,10 +210,6 @@ import { isReading, LINK_STATE_LABELS, repositoryName } from './link-format';
       display: block;
       min-width: 0;
     }
-    .live:empty {
-      display: none;
-    }
-    .live,
     .gap {
       display: block;
       margin-bottom: var(--space-md);
@@ -327,6 +328,8 @@ export class LinksCard {
 
   private readonly api = inject(RepositoriesService);
   private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
+  private readonly dates = inject(Dates);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private opener: UiOverflowMenu | null = null;
 
@@ -340,7 +343,6 @@ export class LinksCard {
   protected readonly busy = signal<string | null>(null);
   protected readonly confirming = signal<string | null>(null);
   protected readonly problem = signal<string | null>(null);
-  protected readonly done = signal<{ key: string; params: Record<string, string> } | null>(null);
 
   protected count(value: number | string): number {
     return typeof value === 'number' ? value : Number.parseInt(value, 10) || 0;
@@ -348,10 +350,7 @@ export class LinksCard {
 
   protected when(value: string | null): string {
     if (!value) return '';
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value));
+    return this.dates.dateTime(value);
   }
 
   protected ask(link: LinkView, opener: UiOverflowMenu): void {
@@ -397,9 +396,9 @@ export class LinksCard {
   ): Promise<void> {
     this.busy.set(link.id);
     this.problem.set(null);
-    this.done.set(null);
     try {
-      this.done.set(await work());
+      const done = await work();
+      this.toaster.show({ text: this.transloco.translate(done.key, done.params) });
       this.links().reload();
       this.changed.emit();
     } catch (error) {

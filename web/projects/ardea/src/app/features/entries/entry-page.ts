@@ -20,6 +20,7 @@ import {
   type AffectedView,
 } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import {
   affectedStatusLabel,
   CHANGE_LABELS,
@@ -598,6 +599,7 @@ export class EntryPage {
   readonly key = input.required<string>();
 
   private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
 
   private readonly keySignal = computed(() => this.key());
   protected readonly detail = getEntryResource(this.keySignal);
@@ -679,15 +681,7 @@ export class EntryPage {
     return OPERATOR_KINDS[kind] ?? 'sources.operatorKind.community';
   }
 
-  private readonly format = computed(
-    () =>
-      new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }),
-  );
-
   protected when(value: string): string {
-    return this.format().format(new Date(value));
+    return this.dates.dateTime(value);
   }
 }

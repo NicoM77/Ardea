@@ -15,6 +15,7 @@ import {
   UiOverflowMenu,
   UiPasswordToggle,
   UiPill,
+  UiToaster,
 } from 'ui';
 import {
   listGitHubHostsResource,
@@ -24,6 +25,7 @@ import {
   type SessionOrganization,
 } from '../../core/api/client';
 import { problemMessageKey, problemOf } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { fieldProblems } from '../admin/admin-errors';
 import { fieldErrorKey } from '../auth/auth-forms';
 import { focusFirstInvalid } from '../auth/focus-invalid';
@@ -55,8 +57,11 @@ import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
     >
       <p class="intro">{{ 'settings.accesses.intro' | transloco }}</p>
       <div class="live" role="status">
-        @if (done(); as message) {
-          <ui-notice tone="success">{{ message.key | transloco: message.params }}</ui-notice>
+        @if (tested(); as result) {
+          <ui-notice [tone]="result.ok ? 'success' : 'error'">{{
+            (result.ok ? 'settings.accesses.testOk' : 'settings.accesses.testFailed')
+              | transloco: { name: result.name }
+          }}</ui-notice>
         }
       </div>
       @if (problem()) {
@@ -295,6 +300,8 @@ export class AccessesCard {
 
   private readonly api = inject(RepositoryConnectionsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
+  private readonly dates = inject(Dates);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private opener: UiOverflowMenu | null = null;
 
@@ -320,7 +327,7 @@ export class AccessesCard {
   protected readonly busy = signal<string | null>(null);
   protected readonly confirming = signal<string | null>(null);
   protected readonly problem = signal<string | null>(null);
-  protected readonly done = signal<{ key: string; params: Record<string, string> } | null>(null);
+  protected readonly tested = signal<{ ok: boolean; name: string } | null>(null);
 
   private readonly model = signal({ name: '', token: '', hostId: '' });
   protected readonly create = form(
@@ -343,7 +350,7 @@ export class AccessesCard {
               }),
             );
             this.create().reset({ name: '', token: '', hostId: '' });
-            this.done.set({ key: 'settings.accesses.created', params: { name: created.name } });
+            this.confirm('settings.accesses.created', created.name);
             this.connections.reload();
             return undefined;
           } catch (error) {
@@ -386,9 +393,7 @@ export class AccessesCard {
   }
 
   protected when(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), { dateStyle: 'medium' }).format(
-      new Date(value),
-    );
+    return this.dates.date(value);
   }
 
   protected async test(c: ConnectionView): Promise<void> {
@@ -396,10 +401,7 @@ export class AccessesCard {
       const checked = await firstValueFrom(
         this.api.testRepositoryConnection(this.organization().id, c.id),
       );
-      return {
-        key: checked.lastError ? 'settings.accesses.testFailed' : 'settings.accesses.testOk',
-        params: { name: c.name },
-      };
+      this.tested.set({ ok: !checked.lastError, name: c.name });
     });
   }
 
@@ -420,23 +422,24 @@ export class AccessesCard {
       await firstValueFrom(this.api.deleteRepositoryConnection(this.organization().id, c.id));
       this.confirming.set(null);
       this.opener = null;
-      return { key: 'settings.accesses.deleted', params: { name: c.name } };
+      this.confirm('settings.accesses.deleted', c.name);
     });
   }
 
   private reset(): void {
     this.problem.set(null);
-    this.done.set(null);
+    this.tested.set(null);
   }
 
-  private async run(
-    id: string,
-    work: () => Promise<{ key: string; params: Record<string, string> }>,
-  ): Promise<void> {
+  private confirm(key: string, name: string): void {
+    this.toaster.show({ text: this.transloco.translate(key, { name }) });
+  }
+
+  private async run(id: string, work: () => Promise<void>): Promise<void> {
     this.busy.set(id);
     this.reset();
     try {
-      this.done.set(await work());
+      await work();
       this.connections.reload();
     } catch (error) {
       this.problem.set(

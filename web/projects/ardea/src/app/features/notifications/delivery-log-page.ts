@@ -1,7 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiInput, UiLoader, UiNotice, UiStatus } from 'ui';
 import { listDeliveriesResource, type DeliveryView } from '../../core/api/client';
+import { Dates } from '../../core/format/dates';
 import { reloadOnLiveChange } from '../../core/live/live-events';
 import { num } from '../actions/action-format';
 import { injectOrganization } from '../organizations/current-organization';
@@ -207,7 +208,7 @@ const PAGE = 50;
   `,
 })
 export class DeliveryLogPage {
-  private readonly transloco = inject(TranslocoService);
+  private readonly dates = inject(Dates);
   protected readonly organization = injectOrganization().organization;
   private readonly orgId = computed(() => {
     const org = this.organization();
@@ -264,11 +265,6 @@ export class DeliveryLogPage {
   }
 
   protected when(value: string | null | undefined): string {
-    return value
-      ? new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        }).format(new Date(value))
-      : '';
+    return value ? this.dates.dateTime(value) : '';
   }
 }

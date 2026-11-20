@@ -89,6 +89,11 @@ export interface ChoiceOption {
     .choice:active {
       transform: scale(0.99);
     }
+    @media (prefers-reduced-motion: reduce) {
+      .choice:active {
+        transform: none;
+      }
+    }
     .choice input {
       position: absolute;
       left: 12px;

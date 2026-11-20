@@ -168,6 +168,11 @@ import { UnreadCount } from '../../features/notifications/unread-count';
     .search:active {
       transform: scale(0.99);
     }
+    @media (prefers-reduced-motion: reduce) {
+      .search:active {
+        transform: none;
+      }
+    }
     .search:focus-visible,
     .account:focus-visible {
       outline: var(--focus-ring);

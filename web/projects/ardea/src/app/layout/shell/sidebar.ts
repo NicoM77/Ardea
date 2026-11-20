@@ -138,6 +138,11 @@ interface NavLink {
     .nav a:active {
       transform: scale(0.98);
     }
+    @media (prefers-reduced-motion: reduce) {
+      .nav a:active {
+        transform: none;
+      }
+    }
     .nav a:focus-visible {
       outline: var(--focus-ring);
       outline-offset: -2px;

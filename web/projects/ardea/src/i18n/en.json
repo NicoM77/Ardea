@@ -295,7 +295,8 @@
       },
       "errors": {
         "invalid": "The email address or the password is not right.",
-        "lockedOut": "Too many failed attempts. This account is locked for a few minutes."
+        "lockedOut": "Too many failed attempts. This account is locked for a few minutes.",
+        "refused": "Ardea refused this sign-in. If you reached Ardea through a different address than the one it is set up for, open it at the configured address and try again."
       }
     },
     "twoFactor": {
@@ -1028,7 +1029,7 @@
     "entriesTitle": "Products the organization runs",
     "entriesLabel": "Stack entries",
     "savedAtOnce": "Changes are saved at once",
-    "empty": "No products yet. Add what the organization runs from the catalogue below, or take a suggestion.",
+    "empty": "No products yet. Add what the organization runs from the catalogue above, or take a suggestion.",
     "remove": "Remove {name}",
     "columns": {
       "product": "Product",
@@ -1043,7 +1044,6 @@
       "anyPlaceholder": "Any",
       "line": "Line",
       "exact": "Exact",
-      "noneHint": "Any version",
       "lineHint": "Only entries for this line",
       "exactHint": "Checked exactly, like a project"
     },
@@ -1237,6 +1237,7 @@
   },
   "settings": {
     "lead": "{name}: name, language, two-factor requirement, AI data policy, accesses to GitHub and the audit log.",
+    "leadMember": "{name}: its name, language and time zone, your notifications and the accesses to GitHub.",
     "save": "Save",
     "adminsOnly": "Owner and admins change these settings.",
     "general": {
@@ -1318,7 +1319,48 @@
         "profileReplaced": "changed a project’s technologies",
         "connectionCreated": "added an access to GitHub",
         "connectionChanged": "changed an access to GitHub",
-        "connectionDeleted": "deleted an access to GitHub"
+        "connectionDeleted": "deleted an access to GitHub",
+        "actionStatusChanged": "changed the status of an action",
+        "findingStatusChanged": "changed the status of a finding",
+        "findingVerdictReviewed": "reviewed a finding’s verdict",
+        "noticeAnswered": "answered a notice",
+        "noticeReopened": "reopened a notice",
+        "linkCreated": "linked a repository",
+        "linkChanged": "changed a repository link",
+        "linkDeleted": "removed a repository link",
+        "repositoryIndexed": "read a repository",
+        "shrinkHeld": "held back a repository read that would remove many components",
+        "shrinkApplied": "applied a held repository read",
+        "shrinkConfirmed": "confirmed a held repository read",
+        "repositoryUnavailable": "lost access to a repository",
+        "suggestionAccepted": "accepted a suggested component",
+        "suggestionDismissed": "dismissed a suggested component",
+        "addressAdded": "added a notification address",
+        "addressDeleted": "deleted a notification address",
+        "endpointCreated": "added a webhook endpoint",
+        "endpointChanged": "changed a webhook endpoint",
+        "endpointDeleted": "deleted a webhook endpoint",
+        "reminderRhythmChanged": "changed the reminder rhythm",
+        "ruleCreated": "created a notification rule",
+        "ruleChanged": "changed a notification rule",
+        "ruleDeleted": "deleted a notification rule"
+      },
+      "fallback": "changed {object}",
+      "fallbackBare": "changed something",
+      "detail": {
+        "named": "{name}",
+        "invited": "{email}, as {role}",
+        "role": "as {role}",
+        "fromTo": "{from} to {to}",
+        "answer": "Answer: {answer}",
+        "component": "{name}, version {version}",
+        "componentName": "{name}",
+        "repository": "{repository}",
+        "indexed": "{packages} packages found",
+        "product": "{product}",
+        "address": "{address}",
+        "rhythm": "Level 5 {level5}, level 4 {level4}, level 3 {level3}",
+        "action": "Action {number}: {from} to {to}"
       }
     },
     "ai": {
@@ -1901,6 +1943,11 @@
       "text": "You decide for yourself which channels you hear on.",
       "link": "Your notification settings"
     },
+    "subs": {
+      "rules": "Who hears about which reminders, on which channel, and when.",
+      "recipients": "The e-mail addresses and webhooks that rules can send to.",
+      "log": "Every message the rules sent, and whether it arrived."
+    },
     "tabs": {
       "rules": "Rules",
       "recipients": "Recipients",
@@ -1995,7 +2042,6 @@
       },
       "below": "Low and Not relevant remind only in the digests.",
       "next": "Next run: {date}",
-      "save": "Save reminders",
       "saved": "Reminders saved.",
       "saveFailed": "The reminders could not be saved. Try again."
     },

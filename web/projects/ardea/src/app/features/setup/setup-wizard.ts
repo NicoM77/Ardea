@@ -264,7 +264,11 @@ const STEP_LABELS: Record<WizardStep, string> = {
     }
     .is-done .item b {
       color: var(--text);
-      font-weight: 500;
+    }
+    .is-done .item:not([aria-current]) b::before {
+      content: '\\2713' / '';
+      margin-right: 6px;
+      color: var(--muted);
     }
     .item[aria-current='step']::before {
       background: var(--text);

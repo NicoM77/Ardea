@@ -50,6 +50,11 @@ export type UiButtonVariant = 'default' | 'primary' | 'ghost';
     :host(:active:not(:disabled):not(.is-loading)) {
       transform: scale(0.97);
     }
+    @media (prefers-reduced-motion: reduce) {
+      :host(:active:not(:disabled):not(.is-loading)) {
+        transform: none;
+      }
+    }
     :host(:focus-visible),
     :host([data-ui-state='focus']) {
       outline: var(--focus-ring);

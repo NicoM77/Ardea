@@ -7,7 +7,7 @@ import {
   linkedSignal,
   signal,
 } from '@angular/core';
-import { disabled, form, FormField, FormRoot, maxLength, required } from '@angular/forms/signals';
+import { form, FormField, FormRoot, maxLength, required } from '@angular/forms/signals';
 import type { TreeValidationResult } from '@angular/forms/signals';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
@@ -45,52 +45,66 @@ function timeZones(): string[] {
   imports: [FormField, FormRoot, TranslocoPipe, UiButton, UiCard, UiField, UiInput, UiNotice],
   template: `
     <ui-card [heading]="'settings.general.title' | transloco">
-      <form class="form" [formRoot]="general">
-        <div class="live" role="status">
-          @if (saved()) {
-            <ui-notice tone="success">{{ 'settings.general.saved' | transloco }}</ui-notice>
+      @if (!manage()) {
+        <dl class="pairs">
+          <div>
+            <dt>{{ 'settings.general.name' | transloco }}</dt>
+            <dd>{{ model().name }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'settings.general.locale' | transloco }}</dt>
+            <dd [attr.lang]="model().locale">{{ localeName() }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'settings.general.timeZone' | transloco }}</dt>
+            <dd>{{ model().timeZone }}</dd>
+          </div>
+        </dl>
+        <p class="hint">{{ 'settings.adminsOnly' | transloco }}</p>
+      } @else {
+        <form class="form" [formRoot]="general">
+          <div class="live" role="status">
+            @if (saved()) {
+              <ui-notice tone="success">{{ 'settings.general.saved' | transloco }}</ui-notice>
+            }
+          </div>
+          @if (problem()) {
+            <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
           }
-        </div>
-        @if (problem()) {
-          <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
-        }
-        <ui-field
-          [label]="'settings.general.name' | transloco"
-          [error]="fieldErrorKey(general.name, nameErrors) | transloco"
-        >
-          <input uiInput type="text" [formField]="general.name" />
-        </ui-field>
-        <ui-field
-          [label]="'settings.general.locale' | transloco"
-          [hint]="'settings.general.localeHint' | transloco"
-        >
-          <select uiInput [formField]="general.locale">
-            @for (l of locales; track l.value) {
-              <option [value]="l.value" [attr.lang]="l.value">{{ l.name }}</option>
-            }
-          </select>
-        </ui-field>
-        <ui-field
-          [label]="'settings.general.timeZone' | transloco"
-          [hint]="'settings.general.timeZoneHint' | transloco"
-          [error]="fieldErrorKey(general.timeZone, zoneErrors) | transloco"
-        >
-          <select uiInput [formField]="general.timeZone">
-            @for (zone of zones; track zone) {
-              <option [value]="zone">{{ zone }}</option>
-            }
-          </select>
-        </ui-field>
-        @if (manage()) {
+          <ui-field
+            [label]="'settings.general.name' | transloco"
+            [error]="fieldErrorKey(general.name, nameErrors) | transloco"
+          >
+            <input uiInput type="text" [formField]="general.name" />
+          </ui-field>
+          <ui-field
+            [label]="'settings.general.locale' | transloco"
+            [hint]="'settings.general.localeHint' | transloco"
+          >
+            <select uiInput [formField]="general.locale">
+              @for (l of locales; track l.value) {
+                <option [value]="l.value" [attr.lang]="l.value">{{ l.name }}</option>
+              }
+            </select>
+          </ui-field>
+          <ui-field
+            [label]="'settings.general.timeZone' | transloco"
+            [hint]="'settings.general.timeZoneHint' | transloco"
+            [error]="fieldErrorKey(general.timeZone, zoneErrors) | transloco"
+          >
+            <select uiInput [formField]="general.timeZone">
+              @for (zone of zones; track zone) {
+                <option [value]="zone">{{ zone }}</option>
+              }
+            </select>
+          </ui-field>
           <div>
             <button uiButton variant="primary" type="submit" [loading]="general().submitting()">
               {{ 'settings.save' | transloco }}
             </button>
           </div>
-        } @else {
-          <p class="hint">{{ 'settings.adminsOnly' | transloco }}</p>
-        }
-      </form>
+        </form>
+      }
     </ui-card>
   `,
   styles: `
@@ -108,6 +122,29 @@ function timeZones(): string[] {
     .hint {
       color: var(--muted);
       font-size: var(--fs-sub);
+    }
+    .pairs {
+      display: grid;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+    .pairs > div {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      gap: var(--space-md);
+      padding-top: var(--space-sm);
+      border-top: 1px solid var(--rule);
+    }
+    .pairs > div:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+    .pairs dt {
+      color: var(--muted);
+    }
+    .pairs dd {
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
   `,
 })
@@ -128,11 +165,14 @@ export class GeneralCard {
   protected readonly locales = LOCALES;
   protected readonly zones = timeZones();
   protected readonly manage = computed(() => canManage(this.organization().role));
+  protected readonly localeName = computed(
+    () => LOCALES.find((l) => l.value === this.model().locale)?.name ?? this.model().locale,
+  );
   protected readonly saved = signal(false);
   protected readonly problem = signal<string | null>(null);
 
   private readonly current = getOrganizationResource(computed(() => this.organization().id));
-  private readonly model = linkedSignal(() => {
+  protected readonly model = linkedSignal(() => {
     const org = this.current.hasValue() ? this.current.value() : undefined;
     return {
       name: org?.name ?? this.organization().name,
@@ -146,7 +186,6 @@ export class GeneralCard {
     (p) => {
       required(p.name);
       maxLength(p.name, 200);
-      disabled(p, () => !this.manage());
     },
     {
       submission: {

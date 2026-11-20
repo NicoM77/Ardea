@@ -11,7 +11,10 @@ export type NotifyTab = 'rules' | 'recipients' | 'log';
   selector: 'ardea-notify-frame',
   imports: [RouterLink, TranslocoPipe, UiNotice, UiPageHeader],
   template: `
-    <ui-page-header [heading]="'nav.rules' | transloco" [sub]="sub()">
+    <ui-page-header
+      [heading]="'nav.rules' | transloco"
+      [sub]="sub() ?? (subKeys[current()] | transloco)"
+    >
       <ng-container ngProjectAs="[uiPageActions]"
         ><ng-content select="[uiPageActions]"
       /></ng-container>
@@ -75,6 +78,11 @@ export class NotifyFrame {
   readonly current = input.required<NotifyTab>();
   readonly sub = input<string | null>(null);
 
+  protected readonly subKeys: Record<NotifyTab, string> = {
+    rules: 'notify.subs.rules',
+    recipients: 'notify.subs.recipients',
+    log: 'notify.subs.log',
+  };
   protected readonly manage = computed(() => canManage(this.organization().role));
   protected readonly base = computed(() => `/o/${this.organization().slug}/notification-rules`);
   protected readonly tabs = [

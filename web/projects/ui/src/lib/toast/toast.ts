@@ -78,21 +78,31 @@ export class UiToast {
 @Injectable({ providedIn: 'root' })
 export class UiToaster {
   static readonly duration = 6000;
+  static readonly exit = 150;
 
   private readonly shown = signal<(UiToastMessage & { id: number }) | null>(null);
+  private readonly drawn = signal<(UiToastMessage & { id: number }) | null>(null);
+  private readonly fading = signal(false);
   readonly current = this.shown.asReadonly();
+  readonly rendered = this.drawn.asReadonly();
+  readonly leaving = this.fading.asReadonly();
   private timer: ReturnType<typeof setTimeout> | undefined;
+  private exitTimer: ReturnType<typeof setTimeout> | undefined;
   private next = 0;
   private held = false;
 
   show(message: UiToastMessage): void {
-    this.shown.set({ ...message, id: ++this.next });
+    clearTimeout(this.exitTimer);
+    const toast = { ...message, id: ++this.next };
+    this.fading.set(false);
+    this.shown.set(toast);
+    this.drawn.set(toast);
     this.arm();
   }
 
   dismiss(): void {
     clearTimeout(this.timer);
-    this.shown.set(null);
+    this.leave();
   }
 
   undo(): void {
@@ -107,10 +117,21 @@ export class UiToaster {
     else this.arm();
   }
 
+  private leave(): void {
+    if (!this.shown()) return;
+    this.shown.set(null);
+    this.fading.set(true);
+    clearTimeout(this.exitTimer);
+    this.exitTimer = setTimeout(() => {
+      this.drawn.set(null);
+      this.fading.set(false);
+    }, UiToaster.exit);
+  }
+
   private arm(): void {
     clearTimeout(this.timer);
     if (this.held || !this.shown()) return;
-    this.timer = setTimeout(() => this.shown.set(null), UiToaster.duration);
+    this.timer = setTimeout(() => this.leave(), UiToaster.duration);
   }
 }
 
@@ -119,11 +140,12 @@ export class UiToaster {
   imports: [UiToast],
   host: { role: 'status', 'aria-live': 'polite' },
   template: `
-    @if (toaster.current(); as message) {
+    @if (toaster.rendered(); as message) {
       @for (shown of [message]; track shown.id) {
         <ui-toast
           [text]="shown.text"
           [undoable]="!!shown.undo"
+          [class.leaving]="toaster.leaving()"
           (undo)="toaster.undo()"
           (pointerenter)="toaster.hold(true)"
           (pointerleave)="toaster.hold(false)"
@@ -148,6 +170,10 @@ export class UiToaster {
       pointer-events: auto;
       animation: ui-toast-in var(--t-ui) var(--ease-out) both;
     }
+    ui-toast.leaving {
+      pointer-events: none;
+      animation: ui-toast-out var(--t-hover) ease both;
+    }
     @media (max-width: 640px) {
       :host-context(body:has(.ui-actionbar)) {
         --toast-lift: 64px;
@@ -159,9 +185,23 @@ export class UiToaster {
         transform: translateY(8px) scale(0.98);
       }
     }
+    @keyframes ui-toast-out {
+      to {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+    }
     @media (prefers-reduced-motion: reduce) {
       ui-toast {
         animation-name: ui-toast-fade;
+      }
+      ui-toast.leaving {
+        animation-name: ui-toast-fade-out;
+      }
+      @keyframes ui-toast-fade-out {
+        to {
+          opacity: 0;
+        }
       }
       @keyframes ui-toast-fade {
         from {

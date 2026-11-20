@@ -169,6 +169,10 @@ import { Topbar } from './topbar';
       }
     }
     @media (prefers-reduced-motion: reduce) {
+      .sidebar,
+      .sidebar.open {
+        transition: none;
+      }
       .content {
         animation: shell-content-fade 200ms ease both;
       }

@@ -73,6 +73,3 @@ dotnet_diagnostic.xUnit1051.severity = none
 [**/Migrations/*.cs]
 generated_code = true
 dotnet_analyzer_diagnostic.severity = none
-
-[src/Modules/Notifications/**.cs]
-dotnet_diagnostic.IDE0060.severity = suggestion   # until the follow-up of task 7.5 (Notifications has a test pull request open)

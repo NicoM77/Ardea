@@ -13,18 +13,11 @@ internal static class Scope
 
     private static readonly string[] Generated = [".Designer.cs", "ModelSnapshot.cs"];
 
-    private static readonly string[] TemporarilyExcluded =
-    [
-        "src/Modules/Notifications/",
-        "tests/Ardea.Notifications.Tests/",
-    ];
-
     private static readonly string[] OutOfScope = ["docs/", "node_modules/", "/node_modules/"];
 
     public static FileKind Classify(string path)
     {
-        if (OutOfScope.Any(p => path.StartsWith(p, StringComparison.Ordinal) || path.Contains(p, StringComparison.Ordinal))
-            || TemporarilyExcluded.Any(p => path.StartsWith(p, StringComparison.Ordinal)))
+        if (OutOfScope.Any(p => path.StartsWith(p, StringComparison.Ordinal) || path.Contains(p, StringComparison.Ordinal)))
         {
             return FileKind.None;
         }

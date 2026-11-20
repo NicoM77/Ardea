@@ -112,14 +112,14 @@ internal static class AddressEndpoints
         }
 
         db.Addresses.Add(entry);
-        await RequestConfirmationAsync(entry, db, jobs, tenant, now, cancellationToken);
+        await RequestConfirmationAsync(entry, db, jobs, now, cancellationToken);
         await audit.RecordAsync(new AuditEntry("notify.address_added", "address", entry.Id.ToString(), new { entry.Address }), cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         return Results.Created($"/api/v1/orgs/{tenant.RequiredOrganizationId}/external-addresses/{entry.Id}", View(entry, now));
     }
 
     private static async Task<IResult> ResendAsync(
-        Guid id, NotifyDbContext db, IJobQueue jobs, ITenantContext tenant, IUnitOfWork unitOfWork, TimeProvider time, CancellationToken cancellationToken)
+        Guid id, NotifyDbContext db, IJobQueue jobs, IUnitOfWork unitOfWork, TimeProvider time, CancellationToken cancellationToken)
     {
         var entry = await db.Addresses.SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
         if (entry is null)
@@ -143,7 +143,7 @@ internal static class AddressEndpoints
             return limited;
         }
 
-        await RequestConfirmationAsync(entry, db, jobs, tenant, now, cancellationToken);
+        await RequestConfirmationAsync(entry, db, jobs, now, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         return Results.Ok(View(entry, now));
     }
@@ -206,7 +206,7 @@ internal static class AddressEndpoints
     private static IResult Unsubscribed() => ApiProblems.Problem(
         "address_unsubscribed", StatusCodes.Status409Conflict, "The recipient unsubscribed. Only they can subscribe again, with the link in their last message.");
 
-    private static async Task RequestConfirmationAsync(ExternalAddress entry, NotifyDbContext db, IJobQueue jobs, ITenantContext tenant, DateTimeOffset now, CancellationToken cancellationToken)
+    private static async Task RequestConfirmationAsync(ExternalAddress entry, NotifyDbContext db, IJobQueue jobs, DateTimeOffset now, CancellationToken cancellationToken)
     {
         // The job makes the token: a job carries ids only, never a secret (master plan 4.1).
         entry.TokenHash = null;

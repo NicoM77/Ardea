@@ -27,10 +27,15 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
         await owner.OpenAsync(ct);
         var migrator = new DatabaseMigrator(options, Modules.Databases, new NoDump(), NullLogger<DatabaseMigrator>.Instance);
         await migrator.EnsureAppRoleAsync(owner, ct);
+        // Later migrations (e.g. task 5a.6) come after them: they stay unapplied too, and run with them.
+        var pending = 0;
         foreach (var database in Modules.Databases)
         {
             await using var context = database.CreateContext(owner);
-            if (context.Database.GetMigrations().LastOrDefault(m => !Added.Any(a => m.EndsWith(a, StringComparison.Ordinal))) is { } last)
+            var all = context.Database.GetMigrations().ToList();
+            var before = all.TakeWhile(m => !Added.Any(a => m.EndsWith(a, StringComparison.Ordinal))).ToList();
+            pending += all.Count - before.Count;
+            if (before.LastOrDefault() is { } last)
             {
                 await context.GetService<IMigrator>().MigrateAsync(last, ct);
             }
@@ -80,7 +85,8 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
             """, ct);
 
         var outcome = await migrator.MigrateAsync(owner, ct);
-        Assert.Equal(Added.Length, outcome.Applied);
+        Assert.Equal(pending, outcome.Applied);
+        Assert.True(pending >= Added.Length);
 
         // Every organisation has its stack.
         Assert.Equal("Acme Stack, Empty Stack", await ScalarAsync<string>(owner,

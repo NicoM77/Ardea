@@ -37,6 +37,10 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
 
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
 
+    public DbSet<ReminderSchedule> ReminderSchedules => Set<ReminderSchedule>();
+
+    public DbSet<ReminderState> ReminderStates => Set<ReminderState>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
@@ -106,7 +110,7 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
         {
             delivery.ToTable("delivery", t =>
             {
-                t.HasCheckConstraint("ck_delivery_kind", "kind IN ('immediate', 'digest')");
+                t.HasCheckConstraint("ck_delivery_kind", "kind IN ('immediate', 'digest', 'reminder')");
                 t.HasCheckConstraint("ck_delivery_state", "state IN ('pending', 'sending', 'sent', 'failed', 'dead', 'suppressed')");
             });
             delivery.HasKey(d => d.Id);
@@ -118,6 +122,8 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             delivery.Property(d => d.LastError).HasMaxLength(2000);
             // One digest per target, recipient and period (master plan 8.4).
             delivery.HasIndex(d => new { d.RuleTargetId, d.RecipientKey, d.PeriodEnd }).IsUnique().HasFilter("kind = 'digest'").HasDatabaseName("ux_delivery_digest");
+            // One message per recipient and channel and run of the reminders by level (ADR 048).
+            delivery.HasIndex(d => new { d.OrganizationId, d.RecipientKey, d.Channel, d.PeriodEnd }).IsUnique().HasFilter("kind = 'reminder'").HasDatabaseName("ux_delivery_reminder");
             // At most one waiting immediate message per recipient and channel: further events join it (master plan 8.4).
             delivery.HasIndex(d => new { d.OrganizationId, d.RecipientKey, d.Channel }).IsUnique()
                 .HasFilter("kind = 'immediate' AND state = 'pending'").HasDatabaseName("ux_delivery_waiting");
@@ -138,6 +144,8 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             // A warning's event is its entry, the same in every organisation; the organisation is part of the key.
             e.HasIndex(x => new { x.OrganizationId, x.RecipientKey, x.Channel, x.EventId }).IsUnique().HasDatabaseName("ux_delivery_event");
             e.HasIndex(x => x.DeliveryId).HasDatabaseName("ix_delivery_event_delivery");
+            // A notice is announced once per recipient and channel (ADR 048).
+            e.HasIndex(x => new { x.OrganizationId, x.NoticeId, x.RecipientKey, x.Channel }).HasFilter("notice_id IS NOT NULL").HasDatabaseName("ix_delivery_event_notice");
             e.HasOne<Delivery>().WithMany().HasForeignKey(x => x.DeliveryId).OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -197,6 +205,27 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             subscription.Property(s => s.Label).HasMaxLength(100);
             // One row per user and device; the address is long, so the index holds its hash (master plan 4.7).
             subscription.HasIndex(s => new { s.UserId, s.EndpointHash }).IsUnique().HasDatabaseName("ux_push_subscription");
+        });
+
+        modelBuilder.Entity<ReminderSchedule>(schedule =>
+        {
+            schedule.ToTable("reminder_schedule", t =>
+            {
+                foreach (var level in new[] { "level5", "level4", "level3" })
+                {
+                    t.HasCheckConstraint($"ck_reminder_schedule_{level}", $"{level} IN ('daily', 'weekly', 'monthly', 'off')");
+                }
+            });
+            schedule.HasKey(s => s.OrganizationId);
+            schedule.Property(s => s.Level5).HasMaxLength(10);
+            schedule.Property(s => s.Level4).HasMaxLength(10);
+            schedule.Property(s => s.Level3).HasMaxLength(10);
+        });
+
+        modelBuilder.Entity<ReminderState>(state =>
+        {
+            state.ToTable("reminder_state");
+            state.HasKey(s => new { s.OrganizationId, s.RemediationId });
         });
 
         ApplyTenantFilters(modelBuilder);

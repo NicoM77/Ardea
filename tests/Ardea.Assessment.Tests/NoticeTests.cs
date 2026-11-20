@@ -24,7 +24,8 @@ public sealed class NoticeTests(PostgresServer server)
     [Fact]
     public async Task A_coarse_hit_raises_one_notice_per_entry_naming_every_component_and_no_reminder()
     {
-        await using var host = await AssessmentTestHost.StartAsync(server);
+        var handedOn = new HandedOn();
+        await using var host = await AssessmentTestHost.StartAsync(server, handedOn.Register);
         var acme = AssessmentTestHost.NewOrganization();
         var (stack, postgres) = await StackAsync(host, acme, "postgresql", "database");
         var shop = await host.AddProjectAsync(acme, "Shop");
@@ -48,8 +49,9 @@ public sealed class NoticeTests(PostgresServer server)
                 FROM assess.finding f JOIN assess.alert a ON a.id = f.alert_id ORDER BY 1
                 """));
 
-        // One event per notice, the seam of notice.raised (task 5a.6); history only for now.
+        // One event per notice, handed to the notifications in its unit of work (task 5a.6, ADR 048).
         Assert.Equal(["notice.raised\tCVE-2026-8001"], await host.RowsAsync("SELECT kind, data->>'entry' FROM assess.assess_event WHERE kind LIKE 'notice.%'"));
+        Assert.Equal(["notice.raised"], handedOn.Kinds.Where(k => k.StartsWith("notice.", StringComparison.Ordinal)));
         Assert.Contains(postgres, await ComponentIdsAsync(host));
         Assert.NotEqual(Guid.Empty, stack);
     }
@@ -303,7 +305,8 @@ public sealed class NoticeTests(PostgresServer server)
     [Fact]
     public async Task A_stack_entry_added_later_raises_its_notices_quietly_with_one_summary()
     {
-        await using var host = await AssessmentTestHost.StartAsync(server);
+        var handedOn = new HandedOn();
+        await using var host = await AssessmentTestHost.StartAsync(server, handedOn.Register);
         var acme = AssessmentTestHost.NewOrganization();
         var (stack, _) = await StackAsync(host, acme, "nginx", "network");
         await EntryAsync(host, "CVE-2026-8801", 9.1);
@@ -316,7 +319,9 @@ public sealed class NoticeTests(PostgresServer server)
 
         Assert.Equal(["CVE-2026-8801\topen\t1\tTrue", "CVE-2026-8802\topen\t1\tTrue"], await host.RowsAsync(Notices));
         Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'notice.raised'"));
-        Assert.Equal([$"{stack}\t2"], await host.RowsAsync("SELECT project_id, data->>'notices' FROM assess.assess_event WHERE kind = 'notice.backfilled'"));
+        Assert.Equal([$"{stack}\t2\t0"], await host.RowsAsync("SELECT project_id, data->>'notices', data->>'important' FROM assess.assess_event WHERE kind = 'notice.backfilled'"));
+        // One summary reaches the notifications, not one event per notice (ADR 048).
+        Assert.Equal(["notice.backfilled"], handedOn.Kinds.Where(k => k.StartsWith("notice.", StringComparison.Ordinal)));
 
         // They are open but not new: the list shows them as earlier ones (ADR 047).
         Assert.Empty(await ListKeysAsync(host, acme, "new"));
@@ -669,5 +674,28 @@ public sealed class NoticeTests(PostgresServer server)
         await host.InOrganizationAsync(organization, async services =>
             result = await services.GetRequiredService<NoticeCommands>().ReopenAsync(notice, new ReopenNoticeRequest(expected), Bob, CancellationToken.None));
         return result;
+    }
+
+    /// <summary>Stands in for the notifications: records the events the history hands on before a unit of work commits.</summary>
+    private sealed class HandedOn
+    {
+        private readonly System.Collections.Concurrent.ConcurrentQueue<string> _kinds = new();
+
+        public IReadOnlyList<string> Kinds => [.. _kinds];
+
+        public void Register(IServiceCollection services) => services.AddScoped<Contracts.IActionEventSubscriber>(_ => new Subscriber(_kinds));
+
+        private sealed class Subscriber(System.Collections.Concurrent.ConcurrentQueue<string> kinds) : Contracts.IActionEventSubscriber
+        {
+            public Task OnActionEventsAsync(IReadOnlyList<Contracts.NotifiableEvent> events, CancellationToken cancellationToken)
+            {
+                foreach (var e in events)
+                {
+                    kinds.Enqueue(e.Kind);
+                }
+
+                return Task.CompletedTask;
+            }
+        }
     }
 }

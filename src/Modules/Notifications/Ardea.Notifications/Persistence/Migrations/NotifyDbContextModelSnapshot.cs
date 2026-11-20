@@ -109,9 +109,14 @@ namespace Ardea.Notifications.Persistence.Migrations
                         .HasDatabaseName("ux_delivery_digest")
                         .HasFilter("kind = 'digest'");
 
+                    b.HasIndex("OrganizationId", "RecipientKey", "Channel", "PeriodEnd")
+                        .IsUnique()
+                        .HasDatabaseName("ux_delivery_reminder")
+                        .HasFilter("kind = 'reminder'");
+
                     b.ToTable("delivery", "notify", t =>
                         {
-                            t.HasCheckConstraint("ck_delivery_kind", "kind IN ('immediate', 'digest')");
+                            t.HasCheckConstraint("ck_delivery_kind", "kind IN ('immediate', 'digest', 'reminder')");
 
                             t.HasCheckConstraint("ck_delivery_state", "state IN ('pending', 'sending', 'sent', 'failed', 'dead', 'suppressed')");
                         });
@@ -153,6 +158,10 @@ namespace Ardea.Notifications.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("level");
 
+                    b.Property<Guid?>("NoticeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("notice_id");
+
                     b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("occurred_at");
@@ -181,6 +190,10 @@ namespace Ardea.Notifications.Persistence.Migrations
 
                     b.HasIndex("DeliveryId")
                         .HasDatabaseName("ix_delivery_event_delivery");
+
+                    b.HasIndex("OrganizationId", "NoticeId", "RecipientKey", "Channel")
+                        .HasDatabaseName("ix_delivery_event_notice")
+                        .HasFilter("notice_id IS NOT NULL");
 
                     b.HasIndex("OrganizationId", "RecipientKey", "Channel", "EventId")
                         .IsUnique()
@@ -630,6 +643,82 @@ namespace Ardea.Notifications.Persistence.Migrations
                         {
                             t.HasCheckConstraint("ck_recipient_state_exploitation", "last_exploitation IN ('none', 'poc', 'active')");
                         });
+                });
+
+            modelBuilder.Entity("Ardea.Notifications.Persistence.ReminderSchedule", b =>
+                {
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<DateTimeOffset?>("LastRunAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_run_at");
+
+                    b.Property<string>("Level3")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("level3");
+
+                    b.Property<string>("Level4")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("level4");
+
+                    b.Property<string>("Level5")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("level5");
+
+                    b.Property<DateTimeOffset?>("NextRunAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_run_at");
+
+                    b.HasKey("OrganizationId")
+                        .HasName("pk_reminder_schedule");
+
+                    b.ToTable("reminder_schedule", "notify", t =>
+                        {
+                            t.HasCheckConstraint("ck_reminder_schedule_level3", "level3 IN ('daily', 'weekly', 'monthly', 'off')");
+
+                            t.HasCheckConstraint("ck_reminder_schedule_level4", "level4 IN ('daily', 'weekly', 'monthly', 'off')");
+
+                            t.HasCheckConstraint("ck_reminder_schedule_level5", "level5 IN ('daily', 'weekly', 'monthly', 'off')");
+                        });
+                });
+
+            modelBuilder.Entity("Ardea.Notifications.Persistence.ReminderState", b =>
+                {
+                    b.Property<Guid>("OrganizationId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<Guid>("RemediationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("remediation_id");
+
+                    b.Property<DateTimeOffset>("LastRemindedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_reminded_at");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer")
+                        .HasColumnName("level");
+
+                    b.HasKey("OrganizationId", "RemediationId")
+                        .HasName("pk_reminder_state");
+
+                    b.ToTable("reminder_state", "notify");
                 });
 
             modelBuilder.Entity("Ardea.Notifications.Persistence.RuleTarget", b =>

@@ -21,8 +21,50 @@ internal sealed class ActionFactsReader(AssessDbContext db, IProfileQueries prof
         var rows = await db.Events.AsNoTracking().Where(e => ids.Contains(e.Id)).ToListAsync(cancellationToken);
         // Rows of the assignment and the review state from before ADR 046 announce nothing.
         return [.. rows.Where(e => EventKinds.IsNotifiable(e.Kind) && !LegacyHistory.Hidden(e.Kind, e.Data.RootElement))
-            .Select(e => new ActionEventFacts(e.Id, e.Kind, e.At, e.RemediationId, e.ProjectId, e.Actor, LegacyHistory.Shown(e.Data.RootElement)))];
+            .Select(e => new ActionEventFacts(e.Id, e.Kind, e.At, e.RemediationId, e.ProjectId, e.Actor, LegacyHistory.Shown(e.Data.RootElement), e.NoticeId))];
     }
+
+    public async Task<IReadOnlyList<NoticeFacts>> NoticesAsync(IReadOnlyCollection<Guid> noticeIds, CancellationToken cancellationToken)
+    {
+        if (noticeIds.Count == 0)
+        {
+            return [];
+        }
+
+        var ids = noticeIds.ToArray();
+        var notices = await db.Notices.AsNoTracking().Where(n => ids.Contains(n.Id)).ToListAsync(cancellationToken);
+        if (notices.Count == 0)
+        {
+            return [];
+        }
+
+        var facts = (await entries.FindManyAsync([.. notices.Select(n => n.EntryId).Distinct()], cancellationToken)).ToDictionary(e => e.Id);
+        var components = (await profiles.FindComponentsAsync([.. notices.SelectMany(n => n.ComponentIds).Distinct()], cancellationToken)).ToDictionary(c => c.Id);
+        return [.. notices.Select(n =>
+        {
+            var entry = facts.GetValueOrDefault(n.EntryId);
+            return new NoticeFacts
+            {
+                Id = n.Id,
+                State = n.State,
+                EntryKey = n.EntryKey,
+                EntryTitle = entry?.Title,
+                CvssScore = n.CvssScore,
+                Exploitation = n.Exploitation,
+                InKev = entry?.InKev ?? false,
+                ReappearedReason = n.ReappearedReason,
+                // A component removed since is no reason any more; the notice is withdrawn with the next assessment.
+                Components = [.. n.ComponentIds.Select(components.GetValueOrDefault).OfType<ProfileComponent>()
+                    .Select(c => new NoticeComponentFacts(c.Name, c.Version, c.ProjectId, c.ProjectName, c.ProjectKind == "organization_stack"))],
+            };
+        })];
+    }
+
+    public async Task<IReadOnlyList<OpenReminder>> OpenRemindersAsync(int minLevel, CancellationToken cancellationToken) =>
+        (await db.Remediations.AsNoTracking().Where(r => r.Status != "closed" && r.Level >= minLevel)
+            .Select(r => new { r.Id, r.Level, r.ProjectId, r.OpenedAt, r.LevelRaisedAt }).ToListAsync(cancellationToken))
+        .Select(r => new OpenReminder(r.Id, r.Level, r.ProjectId, r.LevelRaisedAt is { } raised && raised > r.OpenedAt ? raised : r.OpenedAt))
+        .ToList();
 
     public async Task<IReadOnlyList<ActionFacts>> ActionsAsync(IReadOnlyCollection<Guid> remediationIds, CancellationToken cancellationToken)
     {

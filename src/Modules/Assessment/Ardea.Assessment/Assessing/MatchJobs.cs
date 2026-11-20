@@ -141,7 +141,7 @@ internal sealed class MatchProjectHandler(
         // Notices a reverse search raises, for a stack entry added or changed, are one summary, not one event each (ADR 047).
         if (notices.QuietlyRaised.Count > 0)
         {
-            history.Add(EventKinds.NoticeBackfilled, new { notices = notices.QuietlyRaised.Count }, project: project.Id);
+            history.Add(EventKinds.NoticeBackfilled, new { notices = notices.QuietlyRaised.Count, important = notices.QuietlyRaisedImportant }, project: project.Id);
             await db.SaveChangesAsync(cancellationToken);
         }
 

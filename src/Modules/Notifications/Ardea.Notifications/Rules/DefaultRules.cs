@@ -17,10 +17,14 @@ internal sealed class DefaultRules(NotifyDbContext db, IOrganizationProfiles org
     /// <summary>Mondays at 08:00 in the organisation's time zone.</summary>
     public const string Mondays = "0 8 * * 1";
 
+    /// <summary>
+    /// The events of every default rule. A notice has no level: it meets every threshold when it is actively exploited or in
+    /// KEV, else only level 2, so rule 1 brings the important ones at once and the weekly summary all of them (ADR 048).
+    /// </summary>
     private static readonly string[] ActionEvents =
     [
         NotifyEvents.ActionRaised, NotifyEvents.ActionLevelRaised, NotifyEvents.ActionExploitationEscalated,
-        NotifyEvents.ActionLevelLowered, NotifyEvents.ActionWithdrawn, NotifyEvents.BackfillCompleted,
+        NotifyEvents.ActionLevelLowered, NotifyEvents.ActionWithdrawn, NotifyEvents.BackfillCompleted, NotifyEvents.NoticeRaised,
     ];
 
     public async Task OnOrganizationCreatedAsync(Guid organizationId, CancellationToken cancellationToken)
@@ -88,7 +92,7 @@ internal sealed class DefaultRules(NotifyDbContext db, IOrganizationProfiles org
     }
 }
 
-/// <summary>Moves the next digest of every target to the time its schedule names in the new time zone (master plan 8.3).</summary>
+/// <summary>Moves the next digest of every target, and the next run of the reminders, to the time their schedule names in the new time zone (master plan 8.3).</summary>
 internal sealed class DigestRescheduler(NotifyDbContext db, TimeProvider time) : IOrganizationTimeZoneSubscriber
 {
     public async Task OnTimeZoneChangedAsync(Guid organizationId, string timeZone, CancellationToken cancellationToken)
@@ -97,6 +101,12 @@ internal sealed class DigestRescheduler(NotifyDbContext db, TimeProvider time) :
         foreach (var target in await db.Targets.Where(t => t.Mode == "digest" && t.DigestCron != null).ToListAsync(cancellationToken))
         {
             target.NextDigestAt = DigestSchedule.Next(target.DigestCron!, timeZone, now);
+        }
+
+        // The reminders by level keep their quiet hour in the new zone too (ADR 048).
+        foreach (var schedule in await db.ReminderSchedules.Where(s => s.NextRunAt != null).ToListAsync(cancellationToken))
+        {
+            schedule.NextRunAt = DigestSchedule.Next(Delivering.ReminderRhythms.Schedule, timeZone, now);
         }
 
         await db.SaveChangesAsync(cancellationToken);

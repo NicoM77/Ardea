@@ -60,7 +60,7 @@ public sealed class EmailChannelTests(PostgresServer server)
         var text = full.GetProperty("Text").GetString()!;
         Assert.Contains("What happened", text, StringComparison.Ordinal);
         Assert.Contains("Update to 16.4.", text, StringComparison.Ordinal);
-        Assert.Contains("https://ardea.test/o/acme/actions/2", text, StringComparison.Ordinal);
+        Assert.Contains("https://ardea.test/o/acme/reminders/2", text, StringComparison.Ordinal);
         var headers = await http.GetFromJsonAsync<JsonElement>($"/api/v1/message/{id}/headers", TestContext.Current.CancellationToken);
         Assert.Equal("<https://ardea.test/o/acme/settings/notifications>", headers.GetProperty("List-Unsubscribe")[0].GetString());
     }

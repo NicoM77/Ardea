@@ -141,6 +141,8 @@ public sealed class TenantIsolationTests(PostgresServer server)
         ["POST /api/v1/orgs/{orgId}/notifications/read"] = _ => new { all = true },
         ["GET /api/v1/orgs/{orgId}/notification-preferences"] = _ => null,
         ["PUT /api/v1/orgs/{orgId}/notification-preferences"] = _ => new { mutedChannels = new[] { "email" } },
+        ["GET /api/v1/orgs/{orgId}/reminder-rhythm/"] = _ => null,
+        ["PUT /api/v1/orgs/{orgId}/reminder-rhythm/"] = _ => new { level5 = "off", level4 = "off", level3 = "off" },
         ["POST /api/v1/orgs/{orgId}/alerts/{number}/assessment"] = _ => null,
     };
 
@@ -354,6 +356,7 @@ public sealed class TenantIsolationTests(PostgresServer server)
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM notify.external_address WHERE id = '{bobsAddress}' AND unsubscribed_at IS NULL"));
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM notify.notification WHERE id = '{bobsNotification}' AND read_at IS NULL"));
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM notify.user_preference WHERE organization_id = '{bobOrg}'"));
+        Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM notify.reminder_schedule WHERE organization_id = '{bobOrg}'"));
         Assert.Equal(1L, await host.ScalarAsync<long>($"SELECT count(*) FROM iam.invitation WHERE organization_id = '{bobOrg}'"));
         Assert.Equal("Bob Corp", await host.ScalarAsync<string>($"SELECT name FROM iam.organization WHERE id = '{bobOrg}'"));
         Assert.Equal(0L, await host.ScalarAsync<long>($"SELECT count(*) FROM iam.organization WHERE id = '{bobOrg}' AND settings->'setup' IS NOT NULL AND settings->'setup' <> 'null'::jsonb"));

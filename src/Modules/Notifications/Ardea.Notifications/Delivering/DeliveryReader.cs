@@ -72,9 +72,12 @@ internal sealed class DeliveryReader(
             return new DeliveryStart(null, "The recipient is no longer reachable: left the organisation, unsubscribed, or the endpoint is off.");
         }
 
-        var items = delivery.Kind == "digest"
-            ? await DigestItemsAsync(delivery, cancellationToken)
-            : await ImmediateItemsAsync(delivery, cancellationToken);
+        var items = delivery.Kind switch
+        {
+            "digest" => await DigestItemsAsync(delivery, cancellationToken),
+            "reminder" => await ReminderItemsAsync(delivery, cancellationToken),
+            _ => await ImmediateItemsAsync(delivery, cancellationToken),
+        };
         var content = new MessageContent
         {
             DeliveryId = delivery.Id,
@@ -89,6 +92,11 @@ internal sealed class DeliveryReader(
         if (delivery.Kind == "immediate" && items.Count == 0)
         {
             return new DeliveryStart(null, "None of its events exists any more.");
+        }
+
+        if (delivery.Kind == "reminder" && items.Count == 0)
+        {
+            return new DeliveryStart(null, "None of its reminders is open any more.");
         }
 
         var message = new Outgoing { Content = content, Recipient = recipient, Channel = delivery.Channel };
@@ -150,7 +158,25 @@ internal sealed class DeliveryReader(
     private async Task<IReadOnlyList<MessageItem>> ImmediateItemsAsync(Delivery delivery, CancellationToken cancellationToken)
     {
         var covered = await db.DeliveryEvents.AsNoTracking().Where(e => e.DeliveryId == delivery.Id).OrderBy(e => e.OccurredAt).ToListAsync(cancellationToken);
-        return await ItemsAsync(covered.Select(e => (e.EventId, e.Event, e.OccurredAt, e.EntryId, e.Level)).ToList(), cancellationToken);
+        var items = await ItemsAsync(covered.Select(e => (e.EventId, e.Event, e.OccurredAt, e.EntryId, e.Level)).ToList(), cancellationToken);
+        // A notice answered or withdrawn while the message waited asks nobody any more (ADR 048).
+        return [.. items.Where(i => i.Notice is not { State: not "open" })];
+    }
+
+    /// <summary>
+    /// A run of the reminders by level (ADR 048): the reminders it named that are still open now, at the level they stand
+    /// at now; one done in the meantime is left out.
+    /// </summary>
+    private async Task<IReadOnlyList<MessageItem>> ReminderItemsAsync(Delivery delivery, CancellationToken cancellationToken)
+    {
+        var rows = await db.DeliveryEvents.AsNoTracking().Where(e => e.DeliveryId == delivery.Id && e.RemediationId != null).ToListAsync(cancellationToken);
+        var actions = (await facts.ActionsAsync([.. rows.Select(r => r.RemediationId!.Value).Distinct()], cancellationToken)).ToDictionary(a => a.Id);
+        return [.. rows
+            .Select(r => actions.GetValueOrDefault(r.RemediationId!.Value) is { Status: not "closed" } action
+                ? new MessageItem { EventId = r.EventId, Event = NotifyEvents.ReminderDue, At = r.OccurredAt, Action = action, Level = action.Level }
+                : null)
+            .OfType<MessageItem>()
+            .OrderByDescending(i => i.Level).ThenBy(i => i.At)];
     }
 
     /// <summary>
@@ -202,6 +228,7 @@ internal sealed class DeliveryReader(
         var events = (await facts.EventsAsync([.. rows.Where(r => r.EntryId is null).Select(r => r.EventId)], cancellationToken)).ToDictionary(e => e.Id);
         var actions = (await facts.ActionsAsync([.. events.Values.Select(e => e.RemediationId).OfType<Guid>().Distinct()], cancellationToken)).ToDictionary(a => a.Id);
         var projects = await facts.ProjectNamesAsync([.. events.Values.Select(e => e.ProjectId).OfType<Guid>().Distinct()], cancellationToken);
+        var notices = (await facts.NoticesAsync([.. events.Values.Select(e => e.NoticeId).OfType<Guid>().Distinct()], cancellationToken)).ToDictionary(n => n.Id);
         var items = new List<MessageItem>();
         foreach (var row in rows)
         {
@@ -227,7 +254,14 @@ internal sealed class DeliveryReader(
             }
 
             var item = new MessageItem { EventId = fact.Id, Event = fact.Kind, At = fact.At, Data = fact.Data, Level = row.Level };
-            if (fact.RemediationId is { } remediation && actions.TryGetValue(remediation, out var action))
+            if (NotifyEvents.IsNotice(fact.Kind))
+            {
+                if (MessageItem.ForNotice(fact, notices, projects) is { } notice)
+                {
+                    items.Add(notice);
+                }
+            }
+            else if (fact.RemediationId is { } remediation && actions.TryGetValue(remediation, out var action))
             {
                 items.Add(item with { Action = action, Level = row.Level ?? action.Level });
             }

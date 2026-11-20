@@ -67,7 +67,7 @@ public sealed class WebPushTests(PostgresServer server)
         Assert.Equal(8030, payload.GetProperty("web_push").GetInt32());
         var notification = payload.GetProperty("notification");
         Assert.StartsWith("[5 Critical] #2", notification.GetProperty("title").GetString(), StringComparison.Ordinal);
-        Assert.Equal("https://ardea.test/o/acme/actions/2", notification.GetProperty("navigate").GetString());
+        Assert.Equal("https://ardea.test/o/acme/reminders/2", notification.GetProperty("navigate").GetString());
         Assert.DoesNotContain("Critical", Encoding.UTF8.GetString(request.Body), StringComparison.Ordinal);
         Assert.Equal("sent", await host.ScalarAsync<string>("SELECT state FROM notify.delivery WHERE channel = 'push'"));
         Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.push_subscription WHERE last_success_at IS NOT NULL"));

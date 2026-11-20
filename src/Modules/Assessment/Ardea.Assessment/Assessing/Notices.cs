@@ -38,6 +38,9 @@ internal sealed class Notices(AssessDbContext db, History history, TimeProvider 
     /// <summary>The notices a reverse search raised in this unit of work, for its single summary.</summary>
     public IReadOnlyList<Guid> QuietlyRaised => _quietlyRaised;
 
+    /// <summary>Of them, those whose entry is actively exploited or listed in KEV: the summary is high-signal when there are any (ADR 048).</summary>
+    public int QuietlyRaisedImportant { get; private set; }
+
     public async Task UpdateAsync(EntryFacts entry, CoarseHits hits, CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
@@ -126,6 +129,11 @@ internal sealed class Notices(AssessDbContext db, History history, TimeProvider 
         if (quiet)
         {
             _quietlyRaised.Add(notice.Id);
+            if (entry.Exploitation == "active" || entry.InKev)
+            {
+                QuietlyRaisedImportant++;
+            }
+
             return;
         }
 

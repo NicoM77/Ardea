@@ -51,13 +51,14 @@ internal sealed class Evaluator(
         var emailAvailable = await email.IsConfiguredAsync(cancellationToken);
         var events = (await facts.EventsAsync([.. pending.Where(p => p.EntryId is null).Select(p => p.EventId)], cancellationToken)).ToDictionary(e => e.Id);
         var actions = (await facts.ActionsAsync([.. events.Values.Select(e => e.RemediationId).OfType<Guid>().Distinct()], cancellationToken)).ToDictionary(a => a.Id);
-        return new Batch(new Context(organization, rules, directory, emailAvailable, PublicUrl(configuration), time.GetUtcNow()), events, actions);
+        var notices = (await facts.NoticesAsync([.. events.Values.Select(e => e.NoticeId).OfType<Guid>().Distinct()], cancellationToken)).ToDictionary(n => n.Id);
+        return new Batch(new Context(organization, rules, directory, emailAvailable, PublicUrl(configuration), time.GetUtcNow()), events, actions, notices);
     }
 
     /// <summary>Evaluates one event of the batch and saves what it decided.</summary>
     public async Task EvaluateAsync(Batch batch, PendingEvent pending, CancellationToken cancellationToken)
     {
-        var item = await ItemAsync(pending, batch.Events, batch.Actions, cancellationToken);
+        var item = await ItemAsync(pending, batch, cancellationToken);
         if (item is not null)
         {
             await EvaluateAsync(item, batch.Context, cancellationToken);
@@ -71,9 +72,9 @@ internal sealed class Evaluator(
         return new Uri(url.EndsWith('/') ? url : url + "/");
     }
 
-    private async Task<MessageItem?> ItemAsync(
-        PendingEvent pending, Dictionary<Guid, ActionEventFacts> events, Dictionary<Guid, ActionFacts> actions, CancellationToken cancellationToken)
+    private async Task<MessageItem?> ItemAsync(PendingEvent pending, Batch batch, CancellationToken cancellationToken)
     {
+        var (events, actions) = (batch.Events, batch.Actions);
         if (pending.EntryId is { } entryId)
         {
             var entry = await entries.FindAsync(entryId, cancellationToken);
@@ -91,6 +92,14 @@ internal sealed class Evaluator(
         if (!events.TryGetValue(pending.EventId, out var fact))
         {
             return null;
+        }
+
+        if (NotifyEvents.IsNotice(fact.Kind))
+        {
+            var projects = fact.ProjectId is { } summary ? await facts.ProjectNamesAsync([summary], cancellationToken) : new Dictionary<Guid, string>();
+            var notice = MessageItem.ForNotice(fact, batch.Notices, projects);
+            // A notice answered or withdrawn before its event is evaluated asks nobody any more.
+            return notice is { Notice.State: not "open" } ? null : notice;
         }
 
         if (fact.Kind == NotifyEvents.BackfillCompleted && fact.ProjectId is { } project)
@@ -133,11 +142,12 @@ internal sealed class Evaluator(
             await LowerStatesAsync(lowered.Id, item.DataInt("to") ?? lowered.Level, cancellationToken);
         }
 
-        var project = item.Action?.ProjectId ?? item.Backfill?.ProjectId;
-        // An all-clear is measured against the level it clears.
-        var level = item.Event == NotifyEvents.ActionLevelLowered ? Math.Max(item.DataInt("from") ?? 0, item.Level ?? 0) : item.Level ?? (item.Backfill is not null ? 1 : null);
-        var rules = context.Rules.Where(r => r.Events.Contains(item.Event)
-            && (r.ProjectIds.Length == 0 || (project is { } p && r.ProjectIds.Contains(p)))
+        var projects = item.Projects;
+        // An all-clear is measured against the level it clears; a notice by the stand-in of ADR 048.
+        var level = item.Event == NotifyEvents.ActionLevelLowered ? Math.Max(item.DataInt("from") ?? 0, item.Level ?? 0) : item.ThresholdLevel;
+        var ruleEvent = NotifyEvents.RuleEvent(item.Event);
+        var rules = context.Rules.Where(r => r.Events.Contains(ruleEvent)
+            && (r.ProjectIds.Length == 0 || projects.Any(p => r.ProjectIds.Contains(p)))
             && (level is not { } l || l >= r.MinLevel)).ToList();
 
         var immediate = new Dictionary<(string Key, string Channel), Recipient>();
@@ -177,8 +187,14 @@ internal sealed class Evaluator(
             var state = HasState(item.Event) && item.Action is { } action
                 ? await db.States.FindAsync([context.Organization.Id, action.Id, key, channel], cancellationToken)
                 : null;
+            // A notice is announced once per recipient and channel, and its return once more (ADR 048): raised anew after a
+            // withdrawal, or brought back to «new» by a reminder it took over, it does not come again.
+            var noticeId = item.Notice?.Id;
             if (!ShouldSend(item, state, channel)
-                || await db.DeliveryEvents.AnyAsync(e => e.RecipientKey == key && e.Channel == channel && e.EventId == item.EventId, cancellationToken))
+                || await db.DeliveryEvents.AnyAsync(
+                    e => e.RecipientKey == key && e.Channel == channel
+                        && (e.EventId == item.EventId || (noticeId != null && e.NoticeId == noticeId && e.Event == item.Event)),
+                    cancellationToken))
             {
                 continue;
             }
@@ -223,12 +239,13 @@ internal sealed class Evaluator(
     }
 
     /// <summary>
-    /// Who hears about an event without a target naming them (master plan 8.2): every member about a warning in the
-    /// app. A reminder has no assignee (master plan 17.5), so nobody hears about the team's work without a rule.
+    /// Who hears about an event without a target naming them (master plan 8.2): every member about a warning or a notice in
+    /// the app, when a rule of the organisation names it (ADR 038, 048). A reminder has no assignee (master plan 17.5), so
+    /// nobody hears about the team's work without a rule.
     /// </summary>
     private static IEnumerable<(Recipient Recipient, string Channel)> Implicit(MessageItem item, bool ruleMatched, Context context)
     {
-        if (item.Event == NotifyEvents.WarningPublished && ruleMatched)
+        if ((item.Event == NotifyEvents.WarningPublished || NotifyEvents.IsNotice(item.Event)) && ruleMatched)
         {
             foreach (var member in context.Directory.WithRole(OrganizationRole.Viewer))
             {
@@ -301,7 +318,7 @@ internal sealed class Evaluator(
             Event = item.Event,
             RemediationId = item.Action?.Id,
             EntryId = item.Warning?.EntryId,
-            ProjectId = item.Backfill?.ProjectId,
+            ProjectId = item.Backfill?.ProjectId ?? item.NoticeBackfill?.ProjectId,
             Level = item.Level,
             OccurredAt = item.At,
         });
@@ -378,7 +395,7 @@ internal sealed class Evaluator(
             EventId = item.EventId,
             RemediationId = item.Action?.Id,
             EntryId = item.Warning?.EntryId,
-            ProjectId = item.Backfill?.ProjectId,
+            ProjectId = item.Backfill?.ProjectId ?? item.NoticeBackfill?.ProjectId,
             Kind = item.Event,
             Level = item.Level,
             Title = text.Title,
@@ -414,7 +431,8 @@ internal sealed class Evaluator(
         Event = item.Event,
         RemediationId = item.Action?.Id,
         EntryId = item.Warning?.EntryId,
-        ProjectId = item.Backfill?.ProjectId,
+        ProjectId = item.Backfill?.ProjectId ?? item.NoticeBackfill?.ProjectId,
+        NoticeId = item.Notice?.Id,
         Level = item.Level,
         OccurredAt = item.At,
     };
@@ -429,7 +447,8 @@ internal sealed class Evaluator(
         _ => false,
     };
 
-    internal sealed record Batch(Context Context, Dictionary<Guid, ActionEventFacts> Events, Dictionary<Guid, ActionFacts> Actions);
+    internal sealed record Batch(
+        Context Context, Dictionary<Guid, ActionEventFacts> Events, Dictionary<Guid, ActionFacts> Actions, Dictionary<Guid, NoticeFacts> Notices);
 
     internal sealed record Context(
         OrganizationProfile Organization, IReadOnlyList<NotificationRule> Rules, RecipientDirectory Directory, bool EmailAvailable, Uri PublicUrl, DateTimeOffset Now);

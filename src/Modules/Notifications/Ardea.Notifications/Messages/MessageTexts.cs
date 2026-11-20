@@ -1,3 +1,4 @@
+using Ardea.Assessment.Contracts;
 using System.Globalization;
 using Ardea.Notifications.Rules;
 
@@ -57,8 +58,49 @@ internal sealed class MessageTexts
                 ? Format("headline.backfill_none", b.ProjectName)
                 : Format("headline.backfill", b.ProjectName, b.Actions, b.HighestLevel, LevelName(b.HighestLevel)),
             NotifyEvents.DeliveryFailed => this["headline.delivery_failed"],
+            NotifyEvents.NoticeRaised => this["headline.notice"],
+            NotifyEvents.NoticeReappeared => Format(
+                "headline.notice_reappeared", this[item.Notice?.ReappearedReason == "kev" ? "notice.back.kev" : "notice.back.exploited"]),
+            NotifyEvents.NoticeBackfilled when item.NoticeBackfill is { } n => n.Important > 0
+                ? Format("headline.notice_backfill_important", n.Notices, n.ProjectName, n.Important)
+                : Format("headline.notice_backfill", n.Notices, n.ProjectName),
+            NotifyEvents.ReminderDue => Format("headline.reminder", level, LevelName(level), item.At.ToString("d MMM yyyy", Culture)),
             _ => item.Event,
         };
+    }
+
+    /// <summary>What a notice is about, as the first answer of a message: the entry, its score, its exploitation.</summary>
+    public string NoticeWhat(NoticeFacts notice)
+    {
+        var what = Format("what.plain", notice.EntryKey, notice.EntryTitle ?? notice.EntryKey);
+        if (notice.CvssScore is { } score)
+        {
+            what += Format("notice.score", score.ToString("0.0", CultureInfo.InvariantCulture));
+        }
+
+        if (notice.Exploitation is "active" or "poc")
+        {
+            what += Format("notice.exploitation", Exploitation(notice.Exploitation));
+        }
+
+        return notice.InKev ? what + this["notice.kev"] : what;
+    }
+
+    /// <summary>Why a notice asks: «Your stack names PostgreSQL 17.», and the projects that name the product.</summary>
+    public string NoticeWhy(NoticeFacts notice)
+    {
+        static string Named(IEnumerable<NoticeComponentFacts> components) =>
+            string.Join(", ", components.Select(c => c.Version is { Length: > 0 } version ? $"{c.Name} {version}" : c.Name).Distinct(StringComparer.Ordinal));
+
+        var parts = new List<string>();
+        if (notice.Components.Where(c => c.InStack).ToList() is { Count: > 0 } stack)
+        {
+            parts.Add(Format("notice.reason_stack", Named(stack)));
+        }
+
+        parts.AddRange(notice.Components.Where(c => !c.InStack).GroupBy(c => c.ProjectName)
+            .Select(g => Format("notice.reason_project", g.Key, Named(g))));
+        return string.Join(" ", parts);
     }
 
     /// <summary>The title of an item: «[5 Critical] #143 Puppet Enterprise in Platform Ops».</summary>
@@ -81,6 +123,16 @@ internal sealed class MessageTexts
             return Format("title.backfill", backfill.ProjectName);
         }
 
+        if (item.Notice is { } notice)
+        {
+            return Format("title.notice", notice.EntryTitle is { Length: > 0 } title ? $"{notice.EntryKey}: {title}" : notice.EntryKey);
+        }
+
+        if (item.NoticeBackfill is { } earlier)
+        {
+            return Format("title.notice_backfill", earlier.ProjectName);
+        }
+
         return item.Event;
     }
 
@@ -100,7 +152,7 @@ internal sealed class MessageTexts
         ["exploitation.active"] = "actively exploited",
         ["exploitation.poc"] = "proof of concept published",
         ["exploitation.none"] = "no known exploitation",
-        ["headline.raised"] = "Level {0}, {1}. New action.",
+        ["headline.raised"] = "Level {0}, {1}. New reminder.",
         ["headline.level_raised"] = "Level {0}, {1}. Raised from level {2}.",
         ["headline.exploitation"] = "Level {0}, {1}. Now {2}.",
         ["headline.fix"] = "A fix is available.",
@@ -110,9 +162,29 @@ internal sealed class MessageTexts
         ["headline.status"] = "Status: {0}.",
         ["headline.note"] = "A note was added.",
         ["headline.warning"] = "New warning without a vulnerability identifier.",
-        ["headline.backfill"] = "First assessment of {0} done: {1} action(s), highest level {2}, {3}.",
+        ["headline.backfill"] = "First assessment of {0} done: {1} reminder(s), highest level {2}, {3}.",
         ["headline.backfill_none"] = "First assessment of {0} done: nothing to do.",
         ["headline.delivery_failed"] = "A level 5 message reached a recipient on none of their channels.",
+        ["headline.notice"] = "New notice: this could affect you.",
+        ["headline.notice_reappeared"] = "Back once: answered «doesn't affect us», now {0}.",
+        ["headline.notice_backfill"] = "{0} earlier notice(s) for {1}; answer them on the Notices page.",
+        ["headline.notice_backfill_important"] = "{0} earlier notice(s) for {1}, {2} of them actively exploited or in KEV; answer them on the Notices page.",
+        ["headline.reminder"] = "Still open at level {0}, {1}, since {2}.",
+        ["notice.back.exploited"] = "actively exploited",
+        ["notice.back.kev"] = "listed in CISA's KEV catalogue",
+        ["notice.score"] = " CVSS {0}.",
+        ["notice.exploitation"] = " It is {0}.",
+        ["notice.kev"] = " CISA lists it in KEV.",
+        ["notice.reason_stack"] = "Your stack names {0}.",
+        ["notice.reason_project"] = "{0} names {1}.",
+        ["notice.todo"] = "Answer on the Notices page: affects us, or doesn't affect us.",
+        ["label.why"] = "Why",
+        ["title.notice"] = "[Notice] {0}",
+        ["title.notice_backfill"] = "[Notices] Earlier notices: {0}",
+        ["title.reminders"] = "[{0} {1}] {2} open reminder(s) in {3}",
+        ["reminders.intro"] = "These reminders are still open. Ardea reminds you of them by their level until they are done.",
+        ["label.all_reminders"] = "All open reminders",
+        ["reason.moved_to_notice"] = "moved to a notice",
         ["title.action"] = "[{0} {1}] #{2} {3}",
         ["title.in"] = "{0} in {1}",
         ["title.warning"] = "[Warning] {0}",
@@ -174,7 +246,7 @@ internal sealed class MessageTexts
         ["exploitation.active"] = "wird aktiv ausgenutzt",
         ["exploitation.poc"] = "ein Proof of Concept ist veröffentlicht",
         ["exploitation.none"] = "keine bekannte Ausnutzung",
-        ["headline.raised"] = "Stufe {0}, {1}. Neue Massnahme.",
+        ["headline.raised"] = "Stufe {0}, {1}. Neuer Reminder.",
         ["headline.level_raised"] = "Stufe {0}, {1}. Gestiegen von Stufe {2}.",
         ["headline.exploitation"] = "Stufe {0}, {1}. Neu: {2}.",
         ["headline.fix"] = "Eine Korrektur ist verfügbar.",
@@ -184,9 +256,28 @@ internal sealed class MessageTexts
         ["headline.status"] = "Status: {0}.",
         ["headline.note"] = "Eine Notiz wurde hinzugefügt.",
         ["headline.warning"] = "Neue Warnung ohne Schwachstellenkennung.",
-        ["headline.backfill"] = "Ersteinschätzung von {0} fertig: {1} Massnahme(n), höchste Stufe {2}, {3}.",
+        ["headline.backfill"] = "Ersteinschätzung von {0} fertig: {1} Reminder, höchste Stufe {2}, {3}.",
         ["headline.backfill_none"] = "Ersteinschätzung von {0} fertig: nichts zu tun.",
         ["headline.delivery_failed"] = "Eine Nachricht der Stufe 5 hat einen Empfänger auf keinem seiner Kanäle erreicht.",
+        ["headline.notice"] = "Neuer Hinweis: Das könnte euch betreffen.",
+        ["headline.notice_reappeared"] = "Einmal zurück: beantwortet mit «betrifft uns nicht», jetzt {0}.",
+        ["headline.notice_backfill"] = "{0} frühere(r) Hinweis(e) zu {1}; beantworte sie auf der Seite «Notices».",
+        ["headline.notice_backfill_important"] = "{0} frühere(r) Hinweis(e) zu {1}, davon {2} aktiv ausgenutzt oder in KEV; beantworte sie auf der Seite «Notices».",
+        ["headline.reminder"] = "Seit {2} offen auf Stufe {0}, {1}.",
+        ["notice.back.exploited"] = "aktiv ausgenutzt",
+        ["notice.back.kev"] = "im KEV-Katalog der CISA",
+        ["notice.exploitation"] = " Sie {0}.",
+        ["notice.kev"] = " Die CISA führt sie in KEV.",
+        ["notice.reason_stack"] = "Euer Stack nennt {0}.",
+        ["notice.reason_project"] = "{0} nennt {1}.",
+        ["notice.todo"] = "Auf der Seite «Notices» beantworten: betrifft uns, oder betrifft uns nicht.",
+        ["label.why"] = "Warum",
+        ["title.notice"] = "[Hinweis] {0}",
+        ["title.notice_backfill"] = "[Hinweise] Frühere Hinweise: {0}",
+        ["title.reminders"] = "[{0} {1}] {2} offene(r) Reminder in {3}",
+        ["reminders.intro"] = "Diese Reminder sind noch offen. Ardea erinnert nach ihrer Stufe daran, bis sie erledigt sind.",
+        ["label.all_reminders"] = "Alle offenen Reminder",
+        ["reason.moved_to_notice"] = "zu einem Hinweis verschoben",
         ["title.in"] = "{0} in {1}",
         ["title.warning"] = "[Warnung] {0}",
         ["title.backfill"] = "Ersteinschätzung: {0}",

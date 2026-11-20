@@ -7625,6 +7625,126 @@
         }
       }
     },
+    "/api/v1/orgs/{orgId}/reminder-rhythm": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "getReminderRhythm",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderRhythmView"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "setReminderRhythm",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReminderRhythmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderRhythmView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/instance": {
       "get": {
         "tags": [
@@ -12901,6 +13021,61 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "ReminderRhythmRequest": {
+        "required": [
+          "level5",
+          "level4",
+          "level3"
+        ],
+        "type": "object",
+        "properties": {
+          "level5": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "level4": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "level3": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ReminderRhythmView": {
+        "required": [
+          "level5",
+          "level4",
+          "level3",
+          "nextRunAt"
+        ],
+        "type": "object",
+        "properties": {
+          "level5": {
+            "type": "string"
+          },
+          "level4": {
+            "type": "string"
+          },
+          "level3": {
+            "type": "string"
+          },
+          "nextRunAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },

@@ -34,7 +34,23 @@ internal static class MessageRenderer
         var body = content.Items.Count == 0
             ? texts["digest.empty"]
             : string.Join("; ", content.Items.OrderByDescending(i => i.Level ?? 0).Take(5).Select(texts.Title));
-        return new InAppText(Truncate(subject, 300), Truncate(body, 2000), $"/o/{content.Organization.Slug}/actions");
+        return new InAppText(Truncate(subject, 300), Truncate(body, 2000), MessageContent.RemindersPath(content.Organization));
+    }
+
+    /// <summary>A run of the reminders by level in the app (ADR 048): its subject, its first lines, and the reminder or the list.</summary>
+    public static InAppText InAppReminders(MessageContent content)
+    {
+        var texts = MessageTexts.For(content.Locale);
+        var items = content.Items.OrderByDescending(i => i.Level ?? 0).ThenBy(i => i.At).ToList();
+        var body = string.Join("; ", items.Take(5).Select(texts.Title));
+        var link = items.Count == 1 ? content.PathOf(items[0]) : MessageContent.RemindersPath(content.Organization);
+        return new InAppText(Truncate(RemindersSubject(content, texts), 300), Truncate(body, 2000), link);
+    }
+
+    private static string RemindersSubject(MessageContent content, MessageTexts texts)
+    {
+        var level = content.Level ?? 0;
+        return texts.Format("title.reminders", level, texts.LevelName(level), content.Items.Count, content.Organization.Name);
     }
 
     /// <summary>The e-mail; <paramref name="settingsOrUnsubscribe"/> is the member's settings or the signed unsubscribe page of an external address, <paramref name="oneClick"/> its RFC 8058 address.</summary>
@@ -42,7 +58,12 @@ internal static class MessageRenderer
     {
         var texts = MessageTexts.For(content.Locale);
         var minimal = content.Organization.EmailContent == "minimal";
-        var (subject, blocks) = content.Kind == "digest" ? Digest(content, texts, minimal) : Immediate(content, texts, minimal);
+        var (subject, blocks) = content.Kind switch
+        {
+            "digest" => Digest(content, texts, minimal),
+            "reminder" => Reminders(content, texts, minimal),
+            _ => Immediate(content, texts, minimal),
+        };
         var footer = oneClick is null
             ? texts.Format("footer.member", content.Organization.Name, settingsOrUnsubscribe.AbsoluteUri)
             : texts.Format("footer.address", content.Organization.Name, settingsOrUnsubscribe.AbsoluteUri);
@@ -91,6 +112,15 @@ internal static class MessageRenderer
         var texts = MessageTexts.For(content.Locale);
         var subjects = content.Items.GroupBy(SubjectKey).OrderByDescending(g => g.Max(i => i.Level ?? 0)).ToList();
         var inbox = $"/o/{content.Organization.Slug}/notifications";
+        if (content.Kind == "reminder" && subjects.Count > 1)
+        {
+            // One message per run (ADR 048): the count, the first reminders, and the list of open reminders.
+            return PushPayload(
+                texts.Locale, content.DeliveryId, RemindersSubject(content, texts),
+                string.Join("; ", subjects.Take(3).Select(g => texts.Title(g.First()))), content.Link(MessageContent.RemindersPath(content.Organization)),
+                content.Level, content.Organization.Slug);
+        }
+
         if (subjects.Count == 1)
         {
             var last = subjects[0].OrderBy(i => i.At).Last();
@@ -215,6 +245,20 @@ internal static class MessageRenderer
                     : null,
                 warning = i.Warning is { } w ? new { key = w.Key, title = w.Title, publishedAt = w.PublishedAt } : null,
                 backfill = i.Backfill is { } b ? new { project = new { id = b.ProjectId, name = b.ProjectName }, actions = b.Actions, highestLevel = b.HighestLevel, findings = b.Findings } : null,
+                notice = i.Notice is { } n
+                    ? new
+                    {
+                        id = n.Id,
+                        state = n.State,
+                        entry = new { key = n.EntryKey, title = n.EntryTitle },
+                        cvssScore = n.CvssScore,
+                        exploitation = n.Exploitation,
+                        kev = n.InKev,
+                        reappearedReason = n.ReappearedReason,
+                        components = n.Components.Select(c => new { name = c.Name, version = c.Version, project = new { id = c.ProjectId, name = c.ProjectName }, inStack = c.InStack }),
+                    }
+                    : null,
+                earlierNotices = i.NoticeBackfill is { } e ? new { project = new { id = e.ProjectId, name = e.ProjectName }, notices = e.Notices, important = e.Important } : null,
                 data = i.Data.ValueKind == JsonValueKind.Undefined ? (JsonElement?)null : i.Data,
             }),
         };
@@ -264,6 +308,16 @@ internal static class MessageRenderer
         else if (!minimal && last.Warning is { Title: { } title } warning)
         {
             yield return new Paragraph($"{warning.Key}: {title}", Bold: false);
+        }
+        else if (!minimal && last.Notice is { } notice)
+        {
+            // The same three answers as for a reminder: what happened, why it could affect you, what to do (ADR 048).
+            yield return new Facts(
+            [
+                (texts["label.what_happened"], texts.NoticeWhat(notice)),
+                (texts["label.why"], texts.NoticeWhy(notice)),
+                (texts["label.to_do"], texts["notice.todo"]),
+            ]);
         }
 
         if (content.PathOf(last) is { } path)
@@ -335,8 +389,30 @@ internal static class MessageRenderer
         return (subject, blocks);
     }
 
+    /// <summary>
+    /// A run of the reminders by level (master plan 8.7, ADR 048): one message with every reminder due for this recipient,
+    /// highest level first, each with its link, and the list of open reminders at the end.
+    /// </summary>
+    private static (string Subject, List<Block> Blocks) Reminders(MessageContent content, MessageTexts texts, bool minimal)
+    {
+        var blocks = new List<Block> { new Paragraph(texts["reminders.intro"], Bold: false) };
+        foreach (var item in content.Items.OrderByDescending(i => i.Level ?? 0).ThenBy(i => i.At))
+        {
+            var line = minimal && item.Action is { } a ? $"#{a.Number}" : texts.Title(item);
+            blocks.Add(new Item(line, texts.Headline(item), content.PathOf(item) is { } path ? content.Link(path) : null));
+        }
+
+        blocks.Add(new Link(texts["label.all_reminders"], content.Link(MessageContent.RemindersPath(content.Organization))));
+        return (RemindersSubject(content, texts), blocks);
+    }
+
     private static string SubjectKey(MessageItem item) =>
-        item.Action is { } a ? $"action:{a.Id}" : item.Warning is { } w ? $"warning:{w.EntryId}" : item.Backfill is { } b ? $"project:{b.ProjectId}" : $"event:{item.EventId}";
+        item.Action is { } a ? $"action:{a.Id}"
+        : item.Warning is { } w ? $"warning:{w.EntryId}"
+        : item.Backfill is { } b ? $"project:{b.ProjectId}"
+        : item.Notice is { } n ? $"notice:{n.Id}"
+        : item.NoticeBackfill is { } e ? $"notices:{e.ProjectId}"
+        : $"event:{item.EventId}";
 
     private static string Truncate(string value, int length) => value.Length <= length ? value : value[..(length - 1)] + "…";
 

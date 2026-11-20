@@ -187,7 +187,7 @@ public sealed class NotificationStateTests(PostgresServer server)
         Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.notification"));
         var mail = Assert.Single(host.Mail!.Sent);
         Assert.Equal("First assessment: Platform Ops", mail.Subject);
-        Assert.Contains("40 action(s), highest level 4", mail.Text, StringComparison.Ordinal);
+        Assert.Contains("40 reminder(s), highest level 4", mail.Text, StringComparison.Ordinal);
         // The actions count as reported to everyone who heard about the first fill: only a later rise sends.
         Assert.Equal(80L, await s.CountAsync("SELECT count(*) FROM notify.recipient_state"));
 

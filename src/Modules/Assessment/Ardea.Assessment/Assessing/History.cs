@@ -43,8 +43,9 @@ internal static class EventKinds
     public const string FindingVerdictCorrected = "finding.verdict_corrected";
 
     /// <summary>
-    /// A notice was raised (ADR 047): the seam for the event <c>notice.raised</c> of task 5a.6. History only until then, as
-    /// are the other <c>notice.*</c> kinds.
+    /// A notice was raised (ADR 047): the event <c>notice.raised</c> of master plan 8.2 (task 5a.6, ADR 048). With
+    /// <c>notice.reappeared</c> and <c>notice.backfilled</c> it is handed to the notifications; the other <c>notice.*</c> kinds
+    /// are history only.
     /// </summary>
     public const string NoticeRaised = "notice.raised";
 
@@ -63,8 +64,12 @@ internal static class EventKinds
     /// <summary>An open notice nothing coarse names any more: the precise path took over, or its components left.</summary>
     public const string NoticeWithdrawn = "notice.withdrawn";
 
-    /// <summary>The events of master plan 8.2 the notifications hear about; the other kinds are history only.</summary>
-    public static bool IsNotifiable(string kind) => kind.StartsWith("action.", StringComparison.Ordinal) || kind == BackfillCompleted;
+    /// <summary>
+    /// The events of master plan 8.2 the notifications hear about; the other kinds are history only. A notice is announced
+    /// when it is raised, when an answered «doesn't affect us» comes back, and once for all a reverse search raised (ADR 048).
+    /// </summary>
+    public static bool IsNotifiable(string kind) =>
+        kind.StartsWith("action.", StringComparison.Ordinal) || kind is BackfillCompleted or NoticeRaised or NoticeReappeared or NoticeBackfilled;
 }
 
 /// <summary>

@@ -67,15 +67,16 @@ internal sealed partial class DeliverHandler(
 
         if (message.Channel == Channels.InApp)
         {
-            // A digest in the app is a row like any other notification; nothing leaves the instance.
+            // A digest or a run of the reminders by level in the app is a row like any other notification; nothing leaves the instance.
             var delivery = await db.Deliveries.SingleAsync(d => d.Id == job.DeliveryId, cancellationToken);
-            var text = MessageRenderer.InAppDigest(message.Content);
+            var reminders = message.Content.Kind == "reminder";
+            var text = reminders ? MessageRenderer.InAppReminders(message.Content) : MessageRenderer.InAppDigest(message.Content);
             db.Notifications.Add(new Notification
             {
                 Id = Guid.CreateVersion7(),
                 UserId = message.Recipient.Id,
                 EventId = delivery.Id,
-                Kind = "digest",
+                Kind = reminders ? NotifyEvents.ReminderDue : "digest",
                 Level = message.Content.Level,
                 Title = text.Title,
                 Body = text.Body,
@@ -172,6 +173,12 @@ internal sealed partial class DeliverHandler(
     /// </summary>
     private async Task WarnOwnersAsync(NotifyDbContext store, IOrganizationMembers members, Delivery delivery, CancellationToken cancellationToken)
     {
+        if (delivery.Kind != "immediate")
+        {
+            // A digest or a reminder repeats what was announced at once before; its failure is in the log.
+            return;
+        }
+
         var critical = await store.DeliveryEvents.AsNoTracking().Where(e => e.DeliveryId == delivery.Id && e.Level == 5).Select(e => e.EventId).ToListAsync(cancellationToken);
         if (critical.Count == 0)
         {

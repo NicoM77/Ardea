@@ -83,7 +83,7 @@ public sealed class HourlyCapTests(PostgresServer server)
 
         async Task DigestDueInAsync(TimeSpan after)
         {
-            await host.ExecuteAsync($"UPDATE notify.rule_target SET next_digest_at = '{host.Time.GetUtcNow() + after:O}' WHERE id = '{target}'");
+            await host.ExecuteAsync($"UPDATE notify.rule_target SET next_digest_at = date_trunc('second', '{host.Time.GetUtcNow() + after:O}'::timestamptz) WHERE id = '{target}'");
             host.Time.Advance(after);
             await host.RunAsync(new FindDueDigests(), organization: null);
             Assert.Empty(await host.RunJobsAsync());

@@ -46,13 +46,32 @@ quarantine. A failing source backs off up to six hours and recovers on its own; 
 of its records in quarantine is marked degraded. Its review list holds cases that need a person, such as
 two entries with different CVE ids that a shared identifier would join.
 
+## Stack and notices
+
+Every organisation has a stack: a coarse list of products, with no version or a version line, and a threshold per
+entry («Only important» or «Everything»). An entry that hits a stack product raises a **notice** («might affect
+you»), which people answer on the *Notices* page; «Affects us» creates a reminder. The rules are in
+[ADR 044](../adr/0044-notices-per-week-and-thresholds.md) and [ADR 047](../adr/0047-notice-generation-and-answers.md).
+What an operator should know:
+
+- **Adding or changing a stack entry** (or its threshold or line) makes Ardea search the last 180 days again for it.
+  What it finds is raised quietly: the notices are listed under *Earlier*, apart from the new ones, with one summary
+  line in the history. A stack of ten entries can bring a few dozen of them at once. Only entries that arrive
+  afterwards are new.
+- **Noisy products.** For products the catalogue marks as noisy (Google Chrome, Microsoft Edge, Mozilla Firefox) even
+  the threshold «Everything» raises a notice only for active exploitation or an authority's warning. Marking more is a
+  curated catalogue change.
+- **Recomputing.** `ardea intel recompute` and `ardea assess recompute` ([Maintenance commands](#maintenance-commands))
+  also update the notices; there is no separate command.
+- **Reminders** have no assignee and no deadline: open or done. Nothing beyond the stack needs configuring.
+
 ## Language model
 
 Ardea works completely without a language model. With one, it adds an assessment to alerts whose findings reach
 *High* or *Critical*, or *Medium* with an unknown version: under which conditions the vulnerability can be
 exploited, whether they probably hold here, and what to do first. The model never sets the priority; its verdict
 can lower it by one level at most, only where the installed version is unknown, and «probably not affected» is a
-proposal a person confirms. At most five calls per action in seven days are made automatically; people can ask
+proposal a person confirms. At most five calls per reminder in seven days are made automatically; people can ask
 for more on an alert, up to a daily cap per organisation. The model sees the vulnerability's public texts and, of
 the organisation, only the affected components' version, kind, exposure, criticality and whether a protection is
 in place, under placeholders: no names of components, projects or the organisation, and no free text such as the
@@ -197,12 +216,12 @@ role: `docker compose run --rm migrate org …`. `seed-demo` needs the owner pas
 | `ardea admin reset-password <email> [--disable-mfa]` | Restore access without e-mail |
 | `ardea intel renormalize --source <key>` | Read a source's stored records again with the current parser |
 | `ardea intel recompute` | Merge every entry again with the current rules |
-| `ardea assess recompute` | Assess every alert again with the current rule set, e.g. after a new rule set version |
+| `ardea assess recompute` | Assess every alert again with the current rule set, e.g. after a new rule set version; this also updates notices and reminders |
 | `ardea intel import --full [--source <key>]` | Load a source's whole inventory instead of the look-back window; for the CVE Program about 10 GB more |
 | `ardea catalog grow` | Let the catalogue learn from the unknown products of the sources now, e.g. after the first load |
 | `ardea org export <slug> [--out file]` | An organisation's data as JSON, without secrets |
 | `ardea org delete <slug> --confirm <slug>` | Remove an organisation and all its data |
-| `ardea seed-demo` | Load the sample data into an empty instance ([Try it](try-it.md)); needs the owner role, refuses a database with data |
+| `ardea seed-demo` | Load the sample data (with a stack and notices) into an empty instance ([Try it](try-it.md)); needs the owner role, refuses a database with data |
 
 ## Size
 

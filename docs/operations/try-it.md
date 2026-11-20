@@ -1,7 +1,7 @@
 # Try it
 
-Look at Ardea with data in it: an organisation, three projects, real vulnerabilities, the actions that follow
-from them and the notifications they raise. `ardea seed-demo` loads this into an empty instance in well under
+Look at Ardea with data in it: an organisation with its stack and three projects, real vulnerabilities, the notices
+and reminders that follow from them and the notifications they raise. `ardea seed-demo` loads this into an empty instance in well under
 a minute. It needs no GitHub token, no initial load and no access to any source: the records are part of the
 image, and the instance fetches nothing.
 
@@ -59,21 +59,26 @@ You need Docker with Compose v2. Until the first release (task 7.3) build the im
   administrator), Marc Keller (administrator) and Lea Brunner (member). Their addresses are on `example.org`, a
   domain reserved for examples. Only Nina's password is shown; the others cannot sign in until an owner resets
   it (`ardea admin reset-password <email>`). The setup wizard counts as done, and stays open under *Setup*.
+- **A stack** of twelve products (for example Ubuntu 24.04, PHP, MySQL, PostgreSQL line 17, FortiOS), the coarse
+  profile of what the organisation runs, mostly without versions. Its entries have the threshold «Only important»,
+  two of them «Everything». Entries that hit the stack raise **notices** (see below).
 - **Three projects**, the example projects A, B and C of the requirements under the names of the mockups:
   *Customer Portal* (.NET, Angular, Umbraco, Azure SQL), *Webshop* (WordPress, PHP, MySQL) and *Platform Ops*
   (Kubernetes, Linux, Redis, PostgreSQL; business-critical, internal). Their versions are those installed
   before the security updates of the week of 11 to 17 November 2026.
 - **16 real CVE records** of that week, curated from the reference data of the repository
-  (`src/Modules/Intel/Ardea.Intel/Demo/demo-records.jsonl`): the ones behind the mockups' actions (for
+  (`src/Modules/Intel/Ardea.Intel/Demo/demo-records.jsonl`): the ones behind the mockups' reminders (for
   example CVE-2026-109619 for PHP and CVE-2026-116325 for PostgreSQL) and a few that turn out not to concern
   any project once the versions are checked.
 - What the pipeline makes of them, through the real jobs and not as rows written by hand: entries, findings
-  with their version checks and levels, six actions with their history, and the in-app notifications of the
-  default rules.
-- A little work on those actions, again through the real commands: Marc notes the rollout of the PHP update,
-  Lea notes what the PostgreSQL update depends on, Marc closes the Linux kernel action as not affected with
-  his reason, and Nina records the .NET update of the Customer Portal in its profile, after which Ardea closes
-  that action by itself. Four actions stay open, one of them critical.
+  with their version checks and levels, notices from the stack, reminders with their history, and the in-app
+  notifications of the default rules.
+- A little work on those reminders and notices, again through the real commands: Marc notes the rollout of the PHP
+  update, Lea notes what the PostgreSQL update depends on, Marc closes the Linux kernel reminder as not affected
+  with his reason, and Nina records the .NET update of the Customer Portal in its profile, after which Ardea
+  closes that reminder by itself. On the stack's notices Lea answers «Doesn't affect us» (PostgreSQL) and Marc
+  «Affects us» (MySQL, which creates a reminder); the others wait for an answer on the *Notices* page. Some
+  reminders stay open, one of them critical.
 
 The records are the CVE Program's own; the demo organisation, its people, projects and versions are invented.
 The instance's sources are registered but **switched off**, so the worker does not load the world into the
@@ -83,7 +88,20 @@ queued for e-mail are suppressed with a reason in the delivery log. So nobody at
 mailed, now or by a later digest, even on an instance with SMTP. Its policy for language models is «none», so no
 data of the demo goes to a model either.
 
-All of it happens at the moment you run the command: the actions were raised «just now».
+All of it happens at the moment you run the command: the reminders were raised «just now».
+
+## What to look at
+
+The **stack** is what the organisation runs, coarsely: a product with no version or with a version line, and per
+entry the threshold «Only important» or «Everything». It is the first step of the setup wizard and has its own page
+(*Stack*). A **notice** says «this might affect you»: an entry hit a product of the stack, and Ardea cannot tell by
+version. A person answers it. **Affects us** creates a reminder (or joins an open one), optionally with a project and
+a version; **Doesn't affect us** closes the question, and it comes back once if the entry is later listed in CISA's
+KEV or actively exploited. Notices found in one go when the stack changed, not by new entries, are listed under
+*Earlier*. A **reminder** is the thing to do: open or done, no assignee, no deadline. Where a project states an exact
+version, Ardea checks it and raises a precise finding and reminder instead of a notice. Background:
+[ADR 046](../adr/0046-stack-notices-and-reminders-without-deadline.md),
+[ADR 047](../adr/0047-notice-generation-and-answers.md).
 
 ## An instance with data is refused
 

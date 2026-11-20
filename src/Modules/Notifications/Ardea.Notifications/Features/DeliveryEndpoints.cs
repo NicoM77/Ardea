@@ -10,7 +10,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Notifications.Features;
 
-/// <summary>The delivery log (master plan 8.6, 10.2): one row per message, newest first; owners and admins.</summary>
 internal static class DeliveryEndpoints
 {
     private static readonly string[] States = ["pending", "sending", "sent", "failed", "dead", "suppressed"];

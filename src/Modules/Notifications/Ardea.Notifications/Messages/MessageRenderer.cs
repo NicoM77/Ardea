@@ -8,14 +8,8 @@ using Ardea.Platform.Email;
 
 namespace Ardea.Notifications.Messages;
 
-/// <summary>An in-app notification's text.</summary>
 internal sealed record InAppText(string Title, string Body, string? Link);
 
-/// <summary>
-/// Words messages (master plan 8.5): every message answers what happened, whether we are affected and what to
-/// do, in that order, like the interface. The subject starts with level and number. Without HTML from
-/// sources: every value is encoded.
-/// </summary>
 internal static class MessageRenderer
 {
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = false };
@@ -26,7 +20,6 @@ internal static class MessageRenderer
         return new InAppText(Truncate(texts.Title(item), 300), Truncate(texts.Headline(item), 2000), content.PathOf(item));
     }
 
-    /// <summary>A digest in the app: its subject, and its first lines as the body.</summary>
     public static InAppText InAppDigest(MessageContent content)
     {
         var texts = MessageTexts.For(content.Locale);
@@ -37,7 +30,6 @@ internal static class MessageRenderer
         return new InAppText(Truncate(subject, 300), Truncate(body, 2000), MessageContent.RemindersPath(content.Organization));
     }
 
-    /// <summary>A run of the reminders by level in the app (ADR 048): its subject, its first lines, and the reminder or the list.</summary>
     public static InAppText InAppReminders(MessageContent content)
     {
         var texts = MessageTexts.For(content.Locale);
@@ -53,7 +45,6 @@ internal static class MessageRenderer
         return texts.Format("title.reminders", level, texts.LevelName(level), content.Items.Count, content.Organization.Name);
     }
 
-    /// <summary>The e-mail; <paramref name="settingsOrUnsubscribe"/> is the member's settings or the signed unsubscribe page of an external address, <paramref name="oneClick"/> its RFC 8058 address.</summary>
     public static EmailMessage Email(MessageContent content, string to, Uri settingsOrUnsubscribe, Uri? oneClick)
     {
         var texts = MessageTexts.For(content.Locale);
@@ -81,7 +72,6 @@ internal static class MessageRenderer
         {
             ["List-Unsubscribe"] = $"<{(oneClick ?? settingsOrUnsubscribe).AbsoluteUri}>",
             ["Auto-Submitted"] = "auto-generated",
-            // Stable across retries: a receiver may drop a second copy of the same message by it (at-least-once, ADR 038).
             ["X-Ardea-Delivery"] = content.DeliveryId.ToString(),
         };
         if (oneClick is not null)
@@ -102,11 +92,6 @@ internal static class MessageRenderer
         return new EmailMessage(to, subject, text.ToString(), body, headers);
     }
 
-    /// <summary>
-    /// A push message (master plan 8.5, 11.9): priority, number and title, and the page a click opens. In the form of
-    /// Declarative Web Push (<c>web_push: 8030</c>), which Safari shows by itself and the service worker reads the same
-    /// way. Several actions in one message name the count and open the inbox.
-    /// </summary>
     public static string Push(MessageContent content)
     {
         var texts = MessageTexts.For(content.Locale);
@@ -114,7 +99,6 @@ internal static class MessageRenderer
         var inbox = $"/o/{content.Organization.Slug}/notifications";
         if (content.Kind == "reminder" && subjects.Count > 1)
         {
-            // One message per run (ADR 048): the count, the first reminders, and the list of open reminders.
             return PushPayload(
                 texts.Locale, content.DeliveryId, RemindersSubject(content, texts),
                 string.Join("; ", subjects.Take(3).Select(g => texts.Title(g.First()))), content.Link(MessageContent.RemindersPath(content.Organization)),
@@ -135,20 +119,12 @@ internal static class MessageRenderer
             string.Join("; ", subjects.Take(3).Select(g => texts.Title(g.OrderBy(i => i.At).Last()))), content.Link(inbox), content.Level, content.Organization.Slug);
     }
 
-    /// <summary>
-    /// Push JSON keeps non-ASCII letters as they are (an escaped form would triple a Cyrillic or Chinese title); the
-    /// payload is plain data for the browser, not HTML.
-    /// </summary>
     private static readonly JsonSerializerOptions PushJson = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = false,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    /// <summary>
-    /// The JSON of a push message; also what the test message of a device is sent as. It fits the push services'
-    /// 4 KB (<see cref="Delivering.WebPushEncryption.MaxPlaintext"/>): title and body are cut by their UTF-8 length.
-    /// </summary>
     public static string PushPayload(string locale, Guid id, string title, string body, Uri navigate, int? level, string? organization)
     {
         title = TruncateUtf8(title, 400);
@@ -180,7 +156,6 @@ internal static class MessageRenderer
         }
     }
 
-    /// <summary>At most <paramref name="bytes"/> of UTF-8, cut between characters and ended with «…».</summary>
     internal static string TruncateUtf8(string value, int bytes)
     {
         if (Encoding.UTF8.GetByteCount(value) <= bytes)
@@ -205,7 +180,6 @@ internal static class MessageRenderer
         return end == 0 ? string.Empty : value[..end] + "…";
     }
 
-    /// <summary>The webhook's body, schema <c>ardea.notification.v1</c> (master plan 8.5).</summary>
     public static string Webhook(MessageContent content)
     {
         var texts = MessageTexts.For(content.Locale);
@@ -292,7 +266,6 @@ internal static class MessageRenderer
         return (subject, blocks);
     }
 
-    /// <summary>The events of one subject, then the three answers and the link.</summary>
     private static IEnumerable<Block> Describe(List<MessageItem> items, MessageContent content, MessageTexts texts, bool minimal)
     {
         foreach (var item in items)
@@ -311,7 +284,6 @@ internal static class MessageRenderer
         }
         else if (!minimal && last.Notice is { } notice)
         {
-            // The same three answers as for a reminder: what happened, why it could affect you, what to do (ADR 048).
             yield return new Facts(
             [
                 (texts["label.what_happened"], texts.NoticeWhat(notice)),
@@ -389,10 +361,6 @@ internal static class MessageRenderer
         return (subject, blocks);
     }
 
-    /// <summary>
-    /// A run of the reminders by level (master plan 8.7, ADR 048): one message with every reminder due for this recipient,
-    /// highest level first, each with its link, and the list of open reminders at the end.
-    /// </summary>
     private static (string Subject, List<Block> Blocks) Reminders(MessageContent content, MessageTexts texts, bool minimal)
     {
         var blocks = new List<Block> { new Paragraph(texts["reminders.intro"], Bold: false) };

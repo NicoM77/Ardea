@@ -3,11 +3,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// The acceptance criteria of master plan 8.8 on state and uniqueness (tasks 5.1, 5.2): never the same twice,
-/// one message per recipient and channel whichever rules fire, again only on a rise, bundling, and one
-/// message for a first fill.
-/// </summary>
 public sealed class NotificationStateTests(PostgresServer server)
 {
     private static readonly string[] Raises = ["action.raised", "action.level_raised", "action.exploitation_escalated", "backfill.completed"];
@@ -15,7 +10,6 @@ public sealed class NotificationStateTests(PostgresServer server)
     [Fact]
     public async Task Above_sixty_immediate_messages_an_hour_on_a_channel_the_next_waits_for_the_digest()
     {
-        // A flood from a faulty or hostile source (master plan 9.7) ends at the cap of 8.6 per channel and organisation.
         await using var host = await NotifyTestHost.StartAsync(server);
         var s = await Scenario.StartAsync(host);
         await s.RuleAsync("High", 4, ["action.raised"], Scenario.Target("email"));
@@ -52,7 +46,6 @@ public sealed class NotificationStateTests(PostgresServer server)
             await host.RowsAsync($"SELECT channel || ' ' || count(*) FROM notify.delivery_event WHERE event_id = '{raised}' GROUP BY channel ORDER BY channel DESC"));
         Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.notification"));
 
-        // The delivery job running twice sends once.
         await s.DeliverAsync();
         var delivery = await host.ScalarAsync<Guid>("SELECT id FROM notify.delivery WHERE channel = 'email'");
         await host.RunAsync(new Deliver(delivery), s.Organization);
@@ -90,7 +83,6 @@ public sealed class NotificationStateTests(PostgresServer server)
         await s.EvaluateAsync();
         Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.notification"));
 
-        // More findings without a rise are history only; a new description changes nothing in Assessment, so no event comes.
         await host.ExecuteAsync($"UPDATE assess.remediation SET open_findings = 5 WHERE id = '{action}'");
         await s.EventAsync("finding.joined", action, """{"level": 4}""");
         await s.EvaluateAsync();
@@ -109,7 +101,6 @@ public sealed class NotificationStateTests(PostgresServer server)
     {
         await using var host = await NotifyTestHost.StartAsync(server);
         var s = await Scenario.StartAsync(host);
-        // E-mail at once for rises only: this recipient does not hear the all-clear in between.
         await s.RuleAsync("Critical", 5, Raises, Scenario.Target("email"));
         var action = await s.ActionAsync(2, level: 4);
 
@@ -159,7 +150,6 @@ public sealed class NotificationStateTests(PostgresServer server)
         Assert.Contains("It is actively exploited.", mail.Text, StringComparison.Ordinal);
         Assert.Equal(["3"], await host.RowsAsync("SELECT count(*) FROM notify.delivery_event GROUP BY delivery_id"));
 
-        // After the message went out, the next event starts a new one.
         var fourth = await s.ActionAsync(5, level: 3);
         await s.EventAsync("action.raised", fourth);
         await s.EvaluateAsync();
@@ -179,7 +169,6 @@ public sealed class NotificationStateTests(PostgresServer server)
             actions.Add(await s.ActionAsync(10 + i, level: i % 10 == 0 ? 4 : 3, backfill: true));
         }
 
-        // The first fill writes no action.raised, only one backfill.completed for the project (ADR 035; Ardea.Assessment.Tests.ActionTests).
         await s.EventAsync("backfill.completed", project: s.Project, data: """{"scope": "project", "actions": 40, "highestLevel": 4, "findings": 40}""");
         await s.EvaluateAsync();
         await s.DeliverAsync();
@@ -188,7 +177,6 @@ public sealed class NotificationStateTests(PostgresServer server)
         var mail = Assert.Single(host.Mail!.Sent);
         Assert.Equal("First assessment: Platform Ops", mail.Subject);
         Assert.Contains("40 reminder(s), highest level 4", mail.Text, StringComparison.Ordinal);
-        // The actions count as reported to everyone who heard about the first fill: only a later rise sends.
         Assert.Equal(80L, await s.CountAsync("SELECT count(*) FROM notify.recipient_state"));
 
         await s.SetActionAsync(actions[1], 4);

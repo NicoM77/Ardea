@@ -3,7 +3,6 @@ using System.Text.Json;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>An organisation with one project and component, its owner signed in, and the rules a test sets.</summary>
 internal sealed class Scenario
 {
     private Scenario(NotifyTestHost host, ApiClient owner, Guid organization, Guid project, Guid component)
@@ -32,7 +31,6 @@ internal sealed class Scenario
         var (owner, organization) = await host.OwnerAsync();
         var (project, component) = await host.ProjectAsync(owner, organization);
         var scenario = new Scenario(host, owner, organization, project, component);
-        // The reverse search the new project queued is not under test here; findings and events are written directly.
         await host.ExecuteAsync("DELETE FROM platform.job WHERE kind LIKE 'assets.%' OR kind LIKE 'assess.%'");
         if (!keepDefaultRules)
         {
@@ -47,7 +45,6 @@ internal sealed class Scenario
 
     public async Task<Guid> OwnerIdAsync() => await Host.ScalarAsync<Guid>("SELECT id FROM iam.\"user\" WHERE normalized_email = 'OWNER@EXAMPLE.ORG'");
 
-    /// <summary>Creates a rule through the API.</summary>
     public async Task<JsonElement> RuleAsync(string name, int minLevel, string[] events, params object[] targets) =>
         await NotifyTestHost.JsonAsync(
             await Owner.PostAsync($"{Path}/rules", new { name, minLevel, events, targets }),
@@ -56,7 +53,6 @@ internal sealed class Scenario
     public static object Target(string channel, string mode = "immediate", string kind = "role", string reference = "owner", string? cron = null, bool sendEmpty = false) =>
         new { channel, recipientKind = kind, recipientRef = reference, mode, digestCron = cron, sendEmpty };
 
-    /// <summary>An action on a component of its own: a component has at most one open action.</summary>
     public async Task<Guid> ActionAsync(int number, int level, string exploitation = "none", bool backfill = false)
     {
         var component = number == 2
@@ -73,7 +69,6 @@ internal sealed class Scenario
     public Task<Guid> EventAsync(string kind, Guid? action = null, string data = "{}", Guid? project = null, Guid? notice = null) =>
         Host.EventAsync(Organization, kind, action, project, data, notice);
 
-    /// <summary>The organisation's stack (ADR 046) and an entry in it without a version, e.g. «PostgreSQL».</summary>
     public async Task<(Guid Stack, Guid Component)> StackEntryAsync(string product = "postgresql")
     {
         var stack = (await NotifyTestHost.JsonAsync(await Owner.GetAsync($"{Path}/stack"))).GetProperty("projectId").GetGuid();
@@ -85,7 +80,6 @@ internal sealed class Scenario
 
     public Task EvaluateAsync() => Host.EvaluateAsync(Organization);
 
-    /// <summary>Moves the clock past the bundling time and runs every job that is due then.</summary>
     public async Task DeliverAsync()
     {
         Host.Time.Advance(TimeSpan.FromMinutes(3));

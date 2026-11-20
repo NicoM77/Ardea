@@ -42,9 +42,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.Sql("""
-                -- User data without an organisation (master plan 4.1, 9.2; ADR 041). The user reads and writes their own
-                -- devices. The worker, in a unit of work of an organisation without a user, reads, counts and removes the
-                -- devices of a named recipient who is a member of that organisation, and nothing else.
                 ALTER TABLE notify.push_subscription ENABLE ROW LEVEL SECURITY;
                 CREATE POLICY own ON notify.push_subscription
                     USING (user_id = platform.current_user_id())
@@ -61,10 +58,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                     USING (platform.current_user_id() IS NULL
                         AND user_id IN (SELECT m.user_id FROM iam.membership m WHERE m.organization_id = platform.current_organization_id()));
 
-                -- Default rule 1 of master plan 8.3 reaches owners and admins by push too (ADR 038 decision 11), also in
-                -- organisations created before the channel existed, but only where nobody changed the rule since it was
-                -- written (changed_at = created_at): a rule someone shaped stays as they left it. A member without a
-                -- device is not reached by it.
                 INSERT INTO notify.rule_target (organization_id, rule_id, channel, recipient_kind, recipient_ref, mode, digest_cron, send_empty, created_at)
                 SELECT r.organization_id, r.id, 'push', 'role', 'admin', 'immediate', NULL, false, now()
                 FROM notify.rule r

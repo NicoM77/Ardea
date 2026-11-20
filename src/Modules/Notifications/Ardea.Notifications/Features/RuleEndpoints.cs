@@ -14,11 +14,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Notifications.Features;
 
-/// <summary>
-/// Rules and their targets (master plan 8.3, 10.2; tasks 5.1, 5.7): owners and admins manage them. Ids in the
-/// body (projects, members, addresses, endpoints) are resolved inside the organisation; a foreign one is
-/// «not found» as a field error.
-/// </summary>
 internal static class RuleEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
@@ -42,7 +37,6 @@ internal static class RuleEndpoints
             new(Channels.InApp, true, null),
             new(Channels.Email, smtp, smtp ? null : "smtp_not_configured"),
             new(Channels.Webhook, true, null),
-            // Members turn it on per device; a member without a subscription is simply not reached by push.
             new(Channels.Push, true, null),
         ];
     }
@@ -124,7 +118,6 @@ internal static class RuleEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>Validates the request and writes it into the rule; targets keep their id, and their schedule, where they stay the same.</summary>
     private static async Task<Dictionary<string, string[]>> ApplyAsync(
         NotificationRule rule, NotificationRuleRequest request, NotifyDbContext db, IActionFacts facts, IOrganizationMembers members,
         IOrganizationProfiles organizations, ITenantContext tenant, DateTimeOffset now, CancellationToken cancellationToken)
@@ -211,10 +204,8 @@ internal static class RuleEndpoints
                 SendEmpty = mode == "digest" && (t.SendEmpty ?? false),
                 NextDigestAt = cron is null ? null : DigestSchedule.Next(cron, timeZone, now),
                 LastDigestAt = cron is null ? null : now,
-                // One microsecond apart, the database's precision: the rule shows its targets in the order given.
                 CreatedAt = now.AddTicks(order * 10),
             };
-            // Added explicitly: a client-side id would otherwise make EF take the new target for an existing one.
             rule.Targets.Add(target);
             db.Targets.Add(target);
             kept.Add(target);

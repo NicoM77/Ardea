@@ -15,11 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Notifications.Features;
 
-/// <summary>
-/// Webhook targets (master plan 8.5, 9.5, 10.2; task 5.6). Address and secret are stored encrypted and never
-/// shown again: the answer names the host, and the secret only right after creating or rotating it. An
-/// address in the private network is refused unless the instance administrator released its host.
-/// </summary>
 internal static class EndpointEndpoints
 {
     public static void Map(IEndpointRouteBuilder api)
@@ -131,7 +126,6 @@ internal static class EndpointEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>Posts a test message now. The request holds no transaction while it waits for the endpoint (master plan 9.2).</summary>
     private static async Task<IResult> TestAsync(
         Guid id, NotifyDbContext db, ISecretProtector secrets, IInstanceSettings settings, IUnitOfWork unitOfWork, IUnitOfWorkFactory units,
         WebhookChannel channel, ITenantContext tenant, Iam.Contracts.IOrganizationProfiles organizations, TimeProvider time, CancellationToken cancellationToken)

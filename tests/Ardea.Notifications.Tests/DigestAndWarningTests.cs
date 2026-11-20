@@ -5,11 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// Warnings without identifier and digests (master plan 8.2, 8.4, 8.8; tasks 5.1, 5.2, 5.7): a warning reaches
-/// every organisation with a rule for it once in the app and once in its next digest; a digest comes at the
-/// time set in the organisation's time zone, holds everything since the last one and also comes empty.
-/// </summary>
 public sealed class DigestAndWarningTests(PostgresServer server)
 {
     [Fact]
@@ -27,7 +22,6 @@ public sealed class DigestAndWarningTests(PostgresServer server)
             VALUES ('warning', 'NCSC-2026-0042', 'Phishing wave against invoice portals', 'published', '{host.Time.GetUtcNow():O}', now(), 1, 'm', 'r', 'none', false, ARRAY[]::text[], true, jsonb_build_object()) RETURNING id
             """);
 
-        // Intel reports the new entry; the distribution may run more than once.
         await host.RunAsync(new DistributeWarning(warning), organization: null);
         await host.RunAsync(new DistributeWarning(warning), organization: null);
         Assert.Empty(await host.RunJobsAsync());
@@ -41,7 +35,6 @@ public sealed class DigestAndWarningTests(PostgresServer server)
             SELECT o.name FROM notify.digest_item i JOIN iam.organization o ON o.id = i.organization_id WHERE i.event = 'warning.published' ORDER BY o.name
             """));
 
-        // The weekly summary is the next digest that takes it; the one after does not repeat it.
         await RunDigestsUntilAsync(host, await host.ScalarAsync<DateTime>($"SELECT t.next_digest_at FROM notify.rule_target t JOIN notify.rule r ON r.id = t.rule_id WHERE r.preset = 'weekly' AND t.organization_id = '{acme}'"));
         var first = host.Mail!.Sent.Where(m => m.Text.Contains("Phishing wave", StringComparison.Ordinal)).ToList();
         Assert.Equal(["alice@example.org", "bob@example.org"], first.Select(m => m.To).Order());
@@ -77,7 +70,6 @@ public sealed class DigestAndWarningTests(PostgresServer server)
         await s.DeliverAsync();
         Assert.Single(host.Mail!.Sent);
 
-        // At 07:30 in New York: one digest with what happened since the rule was made; the immediate e-mail is marked.
         await RunDigestsUntilAsync(host, expected);
         var digest = host.Mail.Sent[^1];
         Assert.Equal("Ardea digest for Acme: 1 item(s)", digest.Subject);
@@ -85,7 +77,6 @@ public sealed class DigestAndWarningTests(PostgresServer server)
         Assert.Contains("(already reported)", digest.Text, StringComparison.Ordinal);
         Assert.Equal(expected.UtcDateTime, (await host.ScalarAsync<DateTime>("SELECT period_end FROM notify.delivery WHERE kind = 'digest'")).ToUniversalTime());
 
-        // The next day holds only what came after the first digest.
         await s.EventAsync("action.raised", second);
         await s.EvaluateAsync();
         await RunDigestsUntilAsync(host, NextDay(expected, zone));
@@ -93,7 +84,6 @@ public sealed class DigestAndWarningTests(PostgresServer server)
         Assert.Contains("#3 PostgreSQL", next.Text, StringComparison.Ordinal);
         Assert.DoesNotContain("#2 PostgreSQL", next.Text, StringComparison.Ordinal);
 
-        // A day without news: the rule that says so sends an empty digest, the other sends nothing.
         var before = await s.CountAsync("SELECT count(*) FROM notify.delivery WHERE kind = 'digest'");
         await RunDigestsUntilAsync(host, NextDay(NextDay(expected, zone), zone));
         Assert.Equal("Ardea digest for Acme: nothing to do", host.Mail.Sent[^1].Subject);
@@ -102,7 +92,6 @@ public sealed class DigestAndWarningTests(PostgresServer server)
         Assert.Equal(["in_app 2", "email 3"], await host.RowsAsync("SELECT channel || ' ' || count(*) FROM notify.delivery WHERE kind = 'digest' AND state = 'sent' GROUP BY channel ORDER BY channel DESC"));
     }
 
-    /// <summary>Moves the clock to <paramref name="at"/> and lets the instance's schedule find and send what is due.</summary>
     private static Task RunDigestsUntilAsync(NotifyTestHost host, DateTime at) => RunDigestsUntilAsync(host, new DateTimeOffset(DateTime.SpecifyKind(at, DateTimeKind.Utc)));
 
     private static async Task RunDigestsUntilAsync(NotifyTestHost host, DateTimeOffset at)

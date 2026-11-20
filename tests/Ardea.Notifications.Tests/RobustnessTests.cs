@@ -7,12 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// What keeps notifications flowing when something goes wrong (ADR 038): events left waiting are found again, one
-/// broken event does not hold back the others, a channel that throws neither leaves its message hanging nor keeps
-/// the owners from hearing about a lost level 5, the rule compares the level the event reports, and a new time
-/// zone moves the next digest.
-/// </summary>
 public sealed class RobustnessTests(PostgresServer server)
 {
     [Fact]
@@ -21,7 +15,6 @@ public sealed class RobustnessTests(PostgresServer server)
         await using var host = await NotifyTestHost.StartAsync(server);
         var s = await Scenario.StartAsync(host);
         await s.RuleAsync("Everything", 2, ["action.raised"], Scenario.Target("in_app"));
-        // The event waits, but its evaluation job never ran (a lost wake-up).
         await s.EventAsync("action.raised", await s.ActionAsync(2, level: 4));
 
         await host.RunAsync(new FindDueDigests(), organization: null);
@@ -61,7 +54,6 @@ public sealed class RobustnessTests(PostgresServer server)
         Assert.Contains(status.GetProperty("warnings").EnumerateArray(), w => w.GetProperty("code").GetString() == "notify_events_failed");
         Assert.Contains(status.GetProperty("metrics").EnumerateArray(), m => m.GetProperty("name").GetString() == "events_failed" && m.GetProperty("value").GetDouble() == 1);
 
-        // Set aside: the sweep no longer brings it back.
         host.Time.Advance(TimeSpan.FromMinutes(5));
         await host.RunAsync(new FindDueDigests(), organization: null);
         Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM platform.job WHERE kind = 'notify.evaluate' AND state = 'pending'"));
@@ -86,7 +78,6 @@ public sealed class RobustnessTests(PostgresServer server)
         Assert.Equal("failed|SslHandshakeException", await host.ScalarAsync<string>(
             "SELECT state || '|' || split_part(last_error, ':', 1) FROM notify.delivery WHERE channel = 'email'"));
 
-        // The last attempt gives up and the owner hears that the member was reached nowhere.
         var delivery = await host.ScalarAsync<Guid>("SELECT id FROM notify.delivery WHERE channel = 'email'");
         await host.RunAsync(new Deliver(delivery), s.Organization, attempt: Deliver.MaxAttempts);
         Assert.Equal("dead", await host.ScalarAsync<string>($"SELECT state FROM notify.delivery WHERE id = '{delivery}'"));
@@ -102,7 +93,6 @@ public sealed class RobustnessTests(PostgresServer server)
         await s.RuleAsync("Critical", 5, ["action.raised", "action.level_raised"], Scenario.Target("in_app"));
         var action = await s.ActionAsync(2, level: 5);
 
-        // Raised at 4, then raised to 5; both are evaluated after the action reached 5.
         await s.EventAsync("action.raised", action, """{"level": 4, "findings": 1, "exploitation": "none"}""");
         await s.EventAsync("action.level_raised", action, """{"from": 4, "to": 5}""");
         await s.EvaluateAsync();
@@ -141,7 +131,6 @@ public sealed class RobustnessTests(PostgresServer server)
         services.Add(new ServiceDescriptor(typeof(TService), sp => wrap((TService)ActivatorUtilities.CreateInstance(sp, original.ImplementationType!)), original.Lifetime));
     }
 
-    /// <summary>The entries of Intel, except one whose lookup always fails.</summary>
     private sealed class FailingEntries(IEntryQueries inner, Guid broken) : IEntryQueries
     {
         public Task<EntryFacts?> FindAsync(Guid entryId, CancellationToken cancellationToken) =>

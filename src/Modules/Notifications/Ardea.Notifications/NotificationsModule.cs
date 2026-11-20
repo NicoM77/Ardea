@@ -17,15 +17,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Notifications;
 
-/// <summary>
-/// Rules, recipients, channels, delivery with retries, digests and in-app notifications (master plan 3.2, 8).
-/// Hears about events through the subscriber interfaces of Assessment and Intel; reads members through Iam.
-/// </summary>
 public sealed class NotificationsModule : IModule
 {
     public string Name => NotifyDbContext.Schema;
 
-    /// <summary>What is wrong with the Web Push variables (<c>ARDEA_VAPID__*</c>); checked when API and worker start.</summary>
     public static IReadOnlyList<string> ConfigurationErrors(IConfiguration configuration) => PushConfiguration.Errors(configuration);
 
     public IModuleDatabase? Database { get; } =
@@ -53,11 +48,9 @@ public sealed class NotificationsModule : IModule
         services.AddSingleton<PushOptions>();
         services.AddScoped<WebPushChannel>();
         services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<WebPushChannel>());
-        // Push endpoints are capabilities of the browser makers' push services: never logged, never internal (ADR 041).
         services.AddHttpClient(WebPushChannel.ClientName, client => client.Timeout = TimeSpan.FromSeconds(10))
             .ConfigurePrimaryHttpMessageHandler(OutboundAddresses.CreateHandler)
             .RemoveAllLoggers();
-        // No request logging: chat services (Slack, Teams, Discord) carry the webhook's secret in its path.
         services.AddHttpClient(WebhookChannel.ClientName, client => client.Timeout = TimeSpan.FromSeconds(10))
             .ConfigurePrimaryHttpMessageHandler(OutboundAddresses.CreateHandler)
             .RemoveAllLoggers();
@@ -71,7 +64,6 @@ public sealed class NotificationsModule : IModule
         services.AddJob<SendDigest, SendDigestHandler>(new JobKindOptions { MaxConcurrency = 2, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(2) });
         services.AddJob<SendReminders, SendRemindersHandler>(new JobKindOptions { MaxConcurrency = 2, MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(2) });
         services.AddJob<SendAddressConfirmation, SendAddressConfirmationHandler>(new JobKindOptions { MaxAttempts = 5, Timeout = TimeSpan.FromMinutes(1) });
-        // Due digests are found every minute; when a single target is due stands on the target (master plan 3.4, 8.4).
         services.AddSchedule("notify.find-due-digests", "* * * * *", new FindDueDigests());
     }
 

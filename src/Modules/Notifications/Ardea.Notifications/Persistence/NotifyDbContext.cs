@@ -5,10 +5,6 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace Ardea.Notifications.Persistence;
 
-/// <summary>
-/// Schema <c>notify</c> (master plan 4.7): organisation data, two user tables that also carry the
-/// organisation (<c>notification</c>, <c>user_preference</c>), and the devices' push subscriptions, which do not.
-/// </summary>
 internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options, ITenantContext tenant) : ModuleDbContext(options, tenant)
 {
     public const string Schema = "notify";
@@ -72,7 +68,6 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             target.Property(t => t.Mode).HasMaxLength(20);
             target.Property(t => t.DigestCron).HasMaxLength(100);
             target.HasIndex(t => t.RuleId).HasDatabaseName("ix_rule_target_rule");
-            // The instance's digest schedule asks which targets are due (master plan 8.4, 9.2).
             target.HasIndex(t => t.NextDigestAt).HasFilter("mode = 'digest'").HasDatabaseName("ix_rule_target_due");
         });
 
@@ -120,14 +115,10 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             delivery.Property(d => d.RecipientKey).HasMaxLength(100);
             delivery.Property(d => d.State).HasMaxLength(20);
             delivery.Property(d => d.LastError).HasMaxLength(2000);
-            // One digest per target, recipient and period (master plan 8.4).
             delivery.HasIndex(d => new { d.RuleTargetId, d.RecipientKey, d.PeriodEnd }).IsUnique().HasFilter("kind = 'digest'").HasDatabaseName("ux_delivery_digest");
-            // One message per recipient and channel and run of the reminders by level (ADR 048).
             delivery.HasIndex(d => new { d.OrganizationId, d.RecipientKey, d.Channel, d.PeriodEnd }).IsUnique().HasFilter("kind = 'reminder'").HasDatabaseName("ux_delivery_reminder");
-            // At most one waiting immediate message per recipient and channel: further events join it (master plan 8.4).
             delivery.HasIndex(d => new { d.OrganizationId, d.RecipientKey, d.Channel }).IsUnique()
                 .HasFilter("kind = 'immediate' AND state = 'pending'").HasDatabaseName("ux_delivery_waiting");
-            // The log, newest first, and the hourly limit per channel (master plan 8.6).
             delivery.HasIndex(d => new { d.OrganizationId, d.CreatedAt }).HasDatabaseName("ix_delivery_org_created");
             delivery.HasOne<RuleTarget>().WithMany().HasForeignKey(d => d.RuleTargetId).OnDelete(DeleteBehavior.SetNull);
         });
@@ -140,11 +131,8 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             e.Property(x => x.RecipientKey).HasMaxLength(100);
             e.Property(x => x.Channel).HasMaxLength(20);
             e.Property(x => x.Event).HasMaxLength(40);
-            // Recipient, channel and event together are unique: an event processed again sends nothing (master plan 8.4).
-            // A warning's event is its entry, the same in every organisation; the organisation is part of the key.
             e.HasIndex(x => new { x.OrganizationId, x.RecipientKey, x.Channel, x.EventId }).IsUnique().HasDatabaseName("ux_delivery_event");
             e.HasIndex(x => x.DeliveryId).HasDatabaseName("ix_delivery_event_delivery");
-            // A notice is announced once per recipient and channel (ADR 048).
             e.HasIndex(x => new { x.OrganizationId, x.NoticeId, x.RecipientKey, x.Channel }).HasFilter("notice_id IS NOT NULL").HasDatabaseName("ix_delivery_event_notice");
             e.HasOne<Delivery>().WithMany().HasForeignKey(x => x.DeliveryId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -170,9 +158,7 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             notification.Property(n => n.Body).HasMaxLength(2000);
             notification.Property(n => n.Link).HasMaxLength(500);
             notification.HasIndex(n => new { n.UserId, n.OrganizationId, n.EventId }).IsUnique().HasDatabaseName("ux_notification_event");
-            // The member's list and unread counter in one organisation, newest first.
             notification.HasIndex(n => new { n.OrganizationId, n.UserId, n.CreatedAt }).HasDatabaseName("ix_notification_user");
-            // The header's unread counter, asked on every page: it and the unread list read the unread rows only, however old the inbox is.
             notification.HasIndex(n => new { n.OrganizationId, n.UserId, n.CreatedAt, n.Id }).HasFilter("read_at IS NULL").HasDatabaseName("ix_notification_unread");
         });
 
@@ -203,7 +189,6 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             subscription.Property(s => s.Auth).HasMaxLength(50);
             subscription.Property(s => s.UserAgent).HasMaxLength(500);
             subscription.Property(s => s.Label).HasMaxLength(100);
-            // One row per user and device; the address is long, so the index holds its hash (master plan 4.7).
             subscription.HasIndex(s => new { s.UserId, s.EndpointHash }).IsUnique().HasDatabaseName("ux_push_subscription");
         });
 

@@ -13,12 +13,6 @@ using Microsoft.Extensions.Configuration;
 
 namespace Ardea.Notifications.Evaluation;
 
-/// <summary>
-/// Evaluates the organisation's rules for its events (master plan 8.1 to 8.4): which targets an event
-/// reaches, who they are now, whether each recipient learns something new on each channel, and then
-/// either an in-app notification at once, a place in the waiting message of that recipient and channel,
-/// or a line in a digest. Runs in the organisation's job, under its lock, events in the order they happened.
-/// </summary>
 internal sealed class Evaluator(
     NotifyDbContext db,
     IActionFacts facts,
@@ -31,17 +25,14 @@ internal sealed class Evaluator(
     IConfiguration configuration,
     TimeProvider time)
 {
-    /// <summary>An immediate message waits this long for further events of the same recipient and channel (master plan 8.4).</summary>
     public static readonly TimeSpan Bundling = TimeSpan.FromMinutes(2);
 
-    /// <summary>Immediate messages per channel and organisation and hour; above, the event waits for the digest (master plan 8.6).</summary>
     public const int HourlyLimit = 60;
 
     public static readonly TimeSpan LimitWindow = TimeSpan.FromHours(1);
 
     public static readonly string CappedReason = $"More than {HourlyLimit} immediate messages on this channel within an hour; the event waits for the digest.";
 
-    /// <summary>Reads what every event of the batch needs once: organisation, rules, recipients, events and actions.</summary>
     public async Task<Batch?> LoadAsync(IReadOnlyList<PendingEvent> pending, CancellationToken cancellationToken)
     {
         var organization = await organizations.FindAsync(tenant.RequiredOrganizationId, cancellationToken);
@@ -59,7 +50,6 @@ internal sealed class Evaluator(
         return new Batch(new Context(organization, rules, directory, emailAvailable, PublicUrl(configuration), time.GetUtcNow()), events, actions, notices);
     }
 
-    /// <summary>Evaluates one event of the batch and saves what it decided.</summary>
     public async Task EvaluateAsync(Batch batch, PendingEvent pending, CancellationToken cancellationToken)
     {
         var item = await ItemAsync(pending, batch, cancellationToken);
@@ -102,7 +92,6 @@ internal sealed class Evaluator(
         {
             var projects = fact.ProjectId is { } summary ? await facts.ProjectNamesAsync([summary], cancellationToken) : new Dictionary<Guid, string>();
             var notice = MessageItem.ForNotice(fact, batch.Notices, projects);
-            // A notice answered or withdrawn before its event is evaluated asks nobody any more.
             return notice is { Notice.State: not "open" } ? null : notice;
         }
 
@@ -123,10 +112,6 @@ internal sealed class Evaluator(
             : null;
     }
 
-    /// <summary>
-    /// The level the event reports, from its own data: the action may have moved on since, and a rule's threshold and
-    /// the state compare against what this event says (raised at 4, then raised to 5, are two events at 4 and 5).
-    /// </summary>
     internal static int EventLevel(ActionEventFacts fact, ActionFacts action)
     {
         var item = new MessageItem { EventId = fact.Id, Event = fact.Kind, At = fact.At, Data = fact.Data };
@@ -142,12 +127,10 @@ internal sealed class Evaluator(
     {
         if (item.Event == NotifyEvents.ActionLevelLowered && item.Action is { } lowered)
         {
-            // Every recipient's state sinks with the action, whether or not they hear the all-clear (master plan 8.4).
             await LowerStatesAsync(lowered.Id, item.DataInt("to") ?? lowered.Level, cancellationToken);
         }
 
         var projects = item.Projects;
-        // An all-clear is measured against the level it clears; a notice by the stand-in of ADR 048.
         var level = item.Event == NotifyEvents.ActionLevelLowered ? Math.Max(item.DataInt("from") ?? 0, item.Level ?? 0) : item.ThresholdLevel;
         var ruleEvent = NotifyEvents.RuleEvent(item.Event);
         var rules = context.Rules.Where(r => r.Events.Contains(ruleEvent)
@@ -191,8 +174,6 @@ internal sealed class Evaluator(
             var state = HasState(item.Event) && item.Action is { } action
                 ? await db.States.FindAsync([context.Organization.Id, action.Id, key, channel], cancellationToken)
                 : null;
-            // A notice is announced once per recipient and channel, and its return once more (ADR 048): raised anew after a
-            // withdrawal, or brought back to «new» by a reminder it took over, it does not come again.
             var noticeId = item.Notice?.Id;
             if (!ShouldSend(item, state, channel)
                 || await db.DeliveryEvents.AnyAsync(
@@ -212,7 +193,6 @@ internal sealed class Evaluator(
 
         if (item.Backfill is { } backfill)
         {
-            // The first fill's actions count as reported to everyone who hears about it, so that only a later rise sends (master plan 8.4).
             var reached = immediate.Keys.Concat(digestRecipients).ToHashSet();
             foreach (var action in await facts.BackfillActionsAsync(backfill.ProjectId, cancellationToken))
             {
@@ -242,11 +222,6 @@ internal sealed class Evaluator(
         }
     }
 
-    /// <summary>
-    /// Who hears about an event without a target naming them (master plan 8.2): every member about a warning or a notice in
-    /// the app, when a rule of the organisation names it (ADR 038, 048). A reminder has no assignee (master plan 17.5), so
-    /// nobody hears about the team's work without a rule.
-    /// </summary>
     private static IEnumerable<(Recipient Recipient, string Channel)> Implicit(MessageItem item, bool ruleMatched, Context context)
     {
         if ((item.Event == NotifyEvents.WarningPublished || NotifyEvents.IsNotice(item.Event)) && ruleMatched)
@@ -258,11 +233,9 @@ internal sealed class Evaluator(
         }
     }
 
-    /// <summary>The events that move the notification state; the others need only the uniqueness of the event (master plan 8.4).</summary>
     private static bool HasState(string kind) => kind is NotifyEvents.ActionRaised or NotifyEvents.ActionLevelRaised or NotifyEvents.ActionExploitationEscalated
         or NotifyEvents.ActionFixAvailable or NotifyEvents.ActionLevelLowered or NotifyEvents.ActionWithdrawn;
 
-    /// <summary>The table of master plan 8.4: whether the recipient learns something new on this channel.</summary>
     internal static bool ShouldSend(MessageItem item, RecipientState? state, string channel) => item.Event switch
     {
         NotifyEvents.ActionRaised or NotifyEvents.ActionLevelRaised => (item.Level ?? 0) > (state?.LastLevel ?? 0),
@@ -298,7 +271,6 @@ internal sealed class Evaluator(
     {
         await db.States.Where(s => s.RemediationId == remediationId && s.LastLevel > level)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.LastLevel, level), cancellationToken);
-        // States read earlier in this job are saved after every event; they now hold what the database holds.
         foreach (var tracked in db.States.Local.Where(s => s.RemediationId == remediationId && s.LastLevel > level))
         {
             db.Entry(tracked).Property(x => x.LastLevel).OriginalValue = level;
@@ -417,10 +389,6 @@ internal sealed class Evaluator(
         await Task.CompletedTask;
     }
 
-    /// <summary>
-    /// The waiting message of this recipient and channel, locked: the delivery job takes it under the same lock
-    /// when it starts sending, so an event joins either before the message is read or a new message.
-    /// </summary>
     internal static async Task<Guid?> WaitingAsync(NotifyDbContext db, Guid organization, string key, string channel, CancellationToken cancellationToken)
     {
         var ids = await db.Database.SqlQuery<Guid>($"""
@@ -450,9 +418,7 @@ internal sealed class Evaluator(
     private static bool Usable(RuleTarget target, Context context) => target.Channel switch
     {
         Channels.InApp or Channels.Webhook => true,
-        // Push reaches the members with a subscribed device, at once; the directory leaves out the others.
         Channels.Push => target.Mode == "immediate",
-        // Without SMTP the channel is off (master plan 8.5); the rules page says so.
         Channels.Email => context.EmailAvailable,
         _ => false,
     };

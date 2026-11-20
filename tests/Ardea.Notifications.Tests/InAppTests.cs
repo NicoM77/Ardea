@@ -3,10 +3,6 @@ using Npgsql;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// The in-app channel (master plan 8.5, 9.2, 10.2; task 5.3): notifications are personal, the counter falls
-/// when they are read, and a new one wakes the organisation's live stream.
-/// </summary>
 public sealed class InAppTests(PostgresServer server)
 {
     [Fact(Timeout = 120_000)]
@@ -19,7 +15,6 @@ public sealed class InAppTests(PostgresServer server)
         await host.AddMemberAsync(s.Organization, "viewer@example.org", "viewer");
         await s.RuleAsync("Everyone", 3, ["action.raised"], Scenario.Target("in_app", reference: "viewer"));
 
-        // The event itself wakes streams too (task 3.11); here the stream opens after it, so only the notification can.
         await s.EventAsync("action.raised", await s.ActionAsync(2, level: 4));
         using var stream = await s.Owner.StreamAsync($"{s.Path}/events", cancellation);
         using var reader = new StreamReader(await stream.Content.ReadAsStreamAsync(cancellation));
@@ -36,7 +31,6 @@ public sealed class InAppTests(PostgresServer server)
         var theirs = await NotifyTestHost.JsonAsync(await viewer.GetAsync($"{s.Path}/notifications"));
         Assert.NotEqual(item.GetProperty("id").GetGuid(), theirs.GetProperty("items")[0].GetProperty("id").GetGuid());
 
-        // Someone else's id marks nothing; the own one does.
         var foreign = await NotifyTestHost.JsonAsync(await viewer.PostAsync($"{s.Path}/notifications/read", new { ids = new[] { item.GetProperty("id").GetGuid() } }));
         Assert.Equal(1, foreign.GetProperty("unread").GetInt32());
         Assert.Equal(1, (await NotifyTestHost.JsonAsync(await s.Owner.GetAsync($"{s.Path}/notifications/unread-count"))).GetProperty("unread").GetInt32());
@@ -64,13 +58,11 @@ public sealed class InAppTests(PostgresServer server)
             await set.ExecuteNonQueryAsync();
         }
 
-        // The job's context: the organisation, no user. It sees no one's notifications ...
         await using (var count = new NpgsqlCommand("SELECT count(*) FROM notify.notification", connection, transaction))
         {
             Assert.Equal(0L, await count.ExecuteScalarAsync());
         }
 
-        // ... and cannot write one for someone outside the organisation.
         await using var insert = new NpgsqlCommand(
             $"INSERT INTO notify.notification (user_id, organization_id, event_id, kind, title, body, created_at) VALUES (gen_random_uuid(), '{s.Organization}', gen_random_uuid(), 'x', 'x', 'x', now())",
             connection, transaction);
@@ -78,7 +70,6 @@ public sealed class InAppTests(PostgresServer server)
         Assert.Equal(PostgresErrorCodes.InsufficientPrivilege, refused.SqlState);
     }
 
-    /// <summary>The type of the next event; a «ping» is skipped.</summary>
     private static async Task<string> NextEventAsync(StreamReader reader)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);

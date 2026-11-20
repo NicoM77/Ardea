@@ -10,31 +10,20 @@ using Npgsql;
 
 namespace Ardea.Notifications.Evaluation;
 
-/// <summary>
-/// <c>EvaluateRules</c> of master plan 3.3 for one organisation: takes its pending events in the order they
-/// happened. One waiting job per organisation; a lock keeps a running and a following one apart.
-/// </summary>
 internal sealed record EvaluateEvents : IJob
 {
     public static string Kind => "notify.evaluate";
 
     public const int Batch = 200;
 
-    /// <summary>An event whose evaluation failed this often is set aside; the organisation's other events go on.</summary>
     public const int MaxEventAttempts = 5;
 
-    /// <summary>Events waiting longer than this are queued again by the instance's sweep (<c>notify.find-due-digests</c>).</summary>
     public static readonly TimeSpan Stale = TimeSpan.FromMinutes(2);
 
     public static EnqueueOptions Options(Guid organizationId) =>
         new() { CoalesceKey = $"notify.evaluate:{organizationId}", OrganizationId = organizationId, Priority = JobPriority.Urgent };
 }
 
-/// <summary>
-/// Each event is evaluated under a savepoint of its own: an event that fails is rolled back alone, counted, and tried
-/// again when the sweep finds it waiting, so one broken event does not hold back its organisation's notifications. After
-/// <see cref="EvaluateEvents.MaxEventAttempts"/> it is set aside with its error (instance status, ADR 038).
-/// </summary>
 internal sealed partial class EvaluateEventsHandler(
     NotifyDbContext db, Evaluator evaluator, ITenantContext tenant, IJobQueue jobs, TimeProvider time, ILogger<EvaluateEventsHandler> logger)
     : IJobHandler<EvaluateEvents>
@@ -92,10 +81,6 @@ internal sealed partial class EvaluateEventsHandler(
     private partial void LogEventFailed(Exception exception, Guid eventId, string kind, int attempt);
 }
 
-/// <summary>
-/// Hears about the events Assessment wrote, inside its transaction: they wait in <c>pending_event</c> and the
-/// organisation's evaluation job is queued, so neither exists without the other (master plan 3.3, 3.4).
-/// </summary>
 internal sealed class ActionEventInbox(NotifyDbContext db, IJobQueue jobs, ITenantContext tenant) : IActionEventSubscriber
 {
     public async Task OnActionEventsAsync(IReadOnlyList<NotifiableEvent> events, CancellationToken cancellationToken)
@@ -118,18 +103,15 @@ internal sealed class ActionEventInbox(NotifyDbContext db, IJobQueue jobs, ITena
     }
 }
 
-/// <summary>A new warning without identifier is distributed once for the instance (master plan 8.2, 9.2).</summary>
 internal sealed record DistributeWarning(Guid EntryId) : IJob
 {
     public static string Kind => "notify.distribute-warning";
 
-    /// <summary>Older warnings arrive with the first load of a source; they are history, not news.</summary>
     public static readonly TimeSpan Freshness = TimeSpan.FromDays(14);
 
     public static EnqueueOptions Options(Guid entryId) => new() { CoalesceKey = $"notify.distribute-warning:{entryId}" };
 }
 
-/// <summary>Hears about new entries from Intel and starts the distribution of new warnings.</summary>
 internal sealed class WarningSubscriber(IJobQueue jobs) : IEntryChangeSubscriber
 {
     public async Task OnEntryChangedAsync(EntryChanged change, CancellationToken cancellationToken)
@@ -141,10 +123,6 @@ internal sealed class WarningSubscriber(IJobQueue jobs) : IEntryChangeSubscriber
     }
 }
 
-/// <summary>
-/// A system job (master plan 9.2): asks which organisations have a rule for warnings, through the narrow
-/// function <c>notify.organizations_with_warning_rules</c>, and queues one job per organisation.
-/// </summary>
 internal sealed class DistributeWarningHandler(IEntryQueries entries, NotifyDbContext db, IJobQueue jobs, TimeProvider time) : IJobHandler<DistributeWarning>
 {
     public async Task HandleAsync(DistributeWarning job, JobContext context, CancellationToken cancellationToken)
@@ -164,7 +142,6 @@ internal sealed class DistributeWarningHandler(IEntryQueries entries, NotifyDbCo
     }
 }
 
-/// <summary>A warning reaches one organisation: the entry's id is the event's id, so it is evaluated there once.</summary>
 internal sealed record ReceiveWarning(Guid EntryId) : IJob
 {
     public static string Kind => "notify.receive-warning";

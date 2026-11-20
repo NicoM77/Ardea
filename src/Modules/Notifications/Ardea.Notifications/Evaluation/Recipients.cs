@@ -6,22 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Ardea.Notifications.Evaluation;
 
-/// <summary>A resolved recipient: a member, a confirmed external address or a webhook endpoint.</summary>
-/// <param name="Key">The <c>recipient_key</c>.</param>
-/// <param name="Kind"><c>user</c>, <c>address</c> or <c>endpoint</c>.</param>
-/// <param name="Id">The user, address or endpoint.</param>
-/// <param name="Email">Where e-mail goes, for members and addresses.</param>
-/// <param name="Name">The member's name, the address or the endpoint's name.</param>
 internal sealed record Recipient(string Key, string Kind, Guid Id, string? Email, string Name)
 {
     public Guid? UserId => Kind == RecipientKinds.User ? Id : null;
 }
 
-/// <summary>
-/// The organisation's recipients, read once per job inside its unit of work (master plan 8.3, 9.2): members
-/// from the member directory of Iam, confirmed external addresses, enabled endpoints and the members' own
-/// settings. Recipients are never resolved across organisations.
-/// </summary>
 internal sealed class RecipientDirectory
 {
     private readonly Dictionary<Guid, OrganizationMember> _members;
@@ -48,17 +37,11 @@ internal sealed class RecipientDirectory
         await db.Addresses.AsNoTracking().Where(a => a.ConfirmedAt != null && a.UnsubscribedAt == null).ToListAsync(cancellationToken),
         await db.Endpoints.AsNoTracking().Where(e => e.Enabled).ToListAsync(cancellationToken),
         await db.Preferences.AsNoTracking().ToListAsync(cancellationToken),
-        // Through the worker's policy: only members of the job's organisation (ADR 041).
         await db.PushSubscriptions.AsNoTracking().Select(s => s.UserId).Distinct().ToListAsync(cancellationToken));
 
-    /// <summary>
-    /// Who a target names now. A role means that role and the ones above it; a member who left is nobody. On
-    /// push, only members with at least one subscribed device: the others are not reached, not failed.
-    /// </summary>
     public IEnumerable<Recipient> Resolve(RuleTarget target) =>
         target.Channel == Channels.Push ? Named(target).Where(r => HasPush(r.Id)) : Named(target);
 
-    /// <summary>Whether the member subscribed at least one device to Web Push.</summary>
     public bool HasPush(Guid userId) => _withPush.Contains(userId);
 
     private IEnumerable<Recipient> Named(RuleTarget target)
@@ -83,15 +66,10 @@ internal sealed class RecipientDirectory
     public IEnumerable<Recipient> WithRole(OrganizationRole minimum) =>
         _members.Values.Where(m => OrganizationRoles.TryParse(m.Role, out var role) && role >= minimum).Select(Of);
 
-    /// <summary>
-    /// A member muted the channel for themselves (master plan 8.3). Level 5 gets through unless the
-    /// organisation allows muting it too.
-    /// </summary>
     public bool IsMuted(Recipient recipient, string channel, int? level, bool allowMuteCritical) =>
         recipient.UserId is { } user && _preferences.TryGetValue(user, out var preference) && preference.MutedChannels.Contains(channel)
         && (level != 5 || allowMuteCritical);
 
-    /// <summary>The language of messages to the recipient: the member's own, else the organisation's.</summary>
     public string Locale(Recipient recipient, string organizationLocale) =>
         recipient.UserId is { } user && _preferences.TryGetValue(user, out var preference) && preference.Locale is { Length: > 0 } locale ? locale : organizationLocale;
 

@@ -23,34 +23,20 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Notifications.Features;
 
-/// <summary>
-/// External e-mail addresses (master plan 8.3, 8.5; task 5.1): an admin adds one, the address's owner confirms
-/// it with a link from a mail, and only then does it receive messages. Every message carries a signed link that
-/// unsubscribes it without signing in. Confirming and unsubscribing know no session: the token is the proof.
-/// </summary>
 internal static class AddressEndpoints
 {
     public static readonly TimeSpan ConfirmationLifetime = TimeSpan.FromDays(7);
 
-    /// <summary>
-    /// Limits against using confirmation mails for spam or phishing (ADR 038): anyone may found an organisation
-    /// under any name, so its admins must not be able to mail arbitrary addresses at will.
-    /// </summary>
     internal static class Limits
     {
-        /// <summary>External addresses per organisation.</summary>
         public const int AddressesPerOrganization = 50;
 
-        /// <summary>Confirmation mails to one address of an organisation, in all.</summary>
         public const int ConfirmationsPerAddress = 3;
 
-        /// <summary>Time between two confirmation mails to the same address of an organisation.</summary>
         public static readonly TimeSpan Cooldown = TimeSpan.FromMinutes(15);
 
-        /// <summary>Confirmation mails an organisation may ask for in 24 hours.</summary>
         public const int ConfirmationsPerOrganizationPerDay = 20;
 
-        /// <summary>Organisations that may ask the same address for confirmation in 24 hours, over the instance.</summary>
         public const int OrganizationsPerAddressPerDay = 3;
     }
 
@@ -63,14 +49,11 @@ internal static class AddressEndpoints
         addresses.MapDelete("/{id:guid}", DeleteAsync).WithName("deleteExternalAddress").NoContent().Problems(403, 404, 409);
 
         var links = api.MapGroup("/notify/addresses").WithTags("Notifications").RequireRateLimiting(RateLimits.Lookup);
-        // The token travels in the body: a query string ends up in the logs of every proxy on the way. Only the RFC 8058
-        // one-click address in the mail header carries it in the query, because mail clients post a fixed form there.
         links.MapPost("/preview", PreviewAsync).WithName("previewAddressLink").AuthenticatedByToken().Produces<AddressSubscriptionView>().Problems(404);
         links.MapPost("/confirm", ConfirmAsync).WithName("confirmExternalAddress").AuthenticatedByToken().NoContent().Problems(404);
         links.MapPost("/unsubscribe", (AddressLinkRequest request, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken) =>
                 UnsubscribeAsync(request.Token, services, secrets, cancellationToken))
             .WithName("unsubscribeExternalAddress").AuthenticatedByToken().NoContent().Problems(404);
-        // RFC 8058: the mail client posts a fixed form to the address in the List-Unsubscribe header, so the token is in its query.
         links.MapPost("/unsubscribe/one-click", UnsubscribeAsync).WithName("unsubscribeExternalAddressOneClick").AuthenticatedByToken().NoContent().Problems(404);
         links.MapPost("/resubscribe", ResubscribeAsync).WithName("resubscribeExternalAddress").AuthenticatedByToken().NoContent().Problems(404);
     }
@@ -158,7 +141,6 @@ internal static class AddressEndpoints
 
         if (entry.UnsubscribedAt is not null)
         {
-            // Kept, so that it cannot be added and asked again: the recipient's no stands.
             return Unsubscribed();
         }
 
@@ -175,7 +157,6 @@ internal static class AddressEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>The limits on confirmation mails; <c>null</c> when one more may go out now.</summary>
     private static async Task<IResult?> LimitedAsync(ExternalAddress entry, NotifyDbContext db, DateTimeOffset now, CancellationToken cancellationToken)
     {
         if (entry.ConfirmationsSent >= Limits.ConfirmationsPerAddress)
@@ -208,7 +189,6 @@ internal static class AddressEndpoints
 
     private static async Task RequestConfirmationAsync(ExternalAddress entry, NotifyDbContext db, IJobQueue jobs, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        // The job makes the token: a job carries ids only, never a secret (master plan 4.1).
         entry.TokenHash = null;
         entry.TokenExpiresAt = now + ConfirmationLifetime;
         entry.ConfirmationSentAt = now;
@@ -217,7 +197,6 @@ internal static class AddressEndpoints
         await jobs.EnqueueAsync(new SendAddressConfirmation(entry.Id), new EnqueueOptions { CoalesceKey = $"notify.confirm-address:{entry.Id}" }, cancellationToken);
     }
 
-    /// <summary>Shows the organisation and the address behind a confirmation or unsubscribe link.</summary>
     private static async Task<IResult> PreviewAsync(AddressLinkRequest request, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken)
     {
         if (Resolve(request.Token, secrets) is not { } link)
@@ -259,7 +238,6 @@ internal static class AddressEndpoints
         }, commit: true, cancellationToken);
     }
 
-    /// <summary>The unsubscribe link of every message to an external address; mail clients post here for one-click (RFC 8058).</summary>
     private static async Task<IResult> UnsubscribeAsync(string? token, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken)
     {
         if (Resolve(token, secrets) is not { Confirmation: false } link)
@@ -281,9 +259,6 @@ internal static class AddressEndpoints
         }, commit: true, cancellationToken);
     }
 
-    /// <summary>
-    /// The recipient takes back their unsubscribe with the same signed link: only they can, the organisation cannot.
-    /// </summary>
     private static async Task<IResult> ResubscribeAsync(AddressLinkRequest request, IServiceProvider services, ISecretProtector secrets, CancellationToken cancellationToken)
     {
         if (Resolve(request.Token, secrets) is not { Confirmation: false } link)
@@ -305,10 +280,6 @@ internal static class AddressEndpoints
         }, commit: true, cancellationToken);
     }
 
-    /// <summary>
-    /// The link names its organisation; the unit of work runs as that tenant, as the invitation does (master plan 9.2).
-    /// A confirmation token proves itself against its stored hash, an unsubscribe token by its signature.
-    /// </summary>
     private static async Task<IResult> InOrganizationAsync(
         IServiceProvider services, Guid organization, Func<NotifyDbContext, IOrganizationProfiles, TimeProvider, Task<IResult>> work, bool commit, CancellationToken cancellationToken)
     {
@@ -339,7 +310,6 @@ internal static class AddressEndpoints
             : null;
     }
 
-    /// <summary>A confirmation token: organisation and address in the clear, then 32 random bytes; only its hash is stored.</summary>
     internal static string ConfirmationToken(Guid organization, Guid address) =>
         $"c.{organization:N}.{address:N}.{WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32))}";
 
@@ -374,16 +344,11 @@ internal static class AddressEndpoints
     private sealed record LinkToken(Guid Organization, Guid Address, bool Confirmation, string Token);
 }
 
-/// <summary>Sends the confirmation link to a new external address (master plan 8.3).</summary>
 internal sealed record SendAddressConfirmation(Guid AddressId) : IJob
 {
     public static string Kind => "notify.send-address-confirmation";
 }
 
-/// <summary>
-/// Makes a fresh token and stores its hash in a short unit of work, then mails without an open transaction
-/// (master plan 9.2). A retry makes another token; only the latest link works.
-/// </summary>
 internal sealed class SendAddressConfirmationHandler(IUnitOfWorkFactory units, IEmailSender email, IConfiguration configuration, ITenantContext tenant)
     : IJobHandler<SendAddressConfirmation>
 {
@@ -410,7 +375,6 @@ internal sealed class SendAddressConfirmationHandler(IUnitOfWorkFactory units, I
         }
 
         var texts = MessageTexts.For(profile.Locale);
-        // In the fragment: the browser never sends it, so the page's request carries no token into any log.
         var link = new Uri(Evaluator.PublicUrl(configuration), $"notifications/confirm#token={Uri.EscapeDataString(token)}");
         await email.SendAsync(EmailTemplate.Render(
             address,

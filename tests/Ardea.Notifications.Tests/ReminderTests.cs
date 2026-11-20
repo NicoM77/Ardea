@@ -5,11 +5,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>
-/// Reminders by level (master plan 8.7, 17.5; task 5a.6, ADR 048): open reminders remind their recipients daily at level 5,
-/// weekly at 4, monthly at 3 by default, on weekdays at 08:00 in the organisation's time zone, in one message per recipient
-/// and channel; done reminders and levels below 3 never; the rhythm is set per organisation. The clock is the test's.
-/// </summary>
 public sealed class ReminderTests(PostgresServer server)
 {
     private static readonly DateTimeOffset Monday = new(2026, 11, 16, 10, 0, 0, TimeSpan.Zero);
@@ -52,7 +47,6 @@ public sealed class ReminderTests(PostgresServer server)
             """);
         await host.ExecuteAsync("DELETE FROM platform.job");
 
-        // The first sweep writes the defaults and schedules the first run: the next weekday at 08:00 in Zurich.
         await host.RunAsync(new FindDueDigests(), organization: null);
         Assert.Empty(await host.RunJobsAsync());
         var first = await NextRunAsync(host);
@@ -60,7 +54,6 @@ public sealed class ReminderTests(PostgresServer server)
         Assert.Equal(["daily weekly monthly"], await host.RowsAsync("SELECT level5 || ' ' || level4 || ' ' || level3 FROM notify.reminder_schedule"));
         Assert.Empty(Reminders(host));
 
-        // The run: level 5 (daily) and 4 (weekly) are due; level 3 is not a month old, level 2 and the done one never remind.
         await RunAtAsync(host, first);
         var mail = Assert.Single(Reminders(host));
         Assert.Equal("owner@example.org", mail.To);
@@ -73,20 +66,17 @@ public sealed class ReminderTests(PostgresServer server)
         Assert.Equal(["reminder.due|[5 Critical] 2 open reminder(s) in Acme|/o/acme/reminders"], await host.RowsAsync("SELECT kind || '|' || title || '|' || link FROM notify.notification"));
         Assert.Equal(TimeSpan.FromHours(8), TimeZoneInfo.ConvertTime(await NextRunAsync(host), DigestSchedule.Zone("Europe/Zurich")).TimeOfDay);
 
-        // The sweep again the same morning: the run is done.
         host.Time.Advance(TimeSpan.FromHours(1));
         await host.RunAsync(new FindDueDigests(), organization: null);
         Assert.Empty(await host.RunJobsAsync());
         Assert.Single(Reminders(host));
 
-        // The next weekday: level 5 again, level 4 waits for its week. Then it is done, and nothing more comes.
         await RunAtAsync(host, await NextRunAsync(host));
         Assert.Equal(2, Reminders(host).Count);
         Assert.Equal("[5 Critical] 1 open reminder(s) in Acme", Reminders(host)[1].Subject);
         await host.ExecuteAsync($"UPDATE assess.remediation SET status = 'closed', closed_at = now(), close_reason = 'remediated' WHERE id = '{critical}'");
         await RunAtAsync(host, await NextRunAsync(host));
         Assert.Equal(2, Reminders(host).Count);
-        // The done one has left the reminders' state; the level 4 one keeps its last reminder.
         Assert.Equal([high.ToString()], await host.RowsAsync("SELECT remediation_id FROM notify.reminder_state"));
     }
 
@@ -126,7 +116,6 @@ public sealed class ReminderTests(PostgresServer server)
             INSERT INTO notify.reminder_schedule (organization_id, level5, level4, level3, next_run_at, changed_at)
             VALUES ('{s.Organization}', 'daily', 'weekly', 'monthly', '{host.Time.GetUtcNow().AddMinutes(-1):O}', now());
             """);
-        // Closed and taken back an hour ago: it counts from the reopening, not from twenty days ago.
         await s.EventAsync("action.status_changed", reopened, data: """{"from": "closed", "to": "open"}""");
         await host.ExecuteAsync($"UPDATE assess.assess_event SET at = '{host.Time.GetUtcNow().AddHours(-1):O}' WHERE kind = 'action.status_changed'");
         await host.ExecuteAsync("DELETE FROM notify.pending_event; DELETE FROM platform.job");
@@ -134,8 +123,6 @@ public sealed class ReminderTests(PostgresServer server)
         await host.RunAsync(new SendReminders(), s.Organization);
         Assert.Empty(await host.RunJobsAsync());
 
-        // Level 4 is due but no rule names anyone for it: it does not count as reminded. The state of a reminder that is
-        // not open any more is gone.
         Assert.Empty(Reminders(host));
         Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.reminder_state"));
     }
@@ -173,7 +160,6 @@ public sealed class ReminderTests(PostgresServer server)
         Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.delivery WHERE kind = 'reminder'"));
     }
 
-    /// <summary>The reminder messages; the default weekly summary comes too, empty, on Mondays.</summary>
     private static List<Platform.Email.EmailMessage> Reminders(NotifyTestHost host) =>
         [.. host.Mail!.Sent.Where(m => m.Subject.Contains("open reminder", StringComparison.Ordinal))];
 

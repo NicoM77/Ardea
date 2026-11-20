@@ -379,7 +379,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                 column: "rule_id");
 
             migrationBuilder.Sql("""
-                -- Organisation data (master plan 4.1, 9.2; ADR 029): only the tenant of the transaction sees and writes it.
                 ALTER TABLE notify.rule ENABLE ROW LEVEL SECURITY;
                 CREATE POLICY tenant ON notify.rule
                     USING (organization_id = platform.current_organization_id())
@@ -417,8 +416,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                     USING (organization_id = platform.current_organization_id())
                     WITH CHECK (organization_id = platform.current_organization_id());
 
-                -- User data that also carries the organisation (master plan 4.1, 9.2). The member reads and marks
-                -- their own notifications; the worker writes them for a named member of the job's organisation.
                 ALTER TABLE notify.notification ENABLE ROW LEVEL SECURITY;
                 CREATE POLICY own_read ON notify.notification FOR SELECT
                     USING (organization_id = platform.current_organization_id() AND user_id = platform.current_user_id());
@@ -429,8 +426,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                     WITH CHECK (organization_id = platform.current_organization_id()
                         AND user_id IN (SELECT m.user_id FROM iam.membership m WHERE m.organization_id = platform.current_organization_id()));
 
-                -- The member's own settings; the worker reads those of the job's organisation for named recipients,
-                -- in a unit of work without a user.
                 ALTER TABLE notify.user_preference ENABLE ROW LEVEL SECURITY;
                 CREATE POLICY own_read ON notify.user_preference FOR SELECT
                     USING (organization_id = platform.current_organization_id()
@@ -439,8 +434,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                     USING (organization_id = platform.current_organization_id() AND user_id = platform.current_user_id())
                     WITH CHECK (organization_id = platform.current_organization_id() AND user_id = platform.current_user_id());
 
-                -- Live signals (master plan 10.2 «Live», task 5.3): a new or read notification wakes the organisation's
-                -- streams when the transaction commits; their «changed» reloads the counter through the API.
                 CREATE FUNCTION notify.signal_organization_changed() RETURNS trigger
                     LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp
                     AS $$
@@ -452,8 +445,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                 CREATE TRIGGER signal_organization_changed AFTER INSERT OR UPDATE ON notify.notification
                     FOR EACH ROW EXECUTE FUNCTION notify.signal_organization_changed();
 
-                -- System operation "warning without identifier" (master plan 9.2, ADR 029): which organisations have
-                -- an enabled rule for warnings. Returns organisation ids only.
                 CREATE FUNCTION notify.organizations_with_warning_rules()
                     RETURNS TABLE (organization_id uuid)
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
@@ -462,8 +453,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                         WHERE r.enabled AND 'warning.published' = ANY (r.events) AND cardinality(r.project_ids) = 0
                     $$;
 
-                -- System operation "digests" (master plan 9.2, ADR 029): which digest targets are due, or still
-                -- without a schedule. Returns organisation and target ids only.
                 CREATE FUNCTION notify.due_digest_targets(p_now timestamptz)
                     RETURNS TABLE (organization_id uuid, target_id uuid)
                     LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp
@@ -472,8 +461,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                         WHERE t.mode = 'digest' AND (t.next_digest_at IS NULL OR t.next_digest_at <= p_now)
                     $$;
 
-                -- The default rules (master plan 8.3) for organisations created before this module existed; new ones
-                -- get them when they are created (DefaultRules). Their digests are scheduled on the first run.
                 WITH orgs AS (SELECT id FROM iam.organization),
                 critical AS (
                     INSERT INTO notify.rule (organization_id, name, enabled, project_ids, min_level, events, preset, created_at, changed_at)

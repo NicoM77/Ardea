@@ -8,13 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Notifications.Features;
 
-/// <summary>
-/// The last step of <c>ardea seed-demo</c> (task 7.6): the demo organisation keeps its notifications in the app only.
-/// Its people have invented addresses, so nothing may leave the instance for them, now or later: the e-mail and push
-/// targets of the default rules are removed, a rule left without another target (the weekly summary) is switched off
-/// with its target kept, the digest items noted for those targets are dropped, and the messages already queued for
-/// them are suppressed with a reason in the delivery log. An administrator who adds real people turns them on again.
-/// </summary>
 internal sealed class DemoSeed : IDemoSeedStep
 {
     internal const string Reason = "Not sent: a message about the sample data of seed-demo, whose people have invented addresses.";

@@ -2,7 +2,6 @@ using Ardea.TestSupport;
 
 namespace Ardea.Notifications.Tests;
 
-/// <summary>The system warns about failing deliveries and shows their figures to the administrator (master plan 12.7; task 6.6).</summary>
 public sealed class StatusTests(PostgresServer server)
 {
     [Fact]
@@ -14,7 +13,6 @@ public sealed class StatusTests(PostgresServer server)
         var quiet = await NotifyTestHost.JsonAsync(await s.Owner.GetAsync("/api/v1/instance/status"));
         Assert.DoesNotContain(quiet.GetProperty("warnings").EnumerateArray(), w => w.GetProperty("code").GetString() == "deliveries_failing");
 
-        // A dead delivery from three days ago is history; a sent one and a retrying one are only figures.
         await Insert(host, s, "dead", "now() - interval '3 days'", "a");
         await Insert(host, s, "sent", "now() - interval '1 hour'", "b");
         await Insert(host, s, "failed", "now() - interval '2 hours'", "c");
@@ -30,7 +28,6 @@ public sealed class StatusTests(PostgresServer server)
         Assert.Contains("1 message(s)", warning.GetProperty("message").GetString(), StringComparison.Ordinal);
         Assert.Equal(["dead=1", "failed=1", "sent=1"], Figures(warned, "deliveries"));
 
-        // Every signed-in user sees the warning on the overview; the figures stay with the administrator.
         var overview = await NotifyTestHost.JsonAsync(await s.Owner.GetAsync("/api/v1/status"));
         Assert.Contains(overview.EnumerateArray(), w => w.GetProperty("code").GetString() == "deliveries_failing");
     }

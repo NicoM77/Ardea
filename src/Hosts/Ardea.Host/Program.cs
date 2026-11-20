@@ -10,7 +10,7 @@ return command switch
     "migrate" => await MigrateCommand.RunAsync(rest),
     "healthcheck" => await HealthcheckCommand.RunAsync(rest),
     "init-env" => InitEnvCommand.Run(rest),
-    "doctor" => await DoctorCommand.RunAsync(rest),
+    "doctor" => await DoctorCommand.RunAsync(),
     "admin" => await AdminCommand.RunAsync(rest),
     _ when rest.Length > 0 && AdminCommand.GroupPrefixes.Contains(command) => await AdminCommand.RunAsync([command + "-" + rest[0], .. rest[1..]]),
     "org" => await OrgCommand.RunAsync(rest),

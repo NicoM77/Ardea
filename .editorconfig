@@ -57,6 +57,13 @@ dotnet_diagnostic.IDE0005.severity = warning   # unnecessary usings
 dotnet_diagnostic.CA1848.severity = warning    # use LoggerMessage (generated log methods, 13.4)
 dotnet_diagnostic.CA2016.severity = warning    # forward CancellationToken
 dotnet_diagnostic.CA1707.severity = none       # underscores allowed in test names
+dotnet_diagnostic.IDE0051.severity = warning   # unused private members
+dotnet_diagnostic.IDE0052.severity = warning   # private members written but never read
+dotnet_diagnostic.IDE0060.severity = warning   # unused parameters
+dotnet_diagnostic.IDE0059.severity = warning   # values assigned but never used
+dotnet_diagnostic.CA1823.severity = warning    # unused fields
+dotnet_diagnostic.IDE0035.severity = warning   # unreachable code
+dotnet_diagnostic.CS0162.severity = warning    # unreachable code
 
 [tests/**.cs]
 dotnet_diagnostic.CA1848.severity = none
@@ -66,3 +73,6 @@ dotnet_diagnostic.xUnit1051.severity = none
 [**/Migrations/*.cs]
 generated_code = true
 dotnet_analyzer_diagnostic.severity = none
+
+[src/Modules/Notifications/**.cs]
+dotnet_diagnostic.IDE0060.severity = suggestion   # until the follow-up of task 7.5 (Notifications has a test pull request open)

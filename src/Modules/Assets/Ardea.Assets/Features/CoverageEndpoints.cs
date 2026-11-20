@@ -93,11 +93,11 @@ internal static partial class CoverageEndpoints
         }
 
         var gaps = new HashSet<Guid>(hints.Where(h => h.Kind is "missing_version" or "version_line_only" or "distribution_packages" or "packages_without_lockfile" or "ecosystem_not_checkable" or "not_in_catalog")
-            .SelectMany(h => components.Where(c => IsIn(h.Kind, c, products, hosts, components)).Select(c => c.Id)));
+            .SelectMany(h => components.Where(c => IsIn(h.Kind, c, products)).Select(c => c.Id)));
         return Results.Ok(new CoverageView(components.Count, components.Count - gaps.Count, hints));
     }
 
-    private static bool IsIn(string kind, Item c, Dictionary<string, CatalogProduct?> products, HashSet<string> hosts, List<Item> all) => kind switch
+    private static bool IsIn(string kind, Item c, Dictionary<string, CatalogProduct?> products) => kind switch
     {
         "missing_version" => c.Purl is null && c.Version is null && c.Kind != "service",
         "version_line_only" => c.Purl is null && c.Origin == "repository" && c.Version is not null && VersionLine().IsMatch(c.Version),

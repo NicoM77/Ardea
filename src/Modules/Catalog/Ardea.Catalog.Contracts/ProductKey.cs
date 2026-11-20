@@ -91,7 +91,6 @@ public readonly record struct ProductKey
         var removed = true;
         while (removed && words.Count > 1)
         {
-            removed = false;
             if (LegalForms.Contains(words[^1]))
             {
                 words.RemoveAt(words.Count - 1);

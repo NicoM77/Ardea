@@ -15,7 +15,9 @@ The rules below summarise chapter 13 of the [master plan](docs/masterplan/13-rep
 
 ## Code
 
-- `Nullable` and `TreatWarningsAsErrors` are on; formatting follows `.editorconfig` (`dotnet format`).
+- `Nullable` and `TreatWarningsAsErrors` are on; formatting follows `.editorconfig` (`dotnet format`). Unused code
+  fails the build: unused usings, private members, fields, parameters and assignments, and unreachable code
+  (IDE0005, IDE0051, IDE0052, IDE0059, IDE0060, CA1823, IDE0035, CS0162).
 - Types of a module are `internal`. Only the module entry point (`*Module`) is public; whatever other modules
   may use lives in the module's `Contracts` assembly. The architecture tests enforce this.
 - A module uses another module only through its `Contracts`. Allowed directions are in master plan 3.2.

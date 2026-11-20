@@ -84,7 +84,7 @@ internal static class SeedDemoCommand
                 }
             }
 
-            await RecordAsync(services, context, cancellationToken);
+            await RecordAsync(context, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -128,7 +128,7 @@ internal static class SeedDemoCommand
         }
     }
 
-    private static async Task RecordAsync(IServiceProvider services, DemoSeedContext context, CancellationToken cancellationToken)
+    private static async Task RecordAsync(DemoSeedContext context, CancellationToken cancellationToken)
     {
         await using var scope = context.CreateScope();
         await scope.ServiceProvider.GetRequiredService<IAuditLog>().RecordAsync(

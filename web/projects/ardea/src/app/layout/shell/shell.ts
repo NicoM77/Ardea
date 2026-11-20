@@ -14,7 +14,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterOutlet } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideKeyRound } from '@lucide/angular';
+import { LucideBellRing, LucideKeyRound } from '@lucide/angular';
 import { UiToastHost } from 'ui';
 import { firstValueFrom, map } from 'rxjs';
 import { AuthenticationService } from '../../core/api/client';
@@ -294,6 +294,15 @@ export class Shell {
       });
     }
     const account = t('search.groups.account');
+    if (org) {
+      items.push({
+        label: t('notify.settings.title'),
+        group: account,
+        url: `/o/${org.slug}/settings/notifications`,
+        icon: LucideBellRing.icon,
+        keywords: t('search.keywords.notifications'),
+      });
+    }
     items.push({
       label: t('shell.account.twoFactor'),
       group: account,

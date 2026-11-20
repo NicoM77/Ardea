@@ -412,7 +412,6 @@
     "org": {
       "switchPrefix": "Organization:",
       "switchHint": "Switch organization",
-      "count": "{count, plural, one {# organization} other {# organizations}}",
       "none": "No organization",
       "menuLabel": "Switch to",
       "create": "Create organization",
@@ -440,7 +439,8 @@
       "instance": "This instance"
     },
     "keywords": {
-      "twoFactor": "MFA TOTP authenticator security"
+      "twoFactor": "MFA TOTP authenticator security",
+      "notifications": "e-mail push channels settings"
     }
   },
   "entries": {

@@ -2,7 +2,7 @@ import { booleanAttribute, Component, computed, input, output } from '@angular/c
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideDynamicIcon, LucideX } from '@lucide/angular';
-import { UiAvatar, UiButton } from 'ui';
+import { UiButton } from 'ui';
 import type { SessionOrganization } from '../../core/api/client';
 import type { Me } from '../../core/session/session';
 import { AREA_ICONS } from '../../features/areas/area-icons';
@@ -22,7 +22,6 @@ interface NavLink {
     TranslocoPipe,
     LucideDynamicIcon,
     LucideX,
-    UiAvatar,
     UiButton,
     OrgSwitch,
   ],
@@ -85,15 +84,6 @@ interface NavLink {
             </li>
           }
         </ul>
-        @if (user(); as me) {
-          <div class="person">
-            <ui-avatar [name]="me.displayName" [personId]="me.id" />
-            <span class="person-name">
-              {{ me.displayName }}
-              <small>{{ me.email }}</small>
-            </span>
-          </div>
-        }
       </div>
     </nav>
   `,
@@ -177,29 +167,6 @@ interface NavLink {
       gap: 2px;
       margin-top: auto;
       padding-top: var(--space-md);
-    }
-    .person {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: var(--space-sm);
-      margin-top: var(--space-xs);
-    }
-    .person-name {
-      min-width: 0;
-      font-weight: 500;
-      line-height: var(--lh-small);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .person-name small {
-      display: block;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: var(--muted);
-      font-size: var(--fs-sub);
-      font-weight: 400;
     }
     :host(.is-menu) .nav a {
       height: 44px;

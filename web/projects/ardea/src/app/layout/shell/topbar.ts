@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   LucideBell,
+  LucideBellRing,
   LucideKeyRound,
   LucideLogOut,
   LucideMenu,
@@ -24,6 +25,7 @@ import { UnreadCount } from '../../features/notifications/unread-count';
     RouterLinkActive,
     TranslocoPipe,
     LucideBell,
+    LucideBellRing,
     LucideKeyRound,
     LucideLogOut,
     LucideMenu,
@@ -97,6 +99,16 @@ import { UnreadCount } from '../../features/notifications/unread-count';
             <b>{{ me.displayName }}</b>
             <small>{{ me.email }}</small>
           </div>
+          @if (organization(); as org) {
+            <a
+              class="ui-menu-item"
+              cdkMenuItem
+              [routerLink]="'/o/' + org.slug + '/settings/notifications'"
+            >
+              <svg lucideBellRing aria-hidden="true"></svg>
+              {{ 'notify.settings.title' | transloco }}
+            </a>
+          }
           <a class="ui-menu-item" cdkMenuItem routerLink="/account/two-factor">
             <svg lucideKeyRound aria-hidden="true"></svg>
             {{ 'shell.account.twoFactor' | transloco }}

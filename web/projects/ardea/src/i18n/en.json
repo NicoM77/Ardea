@@ -919,6 +919,7 @@
       "more": "Show {count, plural, one {# more} other {# more}}"
     },
     "addRepository": "Add repository",
+    "openReminders": "{count, plural, one {# open reminder} other {# open reminders}}",
     "links": {
       "title": "Repositories",
       "reading": "Reading",

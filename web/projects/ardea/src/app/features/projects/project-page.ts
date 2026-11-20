@@ -1,27 +1,46 @@
 import {
+  afterNextRender,
   Component,
   computed,
   effect,
   ElementRef,
   inject,
+  Injector,
   input,
   linkedSignal,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { form, FormField, FormRoot, maxLength, required } from '@angular/forms/signals';
 import type { TreeValidationResult } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   LucideArchive,
+  LucideArrowRight,
   LucideFolderGit2,
   LucidePencil,
   LucideSlidersHorizontal,
 } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiField, UiInput, UiLoader, UiNotice, UiPageHeader, UiPill } from 'ui';
 import {
+  UiBackLink,
+  UiButton,
+  UiCard,
+  UiField,
+  UiInput,
+  UiLoader,
+  UiMenu,
+  UiMenuItem,
+  UiNotice,
+  UiOverflowMenu,
+  UiPageHeader,
+  UiPill,
+  UiToaster,
+} from 'ui';
+import {
+  getOverviewResource,
   getProfileCoverageResource,
   getProjectResource,
   listRepositoryLinksResource,
@@ -59,14 +78,19 @@ import { SuggestionsList } from './suggestions-list';
     RouterLink,
     TranslocoPipe,
     LucideArchive,
+    LucideArrowRight,
     LucidePencil,
     LucideSlidersHorizontal,
+    UiBackLink,
     UiButton,
     UiCard,
     UiField,
     UiInput,
     UiLoader,
+    UiMenu,
+    UiMenuItem,
     UiNotice,
+    UiOverflowMenu,
     UiPageHeader,
     UiPill,
     PackagesView,
@@ -76,37 +100,39 @@ import { SuggestionsList } from './suggestions-list';
     LucideFolderGit2,
   ],
   template: `
+    <ui-back-link [label]="'nav.projects' | transloco" link=".." />
     @if (detail.hasValue() && detail.value(); as d) {
       <ui-page-header [heading]="d.project.name" [sub]="d.project.description">
         @if (canEdit()) {
           <ng-container ngProjectAs="[uiPageActions]">
-            <a uiButton routerLink="setup" [queryParams]="{ step: 'repository' }">
+            <a uiButton class="setup" routerLink="setup" [queryParams]="{ step: 'repository' }">
               <svg lucideFolderGit2 aria-hidden="true"></svg>
               {{ 'projects.addRepository' | transloco }}
             </a>
-            <a uiButton routerLink="setup" [queryParams]="{ step: 'technologies' }">
+            <a uiButton class="setup" routerLink="setup" [queryParams]="{ step: 'technologies' }">
               <svg lucideSlidersHorizontal aria-hidden="true"></svg>
               {{ 'projects.changeTechnologies' | transloco }}
             </a>
-            <button
-              uiButton
-              type="button"
-              [attr.aria-expanded]="editing()"
-              (click)="editing.set(!editing())"
-            >
-              <svg lucidePencil aria-hidden="true"></svg>
-              {{ 'projects.edit' | transloco }}
-            </button>
-            <button
-              uiButton
-              variant="ghost"
-              type="button"
-              [loading]="busy() === 'archive'"
-              (click)="toggleArchive()"
-            >
-              <svg lucideArchive aria-hidden="true"></svg>
-              {{ (d.project.archived ? 'projects.restore' : 'projects.archive') | transloco }}
-            </button>
+            <ui-overflow-menu [name]="d.project.name" [busy]="busy() === 'archive'">
+              <ng-template>
+                <div uiMenu>
+                  <button uiMenuItem type="button" (triggered)="startEditing()">
+                    <svg lucidePencil aria-hidden="true"></svg>
+                    {{ 'projects.edit' | transloco }}
+                  </button>
+                  <div class="ui-menu-sep" role="separator"></div>
+                  <button
+                    uiMenuItem
+                    type="button"
+                    [destructive]="!d.project.archived"
+                    (triggered)="toggleArchive()"
+                  >
+                    <svg lucideArchive aria-hidden="true"></svg>
+                    {{ (d.project.archived ? 'projects.restore' : 'projects.archive') | transloco }}
+                  </button>
+                </div>
+              </ng-template>
+            </ui-overflow-menu>
           </ng-container>
         }
       </ui-page-header>
@@ -117,6 +143,15 @@ import { SuggestionsList } from './suggestions-list';
         }
         <ui-pill>{{ exposureLabels[d.project.exposure] | transloco }}</ui-pill>
         <ui-pill>{{ criticalityLabels[d.project.criticality] | transloco }}</ui-pill>
+        @if (openReminders(); as count) {
+          <a
+            class="link reminders"
+            routerLink="../../reminders"
+            [queryParams]="{ project: projectId() }"
+            >{{ 'projects.openReminders' | transloco: { count: count }
+            }}<svg lucideArrowRight aria-hidden="true"></svg
+          ></a>
+        }
       </div>
 
       <div class="live" role="status">
@@ -160,7 +195,7 @@ import { SuggestionsList } from './suggestions-list';
               <button uiButton variant="primary" type="submit" [loading]="editForm().submitting()">
                 {{ 'projects.save' | transloco }}
               </button>
-              <button uiButton variant="ghost" type="button" (click)="editing.set(false)">
+              <button uiButton variant="ghost" type="button" (click)="stopEditing()">
                 {{ 'team.cancel' | transloco }}
               </button>
             </div>
@@ -301,8 +336,15 @@ import { SuggestionsList } from './suggestions-list';
     .facts {
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       gap: var(--space-sm);
       margin: calc(-1 * var(--space-md)) 0 var(--space-xl);
+    }
+    .reminders {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: var(--space-xs);
     }
     .live:empty {
       display: none;
@@ -384,6 +426,12 @@ import { SuggestionsList } from './suggestions-list';
       font-size: var(--fs-sub);
     }
     @media (max-width: 640px) {
+      .setup svg {
+        display: none;
+      }
+      .facts {
+        margin-top: calc(-1 * var(--space-sm));
+      }
       .pair {
         grid-template-columns: minmax(0, 1fr);
       }
@@ -430,8 +478,12 @@ export class ProjectPage {
   readonly projectId = input.required<string>();
 
   private readonly projects = inject(ProjectsService);
+  private readonly toaster = inject(UiToaster);
+  private readonly transloco = inject(TranslocoService);
+  private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly org = injectOrganization().organization;
+  private readonly more = viewChild(UiOverflowMenu);
 
   protected readonly kindLabels = KIND_LABELS;
   protected readonly exposureLabels = EXPOSURE_LABELS;
@@ -461,6 +513,12 @@ export class ProjectPage {
       fallback: 'projects.loadFailed',
     }),
   );
+
+  private readonly overview = getOverviewResource(this.orgId);
+  protected readonly openReminders = computed(() => {
+    const projects = this.overview.hasValue() ? (this.overview.value()?.projects ?? []) : [];
+    return Number(projects.find((p) => p.project.id === this.projectId())?.actions ?? 0);
+  });
 
   protected readonly links = listRepositoryLinksResource(
     this.orgId,
@@ -520,7 +578,7 @@ export class ProjectPage {
                 archived: null,
               }),
             );
-            this.editing.set(false);
+            this.stopEditing();
             this.done.set({ key: 'projects.saved', params: {} });
             this.detail.reload();
             return undefined;
@@ -565,20 +623,51 @@ export class ProjectPage {
     this.coverage.reload();
   }
 
+  protected startEditing(): void {
+    this.editing.set(true);
+    afterNextRender(() => this.host.querySelector<HTMLElement>('.form input')?.focus(), {
+      injector: this.injector,
+    });
+  }
+
+  protected stopEditing(): void {
+    this.editing.set(false);
+    this.more()?.focus();
+  }
+
   protected async toggleArchive(): Promise<void> {
-    const archived = this.detail.value()?.project.archived ?? false;
-    await this.run('archive', async () => {
+    const archived = !(this.detail.value()?.project.archived ?? false);
+    if (!(await this.setArchived(archived))) return;
+    this.toaster.show({
+      text: this.transloco.translate(archived ? 'projects.archivedNow' : 'projects.restored'),
+      undo: () => void this.setArchived(!archived),
+    });
+  }
+
+  private async setArchived(archived: boolean): Promise<boolean> {
+    this.busy.set('archive');
+    this.problem.set(null);
+    this.done.set(null);
+    try {
       await firstValueFrom(
         this.projects.updateProject(this.orgId()!, this.projectId(), {
           name: null,
           description: null,
           exposure: null,
           criticality: null,
-          archived: !archived,
+          archived,
         }),
       );
-      return { key: archived ? 'projects.restored' : 'projects.archivedNow', params: {} };
-    });
+      this.refresh();
+      return true;
+    } catch (error) {
+      this.problem.set(
+        problemMessageKey(error, { codes: WIZARD_PROBLEMS, fallback: 'wizard.errors.save' }),
+      );
+      return false;
+    } finally {
+      this.busy.set(null);
+    }
   }
 
   protected async useCatalogEntry(component: ComponentView, productKey: string): Promise<void> {

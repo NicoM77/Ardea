@@ -1,3 +1,5 @@
+using Ardea.Host.Commands;
+
 namespace Ardea.Host.Tests;
 
 public sealed class AppVersionTests
@@ -25,5 +27,17 @@ public sealed class AppVersionTests
     public void A_local_build_of_the_repository_reports_dev()
     {
         Assert.Equal("dev", AppVersion.Current);
+    }
+
+    [Fact]
+    public void Doctor_prints_the_installed_version_as_a_passing_check()
+    {
+        Assert.Equal("ok   version        dev", DoctorCommand.Line(DoctorCommand.VersionResult()));
+    }
+
+    [Fact]
+    public void Doctor_prints_a_failed_check_with_its_reason()
+    {
+        Assert.Equal("FAIL database       unreachable", DoctorCommand.Line(("database", false, "unreachable")));
     }
 }

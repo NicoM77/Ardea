@@ -91,11 +91,11 @@ Es existiert kein Produktivcode. Vorhanden sind dieser Plan, drei Recherchen mit
 | Unterlage | Ort |
 |---|---|
 | Entscheidungsregister | [`docs/adr/`](../adr/README.md) |
-| Recherchen zu Backend, Frontend und Quellenkatalog, mit Nachweisen | [`docs/research/`](../research/) |
-| Bericht der unabhängigen Durchsicht | [`docs/research/2026-11-18-independent-plan-review.md`](../research/2026-11-18-independent-plan-review.md) |
-| Daten-Spike mit Skripten und Messwerten | [`prototypes/relevance-funnel/`](../../prototypes/relevance-funnel/README.md) |
+| Recherchen zu Backend, Frontend und Quellenkatalog, mit Nachweisen | [`docs/research/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/research) |
+| Bericht der unabhängigen Durchsicht | [`docs/research/2026-11-18-independent-plan-review.md`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/research/2026-11-18-independent-plan-review.md) |
+| Daten-Spike mit Skripten und Messwerten | [`prototypes/relevance-funnel/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/prototypes/relevance-funnel/README.md) |
 | Produktgrundlage und Designsystem | [`PRODUCT.md`](../../PRODUCT.md), [`DESIGN.md`](../../DESIGN.md) |
-| UI-Mockups | [`docs/design/mockups/`](../design/mockups/), Einstieg `overview.html` |
+| UI-Mockups | [`docs/design/mockups/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/design/mockups), Einstieg `overview.html` |
 
 ## Zur Freigabe
 
@@ -107,7 +107,7 @@ Die Freigabe umfasst drei Dinge:
 
 ## Woher die Zahlen stammen
 
-- Mengen und Anteile zu CVEs: Auswertung der Daten des CVE Program vom 19.10. bis 18.11.2026 mit den Skripten in `prototypes/relevance-funnel/`. Die Befundzahlen sind Bandbreiten unter einheitlichen Annahmen, keine Prognose.
-- Versionen, Lizenzen und Pflegestände: Recherche am 18.11.2026 (`docs/research/`). Was nicht bestätigt werden konnte, steht in Kapitel 2.8; Bedingungen rund der Hälfte der späteren Quellen sind ungeprüft (Kapitel 5.6).
+- Mengen und Anteile zu CVEs: Auswertung der Daten des CVE Program vom 19.10. bis 18.11.2026 mit den Skripten in [`prototypes/relevance-funnel/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/prototypes/relevance-funnel). Die Befundzahlen sind Bandbreiten unter einheitlichen Annahmen, keine Prognose.
+- Versionen, Lizenzen und Pflegestände: Recherche am 18.11.2026 ([`docs/research/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/research)). Was nicht bestätigt werden konnte, steht in Kapitel 2.8; Bedingungen rund der Hälfte der späteren Quellen sind ungeprüft (Kapitel 5.6).
 - Aufwände, Token-Mengen und Speicherbedarf: Schätzungen, als solche gekennzeichnet.
 - Beispieldaten der Mockups: echte CVE-Records; Organisation, Personen, Projekte, installierte Versionen und die Warnung der nationalen Stelle sind erfunden.

@@ -17,7 +17,7 @@ Usage:
   python3 -I tools/reference-set/select_pairs.py <spike-dir> <repo-root>
 
 <spike-dir> holds the unpacked delta archives of 11-17 November 2026 in folders 11 ... 17 (see
-prototypes/relevance-funnel/README.md). Writes data/reference/records.jsonl and the unlabelled pairs
+the planning spike at tag archive/planning-and-design, prototypes/relevance-funnel/README.md). Writes data/reference/records.jsonl and the unlabelled pairs
 to data/reference/pairs.json; existing labels in pairs.json are kept for pairs that are selected again.
 """
 

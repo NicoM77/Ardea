@@ -2,7 +2,7 @@
 
 Ein Projekt lässt sich mit einem oder mehreren GitHub-Repositories verbinden. Ardea liest daraus alle Abhängigkeiten ein, hält sie aktuell und gleicht sie wie jede andere Komponente gegen die Einträge ab. Was das Repository nicht zeigen kann, ergänzt der Mensch im Wizard (Kapitel 11.6).
 
-Entschieden am 18.11.2026 auf Rückfrage: Der Import gehört zum MVP, und mit ihm OSV als Paketquelle (Kapitel 5.6). Ohne OSV blieben die meisten Pakete ungeprüft, weil nur 12,9 % der CVE-Records Paketkoordinaten tragen (`prototypes/relevance-funnel/`). Wer ein Repository verbindet und «812 Pakete» sieht, aber keine Meldung erhält, hielte das für Entwarnung.
+Entschieden am 18.11.2026 auf Rückfrage: Der Import gehört zum MVP, und mit ihm OSV als Paketquelle (Kapitel 5.6). Ohne OSV blieben die meisten Pakete ungeprüft, weil nur 12,9 % der CVE-Records Paketkoordinaten tragen ([`prototypes/relevance-funnel/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/prototypes/relevance-funnel)). Wer ein Repository verbindet und «812 Pakete» sieht, aber keine Meldung erhält, hielte das für Entwarnung.
 
 ## 16.1 Ziel und Grenze
 

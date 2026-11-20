@@ -4,7 +4,7 @@
 Every record that appeared or changed from 11 to 17 November 2026 (newest state each, rejected ones
 included), as the CVE Program published it, keeping only records that mention one of the technologies of
 the three example projects anywhere: in a vendor, product, CPE, package name or text. This is the spike's
-naive keyword match, widened (prototypes/relevance-funnel), and a superset of what the structured search
+naive keyword match, widened (the planning spike, tag archive/planning-and-design), and a superset of what the structured search
 can hit for these profiles; a record that names none of the words cannot match them. The full week was
 run once against the same profiles with the same open actions (ADR 036); the filter
 keeps the test's run time down.

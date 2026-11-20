@@ -35,7 +35,7 @@ push service; the SMTP test uses a Mailpit container.
 - **A real push service.** One real subscription each in Chrome (Google), Firefox (Mozilla) and, with the iOS check,
   Safari (Apple): a level 5 message arrives with high urgency, and a removed browser subscription disappears after
   the first refusal. Until then the channel is verified against RFC 8291 and a fake service only.
-- **Review the notification mockups** (E15) against the built screens: `docs/design/mockups/notification-rules.html`,
+- **Review the notification mockups** (E15) against the built screens: [`docs/design/mockups/notification-rules.html`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/design/mockups/notification-rules.html),
   `notifications.html`, `notification-settings.html` and `notification-link.html`. Deviations are listed in PR #72:
   the delivery log has no chart, «Send a test» is on each device row, webhook rows show «New secret» and «Delete» as
   buttons, and underline tabs stay flush on their rule.

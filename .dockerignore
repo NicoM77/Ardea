@@ -5,10 +5,8 @@
 **/TestResults
 .git
 .github
-.impeccable
 artifacts
 docs
-prototypes
 tests
 deploy/.env
 deploy/.env.app

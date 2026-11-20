@@ -1,7 +1,3 @@
-/*
- * Public API of the Ardea component library. Styles (tokens, base, controls, fonts) are global
- * stylesheets under `styles/` and are imported by the application's styles.css.
- */
 export * from './lib/avatar/avatar';
 export * from './lib/button/button';
 export * from './lib/card/card';

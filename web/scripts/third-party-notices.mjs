@@ -1,10 +1,4 @@
 #!/usr/bin/env node
-/*
- * Writes the third-party notices for the production npm packages (what the web app ships):
- * name, version, licence, source and the text of each package's licence file. The result is
- * appended to THIRD-PARTY-NOTICES.md by build/third-party-notices.sh (master plan 12, 13.5).
- * Usage: node scripts/third-party-notices.mjs <output file>
- */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { basename } from 'node:path';

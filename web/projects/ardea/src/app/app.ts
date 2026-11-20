@@ -11,10 +11,6 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { UiLoader } from 'ui';
 import { filter, map, take } from 'rxjs';
 
-/**
- * The root. Until the first navigation has settled (the guards wait for the session), the page
- * shows the loader instead of a blank screen; it appears only if the wait passes 300ms.
- */
 @Component({
   selector: 'ardea-root',
   imports: [RouterOutlet, TranslocoPipe, UiLoader],

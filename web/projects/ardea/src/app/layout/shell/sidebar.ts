@@ -14,11 +14,6 @@ interface NavLink {
   url: string;
 }
 
-/**
- * The sidebar on the ground (DESIGN.md, Navigation): logo, organization switch, the areas at
- * 32px with 16px icons, the selected one on an Active fill, and the person at the foot.
- * Below 900px the shell shows it as a full-screen menu; `menuMode` adds the close button.
- */
 @Component({
   selector: 'ardea-sidebar',
   imports: [
@@ -157,7 +152,6 @@ interface NavLink {
       outline: var(--focus-ring);
       outline-offset: -2px;
     }
-    /* A count only on a queue that needs action (DESIGN.md Navigation): the new notices */
     .count {
       margin-left: auto;
       color: var(--text);
@@ -170,7 +164,6 @@ interface NavLink {
       color: var(--text);
       font-weight: 500;
     }
-    /* The navigation landmark: the area lists, with the second group pushed to the foot */
     .links {
       display: flex;
       flex: 1;
@@ -227,14 +220,11 @@ export class Sidebar {
   protected readonly icons = AREA_ICONS;
   readonly user = input<Me | null>(null);
   readonly organization = input<SessionOrganization | null>(null);
-  /** The new notices as written beside «Notices» («3», «99+»); nothing while there are none. */
   readonly noticeCount = input<string | null>(null);
-  /** Shown as the phone menu: larger targets and a close button. */
   readonly menuMode = input(false, { transform: booleanAttribute });
   readonly closeMenu = output();
   readonly navigated = output();
 
-  /** Organization areas need an organization; instance-wide ones (entries, sources) are always there. */
   private readonly orgLinks = computed<NavLink[]>(() => {
     const slug = this.organization()?.slug;
     return AREAS.flatMap((area) => {

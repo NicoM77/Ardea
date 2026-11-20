@@ -13,7 +13,6 @@ import { SHOWCASE_ROUTES } from './showcase/showcase.entry';
 export const routes: Routes = [
   {
     path: '',
-    // An empty-path layout would also match `/` with an empty outlet; `/` belongs to the shell.
     canMatch: [(_route: Route, segments: UrlSegment[]) => segments.length > 0],
     loadComponent: () => import('./layout/auth-layout/auth-layout').then((m) => m.AuthLayout),
     children: [
@@ -56,20 +55,17 @@ export const routes: Routes = [
           import('./features/auth/reset-password-page').then((m) => m.ResetPasswordPage),
       },
       {
-        // The link from the confirmation e-mail: signed in or out.
         path: 'confirm-email',
         title: 'auth.confirmEmail.title',
         loadComponent: () =>
           import('./features/auth/confirm-email-page').then((m) => m.ConfirmEmailPage),
       },
       {
-        // The link from an invitation: signed in or out.
         path: 'invitations/:token',
         title: 'invitation.title',
         loadComponent: () =>
           import('./features/invitations/invitation-page').then((m) => m.InvitationPage),
       },
-      // The links in e-mails to external addresses (master plan 8.3, task 5.8): without a session.
       ...(['confirm', 'unsubscribe', 'resubscribe'] as const).map((mode) => ({
         path: `notifications/${mode}`,
         title: 'notify.link.title',
@@ -112,7 +108,6 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/account/enable-two-factor-page').then((m) => m.EnableTwoFactorPage),
       },
-      // Entries and sources are the same for every organization (master plan 10.2): instance-wide.
       {
         path: 'entries',
         title: 'entries.title',
@@ -137,12 +132,10 @@ export const routes: Routes = [
       {
         path: 'o/:slug',
         canActivate: [organizationGuard],
-        // Holds the pages back while the organization requires two-factor authentication.
         loadComponent: () =>
           import('./features/organizations/organization-frame').then((m) => m.OrganizationFrame),
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'overview' },
-          // Addresses from before entries and sources became instance-wide.
           { path: 'vulnerabilities', redirectTo: '/entries' },
           { path: 'sources', redirectTo: '/sources' },
           {
@@ -157,8 +150,6 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/notices/notices-page').then((m) => m.NoticesPage),
           },
-          // The action is called «Reminder» in the interface (master plan 17.5, ADR 046); links from
-          // before, in e-mails and notifications, keep working.
           { path: 'actions', redirectTo: 'reminders' },
           { path: 'actions/:number', redirectTo: 'reminders/:number' },
           {

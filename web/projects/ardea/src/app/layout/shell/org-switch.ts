@@ -5,10 +5,6 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideCheck, LucideChevronsUpDown, LucidePlus } from '@lucide/angular';
 import type { SessionOrganization } from '../../core/api/client';
 
-/**
- * The organization the pages belong to, and a menu to switch to another one or create one. With
- * no membership it says so and leads to creating one instead of offering an empty menu.
- */
 @Component({
   selector: 'ardea-org-switch',
   imports: [
@@ -23,7 +19,6 @@ import type { SessionOrganization } from '../../core/api/client';
   ],
   template: `
     @if (current(); as org) {
-      <!-- The name comes from the visible text, framed by hidden words (WCAG 2.5.3, label in name). -->
       <button type="button" class="switch" [cdkMenuTriggerFor]="menu">
         <span class="mark" aria-hidden="true">{{ mark() }}</span>
         <span class="name">

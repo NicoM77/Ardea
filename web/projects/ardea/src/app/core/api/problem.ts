@@ -1,6 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-/** RFC 9457 problem details as the API sends them; `code` is a stable, machine-readable reason. */
 export interface ProblemDetails {
   type?: string;
   title?: string;
@@ -10,15 +9,12 @@ export interface ProblemDetails {
   errors?: Record<string, string[]>;
 }
 
-/** The error sentence keys a form knows, by problem `code` and by HTTP status. */
 export interface ProblemMessages {
   codes?: Readonly<Record<string, string>>;
   statuses?: Readonly<Record<number, string>>;
-  /** For every other failure the server answered. */
   fallback: string;
 }
 
-/** Keys every form shares when the server is unreachable or overloaded. */
 export const COMMON_PROBLEM_KEYS = {
   offline: 'errors.offline',
   tooManyRequests: 'errors.tooManyRequests',
@@ -32,12 +28,6 @@ export function problemOf(error: unknown): ProblemDetails | null {
   return { status: error.status };
 }
 
-/**
- * Picks the translation key for a failed request: a known `code` first, then a known status,
- * then the shared answers for "no connection", "too many attempts" and "server error", and the
- * form's own fallback for anything else. The server's English `title` is never shown, because the
- * interface speaks the user's language.
- */
 export function problemMessageKey(error: unknown, messages: ProblemMessages): string {
   if (!(error instanceof HttpErrorResponse)) return COMMON_PROBLEM_KEYS.server;
   const problem = problemOf(error);

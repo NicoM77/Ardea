@@ -1,7 +1,5 @@
 import type { Page } from '@playwright/test';
 
-/** API answers for the Playwright tests: a signed-in instance administrator, or a signed-out visitor. */
-
 const SESSION = {
   user: {
     id: '0190a000-0000-7000-8000-000000000001',
@@ -138,8 +136,6 @@ const SETTING = (value: string | null, locked = false) => ({
 export async function api(page: Page, signedIn: boolean): Promise<void> {
   await page.route('**/api/v1/**', (route) => {
     const path = new URL(route.request().url()).pathname;
-    // The organization's live stream: one `ready`, then it ends; the long retry keeps the browser
-    // from opening it again during a test.
     if (/^\/api\/v1\/orgs\/[^/]+\/events$/.test(path))
       return route.fulfill({
         status: 200,
@@ -464,7 +460,6 @@ const ENTRY_DETAIL = {
   redirectedFrom: null,
 };
 
-/** The catalogue that learns (task 4.9): the measures and the review list on «Sources». */
 const LEARNING = {
   provider: { setting: null, locked: false, name: 'local', local: true, model: 'qwen3:14b' },
   callsToday: 12,

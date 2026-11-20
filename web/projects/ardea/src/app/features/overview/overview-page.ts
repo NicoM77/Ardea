@@ -27,14 +27,6 @@ import { PriorityRing } from './priority-ring';
 
 const WEEK = 7 * 86_400_000;
 
-/**
- * «Overview» (task 3.8, master plan 11.4 and 17.7, mockup overview.html): the day at a glance. One
- * sentence on what needs attention, the open reminders with the most urgent one's three answers, the
- * new notices leading the side column above the split by priority, projects, what changed since yesterday, the warnings of national centres without an
- * identifier and the state of the sources. Reminders have no deadlines (master plan 17.5), so
- * nothing counts down. On a quiet day the same cards stay in place and say that nothing is urgent,
- * so the page never changes shape.
- */
 @Component({
   selector: 'ardea-overview-page',
   imports: [
@@ -106,7 +98,6 @@ export class OverviewPage {
   protected readonly statusWarnings = computed(() =>
     this.statusRead.hasValue() ? (this.statusRead.value() ?? []) : [],
   );
-  /** A member of an organization whose setup is unfinished is offered to continue it (11.6). */
   protected readonly offerSetup = computed(
     () =>
       roleRank(this.organization()?.role) >= roleRank('member') &&
@@ -114,12 +105,10 @@ export class OverviewPage {
       !this.setup.value()?.completedAt,
   );
 
-  /** The new notices (master plan 17.7): their count leads the side column, the first three below. */
   private readonly notices = inject(NoticeCount);
   protected readonly noticeCount = this.notices.count;
   protected readonly noticesKnown = this.notices.ready;
   protected readonly noticesFailed = this.notices.failed;
-  /** «3», «99+», or «100+» when a further page was not read. */
   protected readonly noticeText = computed(() =>
     countText(this.notices.count(), this.notices.more()),
   );
@@ -129,7 +118,6 @@ export class OverviewPage {
   }
   protected readonly peekScore = cvssText;
 
-  /** A priority pointed at in the ring's legend stands out in the ring. */
   protected readonly focus = signal<string | null>(null);
 
   constructor() {

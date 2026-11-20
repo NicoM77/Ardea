@@ -7,11 +7,6 @@ import { canManage } from '../organizations/org-format';
 
 export type NotifyTab = 'rules' | 'recipients' | 'log';
 
-/**
- * The head of «Notification rules» (master plan 11.4, mockup notification-rules.html): the title, the
- * page's action and underline tabs for rules, recipients and the delivery log. Members who are neither
- * owner nor admin get a sentence and the way to their own settings instead of the pages.
- */
 @Component({
   selector: 'ardea-notify-frame',
   imports: [RouterLink, TranslocoPipe, UiNotice, UiPageHeader],

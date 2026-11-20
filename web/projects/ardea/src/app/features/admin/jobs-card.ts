@@ -7,10 +7,6 @@ import { AdministrationService, type AbandonedJobResponse } from '../../core/api
 import { problemMessageKey } from '../../core/api/problem';
 import { count } from './settings-patch';
 
-/**
- * Jobs that gave up (dead) or failed for good, newest first, with a retry each (master plan 3.4,
- * 11.4). A retry queues the job again; the list then no longer shows it.
- */
 @Component({
   selector: 'ardea-jobs-card',
   imports: [
@@ -188,7 +184,6 @@ import { count } from './settings-patch';
     .muted {
       color: var(--faint);
     }
-    /* Phones: each row becomes a record of its own (DESIGN.md, Layout) */
     @media (max-width: 640px) {
       .table-wrap {
         margin: 0;
@@ -235,7 +230,6 @@ import { count } from './settings-patch';
   `,
 })
 export class JobsCard {
-  /** null while loading. */
   readonly jobs = input<AbandonedJobResponse[] | null>(null);
   readonly loading = input(false);
   readonly failed = input(false);

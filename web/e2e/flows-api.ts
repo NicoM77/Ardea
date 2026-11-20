@@ -1,14 +1,6 @@
 import type { Page, Route } from '@playwright/test';
 import { api, ORG_ID, PROJECT_ID, USER_ID } from './mock-api';
 
-/**
- * The organization's actions for the flow tests of phase 3 (overview, actions, action, alert), on
- * top of `api()`. Times are relative to now. The server keeps the
- * state of the actions per test, checks `expectedStatus` like the API and answers 409
- * `status_conflict` when it does not match. With `ai`, the alert behind action 143 carries the
- * model's assessment (phase 4): its texts, a verdict «unlikely» and a proposal «not affected» on
- * two findings with a version that cannot be checked, and the review of task 4.7.
- */
 const PLATFORM = { id: '0190a000-0000-7000-8000-000000000030', name: 'Platform Ops' };
 const PORTAL = { id: PROJECT_ID, name: 'Customer Portal' };
 const HOUR = 3_600_000;
@@ -169,7 +161,6 @@ const FACTORS = {
   floors: [],
 };
 
-/** The model's assessment of alert 142; its sentence carries markup and an address, shown as text. */
 const MODEL_ANSWERS = {
   ...POSTGRES_ANSWERS,
   origin: 'model',
@@ -229,7 +220,6 @@ const MODEL_ANSWERS = {
   },
 };
 
-/** A finding whose version could not be checked, with the model's verdict counting (task 4.5). */
 const MODEL_FACTORS = {
   ...FACTORS,
   level: 3,
@@ -286,21 +276,13 @@ function finding(
 }
 
 export interface FlowOptions {
-  /** A quiet day: no critical or high action open. */
   calm?: boolean;
-  /** Someone else closes the action just before the first status change. */
   conflict?: boolean;
-  /** The model assessed alert 142; the organization has used today's requests for assessments. */
   ai?: boolean;
-  /** The first finding came about through a learned catalogue entry (task 4.10). */
   learned?: boolean;
-  /** The stack's PostgreSQL entry has an open reminder #155 from an earlier «Affects us». */
   stackReminder?: boolean;
-  /** Someone else answers the first notice just before this page does. */
   noticeConflict?: boolean;
 }
-
-/* ---------- Notices (task 5a.5): the stack, its notices, their answers and taking them back ---------- */
 
 const STACK = { id: '0190a000-0000-7000-8000-0000000000f0', name: 'Stack' };
 
@@ -366,11 +348,6 @@ function notice(
   };
 }
 
-/**
- * Three new notices (two exploited, so the order is Windows, FortiGate, PostgreSQL), one raised
- * quietly by a backfill, and two answered. FortiGate came back once: answered «Doesn't affect us»,
- * then listed by CISA as exploited (E22). On a quiet day every notice is answered.
- */
 function notices(calm: boolean): Notice[] {
   const rows = [
     notice('n1', 'CVE-2026-200001', 'Windows Server: code execution in the RPC runtime', WINDOWS, {
@@ -473,7 +450,6 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
   ];
 
   const open = () => rows.filter((r) => r.status !== 'closed');
-  // What people decided about the model's estimates (task 4.7), per finding.
   const reviewed = new Map<string, Review>();
   const modelled = (id: string, verdict: string, level: number, levelName: string) => {
     if (!options.ai) return {};
@@ -592,7 +568,6 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
           note: string | null;
         };
         if (conflict) {
-          // Someone else closed it as an accepted risk a moment before.
           conflict = false;
           action.status = 'closed';
           action.closeReason = 'risk_accepted';
@@ -624,7 +599,6 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
         return route.fulfill({ json: detail(number) });
       }
       if (one[2] === '/notes') return route.fulfill({ status: 201, json: events[0] });
-      // A reminder has no assignee and no deadline (master plan 17.5): nothing to change by PATCH.
       if (request.method() !== 'GET') return route.fulfill({ status: 405 });
       return route.fulfill({ json: detail(number) });
     }
@@ -786,7 +760,6 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
       const state = q.get('state') ?? 'new';
       const component = q.get('component');
       const items = inbox
-        // «new» leaves out what a backfill raised; that is «earlier» (ADR 047).
         .filter((n) =>
           state === 'answered'
             ? n.state === 'affects_us' || n.state === 'not_affected'
@@ -825,7 +798,6 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
           body: JSON.stringify({ status: 409, code: 'status_conflict' }),
         });
       if (answer[2] === 'reopen') {
-        // As the API: taking an answer back forgets who gave it; a return once (E22) stays.
         Object.assign(n, {
           state: 'open',
           reminderNumber: null,

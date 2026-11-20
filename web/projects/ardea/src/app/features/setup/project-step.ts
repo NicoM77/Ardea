@@ -11,12 +11,6 @@ import { fieldErrorKey } from '../auth/auth-forms';
 import { focusFirstInvalid } from '../auth/focus-invalid';
 import { WIZARD_PROBLEMS } from './wizard-problems';
 
-/**
- * Step "Project" (master plan 11.6): the name and the business process it carries; optional after
- * the stack in an organization's first run (task 5a.4). Exposure and
- * criticality follow in Operations, while the repository is read. An existing project is renamed,
- * not created again: the wizard never asks twice.
- */
 @Component({
   selector: 'ardea-project-step',
   imports: [FormField, FormRoot, TranslocoPipe, UiButton, UiCard, UiField, UiInput, UiNotice],
@@ -102,12 +96,7 @@ import { WIZARD_PROBLEMS } from './wizard-problems';
 })
 export class ProjectStep {
   readonly orgId = input.required<string>();
-  /** The project the wizard already created, if it comes back to this step. */
   readonly project = input<ProjectView | null>(null);
-  /**
-   * In the organization's first run the stack is enough to start (master plan 11.6, task 5a.4):
-   * the step goes back to the stack, and can be skipped, which finishes the setup without a project.
-   */
   readonly optional = input(false);
   readonly skipping = input(false);
   readonly saved = output<ProjectView>();

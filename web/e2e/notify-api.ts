@@ -1,12 +1,6 @@
 import type { Page, Route } from '@playwright/test';
 import { api, ORG_ID, USER_ID } from './mock-api';
 
-/**
- * Notifications for the flow tests of phase 5 (task 5.8), on top of `api()`: the three default rules, the
- * webhook targets and external addresses, the delivery log, the inbox with its counter, the member's own
- * settings, push devices, and the public link pages. The server keeps what a test changes, so a saved rule,
- * a new webhook or a read notification shows up when the page reads again.
- */
 const HOUR = 3_600_000;
 const at = (ms: number) => new Date(Date.now() + ms).toISOString();
 let ids = 0;
@@ -87,17 +81,11 @@ export interface NotifyState {
   notifications: Json[];
   devices: Json[];
   preferences: { mutedChannels: string[]; locale: string | null; canMuteCritical: boolean };
-  /** The reminders by level (task 5a.6). */
   reminders: { level5: string; level4: string; level3: string; nextRunAt: string | null };
-  /** The external address behind the link token `link-token`. */
   link: { state: string };
   requests: { method: string; path: string; body: unknown }[];
 }
 
-/**
- * `signedIn: false` is the visitor of a link page; `base: false` leaves the general answers to a stand-in
- * registered before (e.g. `flowsApi`), so that both serve one page.
- */
 export async function notifyApi(
   page: Page,
   options: { signedIn?: boolean; base?: boolean } = {},
@@ -293,7 +281,6 @@ export async function notifyApi(
       return route.fulfill({ json: state.preferences });
     }
     if (path === '/api/v1/push/public-key') {
-      // A valid uncompressed P-256 point (the example key of RFC 8291).
       return route.fulfill({
         json: {
           publicKey:
@@ -349,7 +336,6 @@ export async function notifyApi(
   return state;
 }
 
-/** The rule as the API answers after a write: its targets with ids and labels. */
 function ruleOf(request: Json): Json {
   const targets = (request['targets'] as Json[]).map((t) => ({
     ...t,

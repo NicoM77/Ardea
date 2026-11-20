@@ -6,11 +6,6 @@ import { StackStore } from './stack-store';
 import { StackSuggestions } from './stack-suggestions';
 import { StackThresholds } from './stack-thresholds';
 
-/**
- * The organization's stack outside the wizard (the stack mockup, master plan 17.2): the products
- * it runs, each with an optional version and its threshold, saved at once; what to add; and what
- * raises a notice. Notices per entry in the last week join the rows with the Notices page (5a.5).
- */
 @Component({
   selector: 'ardea-stack-page',
   imports: [

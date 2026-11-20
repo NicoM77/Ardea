@@ -3,7 +3,6 @@ import { UiCard, UiCopyButton, UiPageHeader, UiQrCode } from 'ui';
 import { RecoveryCodes } from '../../features/account/recovery-codes';
 import { formatSharedKey } from '../../features/auth/auth-forms';
 
-/** Sample secret, not a real account: the RFC 6238 test key "12345678901234567890" in base32. */
 const SAMPLE_KEY = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
 
 @Component({
@@ -26,12 +25,10 @@ const SAMPLE_KEY = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
         </ui-card>
 
         <ui-card heading="Recovery codes, phone width">
-          <!-- 390px screen less 16px padding on each side, less the card's own padding -->
           <div class="phone"><ardea-recovery-codes [codes]="codes" /></div>
         </ui-card>
       </div>
 
-      <!-- The width of the card on the real page (its column is at most 640px) -->
       <ui-card class="page-width" heading="Recovery codes, page width">
         <ardea-recovery-codes [codes]="codes" />
       </ui-card>

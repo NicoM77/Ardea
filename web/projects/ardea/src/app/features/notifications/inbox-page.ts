@@ -18,7 +18,6 @@ import { notificationPriority } from './notify-format';
 import { NotifyIcon } from './notify-icon';
 import { UnreadCount } from './unread-count';
 
-/** Day groups of the list: today, yesterday, then the date. */
 export function dayKey(createdAt: string, now: Date): string {
   const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const diff = Math.round((day(now) - day(new Date(createdAt))) / 86_400_000);
@@ -29,11 +28,6 @@ export function dayKey(createdAt: string, now: Date): string {
       : new Date(day(new Date(createdAt))).toISOString();
 }
 
-/**
- * The member's notifications in this organization (master plan 8.5, 11.4; tasks 5.3, 5.8; mockup
- * notifications.html): newest first, grouped by day, unread with a dot and a bold title. Opening one marks it
- * read and goes to its page; new ones arrive live through the organization's stream.
- */
 @Component({
   selector: 'ardea-inbox-page',
   imports: [
@@ -377,7 +371,6 @@ export class InboxPage {
     );
   }
 
-  /** Opening marks it read; a notification without a page is only marked. */
   protected open(n: InAppNotificationView): void {
     if (!n.readAt) void this.mark([n.id]);
   }

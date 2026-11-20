@@ -1,12 +1,5 @@
 import { Component, input } from '@angular/core';
 
-/**
- * What a page or list shows when there is nothing in it yet. Says what will appear here and, when
- * there is one, the step that makes it appear. Silence is a valid state (PRODUCT.md, principle 1),
- * so the tone is calm: a dashed edge, muted words, no illustration.
- *
- * Slots: an icon (`[uiEmptyIcon]`), the text (default) and actions (`[uiEmptyActions]`).
- */
 @Component({
   selector: 'ui-empty-state',
   template: `

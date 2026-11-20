@@ -9,10 +9,6 @@ import { problemMessageKey } from '../../core/api/problem';
 import { EMAIL_ERRORS, emailRules, fieldErrorKey } from './auth-forms';
 import { focusFirstInvalid } from './focus-invalid';
 
-/**
- * Asks for a reset link. The answer is the same whether or not an account exists, so the page
- * cannot be used to find out who has one.
- */
 @Component({
   selector: 'ardea-forgot-password-page',
   imports: [FormField, FormRoot, RouterLink, TranslocoPipe, UiButton, UiField, UiInput, UiNotice],

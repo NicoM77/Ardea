@@ -1,4 +1,3 @@
-/** The sentences for the problem codes the organization endpoints answer with (task 2.1). */
 export const TEAM_PROBLEMS: Readonly<Record<string, string>> = {
   already_member: 'team.errors.alreadyMember',
   owner_role: 'team.errors.ownerRole',

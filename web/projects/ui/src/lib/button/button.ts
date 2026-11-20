@@ -3,13 +3,6 @@ import { UiLoader } from '../loader/loader';
 
 export type UiButtonVariant = 'default' | 'primary' | 'ghost';
 
-/**
- * Buttons (DESIGN.md, Components): 32px high (40px on phones), 6px corners, weight 500.
- * Primary is near-black and appears once per screen; Default has a Control edge; Ghost has none.
- *
- * While `loading` is set the button stays focusable, announces `aria-busy`, ignores clicks and
- * keeps its label beside the drawing heron, so a keyboard user never loses their place.
- */
 @Component({
   // An attribute on the native element keeps its semantics, focus and form behaviour.
   // eslint-disable-next-line @angular-eslint/component-selector
@@ -113,8 +106,6 @@ export class UiButton {
   readonly block = input(false, { transform: booleanAttribute });
 
   constructor() {
-    // A capture listener on the element runs before the (click) handlers its parent template
-    // binds, so a click while loading reaches neither them nor the form's submit.
     const element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
     const guard = (event: Event) => {
       if (!this.loading()) return;

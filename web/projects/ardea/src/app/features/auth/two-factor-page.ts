@@ -11,10 +11,6 @@ import { Session } from '../../core/session/session';
 import { fieldErrorKey, normalizeRecoveryCode, normalizeTotp } from './auth-forms';
 import { focusFirstInvalid } from './focus-invalid';
 
-/**
- * The second step of signing in: a 6-digit code from the authenticator app, or one of the
- * recovery codes. Pasting is allowed and spaces are ignored (WCAG 2.2, accessible authentication).
- */
 @Component({
   selector: 'ardea-two-factor-page',
   imports: [FormField, FormRoot, RouterLink, TranslocoPipe, UiButton, UiField, UiInput, UiNotice],

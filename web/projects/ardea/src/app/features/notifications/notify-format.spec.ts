@@ -54,7 +54,6 @@ describe('the matrix of a rule (mockup notification-rules.html)', () => {
     expect(row.push).toBeNull();
     expect(row.webhook).toBeNull();
     expect(row.in_app?.when).toEqual([{ key: 'notify.mode.immediate', cron: null }]);
-    // Two targets on one channel with the same schedule are one cell with both recipients.
     expect(row.email?.when).toEqual([{ key: 'notify.schedule.weekdays', cron: '0 8 * * 1-5' }]);
     expect(row.email?.who).toEqual([
       { key: 'notify.recipients.roles.viewer', name: 'viewer' },

@@ -27,12 +27,6 @@ import {
   STATE_LABELS,
 } from './entry-format';
 
-/**
- * «Entries» (task 1.10, master plan 11.4 Vulnerabilities): every consolidated entry from every
- * source, the same for all organizations, newest change first. Search by identifier or words,
- * filter by kind and by how recently an entry changed; more rows load with the cursor.
- * The filters live in the address, so a filtered list can be shared and survives a reload.
- */
 @Component({
   selector: 'ardea-entries-page',
   imports: [
@@ -297,7 +291,6 @@ import {
   `,
 })
 export class EntriesPage {
-  /** From the address: `?q=...&kind=...&since=...`. */
   readonly q = input<string | null>(null);
   readonly kind = input<string | null>(null);
   readonly since = input<string | null>(null);
@@ -313,7 +306,6 @@ export class EntriesPage {
     return !!(f.q || f.kind || f.since);
   });
 
-  /** The cursor of the page being loaded; undefined for the first page. Reset by new filters. */
   private readonly cursor = linkedSignal<EntryFilters, string | undefined>({
     source: this.filters,
     computation: () => undefined,
@@ -321,7 +313,6 @@ export class EntriesPage {
   private readonly params = computed(() => listParams(this.filters(), this.cursor(), new Date()));
   protected readonly page = listEntriesResource(this.params);
 
-  /** All rows loaded so far for the current filters. */
   protected readonly rows = linkedSignal<
     { filters: EntryFilters; cursor: string | undefined; items: EntrySummary[] | undefined },
     EntrySummary[]
@@ -354,8 +345,6 @@ export class EntriesPage {
   });
 
   constructor() {
-    // Kind and time apply as soon as they are chosen; the words wait for Search or Enter.
-    // A plain variable, not a signal: the effect must not depend on what it writes.
     let lastChoice = { kind: '', since: '' };
     effect(() => {
       const { kind, since } = this.model();

@@ -9,14 +9,8 @@ import {
 } from '../../core/api/client';
 import { CATALOG_GROUPS, KIND_LABELS } from './component-format';
 
-/** What the person chose: a catalogue product, or a free entry with a name and a kind. */
 export type Picked = { product: CatalogProductView } | { name: string; kind: string };
 
-/**
- * The catalogue search (`GET /catalog/products?q=`, master plan 10.2, 11.6): type, narrow by group,
- * add. A product the catalogue lacks can be added as a free entry, which no source can match.
- * `kinds` limits the offer to some kinds, for the questions in Operations.
- */
 @Component({
   selector: 'ardea-catalog-picker',
   imports: [TranslocoPipe, LucidePlus, LucideSearch, UiButton, UiInput, UiLoader],
@@ -211,7 +205,6 @@ export type Picked = { product: CatalogProductView } | { name: string; kind: str
   `,
 })
 export class CatalogPicker {
-  /** Only these kinds are offered, without the group chips. */
   readonly kinds = input<readonly string[] | null>(null);
   readonly label = input<string | null>(null);
   readonly placeholder = input<string | null>(null);
@@ -251,7 +244,6 @@ export class CatalogPicker {
     const value = (event.target as HTMLInputElement).value;
     this.text.set(value);
     clearTimeout(this.timer);
-    // A short pause before asking: one request per word, not per key.
     this.timer = setTimeout(() => this.query.set(value.trim()), 250);
     if (!value.trim()) this.query.set('');
   }

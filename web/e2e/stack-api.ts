@@ -1,13 +1,6 @@
 import type { Page, Route } from '@playwright/test';
 import { ORG_ID } from './mock-api';
 
-/**
- * The organization's stack (task 5a.4) on top of `api()` or `flowsApi()`: `GET stack`, the
- * suggestions, the stack project's component endpoints and a small catalogue that knows a few
- * other spellings, all with state per test. With `wizard`, the organization has just been created:
- * an empty stack and a setup that has not started; otherwise the stack names Ubuntu and
- * PostgreSQL 17 and the setup is complete.
- */
 const STACK_ID = '0190a000-0000-7000-8000-0000000000f0';
 
 interface Product {
@@ -77,7 +70,6 @@ const COMPANIONS: Record<string, string> = {
   'exchange-server': 'windows-server',
   ubuntu: 'linux-kernel',
 };
-/** What the organization's projects name (the Platform Ops project of the flows). */
 const NAMED: Record<string, string[]> = { redis: ['Platform Ops'] };
 
 const product = (key: string) => CATALOGUE.find((p) => p.key === key)!;
@@ -108,14 +100,11 @@ function entry(key: string, version: string | null, precision: string, threshold
   };
 }
 
-/** As the API derives it for a version typed by hand (ADR 046). */
 const derived = (version: string | null) =>
   !version ? 'none' : /^(\d+|\d+(\.\d+)*\.[xX*])$/.test(version) ? 'line' : 'exact';
 
 export interface StackState {
-  /** Every write to the stack project, in order, with its body. */
   writes: { method: string; path: string; body: unknown }[];
-  /** While set, every write to the stack project fails as a conflict, and changes nothing. */
   failWrites: boolean;
 }
 

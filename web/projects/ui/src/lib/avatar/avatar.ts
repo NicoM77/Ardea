@@ -3,7 +3,6 @@ import { Component, computed, input } from '@angular/core';
 export type UiAvatarTint = 'a' | 'b' | 'c';
 const TINTS: readonly UiAvatarTint[] = ['a', 'b', 'c'];
 
-/** Up to two letters: the first of the first and the last word ("Ada Lovelace" → "AL"). */
 export function initialsOf(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
   if (words.length === 0) return '';
@@ -12,22 +11,15 @@ export function initialsOf(name: string): string {
   return (first + last).toLocaleUpperCase();
 }
 
-/** The same person always gets the same tint: a stable hash of their id. */
 export function tintFor(id: string): UiAvatarTint {
   let hash = 0;
   for (const char of id) hash = (hash * 31 + (char.codePointAt(0) ?? 0)) | 0;
   return TINTS[Math.abs(hash) % TINTS.length];
 }
 
-/**
- * A person's initials on their own pale tint (DESIGN.md, "People are tints"). Decorative: the
- * name is always written next to it or given to the control around it.
- */
 @Component({
   selector: 'ui-avatar',
   host: { '[class]': "'is-' + tint()", '[attr.data-initials]': 'initials()', 'aria-hidden': 'true' },
-  // The initials are drawn as generated content, not text: the control around the avatar carries the
-  // person's name, and visible text that is not part of that name fails WCAG 2.5.3 (label in name).
   template: '',
   styles: `
     :host::after {

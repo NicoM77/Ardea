@@ -16,12 +16,6 @@ import { StackAdd } from './stack-add';
 import { PRECISION_HINTS, precisionOf, THRESHOLDS, type Precision } from './stack-format';
 import { StackStore } from './stack-store';
 
-/**
- * The stack's entries, one row each (the stack mockup): the product, its version (any, a line
- * or exact, master plan 17.1), the threshold of its notices (ADR 044) and Remove; below, the
- * catalogue search to add one. Every change is saved at once. The count of notices per entry in the
- * last seven days joins the row once the API offers it (task 5a.3, 5a.5).
- */
 @Component({
   selector: 'ardea-stack-entries',
   imports: [TranslocoPipe, LucideTrash, UiButton, UiInput, StackAdd],
@@ -274,7 +268,6 @@ export class StackEntries {
 
   protected readonly kindLabels = KIND_LABELS;
   protected readonly thresholds = THRESHOLDS;
-  /** The version being typed, so the hint under it follows before it is saved. */
   protected readonly typed = signal<{ id: string; value: string } | null>(null);
 
   protected precisionHint(entry: ComponentView): string {
@@ -286,10 +279,6 @@ export class StackEntries {
     return PRECISION_HINTS[precision] ?? PRECISION_HINTS.none;
   }
 
-  /**
-   * Saves the version typed (on Enter or when the field is left). While a save of the row runs,
-   * the field is read-only; when a save fails, the field shows the stored version again.
-   */
   protected async saveVersion(entry: ComponentView, input: HTMLInputElement): Promise<void> {
     if (this.store.isPending(entry.id)) return;
     const version = input.value.trim();
@@ -299,7 +288,6 @@ export class StackEntries {
     }
   }
 
-  /** Line or exact; the select waits while its row is saved and keeps the focus afterwards. */
   protected async savePrecision(entry: ComponentView, select: HTMLSelectElement): Promise<void> {
     if (!entry.version) return;
     const saved = await this.store.setVersion(entry, entry.version, select.value as Precision);
@@ -316,7 +304,6 @@ export class StackEntries {
     return this.store.entries().find((e) => e.id === entry.id) ?? entry;
   }
 
-  /** After a removal the focus moves to the next row's Remove, or to the search after the last. */
   protected async remove(entry: ComponentView): Promise<void> {
     const at = this.store.entries().findIndex((e) => e.id === entry.id);
     if (!(await this.store.remove(entry))) return;
@@ -331,7 +318,6 @@ export class StackEntries {
     );
   }
 
-  /** Puts the focus into the search, for a step that asks for at least one entry. */
   focusSearch(): void {
     this.adder()?.focus();
   }

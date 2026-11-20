@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { UiCard, UiField, UiInput, UiPageHeader, UiPasswordToggle } from 'ui';
 
-/** Fields in every state. Hover and focus are pinned with `data-ui-state` for the image. */
 @Component({
   selector: 'ardea-fields-page',
   imports: [UiCard, UiField, UiInput, UiPageHeader, UiPasswordToggle],

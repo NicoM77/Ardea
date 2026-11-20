@@ -51,11 +51,6 @@ import { LinksCard } from './links-card';
 import { isReading, pollWhile } from './link-format';
 import { SuggestionsList } from './suggestions-list';
 
-/**
- * A project and its technology profile (master plan 11.4, 16.5): the project's facts, its
- * platforms and services, and its packages per ecosystem. Components from a repository follow it
- * until they are detached; the ones entered by hand are changed in the wizard's Technologies step.
- */
 @Component({
   selector: 'ardea-project-page',
   imports: [
@@ -432,7 +427,6 @@ import { SuggestionsList } from './suggestions-list';
   `,
 })
 export class ProjectPage {
-  /** From the address. */
   readonly projectId = input.required<string>();
 
   private readonly projects = inject(ProjectsService);
@@ -548,7 +542,6 @@ export class ProjectPage {
   );
 
   constructor() {
-    // A reading in the background: look again until it is done, then show what it found.
     pollWhile(
       computed(() => this.reading() > 0),
       () => this.links.reload(),
@@ -567,7 +560,6 @@ export class ProjectPage {
     });
   }
 
-  /** After a change to the profile: the components and what can be checked of them. */
   protected refresh(): void {
     this.detail.reload();
     this.coverage.reload();
@@ -589,7 +581,6 @@ export class ProjectPage {
     });
   }
 
-  /** A free entry the catalogue now knows becomes that catalogue entry (master plan 6.9 «Vorschläge»). */
   protected async useCatalogEntry(component: ComponentView, productKey: string): Promise<void> {
     await this.run(component.id, async () => {
       await firstValueFrom(

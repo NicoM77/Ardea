@@ -30,11 +30,6 @@ const ADDRESS_PROBLEMS = {
   address_in_use: 'notify.addresses.errors.inUse',
 };
 
-/**
- * «Recipients» of the notification rules (master plan 8.3, 8.5; task 5.8; mockup notification-rules.html): webhook
- * targets with a test message and the secret shown once, and e-mail addresses outside the organisation, which
- * receive messages only after their owner confirmed them.
- */
 @Component({
   selector: 'ardea-recipients-page',
   imports: [

@@ -139,7 +139,6 @@ describe('SetupWizard', () => {
       .flush([]);
     await settle(fixture);
 
-    // Technologies, the first step not done yet, with what was entered by hand.
     expect(element.querySelector('ardea-technologies-step')).not.toBeNull();
     expect(element.querySelector('ardea-draft-list')?.textContent).toContain('PostgreSQL');
 
@@ -170,7 +169,6 @@ describe('SetupWizard', () => {
       queryParamsHandling: 'merge',
     });
 
-    // Step 6: what can be checked; finishing completes the setup and opens the project.
     fixture.componentRef.setInput('step', 'coverage');
     await settle(fixture);
     http
@@ -213,7 +211,6 @@ describe('SetupWizard', () => {
     http.expectOne(`/api/v1/orgs/${ORG}/stack/suggestions`).flush([]);
     await settle(fixture);
 
-    // Without a product the step says so and records nothing.
     element.querySelector<HTMLButtonElement>('ardea-stack-step .actions button')!.click();
     await settle(fixture);
     http.expectNone((r) => r.method === 'PATCH');
@@ -255,7 +252,6 @@ describe('SetupWizard', () => {
       .expectOne(`/api/v1/orgs/${ORG}/setup`)
       .flush({ stepsDone: ['stack'], firstProjectId: null, completedAt: null });
     await settle(fixture);
-    // In the first run the project step goes back to the stack and can be skipped.
     const forward = element.querySelectorAll<HTMLButtonElement>(
       'ardea-project-step .forward button',
     );
@@ -295,7 +291,6 @@ describe('SetupWizard', () => {
       .expectOne((r) => r.url === `/api/v1/orgs/${ORG}/projects/${PROJECT}/suggestions`)
       .flush([]);
     await settle(fixture);
-    // The stack comes first; the stepper still shows the project's steps as done.
     expect(element.querySelector('ardea-stack-step')).not.toBeNull();
     expect(element.querySelectorAll('.stepper li.is-done').length).toBe(4);
     http

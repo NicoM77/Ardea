@@ -2,18 +2,14 @@ import type { UiPriorityLevel } from 'ui';
 import type { ActionEventView, FindingView, MemberView } from '../../core/api/client';
 import { priorityOfLevel, SYSTEM_REASON_LABELS } from './action-format';
 
-/** One line of an action's history (master plan 8.2): what happened, in the reader's words. */
 export interface HistoryLine {
   id: string;
   kind: string;
   at: string;
   key: string;
   params: Record<string, string | number>;
-  /** A person's own words (a note, a reason), quoted as written. */
   quote: string | null;
-  /** A change of priority: from (null when it started) to. */
   change: [UiPriorityLevel | null, UiPriorityLevel] | null;
-  /** A system reason, already a translation key. */
   reason: string | null;
 }
 
@@ -28,7 +24,6 @@ function data(event: ActionEventView): Data {
   return event.data && typeof event.data === 'object' ? (event.data as Data) : {};
 }
 
-/** Newest first, each with the words for its kind; unknown kinds keep their name. */
 export function historyLines(
   events: readonly ActionEventView[],
   members: readonly MemberView[],
@@ -52,7 +47,6 @@ export function historyLines(
       change: null,
       reason: null,
     };
-    // A person who left the organization, or none: the sentence says «Someone» (ICU select).
     const who = actor ?? 'someone';
     switch (event.kind) {
       case 'action.raised':

@@ -11,7 +11,6 @@ import { problemMessageKey } from '../../core/api/problem';
 import { ChoiceGroup, type ChoiceOption } from '../setup/choice-group';
 import { TEAM_PROBLEMS } from '../team/team-problems';
 
-/** The organization's AI data policy (master plan 7.8, 9.3; ADR 037), in the API's words. */
 export const AI_POLICIES: readonly ChoiceOption[] = [
   { value: 'none', label: 'settings.ai.none', hint: 'settings.ai.noneHint' },
   { value: 'local_only', label: 'settings.ai.localOnly', hint: 'settings.ai.localOnlyHint' },
@@ -22,11 +21,6 @@ export const AI_POLICIES: readonly ChoiceOption[] = [
   },
 ];
 
-/**
- * Whether the organization's alerts may go to a language model, and which (task 4.4, master plan
- * 7.8): none, only models on the instance's own network, or cloud models too. For owner and
- * admins; the card says what leaves Ardea in either case.
- */
 @Component({
   selector: 'ardea-ai-policy-card',
   imports: [TranslocoPipe, UiButton, UiCard, UiNotice, ChoiceGroup],

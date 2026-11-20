@@ -1,32 +1,23 @@
-/* Ardea design tokens.
-   Source: DESIGN.md (first drawn in static mockups, kept at the tag archive/planning-and-design). This file is the only place in web/ that holds
-   colour values; components use these custom properties and nothing else (scripts/check-tokens.mjs).
-   Light theme only (DESIGN.md: "Don't build a dark theme"). */
-
 :root {
-  /* Surfaces: the frame carries a grey-blue step taken from the heron */
   --ground: #f1f4f6;
   --surface: #ffffff;
   --raised: #f5f7f8;
   --active: #e4e9ec;
   --border: #e3e8eb;
   --rule: #edf0f2;
-  --control: #c9d0d4; /* outlined buttons and chips, which carry a label */
-  --field: #7f868b; /* input boundaries: 3.7:1 on the sheet, above the 3:1 non-text minimum */
+  --control: #c9d0d4;
+  --field: #7f868b;
 
-  /* Text */
-  --text: #131416; /* 18.4:1 on surface */
-  --muted: #53595d; /* 7.1:1 on surface, 6.4:1 on ground */
-  --faint: #656b6f; /* 5.4:1 on surface: meta, placeholders */
+  --text: #131416;
+  --muted: #53595d;
+  --faint: #656b6f;
 
-  /* One data hue, the heron's slate teal: charts, focus, the selected thing */
   --accent: #1b6c80;
   --accent-soft: #e2eef1;
   --primary: #131416;
   --primary-hover: #2a2c2f;
   --primary-ink: #ffffff;
 
-  /* Priority: always with its symbol and its word */
   --critical: #c8102e;
   --high: #b84a00;
   --medium: #8a6100;
@@ -34,11 +25,10 @@
   --positive: #1e7b4f;
   --positive-soft: #dcfae5;
   --positive-ink: #04250e;
-  --alert-soft: #fae7ea; /* the "Exploited" pill: critical at 10% on white */
+  --alert-soft: #fae7ea;
   --alert-ink: #7d0a1d;
   --toast-check: #7fd8a8;
 
-  /* People: pale tints, identity only */
   --who-a-bg: #dbe8f3;
   --who-a-ink: #1c4a68;
   --who-b-bg: #f1e4d2;
@@ -46,7 +36,6 @@
   --who-c-bg: #dbebdf;
   --who-c-ink: #1f5638;
 
-  /* Charts */
   --grid: #e6eaed;
   --axis-ink: var(--faint);
   --dot: #b4bdc2;
@@ -54,7 +43,6 @@
   --score-deep: #124d5c;
   --score-light: #2a7588;
 
-  /* Things that float: the only shadows in the system */
   --shadow-tip: 0 4px 12px rgb(19 20 22 / 0.08);
   --shadow-toast: 0 8px 24px rgb(19 20 22 / 0.18);
   --shadow-dialog: 0 24px 64px rgb(19 20 22 / 0.24);
@@ -62,7 +50,6 @@
   --on-dark-fill: rgb(255 255 255 / 0.14);
   --on-dark-fill-hover: rgb(255 255 255 / 0.24);
 
-  /* Type */
   --font: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
   --fs-figure: 36px;
@@ -80,7 +67,6 @@
   --lh-sub: 18px;
   --lh-small: 16px;
 
-  /* Shape */
   --radius-sheet: 16px;
   --radius-dialog: 12px;
   --radius-toast: 10px;
@@ -91,7 +77,6 @@
   --radius-meter: 2px;
   --radius-pill: 999px;
 
-  /* Space */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 12px;
@@ -102,7 +87,6 @@
   --pad: 24px;
   --card-pad: 20px;
 
-  /* Layout */
   --sidebar-width: 228px;
   --topbar: 48px;
   --content-max: 1240px;
@@ -110,18 +94,16 @@
   --focus-ring: 2px solid var(--accent);
   --focus-offset: 2px;
 
-  /* Motion: strong ease-out for anything entering or responding, ease-in-out for things moving on screen */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --t-press: 140ms;
   --t-hover: 150ms;
   --t-ui: 220ms;
-  --t-draw: 700ms; /* a chart drawing itself once, on arrival */
+  --t-draw: 700ms;
 
   color-scheme: light;
 }
 
-/* Phones: 16px padding, 40 to 44px controls */
 @media (max-width: 640px) {
   :root {
     --pad: 16px;

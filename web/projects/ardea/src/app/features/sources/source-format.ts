@@ -15,10 +15,8 @@ export const OPERATOR_KIND_LABELS: Record<string, string> = {
   community: 'sources.operatorKind.community',
 };
 
-/** The order operator kinds are offered in: by weight of the operator (master plan 5.6). */
 const KIND_ORDER = ['authority', 'mandated', 'recognized', 'vendor', 'community'];
 
-/** int64 and int32 values arrive as number or string (OpenAPI 3.1 from .NET). */
 export function count(value: number | string): number {
   const number = typeof value === 'number' ? value : Number.parseInt(value, 10);
   return Number.isFinite(number) ? number : 0;
@@ -29,7 +27,6 @@ export interface SourceFilters {
   operator: string;
 }
 
-/** The operator kinds and operators present, for the filters; each offered once. */
 export function filterOptions(sources: readonly SourceStatus[]): {
   kinds: string[];
   operators: string[];
@@ -41,7 +38,6 @@ export function filterOptions(sources: readonly SourceStatus[]): {
   return { kinds, operators };
 }
 
-/** The sources a filter leaves, with the ones that need attention (failing, then degraded) first. */
 export function filterSources(
   sources: readonly SourceStatus[],
   filters: SourceFilters,
@@ -55,7 +51,6 @@ export function filterSources(
     );
 }
 
-/** How many sources are in each health state, for the summary line. */
 export function healthCounts(
   sources: readonly SourceStatus[],
 ): Record<'healthy' | 'degraded' | 'failing' | 'disabled', number> {
@@ -66,7 +61,6 @@ export function healthCounts(
   return counts;
 }
 
-/** An interval in minutes as the page prints it: minutes below two hours, hours below two days, then days. */
 export function interval(minutes: number): { key: string; value: number } {
   if (minutes < 120) return { key: 'sources.every.minutes', value: minutes };
   if (minutes < 2880) return { key: 'sources.every.hours', value: Math.round(minutes / 60) };

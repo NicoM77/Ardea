@@ -5,10 +5,6 @@ import { UiEmptyState, UiPageHeader } from 'ui';
 import { AREA_ICONS } from './area-icons';
 import { AreaId, areaById } from './areas';
 
-/**
- * The page of a navigation area until its feature is built: its title and an empty state that
- * says what will appear here. No sample data.
- */
 @Component({
   selector: 'ardea-area-page',
   imports: [TranslocoPipe, LucideDynamicIcon, UiEmptyState, UiPageHeader],
@@ -21,7 +17,6 @@ import { AreaId, areaById } from './areas';
   `,
 })
 export class AreaPage {
-  /** From the route's data. */
   readonly area = input.required<AreaId>();
   protected readonly def = computed(() => areaById(this.area()));
   protected readonly icons = AREA_ICONS;

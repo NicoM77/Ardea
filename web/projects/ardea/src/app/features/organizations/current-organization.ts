@@ -6,11 +6,6 @@ import type { SessionOrganization } from '../../core/api/client';
 import { Session } from '../../core/session/session';
 import { organizationBySlug } from './org-format';
 
-/**
- * The organization of the address for a page below `/o/:slug`. The slug belongs to the nearest
- * route that has it, so pages at any depth (projects, a project, settings) find it the same way.
- * Call in an injection context.
- */
 export function injectOrganization(): {
   slug: Signal<string | null>;
   organization: Signal<SessionOrganization | null>;

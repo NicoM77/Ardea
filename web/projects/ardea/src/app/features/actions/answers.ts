@@ -15,16 +15,6 @@ import {
   TODO_LABELS,
 } from './answers-format';
 
-/**
- * The three answers that open an action and an alert (master plan 11.2, «in five seconds»): what
- * happened, are we affected, what to do. Built from the structured answers of the API (task 3.6);
- * the source's own words are a quotation with their source named. At 390 × 844 all three sit above
- * the action bar, so the layout stays compact on phones. With the model's assessment (`origin`
- * `model`, mockup remediation.html?ai) its sentence answers «what happened», its verdict and the
- * likelihood join «are we affected», and its steps with their source numbers join «what to do»;
- * its texts are plain text, never markup or links. When the model was asked and failed, a line
- * says the answers come without it («ohne KI-Einschätzung»).
- */
 @Component({
   selector: 'ardea-answers',
   imports: [TranslocoPipe, LucideExternalLink, UiCopyButton],
@@ -341,10 +331,8 @@ import {
 export class Answers {
   private static next = 0;
   protected readonly uid = `answers-${Answers.next++}`;
-  /** The advisory comes from source data: it opens only when it is a web address. */
   protected readonly web = webUrl;
   readonly answers = input.required<AnswersView>();
-  /** The component the target version belongs to, written before it («PostgreSQL 17.12»). */
   readonly component = input<string | null>(null);
 
   private readonly transloco = inject(TranslocoService);
@@ -363,19 +351,13 @@ export class Answers {
     );
   });
 
-  /** The model's verdict on a component of «are we affected», when it judged one. */
   protected verdictOf(item: AffectedItem): ModelVerdictView | null {
     return this.verdicts().get(item.component.id) ?? null;
   }
 
-  /**
-   * One component's check in one line: «In range: 17 to before 17.12», «Version unknown (no
-   * version recorded)». Put together here, so the punctuation sits right in every language.
-   */
   protected checkLine(item: AffectedItem): string {
     const t = (key: string, params?: Record<string, string>) =>
       this.transloco.translate(key, params ?? {});
-    // The reason is worth a word only where the version could not be checked.
     const why = item.versionVerdict === 'unknown' ? reasonLabel(item.versionReason) : null;
     const ranges = item.ranges.map((range) => {
       const phrase = rangePhrase(range);

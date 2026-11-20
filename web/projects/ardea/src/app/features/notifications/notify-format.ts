@@ -6,7 +6,6 @@ import type {
 } from '../../core/api/client';
 import { num, priorityOfLevel } from '../actions/action-format';
 
-/** The channels of master plan 8.5, in the order the pages show them. */
 export type Channel = 'in_app' | 'email' | 'push' | 'webhook';
 export const CHANNELS: readonly Channel[] = ['in_app', 'email', 'push', 'webhook'];
 
@@ -17,10 +16,8 @@ export const CHANNEL_LABELS: Readonly<Record<string, string>> = {
   webhook: 'notify.channels.webhook',
 };
 
-/** The channels a member can mute for themselves (webhooks are not people). */
 export const PERSONAL_CHANNELS: readonly Channel[] = ['in_app', 'email', 'push'];
 
-/** The events of master plan 8.2 in four groups, each with a word and a hint. */
 export interface EventOption {
   value: string;
   label: string;
@@ -94,7 +91,6 @@ export const EVENT_GROUPS: readonly { label: string; events: readonly EventOptio
   },
 ];
 
-/** What a new rule starts with: the events of the default rules. */
 export const DEFAULT_EVENTS: readonly string[] = [
   'action.raised',
   'action.level_raised',
@@ -105,7 +101,6 @@ export const DEFAULT_EVENTS: readonly string[] = [
   'notice.raised',
 ];
 
-/** A rule's threshold: level 2 to 5 shown as the priority it reports from. */
 export const THRESHOLDS: readonly { level: number; priority: UiPriorityLevel }[] = [
   { level: 2, priority: 'low' },
   { level: 3, priority: 'medium' },
@@ -117,7 +112,6 @@ export function thresholdPriority(minLevel: number | string): UiPriorityLevel {
   return priorityOfLevel(minLevel);
 }
 
-/** The roles a target can name; a role means it and the ones above it. */
 export const ROLE_TARGETS: readonly { value: string; label: string }[] = [
   { value: 'admin', label: 'notify.recipients.roles.admin' },
   { value: 'owner', label: 'notify.recipients.roles.owner' },
@@ -129,7 +123,6 @@ export const ROLE_TARGET_LABELS: Readonly<Record<string, string>> = Object.fromE
   ROLE_TARGETS.map((r) => [r.value, r.label]),
 );
 
-/** Which channels a kind of recipient can be reached on (the API's rule, master plan 8.3). */
 export function channelsFor(kind: string): Channel[] {
   switch (kind) {
     case 'role':
@@ -144,7 +137,6 @@ export function channelsFor(kind: string): Channel[] {
   }
 }
 
-/** Digest schedules people pick; a five-field cron in the organization's time zone. */
 export const SCHEDULES: readonly { cron: string; label: string }[] = [
   { cron: '0 8 * * 1-5', label: 'notify.schedule.weekdays' },
   { cron: '0 8 * * 1', label: 'notify.schedule.mondays' },
@@ -155,11 +147,8 @@ export function scheduleLabel(cron: string | null | undefined): string | null {
   return SCHEDULES.find((s) => s.cron === cron?.trim())?.label ?? null;
 }
 
-/** One cell of the matrix: how a rule reaches people on one channel. */
 export interface MatrixCell {
-  /** «At once», a schedule's label, or the cron itself. */
   when: { key: string; cron: string | null }[];
-  /** Who: role labels (keys) and names. */
   who: { key: string | null; name: string | null }[];
   sendEmpty: boolean;
 }
@@ -177,7 +166,6 @@ export function recipientOf(target: NotificationTargetView): {
   };
 }
 
-/** The matrix of master plan 8.3 as the mockup draws it: one cell per channel, empty where the rule does not reach. */
 export function matrixRow(rule: NotificationRuleView): Record<Channel, MatrixCell | null> {
   const row = { in_app: null, email: null, push: null, webhook: null } as Record<
     Channel,
@@ -202,7 +190,6 @@ export function matrixRow(rule: NotificationRuleView): Record<Channel, MatrixCel
   return row;
 }
 
-/** The delivery states with a word and the status symbol that reads closest. */
 export const DELIVERY_STATES: readonly string[] = [
   'pending',
   'sending',
@@ -235,7 +222,6 @@ export function deliveryStatus(state: string): 'open' | 'review' | 'remediated' 
   }
 }
 
-/** How many of the shown rows are still being retried and how many were given up. */
 export function logSummary(rows: readonly DeliveryView[]): { failed: number; dead: number } {
   return {
     failed: rows.filter((r) => r.state === 'failed').length,
@@ -250,14 +236,12 @@ export const ADDRESS_STATE_LABELS: Readonly<Record<string, string>> = {
   expired: 'notify.addresses.states.expired',
 };
 
-/** The level a notification concerns as a priority, or nothing for warnings and team work. */
 export function notificationPriority(
   level: number | string | null | undefined,
 ): UiPriorityLevel | null {
   return level === null || level === undefined ? null : priorityOfLevel(num(level));
 }
 
-/** How often open reminders remind, by level (master plan 8.7, 17.5; ADR 048). */
 export type ReminderRhythm = 'daily' | 'weekly' | 'monthly' | 'off';
 export const REMINDER_RHYTHMS: readonly ReminderRhythm[] = ['daily', 'weekly', 'monthly', 'off'];
 
@@ -270,14 +254,12 @@ export const REMINDER_RHYTHM_LABELS: Readonly<Record<ReminderRhythm, string>> = 
 
 export type ReminderLevelField = 'level5' | 'level4' | 'level3';
 
-/** The levels that remind; below level 3 only the digests name a reminder. */
 export const REMINDER_LEVELS: readonly { level: 5 | 4 | 3; field: ReminderLevelField }[] = [
   { level: 5, field: 'level5' },
   { level: 4, field: 'level4' },
   { level: 3, field: 'level3' },
 ];
 
-/** The rhythm each level starts with. */
 export const DEFAULT_RHYTHMS: Readonly<Record<ReminderLevelField, ReminderRhythm>> = {
   level5: 'daily',
   level4: 'weekly',

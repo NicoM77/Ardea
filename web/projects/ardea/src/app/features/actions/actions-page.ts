@@ -23,7 +23,6 @@ import {
   type ActionFilters,
 } from './list-filters';
 
-/** A further page is appended; an action that moved between pages appears once. */
 function mergeActions(
   shown: readonly ActionSummary[],
   page: readonly ActionSummary[],
@@ -34,13 +33,6 @@ function mergeActions(
   return [...shown, ...page.filter((a) => !known.has(num(a.number)))];
 }
 
-/**
- * «Reminders» (task 3.9, 5a.5; master plan 11.4, 17.5; mockups actions.html, reminders.html): the
- * organization's reminders (the API's actions, ADR 046), open or
- * closed, filtered by priority and project and found by number, entry, component or project. The
- * filters live in the address. A reminder has no owner, no deadline and no time to close (master
- * plan 17.5), so the list stands alone.
- */
 @Component({
   selector: 'ardea-actions-page',
   imports: [
@@ -283,7 +275,6 @@ function mergeActions(
   `,
 })
 export class ActionsPage {
-  /** From the address. */
   readonly view = input<string | null>(null);
   readonly priority = input<string | null>(null);
   readonly project = input<string | null>(null);
@@ -341,7 +332,6 @@ export class ActionsPage {
     problemMessageKey(this.page.error(), { fallback: 'actions.loadFailed' }),
   );
 
-  /** The view without the priorities: the counts on the chips and in the summary. */
   private readonly counts = listActionsResource(
     this.orgId,
     computed(() => actionCountParams(this.filters())),
@@ -356,7 +346,6 @@ export class ActionsPage {
     const rows = this.countRows();
     return rows && this.countsComplete() ? countByPriority(rows) : null;
   });
-  /** The rows the filters leave, for the summary. */
   protected readonly inView = computed(() => {
     const wanted = this.filters().priorities as string[];
     const rows = this.countRows() ?? [];
@@ -413,7 +402,6 @@ export class ActionsPage {
   constructor() {
     reloadOnLiveChange(
       {
-        // A change can move rows between pages: start again from the first.
         reload: () => {
           if (!this.cursor()) return this.page.reload();
           this.cursor.set(undefined);

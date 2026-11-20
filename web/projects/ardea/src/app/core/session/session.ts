@@ -2,22 +2,12 @@ import { computed, inject, Injectable, Injector, Resource } from '@angular/core'
 import { toObservable } from '@angular/core/rxjs-interop';
 import { filter, firstValueFrom } from 'rxjs';
 import type { SessionOrganization, SessionUser } from '../api/client';
-// The two reads every page needs come straight from their files: the barrel would pull every
-// generated service into the first bundle, because injectable classes are never tree-shaken.
 import { getSessionResource } from '../api/generated/endpoints/authentication/authentication.service';
 import { getSetupStatusResource } from '../api/generated/endpoints/setup/setup.service';
 import { signInStateOf, SignInState } from './access';
 
-/** The signed-in person as the pages use it: the user with their memberships. */
 export type Me = SessionUser & { organizations: SessionOrganization[] };
 
-/**
- * Who is signed in and whether the instance still needs its first user. Both are reads
- * (`httpResource`); sign-in, sign-out and setup call `refresh()` afterwards. No global store.
- *
- * `GET /api/v1/auth/session` also sets the `XSRF-TOKEN` cookie. Its token is bound to the user,
- * which is why the session is read again after every change of identity, before the next write.
- */
 @Injectable({ providedIn: 'root' })
 export class Session {
   private readonly injector = inject(Injector);
@@ -34,7 +24,6 @@ export class Session {
     this.setupStatus.hasValue() ? (this.setupStatus.value()?.setupRequired ?? null) : null,
   );
 
-  /** Resolves once both reads have an answer, so a guard never decides on a loading state. */
   async ready(): Promise<void> {
     await Promise.all([
       settled(this.setupStatus, this.injector),
@@ -42,7 +31,6 @@ export class Session {
     ]);
   }
 
-  /** After a change of identity (sign-in, setup, sign-out): both reads again. */
   async refresh(): Promise<void> {
     this.setupStatus.reload();
     this.session.reload();

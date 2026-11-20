@@ -12,7 +12,6 @@ import { problemMessageKey, problemOf } from '../../core/api/problem';
 import { ROLE_LABELS } from '../organizations/org-format';
 import { TEAM_PROBLEMS } from './team-problems';
 
-/** Open invitations with their role, who sent them and until when they work; each can be revoked. */
 @Component({
   selector: 'ardea-invitations-card',
   imports: [TranslocoPipe, UiButton, UiCard, UiLoader, UiNotice, UiPill],
@@ -168,7 +167,6 @@ export class InvitationsCard {
       this.revoked.set(invitation.email);
       this.invitations().reload();
     } catch (error) {
-      // Gone already (accepted or revoked elsewhere): the list catches up.
       if (problemOf(error)?.code === 'invitation_not_found') this.invitations().reload();
       this.problem.set(
         problemMessageKey(error, { codes: TEAM_PROBLEMS, fallback: 'team.errors.failed' }),

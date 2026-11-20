@@ -1,7 +1,6 @@
 import type { NotificationRuleRequest, NotificationRuleView } from '../../core/api/client';
 import { num } from '../actions/action-format';
 
-/** The rule as the API takes it back: the same rule, with whatever the caller changes on top. */
 export function ruleRequest(
   rule: NotificationRuleView,
   change: Partial<NotificationRuleRequest> = {},

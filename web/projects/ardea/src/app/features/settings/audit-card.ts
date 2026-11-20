@@ -11,10 +11,6 @@ import { actorKey, AUDIT_ACTIONS, dataSummary } from './audit-format';
 
 const PAGE = 50;
 
-/**
- * The organization's audit log (master plan 9.4), newest first, for owner and admins: who did what
- * and when. Further pages load on demand and are added below, so nothing moves while reading.
- */
 @Component({
   selector: 'ardea-audit-card',
   imports: [TranslocoPipe, UiButton, UiCard, UiLoader, UiNotice],
@@ -122,7 +118,6 @@ export class AuditCard {
     this.params,
   );
 
-  /** Every page loaded so far; a new first page (another organization) starts over. */
   protected readonly events = linkedSignal<AuditEventView[], AuditEventView[]>({
     source: () => (this.page.hasValue() ? (this.page.value()?.items ?? []) : []),
     computation: (items, previous) => {

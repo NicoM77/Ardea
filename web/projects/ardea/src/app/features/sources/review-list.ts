@@ -12,12 +12,6 @@ import {
 } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 
-/**
- * The data-quality review (master plan 6.9, task 1.13), for the instance administrator: CVE
- * entries that share an identifier but were not merged. Each case shows its entries and the
- * identifiers that join them, with one decision, «Keep separate». There is deliberately no merge:
- * merging happens only through the rules (master plan 4.4).
- */
 @Component({
   selector: 'ardea-review-list',
   imports: [
@@ -214,7 +208,6 @@ import { problemMessageKey } from '../../core/api/problem';
       min-width: 0;
     }
     .entries .link {
-      /* Stacked links need a 24px target (WCAG 2.2, 2.5.8). */
       display: inline-flex;
       align-items: center;
       min-height: 24px;

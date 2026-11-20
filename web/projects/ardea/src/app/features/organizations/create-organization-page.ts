@@ -20,10 +20,6 @@ import { fieldErrorKey } from '../auth/auth-forms';
 import { focusFirstInvalid } from '../auth/focus-invalid';
 import { SLUG_MAX_LENGTH, SLUG_PATTERN, slugify } from './org-format';
 
-/**
- * Founding an organization (master plan 9.1): any signed-in person may, and becomes its owner.
- * The address follows the name until someone types their own.
- */
 @Component({
   selector: 'ardea-create-organization-page',
   imports: [
@@ -119,7 +115,6 @@ export class CreateOrganizationPage {
   protected readonly problem = signal<string | null>(null);
 
   private readonly model = signal({ name: '', slug: '' });
-  /** The address the API derives from the name when the field is left empty. */
   protected readonly derived = computed(() => slugify(this.model().name));
   protected readonly preview = computed(() => `/o/${this.model().slug.trim() || this.derived()}`);
 
@@ -144,7 +139,6 @@ export class CreateOrganizationPage {
               }),
             );
             await this.session.refresh();
-            // A new organization goes on to the setup wizard: its first project.
             await this.router.navigate(['/o', created.slug, 'setup']);
             return undefined;
           } catch (error) {

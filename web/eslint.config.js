@@ -5,7 +5,6 @@ const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
 
 module.exports = defineConfig([
-  // Generated from the OpenAPI document by orval; checked by regenerating, not by linting.
   { ignores: ['**/core/api/generated/**'] },
   {
     files: ['**/*.ts'],

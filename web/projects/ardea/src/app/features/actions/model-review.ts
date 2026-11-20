@@ -22,7 +22,6 @@ import {
   VERDICTS,
 } from './model-format';
 
-/** The level a person may expect, in the words of the priorities. */
 const LEVEL_NAMES: Readonly<Record<number, string>> = {
   5: 'estimate.levels.critical',
   4: 'estimate.levels.high',
@@ -31,25 +30,14 @@ const LEVEL_NAMES: Readonly<Record<number, string>> = {
   1: 'estimate.levels.notRelevant',
 };
 
-/** What a person decided about a finding's assessment (task 4.7). */
 export interface ReviewChange {
   finding: FindingView;
   decision: 'confirm' | 'correct';
-  /** The person's verdict; null when only the level is questioned, or for a confirmation. */
   verdict: string | null;
-  /** The level the person expects instead; null when the level is not questioned. */
   level: number | null;
   reason: string | null;
 }
 
-/**
- * The model's estimate of one finding and what a person does with it (mockup remediation.html?ai,
- * master plan 7.5, 7.6, 7.9; tasks 4.5, 4.7): the verdict, marked as a proposal when it is «not
- * affected»; the level the rules give without it and with it; «Confirm the estimate», which makes
- * it a person's verdict (a confirmed «not affected» closes the finding); and «Correct this
- * assessment» with another verdict, the level the person expects, and why. Once reviewed, it says
- * who confirmed or corrected it.
- */
 @Component({
   selector: 'ardea-model-review',
   imports: [TranslocoPipe, UiButton, UiInput, UiPill, UiPriority],
@@ -283,7 +271,6 @@ export class ModelReview {
   private readonly levelField = viewChild<ElementRef<HTMLSelectElement>>('level');
   private readonly whyField = viewChild<ElementRef<HTMLTextAreaElement>>('why');
 
-  /** The model's verdict counted and waits for a person. */
   protected readonly estimate = computed(() => hasModelEstimate(this.finding()));
   protected readonly shown = computed(
     () => this.estimate() || (this.finding().verdictSource === 'human' && !!this.finding().review),
@@ -293,19 +280,16 @@ export class ModelReview {
   protected readonly now = computed(() => priorityOfLevel(this.finding().level));
   protected readonly held = computed(() => heldByFloor(this.finding().factors));
   private readonly transloco = inject(TranslocoService);
-  /** Who reviewed it; a person who left the organization is «Someone». */
   protected readonly who = computed(() => {
     const name = reviewer(this.finding(), this.members());
     return name === 'someone' ? this.transloco.translate('actionDetail.history.someone') : name;
   });
-  /** A correction of the level alone: the verdict stays the model's, the expectation is recorded. */
   protected readonly levelOnly = computed(() => {
     const r = this.finding().review;
     return r && r.decision === 'corrected' && r.verdict === null && r.expectedLevel !== null
       ? r
       : null;
   });
-  /** The form starts with the verdict shown. */
   protected readonly initialVerdict = computed(() => this.finding().verdict);
 
   protected expectedName(level: number | string | null): string {
@@ -335,7 +319,6 @@ export class ModelReview {
     const levelText = this.levelField()?.nativeElement.value ?? '';
     const level = levelText ? Number(levelText) : null;
     const reason = this.whyField()?.nativeElement.value.trim() ?? '';
-    // The verdict shown again is no correction of it: then only the level is questioned.
     const verdict = chosen === f.verdict ? null : chosen;
     if (verdict === null && level === null) {
       this.error.set('estimate.errors.nothing');
@@ -356,7 +339,6 @@ export class ModelReview {
     });
   }
 
-  /** Called by the page once the review went through. */
   done(): void {
     this.open.set(false);
     this.error.set(null);

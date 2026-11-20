@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 
-/** A key cap for keyboard hints, such as the `/` beside the search. */
 @Component({
   selector: 'ui-kbd',
   template: `<kbd><ng-content /></kbd>`,

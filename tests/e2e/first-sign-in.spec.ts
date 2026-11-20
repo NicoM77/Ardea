@@ -1,18 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { Authenticator, expectAccessible, openFirstPage, watchConsole } from './support';
 
-/**
- * Core flow 1 of master plan 13.6 and the acceptance of phase 0: on a fresh instance, set up the
- * first user with the setup token, turn on two-factor authentication, sign out, and sign in again
- * with password and TOTP over HTTPS. Then the core flow «accept an invitation»: create an
- * organization, invite a second person, who registers through the link and joins. Every visited
- * page is checked with axe (WCAG 2.2 AA) and the test fails on any console error.
- */
 const setupToken = process.env['E2E_SETUP_TOKEN'] ?? '';
 const person = {
   email: 'first.admin@example.org',
   name: 'First Admin',
-  // A long passphrase: the password rules ask for length, not character classes.
   password: 'heron stands still in the reeds',
 };
 const invitee = {
@@ -25,7 +17,6 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   test.skip(!setupToken, 'E2E_SETUP_TOKEN is not set; run the test through run.sh');
   const problems = watchConsole(page);
 
-  // A fresh instance sends every visitor to setup.
   await openFirstPage(page, '/');
   await expect(page).toHaveURL(/\/setup$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Set up Ardea' })).toBeVisible();
@@ -37,13 +28,11 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await page.getByLabel('Password', { exact: true }).fill(person.password);
   await page.getByRole('button', { name: 'Create account' }).click();
 
-  // Signed in, without an organization yet; the instance administrator sees Administration.
   await expect(page.getByRole('heading', { level: 1, name: 'Welcome' })).toBeVisible();
   const navigation = page.getByRole('navigation', { name: 'Main' });
   await expect(navigation.getByRole('link', { name: 'Administration' })).toBeVisible();
   await expectAccessible(page, 'no organization');
 
-  // Two-factor authentication: confirm the password, read the key, enter a code, see the recovery codes.
   await page.getByRole('button', { name: `Account: ${person.name}` }).click();
   await page.getByRole('menuitem', { name: 'Two-factor authentication' }).click();
   await expect(
@@ -60,7 +49,6 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   const uri = new URL((await appLink.getAttribute('href')) ?? '');
   const sharedKey = uri.searchParams.get('secret') ?? '';
   expect(sharedKey).not.toBe('');
-  // The key shown for typing by hand is the same one, in groups of four.
   await expect(page.getByText(sharedKey.match(/.{1,4}/g)!.join(' '))).toBeVisible();
   const authenticator = new Authenticator(sharedKey);
 
@@ -73,14 +61,12 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await expectAccessible(page, 'recovery codes');
   await page.getByRole('button', { name: 'I saved them' }).click();
 
-  // Sign out.
   await page.getByRole('button', { name: `Account: ${person.name}` }).click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/sign-in\?notice=signedOut$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
   await expectAccessible(page, 'sign in');
 
-  // Sign in with the password, then the second step with a fresh code.
   await page.getByLabel('Email').fill(person.email);
   await page.getByLabel('Password', { exact: true }).fill(person.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -93,7 +79,6 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await page.getByLabel('Code').fill(await authenticator.nextCode());
   await page.getByRole('button', { name: 'Verify' }).click();
 
-  // Signed in: the shell with the instance administrator's Administration.
   await expect(page.getByRole('heading', { level: 1, name: 'Welcome' })).toBeVisible();
   await expect(navigation.getByRole('link', { name: 'Administration' })).toBeVisible();
   await navigation.getByRole('link', { name: 'Administration' }).click();
@@ -101,7 +86,6 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await expect(page.getByText('Installed version')).toBeVisible();
   await expectAccessible(page, 'administration');
 
-  // Entries and sources (task 1.10): instance-wide, reachable without an organization.
   await navigation.getByRole('link', { name: 'Sources' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Sources' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible();
@@ -113,10 +97,6 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await expect(page.locator('section[aria-busy="false"]')).toBeVisible();
   await expectAccessible(page, 'entries');
 
-  // Task 2.1 and core flow «accept an invitation» (master plan 13.6): create an organization,
-  // invite someone, and let them join through the link. The instance sends no e-mail, so the
-  // Team page hands the link over once.
-  // Without an organization yet, the switch in the sidebar leads to creating one.
   await page.getByRole('link', { name: /No organization/ }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Create organization' })).toBeVisible();
   await page.getByLabel('Name').fill('Heron Works');
@@ -124,8 +104,6 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await expectAccessible(page, 'create organization');
   await page.getByRole('button', { name: 'Create organization' }).click();
 
-  // Task 2.7: the setup wizard takes over with the first project (master plan 11.6). There is no
-  // access to GitHub on this instance, so the repository step is skipped.
   await expect(page).toHaveURL(/\/o\/heron-works\/setup/);
   await expect(
     page.getByRole('heading', { level: 1, name: 'Set up your organization' }),
@@ -176,7 +154,6 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/sign-in\?notice=signedOut$/);
 
-  // The invited person opens the link, creates an account with the address filled in, and joins.
   await page.goto(link);
   await expect(page.getByRole('heading', { level: 1, name: 'Join Heron Works' })).toBeVisible();
   await expectAccessible(page, 'invitation');
@@ -191,7 +168,6 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   const members = page.getByRole('list', { name: 'Members' });
   await expect(members.getByRole('listitem')).toHaveCount(2);
   await expect(members.getByText(invitee.email)).toBeVisible();
-  // A viewer reads the directory and may leave, but invites no one.
   await expect(page.getByRole('button', { name: 'Leave organization' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send invitation' })).toHaveCount(0);
 

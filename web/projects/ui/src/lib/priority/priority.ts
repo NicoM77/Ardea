@@ -19,11 +19,6 @@ const PRIORITY_LABELS: Record<UiPriorityLevel, string> = {
   none: 'ui.priority.none',
 };
 
-/**
- * Priority (DESIGN.md, signature): a shaped symbol plus the word, both in the priority colour.
- * Filled octagon Critical, filled triangle High, filled diamond Medium, outlined circle with a down
- * arrow Low, outlined circle with a dash Not relevant. The word is always visible; never a numeral.
- */
 @Component({
   selector: 'ui-priority',
   imports: [TranslocoPipe],
@@ -105,7 +100,6 @@ const PRIORITY_LABELS: Record<UiPriorityLevel, string> = {
 })
 export class UiPriority {
   readonly level = input.required<UiPriorityLevel>();
-  /** Only where the word stands next to it already, such as a filter chip. */
   readonly symbolOnly = input(false, { transform: booleanAttribute });
   protected readonly label = computed(() => PRIORITY_LABELS[this.level()]);
 }

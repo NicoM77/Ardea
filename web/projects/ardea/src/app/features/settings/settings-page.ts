@@ -10,11 +10,6 @@ import { AiPolicyCard } from './ai-policy-card';
 import { AuditCard } from './audit-card';
 import { GeneralCard } from './general-card';
 
-/**
- * The organization's settings (master plan 11.4): name, language and time zone, the
- * two-factor requirement, the AI data policy, the accesses to GitHub and, for owner and admins,
- * the audit log.
- */
 @Component({
   selector: 'ardea-settings-page',
   imports: [

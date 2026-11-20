@@ -2,10 +2,6 @@ import { Component, input } from '@angular/core';
 
 export type UiPillTone = 'neutral' | 'alert' | 'done';
 
-/**
- * Signals (DESIGN.md, Pills): "Exploited" is a pale red pill with a red dot, "Fix available" pale
- * green, anything else Raised. 22px high, fully round, 12px type.
- */
 @Component({
   selector: 'ui-pill',
   host: { '[class]': "'is-' + tone()" },

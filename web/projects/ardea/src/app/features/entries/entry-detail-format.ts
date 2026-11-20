@@ -1,6 +1,5 @@
 import type { AffectedView } from '../../core/api/client';
 
-/** A version range as a translation key and its arguments (master plan 6.4: introduced, fixed, last affected, exact). */
 export function versionRange(affected: AffectedView): {
   key: string;
   params: Record<string, string>;
@@ -17,13 +16,11 @@ export function versionRange(affected: AffectedView): {
   return { key: 'entryDetail.range.any', params: {} };
 }
 
-/** The product a range applies to: vendor and product, else the package or CPE name. */
 export function productName(affected: AffectedView): string {
   const named = [affected.vendor, affected.product].filter(Boolean).join(' ');
   return named || affected.purl || affected.cpe || affected.productKey || '';
 }
 
-/** Links from source data open only when they are web addresses. */
 export function webUrl(value: string | null | undefined): string | null {
   if (!value) return null;
   try {

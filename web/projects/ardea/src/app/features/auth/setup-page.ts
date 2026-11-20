@@ -19,7 +19,6 @@ import {
 } from './auth-forms';
 import { focusFirstInvalid } from './focus-invalid';
 
-/** First start of an instance: the person holding the setup token creates the first account. */
 @Component({
   selector: 'ardea-setup-page',
   imports: [

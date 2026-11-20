@@ -30,11 +30,6 @@ const CONFIRM_LABELS: Record<Pending['kind'], string> = {
   transfer: 'team.members.transfer',
 };
 
-/**
- * The member directory (master plan 9.2): name, e-mail address and role, nothing else. The owner
- * and administrators change roles and remove members; everyone may leave; the owner hands
- * ownership on. Removing, leaving and the transfer ask once, in place, before they happen.
- */
 @Component({
   selector: 'ardea-members-card',
   imports: [TranslocoPipe, UiAvatar, UiButton, UiCard, UiInput, UiLoader, UiNotice],
@@ -226,7 +221,6 @@ const CONFIRM_LABELS: Record<Pending['kind'], string> = {
       overflow-wrap: anywhere;
     }
     .role-text {
-      /* In line with the text of the selects above and below */
       padding-left: 11px;
       color: var(--muted);
     }
@@ -305,7 +299,6 @@ export class MembersCard {
     }),
   );
 
-  /** The control that opened the confirmation, to return focus to when it closes. */
   private opener: HTMLElement | null = null;
 
   protected actions(member: MemberView) {
@@ -334,7 +327,6 @@ export class MembersCard {
       if (kind === 'transfer') {
         await firstValueFrom(this.api.updateMember(orgId, member.userId, { role: 'owner' }));
         this.pending.set(null);
-        // The former owner is an administrator now: the session carries the new role.
         await this.session.refresh();
         this.members().reload();
         this.finish('team.members.transferred', { name: member.displayName });
@@ -364,7 +356,6 @@ export class MembersCard {
         role: this.transloco.translate(ROLE_LABELS[role] ?? role),
       });
     });
-    // A refused change leaves the select where the server still has it.
     if (!changed) select.value = member.role;
   }
 

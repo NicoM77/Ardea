@@ -1,4 +1,3 @@
-/* Global styles: fonts, tokens and the base layer of the ui library. Everything else lives with its component. */
 @import '../../ui/src/styles/fonts.css';
 @import '../../ui/src/styles/tokens.css';
 @import '../../ui/src/styles/base.css';

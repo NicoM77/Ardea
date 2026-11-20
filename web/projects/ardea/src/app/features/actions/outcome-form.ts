@@ -12,20 +12,13 @@ import { UiButton, UiInput, UiStatus } from 'ui';
 import type { Outcome } from './action-format';
 import { CLOSING_QUESTIONS } from './action-status';
 
-/** The outcomes that close a reminder without remediating it; each needs a reason (master plan 17.5). */
 export type OtherOutcome = Exclude<Outcome, 'remediated'>;
 
-/** A closing chosen in the form: the outcome and its reason. */
 export interface OtherClosing {
   outcome: OtherOutcome;
   note: string;
 }
 
-/**
- * «Other outcome» of a reminder (mockup reminder.html): Risk accepted or Not affected, each with a short
- * reason that stays in the history. «Mark as remediated» needs none and is not here. Opens with the focus
- * on the chosen outcome; Escape and Cancel close it.
- */
 @Component({
   selector: 'ardea-outcome-form',
   imports: [TranslocoPipe, UiButton, UiInput, UiStatus],

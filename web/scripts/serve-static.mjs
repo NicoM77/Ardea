@@ -1,13 +1,4 @@
 #!/usr/bin/env node
-/*
- * Serves a built app for the Playwright tests, with the single-page fallback to index.html and the
- * same Content Security Policy the API sends in production. The policy is read from
- * src/Hosts/Ardea.Host/Http/RequestProtection.cs, so a test here fails exactly where the real
- * instance would (no 'unsafe-eval', no inline script). Plain Node: it runs on the Node of the
- * Playwright image, which is older than the Angular CLI needs.
- *
- * Usage: node scripts/serve-static.mjs <dir> <port>
- */
 import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve } from 'node:path';
@@ -29,7 +20,6 @@ const types = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
-/** The policy as the host sets it: the string literals of `ContentSecurityPolicy = "..." + "...";`. */
 function productionPolicy() {
   const source = fileURLToPath(
     new URL('../../src/Hosts/Ardea.Host/Http/RequestProtection.cs', import.meta.url),

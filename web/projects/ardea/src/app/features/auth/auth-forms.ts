@@ -2,12 +2,9 @@ import { email, maxLength, minLength, required, SchemaPath } from '@angular/form
 import type { FieldTree, TreeValidationResult } from '@angular/forms/signals';
 import { problemOf } from '../../core/api/problem';
 
-/** Master plan 9: at least 12 characters; length is the rule, not character classes. */
 export const PASSWORD_MIN_LENGTH = 12;
-/** The longest password the API accepts; long passphrases are welcome. */
 export const PASSWORD_MAX_LENGTH = 256;
 
-/** Translation keys for the validation errors a field can show, by error kind. */
 export type ErrorKeys = Partial<Record<string, string>>;
 
 export const EMAIL_ERRORS: ErrorKeys = {
@@ -31,11 +28,6 @@ export const NEW_PASSWORD_ERRORS: ErrorKeys = {
   weakPassword: 'auth.fields.newPassword.weak',
 };
 
-/**
- * The API rejects a password the client cannot judge (a known or guessable one) with the problem
- * code `weak_password`. That answer belongs to the password field, not to the form, so it comes
- * back as a submission error on the field and shows like any other error there.
- */
 export function weakPasswordError(
   error: unknown,
   password: FieldTree<string>,
@@ -61,10 +53,6 @@ export function displayNameRules(path: SchemaPath<string>): void {
   maxLength(path, 100);
 }
 
-/**
- * The error a field shows: only once it was left or the form was submitted, and only the first
- * one, so a person reads one sentence at a time. Returns a translation key or null.
- */
 export function fieldErrorKey(field: FieldTree<string>, keys: ErrorKeys): string | null {
   const state = field();
   if (!state.touched()) return null;
@@ -75,17 +63,14 @@ export function fieldErrorKey(field: FieldTree<string>, keys: ErrorKeys): string
   return null;
 }
 
-/** Digits only: people paste "123 456" or "123-456" from their app. */
 export function normalizeTotp(value: string): string {
   return value.replace(/[^0-9]/g, '');
 }
 
-/** Recovery codes are compared without spaces and case. */
 export function normalizeRecoveryCode(value: string): string {
   return value.replace(/\s+/g, '').toUpperCase();
 }
 
-/** The shared key in groups of four, the way authenticator apps show it and people type it. */
 export function formatSharedKey(key: string): string {
   return (
     key

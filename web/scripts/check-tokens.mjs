@@ -1,9 +1,4 @@
 #!/usr/bin/env node
-/*
- * Fails when a stylesheet or component holds a colour value instead of a design token
- * (master plan 13.4: "Farben ... nur über die Tokens des Designsystems; keine Farbwerte in Komponenten").
- * The token file is the one place allowed to define colours.
- */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +16,6 @@ function* files(dir) {
   }
 }
 
-/** Only style code: whole .css files, and the `styles:` blocks and style attributes of components. */
 function styleParts(path, text) {
   if (path.endsWith('.css')) return [{ text, offset: 0 }];
   const parts = [];
@@ -38,7 +32,6 @@ for (const dir of ['projects/ardea/src', 'projects/ui/src'].map((p) => join(root
     if (allowed.has(path)) continue;
     const text = readFileSync(path, 'utf8');
     for (const part of styleParts(path, text)) {
-      // Comments may name colours; blank them out but keep offsets for the line numbers.
       const code = part.text.replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '));
       for (const m of code.matchAll(colour)) {
         const line = text.slice(0, part.offset + m.index).split('\n').length;

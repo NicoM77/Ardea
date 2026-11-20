@@ -8,11 +8,6 @@ import { problemMessageKey, problemOf } from '../../core/api/problem';
 import { Session } from '../../core/session/session';
 import { TEAM_PROBLEMS } from './team-problems';
 
-/**
- * The organization's two-factor requirement (master plan 9.1, for owner and administrators).
- * Whoever turns it on must use two-factor authentication already, or they would lock themselves
- * out; the card says so before the API has to.
- */
 @Component({
   selector: 'ardea-mfa-setting-card',
   imports: [RouterLink, TranslocoPipe, UiButton, UiCard, UiNotice],
@@ -116,7 +111,6 @@ import { TEAM_PROBLEMS } from './team-problems';
 })
 export class MfaSettingCard {
   readonly organization = input.required<SessionOrganization>();
-  /** The page's address, for the way back from the two-factor page. */
   readonly here = input.required<string>();
 
   private readonly api = inject(OrganizationsService);
@@ -124,7 +118,6 @@ export class MfaSettingCard {
 
   protected readonly required = linkedSignal(() => this.organization().mfaRequired);
   protected readonly changed = computed(() => this.required() !== this.organization().mfaRequired);
-  /** Turning the requirement on needs two-factor authentication on one's own account first. */
   protected readonly blockedForMe = computed(
     () => !this.organization().mfaRequired && this.session.user()?.twoFactorEnabled !== true,
   );
@@ -148,7 +141,6 @@ export class MfaSettingCard {
           aiPolicy: null,
         }),
       );
-      // The session carries the requirement for the switcher, the guard and this card.
       await this.session.refresh();
       this.saved.set(true);
     } catch (error) {

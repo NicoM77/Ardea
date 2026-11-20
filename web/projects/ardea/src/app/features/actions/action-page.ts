@@ -38,20 +38,9 @@ interface Confirmation {
   key: string;
   params?: Record<string, string>;
   undo?: () => void;
-  /** The sentences for a refusal; the reminder's by default. */
   problems?: typeof ACTION_PROBLEMS;
 }
 
-/**
- * One reminder (task 5a.5, master plan 17.5 and 17.7, mockup reminder.html; the API keeps «action»,
- * ADR 046): its status and the three answers first, so at 390 × 844 they end above the action bar. A
- * reminder is open or done, without owner, deadline or «in review». «Mark as remediated» needs no
- * reason and confirms with Undo; «Other outcome» closes it as risk accepted or not affected with a
- * short reason. The vulnerabilities it holds follow with their factors collapsed, then the history,
- * collapsed too. A change someone else made meanwhile (409) is said in a sentence and the page shows
- * the current state. With the model's assessment (phase 4) the answers carry its texts and a card its
- * reasoning.
- */
 @Component({
   selector: 'ardea-action-page',
   imports: [
@@ -143,7 +132,6 @@ interface Confirmation {
           @if (v.answers && v.answers.origin === 'model' && v.answers.model; as model) {
             <ardea-ai-assessment-card [model]="model" />
           }
-          <!-- A disclosure: the heading holds the button that opens it (WAI-ARIA disclosure pattern) -->
           <section class="disclose" [class.is-open]="historyOpen()" aria-labelledby="history-title">
             <h2>
               <button
@@ -408,7 +396,6 @@ interface Confirmation {
   `,
 })
 export class ActionPage {
-  /** From the route. */
   readonly number = input.required<string>();
 
   private readonly api = inject(ActionsService);
@@ -444,7 +431,6 @@ export class ActionPage {
     const a = this.action();
     return a ? statusKindOf(a.status, a.closeReason) : 'open';
   });
-  /** «Open since 13 Nov 2026.» or «Done on 18 Nov 2026: remediated. No more reminders.» */
   protected readonly stateLine = computed(() => {
     const a = this.action();
     if (!a) return { key: 'actionDetail.state.open', params: { date: '' } };
@@ -463,9 +449,7 @@ export class ActionPage {
       },
     };
   });
-  /** The history is collapsed, one click away (master plan 17.7). */
   protected readonly historyOpen = signal(false);
-  /** «Other outcome» is open: risk accepted or not affected, with a reason. */
   protected readonly closing = signal(false);
   protected readonly lines = computed(() =>
     historyLines(
@@ -488,7 +472,6 @@ export class ActionPage {
     reloadOnLiveChange(this.detail);
   }
 
-  /** «Mark as remediated»: at once, without a reason, with Undo (mockup reminder.html). */
   protected remediate(): void {
     this.closing.set(false);
     this.setStatus('remediated', null, 'actionDetail.toast.remediated');
@@ -497,7 +480,6 @@ export class ActionPage {
   protected toggleOther(open: boolean): void {
     this.closing.set(open);
     if (!open) {
-      // Back to the button that opened the form, in the visible copy of the controls.
       setTimeout(() => {
         const buttons = Array.from(
           document.querySelectorAll<HTMLElement>('ardea-action-page [aria-controls="close-form"]'),
@@ -565,7 +547,6 @@ export class ActionPage {
           }),
         );
         this.findingsList()?.done();
-        // The reminder may have closed or changed level with it.
         this.detail.reload();
         return null;
       },
@@ -573,7 +554,6 @@ export class ActionPage {
     );
   }
 
-  /** A person confirms the model's estimate or corrects the assessment of a finding (task 4.7). */
   protected review(change: ReviewChange): void {
     const org = this.orgId();
     if (!org) return;
@@ -597,7 +577,6 @@ export class ActionPage {
           }),
         );
         this.findingsList()?.done();
-        // The finding was assessed again; the reminder may have changed level or closed with it.
         this.detail.reload();
         return null;
       },
@@ -617,7 +596,6 @@ export class ActionPage {
     );
   }
 
-  /** Runs one change: shows what came back, confirms it, or says why it did not work. */
   private async run(
     work: () => Promise<ActionDetailView | null>,
     confirmation: Confirmation,
@@ -635,7 +613,6 @@ export class ActionPage {
       });
     } catch (error) {
       this.problem.set(problemMessageKey(error, confirmation.problems ?? ACTION_PROBLEMS));
-      // Someone else changed it: show the state as it is now, and let the person decide again.
       const code = problemOf(error)?.code;
       if (isStale(code) || isStaleReview(code)) {
         this.closing.set(false);

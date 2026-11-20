@@ -18,7 +18,6 @@ describe('stack format', () => {
     expect(precisionOf('17')).toBe('line');
     expect(precisionOf('8.x')).toBe('line');
     expect(precisionOf('8.3.*')).toBe('line');
-    // Many products count releases with two numbers: «8.3» is meant exactly unless someone says otherwise.
     expect(precisionOf('8.3')).toBe('exact');
     expect(precisionOf('17.11')).toBe('exact');
   });

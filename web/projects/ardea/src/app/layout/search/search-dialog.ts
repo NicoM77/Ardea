@@ -8,14 +8,9 @@ import { filterSearchItems, moveActive, SearchItem } from './search';
 
 export interface SearchDialogData {
   items: readonly SearchItem[];
-  /** Opened with the pointer it scales in; opened from the keyboard it simply appears. */
   byPointer: boolean;
 }
 
-/**
- * The search behind `/` and Ctrl K: a combobox over the pages of the current organization.
- * Actions, vulnerabilities and projects join the list once those areas exist.
- */
 @Component({
   selector: 'ardea-search-dialog',
   imports: [TranslocoPipe, LucideDynamicIcon, LucideSearch, UiKbd],
@@ -186,7 +181,6 @@ export class SearchDialog {
   protected readonly query = signal('');
   protected readonly results = computed(() => filterSearchItems(this.data.items, this.query()));
   protected readonly active = signal(0);
-  /** The results under their group headings, each with its index in the flat list. */
   protected readonly groups = computed(() => {
     const groups: { name: string; entries: { item: SearchItem; index: number }[] }[] = [];
     this.results().forEach((item, index) => {

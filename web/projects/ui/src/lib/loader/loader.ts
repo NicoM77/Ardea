@@ -14,7 +14,6 @@ export type UiLoaderSize = 'page' | 'inline' | 'button';
 
 const PIXELS: Record<UiLoaderSize, number> = { page: 96, inline: 20, button: 16 };
 
-/** The heron's lines (docs/design/brand), each normalised to a path length of 100. */
 const LINES = [
   {
     name: 'back',
@@ -27,20 +26,6 @@ const LINES = [
   { name: 'crest', d: 'M39 14.5 L47 12' },
 ] as const;
 
-/**
- * The loader (DESIGN.md, Components, Loader; variant Draw, kept at the tag archive/planning-and-design): the heron draws
- * itself from the beak to the feet, the front line 90ms behind, then crest and eye appear; it holds
- * and the line leaves the way it came, 2.4s per cycle. Ink only.
- *
- * - Sizes: 96px for a page, 20px inline, 16px in a button. From 24px down the line is 4.6 and the
- *   eye is left out, as on the favicon.
- * - It appears only after `delay` (300ms), so a quick answer never flashes it.
- * - `done` hands over: the loop fades out in 150ms and the mark draws once in 700ms, the eye last.
- * - Reduced motion: the finished mark fades slowly between full and 35% opacity, without drawing.
- * - The host is a `role="status"` region with the label as a word beside the mark (or for screen
- *   readers only, in a button); the container that waits sets `aria-busy`.
- * - `frame` (0 to 1) draws one still frame of the loop, for the component pages and image comparison.
- */
 @Component({
   selector: 'ui-loader',
   host: {
@@ -130,7 +115,6 @@ const LINES = [
       opacity: 0;
     }
 
-    /* The loop */
     .loop path {
       stroke-dasharray: 100 100;
       animation: ui-loader-draw 2.4s var(--ease-in-out) infinite both;
@@ -149,7 +133,6 @@ const LINES = [
       animation: none;
     }
 
-    /* Done: the loop gives way to the mark, drawn once from the beak */
     :host(.is-done) .loop {
       opacity: 0;
       transition: opacity 150ms ease-out;
@@ -224,7 +207,6 @@ const LINES = [
       }
     }
 
-    /* Reduced motion: no drawing, the finished mark fades slowly between two tones */
     @media (prefers-reduced-motion: reduce) {
       :host(:not(.is-still)) .loop {
         display: none;
@@ -243,16 +225,10 @@ const LINES = [
   `,
 })
 export class UiLoader implements OnInit {
-  /**
-   * What is loading, as a word or short sentence, already translated. Without one the loader is
-   * decorative, for a control that announces its own busy state (`aria-busy` on a button).
-   */
   readonly label = input<string | null>(null);
   readonly size = input<UiLoaderSize>('inline');
-  /** Milliseconds of waiting before the loader shows. */
   readonly delay = input(300, { transform: numberAttribute });
   readonly done = input(false, { transform: booleanAttribute });
-  /** A still frame of the loop, 0 (nothing drawn) to 1 (the whole mark). */
   readonly frame = input<number | null>(null);
 
   protected readonly lines = LINES;
@@ -273,7 +249,6 @@ export class UiLoader implements OnInit {
     this.destroyRef.onDestroy(() => clearTimeout(timer));
   }
 
-  /** The neck lines draw over the whole frame range, the crest over its last fifth. */
   protected stillOffset(line: string): number | null {
     const frame = this.frame();
     if (frame === null) return null;

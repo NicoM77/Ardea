@@ -14,10 +14,6 @@ import type { SessionOrganization } from '../../core/api/client';
 import type { Me } from '../../core/session/session';
 import { UnreadCount } from '../../features/notifications/unread-count';
 
-/**
- * The top bar on the ground (48px): the search, which opens with `/` or Ctrl K, and the account
- * menu. Below 900px it also holds the menu button and the heron mark, because the sidebar folds.
- */
 @Component({
   selector: 'ardea-topbar',
   imports: [
@@ -267,7 +263,6 @@ import { UnreadCount } from '../../features/notifications/unread-count';
 })
 export class Topbar {
   readonly user = input<Me | null>(null);
-  /** The organization in view; its unread notifications show on the bell. */
   readonly organization = input<SessionOrganization | null>(null);
   protected readonly unread = inject(UnreadCount);
 
@@ -277,7 +272,6 @@ export class Topbar {
 
   readonly menuOpen = input(false);
   readonly openMenu = output();
-  /** `true` when opened with the pointer: the dialog then scales in. */
   readonly openSearch = output<boolean>();
   readonly signOut = output();
 }

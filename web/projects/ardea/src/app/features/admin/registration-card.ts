@@ -31,7 +31,6 @@ const MODE_HINTS: Record<string, string> = {
   closed: 'admin.registration.closedHint',
 };
 
-/** Who may create an account on this instance: by invitation, anyone, or no one. */
 @Component({
   selector: 'ardea-registration-card',
   imports: [FormField, FormRoot, TranslocoPipe, UiButton, UiCard, UiField, UiInput, UiNotice],

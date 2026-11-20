@@ -8,11 +8,6 @@ import {
   type DraftComponent,
 } from './component-format';
 
-/**
- * The components entered by hand, as the wizard edits them before saving: version or "version
- * unknown" (a valid answer, master plan 11.6), and on demand how it is packaged and whether a
- * protection makes it safe, with the reason. Services have no version.
- */
 @Component({
   selector: 'ardea-draft-list',
   imports: [TranslocoPipe, UiButton, UiInput],

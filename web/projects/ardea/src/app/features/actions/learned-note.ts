@@ -3,7 +3,6 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Session } from '../../core/session/session';
 
-/** What a finding's evidence says about a learned catalogue entry (master plan 6.9), or `null`. */
 export interface LearnedHit {
   productKey: string;
   rawKeys: string[];
@@ -23,10 +22,6 @@ export function learnedHit(evidence: unknown): LearnedHit | null {
   };
 }
 
-/**
- * The note on a hit that came about only through a learned catalogue entry (master plan 6.9 «über gelernten
- * Katalogeintrag»): says so, and links the instance administrator to the entry, where it is withdrawn with one click.
- */
 @Component({
   selector: 'ardea-learned-note',
   imports: [RouterLink, TranslocoPipe],

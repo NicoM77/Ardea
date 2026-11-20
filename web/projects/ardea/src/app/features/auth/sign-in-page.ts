@@ -11,7 +11,6 @@ import { Session } from '../../core/session/session';
 import { EMAIL_ERRORS, emailRules, fieldErrorKey, PASSWORD_ERRORS } from './auth-forms';
 import { focusFirstInvalid } from './focus-invalid';
 
-/** Messages another page hands over when it sends someone here. */
 const NOTICES: Record<string, string> = {
   passwordChanged: 'auth.signIn.notices.passwordChanged',
   registered: 'auth.signIn.notices.registered',

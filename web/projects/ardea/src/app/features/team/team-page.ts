@@ -13,18 +13,12 @@ import { InvitationsCard } from './invitations-card';
 import { InviteCard } from './invite-card';
 import { MembersCard } from './members-card';
 
-/**
- * «Team» (master plan 11.4): the members with their roles, open invitations and the invite form.
- * Everyone reads the directory; owner and administrators manage it (master plan 9.1). The
- * two-factor requirement is in Settings.
- */
 @Component({
   selector: 'ardea-team-page',
   imports: [TranslocoPipe, UiPageHeader, MfaRequired, InvitationsCard, InviteCard, MembersCard],
   template: `
     @if (organization(); as org) {
       @if (mfaRefused()) {
-        <!-- The session was older than the requirement; the API has the last word. -->
         <ardea-mfa-required [organization]="org.name" [returnUrl]="here()" />
       } @else {
         <ui-page-header
@@ -84,7 +78,6 @@ export class TeamPage {
   private readonly session = inject(Session);
   private readonly router = inject(Router);
 
-  /** The slug belongs to the parent route, `/o/:slug`. */
   private readonly slug = toSignal(
     (inject(ActivatedRoute).parent ?? inject(ActivatedRoute)).paramMap.pipe(
       map((params) => params.get('slug')),
@@ -100,7 +93,6 @@ export class TeamPage {
   private readonly adminOrgId = computed(() => (this.manage() ? this.orgId() : undefined));
 
   protected readonly members = listMembersResource(this.orgId);
-  /** Only owner and administrators may read them; nobody else asks. */
   protected readonly invitations = listInvitationsResource(this.adminOrgId);
 
   protected readonly mfaRefused = computed(

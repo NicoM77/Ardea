@@ -3,11 +3,6 @@ import { Component, input } from '@angular/core';
 export type NotifyIconName =
   'mail' | 'smartphone' | 'webhook' | 'trash' | 'share' | 'square-plus' | 'inbox';
 
-/**
- * The few line icons only the notification pages use, drawn like the Lucide set the app is configured with
- * (16px, 1.6 stroke; paths from Lucide, ISC). Inline here because every icon imported from `@lucide/angular`
- * lands in the initial bundle, which is already over its budget; these stay in the pages' lazy chunks.
- */
 @Component({
   selector: 'ardea-notify-icon',
   host: { 'aria-hidden': 'true' },

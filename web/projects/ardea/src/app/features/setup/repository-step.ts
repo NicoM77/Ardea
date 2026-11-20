@@ -33,12 +33,6 @@ interface Pick {
 
 const key = (r: { owner: string; name: string }) => `${r.owner}/${r.name}`;
 
-/**
- * Step "Repository" (master plan 11.6, 16.2): choose an access, then one or more repositories it
- * can read, each with a branch and, for a monorepo, a subfolder. Reading starts at once in the
- * background and runs while Operations is answered. Optional: without a repository everything is
- * entered by hand.
- */
 @Component({
   selector: 'ardea-repository-step',
   imports: [RouterLink, TranslocoPipe, LucideSearch, UiButton, UiCard, UiInput, UiLoader, UiNotice],
@@ -366,7 +360,6 @@ export class RepositoryStep {
       fallback: 'settings.accesses.errors.github',
     }),
   );
-  /** The chosen repositories; a different access starts the choice over. */
   protected readonly picks = linkedSignal<string | undefined, Pick[]>({
     source: this.connectionId,
     computation: () => [],
@@ -425,7 +418,6 @@ export class RepositoryStep {
             }),
           );
         } catch (error) {
-          // Linked already, from an earlier visit of this step: that is what was asked for.
           if (problemOf(error)?.code === 'link_exists') continue;
           this.problemParams.set({ name: key(p) });
           this.problem.set(

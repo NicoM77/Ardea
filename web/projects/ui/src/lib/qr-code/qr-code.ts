@@ -2,11 +2,6 @@ import { Component, computed, input } from '@angular/core';
 import { encode } from 'uqr';
 import { qrPath } from './qr-path';
 
-/**
- * A QR code drawn as one SVG path, in Text on the sheet's white, with the quiet zone of four
- * modules the standard asks for. Rendered locally: the secret never leaves the browser.
- * The code is an image with a label; the same content must also be offered as text nearby.
- */
 @Component({
   selector: 'ui-qr-code',
   template: `
@@ -45,7 +40,6 @@ import { qrPath } from './qr-path';
 })
 export class UiQrCode {
   readonly value = input.required<string>();
-  /** What the code holds, for people who cannot see it. Already translated. */
   readonly label = input.required<string>();
 
   protected readonly qr = computed(() => encode(this.value(), { ecc: 'M', border: 4 }));

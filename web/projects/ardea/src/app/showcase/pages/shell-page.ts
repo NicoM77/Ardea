@@ -6,7 +6,6 @@ import type { Me } from '../../core/session/session';
 import { Sidebar } from '../../layout/shell/sidebar';
 import { Topbar } from '../../layout/shell/topbar';
 
-/** Sample account: not a real organization or person. */
 const SAMPLE_ME: Me = {
   id: 'sample-1',
   email: 'sample.person@example.org',
@@ -19,7 +18,6 @@ const SAMPLE_ME: Me = {
   ],
 };
 
-/** The frame of the signed-in app, drawn with sample data: sidebar, top bar and an empty sheet. */
 @Component({
   selector: 'ardea-shell-showcase-page',
   imports: [TranslocoPipe, LucideLayoutGrid, Sidebar, Topbar, UiCard, UiEmptyState, UiPageHeader],
@@ -70,7 +68,6 @@ const SAMPLE_ME: Me = {
     }
     .phone {
       width: 390px;
-      /* Tall enough for every area and the person at the foot */
       height: 720px;
     }
     .phone ardea-sidebar {

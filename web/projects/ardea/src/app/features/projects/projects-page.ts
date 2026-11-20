@@ -9,7 +9,6 @@ import { injectOrganization } from '../organizations/current-organization';
 import { roleRank } from '../organizations/org-format';
 import { CRITICALITY_LABELS, EXPOSURE_LABELS } from './component-format';
 
-/** The organization's projects (master plan 11.4): what each one runs and how exposed it is. */
 @Component({
   selector: 'ardea-projects-page',
   imports: [

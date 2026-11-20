@@ -15,18 +15,11 @@ import type { ActionSummary, NoticeView } from '../../core/api/client';
 import { actionName, num } from '../actions/action-format';
 import { defaultPlaceId, openReminderFor, reasonComponent } from './notice-format';
 
-/** Where «Affects us» puts the reminder: a project (else the stack entry), and a version if known. */
 export interface FollowUpAnswer {
   projectId: string | null;
   version: string | null;
 }
 
-/**
- * The short follow-up of «Affects us» (master plan 17.3, E21; mockup notices.html): a project and a
- * version, both optional. It says what will happen before anything is saved: a new reminder, or the
- * open reminder of the same product and place it joins («Add to reminder»). With a version Ardea
- * checks the entry against it. Opens with the focus on the project; Escape and Cancel close it.
- */
 @Component({
   selector: 'ardea-notice-follow-up',
   imports: [TranslocoPipe, UiButton, UiField, UiInput, UiNotice],
@@ -143,14 +136,10 @@ export class NoticeFollowUp {
   protected readonly uid = `notice-follow-${NoticeFollowUp.next++}`;
 
   readonly notice = input.required<NoticeView>();
-  /** The organization's projects a reminder can go to. */
   readonly projects = input<readonly { id: string; name: string }[]>([]);
-  /** The open reminders, to say «Add to reminder» where one exists for the product and place. */
   readonly reminders = input<readonly ActionSummary[]>([]);
   readonly busy = input(false);
-  /** Why the answer was refused, as a translation key. */
   readonly problem = input<string | null>(null);
-  /** Why the version was refused, as a translation key. */
   readonly versionError = input<string | null>(null);
   readonly projectError = input<string | null>(null);
 
@@ -164,16 +153,12 @@ export class NoticeFollowUp {
 
   protected readonly product = computed(() => reasonComponent(this.notice())?.name ?? '?');
   private readonly place = computed(() => this.placeId() ?? defaultPlaceId(this.notice()));
-  /** The chosen project's name; `null` for the stack entry the notice names. */
   protected readonly placeName = computed(() => {
     const chosen = this.placeId();
     if (chosen) return this.projects().find((p) => p.id === chosen)?.name ?? null;
-    // Without a project the API places it where the notice's component is: the stack entry, or
-    // the project of a component outside the stack (ADR 047 decision 7).
     const reason = reasonComponent(this.notice());
     return reason && !reason.inStack ? (reason.project?.name ?? null) : null;
   });
-  /** The project a reminder goes to without a choice, when that is not the stack. */
   protected readonly defaultPlace = computed(() => {
     const reason = reasonComponent(this.notice());
     return reason && !reason.inStack ? (reason.project?.name ?? null) : null;

@@ -32,11 +32,6 @@ import { Topbar } from './topbar';
 
 const SLUG = /^\/o\/([^/?#]+)/;
 
-/**
- * The signed-in frame (master plan 11.4, DESIGN.md Layout): a 228px sidebar and a 48px top bar
- * on the grey-blue ground, the work on a white sheet inset 8px. Below 900px the sidebar becomes
- * a full-screen menu behind a button in the top bar.
- */
 @Component({
   selector: 'ardea-shell',
   providers: [ICON_CONFIG],
@@ -213,14 +208,12 @@ export class Shell {
     { initialValue: this.router.url },
   );
 
-  /** The organization in the address, or the first one for pages outside an organization. */
   protected readonly organization = computed(() => {
     const orgs = this.session.user()?.organizations ?? [];
     const slug = SLUG.exec(this.url())?.[1];
     return orgs.find((org) => org.slug === slug) ?? orgs[0] ?? null;
   });
 
-  /** The new notices of the organization in view, for the sidebar (master plan 17.7). */
   private readonly notices = inject(NoticeCount);
   protected readonly noticeCount = computed(() =>
     this.notices.count() > 0 ? countText(this.notices.count(), this.notices.more()) : null,
@@ -228,7 +221,6 @@ export class Shell {
 
   constructor() {
     effect(() => this.notices.watch(this.organization()?.id));
-    // Leaving the phone width with the menu open must not leave it open on the desktop layout.
     effect(() => {
       if (!this.narrow()) this.menuOpen.set(false);
     });
@@ -266,14 +258,12 @@ export class Shell {
       ariaLabel: this.transloco.translate('search.label'),
       backdropClass: 'ui-scrim',
       panelClass: 'ui-dialog-pane',
-      // The icons' size comes from the shell's providers (core/icons.ts).
       injector: this.injector,
     });
   }
 
   protected async signOut(): Promise<void> {
     try {
-      // While the session still exists: this browser no longer receives the person's push messages.
       await this.push.forget();
       await firstValueFrom(this.auth.logout());
     } finally {
@@ -292,7 +282,6 @@ export class Shell {
     const items: SearchItem[] = [];
     const org = this.organization();
     const instance = t('search.groups.instance');
-    // The organization's pages first, then the instance-wide ones, so each group is one block.
     const ordered = [...AREAS].sort(
       (a, b) => Number(isInstanceWide(a)) - Number(isInstanceWide(b)),
     );

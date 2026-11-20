@@ -14,22 +14,13 @@ import {
 import { problemMessageKey } from '../../core/api/problem';
 import { count } from './settings-patch';
 
-/** The outcome of one connection test, kept per provider until the next. */
 interface TestOutcome {
   ok: boolean;
   durationMs: number;
-  /** The API's own words for an administrator, or a translation key when the request failed. */
   error: string | null;
   errorKey: string | null;
 }
 
-/**
- * The language models of this instance (task 4.1, master plan 7.8, 11.4): the configured
- * providers with kind, model, whether they run on the instance's own network, and their host,
- * each with a connection test; and how people judged the models' verdicts (task 4.7, master plan
- * 7.9): the correction rate per model and prompt version. Providers are configured through
- * environment variables, so the card shows them and changes nothing.
- */
 @Component({
   selector: 'ardea-ai-card',
   imports: [
@@ -327,7 +318,6 @@ export class AiCard {
     this.outcomes.update((all) => ({ ...all, [provider.name]: outcome }));
   }
 
-  /** Corrected among the reviewed, as a percentage in the reader's language; a dash before the first review. */
   protected rate(row: ModelQualityView): string {
     if (row.correctionRate === null || row.correctionRate === undefined) return '–';
     return new Intl.NumberFormat(this.transloco.getActiveLang(), {

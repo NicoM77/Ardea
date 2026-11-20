@@ -40,13 +40,11 @@ import { isReading, pollWhile } from '../projects/link-format';
 import { canManage } from '../organizations/org-format';
 import { WIZARD_PROBLEMS } from './wizard-problems';
 
-/** `organization`: the stack and the first project of a new organization; `new`: another project; `project`: an existing one. */
 export type WizardMode = 'organization' | 'new' | 'project';
 
 export type WizardStep =
   'stack' | 'project' | 'repository' | 'operations' | 'technologies' | 'coverage';
 
-/** Steps that work on a project; before one exists only the stack and the project step are open. */
 const WITHOUT_PROJECT: readonly WizardStep[] = ['stack', 'project'];
 
 const STEP_LABELS: Record<WizardStep, string> = {
@@ -58,12 +56,6 @@ const STEP_LABELS: Record<WizardStep, string> = {
   coverage: 'wizard.steps.coverage',
 };
 
-/**
- * The setup wizard (master plan 11.6): saved after every step, continued at any time, nothing
- * asked twice. The first run asks for the organization's stack, then optionally its first project
- * (task 5a.4: «the stack is enough to start»), and records its progress (`/orgs/{orgId}/setup`);
- * later runs add a project or work on an existing one.
- */
 @Component({
   selector: 'ardea-setup-wizard',
   imports: [
@@ -332,11 +324,8 @@ const STEP_LABELS: Record<WizardStep, string> = {
   `,
 })
 export class SetupWizard {
-  /** From the route's data. */
   readonly mode = input<WizardMode>('organization');
-  /** From the address: the project of `/o/:slug/projects/:projectId/setup`. */
   readonly projectId = input<string | null>(null);
-  /** From the query string. */
   readonly step = input<string | null>(null);
 
   private readonly projects = inject(ProjectsService);
@@ -352,7 +341,6 @@ export class SetupWizard {
   protected readonly saving = signal(false);
   protected readonly problem = signal<string | null>(null);
 
-  /** Progress of the first run; the other modes do not record any. */
   protected readonly state = getWizardStateResource(
     computed(() => (this.mode() === 'organization' ? this.orgId() : undefined)),
   );
@@ -375,8 +363,6 @@ export class SetupWizard {
   protected readonly components = computed(() =>
     this.detail.hasValue() ? (this.detail.value()?.components ?? []) : [],
   );
-  /** The components entered by hand, edited here and saved as a whole (`PUT …/components`). */
-  /** The project's repositories: read in the background while Operations is answered. */
   protected readonly links = listRepositoryLinksResource(
     this.orgId,
     computed(() => this.currentProjectId() ?? undefined),
@@ -394,7 +380,6 @@ export class SetupWizard {
   protected readonly showSide = computed(
     () => this.hasLinks() && (this.current() === 'operations' || this.current() === 'technologies'),
   );
-  /** What can be checked of the profile, for step 6 (task 2.8). */
   protected readonly coverage = getProfileCoverageResource(
     this.orgId,
     computed(() => {
@@ -424,11 +409,9 @@ export class SetupWizard {
   protected readonly done = computed(() =>
     this.state.hasValue() ? (this.state.value()?.stepsDone ?? []) : [],
   );
-  /** In the first run, projects can be skipped once the stack step is done (task 5a.4). */
   protected readonly canSkip = computed(
     () => this.mode() === 'organization' && this.done().includes('stack'),
   );
-  /** A step that needs a project waits until there is one. */
   private readonly open = (step: WizardStep): boolean =>
     WITHOUT_PROJECT.includes(step) || !!this.currentProjectId();
   protected readonly current = computed<WizardStep>(() => {
@@ -439,7 +422,6 @@ export class SetupWizard {
     return this.open(next) ? next : (steps.find((s) => s === 'project') ?? steps[0]);
   });
   protected readonly index = computed(() => this.steps().indexOf(this.current()));
-  /** Steps up to the furthest one reached can be revisited from the stepper. */
   protected readonly furthest = computed(() => {
     const steps = this.steps();
     const reached = steps.map((s, i) => (this.done().includes(s) ? i + 1 : 0));
@@ -448,7 +430,6 @@ export class SetupWizard {
       ...reached,
       this.mode() === 'organization' ? 0 : steps.length - 1,
     );
-    // Without a project, nothing after the project step can be opened.
     return this.currentProjectId() ? furthest : Math.min(furthest, steps.indexOf('project'));
   });
   protected readonly previous = computed(() => this.steps()[Math.max(0, this.index() - 1)]);
@@ -480,8 +461,6 @@ export class SetupWizard {
   });
 
   constructor() {
-    // A new step moves the focus to its title, so keyboard and screen reader users start there
-    // instead of on the button that is gone. The first step keeps the page's own start.
     let shown: WizardStep | null = null;
     afterRenderEffect(() => {
       const title = this.stepTitle()?.nativeElement;
@@ -490,8 +469,6 @@ export class SetupWizard {
       if (shown !== null && shown !== step) title.focus();
       shown = step;
     });
-    // While a repository is read, look again every few seconds; when one finishes, its packages
-    // and suggestions are there to show.
     pollWhile(
       computed(() => this.reading() > 0),
       () => this.links.reload(),
@@ -510,20 +487,11 @@ export class SetupWizard {
   }
 
   protected async repositoryDone(): Promise<void> {
-    try {
-      await this.record({ stepDone: 'repository', firstProjectId: null });
-    } catch {
-      // Progress is a convenience; the links exist either way.
-    }
+    await this.record({ stepDone: 'repository', firstProjectId: null }).catch(() => undefined);
     this.links.reload();
     this.go('operations');
   }
 
-  /**
-   * The stack's entries are saved as they change; the step only records that it is done and goes
-   * on to the first step not done yet. An organization that had started the wizard before the
-   * stack step existed continues where it stopped.
-   */
   protected async stackDone(): Promise<void> {
     this.saving.set(true);
     this.problem.set(null);
@@ -540,11 +508,9 @@ export class SetupWizard {
     }
   }
 
-  /** «Skip — the stack is enough to start»: the setup is complete without a project (task 5a.4). */
   protected async skipProjects(): Promise<void> {
     const org = this.orgId();
     if (!org || this.saving()) return;
-    // The stack is what makes the start enough: without it, back to the stack step.
     if (!this.canSkip()) {
       this.go('stack');
       return;
@@ -571,7 +537,6 @@ export class SetupWizard {
 
   protected async projectSaved(project: ProjectView): Promise<void> {
     if (this.mode() === 'new') {
-      // From here on the project has an address of its own, so a reload continues where it was.
       await this.router.navigate(['/o', this.current$.slug(), 'projects', project.id, 'setup'], {
         queryParams: { step: 'repository' },
       });
@@ -632,7 +597,6 @@ export class SetupWizard {
     );
   }
 
-  /** Saves a step of the first run; the steps done as the server now has them. */
   private async record(change: {
     stepDone: string;
     firstProjectId: string | null;

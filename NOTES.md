@@ -1,6 +1,6 @@
 # NOTES: Arbeitsstand und Wissen ausserhalb des Repositorys
 
-Stand: 20.11.2026, ca. 13:30 UTC, main = 329ba8c. Abschnitt 0 zuerst lesen.
+Stand: 20.11.2026, ca. 13:45 UTC, main nach #154. Abschnitt 0 zuerst lesen.
 Umsetzung weiss und was nicht schon im Repository steht (README, Masterplan, ADR, Abnahmen, PR-Texte,
 Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 
@@ -19,7 +19,8 @@ Issues). Wo etwas im Repository steht, verweise ich nur darauf.
   git push origin --delete feat/platform-crosscutting
   ```
   `NOTES` bleibt. plus `git push origin --delete assets/social-preview`. Danach README-Zeile 7.14 ✅.
-- **7.15 (UX/UI-Review) läuft:** Audit (48 Befunde, 41 umsetzen, 5 zurückgestellt, 2 abgelehnt) als `FINDINGS.md` im Scratchpad der Sitzung (`…/scratchpad/ux-audit/`, mit Screenshots und Agent-Brief `BRIEF.md`). Gemergt: Batch 1 #144 (Navigation, Suche), 2 #145 (`UiOverflowMenu`, `UiBackLink`, Quellen-Steuerung, AI-Knopf mit `assessmentAvailable`), 4 #146 (ruhige Leerzustände, `core/format/dates.ts`), 5a #147 (Konsistenz), 3 #148 (Reminder, Hinweise, Schwachstelle; **E-Mail-Betreffe ohne Stufenzahl**: `[Critical] #143 …`). Offen: Batch 5b (Toasts statt Inline-Erfolg, Datumsformat überall), dann Screenshots 7.7 neu (`build/screenshots.sh`) und README 7.15 ✅ mit Befundliste im PR. Zurückgestellt für den Eigentümer: UX-43 (Diagramm «Notices so far» entfernen?), UX-44 (Regel-Editor «More events»), UX-45 (Alert-Seite in Reminder aufgehen lassen); UX-46/47 sind neue Funktionen. Offene Frage: Webhook löschen/Secret erneuern/Adresse entfernen ohne Bestätigung (wie vorher, jetzt im ⋯-Menü).
+- **7.15 ✅ (#152):** 48 Befunde, 41 umgesetzt (#144, #145, #146, #147, #148, #151), 5 zurückgestellt, 2 abgelehnt; vollständige Liste im PR #152. Screenshots 7.7 neu (#151). Zurückgestellt für den Eigentümer: UX-43 (Diagramm «Notices so far»), UX-44 (Regel-Editor «More events»), UX-45 (Alert-Seite in Reminder); UX-46/47 neue Funktionen. E-Mail-Betreffe ohne Stufenzahl (`[Critical] #143 …`). Offene Frage: Webhook löschen/Secret erneuern/Adresse entfernen ohne Bestätigung.
+- **7.12 Teil 1 ✅ (#153):** Architektur, Datenmodell, Regelwerk, Sicherheitsmodell, Kapitel-13-Regeln (CONTRIBUTING), «After 1.0» auf Englisch. Teil 2 (Masterplan löschen, Links fixen; Liste im PR #153) erst nach 7.11. Abweichungen Plan/Code im PR #153 (u. a. ADR 034 nennt noch Fristen; Regelwerk-Wechsel nur per `ardea assess recompute`).
 - **Skills für 7.15** (Vercel Web Design Guidelines, Anthropic Frontend Design, Emil Design Engineering) liegen nur im Scratchpad; Installation nach `~/.claude/skills` hat der Sitzungsfilter verweigert. Impeccable ist installiert.
 - **Rote main heute behoben (#149, #150):** Toast-Ausblenden während axe (E2E-Hilfe wartet jetzt, bis kein Toast mehr da ist); Regex-Timeouts von 50/100 ms (FixVersionText, CatalogIndex, Slug, ApiDocument) lösten unter CI-Last aus → jetzt 1 s.
 - **Lehren heute:** kurze Regex-Timeouts sind unter Last nicht deterministisch (≥ 1 s nehmen, Timeout nicht still schlucken, wo das Ergebnis zählt); FakeTimeProvider startet bei echter Zeit → nie zurückstellen; `Guid.CreateVersion7()` ist innerhalb einer Millisekunde nicht monoton, nie danach sortieren; Kommentar-Prüfung (7.5) gilt auch für Testcode; Merge-Betreff immer `--subject "<Conventional Titel> (#N)"`.

@@ -8691,7 +8691,8 @@
           "entry",
           "answers",
           "actions",
-          "findings"
+          "findings",
+          "assessmentAvailable"
         ],
         "type": "object",
         "properties": {
@@ -8722,6 +8723,9 @@
             "items": {
               "$ref": "#/components/schemas/FindingView"
             }
+          },
+          "assessmentAvailable": {
+            "type": "boolean"
           }
         }
       },

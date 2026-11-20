@@ -36,7 +36,19 @@ async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
 }
 
 describe('SourcesPage', () => {
-  async function render(isInstanceAdmin: boolean, query: { operatorKind?: string } = {}) {
+  async function render(
+    isInstanceAdmin: boolean,
+    query: { operatorKind?: string } = {},
+    sources: SourceStatus[] = [
+      source('CVE Program'),
+      source('BACS warnings', {
+        operator: 'BACS',
+        operatorKind: 'authority',
+        health: 'failing',
+        healthReason: 'HTTP 503',
+      }),
+    ],
+  ) {
     const user = signal<Me>({
       id: 'u1',
       email: 'sample@example.org',
@@ -58,15 +70,7 @@ describe('SourcesPage', () => {
     if (query.operatorKind) fixture.componentRef.setInput('operatorKind', query.operatorKind);
     await settle(fixture);
     const http = TestBed.inject(HttpTestingController);
-    http.expectOne('/api/v1/sources').flush([
-      source('CVE Program'),
-      source('BACS warnings', {
-        operator: 'BACS',
-        operatorKind: 'authority',
-        health: 'failing',
-        healthReason: 'HTTP 503',
-      }),
-    ]);
+    http.expectOne('/api/v1/sources').flush(sources);
     await settle(fixture);
     return { fixture, http, element: fixture.nativeElement as HTMLElement };
   }
@@ -105,5 +109,40 @@ describe('SourcesPage', () => {
       ]);
     await settle(fixture);
     expect(element.textContent).toContain('Missing date');
+  });
+
+  it('puts Run now and Pause of a running source into its menu, without the disclosure', async () => {
+    const { fixture, http, element } = await render(true, {}, [source('CVE Program')]);
+    expect(element.querySelector('.paused')).toBeNull();
+    element
+      .querySelector<HTMLButtonElement>('ardea-source-controls ui-overflow-menu button')!
+      .click();
+    await settle(fixture);
+    const items = [...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];
+    expect(items.map((item) => item.textContent?.trim())).toEqual([
+      'en.sources.admin.syncNow',
+      'en.sources.admin.pause',
+    ]);
+    items[1].click();
+    await settle(fixture);
+    const pause = http.expectOne('/api/v1/instance/sources/cve-program');
+    expect(pause.request.body).toEqual({ enabled: false, intervalMinutes: null });
+  });
+
+  it('shows Resume on a paused source, and one way to resume all when every source is paused', async () => {
+    const paused = [source('CVE Program', { enabled: false }), source('OSV', { enabled: false })];
+    const { fixture, http, element } = await render(true, {}, paused);
+    expect(element.querySelectorAll('ardea-source-controls ui-overflow-menu')).toHaveLength(0);
+    expect(
+      element.querySelectorAll('button[aria-label="en.sources.admin.resumeNamed"]'),
+    ).toHaveLength(2);
+    expect(element.querySelector('.paused')?.textContent).toContain('en.sources.admin.allPaused');
+    element.querySelector<HTMLButtonElement>('.resume-all')!.click();
+    await settle(fixture);
+    for (const key of ['cve-program', 'osv'])
+      expect(http.expectOne(`/api/v1/instance/sources/${key}`).request.body).toEqual({
+        enabled: true,
+        intervalMinutes: null,
+      });
   });
 });

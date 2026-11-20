@@ -153,6 +153,7 @@ export class ShowcaseLayout {
   protected readonly pages = [
     { path: 'foundations', label: 'Foundations' },
     { path: 'buttons', label: 'Buttons' },
+    { path: 'actions', label: 'Actions' },
     { path: 'fields', label: 'Fields' },
     { path: 'feedback', label: 'Feedback' },
     { path: 'signals', label: 'Priority and status' },

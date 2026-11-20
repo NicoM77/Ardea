@@ -18,6 +18,11 @@ export const SHOWCASE_PAGES: Routes = [
         loadComponent: () => import('./pages/buttons-page').then((m) => m.ButtonsPage),
       },
       {
+        path: 'actions',
+        title: 'Actions',
+        loadComponent: () => import('./pages/actions-page').then((m) => m.ActionsPage),
+      },
+      {
         path: 'fields',
         title: 'Fields',
         loadComponent: () => import('./pages/fields-page').then((m) => m.FieldsPage),

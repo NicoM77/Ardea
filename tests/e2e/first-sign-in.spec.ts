@@ -182,7 +182,9 @@ test('set up the first user, turn on two-factor, sign in again with TOTP', async
   const members = page.getByRole('list', { name: 'Members' });
   await expect(members.getByRole('listitem')).toHaveCount(2);
   await expect(members.getByText(invitee.email)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Leave organization' })).toBeVisible();
+  await members.getByRole('button', { name: `More actions for ${invitee.name}` }).click();
+  await expect(page.getByRole('menuitem', { name: 'Leave organization' })).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'Send invitation' })).toHaveCount(0);
 
   expect(problems).toEqual([]);

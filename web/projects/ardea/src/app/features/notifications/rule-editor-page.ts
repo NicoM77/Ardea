@@ -11,7 +11,18 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideChevronRight, LucidePlus } from '@lucide/angular';
-import { UiButton, UiCard, UiInput, UiLoader, UiNotice, UiPriority, UiToaster } from 'ui';
+import {
+  UiButton,
+  UiCard,
+  UiInput,
+  UiLoader,
+  UiMenu,
+  UiMenuItem,
+  UiNotice,
+  UiOverflowMenu,
+  UiPriority,
+  UiToaster,
+} from 'ui';
 import { firstValueFrom } from 'rxjs';
 import {
   getNotificationRuleResource,
@@ -87,7 +98,10 @@ function newTarget(): TargetDraft {
     UiCard,
     UiInput,
     UiLoader,
+    UiMenu,
+    UiMenuItem,
     UiNotice,
+    UiOverflowMenu,
     UiPriority,
   ],
   template: `
@@ -97,7 +111,20 @@ function newTarget(): TargetDraft {
         <svg lucideChevronRight aria-hidden="true"></svg>
         <span aria-current="page">{{ title() }}</span>
       </nav>
-      <h1>{{ title() }}</h1>
+      <div class="title">
+        <h1>{{ title() }}</h1>
+        @if (manage() && ruleId() && rule.hasValue()) {
+          <ui-overflow-menu [name]="title()" [busy]="deleting()">
+            <ng-template>
+              <div uiMenu>
+                <button uiMenuItem destructive type="button" (triggered)="remove()">
+                  {{ 'notify.editor.delete' | transloco }}
+                </button>
+              </div>
+            </ng-template>
+          </ui-overflow-menu>
+        }
+      </div>
       @if (rule.value()?.preset) {
         <p class="lead">{{ 'notify.editor.preset' | transloco }}</p>
       }
@@ -389,18 +416,6 @@ function newTarget(): TargetDraft {
                   {{ 'notify.editor.save' | transloco }}
                 </button>
                 <a uiButton [routerLink]="listUrl()">{{ 'notify.editor.cancel' | transloco }}</a>
-                @if (ruleId()) {
-                  <button
-                    uiButton
-                    variant="ghost"
-                    type="button"
-                    class="end"
-                    [loading]="deleting()"
-                    (click)="remove()"
-                  >
-                    {{ 'notify.editor.delete' | transloco }}
-                  </button>
-                }
               </div>
             </ui-card>
           </aside>
@@ -427,7 +442,11 @@ function newTarget(): TargetDraft {
       width: 14px;
       height: 14px;
     }
-    h1 {
+    .title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-md);
       margin-bottom: var(--space-xs);
     }
     .lead {
@@ -603,9 +622,6 @@ function newTarget(): TargetDraft {
       flex-wrap: wrap;
       gap: var(--space-sm);
       margin-top: var(--space-lg);
-    }
-    .actions .end {
-      margin-left: auto;
     }
     @media (max-width: 1100px) {
       .main,

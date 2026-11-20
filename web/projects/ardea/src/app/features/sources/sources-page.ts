@@ -1,14 +1,25 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideChevronDown, LucideRadioTower } from '@lucide/angular';
-import { UiButton, UiEmptyState, UiField, UiInput, UiLoader, UiNotice, UiPageHeader } from 'ui';
-import { listSourcesResource, type SourceStatus } from '../../core/api/client';
+import { LucideChevronDown, LucidePlay, LucideRadioTower } from '@lucide/angular';
+import { firstValueFrom } from 'rxjs';
+import {
+  UiButton,
+  UiEmptyState,
+  UiField,
+  UiInput,
+  UiLoader,
+  UiNotice,
+  UiPageHeader,
+  UiToaster,
+} from 'ui';
+import { listSourcesResource, SourcesService, type SourceStatus } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { Session } from '../../core/session/session';
 import { CatalogLearning } from './catalog-learning';
 import { ReviewList } from './review-list';
 import { SourceAdmin } from './source-admin';
+import { SOURCE_PROBLEMS, SourceControls } from './source-controls';
 import {
   count,
   filterOptions,
@@ -25,9 +36,11 @@ import { SourceHealth } from './source-health';
     TranslocoPipe,
     CatalogLearning,
     LucideChevronDown,
+    LucidePlay,
     LucideRadioTower,
     ReviewList,
     SourceAdmin,
+    SourceControls,
     SourceHealth,
     UiButton,
     UiEmptyState,
@@ -42,6 +55,24 @@ import { SourceHealth } from './source-health';
 
     @if (sources.hasValue() && sources.value(); as all) {
       @if (all.length) {
+        @if (isAdmin() && allPaused()) {
+          <ui-notice class="paused">
+            {{ 'sources.admin.allPaused' | transloco }}
+            <button
+              uiButton
+              type="button"
+              class="resume-all"
+              [loading]="resuming()"
+              (click)="resumeAll()"
+            >
+              <svg lucidePlay aria-hidden="true"></svg>
+              {{ 'sources.admin.resumeAll' | transloco }}
+            </button>
+          </ui-notice>
+          @if (resumeProblem(); as key) {
+            <ui-notice class="paused" tone="error">{{ key | transloco }}</ui-notice>
+          }
+        }
         <p class="summary" role="status">
           {{
             'sources.summary'
@@ -91,6 +122,9 @@ import { SourceHealth } from './source-health';
                       <span class="sub">{{ source.healthReason }}</span>
                     }
                   </div>
+                  @if (isAdmin()) {
+                    <ardea-source-controls [source]="source" (changed)="sources.reload()" />
+                  }
                 </div>
 
                 <dl class="metrics">
@@ -167,7 +201,6 @@ import { SourceHealth } from './source-health';
                       class="admin"
                       [id]="'source-' + source.key"
                       [source]="source"
-                      (changed)="sources.reload()"
                     />
                   }
                 }
@@ -211,6 +244,14 @@ import { SourceHealth } from './source-health';
       margin: calc(-1 * var(--space-sm)) 0 var(--space-lg);
       color: var(--muted);
     }
+    .paused {
+      margin-bottom: var(--space-lg);
+    }
+    .resume-all {
+      display: flex;
+      width: max-content;
+      margin-top: var(--space-sm);
+    }
     .filters {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 260px));
@@ -243,6 +284,9 @@ import { SourceHealth } from './source-health';
       align-items: flex-start;
       justify-content: space-between;
       gap: var(--space-sm) var(--gap);
+    }
+    .name {
+      margin-right: auto;
     }
     .name,
     .state {
@@ -318,6 +362,8 @@ export class SourcesPage {
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly session = inject(Session);
+  private readonly api = inject(SourcesService);
+  private readonly toaster = inject(UiToaster);
 
   protected readonly sources = listSourcesResource();
   protected readonly isAdmin = computed(() => this.session.user()?.isInstanceAdmin === true);
@@ -334,6 +380,11 @@ export class SourcesPage {
     }),
   );
   protected readonly health = computed(() => healthCounts(this.all()));
+  protected readonly allPaused = computed(
+    () => this.all().length > 0 && this.all().every((source) => !source.enabled),
+  );
+  protected readonly resuming = signal(false);
+  protected readonly resumeProblem = signal<string | null>(null);
   protected readonly problem = computed(() =>
     problemMessageKey(this.sources.error(), { fallback: 'sources.loadFailed' }),
   );
@@ -347,6 +398,34 @@ export class SourcesPage {
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+  }
+
+  protected async resumeAll(): Promise<void> {
+    const keys = this.all().map((source) => source.key);
+    if (!(await this.setEnabled(keys, true))) return;
+    this.toaster.show({
+      text: this.transloco.translate('sources.admin.allResumed', { count: keys.length }),
+      undo: () => void this.setEnabled(keys, false),
+    });
+  }
+
+  private async setEnabled(keys: string[], enabled: boolean): Promise<boolean> {
+    this.resuming.set(true);
+    this.resumeProblem.set(null);
+    try {
+      await Promise.all(
+        keys.map((key) =>
+          firstValueFrom(this.api.updateSource(key, { enabled, intervalMinutes: null })),
+        ),
+      );
+      return true;
+    } catch (error) {
+      this.resumeProblem.set(problemMessageKey(error, SOURCE_PROBLEMS));
+      return false;
+    } finally {
+      this.resuming.set(false);
+      this.sources.reload();
+    }
   }
 
   protected clear(): void {

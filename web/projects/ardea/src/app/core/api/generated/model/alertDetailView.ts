@@ -17,4 +17,5 @@ export interface AlertDetailView {
   answers: null | AnswersView;
   actions: ActionSummary[];
   findings: FindingView[];
+  assessmentAvailable: boolean;
 }

@@ -287,7 +287,7 @@ internal static class ActionEndpoints
     }
 
     private static async Task<IResult> AlertAsync(
-        int number, AssessDbContext db, ActionReader reader, Intel.Contracts.IEntryQueries entries, CancellationToken cancellationToken)
+        int number, AssessDbContext db, ActionReader reader, Intel.Contracts.IEntryQueries entries, Estimating.EstimateTrigger trigger, CancellationToken cancellationToken)
     {
         var alert = await db.Alerts.AsNoTracking().SingleOrDefaultAsync(a => a.Number == number, cancellationToken);
         if (alert is null)
@@ -306,7 +306,8 @@ internal static class ActionEndpoints
                 entry.Exploitation, entry.ExploitationSource, entry.ExploitationSince, entry.FixAvailable, entry.EpssClass, entry.AuthorityWarning);
         return Results.Ok(new AlertDetailView(
             (await reader.AlertSummariesAsync([alert], cancellationToken))[0], entryView, await reader.AnswersAsync(findings, null, cancellationToken),
-            await reader.SummariesAsync(actions, cancellationToken), await reader.FindingsAsync(findings, cancellationToken)));
+            await reader.SummariesAsync(actions, cancellationToken), await reader.FindingsAsync(findings, cancellationToken),
+            (await trigger.AllowedAsync(cancellationToken)).Count > 0));
     }
 
     private static async Task<IResult> OverviewAsync(AssessDbContext db, ActionReader reader, IProfileQueries profiles, TimeProvider time, CancellationToken cancellationToken)

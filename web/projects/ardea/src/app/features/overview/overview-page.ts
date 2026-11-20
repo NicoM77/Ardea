@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideChevronRight, LucideLayoutGrid } from '@lucide/angular';
@@ -11,11 +11,14 @@ import {
   listEntriesResource,
   listSourcesResource,
   type ActionSummary,
+  type NoticeView,
 } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { reloadOnLiveChange } from '../../core/live/live-events';
 import { actionName, num, priorityOf } from '../actions/action-format';
 import { Answers } from '../actions/answers';
+import { NoticeCount } from '../notices/notice-count';
+import { cvssText, reasonComponent } from '../notices/notice-format';
 import { injectOrganization } from '../organizations/current-organization';
 import { roleRank } from '../organizations/org-format';
 import { ChangesCard, ProjectsCard, SourcesCard, WarningsCard } from './overview-cards';
@@ -25,9 +28,9 @@ import { PriorityRing } from './priority-ring';
 const WEEK = 7 * 86_400_000;
 
 /**
- * «Overview» (task 3.8, master plan 11.4, mockup overview.html): the day at a glance. One sentence
- * on what needs attention, the most urgent actions with the first one's three answers, the split by
- * priority, projects, what changed since yesterday, the warnings of national centres without an
+ * «Overview» (task 3.8, master plan 11.4 and 17.7, mockup overview.html): the day at a glance. One
+ * sentence on what needs attention, the open reminders with the most urgent one's three answers, the
+ * new notices leading the side column above the split by priority, projects, what changed since yesterday, the warnings of national centres without an
  * identifier and the state of the sources. Reminders have no deadlines (master plan 17.5), so
  * nothing counts down. On a quiet day the same cards stay in place and say that nothing is urgent,
  * so the page never changes shape.
@@ -110,6 +113,15 @@ export class OverviewPage {
       this.setup.hasValue() &&
       !this.setup.value()?.completedAt,
   );
+
+  /** The new notices (master plan 17.7): their count leads the side column, the first three below. */
+  private readonly notices = inject(NoticeCount);
+  protected readonly noticeCount = this.notices.count;
+  protected readonly peek = computed(() => this.notices.fresh().slice(0, 3));
+  protected peekProduct(n: NoticeView): string {
+    return reasonComponent(n)?.name ?? '?';
+  }
+  protected readonly peekScore = cvssText;
 
   /** A priority pointed at in the ring's legend stands out in the ring. */
   protected readonly focus = signal<string | null>(null);

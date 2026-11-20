@@ -20,7 +20,7 @@ import { PROJECT_ID } from './mock-api';
  */
 const ORG = '/o/example';
 
-test('overview on a busy day: the finding, the urgent actions with their answers and the warnings', async ({
+test('overview on a busy day: the finding, the open reminders with their answers, the new notices and the warnings', async ({
   page,
 }) => {
   const problems = watchConsole(page);
@@ -28,25 +28,42 @@ test('overview on a busy day: the finding, the urgent actions with their answers
   await page.goto(`${ORG}/overview`);
 
   await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible();
-  // A reminder has no deadline and no owner (master plan 17.5): the sentence speaks of exploitation and fixes.
-  await expect(page.getByRole('status').filter({ hasText: 'critical action is open' })).toHaveText(
-    /1 critical action is open\. 1 actively exploited, 1 with a fix\./,
+  // A reminder has no deadline and no owner (master plan 17.5): the sentence speaks of notices,
+  // exploitation and fixes.
+  await expect(
+    page.getByRole('status').filter({ hasText: 'critical reminder is open' }),
+  ).toHaveText(
+    /3 new notices to answer\.\s*1 critical reminder is open\. 1 actively exploited, 1 with a fix\./,
   );
   await expect(page.getByRole('region', { name: 'Deadlines' })).toHaveCount(0);
-  // The open actions, highest priority first, the first with its three answers.
-  const urgent = page.getByRole('region', { name: 'Most urgent' });
-  const actionLinks = urgent.getByRole('link', { name: /^(Update|Mitigate) / });
-  await expect(actionLinks).toHaveCount(4);
-  await expect(actionLinks.first()).toHaveText('Update Puppet Enterprise to 2025.12.1');
-  await expect(urgent.getByRole('link', { name: 'All actions' })).toBeVisible();
+  // The open reminders, highest priority first, the first with its three answers.
+  const urgent = page.getByRole('region', { name: 'Open reminders' });
+  const reminderLinks = urgent.getByRole('link', { name: /^(Update|Mitigate) / });
+  await expect(reminderLinks).toHaveCount(4);
+  await expect(reminderLinks.first()).toHaveText('Update Puppet Enterprise to 2025.12.1');
+  await expect(urgent.getByRole('link', { name: 'All reminders' })).toBeVisible();
   await expect(urgent.getByRole('heading', { name: 'What happened' })).toBeVisible();
   await expect(urgent.getByRole('heading', { name: 'Are we affected?' })).toBeVisible();
   await expect(urgent.getByRole('heading', { name: 'What to do' })).toBeVisible();
+  // «n new notices» leads the side column (master plan 17.7): the backfill and the answered do not count.
+  const notices = page.getByRole('region', { name: 'Notices' });
+  await expect(notices).toContainText('3new notices');
+  const peek = notices.getByRole('listitem');
+  await expect(peek).toHaveCount(3);
+  await expect(peek.first()).toContainText('Windows Server: code execution in the RPC runtime');
+  await expect(peek.first()).toContainText('Your stack names Windows Server · CVSS 9.8 · exploited');
+  await notices.getByRole('link', { name: 'Answer notices' }).click();
+  await expect(page).toHaveURL(/\/o\/example\/notices$/);
+  await page.goBack();
   const warnings = page.getByRole('region', { name: 'Warnings without an identifier' });
   await expect(warnings.getByRole('link')).toContainText(
     'Phishing campaign against hospital suppliers',
   );
   await expect(warnings).toContainText('BACS warnings');
+  // The sidebar counts the new notices beside «Notices», then «Reminders» (mockup notices.html).
+  const nav = page.getByRole('navigation', { name: 'Main' });
+  await expect(nav.getByRole('link', { name: 'Notices 3 new' })).toBeVisible();
+  await expect(nav.getByRole('link').nth(2)).toHaveText('Reminders');
   await expectAccessible(page, 'overview busy');
   expect(problems).toEqual([]);
 });
@@ -57,27 +74,40 @@ test('overview on a quiet day keeps its cards and says nothing is urgent', async
   await page.goto(`${ORG}/overview`);
 
   await expect(page.getByRole('status').filter({ hasText: 'Nothing urgent.' })).toContainText(
-    'No critical or high action is open.',
+    'No critical or high reminder is open.',
+  );
+  await expect(page.getByRole('status').filter({ hasText: 'Nothing urgent.' })).not.toContainText(
+    'notice',
   );
   await expect(
     page
-      .getByRole('region', { name: 'Most urgent' })
+      .getByRole('region', { name: 'Open reminders' })
       .getByRole('link', { name: /^(Update|Mitigate) / }),
   ).toHaveCount(2);
   await expect(page.getByRole('region', { name: 'By priority' })).toContainText('2open');
+  const notices = page.getByRole('region', { name: 'Notices' });
+  await expect(notices).toContainText('0new notices');
+  await expect(notices.getByRole('link', { name: 'Answered notices' })).toHaveAttribute(
+    'href',
+    '/o/example/notices?view=answered',
+  );
   await expect(page.getByRole('region', { name: 'Sources' })).toBeVisible();
   await expectAccessible(page, 'overview calm');
   expect(problems).toEqual([]);
 });
 
-test('actions list: filter by priority and project, search, and the closed view', async ({
+test('reminders list: filter by priority and project, search, and the done view', async ({
   page,
 }) => {
   const problems = watchConsole(page);
   await flowsApi(page);
-  await page.goto(`${ORG}/actions`);
+  // Addresses from before the rename lead to the reminders, with their filters.
+  await page.goto(`${ORG}/actions?view=open`);
+  await expect(page).toHaveURL(/\/o\/example\/reminders\?view=open$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Reminders' })).toBeVisible();
+  await expect(page).toHaveTitle('Reminders · Ardea');
 
-  const table = page.getByRole('table', { name: 'Open actions' });
+  const table = page.getByRole('table', { name: 'Open reminders' });
   await expect(table.getByRole('row')).toHaveCount(5);
   await expect(page.getByRole('status').filter({ hasText: 'open.' })).toHaveText(
     '4 open. 1 critical.',
@@ -85,12 +115,12 @@ test('actions list: filter by priority and project, search, and the closed view'
   // No owner and no time left: a reminder has neither (master plan 17.5).
   await expect(table.getByRole('columnheader')).toHaveText([
     'Priority',
-    'Action',
+    'Reminder',
     'Since',
     'Status',
   ]);
   await expect(page.getByRole('region', { name: 'Owners' })).toHaveCount(0);
-  await expectAccessible(page, 'actions');
+  await expectAccessible(page, 'reminders');
 
   const critical = page.getByRole('button', { name: /Critical/ });
   await expect(critical).toHaveText(/Critical\s*1/);
@@ -114,92 +144,292 @@ test('actions list: filter by priority and project, search, and the closed view'
   await page.getByRole('combobox', { name: 'Project' }).selectOption('');
   await expect(page).not.toHaveURL(/project=/);
 
-  await page.getByRole('searchbox', { name: 'Search actions' }).fill('postgres');
-  await page.getByRole('searchbox', { name: 'Search actions' }).press('Enter');
+  await page.getByRole('searchbox', { name: 'Search reminders' }).fill('postgres');
+  await page.getByRole('searchbox', { name: 'Search reminders' }).press('Enter');
   await expect(page).toHaveURL(/q=postgres/);
   await expect(table.getByRole('row')).toHaveCount(2);
   await expect(page.getByRole('status').filter({ hasText: 'match' })).toHaveText(
-    '1 open action matches.',
+    '1 open reminder matches.',
   );
 
-  await page.goto(`${ORG}/actions`);
-  await page
-    .getByRole('navigation', { name: 'Show' })
-    .getByRole('link', { name: 'Closed' })
-    .click();
+  await page.goto(`${ORG}/reminders`);
+  await page.getByRole('navigation', { name: 'Show' }).getByRole('link', { name: 'Done' }).click();
   await expect(page).toHaveURL(/view=closed/);
-  const closed = page.getByRole('table', { name: 'Closed actions' });
+  const closed = page.getByRole('table', { name: 'Done reminders' });
   await expect(closed.getByRole('row')).toHaveCount(2);
   await expect(closed).toContainText('Update .NET runtime to 10.0.4');
   await expect(closed).toContainText('Remediated');
   expect(problems).toEqual([]);
 });
 
-test('action: someone else changed it meanwhile (409), the page says so and shows the current state', async ({
+test('reminder: someone else changed it meanwhile (409), the page says so and shows the current state', async ({
   page,
 }) => {
   const problems = watchConsole(page);
   await flowsApi(page, { conflict: true });
-  await page.goto(`${ORG}/actions/143`);
+  await page.goto(`${ORG}/reminders/143`);
   await expect(
     page.getByRole('heading', { level: 1, name: 'Update PostgreSQL to 17.12' }),
   ).toBeVisible();
 
   await page.getByRole('button', { name: 'Mark as remediated' }).click();
-  await page.getByLabel('How was it remediated?').fill('Updated to 17.12.');
-  await page.getByRole('button', { name: 'Close for all findings' }).click();
   await expect(page.getByRole('alert')).toHaveText(
-    'Someone changed this action in the meantime. It shows the current state now; decide again.',
+    'Someone changed this reminder in the meantime. It shows the current state now; decide again.',
   );
-  // Read again: someone else closed it as an accepted risk; the way back is to take the closing back.
+  // Read again: someone else closed it as an accepted risk; the way back is to reopen it.
   await expect(page.getByRole('button', { name: 'Reopen' })).toBeVisible();
-  await expect(page.locator('#action-status')).toHaveValue('risk_accepted');
+  await expect(page.getByRole('status').filter({ hasText: 'Done on' })).toContainText(
+    'risk accepted. No more reminders.',
+  );
   expect(problems.filter((p) => !p.includes('status of 409'))).toEqual([]);
 });
 
-test('action: open or done, closed with a reason, the closing taken back', async ({ page }) => {
+test('reminder: status and the three answers first, «Mark as remediated» with Undo, another outcome with a reason', async ({
+  page,
+}) => {
   const problems = watchConsole(page);
   await flowsApi(page);
-  await page.goto(`${ORG}/actions/143`);
+  // A link from before the rename, as in e-mails and notifications, opens the reminder.
+  await page.goto(`${ORG}/reminders/143`);
+  await expect(page).toHaveURL(/\/o\/example\/reminders\/143$/);
   await expect(
     page.getByRole('heading', { level: 1, name: 'Update PostgreSQL to 17.12' }),
   ).toBeVisible();
-  await expectAccessible(page, 'action');
-
-  // A reminder has no owner, no deadline and no «in review» (master plan 17.5).
+  await expect(page.getByRole('link', { name: 'Reminders' }).first()).toBeVisible();
+  const head = page.getByRole('region', { name: 'The three answers' });
+  await expect(head.getByRole('status')).toHaveText(/^Open since /);
+  // No owner, no deadline, no «in review» (master plan 17.5); score and history are collapsed.
   await expect(page.getByLabel('Owner')).toHaveCount(0);
   await expect(page.getByLabel('Due')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Take into review' })).toHaveCount(0);
-  await expect(page.locator('#action-status option')).toHaveText([
-    'Open',
-    'Remediated',
-    'Risk accepted',
-    'Not affected',
-  ]);
+  await expect(page.getByRole('table', { name: /^Factors of/ })).toHaveCount(0);
+  const history = page.locator('details', { has: page.getByRole('heading', { name: 'History' }) });
+  await expect(history).not.toHaveAttribute('open');
+  await expectAccessible(page, 'reminder');
 
+  // «Mark as remediated» needs no reason, and Undo opens it again.
+  const remediated = page.waitForRequest((r) => r.url().endsWith('/actions/143/status'));
   await page.getByRole('button', { name: 'Mark as remediated' }).click();
+  expect((await remediated).postDataJSON()).toMatchObject({
+    status: 'remediated',
+    expectedStatus: 'open',
+    note: null,
+  });
   const toast = page.locator('ui-toast');
-  const reason = page.getByLabel('How was it remediated?');
-  await expect(reason).toBeFocused();
-  await page.getByRole('button', { name: 'Close for all findings' }).click();
-  await expect(page.getByText('Write a short reason; it stays in the history.')).toBeVisible();
-  await reason.fill('Updated the primary and the replicas to 17.12.');
-  await page.getByRole('button', { name: 'Close for all findings' }).click();
-  await expect(toast).toContainText('Closed as remediated for all findings');
-  await expect(page.locator('#action-status')).toHaveValue('remediated');
-  await expect(page.getByRole('region', { name: 'History' })).toContainText(
-    'Updated the primary and the replicas to 17.12.',
+  await expect(toast).toContainText('Marked as remediated');
+  await expect(head.getByRole('status')).toContainText('remediated. No more reminders.');
+  const undo = page.waitForRequest(
+    (r) => r.url().endsWith('/actions/143/status') && r.postDataJSON()?.status === 'open',
   );
+  await toast.getByRole('button', { name: 'Undo' }).click();
+  expect((await undo).postDataJSON()).toMatchObject({ status: 'open', expectedStatus: 'closed' });
+  await expect(head.getByRole('status')).toHaveText(/^Open since /);
 
-  // Taking the closing back sends «open» against the status the page saw: closed.
+  // «Other outcome»: risk accepted or not affected, each with a reason.
+  const other = page.locator('.controls').getByRole('button', { name: 'Other outcome' });
+  await other.click();
+  await expect(other).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('radio', { name: 'Risk accepted' })).toBeFocused();
+  await page.getByRole('radio', { name: 'Not affected' }).check();
+  await page.getByRole('button', { name: 'Close reminder' }).click();
+  await expect(page.getByText('Write a short reason; it stays in the history.')).toBeVisible();
+  await page.getByLabel('Why is the project not affected?').fill('Only the replicas run 17.9.');
+  await page.getByRole('button', { name: 'Close reminder' }).click();
+  await expect(toast).toContainText('Closed as not affected for all findings');
+  await expect(head.getByRole('status')).toContainText('not affected. No more reminders.');
+  await history.getByRole('heading', { name: 'History' }).click();
+  await expect(history).toContainText('Only the replicas run 17.9.');
+
+  // Reopening sends «open» against the status the page saw: closed.
   const reopen = page.waitForRequest(
     (r) => r.url().endsWith('/actions/143/status') && r.postDataJSON()?.expectedStatus === 'closed',
   );
-  await page.getByRole('button', { name: 'Reopen' }).click();
+  await page.locator('.controls').getByRole('button', { name: 'Reopen' }).click();
   expect((await reopen).postDataJSON()).toMatchObject({ status: 'open', expectedStatus: 'closed' });
-  await expect(toast).toContainText('Closing taken back: the action is open again');
-  await expect(page.getByRole('button', { name: 'Mark as remediated' })).toBeVisible();
-  await expectAccessible(page, 'action after reopening');
+  await expect(toast).toContainText('Reopened: the reminder is open again');
+  await expect(page.getByRole('button', { name: 'Mark as remediated' }).first()).toBeVisible();
+  await expectAccessible(page, 'reminder after reopening');
+  expect(problems).toEqual([]);
+});
+
+/*
+ * Notices (task 5a.5, master plan 17.7, mockup notices.html) against the notices of `flowsApi`: three
+ * new ones (two exploited), one a backfill brought in quietly, and two answered.
+ */
+test('notices: the inbox in order, «Doesn’t affect us» with Undo, and the focus moving on', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  await page.goto(`${ORG}/notices`);
+  await expect(page.getByRole('heading', { level: 1, name: 'Notices' })).toBeVisible();
+  const summary = page.getByRole('status').filter({ hasText: 'might affect you' });
+  await expect(summary).toHaveText('3 new notices might affect you. 2 answered.');
+
+  // Exploited first, then by score; no priority of their own, the score as a neutral pill.
+  const list = page.getByRole('list', { name: 'New notices' });
+  const cards = list.getByRole('article');
+  await expect(cards).toHaveCount(3);
+  await expect(cards.getByRole('heading', { level: 3 })).toHaveText([
+    'Windows Server: code execution in the RPC runtime',
+    'FortiGate: heap overflow in the SSL VPN',
+    'PostgreSQL: privilege escalation through a crafted index',
+  ]);
+  await expect(cards.first()).toContainText('ExploitedCVSS 9.8CVE-2026-200001');
+  await expect(cards.first()).toContainText('Your stack names Windows Server');
+  await expect(cards.nth(2)).toContainText('Your stack names PostgreSQL 17');
+  await expect(cards.nth(2)).toContainText('Your stack names the 17 line, not the installed release.');
+  // FortiGate came back once (E22).
+  await expect(cards.nth(1)).toContainText('Back once.');
+  await expect(cards.nth(1)).toContainText('CISA lists it as exploited');
+  // The backfill waits under «Earlier» and does not count.
+  const earlier = page.getByRole('region', { name: 'Earlier' });
+  await expect(earlier.getByRole('article')).toHaveCount(1);
+  await expect(earlier).toContainText('PostgreSQL: memory disclosure in the planner');
+  await expect(page.getByRole('button', { name: /^New/ })).toHaveText(/New\s*3/);
+  await expectAccessible(page, 'notices');
+
+  const answer = page.waitForRequest((r) => r.url().endsWith('/answer'));
+  await cards.first().getByRole('button', { name: 'Doesn’t affect us' }).click();
+  expect((await answer).postDataJSON()).toEqual({ answer: 'not_affected', expectedState: 'open' });
+  const toast = page.locator('ui-toast');
+  await expect(toast).toContainText('Doesn’t affect us. It comes back once if it gets exploited.');
+  await expect(summary).toHaveText('2 new notices might affect you. 3 answered.');
+  await expect(cards).toHaveCount(2);
+  // The focus moves to the card that took its place.
+  await expect(cards.first()).toBeFocused();
+  await expect(page.getByRole('link', { name: 'Notices 2 new' })).toBeVisible();
+
+  // Undo takes the answer back: the notice returns in its place and takes the focus.
+  const reopen = page.waitForRequest((r) => r.url().endsWith('/reopen'));
+  await toast.getByRole('button', { name: 'Undo' }).click();
+  expect((await reopen).postDataJSON()).toEqual({ expectedState: 'not_affected' });
+  await expect(cards).toHaveCount(3);
+  await expect(summary).toHaveText('3 new notices might affect you. 2 answered.');
+  await expect(cards.first()).toBeFocused();
+  expect(problems).toEqual([]);
+});
+
+test('notices: the keyboard moves between cards and answers with 1 and 2, Esc closes the follow-up', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page, { stackReminder: true });
+  await page.goto(`${ORG}/notices`);
+  const cards = page.getByRole('list', { name: 'New notices' }).getByRole('article');
+  await expect(cards).toHaveCount(3);
+  await expect(page.getByText('next notice')).toBeVisible();
+
+  await cards.first().focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(cards.nth(1)).toBeFocused();
+  await page.keyboard.press('j');
+  await expect(cards.nth(2)).toBeFocused();
+  await page.keyboard.press('k');
+  await expect(cards.nth(1)).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+
+  // 1 opens «Affects us» on the PostgreSQL card: the stack has an open reminder for it, so it adds to it.
+  await page.keyboard.press('1');
+  const project = cards.nth(2).getByLabel('Project');
+  await expect(project).toBeFocused();
+  await expect(cards.nth(2)).toContainText(
+    'Adds this entry to the open reminder #155 “Update PostgreSQL” in the stack, which has 1 entry.',
+  );
+  await expect(cards.nth(2).getByRole('button', { name: 'Add to reminder' })).toBeVisible();
+  await expectAccessible(page, 'notices with the follow-up');
+  await page.keyboard.press('Escape');
+  await expect(cards.nth(2).getByLabel('Project')).toHaveCount(0);
+  await expect(cards.nth(2)).toBeFocused();
+
+  // 2 answers «Doesn't affect us» at once; the focus stays at that place, now the last card.
+  const answer = page.waitForRequest((r) => r.url().endsWith('/answer'));
+  await page.keyboard.press('2');
+  expect((await answer).postDataJSON()).toMatchObject({ answer: 'not_affected' });
+  await expect(cards).toHaveCount(2);
+  await expect(cards.nth(1)).toBeFocused();
+  expect(problems).toEqual([]);
+});
+
+test('notices: «Affects us» with a project and a version makes a reminder, a refused version is said in the form', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  await page.goto(`${ORG}/notices`);
+  const card = page.getByRole('article', {
+    name: 'PostgreSQL: privilege escalation through a crafted index',
+  });
+  await card.getByRole('button', { name: 'Affects us' }).click();
+  await expect(card).toContainText('Creates a reminder to update PostgreSQL in the stack.');
+  await card.getByLabel('Project').selectOption({ label: 'Customer Portal' });
+  await expect(card).toContainText('Creates a reminder to update PostgreSQL in Customer Portal.');
+
+  // A version the API refuses is said under the field.
+  await card.getByLabel('Version').fill('not-a-version');
+  await card.getByRole('button', { name: 'Create reminder' }).click();
+  await expect(card.getByText('Ardea cannot record this version here.')).toBeVisible();
+
+  await card.getByLabel('Version').fill('17.9');
+  const answer = page.waitForRequest(
+    (r) => r.url().endsWith('/answer') && r.postDataJSON()?.version === '17.9',
+  );
+  await card.getByRole('button', { name: 'Create reminder' }).click();
+  expect((await answer).postDataJSON()).toEqual({
+    answer: 'affects_us',
+    expectedState: 'open',
+    projectId: PROJECT_ID,
+    version: '17.9',
+  });
+  await expect(page.locator('ui-toast')).toContainText('Reminder #160 created');
+  await expect(page.getByRole('list', { name: 'New notices' }).getByRole('article')).toHaveCount(2);
+  expect(problems.filter((p) => !p.includes('status of 400'))).toEqual([]);
+});
+
+test('notices: the answered view grouped by stack entry and answer, a filter by entry, and the quiet state', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  await page.goto(`${ORG}/notices`);
+  await page.getByRole('button', { name: /^Answered/ }).click();
+  await expect(page).toHaveURL(/view=answered/);
+  const answered = page.getByRole('region', { name: 'Answered' });
+  await expect(answered).toContainText('Windows Server · 1 entry');
+  await expect(answered).toContainText('Doesn’t affect us');
+  await expect(answered).toContainText('comes back once if exploited');
+  await expect(answered).toContainText('PostgreSQL 17 · 1 entry');
+  await expect(answered.getByRole('link', { name: 'Open reminder' })).toHaveAttribute(
+    'href',
+    '/o/example/reminders/155',
+  );
+  await expectAccessible(page, 'notices answered');
+
+  // «Change answer» takes «Doesn't affect us» back: the notice is new again.
+  await answered.getByRole('button', { name: 'Change answer' }).click();
+  await expect(page.locator('ui-toast')).toContainText('Moved back to New');
+  await expect(answered).not.toContainText('Windows Server · 1 entry');
+
+  // The filter narrows both views to one stack entry.
+  await page.getByRole('combobox', { name: 'Stack entry' }).selectOption({ label: 'PostgreSQL 17' });
+  await expect(page).toHaveURL(/entry=c-st-pg/);
+  await page.getByRole('button', { name: /^New/ }).click();
+  await expect(page.getByRole('list', { name: 'New notices' }).getByRole('article')).toHaveCount(1);
+  expect(problems).toEqual([]);
+});
+
+test('notices on a quiet day: nothing to answer, said in the same place', async ({ page }) => {
+  const problems = watchConsole(page);
+  await flowsApi(page, { calm: true });
+  await page.goto(`${ORG}/notices`);
+  await expect(page.getByRole('status').filter({ hasText: 'No new notices.' })).toHaveText(
+    'No new notices. 6 answered.',
+  );
+  await expect(page.getByText('Nothing to answer')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Notices', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'See answered' }).click();
+  await expect(page).toHaveURL(/view=answered/);
+  await expectAccessible(page, 'notices calm');
   expect(problems).toEqual([]);
 });
 
@@ -209,7 +439,7 @@ test.describe('at 390 × 844', () => {
   test('the three answers sit above the action bar', async ({ page }) => {
     const problems = watchConsole(page);
     await flowsApi(page);
-    await page.goto(`${ORG}/actions/143`);
+    await page.goto(`${ORG}/reminders/143`);
     const bar = page.locator('.ui-actionbar');
     await expect(bar).toBeVisible();
     await expect(bar.getByRole('button', { name: 'Mark as remediated' })).toBeVisible();
@@ -239,7 +469,7 @@ test('alert: the components hit with their factors, and the entry', async ({ pag
   await expect(
     page.getByRole('table', { name: 'Factors for PostgreSQL in Platform Ops' }),
   ).toContainText('5 points · rule set v1');
-  await expect(page.getByRole('link', { name: 'Action #143' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Reminder #143' })).toBeVisible();
   await expectAccessible(page, 'alert');
   expect(problems).toEqual([]);
 });
@@ -249,7 +479,7 @@ test('action with the model’s assessment: plain text, the proposal confirmed, 
 }) => {
   const problems = watchConsole(page);
   await flowsApi(page, { ai: true });
-  await page.goto(`${ORG}/actions/143`);
+  await page.goto(`${ORG}/reminders/143`);
   await expect(
     page.getByRole('heading', { level: 1, name: 'Update PostgreSQL to 17.12' }),
   ).toBeVisible();
@@ -294,9 +524,10 @@ test('action with the model’s assessment: plain text, the proposal confirmed, 
     level: null,
   });
   await expect(toast).toContainText('CVE-2026-116325: correction saved');
-  await expect(page.getByRole('region', { name: 'History' })).toContainText(
-    'corrected CVE-2026-116325 to affected',
-  );
+  // The history is collapsed on a reminder (master plan 17.7): one click away.
+  const history = page.locator('details', { has: page.getByRole('heading', { name: 'History' }) });
+  await history.getByRole('heading', { name: 'History' }).click();
+  await expect(history).toContainText('corrected CVE-2026-116325 to affected');
   await expectAccessible(page, 'action after the review');
   expect(problems).toEqual([]);
 });
@@ -346,7 +577,7 @@ test('notification rules: the matrix of rules and channels, and a new rule', asy
   await page.getByLabel('Channel', { exact: true }).nth(1).selectOption('email');
   await page.getByRole('combobox', { name: 'When', exact: true }).nth(1).selectOption('digest');
   await expect(
-    page.getByText('Medium actions and above in all projects reach Owners and admins by push'),
+    page.getByText('Medium reminders and above in all projects reach Owners and admins by push'),
   ).toBeVisible();
   await expectAccessible(page, 'rule editor');
 
@@ -418,7 +649,7 @@ test('an external address is confirmed through the link in its e-mail, without s
   expect(problems).toEqual([]);
 });
 
-test('the bell counts unread notifications; reading one in the inbox opens its action', async ({
+test('the bell counts unread notifications; reading one in the inbox opens its reminder', async ({
   page,
 }) => {
   const problems = watchConsole(page);
@@ -434,7 +665,7 @@ test('the bell counts unread notifications; reading one in the inbox opens its a
   await expectAccessible(page, 'inbox');
 
   await page.getByRole('link', { name: /\[5 Critical\] #143 Puppet Enterprise/ }).click();
-  await expect(page).toHaveURL(/\/o\/example\/actions\/143$/);
+  await expect(page).toHaveURL(/\/o\/example\/reminders\/143$/);
   await expect(page.getByRole('link', { name: 'Notifications, 1 unread' })).toBeVisible();
   const read = api.requests.find((r) => r.path.endsWith('/notifications/read'))!;
   expect((read.body as { ids: string[] }).ids).toHaveLength(1);
@@ -524,7 +755,9 @@ test('catalogue that learns: the note on a hit leads to the review list, where a
 }) => {
   const problems = watchConsole(page);
   await flowsApi(page, { learned: true });
-  await page.goto(`${ORG}/actions/143`);
+  await page.goto(`${ORG}/reminders/143`);
+  // The findings keep their details collapsed on a reminder: open the first.
+  await page.locator('details.finding summary').first().click();
   await expect(page.getByText('Via the learned catalogue entry postgresql')).toBeVisible();
   await page.getByRole('link', { name: 'Open the entry' }).click();
   await expect(page).toHaveURL(/\/sources\?learned=enterprisedb%2Fpostgresplus#catalogue$/);

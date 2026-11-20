@@ -2,6 +2,9 @@
   <h1>{{ 'nav.overview' | transloco }}</h1>
   <p class="finding" role="status">
     @if (finding(); as f) {
+      @if (noticeCount()) {
+        <strong>{{ 'overview.finding.notices' | transloco: { count: noticeCount() } }}</strong>
+      }
       <strong>{{ f.lead.key | transloco: f.lead.params }}</strong>
       @if (f.detail; as d) {
         {{ d.key | transloco: d.params }}
@@ -23,13 +26,13 @@
 @if (data(); as d) {
   <div class="grid">
     <ui-card class="span-8" [heading]="'overview.urgent.title' | transloco">
-      <a uiCardMeta class="card-link" routerLink="../actions"
+      <a uiCardMeta class="card-link" routerLink="../reminders"
         >{{ 'overview.urgent.all' | transloco }}<svg lucideChevronRight aria-hidden="true"></svg
       ></a>
       @if (urgent()[0]; as top) {
         <p class="urgent-head">
           <ui-priority [level]="priority(top.action.levelName)" />
-          <a class="link" [routerLink]="['../actions', number(top.action.number)]">{{
+          <a class="link" [routerLink]="['../reminders', number(top.action.number)]">{{
             name(top.action).key | transloco: name(top.action).params
           }}</a>
           <span class="muted">{{ top.action.project.name }}</span>
@@ -42,7 +45,7 @@
             @for (u of urgent().slice(1); track u.action.number) {
               <li>
                 <ui-priority [level]="priority(u.action.levelName)" />
-                <a class="link" [routerLink]="['../actions', number(u.action.number)]">{{
+                <a class="link" [routerLink]="['../reminders', number(u.action.number)]">{{
                   name(u.action).key | transloco: name(u.action).params
                 }}</a>
                 <span class="muted">{{ u.action.project.name }}</span>
@@ -60,9 +63,54 @@
       }
     </ui-card>
 
-    <ui-card class="span-4" [heading]="'overview.ring.title' | transloco">
-      <ardea-priority-ring [counts]="counts()" [focus]="focus()" (focused)="focus.set($event)" />
-    </ui-card>
+    <!-- «n new notices» leads the side column (master plan 17.7); below 1100px it moves to the top -->
+    <div class="side span-4">
+      <ui-card class="notices-card" [heading]="'overview.notices.title' | transloco">
+        <p class="figure-row">
+          <span class="figure">{{ noticeCount() }}</span>
+          <span>{{ 'overview.notices.word' | transloco: { count: noticeCount() } }}</span>
+        </p>
+        <p class="figure-sub">
+          {{ (noticeCount() ? 'overview.notices.sub' : 'overview.notices.calm') | transloco }}
+        </p>
+        @if (peek().length) {
+          <ul class="peek">
+            @for (n of peek(); track n.id) {
+              <li>
+                <a routerLink="../notices">
+                  <b>{{ n.entry.title ?? n.entry.key }}</b>
+                  <small
+                    >{{ 'overview.notices.peek' | transloco: { product: peekProduct(n) } }}
+                    @if (peekScore(n); as s) {
+                      · {{ 'overview.notices.cvss' | transloco: { score: s } }}
+                    }
+                    @if (n.exploitation === 'active') {
+                      · {{ 'overview.notices.exploited' | transloco }}
+                    }
+                  </small>
+                </a>
+              </li>
+            }
+          </ul>
+        }
+        @if (noticeCount()) {
+          <a uiButton variant="primary" class="notices-go" routerLink="../notices">{{
+            'overview.notices.answer' | transloco
+          }}</a>
+        } @else {
+          <a
+            uiButton
+            class="notices-go"
+            routerLink="../notices"
+            [queryParams]="{ view: 'answered' }"
+            >{{ 'overview.notices.answered' | transloco }}</a
+          >
+        }
+      </ui-card>
+      <ui-card [heading]="'overview.ring.title' | transloco">
+        <ardea-priority-ring [counts]="counts()" [focus]="focus()" (focused)="focus.set($event)" />
+      </ui-card>
+    </div>
   </div>
 
   <div class="grid">

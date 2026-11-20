@@ -152,13 +152,23 @@ export const routes: Routes = [
               import('./features/overview/overview-page').then((m) => m.OverviewPage),
           },
           {
-            path: 'actions',
-            title: 'nav.actions',
+            path: 'notices',
+            title: 'nav.notices',
+            loadComponent: () =>
+              import('./features/notices/notices-page').then((m) => m.NoticesPage),
+          },
+          // The action is called «Reminder» in the interface (master plan 17.5, ADR 046); links from
+          // before, in e-mails and notifications, keep working.
+          { path: 'actions', redirectTo: 'reminders' },
+          { path: 'actions/:number', redirectTo: 'reminders/:number' },
+          {
+            path: 'reminders',
+            title: 'nav.reminders',
             loadComponent: () =>
               import('./features/actions/actions-page').then((m) => m.ActionsPage),
           },
           {
-            path: 'actions/:number',
+            path: 'reminders/:number',
             title: 'actionDetail.title',
             loadComponent: () => import('./features/actions/action-page').then((m) => m.ActionPage),
           },

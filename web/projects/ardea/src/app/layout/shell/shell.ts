@@ -1,7 +1,16 @@
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { Dialog } from '@angular/cdk/dialog';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  Injector,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -10,7 +19,11 @@ import { UiToastHost } from 'ui';
 import { filter, firstValueFrom, map } from 'rxjs';
 import { AuthenticationService } from '../../core/api/client';
 import { Session } from '../../core/session/session';
+import { ICON_CONFIG } from '../../core/icons';
+import { AREA_ICONS } from '../../features/areas/area-icons';
 import { ADMINISTRATION, AREAS, areaUrl, isInstanceWide } from '../../features/areas/areas';
+import { NoticeCount } from '../../features/notices/notice-count';
+import { countText } from '../../features/notices/notice-format';
 import { PushDevice } from '../../features/notifications/push-device';
 import { SearchDialog, SearchDialogData } from '../search/search-dialog';
 import { opensSearch, SearchItem } from '../search/search';
@@ -26,6 +39,7 @@ const SLUG = /^\/o\/([^/?#]+)/;
  */
 @Component({
   selector: 'ardea-shell',
+  providers: [ICON_CONFIG],
   imports: [CdkTrapFocus, RouterOutlet, TranslocoPipe, Sidebar, Topbar, UiToastHost],
   host: {
     '[class.is-narrow]': 'narrow()',
@@ -47,6 +61,7 @@ const SLUG = /^\/o\/([^/?#]+)/;
       [cdkTrapFocus]="narrow() && menuOpen()"
       [user]="session.user()"
       [organization]="organization()"
+      [noticeCount]="noticeCount()"
       [menuMode]="narrow()"
       (closeMenu)="closeMenu()"
       (navigated)="closeMenu(false)"
@@ -177,6 +192,7 @@ export class Shell {
   private readonly push = inject(PushDevice);
   private readonly router = inject(Router);
   private readonly dialog = inject(Dialog);
+  private readonly injector = inject(Injector);
   private readonly transloco = inject(TranslocoService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly main = viewChild.required<ElementRef<HTMLElement>>('main');
@@ -204,7 +220,14 @@ export class Shell {
     return orgs.find((org) => org.slug === slug) ?? orgs[0] ?? null;
   });
 
+  /** The new notices of the organization in view, for the sidebar (master plan 17.7). */
+  private readonly notices = inject(NoticeCount);
+  protected readonly noticeCount = computed(() =>
+    this.notices.count() > 0 ? countText(this.notices.count(), this.notices.more()) : null,
+  );
+
   constructor() {
+    effect(() => this.notices.watch(this.organization()?.id));
     // Leaving the phone width with the menu open must not leave it open on the desktop layout.
     effect(() => {
       if (!this.narrow()) this.menuOpen.set(false);
@@ -243,6 +266,8 @@ export class Shell {
       ariaLabel: this.transloco.translate('search.label'),
       backdropClass: 'ui-scrim',
       panelClass: 'ui-dialog-pane',
+      // The icons' size comes from the shell's providers (core/icons.ts).
+      injector: this.injector,
     });
   }
 
@@ -278,7 +303,7 @@ export class Shell {
         label: t(area.label),
         group: isInstanceWide(area) ? instance : (org?.name ?? instance),
         url,
-        icon: area.icon,
+        icon: AREA_ICONS[area.id],
       });
     }
     const account = t('search.groups.account');
@@ -294,7 +319,7 @@ export class Shell {
         label: t(ADMINISTRATION.label),
         group: t('search.groups.instance'),
         url: ADMINISTRATION.path,
-        icon: ADMINISTRATION.icon,
+        icon: AREA_ICONS.administration,
       });
     }
     return items;

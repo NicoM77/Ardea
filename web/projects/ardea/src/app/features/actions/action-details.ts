@@ -1,20 +1,17 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { UiCard, UiStatus } from 'ui';
 import type { ActionSummary } from '../../core/api/client';
-import { num, statusKindOf, type Outcome } from './action-format';
-import { CLOSING_QUESTIONS } from './action-status';
-import { ReasonForm } from './reason-form';
+import { num, statusKindOf } from './action-format';
 
 /**
- * The facts of an action (mockup remediation.html «Details»): status, project, component, versions,
- * number and when it opened. A reminder has no owner and no deadline (master plan 17.5); a closing
- * asks for its reason here.
+ * The facts of a reminder (mockup reminder.html «Details»): status, project, component, versions,
+ * number and when it opened. A reminder has no owner and no deadline (master plan 17.5).
  */
 @Component({
   selector: 'ardea-action-details',
-  imports: [RouterLink, TranslocoPipe, UiCard, UiStatus, ReasonForm],
+  imports: [RouterLink, TranslocoPipe, UiCard, UiStatus],
   template: `
     @let a = action();
     <ui-card>
@@ -59,16 +56,6 @@ import { ReasonForm } from './reason-form';
           <dd>{{ when(a.openedAt) }}</dd>
         </div>
       </dl>
-      @if (pending(); as outcome) {
-        <ardea-reason-form
-          class="reason"
-          [label]="question(outcome) | transloco"
-          [submitLabel]="'actionDetail.reason.submit' | transloco"
-          [busy]="busy()"
-          (save)="reason.emit($event)"
-          (dismiss)="cancelReason.emit()"
-        />
-      }
     </ui-card>
   `,
   styles: `
@@ -98,30 +85,16 @@ import { ReasonForm } from './reason-form';
       color: var(--muted);
       font-weight: 400;
     }
-    .reason {
-      display: block;
-      margin-top: var(--space-lg);
-    }
   `,
 })
 export class ActionDetails {
   readonly action = input.required<ActionSummary>();
-  readonly busy = input(false);
-  /** The outcome waiting for its reason. */
-  readonly pending = input<Outcome | null>(null);
-
-  readonly reason = output<string>();
-  readonly cancelReason = output();
-
   private readonly transloco = inject(TranslocoService);
 
   protected readonly kind = computed(() =>
     statusKindOf(this.action().status, this.action().closeReason),
   );
   protected readonly number = computed(() => num(this.action().number));
-  protected question(outcome: Outcome): string {
-    return CLOSING_QUESTIONS[outcome];
-  }
 
   protected when(value: string): string {
     return new Intl.DateTimeFormat(this.transloco.getActiveLang(), {

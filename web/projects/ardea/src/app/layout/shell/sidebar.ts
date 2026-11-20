@@ -5,6 +5,7 @@ import { LucideDynamicIcon, LucideX } from '@lucide/angular';
 import { UiAvatar, UiButton } from 'ui';
 import type { SessionOrganization } from '../../core/api/client';
 import type { Me } from '../../core/session/session';
+import { AREA_ICONS } from '../../features/areas/area-icons';
 import { ADMINISTRATION, Area, AREAS, areaUrl } from '../../features/areas/areas';
 import { OrgSwitch } from './org-switch';
 
@@ -60,8 +61,14 @@ interface NavLink {
               ariaCurrentWhenActive="page"
               (click)="navigated.emit()"
             >
-              <svg [lucideIcon]="link.area.icon" aria-hidden="true"></svg>
+              <svg [lucideIcon]="icons[link.area.id]" aria-hidden="true"></svg>
               <span>{{ link.area.label | transloco }}</span>
+              @if (link.area.id === 'notices' && noticeCount()) {
+                <span class="count" aria-hidden="true">{{ noticeCount() }}</span>
+                <span class="sr-only">{{
+                  'nav.noticesNew' | transloco: { count: noticeCount() }
+                }}</span>
+              }
             </a>
           </li>
         }
@@ -77,7 +84,7 @@ interface NavLink {
                 ariaCurrentWhenActive="page"
                 (click)="navigated.emit()"
               >
-                <svg [lucideIcon]="link.area.icon" aria-hidden="true"></svg>
+                <svg [lucideIcon]="icons[link.area.id]" aria-hidden="true"></svg>
                 <span>{{ link.area.label | transloco }}</span>
               </a>
             </li>
@@ -150,6 +157,14 @@ interface NavLink {
       outline: var(--focus-ring);
       outline-offset: -2px;
     }
+    /* A count only on a queue that needs action (DESIGN.md Navigation): the new notices */
+    .count {
+      margin-left: auto;
+      color: var(--text);
+      font-size: var(--fs-small);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
     .nav a.is-current {
       background: var(--active);
       color: var(--text);
@@ -209,8 +224,11 @@ interface NavLink {
   host: { '[class.is-menu]': 'menuMode()' },
 })
 export class Sidebar {
+  protected readonly icons = AREA_ICONS;
   readonly user = input<Me | null>(null);
   readonly organization = input<SessionOrganization | null>(null);
+  /** The new notices as written beside «Notices» («3», «99+»); nothing while there are none. */
+  readonly noticeCount = input<string | null>(null);
   /** Shown as the phone menu: larger targets and a close button. */
   readonly menuMode = input(false, { transform: booleanAttribute });
   readonly closeMenu = output();

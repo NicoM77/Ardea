@@ -1,6 +1,7 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { ICON_CONFIG } from '../../core/icons';
 
 /**
  * The frame for everything before the shell: setup, sign-in, two-factor, registration and the
@@ -11,6 +12,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
  */
 @Component({
   selector: 'ardea-auth-layout',
+  providers: [ICON_CONFIG],
   imports: [RouterOutlet, TranslocoPipe],
   encapsulation: ViewEncapsulation.None,
   template: `

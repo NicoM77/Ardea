@@ -294,12 +294,149 @@ export interface FlowOptions {
   ai?: boolean;
   /** The first finding came about through a learned catalogue entry (task 4.10). */
   learned?: boolean;
+  /** The stack's PostgreSQL entry has an open reminder #155 from an earlier «Affects us». */
+  stackReminder?: boolean;
+}
+
+/* ---------- Notices (task 5a.5): the stack, its notices, their answers and taking them back ---------- */
+
+const STACK = { id: '0190a000-0000-7000-8000-0000000000f0', name: 'Stack' };
+
+function stackEntry(id: string, name: string, version: string | null, extra = {}) {
+  return {
+    id,
+    name,
+    version,
+    versionPrecision: version ? 'line' : 'none',
+    noticeThreshold: 'only_important',
+    noisy: false,
+    project: STACK,
+    inStack: true,
+    removed: false,
+    ...extra,
+  };
+}
+
+const POSTGRES = stackEntry('c-st-pg', 'PostgreSQL', '17');
+const WINDOWS = stackEntry('c-st-win', 'Windows Server', null);
+const FORTIGATE = stackEntry('c-st-fg', 'Fortinet FortiGate', null);
+
+interface Notice {
+  id: string;
+  state: string;
+  entry: { id: string; key: string; title: string | null };
+  cvssScore: number | null;
+  exploitation: string;
+  raisedAt: string;
+  isBackfill: boolean;
+  components: ReturnType<typeof stackEntry>[];
+  decidedBy: string | null;
+  decidedAt: string | null;
+  reminderNumber: number | null;
+  reappearedAt: string | null;
+  reappearedReason: string | null;
+  changedAt: string;
+}
+
+function notice(
+  id: string,
+  key: string,
+  title: string,
+  component: ReturnType<typeof stackEntry>,
+  extra: Partial<Notice> = {},
+): Notice {
+  return {
+    id: `0193f2a1-0000-7000-8000-0000000000${id}`,
+    state: 'open',
+    entry: { id: `e-${key}`, key, title },
+    cvssScore: 9.1,
+    exploitation: 'none',
+    raisedAt: at(-6 * HOUR),
+    isBackfill: false,
+    components: [component],
+    decidedBy: null,
+    decidedAt: null,
+    reminderNumber: null,
+    reappearedAt: null,
+    reappearedReason: null,
+    changedAt: at(-6 * HOUR),
+    ...extra,
+  };
+}
+
+/**
+ * Three new notices (two exploited, so the order is Windows, FortiGate, PostgreSQL), one raised
+ * quietly by a backfill, and two answered. FortiGate came back once: answered «Doesn't affect us»,
+ * then listed by CISA as exploited (E22). On a quiet day every notice is answered.
+ */
+function notices(calm: boolean): Notice[] {
+  const rows = [
+    notice('n1', 'CVE-2026-200001', 'Windows Server: code execution in the RPC runtime', WINDOWS, {
+      cvssScore: 9.8,
+      exploitation: 'active',
+    }),
+    notice('n2', 'CVE-2026-200002', 'PostgreSQL: privilege escalation through a crafted index', POSTGRES),
+    notice('n3', 'CVE-2026-200003', 'FortiGate: heap overflow in the SSL VPN', FORTIGATE, {
+      cvssScore: 9.6,
+      exploitation: 'active',
+      decidedBy: USER_ID,
+      decidedAt: at(-3 * DAY),
+      reappearedAt: at(-2 * HOUR),
+      reappearedReason: 'kev',
+    }),
+    notice('n4', 'CVE-2026-100404', 'PostgreSQL: memory disclosure in the planner', POSTGRES, {
+      cvssScore: 9.3,
+      isBackfill: true,
+      raisedAt: at(-60 * DAY),
+      changedAt: at(-DAY),
+    }),
+    notice('a1', 'CVE-2026-190001', 'Windows Server: spoofing in the print spooler', WINDOWS, {
+      state: 'not_affected',
+      decidedBy: USER_ID,
+      decidedAt: at(-DAY),
+      changedAt: at(-DAY),
+    }),
+    notice('a2', 'CVE-2026-190002', 'PostgreSQL: crash through a crafted query', POSTGRES, {
+      state: 'affects_us',
+      decidedBy: USER_ID,
+      decidedAt: at(-2 * DAY),
+      reminderNumber: 155,
+      changedAt: at(-2 * DAY),
+    }),
+  ];
+  return calm
+    ? rows.map((n) =>
+        n.state === 'open'
+          ? { ...n, state: 'not_affected', decidedBy: USER_ID, decidedAt: at(-HOUR), isBackfill: false }
+          : n,
+      )
+    : rows;
+}
+
+function noticeOrder(a: Notice, b: Notice): number {
+  const exploited = Number(b.exploitation === 'active') - Number(a.exploitation === 'active');
+  return exploited || (b.cvssScore ?? -1) - (a.cvssScore ?? -1) || b.raisedAt.localeCompare(a.raisedAt);
 }
 
 export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<void> {
   await api(page, true);
+  const inbox = notices(!!options.calm);
+  let nextReminder = 160;
   let rows = actions();
   if (options.calm) rows = rows.filter((r) => r.level <= 3);
+  if (options.stackReminder)
+    rows.push(
+      row({
+        number: 155,
+        level: 3,
+        levelName: 'medium',
+        project: STACK,
+        component: { id: POSTGRES.id, name: 'PostgreSQL', version: null, removed: false },
+        fixAvailable: true,
+        openedAt: at(-2 * DAY),
+        entries: ['CVE-2026-190002'],
+      }),
+    );
   let conflict = !!options.conflict;
   const events: {
     id: string;
@@ -603,6 +740,113 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
           nextCursor: null,
         },
       });
+    }
+    if (path === `${base}/stack`) {
+      const entries = [POSTGRES, WINDOWS, FORTIGATE].map((c) => ({
+        id: c.id,
+        productKey: null,
+        name: c.name,
+        vendor: null,
+        inCatalog: true,
+        kind: 'platform',
+        version: c.version,
+        versionScheme: null,
+        packaging: 'platform',
+        parentId: null,
+        exposure: null,
+        criticality: null,
+        protection: 'none',
+        protectionNote: null,
+        origin: 'manual',
+        purl: null,
+        dependencyScope: null,
+        dependencyRelation: null,
+        versionPrecision: c.versionPrecision,
+        noticeThreshold: c.noticeThreshold,
+      }));
+      return route.fulfill({ json: { projectId: STACK.id, components: entries } });
+    }
+    if (path === `${base}/notices` && request.method() === 'GET') {
+      const state = q.get('state') ?? 'new';
+      const component = q.get('component');
+      const items = inbox
+        .filter((n) =>
+          state === 'answered'
+            ? n.state === 'affects_us' || n.state === 'not_affected'
+            : n.state === (state === 'new' ? 'open' : state),
+        )
+        .filter((n) => !component || n.components.some((c) => c.id === component))
+        .sort(noticeOrder);
+      return route.fulfill({ json: { items, nextCursor: null } });
+    }
+    const answer = new RegExp(`^${base}/notices/([^/]+)/(answer|reopen)$`).exec(path);
+    if (answer && request.method() === 'POST') {
+      const n = inbox.find((x) => x.id === answer[1]);
+      if (!n) return route.fulfill({ status: 404, json: { status: 404, code: 'notice_not_found' } });
+      const body = request.postDataJSON() as {
+        answer?: string;
+        expectedState: string;
+        projectId?: string | null;
+        version?: string | null;
+      };
+      if (n.state !== body.expectedState)
+        return route.fulfill({
+          status: 409,
+          contentType: 'application/problem+json',
+          body: JSON.stringify({ status: 409, code: 'status_conflict' }),
+        });
+      if (answer[2] === 'reopen') {
+        Object.assign(n, { state: 'open', reminderNumber: null, changedAt: at(0) });
+        return route.fulfill({ json: n });
+      }
+      if (body.answer === 'affects_us' && body.version === 'not-a-version')
+        return route.fulfill({
+          status: 400,
+          contentType: 'application/problem+json',
+          body: JSON.stringify({
+            status: 400,
+            code: 'invalid_answer',
+            errors: { version: ['Services have no version.'] },
+          }),
+        });
+      let reminderNumber: number | null = null;
+      if (body.answer === 'affects_us') {
+        const place = body.projectId ?? n.components[0].project.id;
+        const product = n.components[0].name;
+        const open = rows.find(
+          (r) => r.status !== 'closed' && r.project.id === place && r.component.name === product,
+        );
+        if (open) {
+          reminderNumber = open.number;
+          open.openFindings += 1;
+        } else {
+          reminderNumber = nextReminder++;
+          rows.push(
+            row({
+              number: reminderNumber,
+              level: 3,
+              levelName: 'medium',
+              project: place === PORTAL.id ? PORTAL : STACK,
+              component: {
+                id: n.components[0].id,
+                name: product,
+                version: body.version ?? null,
+                removed: false,
+              },
+              openedAt: at(0),
+              entries: [n.entry.key],
+            }),
+          );
+        }
+      }
+      Object.assign(n, {
+        state: body.answer,
+        decidedBy: USER_ID,
+        decidedAt: at(0),
+        reminderNumber,
+        changedAt: at(0),
+      });
+      return route.fulfill({ json: n });
     }
     if (path === '/api/v1/status') return route.fulfill({ json: [] });
     return route.fallback();

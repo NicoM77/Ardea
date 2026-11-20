@@ -27,5 +27,5 @@ The latest release of the current major version receives security fixes.
 
 - Security fixes are published as **GitHub security advisories** of this repository and in the release
   notes; watch the repository with «Releases» and «Security alerts» selected.
-- From the first release on, images are tagged by version (`ghcr.io/nicom77/ardea:0`, `:0.x`, `:0.x.y`);
+- Images are tagged by version (`ghcr.io/nicom77/ardea:0`, `:0.x`, `:0.x.y`);
   `docker compose pull` with the major tag brings fixes in. See [Update](docs/operations/update.md).

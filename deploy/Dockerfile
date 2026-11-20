@@ -22,14 +22,14 @@ COPY build/third-party-notices.sh build/third-party-notices.sh
 COPY build/licenses/ build/licenses/
 COPY --from=web /npm-notices.md /npm-notices.md
 COPY src/ src/
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet restore src/Hosts/Ardea.Host/Ardea.Host.csproj -a "$TARGETARCH"
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish src/Hosts/Ardea.Host/Ardea.Host.csproj -c Release -a "$TARGETARCH" --no-restore \
       -p:Version="$VERSION" -p:UseAppHost=true -o /app \
  && mkdir -p /scratch
 # Licence texts and notices of what the image ships (master plan 13.5): NuGet and npm packages.
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     NPM_NOTICES=/npm-notices.md build/third-party-notices.sh /app/THIRD-PARTY-NOTICES.md
 COPY LICENSE /app/LICENSE
 

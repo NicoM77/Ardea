@@ -68,7 +68,8 @@ internal sealed record AlertEntryView(
     Guid Id, string Key, string? Title, string State, DateTimeOffset? PublishedAt, DateTimeOffset ChangedAt, double? CvssScore, string? CvssVersion,
     string? CvssVector, string Exploitation, string? ExploitationSource, DateTimeOffset? ExploitationSince, bool FixAvailable, string? EpssClass, bool AuthorityWarning);
 
-internal sealed record AlertDetailView(AlertSummary Alert, AlertEntryView Entry, AnswersView? Answers, IReadOnlyList<ActionSummary> Actions, IReadOnlyList<FindingView> Findings);
+internal sealed record AlertDetailView(
+    AlertSummary Alert, AlertEntryView Entry, AnswersView? Answers, IReadOnlyList<ActionSummary> Actions, IReadOnlyList<FindingView> Findings, bool AssessmentAvailable);
 
 internal sealed record UrgentActionView(ActionSummary Action, AnswersView Answers);
 

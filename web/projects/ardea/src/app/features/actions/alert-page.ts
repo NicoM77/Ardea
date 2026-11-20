@@ -70,7 +70,7 @@ import { ModelReview, type ReviewChange } from './model-review';
       <header class="head">
         <div class="title">
           <h1>{{ v.entry.title ?? v.entry.key }}</h1>
-          @if (canEdit()) {
+          @if (canEdit() && v.assessmentAvailable) {
             <button uiButton type="button" [loading]="requesting()" (click)="request()">
               <svg lucideSparkles aria-hidden="true"></svg>
               {{ 'aiAssessment.request.button' | transloco }}
@@ -209,7 +209,7 @@ import { ModelReview, type ReviewChange } from './model-review';
           @if (v.answers && v.answers.origin === 'model' && v.answers.model; as model) {
             <ardea-ai-assessment-card
               [model]="model"
-              [canRequest]="canEdit()"
+              [canRequest]="canEdit() && v.assessmentAvailable"
               [busy]="requesting()"
               (again)="request()"
             />

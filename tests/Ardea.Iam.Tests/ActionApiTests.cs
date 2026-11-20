@@ -86,6 +86,7 @@ public sealed class ActionApiTests(PostgresServer server)
         var alert = await Json(await client.GetAsync($"{path}/alerts/1"));
         Assert.Equal("CVE-2026-0001", alert.GetProperty("entry").GetProperty("key").GetString());
         Assert.Equal(2, alert.GetProperty("actions")[0].GetProperty("number").GetInt32());
+        Assert.False(alert.GetProperty("assessmentAvailable").GetBoolean());
         Assert.Single((await Json(await client.GetAsync($"{path}/alerts"))).GetProperty("items").EnumerateArray());
 
         await ExpectProblem(await client.PostAsync($"{path}/alerts/1/assessment", null), HttpStatusCode.Conflict, "ai_not_available");

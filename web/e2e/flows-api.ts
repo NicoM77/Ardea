@@ -704,6 +704,7 @@ export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<v
           answers: d.answers,
           actions: [d.action],
           findings: [d.findings[0]],
+          assessmentAvailable: !!options.ai,
         },
       });
     }

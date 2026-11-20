@@ -521,6 +521,7 @@ test('alert: the components hit with their factors, and the entry', async ({ pag
     page.getByRole('table', { name: 'Factors for PostgreSQL in Platform Ops' }),
   ).toContainText('5 points · rule set v1');
   await expect(page.getByRole('link', { name: 'Reminder #143' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Request an AI assessment' })).toHaveCount(0);
   await expectAccessible(page, 'alert');
   expect(problems).toEqual([]);
 });

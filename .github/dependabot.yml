@@ -12,6 +12,23 @@ updates:
     groups:
       nuget-minor-patch:
         update-types: [minor, patch]
+    # Packages bound to the .NET runtime stay on the 10.x line until the project moves to .NET 11.
+    # Packages with their own versioning (Microsoft.Extensions.AI, Npgsql tooling outside EF) are not listed.
+    ignore:
+      - dependency-name: "Microsoft.AspNetCore.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.EntityFrameworkCore*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.Extensions.Http.Resilience"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.Extensions.TimeProvider.Testing"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "dotnet-ef"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Npgsql*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "EFCore.NamingConventions"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: npm
     directory: /web
@@ -24,6 +41,10 @@ updates:
     groups:
       web-minor-patch:
         update-types: [minor, patch]
+    # Must match the Playwright image (mcr.microsoft.com/playwright:v1.56.1-noble) used for the visual baselines.
+    # Bump it together with the image tag, the baselines and the other pins by hand, then remove this rule.
+    ignore:
+      - dependency-name: "@playwright/test"
 
   - package-ecosystem: npm
     directory: /site
@@ -36,6 +57,9 @@ updates:
     groups:
       site-minor-patch:
         update-types: [minor, patch]
+    # Must match the Playwright image, see the /web entry.
+    ignore:
+      - dependency-name: "@playwright/test"
 
   - package-ecosystem: npm
     directory: /tests/e2e
@@ -48,6 +72,9 @@ updates:
     groups:
       e2e-minor-patch:
         update-types: [minor, patch]
+    # Must match the Playwright image, see the /web entry.
+    ignore:
+      - dependency-name: "@playwright/test"
 
   - package-ecosystem: github-actions
     directory: /
@@ -69,6 +96,10 @@ updates:
     open-pull-requests-limit: 3
     commit-message:
       prefix: "chore(deps)"
+    # The image stays on Node 24 (the LTS line used for web and site); a new major is a deliberate move.
+    ignore:
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: docker-compose
     directory: /deploy

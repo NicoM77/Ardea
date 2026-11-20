@@ -16,7 +16,9 @@
     "otpauth": "9.6.0"
   },
   "overrides": {
-    "playwright-core": "1.56.1"
+    "playwright-core": "1.56.1",
+    "minimatch": "^11.0.2",
+    "glob": "^14.0.2"
   },
   "devDependencies": {
     "license-checker-rseidelsohn": "5.0.1"

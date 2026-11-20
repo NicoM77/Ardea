@@ -175,7 +175,8 @@ internal sealed class NotifyDbContext(DbContextOptions<NotifyDbContext> options,
             pending.HasKey(p => new { p.OrganizationId, p.EventId });
             pending.Property(p => p.Kind).HasMaxLength(40);
             pending.Property(p => p.LastError).HasMaxLength(2000);
-            pending.HasIndex(p => new { p.OrganizationId, p.At }).HasDatabaseName("ix_pending_event_org");
+            pending.Property(p => p.Seq).UseIdentityAlwaysColumn();
+            pending.HasIndex(p => new { p.OrganizationId, p.At, p.Seq }).HasDatabaseName("ix_pending_event_org");
         });
 
         modelBuilder.Entity<PushSubscription>(subscription =>

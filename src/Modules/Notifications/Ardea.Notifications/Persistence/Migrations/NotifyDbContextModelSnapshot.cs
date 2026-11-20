@@ -515,10 +515,17 @@ namespace Ardea.Notifications.Persistence.Migrations
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("last_error");
 
+                    b.Property<long>("Seq")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("seq");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Seq"));
+
                     b.HasKey("OrganizationId", "EventId")
                         .HasName("pk_pending_event");
 
-                    b.HasIndex("OrganizationId", "At")
+                    b.HasIndex("OrganizationId", "At", "Seq")
                         .HasDatabaseName("ix_pending_event_org");
 
                     b.ToTable("pending_event", "notify");

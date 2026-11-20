@@ -26,6 +26,9 @@ internal static class NotifyEvents
     /// <summary>An answered «doesn't affect us» came back once, the entry being exploited or in KEV now (E22); a rule names <see cref="NoticeRaised"/>.</summary>
     public const string NoticeReappeared = "notice.reappeared";
 
+    /// <summary>An open notice nobody answered became actively exploited (KEV included): once per notice (ADR 048); a rule names <see cref="NoticeRaised"/>.</summary>
+    public const string NoticeExploited = "notice.exploited";
+
     /// <summary>A reverse search raised earlier notices quietly: one summary instead of one message each (ADR 047); a rule names <see cref="NoticeRaised"/>.</summary>
     public const string NoticeBackfilled = "notice.backfilled";
 
@@ -41,11 +44,11 @@ internal static class NotifyEvents
         ActionStatusChanged, ActionNoteAdded, WarningPublished, NoticeRaised, BackfillCompleted, RepositoryUnavailable,
     ];
 
-    /// <summary>The event a rule names for a kind: the notice's return and its summary go with <see cref="NoticeRaised"/>.</summary>
-    public static string RuleEvent(string kind) => kind is NoticeReappeared or NoticeBackfilled ? NoticeRaised : kind;
+    /// <summary>The event a rule names for a kind: the notice's exploitation, its return and its summary go with <see cref="NoticeRaised"/>.</summary>
+    public static string RuleEvent(string kind) => kind is NoticeReappeared or NoticeExploited or NoticeBackfilled ? NoticeRaised : kind;
 
     /// <summary>The kinds that are about a notice.</summary>
-    public static bool IsNotice(string kind) => kind is NoticeRaised or NoticeReappeared or NoticeBackfilled;
+    public static bool IsNotice(string kind) => kind is NoticeRaised or NoticeReappeared or NoticeExploited or NoticeBackfilled;
 
     /// <summary>The work of the team reaches people in the app only (master plan 8.2); machines may listen through webhooks.</summary>
     public static bool AllowedOn(string kind, string channel) =>

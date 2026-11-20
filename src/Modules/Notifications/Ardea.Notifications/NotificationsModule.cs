@@ -29,7 +29,10 @@ public sealed class NotificationsModule : IModule
     public static IReadOnlyList<string> ConfigurationErrors(IConfiguration configuration) => PushConfiguration.Errors(configuration);
 
     public IModuleDatabase? Database { get; } =
-        new ModuleDatabase<NotifyDbContext>(NotifyDbContext.Schema, options => new NotifyDbContext(options, new TenantContext()));
+        new ModuleDatabase<NotifyDbContext>(
+            NotifyDbContext.Schema,
+            options => new NotifyDbContext(options, new TenantContext()),
+            seed: (db, _, cancellationToken) => DefaultRules.NameNoticesAsync(db, cancellationToken));
 
     public void AddServices(IServiceCollection services, IConfiguration configuration)
     {

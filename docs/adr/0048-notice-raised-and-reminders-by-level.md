@@ -16,10 +16,13 @@ messages; and what is left of escalation.
 
 ## Decision
 
-1. **Notices are events of 8.2.** `EventKinds.IsNotifiable` hands `notice.raised`, `notice.reappeared` and
-   `notice.backfilled` to the notifications like `action.*` (ADR 038 decision 1, in the event's unit of work). Rules name
-   one event, `notice.raised`; it stands for the return of an answered «doesn't affect us» and for the summary of a reverse
-   search too (`NotifyEvents.RuleEvent`). Notifications reads notices through `IActionFacts.NoticesAsync` (Assessment's read
+1. **Notices are events of 8.2.** `EventKinds.IsNotifiable` hands `notice.raised`, `notice.exploited`,
+   `notice.reappeared` and `notice.backfilled` to the notifications like `action.*` (ADR 038 decision 1, in the event's unit
+   of work). Rules name one event, `notice.raised`; it stands for the others too (`NotifyEvents.RuleEvent`): an open notice
+   nobody answered that becomes actively exploited (KEV included; `notice.exploited`, written once per notice by Assessment,
+   so it reaches people at once as 8.2 asks), the return of an answered «doesn't affect us», and the summary of a reverse
+   search. An authority's warning raises a notice under «only important» (ADR 044) but does not make it important here: 8.2
+   names exploitation and KEV for «at once». Notifications reads notices through `IActionFacts.NoticesAsync` (Assessment's read
    contract): entry, title, score, exploitation, KEV, the components that raised it with project and whether they are in the
    stack, and the reason of a return. Every message links the Notices page `/o/{slug}/notices` (task 5a.5).
 2. **A notice meets a rule's threshold by a stand-in level.** It has no level of its own (17.3), but rules filter by level.
@@ -30,16 +33,19 @@ messages; and what is left of escalation.
    the notice's components (the stack is a project), a summary's the project whose reverse search raised it.
 3. **Who hears about a notice.** Every member in the app, when an enabled rule of the organisation names `notice.raised`
    and matches it, as for warnings (ADR 038 decision 4); the targets of the matching rules on their channels and modes as
-   for any event. The default rules all name `notice.raised` (new organisations through `DefaultRules`, existing ones
-   through the migration `RemindersByLevel` for rules with a preset; rules an organisation wrote itself stay as they are).
+   for any event. The default rules all name `notice.raised`: new organisations through `DefaultRules`; existing ones
+   through the module's step after every `migrate` (`DefaultRules.NameNoticesAsync`), but only presets nobody edited
+   (`changed_at = created_at`; the step bumps `changed_at`). A preset an admin narrowed to one person, or switched off,
+   keeps its events. Organisations the previous build creates during an upgrade get it with the next `migrate`, as their
+   stack (ADR 046 decision 1). Rules an organisation wrote itself stay as they are.
    With the defaults a plain notice reaches everyone in the app and the Monday summary by e-mail; an important one reaches
    owners and admins at once in the app, by e-mail and by push (rule 1) and everyone's weekday digest (rule 2). This is 8.2's
    «nur In-App und Sammelnachricht; sofort nur bei aktiver Ausnutzung oder KEV».
 4. **Once per recipient and channel, its return once more.** `delivery_event.notice_id` (new, indexed) names the notice;
    an immediate message about a notice is decided only when the recipient has no `delivery_event` of the same notice and
    the same kind on that channel. A notice raised anew after a withdrawal, or brought back to «new» because it took over a
-   reminder (ADR 047 decision 1), is therefore not announced again to whoever heard of it; `notice.reappeared` (E22) is
-   announced once. Digests list what their period noted. A notice answered or withdrawn before its event is evaluated, or
+   reminder (ADR 047 decision 1), is therefore not announced again to whoever heard of it; `notice.exploited` and
+   `notice.reappeared` (E22) are announced once each. Digests list what their period noted. A notice answered or withdrawn before its event is evaluated, or
    before its bundled message goes out, is left out of that message. Bundling and the hourly limit are ADR 038's.
 5. **The backfill gives one summary.** Quiet notices of a reverse search write no `notice.raised` (ADR 047); their single
    `notice.backfilled` row («14 earlier notices for Stack, 2 of them actively exploited or in KEV») is the only event.
@@ -52,8 +58,8 @@ messages; and what is left of escalation.
    `notify.send-reminders` per organisation. Levels 1 and 2 have no rhythm: the digests name them.
 7. **A run.** In one unit of work of the organisation, under the schedule row's lock and checked to be still due: the open
    reminders from level 3 on (`IActionFacts.OpenRemindersAsync`) whose rhythm is complete are due. The rhythm counts from
-   the later of the moment the reminder reached its level (opened, or last raised) and its last reminder
-   (`notify.reminder_state`), less twelve hours, so a run at 08:00 takes what was raised at 09:00 a day, week or month
+   the later of the moment the reminder reached its level (opened, last raised, or taken back from done by a person:
+   the last `action.status_changed` to `open`) and its last reminder (`notify.reminder_state`), less twelve hours, so a run at 08:00 takes what was raised at 09:00 a day, week or month
    before. A reminder whose level dropped follows its new rhythm from its last reminder; a done one never reminds. Who hears
    about a reminder: the people named by the targets (immediate or digest) of the enabled rules that announce it
    (`action.raised`, its level, its project) on in-app, e-mail and push; webhooks hear about changes, not about what still
@@ -62,10 +68,13 @@ messages; and what is left of escalation.
    level first; each reminder is one event of the run with an id shared by its channels. The messages go out through
    `notify.deliver` with its three steps (master plan 9.2); the run itself talks to nobody outside. When a message is sent,
    the reminders done since are left out and an empty one is suppressed. A failed reminder message does not warn the owners
-   (8.6 is about level 5 news). A worker that was down sends one run for the gap.
+   (8.6 is about level 5 news). A worker that was down sends one run for the gap. Only a reminder that went into at least
+   one message counts as reminded; one no rule names anyone for stays due. The run deletes the state of reminders that are
+   done or below level 3, so the table holds only open ones; a reminder taken back counts from its reopening.
 8. **Settings.** `GET` and `PUT /orgs/{orgId}/reminder-rhythm` (`ReminderRhythmView`, `ReminderRhythmRequest`), owners and
    admins like the rules; the write is an upsert under the row's lock and is audited (`notify.reminder_rhythm_changed`). The
-   rules page shows the rhythm per level; the rule editor offers `notice.raised`.
+   rules page shows the rhythm per level; the rule editor offers `notice.raised`; the delivery log shows a run as
+   «Reminders by level» with its reminders and the run (`DeliveryView.kind` `reminder`).
 9. **Escalation is dropped (8.7, 17.5, E24).** Nothing in code, settings, API or pages knows escalation, assignment or
    deadline (the acceptance test of ADR 046 decision 12 covers the API). `action.exploitation_escalated` stays: it reports
    that exploitation became known, not an escalation chain. Master plan 8.7 is marked dropped and rewritten as reminders by
@@ -75,7 +84,9 @@ messages; and what is left of escalation.
 11. **Upgrade (4.11).** The migration adds tables, a nullable column, an index, a function and a wider check; the previous
     build ignores them. Notice events written by the new build and evaluated by an old worker during the upgrade are dropped
     (its `IActionFacts` does not know them); a reminder message an old worker delivers is suppressed as empty. Both last
-    only while the two builds overlap.
+    only while the two builds overlap. Its `Down` drops the function and the reminder messages, switches off rules that
+    name nothing but `notice.raised` (an organisation's own: the build before ignores the event) and removes the event from
+    the others.
 
 ## Webhook payload (`ardea.notification.v1`, additions)
 
@@ -91,7 +102,8 @@ Each item of `events` may carry, besides `action`, `warning` and `backfill`:
 "earlierNotices": { "project": { "id": "…", "name": "Stack" }, "notices": 14, "important": 2 }
 ```
 
-`event` is `notice.raised`, `notice.reappeared` or `notice.backfilled`; `level` is `null`; `url` is the Notices page.
+`event` is `notice.raised`, `notice.exploited`, `notice.reappeared` or `notice.backfilled`; `level` is `null`; `url` is the
+Notices page.
 Reminder runs are not sent to webhooks.
 
 ## System functions (ADR 029)

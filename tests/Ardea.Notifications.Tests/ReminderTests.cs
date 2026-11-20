@@ -86,7 +86,8 @@ public sealed class ReminderTests(PostgresServer server)
         await host.ExecuteAsync($"UPDATE assess.remediation SET status = 'closed', closed_at = now(), close_reason = 'remediated' WHERE id = '{critical}'");
         await RunAtAsync(host, await NextRunAsync(host));
         Assert.Equal(2, Reminders(host).Count);
-        Assert.Equal(2L, await s.CountAsync("SELECT count(*) FROM notify.reminder_state"));
+        // The done one has left the reminders' state; the level 4 one keeps its last reminder.
+        Assert.Equal([high.ToString()], await host.RowsAsync("SELECT remediation_id FROM notify.reminder_state"));
     }
 
     [Fact]
@@ -108,6 +109,35 @@ public sealed class ReminderTests(PostgresServer server)
 
         Assert.Empty(host.Mail!.Sent);
         Assert.Equal(["reminder suppressed None of its reminders is open any more."], await host.RowsAsync("SELECT kind || ' ' || state || ' ' || last_error FROM notify.delivery"));
+    }
+
+    [Fact]
+    public async Task A_reminder_taken_back_from_done_counts_from_then_and_one_nobody_hears_about_stays_due()
+    {
+        await using var host = await NotifyTestHost.StartAsync(server);
+        var s = await Scenario.StartAsync(host);
+        await s.RuleAsync("Critical", 5, ["action.raised"], Scenario.Target("email"));
+        var reopened = await s.ActionAsync(2, level: 5);
+        await s.ActionAsync(3, level: 4);
+        var gone = Guid.CreateVersion7();
+        await host.ExecuteAsync($"""
+            UPDATE assess.remediation SET opened_at = '{host.Time.GetUtcNow().AddDays(-20):O}';
+            INSERT INTO notify.reminder_state (organization_id, remediation_id, last_reminded_at) VALUES ('{s.Organization}', '{gone}', now());
+            INSERT INTO notify.reminder_schedule (organization_id, level5, level4, level3, next_run_at, changed_at)
+            VALUES ('{s.Organization}', 'daily', 'weekly', 'monthly', '{host.Time.GetUtcNow().AddMinutes(-1):O}', now());
+            """);
+        // Closed and taken back an hour ago: it counts from the reopening, not from twenty days ago.
+        await s.EventAsync("action.status_changed", reopened, data: """{"from": "closed", "to": "open"}""");
+        await host.ExecuteAsync($"UPDATE assess.assess_event SET at = '{host.Time.GetUtcNow().AddHours(-1):O}' WHERE kind = 'action.status_changed'");
+        await host.ExecuteAsync("DELETE FROM notify.pending_event; DELETE FROM platform.job");
+
+        await host.RunAsync(new SendReminders(), s.Organization);
+        Assert.Empty(await host.RunJobsAsync());
+
+        // Level 4 is due but no rule names anyone for it: it does not count as reminded. The state of a reminder that is
+        // not open any more is gone.
+        Assert.Empty(Reminders(host));
+        Assert.Equal(0L, await s.CountAsync("SELECT count(*) FROM notify.reminder_state"));
     }
 
     [Fact]

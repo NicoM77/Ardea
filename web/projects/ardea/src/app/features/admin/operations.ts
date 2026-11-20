@@ -42,7 +42,12 @@ export function groupMetrics(metrics: readonly StatusMetric[]): MetricGroup[] {
  * When the instance administrators were last mailed about this warning (ADR 043), or null while they were
  * not. Warnings are keyed by code and subject, as the server keys them.
  */
-export function notifiedAt(notified: readonly WarningNotified[], warning: StatusWarning): string | null {
+export function notifiedAt(
+  notified: readonly WarningNotified[],
+  warning: StatusWarning,
+): string | null {
   const subject = warning.subject ?? null;
-  return notified.find((n) => n.code === warning.code && (n.subject ?? null) === subject)?.at ?? null;
+  return (
+    notified.find((n) => n.code === warning.code && (n.subject ?? null) === subject)?.at ?? null
+  );
 }

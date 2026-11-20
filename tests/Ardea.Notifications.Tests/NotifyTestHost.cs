@@ -129,6 +129,14 @@ internal sealed class NotifyTestHost : IAsyncDisposable
 
     public ApiClient Client() => new(_app.GetTestServer(), "https://ardea.test");
 
+    /// <summary>Runs <c>migrate</c> again, as an upgrade does: nothing to migrate, every module's step after it runs.</summary>
+    public async Task MigrateAgainAsync()
+    {
+        await using var owner = new NpgsqlConnection(Database.OwnerConnectionString("tests"));
+        await owner.OpenAsync();
+        await new DatabaseMigrator(Database, Modules.Databases, NoBackup.Instance, NullLogger<DatabaseMigrator>.Instance).MigrateAsync(owner, CancellationToken.None);
+    }
+
     /// <summary>A plain client without cookies or CSRF token, as a mail client's server is.</summary>
     public HttpClient RawClient()
     {

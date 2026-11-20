@@ -133,6 +133,27 @@ public sealed class NoticeTests(PostgresServer server)
     }
 
     [Fact]
+    public async Task An_open_notice_whose_entry_becomes_exploited_is_announced_once_more_and_not_again()
+    {
+        var handedOn = new HandedOn();
+        await using var host = await AssessmentTestHost.StartAsync(server, handedOn.Register);
+        var acme = AssessmentTestHost.NewOrganization();
+        await StackAsync(host, acme, "postgresql", "database");
+        var entry = await EntryAsync(host, "CVE-2026-8311", 9.1);
+
+        // Unanswered and exploited now: one event, so the rules announce it at once (master plan 8.2, ADR 048).
+        await ExploitAsync(host, entry, "active");
+        Assert.Equal(["notice.raised", "notice.exploited"], await host.RowsAsync("SELECT kind FROM assess.assess_event WHERE kind LIKE 'notice.%' ORDER BY at, id"));
+
+        // Calm again and exploited again: nothing more; the notice still asks.
+        await ExploitAsync(host, entry, "none", revision: 4);
+        await ExploitAsync(host, entry, "active", revision: 5);
+        Assert.Equal(1L, await host.ScalarAsync<long>("SELECT count(*) FROM assess.assess_event WHERE kind = 'notice.exploited'"));
+        Assert.Equal(["notice.raised", "notice.exploited"], handedOn.Kinds.Where(k => k.StartsWith("notice.", StringComparison.Ordinal)));
+        Assert.Equal(["open"], await host.RowsAsync("SELECT state FROM assess.notice"));
+    }
+
+    [Fact]
     public async Task Doesnt_affect_us_comes_back_once_when_the_entry_is_exploited_and_never_again()
     {
         await using var host = await AssessmentTestHost.StartAsync(server);

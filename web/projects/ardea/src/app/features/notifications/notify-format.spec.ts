@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { NotificationRuleView } from '../../core/api/client';
-import { DEFAULT_EVENTS, EVENT_GROUPS, isRhythm, matrixRow, REMINDER_LEVELS } from './notify-format';
+import {
+  DEFAULT_EVENTS,
+  EVENT_GROUPS,
+  isRhythm,
+  matrixRow,
+  REMINDER_LEVELS,
+} from './notify-format';
 import { isAppleMobile, keyBytes } from './push-device';
 
 const rule = (

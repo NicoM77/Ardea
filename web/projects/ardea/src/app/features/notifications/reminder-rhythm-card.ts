@@ -68,7 +68,13 @@ import {
               <p class="note">{{ 'notify.reminders.next' | transloco: { date: next } }}</p>
             }
             <div class="buttons">
-              <button uiButton variant="primary" type="submit" [loading]="saving()" [disabled]="!changed()">
+              <button
+                uiButton
+                variant="primary"
+                type="submit"
+                [loading]="saving()"
+                [disabled]="!changed()"
+              >
                 {{ 'notify.reminders.save' | transloco }}
               </button>
             </div>
@@ -141,7 +147,9 @@ export class ReminderRhythmCard {
   protected readonly saving = signal(false);
   protected readonly saved = signal(false);
   protected readonly problem = signal<string | null>(null);
-  protected readonly draft = signal<Record<ReminderLevelField, ReminderRhythm>>({ ...DEFAULT_RHYTHMS });
+  protected readonly draft = signal<Record<ReminderLevelField, ReminderRhythm>>({
+    ...DEFAULT_RHYTHMS,
+  });
 
   private readonly stored = computed<Record<ReminderLevelField, ReminderRhythm>>(() => {
     const value = this.rhythm.hasValue() ? this.rhythm.value() : undefined;

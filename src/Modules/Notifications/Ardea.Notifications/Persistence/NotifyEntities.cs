@@ -233,7 +233,10 @@ internal sealed class ReminderSchedule : IOrganizationOwned
     public DateTimeOffset ChangedAt { get; set; }
 }
 
-/// <summary>When an open reminder last reminded its recipients (master plan 8.7, ADR 048); the rhythm counts from it.</summary>
+/// <summary>
+/// When an open reminder last reminded its recipients (master plan 8.7, ADR 048); the rhythm counts from it. A run deletes
+/// the rows of reminders that are done or below level 3.
+/// </summary>
 internal sealed class ReminderState : IOrganizationOwned
 {
     public Guid OrganizationId { get; set; }
@@ -241,9 +244,6 @@ internal sealed class ReminderState : IOrganizationOwned
     public Guid RemediationId { get; set; }
 
     public DateTimeOffset LastRemindedAt { get; set; }
-
-    /// <summary>The level it was reminded at.</summary>
-    public int Level { get; set; }
 }
 
 /// <summary>An event noted for a digest target (master plan 4.7, 8.4); target and event are unique together.</summary>

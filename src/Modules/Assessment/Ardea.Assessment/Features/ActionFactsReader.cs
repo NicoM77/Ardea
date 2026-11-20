@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Ardea.Assessment.Assessing;
 using Ardea.Assessment.Contracts;
 using Ardea.Assessment.Persistence;
@@ -60,11 +61,30 @@ internal sealed class ActionFactsReader(AssessDbContext db, IProfileQueries prof
         })];
     }
 
-    public async Task<IReadOnlyList<OpenReminder>> OpenRemindersAsync(int minLevel, CancellationToken cancellationToken) =>
-        (await db.Remediations.AsNoTracking().Where(r => r.Status != "closed" && r.Level >= minLevel)
-            .Select(r => new { r.Id, r.Level, r.ProjectId, r.OpenedAt, r.LevelRaisedAt }).ToListAsync(cancellationToken))
-        .Select(r => new OpenReminder(r.Id, r.Level, r.ProjectId, r.LevelRaisedAt is { } raised && raised > r.OpenedAt ? raised : r.OpenedAt))
-        .ToList();
+    public async Task<IReadOnlyList<OpenReminder>> OpenRemindersAsync(int minLevel, CancellationToken cancellationToken)
+    {
+        var open = await db.Remediations.AsNoTracking().Where(r => r.Status != "closed" && r.Level >= minLevel)
+            .Select(r => new { r.Id, r.Level, r.ProjectId, r.OpenedAt, r.LevelRaisedAt }).ToListAsync(cancellationToken);
+        if (open.Count == 0)
+        {
+            return [];
+        }
+
+        // A reminder a person took back from «done» counts from that moment (ADR 048): the last status change to «open».
+        var ids = open.Select(r => r.Id).ToArray();
+        var reopened = (await db.Events.AsNoTracking()
+                .Where(e => e.Kind == EventKinds.ActionStatusChanged && e.RemediationId != null && ids.Contains(e.RemediationId.Value))
+                .Select(e => new { RemediationId = e.RemediationId!.Value, e.At, e.Data })
+                .ToListAsync(cancellationToken))
+            .Where(e => e.Data.RootElement.TryGetProperty("to", out var to) && to.ValueKind == JsonValueKind.String && to.GetString() == "open")
+            .GroupBy(e => e.RemediationId)
+            .ToDictionary(g => g.Key, g => g.Max(e => e.At));
+        return [.. open.Select(r =>
+        {
+            var since = new[] { r.OpenedAt, r.LevelRaisedAt ?? r.OpenedAt, reopened.GetValueOrDefault(r.Id, r.OpenedAt) }.Max();
+            return new OpenReminder(r.Id, r.Level, r.ProjectId, since);
+        })];
+    }
 
     public async Task<IReadOnlyList<ActionFacts>> ActionsAsync(IReadOnlyCollection<Guid> remediationIds, CancellationToken cancellationToken)
     {

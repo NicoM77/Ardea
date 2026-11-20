@@ -148,5 +148,5 @@ public sealed record NoticeComponentFacts(string Name, string? Version, Guid Pro
 /// <param name="Id">The reminder.</param>
 /// <param name="Level">Its level, 2 to 5.</param>
 /// <param name="ProjectId">Its project, for a rule's project scope.</param>
-/// <param name="Since">Since when it stands at its level, as far as the reminder knows: opened, or last raised.</param>
+/// <param name="Since">Since when it stands at its level, as far as the reminder knows: opened, last raised, or taken back from done.</param>
 public sealed record OpenReminder(Guid Id, int Level, Guid ProjectId, DateTimeOffset Since);

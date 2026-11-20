@@ -134,6 +134,9 @@ internal sealed class SendRemindersHandler(
     private async Task RemindAsync(ReminderSchedule schedule, OrganizationProfile profile, DateTimeOffset runAt, DateTimeOffset now, CancellationToken cancellationToken)
     {
         var open = await facts.OpenRemindersAsync(ReminderRhythms.MinLevel, cancellationToken);
+        // A reminder done, or below level 3, has nothing to count from any more: taken back or raised again, it counts from then.
+        var openIds = open.Select(r => r.Id).ToArray();
+        await db.ReminderStates.Where(s => !openIds.Contains(s.RemediationId)).ExecuteDeleteAsync(cancellationToken);
         if (open.Count == 0)
         {
             return;
@@ -215,16 +218,16 @@ internal sealed class SendRemindersHandler(
             await jobs.EnqueueAsync(new Deliver(delivery.Id), Deliver.Options(delivery.Id, now), cancellationToken);
         }
 
-        foreach (var reminder in due)
+        // Only what went into a message counts as reminded; a reminder nobody hears about is due again at the next run.
+        foreach (var reminder in messages.Values.SelectMany(r => r).DistinctBy(r => r.Id))
         {
             if (states.TryGetValue(reminder.Id, out var state))
             {
                 state.LastRemindedAt = now;
-                state.Level = reminder.Level;
             }
             else
             {
-                db.ReminderStates.Add(new ReminderState { RemediationId = reminder.Id, LastRemindedAt = now, Level = reminder.Level });
+                db.ReminderStates.Add(new ReminderState { RemediationId = reminder.Id, LastRemindedAt = now });
             }
         }
     }

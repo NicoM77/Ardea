@@ -38,6 +38,20 @@ internal sealed class DefaultRules(NotifyDbContext db, IOrganizationProfiles org
         await db.SaveChangesAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// The module's step after every <c>migrate</c> (ADR 048): default rules nobody edited (<c>changed_at = created_at</c>)
+    /// learn <c>notice.raised</c>, also those the previous build creates during an upgrade, at the next migrate. A preset an
+    /// admin changed, narrowed or switched off stays as it is: it may name one person now. Idempotent; the rule counts as
+    /// changed afterwards, so a later edit that removes the event is kept.
+    /// </summary>
+    public static Task<int> NameNoticesAsync(NotifyDbContext db, CancellationToken cancellationToken) =>
+        db.Database.ExecuteSqlRawAsync(
+            """
+            UPDATE notify.rule SET events = array_append(events, 'notice.raised'), changed_at = now()
+            WHERE preset IN ('critical', 'high', 'weekly') AND changed_at = created_at AND NOT ('notice.raised' = ANY (events))
+            """,
+            cancellationToken);
+
     public static IReadOnlyList<NotificationRule> Create(DateTimeOffset now, string timeZone)
     {
         // One microsecond apart, the database's precision: lists show targets in the order written here.

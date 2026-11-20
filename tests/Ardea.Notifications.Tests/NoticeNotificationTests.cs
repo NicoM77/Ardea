@@ -82,6 +82,55 @@ public sealed class NoticeNotificationTests(PostgresServer server)
     }
 
     [Fact]
+    public async Task An_unanswered_notice_that_becomes_exploited_reaches_the_admins_at_once_once()
+    {
+        await using var host = await NotifyTestHost.StartAsync(server);
+        var s = await Scenario.StartAsync(host, keepDefaultRules: true);
+        var (_, postgres) = await s.StackEntryAsync();
+        var notice = await host.NoticeAsync(s.Organization, [postgres], "CVE-2026-9020");
+        await s.EventAsync("notice.raised", notice: notice);
+        await s.EvaluateAsync();
+        await s.DeliverAsync();
+        Assert.DoesNotContain(host.Mail!.Sent, m => m.Subject.StartsWith("[Notice]", StringComparison.Ordinal));
+
+        // Actively exploited now, nobody answered: the default rule 1 brings it at once, the app says what changed.
+        await host.ExecuteAsync($"UPDATE assess.notice SET exploitation = 'active' WHERE id = '{notice}'");
+        await s.EventAsync("notice.exploited", notice: notice);
+        await s.EvaluateAsync();
+        await s.DeliverAsync();
+        var mail = Assert.Single(host.Mail.Sent, m => m.Subject.StartsWith("[Notice]", StringComparison.Ordinal));
+        Assert.Contains("Now actively exploited, still unanswered", mail.Text, StringComparison.Ordinal);
+
+        // The same event again, as a retried hand-off would: nothing more.
+        await s.EventAsync("notice.exploited", notice: notice);
+        await s.EvaluateAsync();
+        await s.DeliverAsync();
+        Assert.Single(host.Mail.Sent, m => m.Subject.StartsWith("[Notice]", StringComparison.Ordinal));
+        Assert.Equal(["notice.raised", "notice.exploited"], await host.RowsAsync("SELECT kind FROM notify.notification ORDER BY created_at"));
+    }
+
+    [Fact]
+    public async Task Default_rules_learn_notices_on_migrate_unless_an_admin_edited_them()
+    {
+        await using var host = await NotifyTestHost.StartAsync(server);
+        var s = await Scenario.StartAsync(host, keepDefaultRules: true);
+        // As the previous build wrote them: without notice.raised; one of them narrowed by an admin since.
+        await host.ExecuteAsync($"""
+            UPDATE notify.rule SET events = array_remove(events, 'notice.raised'), changed_at = created_at WHERE organization_id = '{s.Organization}';
+            UPDATE notify.rule SET changed_at = created_at + interval '1 day' WHERE organization_id = '{s.Organization}' AND preset = 'critical';
+            """);
+
+        await host.MigrateAgainAsync();
+        await host.MigrateAgainAsync();
+
+        Assert.Equal(
+            ["critical without", "high with", "weekly with"],
+            await host.RowsAsync("SELECT preset || CASE WHEN 'notice.raised' = ANY (events) THEN ' with' ELSE ' without' END FROM notify.rule ORDER BY preset"));
+        Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.rule WHERE 'notice.raised' = ANY (events) AND preset = 'weekly'"));
+        Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.rule WHERE preset = 'high' AND changed_at > created_at"));
+    }
+
+    [Fact]
     public async Task A_notice_answered_or_withdrawn_before_its_event_is_evaluated_is_not_announced()
     {
         await using var host = await NotifyTestHost.StartAsync(server);

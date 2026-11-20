@@ -59,6 +59,7 @@ internal sealed class MessageTexts
                 : Format("headline.backfill", b.ProjectName, b.Actions, b.HighestLevel, LevelName(b.HighestLevel)),
             NotifyEvents.DeliveryFailed => this["headline.delivery_failed"],
             NotifyEvents.NoticeRaised => this["headline.notice"],
+            NotifyEvents.NoticeExploited => this[item.Notice?.InKev == true ? "headline.notice_kev" : "headline.notice_exploited"],
             NotifyEvents.NoticeReappeared => Format(
                 "headline.notice_reappeared", this[item.Notice?.ReappearedReason == "kev" ? "notice.back.kev" : "notice.back.exploited"]),
             NotifyEvents.NoticeBackfilled when item.NoticeBackfill is { } n => n.Important > 0
@@ -166,6 +167,8 @@ internal sealed class MessageTexts
         ["headline.backfill_none"] = "First assessment of {0} done: nothing to do.",
         ["headline.delivery_failed"] = "A level 5 message reached a recipient on none of their channels.",
         ["headline.notice"] = "New notice: this could affect you.",
+        ["headline.notice_exploited"] = "Now actively exploited, still unanswered: this could affect you.",
+        ["headline.notice_kev"] = "Now listed in CISA's KEV catalogue, still unanswered: this could affect you.",
         ["headline.notice_reappeared"] = "Back once: answered «doesn't affect us», now {0}.",
         ["headline.notice_backfill"] = "{0} earlier notice(s) for {1}; answer them on the Notices page.",
         ["headline.notice_backfill_important"] = "{0} earlier notice(s) for {1}, {2} of them actively exploited or in KEV; answer them on the Notices page.",
@@ -260,6 +263,8 @@ internal sealed class MessageTexts
         ["headline.backfill_none"] = "Ersteinschätzung von {0} fertig: nichts zu tun.",
         ["headline.delivery_failed"] = "Eine Nachricht der Stufe 5 hat einen Empfänger auf keinem seiner Kanäle erreicht.",
         ["headline.notice"] = "Neuer Hinweis: Das könnte euch betreffen.",
+        ["headline.notice_exploited"] = "Jetzt aktiv ausgenutzt, noch unbeantwortet: Das könnte euch betreffen.",
+        ["headline.notice_kev"] = "Jetzt im KEV-Katalog der CISA, noch unbeantwortet: Das könnte euch betreffen.",
         ["headline.notice_reappeared"] = "Einmal zurück: beantwortet mit «betrifft uns nicht», jetzt {0}.",
         ["headline.notice_backfill"] = "{0} frühere(r) Hinweis(e) zu {1}; beantworte sie auf der Seite «Notices».",
         ["headline.notice_backfill_important"] = "{0} frühere(r) Hinweis(e) zu {1}, davon {2} aktiv ausgenutzt oder in KEV; beantworte sie auf der Seite «Notices».",

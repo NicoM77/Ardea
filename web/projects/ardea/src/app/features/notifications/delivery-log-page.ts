@@ -87,6 +87,12 @@ const PAGE = 50;
                       @if (d.kind === 'digest') {
                         {{ 'notify.mode.digest' | transloco }}
                         <small>{{ when(d.periodStart) }} – {{ when(d.periodEnd) }}</small>
+                      } @else if (d.kind === 'reminder') {
+                        {{ 'notify.log.reminders' | transloco }}
+                        <small
+                          >{{ 'notify.log.reminderCount' | transloco: { count: num(d.events) } }} ·
+                          {{ 'notify.log.run' | transloco: { date: when(d.periodEnd) } }}</small
+                        >
                       } @else {
                         {{ 'notify.mode.immediate' | transloco }}
                         <small>{{

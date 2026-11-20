@@ -711,10 +711,6 @@ namespace Ardea.Notifications.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_reminded_at");
 
-                    b.Property<int>("Level")
-                        .HasColumnType("integer")
-                        .HasColumnName("level");
-
                     b.HasKey("OrganizationId", "RemediationId")
                         .HasName("pk_reminder_state");
 

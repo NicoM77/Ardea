@@ -37,6 +37,10 @@ internal sealed class Evaluator(
     /// <summary>Immediate messages per channel and organisation and hour; above, the event waits for the digest (master plan 8.6).</summary>
     public const int HourlyLimit = 60;
 
+    public static readonly TimeSpan LimitWindow = TimeSpan.FromHours(1);
+
+    public static readonly string CappedReason = $"More than {HourlyLimit} immediate messages on this channel within an hour; the event waits for the digest.";
+
     /// <summary>Reads what every event of the batch needs once: organisation, rules, recipients, events and actions.</summary>
     public async Task<Batch?> LoadAsync(IReadOnlyList<PendingEvent> pending, CancellationToken cancellationToken)
     {
@@ -332,11 +336,11 @@ internal sealed class Evaluator(
             return;
         }
 
-        var waiting = await WaitingAsync(recipient.Key, channel, cancellationToken);
+        var waiting = await WaitingAsync(db, tenant.RequiredOrganizationId, recipient.Key, channel, cancellationToken);
         if (waiting is null)
         {
             var overLimit = await db.Deliveries.CountAsync(
-                d => d.Kind == "immediate" && d.Channel == channel && d.State != "suppressed" && d.CreatedAt > context.Now - TimeSpan.FromHours(1),
+                d => d.Kind == "immediate" && d.Channel == channel && d.State != "suppressed" && d.CreatedAt > context.Now - LimitWindow,
                 cancellationToken) >= HourlyLimit;
             var delivery = new Delivery
             {
@@ -346,12 +350,19 @@ internal sealed class Evaluator(
                 RecipientKey = recipient.Key,
                 SendAfter = context.Now + Bundling,
                 State = overLimit ? "suppressed" : "pending",
-                LastError = overLimit ? $"More than {HourlyLimit} immediate messages on this channel within an hour; the event waits for the digest." : null,
+                LastError = overLimit ? CappedReason : null,
                 CreatedAt = context.Now,
             };
             db.Deliveries.Add(delivery);
             await db.SaveChangesAsync(cancellationToken);
-            if (!overLimit)
+            if (overLimit)
+            {
+                await jobs.EnqueueAsync(
+                    new SendOverflow(recipient.Key, channel),
+                    SendOverflow.Options(context.Organization.Id, recipient.Key, channel, context.Now + LimitWindow),
+                    cancellationToken);
+            }
+            else
             {
                 await jobs.EnqueueAsync(new Deliver(delivery.Id), Deliver.Options(delivery.Id, delivery.SendAfter), cancellationToken);
             }
@@ -410,9 +421,8 @@ internal sealed class Evaluator(
     /// The waiting message of this recipient and channel, locked: the delivery job takes it under the same lock
     /// when it starts sending, so an event joins either before the message is read or a new message.
     /// </summary>
-    private async Task<Guid?> WaitingAsync(string key, string channel, CancellationToken cancellationToken)
+    internal static async Task<Guid?> WaitingAsync(NotifyDbContext db, Guid organization, string key, string channel, CancellationToken cancellationToken)
     {
-        var organization = tenant.RequiredOrganizationId;
         var ids = await db.Database.SqlQuery<Guid>($"""
             SELECT id AS "Value" FROM notify.delivery
             WHERE organization_id = {organization} AND kind = 'immediate' AND state = 'pending' AND recipient_key = {key} AND channel = {channel}

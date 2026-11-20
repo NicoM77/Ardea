@@ -42,7 +42,7 @@ internal sealed partial class EvaluateEventsHandler(
     public async Task HandleAsync(EvaluateEvents job, JobContext context, CancellationToken cancellationToken)
     {
         var organization = tenant.RequiredOrganizationId;
-        await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"notify.evaluate:" + organization}, 0))", cancellationToken);
+        await LockOrganizationAsync(db, organization, cancellationToken);
         var pending = await db.PendingEvents.AsNoTracking().Where(p => p.FailedAt == null)
             .OrderBy(p => p.At).ThenBy(p => p.EventId).Take(EvaluateEvents.Batch).ToListAsync(cancellationToken);
         if (pending.Count == 0)
@@ -84,6 +84,9 @@ internal sealed partial class EvaluateEventsHandler(
             await jobs.EnqueueAsync(new EvaluateEvents(), EvaluateEvents.Options(organization), cancellationToken);
         }
     }
+
+    internal static async Task LockOrganizationAsync(NotifyDbContext db, Guid organization, CancellationToken cancellationToken) =>
+        await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"notify.evaluate:" + organization}, 0))", cancellationToken);
 
     [LoggerMessage(EventId = 6001, Level = LogLevel.Warning, Message = "Evaluating event {EventId} ({Kind}) failed, attempt {Attempt}; the organisation's other events went on")]
     private partial void LogEventFailed(Exception exception, Guid eventId, string kind, int attempt);

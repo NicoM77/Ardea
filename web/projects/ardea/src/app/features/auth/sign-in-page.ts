@@ -5,11 +5,11 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { UiButton, UiField, UiInput, UiNotice, UiPasswordToggle } from 'ui';
 import { firstValueFrom } from 'rxjs';
 import { AuthenticationService } from '../../core/api/client';
-import { problemMessageKey } from '../../core/api/problem';
 import { safeReturnUrl } from '../../core/session/access';
 import { Session } from '../../core/session/session';
 import { EMAIL_ERRORS, emailRules, fieldErrorKey, PASSWORD_ERRORS } from './auth-forms';
 import { focusFirstInvalid } from './focus-invalid';
+import { signInProblemKey } from './sign-in-problem';
 
 const NOTICES: Record<string, string> = {
   passwordChanged: 'auth.signIn.notices.passwordChanged',
@@ -117,16 +117,7 @@ export class SignInPage {
             await this.session.refresh();
             await this.router.navigateByUrl(returnUrl ?? '/');
           } catch (error) {
-            this.problem.set(
-              problemMessageKey(error, {
-                codes: {
-                  invalid_credentials: 'auth.signIn.errors.invalid',
-                  locked_out: 'auth.signIn.errors.lockedOut',
-                },
-                statuses: { 400: 'auth.signIn.errors.invalid', 401: 'auth.signIn.errors.invalid' },
-                fallback: 'auth.signIn.errors.invalid',
-              }),
-            );
+            this.problem.set(signInProblemKey(error));
           }
         },
         onInvalid: () => focusFirstInvalid(this.host),

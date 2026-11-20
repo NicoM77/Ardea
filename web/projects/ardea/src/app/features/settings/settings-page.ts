@@ -28,18 +28,22 @@ import { GeneralCard } from './general-card';
     @if (organization(); as org) {
       <ui-page-header
         [heading]="'nav.settings' | transloco"
-        [sub]="'settings.lead' | transloco: { name: org.name }"
+        [sub]="(manage() ? 'settings.lead' : 'settings.leadMember') | transloco: { name: org.name }"
       />
       <div class="grid">
         <ardea-general-card class="span-7" [organization]="org" />
-        <ui-card class="span-5" [heading]="'notify.settings.title' | transloco">
-          <p class="hint">{{ 'settings.notifications.text' | transloco }}</p>
-          <a uiButton class="go" [routerLink]="'/o/' + org.slug + '/settings/notifications'">
-            {{ 'settings.notifications.open' | transloco }}
-          </a>
-        </ui-card>
+        <div class="side span-5">
+          <ui-card [heading]="'notify.settings.title' | transloco">
+            <p class="hint">{{ 'settings.notifications.text' | transloco }}</p>
+            <a uiButton class="go" [routerLink]="'/o/' + org.slug + '/settings/notifications'">
+              {{ 'settings.notifications.open' | transloco }}
+            </a>
+          </ui-card>
+          @if (manage()) {
+            <ardea-mfa-setting-card [organization]="org" [here]="here()" />
+          }
+        </div>
         @if (manage()) {
-          <ardea-mfa-setting-card class="span-5" [organization]="org" [here]="here()" />
           <ardea-ai-policy-card class="span-12" [organization]="org" />
         }
         <ardea-accesses-card class="span-12" [organization]="org" />
@@ -63,6 +67,11 @@ import { GeneralCard } from './general-card';
       color: var(--muted);
       font-size: var(--fs-sub);
       line-height: var(--lh-sub);
+    }
+    .side {
+      display: grid;
+      gap: var(--gap);
+      min-width: 0;
     }
     .go {
       margin-top: var(--space-md);

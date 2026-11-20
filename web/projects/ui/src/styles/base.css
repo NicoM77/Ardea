@@ -145,6 +145,8 @@ svg.lucide {
   *,
   *::before,
   *::after {
-    transition-duration: 0.01ms !important;
+    transition-property:
+      opacity, color, background-color, border-color, outline-color, text-decoration-color, fill,
+      stroke !important;
   }
 }

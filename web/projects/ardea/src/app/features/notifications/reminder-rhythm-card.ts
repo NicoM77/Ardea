@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { UiButton, UiCard, UiInput, UiLoader, UiNotice, UiPriority } from 'ui';
+import { UiCard, UiInput, UiLoader, UiNotice, UiPriority, UiToaster } from 'ui';
 import { firstValueFrom } from 'rxjs';
 import { getReminderRhythmResource, NotificationsService } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
@@ -17,15 +17,12 @@ import {
 
 @Component({
   selector: 'ardea-reminder-rhythm-card',
-  imports: [TranslocoPipe, UiButton, UiCard, UiInput, UiLoader, UiNotice, UiPriority],
+  imports: [TranslocoPipe, UiCard, UiInput, UiLoader, UiNotice, UiPriority],
   template: `
     <ui-card [heading]="'notify.reminders.title' | transloco">
       <span uiCardMeta>{{ 'notify.reminders.meta' | transloco }}</span>
       <p class="lead">{{ 'notify.reminders.lead' | transloco }}</p>
       <div class="live" role="status">
-        @if (saved()) {
-          <ui-notice tone="success">{{ 'notify.reminders.saved' | transloco }}</ui-notice>
-        }
         @if (problem()) {
           <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
         }
@@ -34,7 +31,7 @@ import {
         @if (rhythm.error()) {
           <ui-notice tone="error">{{ 'notify.loadFailed' | transloco }}</ui-notice>
         } @else {
-          <form (submit)="save($event)">
+          <div>
             <ul class="levels">
               @for (l of levels; track l.field) {
                 <li>
@@ -46,7 +43,6 @@ import {
                     class="choice"
                     [id]="'rhythm-' + l.level"
                     [name]="l.field"
-                    [disabled]="saving()"
                     (change)="choose(l.field, $any($event.target).value)"
                   >
                     @for (r of rhythms; track r) {
@@ -62,18 +58,7 @@ import {
             @if (nextRun(); as next) {
               <p class="note">{{ 'notify.reminders.next' | transloco: { date: next } }}</p>
             }
-            <div class="buttons">
-              <button
-                uiButton
-                variant="primary"
-                type="submit"
-                [loading]="saving()"
-                [disabled]="!changed()"
-              >
-                {{ 'notify.reminders.save' | transloco }}
-              </button>
-            </div>
-          </form>
+          </div>
         }
       } @else {
         <ui-loader [label]="'notify.loading' | transloco" />
@@ -122,15 +107,14 @@ import {
     .note {
       margin-top: var(--space-sm);
     }
-    .buttons {
-      display: flex;
-      margin-top: var(--space-md);
-    }
   `,
 })
 export class ReminderRhythmCard {
   private readonly api = inject(NotificationsService);
   private readonly transloco = inject(TranslocoService);
+  private readonly toaster = inject(UiToaster);
+  private queue: Promise<void> = Promise.resolve();
+  private pending = 0;
 
   readonly organizationId = input.required<string>();
 
@@ -138,8 +122,6 @@ export class ReminderRhythmCard {
   protected readonly levels = REMINDER_LEVELS;
   protected readonly rhythms = REMINDER_RHYTHMS;
   protected readonly rhythmLabels = REMINDER_RHYTHM_LABELS;
-  protected readonly saving = signal(false);
-  protected readonly saved = signal(false);
   protected readonly problem = signal<string | null>(null);
   protected readonly draft = signal<Record<ReminderLevelField, ReminderRhythm>>({
     ...DEFAULT_RHYTHMS,
@@ -154,10 +136,6 @@ export class ReminderRhythmCard {
     };
   });
 
-  protected readonly changed = computed(() =>
-    REMINDER_LEVELS.some((l) => this.draft()[l.field] !== this.stored()[l.field]),
-  );
-
   protected readonly nextRun = computed(() => {
     const next = this.rhythm.hasValue() ? this.rhythm.value()?.nextRunAt : null;
     return next
@@ -169,7 +147,10 @@ export class ReminderRhythmCard {
   });
 
   constructor() {
-    effect(() => this.draft.set({ ...this.stored() }));
+    effect(() => {
+      const stored = this.stored();
+      if (this.pending === 0) this.draft.set({ ...stored });
+    });
   }
 
   protected priority(level: number) {
@@ -178,26 +159,47 @@ export class ReminderRhythmCard {
 
   protected choose(field: ReminderLevelField, value: string): void {
     if (!isRhythm(value)) return;
-    this.saved.set(false);
-    this.draft.update((d) => ({ ...d, [field]: value }));
+    const before = { ...this.draft() };
+    if (before[field] === value) return;
+    const after = { ...before, [field]: value };
+    this.draft.set(after);
+    this.enqueue(before, after, true);
   }
 
-  protected async save(event: Event): Promise<void> {
-    event.preventDefault();
-    if (this.saving() || !this.changed()) return;
-    this.saving.set(true);
-    this.saved.set(false);
+  private enqueue(
+    before: Record<ReminderLevelField, ReminderRhythm>,
+    after: Record<ReminderLevelField, ReminderRhythm>,
+    announce: boolean,
+  ): void {
+    this.pending++;
+    this.queue = this.queue
+      .then(() => this.save(before, after, announce))
+      .finally(() => {
+        this.pending--;
+      });
+  }
+
+  private async save(
+    before: Record<ReminderLevelField, ReminderRhythm>,
+    after: Record<ReminderLevelField, ReminderRhythm>,
+    announce: boolean,
+  ): Promise<void> {
     this.problem.set(null);
     try {
-      const result = await firstValueFrom(
-        this.api.setReminderRhythm(this.organizationId(), { ...this.draft() }),
-      );
+      const result = await firstValueFrom(this.api.setReminderRhythm(this.organizationId(), after));
       this.rhythm.set(result);
-      this.saved.set(true);
+      if (announce) {
+        this.toaster.show({
+          text: this.transloco.translate('notify.reminders.saved'),
+          undo: () => {
+            this.draft.set({ ...before });
+            this.enqueue(after, before, false);
+          },
+        });
+      }
     } catch (error) {
       this.problem.set(problemMessageKey(error, { fallback: 'notify.reminders.saveFailed' }));
-    } finally {
-      this.saving.set(false);
+      this.draft.set({ ...before });
     }
   }
 }

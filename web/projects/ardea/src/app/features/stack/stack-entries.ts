@@ -20,6 +20,10 @@ import { StackStore } from './stack-store';
   selector: 'ardea-stack-entries',
   imports: [TranslocoPipe, LucideTrash, UiButton, UiInput, StackAdd],
   template: `
+    @if (store.canEdit()) {
+      <ardea-stack-add />
+    }
+
     @if (store.entries().length) {
       <div class="head" aria-hidden="true">
         <span>{{ 'stack.columns.product' | transloco }}</span>
@@ -51,7 +55,7 @@ import { StackStore } from './stack-store';
                   [readOnly]="store.isPending(entry.id)"
                   [attr.aria-busy]="store.isPending(entry.id)"
                   [attr.aria-label]="'stack.version.label' | transloco: { name: entry.name }"
-                  [attr.aria-describedby]="'stack-k-' + entry.id"
+                  [attr.aria-describedby]="precisionHint(entry) ? 'stack-k-' + entry.id : null"
                   (input)="typed.set({ id: entry.id, value: $any($event.target).value })"
                   (change)="saveVersion(entry, $any($event.target))"
                   (keydown.enter)="saveVersion(entry, $any($event.target))"
@@ -72,9 +76,9 @@ import { StackStore } from './stack-store';
                   </select>
                 }
               </div>
-              <small class="kind" [id]="'stack-k-' + entry.id">{{
-                precisionHint(entry) | transloco
-              }}</small>
+              @if (precisionHint(entry); as hint) {
+                <small class="kind" [id]="'stack-k-' + entry.id">{{ hint | transloco }}</small>
+              }
             </div>
 
             <div
@@ -113,10 +117,6 @@ import { StackStore } from './stack-store';
       </ul>
     } @else {
       <p class="empty">{{ 'stack.empty' | transloco }}</p>
-    }
-
-    @if (store.canEdit()) {
-      <ardea-stack-add />
     }
   `,
   styles: `
@@ -270,13 +270,13 @@ export class StackEntries {
   protected readonly thresholds = THRESHOLDS;
   protected readonly typed = signal<{ id: string; value: string } | null>(null);
 
-  protected precisionHint(entry: ComponentView): string {
+  protected precisionHint(entry: ComponentView): string | null {
     const typing = this.typed();
     const precision =
       typing?.id === entry.id && typing.value.trim() !== (entry.version ?? '')
         ? precisionOf(typing.value)
         : (entry.versionPrecision as Precision);
-    return PRECISION_HINTS[precision] ?? PRECISION_HINTS.none;
+    return precision === 'none' ? null : (PRECISION_HINTS[precision] ?? null);
   }
 
   protected async saveVersion(entry: ComponentView, input: HTMLInputElement): Promise<void> {

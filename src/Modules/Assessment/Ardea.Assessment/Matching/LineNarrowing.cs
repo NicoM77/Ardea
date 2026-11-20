@@ -30,6 +30,11 @@ internal static class LineNarrowing
         ArgumentNullException.ThrowIfNull(range);
         long[] start = [.. line];
         long[] end = [.. line.Take(line.Count - 1), line[^1] + 1];
+        if (new[] { range.Introduced, range.Fixed, range.LastAffected, range.Exact }.Any(IsCommit))
+        {
+            return null;
+        }
+
         if (range.Exact is { } exact)
         {
             return exact == "0" || VersionLines.LeadingNumbers(exact).Length == 0 ? null : VersionLines.InLine(exact, line);
@@ -46,4 +51,10 @@ internal static class LineNarrowing
             : true;
         return lowerOk && upperOk;
     }
+
+    /// <summary>
+    /// A Git commit (CVE records of the Linux kernel state ranges as <c>1da177e4c3f4</c> to <c>4f2e1a9b…</c>): read as a
+    /// version, its leading digits would place it at 1 or 4. A hash of digits alone is left to the numbers, as a version may be one.
+    /// </summary>
+    private static bool IsCommit(string? bound) => VersionRanges.IsCommitHash(bound) && bound!.Any(char.IsAsciiLetter);
 }

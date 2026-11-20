@@ -25,7 +25,7 @@ internal static class JobStore
             WHERE j.id IN (
                 SELECT id FROM platform.job
                 WHERE state = 'pending' AND run_at <= now() AND kind = $3
-                ORDER BY priority, run_at
+                ORDER BY priority, run_at, id
                 FOR UPDATE SKIP LOCKED
                 LIMIT $4)
             RETURNING j.id, j.lease_token, j.kind, j.payload, j.attempts, j.max_attempts, j.timeout_seconds, j.org_id, j.trace_parent

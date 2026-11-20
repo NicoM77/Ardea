@@ -354,7 +354,7 @@ internal static class ActionEndpoints
     private static async Task<ActionDetailView> DetailAsync(Remediation action, AssessDbContext db, ActionReader reader, CancellationToken cancellationToken)
     {
         var findings = await db.Findings.AsNoTracking().Where(f => f.RemediationId == action.Id)
-            .OrderByDescending(f => f.Status == "open").ThenByDescending(f => f.Level).ThenBy(f => f.Id)
+            .OrderByDescending(f => f.Status == "open").ThenByDescending(f => f.Level).ThenBy(f => db.Alerts.Where(a => a.Id == f.AlertId).Select(a => a.EntryKey).First()).ThenBy(f => f.Id)
             .ToListAsync(cancellationToken);
         return new ActionDetailView(
             (await reader.SummariesAsync([action], cancellationToken))[0], await reader.AnswersAsync(findings, action.TargetVersion, cancellationToken),

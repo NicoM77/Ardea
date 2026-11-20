@@ -68,7 +68,7 @@ internal static class AnswerTemplates
         IReadOnlyDictionary<Guid, AlertAssessment>? assessments = null)
     {
         var ordered = findings
-            .OrderByDescending(f => f.Status == "open").ThenByDescending(f => f.Level).ThenBy(f => f.Id).ToList();
+            .OrderByDescending(f => f.Status == "open").ThenByDescending(f => f.Level).ThenBy(f => texts.GetValueOrDefault(f.EntryId)?.Key, StringComparer.Ordinal).ThenBy(f => f.Id).ToList();
         var lead = ordered[0];
         var text = texts.GetValueOrDefault(lead.EntryId);
         var entries = findings.Select(f => f.EntryId).Distinct().Count();

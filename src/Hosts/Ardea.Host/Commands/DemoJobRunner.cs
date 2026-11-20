@@ -57,7 +57,13 @@ internal static class DemoJobRunner
 
     private static async Task BringForwardAsync(NpgsqlDataSource dataSource, CancellationToken cancellationToken)
     {
-        await using var command = dataSource.CreateCommand("UPDATE platform.job SET run_at = now() WHERE state = 'pending' AND run_at > now() AND kind = ANY($1)");
+        await using var command = dataSource.CreateCommand(
+            """
+            UPDATE platform.job j
+            SET run_at = j.run_at - shift.by
+            FROM (SELECT max(run_at) - now() AS by FROM platform.job WHERE state = 'pending' AND run_at > now() AND kind = ANY($1)) shift
+            WHERE j.state = 'pending' AND j.run_at > now() AND j.kind = ANY($1)
+            """);
         command.Parameters.Add(new NpgsqlParameter { Value = Kinds });
         await command.ExecuteNonQueryAsync(cancellationToken);
     }

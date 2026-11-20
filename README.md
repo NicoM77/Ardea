@@ -1,18 +1,145 @@
-# Ardea
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/design/brand/ardea-logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/design/brand/ardea-logo.svg">
+    <img src="docs/design/brand/ardea-logo.svg" alt="Ardea" width="240">
+  </picture>
+</p>
 
-Ardea is Latin for heron: a bird that stands still for a long time and strikes only when it matters.
+Ardea is a self-hosted, open-source early-warning system for security vulnerabilities. It collects advisories and CVE records from trusted sources, merges them into one entry per vulnerability, and tells each organisation which ones affect its technology, how urgent they are, and what to do.
 
-A self-hosted, open-source early-warning system for security vulnerabilities: it collects advisories and CVE records from trusted sources, merges them into one entry per vulnerability, and tells each organization which ones affect its projects, how urgent they are, and what to do.
+It does not forward more security news: it compares every vulnerability with the stack and projects you declared and shows only what plausibly affects you, with a level that reflects exploitation and exposure rather than the CVSS score alone. Ardea is Latin for heron: a bird that stands still for a long time and strikes only when it matters.
 
-## Status: hardening and release preparation
+**Status:** pre-release. There is no published release or image yet; the [road to 1.0](#road-to-10) below shows what is done and what is open.
 
-Phases 0 to 5 are done: an instance fetches and consolidates vulnerabilities from trusted sources, matches them
-to an organisation's stack and projects, raises notices and reminders with a level and reasoning, and notifies
-by channel. Phase 5a (stack and notices) is nearly done, with the notification part (5a.6) open. Hardening
-(phase 6) is mostly done; the release itself (phase 7) is open, and there is no release yet. Progress follows
-chapter 14 of the plan (see the roadmap below).
+<p align="center">
+  <img src="docs/screenshots/overview.png" alt="Ardea overview: one organisation, its open reminders and the notices waiting for an answer" width="860">
+</p>
 
-## Roadmap
+<p align="center">
+  <img src="docs/screenshots/reminder.png" alt="A reminder with its level, the reasoning behind it and the recommended step" width="560">
+  &nbsp;
+  <img src="docs/screenshots/phone-reminder.png" alt="The same reminder at phone width" width="200">
+</p>
+
+## Features
+
+- **Consolidated entries.** Records about the same vulnerability from different sources become one entry, with every field traceable to the source it came from.
+- **Matching against your stack.** A coarse stack for the organisation (no versions needed) and exact projects with a technology profile, optionally read from GitHub repositories (SBOM, lock files, Dockerfile, Compose and more).
+- **Notices and reminders.** Entries that touch your stack become notices («might affect you») that you answer with «affects us» or «doesn't affect us». «Affects us» creates a reminder; open reminders remind by level. No assignment, no deadline, no escalation.
+- **Level with reasoning.** A deterministic, versioned rule set computes the level from exploitation signals (CISA KEV, EPSS), exposure and criticality, and shows its reasoning.
+- **Optional AI assessment.** A language model, hosted or local, can assess unknown versions as a decision aid; it never sets the final level, and Ardea is fully useful without one.
+- **Four notification channels.** In-app, e-mail, Web Push and signed webhooks, with rules, digests and personal mute.
+- **Multi-tenant and self-hosted.** Several organisations per instance with tenant isolation; one container image in three roles (API, worker, migration), PostgreSQL 18, Docker Compose.
+- **Phone-friendly.** The web app is responsive and installable.
+
+## Quick start
+
+> There is no release yet. Images are published to `ghcr.io/nicom77/ardea` from the first release on (task 7.3). Until then build one from source (`docker build -f deploy/Dockerfile -t ardea:dev .`) and set `ARDEA_IMAGE=ardea:dev`. The commands below are the ones for the first release.
+
+```bash
+mkdir ardea && cd ardea && curl -fsSL -O https://raw.githubusercontent.com/NicoM77/Ardea/main/deploy/compose.yaml -O https://raw.githubusercontent.com/NicoM77/Ardea/main/deploy/compose.caddy.yaml -O https://raw.githubusercontent.com/NicoM77/Ardea/main/deploy/Caddyfile
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/out" ghcr.io/nicom77/ardea:0 init-env --dir /out --public-url https://ardea.example.com
+ARDEA_DOMAIN=ardea.example.com docker compose -f compose.yaml -f compose.caddy.yaml up -d
+```
+
+Then open the address and create the first user with the setup token. Keep `ARDEA_MASTER_KEY` in a backup of its own. The full guide, including HTTPS with your own proxy, is [`docs/operations/installation.md`](docs/operations/installation.md).
+
+### Try it
+
+Look at Ardea with sample data first: an organisation with a stack, three projects, real CVE records of the week of 11 to 17 November 2026 and the notices, reminders and notifications the pipeline makes of them. No GitHub token, no initial load, no access to any source. In a folder with `compose.yaml` and the generated `.env` files (steps 1 and 2 of [`docs/operations/try-it.md`](docs/operations/try-it.md), with a plain-HTTP public address):
+
+```bash
+docker compose up -d --wait api        # database, migration, API; the worker comes after the data
+docker compose run --rm -e ARDEA_DB_OWNER_PASSWORD="$(sed -n 's/^ARDEA_DB_OWNER_PASSWORD=//p' .env)" api seed-demo
+docker compose up -d --wait            # the worker; with the sources switched off it fetches nothing
+```
+
+`seed-demo` prints the demo owner's e-mail address and a generated password once. It refuses a database that already holds data. The demo is for local evaluation only, never for an instance others can reach or that will become production.
+
+## Requirements
+
+- Docker with Compose v2 on Linux (`amd64` or `arm64`).
+- For up to about 20 organisations without a local language model: 2 vCPU, 4 GB RAM and 20 GB of disk. The first start loads 180 days of vulnerability data (about 1 to 2 GB) in under an hour on such a machine. Plan about 10 GB more if you load the full CVE set.
+- A host name with HTTPS in front of the API; Ardea answers API calls over HTTPS only.
+- Outbound HTTPS to the sources below, to the push services of the browser makers if you use Web Push, and to your language model provider if you use one. `ardea doctor` checks the hosts; the complete list is in the installation guide.
+
+## Sources and their terms of use
+
+Ardea fetches from public sources and shows the attribution next to the evidence. The terms below are as checked and recorded in the project; each operator's current terms apply. A source whose terms are not checked yet stays in «metadata and link only» mode until they are ([master plan 5.6](docs/masterplan/05-quellen-und-synchronisation.md), German).
+
+| Source | Provides | Operator | Terms as recorded |
+|---|---|---|---|
+| [CVE Program](https://www.cve.org) | CVE records: description, affected products and versions, publisher severity, CISA enrichment | MITRE on behalf of CISA; records come from the CNAs | Free use with attribution |
+| [NCSC Cyber Security Hub](https://security-hub.ncsc.admin.ch) (Switzerland) | Technical advisories, mostly with a CVE ID | National Cyber Security Centre (NCSC / BACS) | Public JSON interface, undocumented; its `robots.txt` asks for no automated access. The project owner confirmed on 18 November 2026 that this use, including storing the advisory texts, is permitted ([master plan README](docs/masterplan/README.md), German); Ardea polls at most every 30 minutes |
+| [BACS website](https://www.bacs.admin.ch) (Switzerland) | Warnings to the public | NCSC / BACS | Reproduction needs written consent; Ardea reads the warnings and links to them |
+| [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | Known exploited vulnerabilities (signal) | CISA | Public domain |
+| [FIRST EPSS](https://www.first.org/epss/) | Exploit prediction score (signal) | FIRST | Checked and free to use |
+| [OSV](https://osv.dev) | Package advisories for npm, NuGet, Packagist, PyPI, Maven and Go | Google and OpenSSF; each record keeps the licence of its data source | CC BY 4.0 (GitHub Advisory Database, PyPA, Go Vulnerability Database, OSS-Fuzz), MIT (Drupal), CC0 1.0 (Global Security Database); attribution is shown ([ADR 0031](docs/adr/0031-osv-source.md)) |
+
+Further sources are planned for after 1.0; how to add one, including checking its terms, is in [`docs/operations/add-a-source.md`](docs/operations/add-a-source.md).
+
+## Documentation
+
+- **Running an instance:** [installation, configuration, operation, update, adding a source](docs/operations/README.md)
+- **Decisions:** [architecture decision records](docs/adr/README.md)
+- **Master plan (German):** [`docs/masterplan/`](docs/masterplan/README.md); the planning and design archive (mockups, research) is the Git tag [`archive/planning-and-design`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design)
+- **Product and design:** [`PRODUCT.md`](PRODUCT.md), [`DESIGN.md`](DESIGN.md)
+- **Website:** coming with the first release (task 7.9)
+
+## Contributing
+
+Pull requests are welcome; the rules for code, dependencies and tests are in [`CONTRIBUTING.md`](CONTRIBUTING.md). To report a security issue privately, follow [`SECURITY.md`](SECURITY.md).
+
+### Development
+
+Requirements: .NET SDK 10.0.4xx (pinned in `global.json`), Docker for integration tests, Node 24 for the web app.
+
+```bash
+dotnet build Ardea.slnx
+dotnet test --solution Ardea.slnx
+dotnet format Ardea.slnx --verify-no-changes
+build/check-licenses.sh            # NuGet licences against the allow-list
+python3 build/check-banned-packages.py
+```
+
+Web app (`web/`, Angular 22, Node 24): `npm ci`, then `npm start` for the dev server (proxies
+`/api` to `http://localhost:5080`), `npm test`, `npm run lint`, `npm run build`. The component
+library pages are at `/ui` in development builds. Details in [`web/README.md`](web/README.md).
+
+Run an instance locally from source:
+
+```bash
+docker compose -f deploy/compose.dev.yaml up -d      # PostgreSQL 18 and a mail catcher
+set -a; . deploy/dev.env; set +a
+dotnet run --project src/Hosts/Ardea.Host -- migrate
+dotnet run --project src/Hosts/Ardea.Host -- api     # http://localhost:5080
+dotnet run --project src/Hosts/Ardea.Host -- worker
+```
+
+Or build the image and start a complete instance the way an operator would (`deploy/compose.yaml`):
+
+```bash
+docker build -f deploy/Dockerfile -t ardea:dev .
+build/smoke-test.sh ardea:dev
+```
+
+The repository layout and the rules for code, dependencies and tests are in chapter 13 of the
+master plan and in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Licence
+
+The application is licensed under the [GNU Affero General Public License v3.0](LICENSE). The provider SDK
+(`src/Sources/Ardea.Intel.Sources.Abstractions`) is licensed under the
+[Apache License 2.0](src/Sources/Ardea.Intel.Sources.Abstractions/LICENSE), so that third parties can write
+source adapters under a licence of their choice (decision E2, master plan 13.9).
+
+## Road to 1.0
+
+Until release 1.0 this roadmap, with the status of every task, is where progress is tracked. At the release it collapses to the list of what comes after 1.0.
+
+<details>
+<summary>Road to 1.0 (implementation status)</summary>
 
 The roadmap follows chapter 14 of the master plan: nine phases up to release 1.0, each ending with
 something that runs and can be checked. Task numbers and dependencies are the plan's; the plan holds
@@ -190,7 +317,7 @@ A tidy repository under the name Ardea, release 1.0 built without manual steps, 
 | 7.5 | Code clean-up: remove comments, keeping only those something depends on: XML docs the OpenAPI document takes its descriptions from, justifications on suppressed analyzer and lint warnings, tool directives; a build check keeps new ones out; remove unused code, packages, translation keys, settings and test helpers (analyzers, `knip` for the web app); resolve every `TODO` or turn it into an issue | 6.1 | 🔄 |
 | 7.6 | `seed-demo` command: loads the sample data (organisation, three projects, entries, findings, actions, notifications) into an empty instance without GitHub token, initial load or source fetches; refuses a database that holds data; «Try it» guide | 6.6 | ✅ [Try it](docs/operations/try-it.md) |
 | 7.7 | Screenshots generated by Playwright from a `seed-demo` instance for README and website (overview, action, vulnerability, wizard, phone width), so they stay current with the UI | 7.5, 7.6 | ✅ |
-| 7.8 | English README: logo in light and dark; purpose in two sentences; screenshots; features; quick start in three commands and «Try it» with `seed-demo`; requirements; sources with their terms of use; links to website and docs; contributing, security, licence; the roadmap shrinks to what comes after 1.0 | 7.4, 7.7 | ⬜ |
+| 7.8 | English README: logo in light and dark; purpose in two sentences; screenshots; features; quick start in three commands and «Try it» with `seed-demo`; requirements; sources with their terms of use; links to website and docs; contributing, security, licence; the roadmap shrinks to what comes after 1.0 | 7.4, 7.7 | ✅ |
 | 7.9 | Website on GitHub Pages: product landing page in the design system of `DESIGN.md` with logo, purpose, screenshots, features, quick start and a link to the latest release; below it the documentation (install, configure, operate, update, «Add a source», architecture, API from the OpenAPI document, ADRs), read from the Markdown files in `docs/` as the single source; static generator (recommended: Astro with Starlight) with the same licence check as the web app; built and published on every release and on changes to `docs/` on main; link and accessibility checks in the build | 7.1, 7.7, 7.8 | ⬜ |
 | 7.10 | Measure coverage, without a quota; close gaps in sign-in, tenant isolation, version checks, rule set and notifications with fast tests within the time budget | 7.5 | ✅ |
 | 7.11 | Acceptance of all phases: the criteria of phases 0 to 5 and chapter 1.6 on a fresh install from the release images (`amd64`, `arm64`); update from the last `0.x` to 1.0; the two manual passes; result in `docs/acceptance/release-1.0.md` | 7.3, 7.10 | ⬜ |
@@ -202,7 +329,9 @@ Acceptance (planned): every pull request runs the pipeline again and branch prot
 
 **Total: 42–56 weeks** (phase 5a added 19.11.2026).
 
-### After 1.0
+</details>
+
+## After 1.0
 
 In this order (master plan, chapter 14):
 
@@ -214,78 +343,3 @@ In this order (master plan, chapter 14):
 6. **Products from free text** via a language model; corrections as context; weights per organisation.
 7. **Capacitor app,** once the push relay is decided.
 8. **30 to 50 sources;** reports and export; per-project permissions; master key rotation; pause on suspicious mass changes from a source.
-
-## Try it
-
-Look at Ardea with sample data: an organisation with a stack, three projects, real CVE records of the week of
-11 to 17 November 2026 and the stack, notices, reminders and notifications the pipeline makes of them. No GitHub token, no
-initial load, no access to any source. With Docker Compose and an image (built with
-`docker build -f deploy/Dockerfile -t ardea:dev .` until the first release):
-
-```bash
-docker compose up -d --wait api        # database, migration, API; the worker comes after the data
-docker compose run --rm -e ARDEA_DB_OWNER_PASSWORD="$(sed -n 's/^ARDEA_DB_OWNER_PASSWORD=//p' .env)" api seed-demo
-docker compose up -d --wait            # the worker; with the sources switched off it fetches nothing
-```
-
-`seed-demo` prints the demo owner's e-mail address and a generated password once; it refuses a database that
-already holds data or that a worker has used. The demo is for local evaluation only, never for an instance others
-can reach or that will become production. The full guide, with the first steps (`compose.yaml` and `init-env`) and what the demo
-contains, is [`docs/operations/try-it.md`](docs/operations/try-it.md).
-
-## Development
-
-Requirements: .NET SDK 10.0.4xx (pinned in `global.json`), Docker for integration tests, Node 24 for the web app.
-
-```bash
-dotnet build Ardea.slnx
-dotnet test --solution Ardea.slnx
-dotnet format Ardea.slnx --verify-no-changes
-build/check-licenses.sh            # NuGet licences against the allow-list
-python3 build/check-banned-packages.py
-```
-
-Web app (`web/`, Angular 22, Node 24): `npm ci`, then `npm start` for the dev server (proxies
-`/api` to `http://localhost:5080`), `npm test`, `npm run lint`, `npm run build`. The component
-library pages are at `/ui` in development builds. Details in [`web/README.md`](web/README.md).
-
-Run an instance locally from source:
-
-```bash
-docker compose -f deploy/compose.dev.yaml up -d      # PostgreSQL 18 and a mail catcher
-set -a; . deploy/dev.env; set +a
-dotnet run --project src/Hosts/Ardea.Host -- migrate
-dotnet run --project src/Hosts/Ardea.Host -- api     # http://localhost:5080
-dotnet run --project src/Hosts/Ardea.Host -- worker
-```
-
-Or build the image and start a complete instance the way an operator would (`deploy/compose.yaml`):
-
-```bash
-docker build -f deploy/Dockerfile -t ardea:dev .
-build/smoke-test.sh ardea:dev
-```
-
-The repository layout and the rules for code, dependencies and tests are in chapter 13 of the
-master plan and in [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
-| What | Where |
-|---|---|
-| Master plan (German) | [`docs/masterplan/`](docs/masterplan/README.md) |
-| Decision register | [`docs/adr/`](docs/adr/README.md) |
-| Product record and design system | [`PRODUCT.md`](PRODUCT.md), [`DESIGN.md`](DESIGN.md) |
-| Planning and design archive: UI mockups, ecosystem research, data spike (removed from `main` in task 7.4) | Git tag [`archive/planning-and-design`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design) |
-| Contribution rules | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-| Running an instance: installation, configuration, operation, update, adding a source | [`docs/operations/`](docs/operations/README.md) |
-| Reporting a security issue | [`SECURITY.md`](SECURITY.md) |
-
-## Planned stack
-
-ASP.NET Core on .NET 10, Angular 22, PostgreSQL 18, one container image with three roles (API, worker, migration), Docker Compose. AI assistance is optional and provider-neutral, including locally hosted models.
-
-## Licence
-
-The application is licensed under the [GNU Affero General Public License v3.0](LICENSE). The provider SDK
-(`src/Sources/Ardea.Intel.Sources.Abstractions`) is licensed under the
-[Apache License 2.0](src/Sources/Ardea.Intel.Sources.Abstractions/LICENSE), so that third parties can write
-source adapters under a licence of their choice (decision E2, master plan 13.9).

@@ -445,7 +445,7 @@
   },
   "entries": {
     "title": "Vulnerabilities",
-    "sub": "Every consolidated entry from every source, whether it affects your projects or not.",
+    "sub": "Every vulnerability and warning from every source, whether it affects your projects or not.",
     "results": "Entries",
     "loading": "Loading the entries",
     "loadFailed": "The entries could not be loaded.",
@@ -502,7 +502,7 @@
   },
   "entryDetail": {
     "title": "Entry",
-    "back": "All entries",
+    "back": "Vulnerabilities",
     "loading": "Loading the entry",
     "loadingPart": "Loading",
     "loadFailed": "The entry could not be loaded.",
@@ -1154,7 +1154,7 @@
     },
     "prompt": {
       "heading": "Set up your organization",
-      "text": "Describe your first project and what it runs. Ardea then tells you which vulnerabilities affect it.",
+      "text": "Name what your organization runs; Ardea then tells you what affects it.",
       "action": "Continue setup"
     },
     "errors": {
@@ -1430,7 +1430,7 @@
       "findingStatus": "{who} set {entry} to {status, select, open {Open} remediated {Remediated} risk_accepted {Risk accepted} not_affected {Not affected} other {another status}}",
       "findingReopenedBy": "{who} reopened {entry}",
       "note": "Note by {who}",
-      "backfill": "First fill completed",
+      "backfill": "First assessment done",
       "joined": "{entry} joined the reminder",
       "findingClosed": "{entry} closed",
       "findingReopened": "{entry} is open again",
@@ -1661,7 +1661,7 @@
     "verdictSource": "{source, select, rules {the rules} model {the model} human {a person} other {the rules}}",
     "note": "Note",
     "factorsOf": "Factors of {entry}",
-    "alert": "Alert #{number}",
+    "alert": "Vulnerability details",
     "statusOf": "Outcome of {entry}",
     "change": "Set the outcome…",
     "reopen": "Take the closing back",
@@ -1759,7 +1759,7 @@
       "withdrawn": "{count, plural, one {# reminder closed by Ardea} other {# reminders closed by Ardea}}",
       "status": "{count, plural, one {# status change} other {# status changes}}",
       "notes": "{count, plural, one {# note} other {# notes}}",
-      "backfill": "{count, plural, one {# first fill completed} other {# first fills completed}}"
+      "backfill": "{count, plural, one {# first assessment done} other {# first assessments done}}"
     },
     "warnings": {
       "title": "Warnings without an identifier",

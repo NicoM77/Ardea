@@ -373,6 +373,44 @@ test('notification rules: the matrix of rules and channels, and a new rule', asy
   expect(problems).toEqual([]);
 });
 
+test('reminders by level: the rhythm per level is changed with the keyboard and saved, and a rule hears about notices', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  const api = await notifyApi(page);
+  await page.goto(`${ORG}/notification-rules`);
+
+  const card = page.locator('ardea-reminder-rhythm-card');
+  await expect(card.getByRole('heading', { name: 'Reminders by level' })).toBeVisible();
+  const critical = card.getByRole('combobox', { name: 'Critical' });
+  await expect(critical).toHaveValue('daily');
+  await expect(card.getByRole('combobox', { name: 'High' })).toHaveValue('weekly');
+  await expect(card.getByRole('combobox', { name: 'Medium' })).toHaveValue('monthly');
+  await expect(card.getByText('Low and Not relevant remind only in the digests.')).toBeVisible();
+  const save = card.getByRole('button', { name: 'Save reminders' });
+  await expect(save).toBeDisabled();
+  await expectAccessible(page, 'reminders by level');
+
+  // Keyboard only: to the level 4 choice, «Off», and the save button.
+  await critical.focus();
+  await page.keyboard.press('Tab');
+  await expect(card.getByRole('combobox', { name: 'High' })).toBeFocused();
+  await card.getByRole('combobox', { name: 'High' }).selectOption('off');
+  await card.getByRole('combobox', { name: 'Medium' }).selectOption('weekly');
+  await expect(save).toBeEnabled();
+  await save.focus();
+  await page.keyboard.press('Enter');
+  await expect(card.getByText('Reminders saved.')).toBeVisible();
+  const put = api.requests.find((r) => r.method === 'PUT' && r.path.includes('/reminder-rhythm'))!;
+  expect(put.body).toEqual({ level5: 'daily', level4: 'off', level3: 'weekly' });
+  await expect(save).toBeDisabled();
+
+  // The rule editor offers notices among its events.
+  await page.getByRole('link', { name: 'New rule' }).click();
+  await expect(page.getByRole('checkbox', { name: /New notice/ })).toBeChecked();
+  expect(problems).toEqual([]);
+});
+
 test('recipients: a webhook is added, its secret shown once, and a test message goes out', async ({
   page,
 }) => {

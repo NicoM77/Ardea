@@ -52,6 +52,8 @@ import type {
   PushSubscriptionRequest,
   PushSubscriptionView,
   PushTestView,
+  ReminderRhythmRequest,
+  ReminderRhythmView,
   UnreadCountView,
   UnsubscribeExternalAddressOneClickParams,
   WebhookEndpointRequest,
@@ -361,6 +363,18 @@ export function listPushSubscriptionsResource(options: OrvalHttpResourceOptions<
 export function listPushSubscriptionsResource(options?: OrvalHttpResourceOptions<PushSubscriptionView[], unknown>): HttpResourceRef<PushSubscriptionView[] | undefined>;
 export function listPushSubscriptionsResource(options?: OrvalHttpResourceOptions<PushSubscriptionView[], unknown>): HttpResourceRef<PushSubscriptionView[] | undefined> {
   return httpResource<PushSubscriptionView[]>(() => applyOrvalRequestExtension(`/api/v1/me/push-subscriptions`, options), options);
+}
+
+/**
+ * @remarks httpResource is available in Angular 19.2 and later.
+ */
+export function getReminderRhythmResource(orgId: Signal<string | undefined>,
+  options: OrvalHttpResourceOptions<ReminderRhythmView, unknown> & { defaultValue: NoInfer<ReminderRhythmView> }): HttpResourceRef<ReminderRhythmView>;
+export function getReminderRhythmResource(orgId: Signal<string | undefined>,
+  options?: OrvalHttpResourceOptions<ReminderRhythmView, unknown>): HttpResourceRef<ReminderRhythmView | undefined>;
+export function getReminderRhythmResource(orgId: Signal<string | undefined>,
+  options?: OrvalHttpResourceOptions<ReminderRhythmView, unknown>): HttpResourceRef<ReminderRhythmView | undefined> {
+  return httpResource<ReminderRhythmView>(() => (orgId() === undefined ? undefined : applyOrvalRequestExtension(`/api/v1/orgs/${orgId()}/reminder-rhythm`, options)), options);
 }
 
 
@@ -1090,6 +1104,40 @@ export class NotificationsService {
     );
   }
 
+ setReminderRhythm<TData = ReminderRhythmView>(orgId: string,
+    reminderRhythmRequest: ReminderRhythmRequest, options?: HttpClientBodyOptions): Observable<TData>;
+  setReminderRhythm<TData = ReminderRhythmView>(
+    orgId: string,
+    reminderRhythmRequest: ReminderRhythmRequest, options?: HttpClientObserveOptions): Observable<TData | HttpEvent<TData> | AngularHttpResponse<TData>> {
+    if (options?.observe === 'events') {
+      return this.http.put<TData>(
+      `/api/v1/orgs/${orgId}/reminder-rhythm`,
+      reminderRhythmRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'events',
+      }
+    );
+    }
+
+    if (options?.observe === 'response') {
+      return this.http.put<TData>(
+      `/api/v1/orgs/${orgId}/reminder-rhythm`,
+      reminderRhythmRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'response',
+      }
+    );
+    }
+
+    return this.http.put<TData>(
+      `/api/v1/orgs/${orgId}/reminder-rhythm`,
+      reminderRhythmRequest,{
+        ...(options as Omit<NonNullable<typeof options>, 'observe'>),
+        observe: 'body',
+      }
+    );
+  }
+
 };
 
 export type GetPushPublicKeyResourceResult = NonNullable<PushPublicKeyView>
@@ -1103,6 +1151,9 @@ export type ListInAppNotificationsResourceResult = NonNullable<InAppNotification
 export type CountUnreadNotificationsResourceResult = NonNullable<UnreadCountView>
 export type GetNotificationPreferencesResourceResult = NonNullable<NotificationPreferencesView>
 export type ListPushSubscriptionsResourceResult = NonNullable<PushSubscriptionView[]>
+export type GetReminderRhythmResourceResult = NonNullable<ReminderRhythmView>
+
+
 
 
 
@@ -1156,6 +1207,7 @@ export type CreatePushSubscriptionClientResult = NonNullable<PushSubscriptionVie
 export type DeletePushSubscriptionByEndpointClientResult = NonNullable<void>
 export type DeletePushSubscriptionClientResult = NonNullable<void>
 export type TestPushSubscriptionClientResult = NonNullable<PushTestView>
+export type SetReminderRhythmClientResult = NonNullable<ReminderRhythmView>
 
 /**
  * Utility type for httpResource results with status tracking.

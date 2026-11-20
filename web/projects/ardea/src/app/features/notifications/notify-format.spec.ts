@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { NotificationRuleView } from '../../core/api/client';
-import { matrixRow } from './notify-format';
+import { DEFAULT_EVENTS, EVENT_GROUPS, isRhythm, matrixRow, REMINDER_LEVELS } from './notify-format';
 import { isAppleMobile, keyBytes } from './push-device';
 
 const rule = (
@@ -86,5 +86,19 @@ describe('push on this device', () => {
     expect(isAppleMobile('Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)', 5)).toBe(true);
     expect(isAppleMobile('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 5)).toBe(true);
     expect(isAppleMobile('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 0)).toBe(false);
+  });
+});
+
+describe('notices and reminders by level (task 5a.6)', () => {
+  it('offers notice.raised as an event, and a new rule starts with it like the default rules', () => {
+    expect(EVENT_GROUPS.flatMap((g) => g.events.map((e) => e.value))).toContain('notice.raised');
+    expect(DEFAULT_EVENTS).toContain('notice.raised');
+  });
+
+  it('knows the four rhythms and the three levels that remind', () => {
+    expect(['daily', 'weekly', 'monthly', 'off'].every(isRhythm)).toBe(true);
+    expect(isRhythm('hourly')).toBe(false);
+    expect(isRhythm(null)).toBe(false);
+    expect(REMINDER_LEVELS.map((l) => l.level)).toEqual([5, 4, 3]);
   });
 });

@@ -24,6 +24,7 @@ import {
   type Channel,
   type MatrixCell,
 } from './notify-format';
+import { ReminderRhythmCard } from './reminder-rhythm-card';
 import { ruleRequest } from './rule-request';
 import { firstValueFrom } from 'rxjs';
 
@@ -54,6 +55,7 @@ const CHANNEL_ICONS: Record<Channel, NotifyIconName | null> = {
     UiPill,
     UiPriority,
     NotifyFrame,
+    ReminderRhythmCard,
   ],
   template: `
     @if (organization(); as org) {
@@ -189,12 +191,16 @@ const CHANNEL_ICONS: Record<Channel, NotifyIconName | null> = {
         } @else {
           <ui-loader [label]="'notify.loading' | transloco" />
         }
+        <ardea-reminder-rhythm-card class="after" [organizationId]="org.id" />
       </ardea-notify-frame>
     }
   `,
   styles: `
     :host {
       display: block;
+    }
+    .after {
+      margin-top: var(--gap);
     }
     .gap {
       display: block;

@@ -1,6 +1,6 @@
 # NOTES: Arbeitsstand und Wissen ausserhalb des Repositorys
 
-Stand: 20.11.2026, ca. 01:30 UTC.
+Stand: 20.11.2026, ca. 05:30 UTC. Phase 5a abgeschlossen; Phase 7 ohne Eigentümer weitgehend erledigt.
 Umsetzung weiss und was nicht schon im Repository steht (README, Masterplan, ADR, Abnahmen, PR-Texte,
 Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 
@@ -14,7 +14,9 @@ Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 | #83 | gemergt: Stammdaten-Suche ignoriert `Data/` ohne Katalog (Windows) | — |
 | #84 (5a.1, ADR 044), #86 (7.10 Teil 1), #87 (#85 TOTP einmalig, ADR 045), #88, #89 (5a.2, ADR 046), #90, #91 (Mockups 5a.5) | gemergt; #87 und #89 unabhängig geprüft (je 1 Blocker bzw. 4 Should-fix, behoben); main-Lauf zu #86 grün, zu #89 läuft | — |
 | #92 (5a.4), #93 (5a.3, ADR 047), #94 (5a.5), #95 (Doku 5a, 6.7 ✅), #97 (7.10 Teil 2), #98 (7.4, Tag `archive/planning-and-design`) | gemergt, jeweils unabhängig geprüft (ausser Doku/Tests) und lokal kombiniert geprüft; **CI gesperrt (Billing)** | — |
-| #96 (5a.6, ADR 048) | Review-Funde in Arbeit beim Autor | dann lokal prüfen, mergen; danach 7.5, 7.10 Teil 3 (Benachrichtigungen), 7.7, 7.8 |
+| #96 (5a.6, ADR 048), #99 (Abnahme 5a), #101/#103/#105/#110 (7.5), #104 (7.10 ✅), #106 (7.7), #108 (7.8), #109 (#102, ADR 049), #112 (7.9 Bau, nicht veröffentlicht) | gemergt, lokal kombiniert geprüft | — |
+| #111 (#107 seed-demo deterministisch) | Determinismus-Test fiel im vollen Iam-Lauf 2/2 (Reminder-Nummer 10 vs 11 unter Last); Agent sucht die Ursache | erst mergen, wenn der Test unter Last stabil ist |
+| **Rest braucht den Eigentümer** | 7.1 (Branch-Schutz, Dependabot, CodeQL, Beschreibung/Topics), 7.2/7.3 (release-please, Images, cosign), 7.9 Veröffentlichung (Pages für privates Repo, Actions), 7.13 (CI auf PRs), 7.14 (Branches, Einstellung «auto-delete»), danach 7.11 Abnahme auf Release-Images und 7.12 Masterplan löschen; 6.2/6.3 Personen; 6.4/6.8 eigene Instanz | |
 | Phase 5a | neu seit #80 (Kapitel 17). **Eigentümer-Entscheid 19.11.: 5a vor Phase 7.** 5a.1 ✅, 5a.2 ✅; **Release-Sperre: kein Release/Upgrade zwischen 5a.2 und 5a.5** (ADR 046 Entscheid 13). 5a.3 (`feat/notices`, ADR 0047) und 5a.4 (`feat/stack-wizard`) laufen als Agents | dann 5a.5 (Seiten, Mockups in #91), 5a.6 |
 | Phase 6 | 6.1, 6.5, 6.6 ✅; 6.4/6.8 brauchen die eigene Instanz; 6.2, 6.3 brauchen Menschen; 6.7 offen nur wegen `SECURITY.md`-Zuordnung (README-Absatz) | |
 | Phase 7 | 7.6 ✅; 7.4, 7.5, 7.7, 7.8 erst **nach 5a** (5a baut Datenmodell und UI um); 7.10 jederzeit; 7.1/7.2/7.3/7.13 nur nach Rückfrage | |
@@ -95,6 +97,9 @@ Die meisten stehen in `docs/acceptance/phase-*.md`; hier alle an einem Ort:
   ausgehende Verbindungen; Grundlage `docs/security/threat-review.md`); 6.3 manueller Zugänglichkeitsdurchgang
   der Kernabläufe mit Tastatur und Screenreader (sinnvoll erst nach 5a, weil 5a die Kernabläufe ändert);
   6.4/6.8 Beobachtungen an der projekteigenen Instanz (braucht Infrastruktur des Eigentümers).
+- **Website (7.9):** `site/` (Astro/Starlight) baut 184 Seiten aus `docs/`; `.github/workflows/site.yml` nur manuell und als «NOT ENABLED» markiert; Lizenz-Ausnahmen im Bau (u. a. sharp-LGPL-Binaries, nie geladen) in `site/license-exceptions.json` zur Durchsicht.
+- **README:** vollständige Roadmap bis 1.0 zugeklappt am Ende (Abweichung von 7.8, damit die Roadmap-Regel gilt); bei 1.0 auf «After 1.0» kürzen.
+- **Issue #100:** Aufräumen der Übergangsspalten/-trigger aus ADR 046 in der Version nach 1.0.
 - **5a.6 / E26 bestätigen:** Erinnerungsrhythmus Stufe 5 täglich, 4 wöchentlich, 3 monatlich, Läufe werktags 08:00 Ortszeit (08:00 vom Agent gewählt); Masterplan-Änderungen in #96 (8.7 eine Runde je Organisation statt Job je Reminder; Kap. 1, 9, 14, 15) zur Abnahme.
 - **Mockups (alle Phasen) liegen nur noch am Tag `archive/planning-and-design`** (7.4, #98).
 - **5a.3-Entscheide zur Abnahme:** «Betrifft uns» mit Version ohne Projekt macht den Stack-Eintrag exakt (17.1); später ergänzte Stack-Einträge bringen 80–500 «Earlier»-Hinweise aus 180 Tagen (ADR 047).

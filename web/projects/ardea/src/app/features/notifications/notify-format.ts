@@ -242,6 +242,10 @@ export function notificationPriority(
   return level === null || level === undefined ? null : priorityOfLevel(num(level));
 }
 
+export function withoutLevelTag(title: string): string {
+  return title.replace(/^\[[^\]]*\]\s*/, '');
+}
+
 export type ReminderRhythm = 'daily' | 'weekly' | 'monthly' | 'off';
 export const REMINDER_RHYTHMS: readonly ReminderRhythm[] = ['daily', 'weekly', 'monthly', 'off'];
 

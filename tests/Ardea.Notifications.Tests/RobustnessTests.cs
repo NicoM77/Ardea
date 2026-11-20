@@ -97,7 +97,7 @@ public sealed class RobustnessTests(PostgresServer server)
         await s.EventAsync("action.level_raised", action, """{"from": 4, "to": 5}""");
         await s.EvaluateAsync();
 
-        Assert.Equal(["action.level_raised|[5 Critical] #2 PostgreSQL in Platform Ops"], await host.RowsAsync("SELECT kind || '|' || title FROM notify.notification"));
+        Assert.Equal(["action.level_raised|[Critical] #2 PostgreSQL in Platform Ops"], await host.RowsAsync("SELECT kind || '|' || title FROM notify.notification"));
     }
 
     [Fact]

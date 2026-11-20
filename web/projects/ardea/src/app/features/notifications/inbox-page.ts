@@ -3,7 +3,15 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideBell, LucideMegaphone } from '@lucide/angular';
-import { UiButton, UiEmptyState, UiLoader, UiNotice, UiPageHeader, UiPriority } from 'ui';
+import {
+  UiButton,
+  UiEmptyState,
+  UiLoader,
+  UiNotice,
+  UiPageHeader,
+  UiPriority,
+  type UiPriorityLevel,
+} from 'ui';
 import { firstValueFrom } from 'rxjs';
 import {
   listInAppNotificationsResource,
@@ -14,7 +22,7 @@ import { problemMessageKey } from '../../core/api/problem';
 import { reloadOnLiveChange } from '../../core/live/live-events';
 import { num } from '../actions/action-format';
 import { injectOrganization } from '../organizations/current-organization';
-import { notificationPriority } from './notify-format';
+import { notificationPriority, withoutLevelTag } from './notify-format';
 import { NotifyIcon } from './notify-icon';
 import { UnreadCount } from './unread-count';
 
@@ -139,10 +147,11 @@ function dayKey(createdAt: string, now: Date): string {
       }
 
       <ng-template #row let-n>
+        @let title = heading(n);
         <span class="dot" aria-hidden="true"></span>
         <span class="icon">
           @if (priorityOf(n); as p) {
-            <ui-priority [level]="p" symbolOnly />
+            <ui-priority [level]="p" symbolOnly [attr.aria-hidden]="title.level ? 'true' : null" />
           } @else if (n.kind === 'warning.published') {
             <svg lucideMegaphone aria-hidden="true"></svg>
           } @else if (n.kind === 'digest') {
@@ -152,7 +161,14 @@ function dayKey(createdAt: string, now: Date): string {
           }
         </span>
         <span class="text">
-          <b>{{ n.title }}</b>
+          <b>
+            @if (title.level) {
+              <span [class]="'level is-' + title.level">{{
+                priorityLabels[title.level] | transloco
+              }}</span>
+            }
+            {{ title.text }}
+          </b>
           <span class="body">{{ n.body }}</span>
         </span>
         <span class="when">
@@ -167,8 +183,6 @@ function dayKey(createdAt: string, now: Date): string {
   styles: `
     :host {
       display: block;
-      max-width: 860px;
-      margin: 0 auto;
     }
     .tools {
       display: flex;
@@ -279,6 +293,23 @@ function dayKey(createdAt: string, now: Date): string {
     .unread .text b {
       font-weight: 600;
     }
+    .level {
+      margin-right: var(--space-xs);
+      color: var(--low);
+      font-weight: 500;
+    }
+    .level.is-critical {
+      color: var(--critical);
+    }
+    .level.is-high {
+      color: var(--high);
+    }
+    .level.is-medium {
+      color: var(--medium);
+    }
+    .level.is-none {
+      font-weight: 400;
+    }
     .body {
       color: var(--muted);
       font-size: var(--fs-sub);
@@ -361,8 +392,22 @@ export class InboxPage {
     reloadOnLiveChange(this.list$);
   }
 
+  protected readonly priorityLabels: Record<UiPriorityLevel, string> = {
+    critical: 'ui.priority.critical',
+    high: 'ui.priority.high',
+    medium: 'ui.priority.medium',
+    low: 'ui.priority.low',
+    none: 'ui.priority.none',
+  };
+
   protected priorityOf(n: InAppNotificationView) {
     return notificationPriority(n.level);
+  }
+
+  protected heading(n: InAppNotificationView): { level: UiPriorityLevel | null; text: string } {
+    const level = this.priorityOf(n);
+    const text = level ? withoutLevelTag(n.title) : n.title;
+    return { level: text !== n.title ? level : null, text };
   }
 
   protected time(value: string): string {

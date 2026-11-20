@@ -811,7 +811,8 @@ test('the bell counts unread notifications; reading one in the inbox opens its r
   await expect(page.getByText('2 unread in Example Org')).toBeVisible();
   await expectAccessible(page, 'inbox');
 
-  await page.getByRole('link', { name: /\[5 Critical\] #143 Puppet Enterprise/ }).click();
+  await expect(page.getByText(/\[(Critical|High)\]/)).toHaveCount(0);
+  await page.getByRole('link', { name: /^Critical #143 Puppet Enterprise/ }).click();
   await expect(page).toHaveURL(/\/o\/example\/reminders\/143$/);
   await expect(page.getByRole('link', { name: 'Notifications, 1 unread' })).toBeVisible();
   const read = api.requests.find((r) => r.path.endsWith('/notifications/read'))!;

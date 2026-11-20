@@ -57,7 +57,7 @@ public sealed class WebPushTests(PostgresServer server)
         var payload = JsonDocument.Parse(device.Decrypt(request.Body)).RootElement;
         Assert.Equal(8030, payload.GetProperty("web_push").GetInt32());
         var notification = payload.GetProperty("notification");
-        Assert.StartsWith("[5 Critical] #2", notification.GetProperty("title").GetString(), StringComparison.Ordinal);
+        Assert.StartsWith("[Critical] #2", notification.GetProperty("title").GetString(), StringComparison.Ordinal);
         Assert.Equal("https://ardea.test/o/acme/reminders/2", notification.GetProperty("navigate").GetString());
         Assert.DoesNotContain("Critical", Encoding.UTF8.GetString(request.Body), StringComparison.Ordinal);
         Assert.Equal("sent", await host.ScalarAsync<string>("SELECT state FROM notify.delivery WHERE channel = 'push'"));

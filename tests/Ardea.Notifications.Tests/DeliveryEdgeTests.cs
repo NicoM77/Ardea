@@ -49,7 +49,7 @@ public sealed class DeliveryEdgeTests(PostgresServer server)
         Assert.Equal(
             ["The member has no device subscribed to push any more.", "The recipient is no longer reachable: left the organisation, unsubscribed, or the endpoint is off."],
             await host.RowsAsync("SELECT DISTINCT last_error FROM notify.delivery WHERE state = 'suppressed' ORDER BY 1"));
-        Assert.Equal(["owner@example.org"], host.Mail!.Sent.Where(m => m.Subject.StartsWith("[4 High]", StringComparison.Ordinal)).Select(m => m.To));
+        Assert.Equal(["owner@example.org"], host.Mail!.Sent.Where(m => m.Subject.StartsWith("[High]", StringComparison.Ordinal)).Select(m => m.To));
 
         var notice = await host.NoticeAsync(s.Organization, [s.Component], "CVE-2026-9101");
         await s.EventAsync("notice.raised", notice: notice);

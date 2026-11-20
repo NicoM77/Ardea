@@ -31,7 +31,7 @@ public sealed class HourlyCapTests(PostgresServer server)
         Assert.Empty(await host.RunJobsAsync());
         var mail = Assert.Single(host.Mail.Sent);
         Assert.Equal("owner@example.org", mail.To);
-        Assert.StartsWith("[5 Critical] #2 PostgreSQL in Platform Ops", mail.Subject, StringComparison.Ordinal);
+        Assert.StartsWith("[Critical] #2 PostgreSQL in Platform Ops", mail.Subject, StringComparison.Ordinal);
         Assert.Equal(
             ["sent action.raised"],
             await host.RowsAsync($"SELECT d.state || ' ' || e.event FROM notify.delivery_event e JOIN notify.delivery d ON d.id = e.delivery_id WHERE e.recipient_key = 'user:{owner}'"));
@@ -59,7 +59,7 @@ public sealed class HourlyCapTests(PostgresServer server)
         host.Time.Advance(TimeSpan.FromMinutes(40));
         Assert.Empty(await host.RunJobsAsync());
         var overflow = Assert.Single(host.Mail!.Sent);
-        Assert.StartsWith("[4 High] #2 PostgreSQL in Platform Ops", overflow.Subject, StringComparison.Ordinal);
+        Assert.StartsWith("[High] #2 PostgreSQL in Platform Ops", overflow.Subject, StringComparison.Ordinal);
         Assert.Equal(
             ["action.raised", "action.level_raised"],
             await host.RowsAsync("SELECT e.event FROM notify.delivery_event e JOIN notify.delivery d ON d.id = e.delivery_id WHERE d.state = 'sent' ORDER BY e.occurred_at"));
@@ -69,7 +69,7 @@ public sealed class HourlyCapTests(PostgresServer server)
         await s.EvaluateAsync();
         await s.DeliverAsync();
         Assert.Equal(2, host.Mail.Sent.Count);
-        Assert.StartsWith("[5 Critical] #2 PostgreSQL in Platform Ops", host.Mail.Sent[1].Subject, StringComparison.Ordinal);
+        Assert.StartsWith("[Critical] #2 PostgreSQL in Platform Ops", host.Mail.Sent[1].Subject, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public sealed class HourlyCapTests(PostgresServer server)
         host.Time.Advance(Evaluator.LimitWindow);
         Assert.Empty(await host.RunJobsAsync());
         Assert.Equal(2, host.Mail.Sent.Count);
-        Assert.StartsWith("[4 High] #3 PostgreSQL in Platform Ops", host.Mail.Sent[1].Subject, StringComparison.Ordinal);
+        Assert.StartsWith("[High] #3 PostgreSQL in Platform Ops", host.Mail.Sent[1].Subject, StringComparison.Ordinal);
 
         await DigestDueInAsync(TimeSpan.FromMinutes(1));
         Assert.Equal(3, host.Mail.Sent.Count);

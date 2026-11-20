@@ -50,7 +50,7 @@ public sealed class NotificationStateTests(PostgresServer server)
         var delivery = await host.ScalarAsync<Guid>("SELECT id FROM notify.delivery WHERE channel = 'email'");
         await host.RunAsync(new Deliver(delivery), s.Organization);
         Assert.Single(host.Mail!.Sent);
-        Assert.StartsWith("[4 High] #2 PostgreSQL in Platform Ops", host.Mail.Sent[0].Subject, StringComparison.Ordinal);
+        Assert.StartsWith("[High] #2 PostgreSQL in Platform Ops", host.Mail.Sent[0].Subject, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public sealed class NotificationStateTests(PostgresServer server)
         await s.EventAsync("action.level_raised", action, """{"from": 4, "to": 5}""");
         await s.EvaluateAsync();
         Assert.Equal(
-            ["action.level_raised|[5 Critical] #2 PostgreSQL in Platform Ops", "action.raised|[4 High] #2 PostgreSQL in Platform Ops"],
+            ["action.level_raised|[Critical] #2 PostgreSQL in Platform Ops", "action.raised|[High] #2 PostgreSQL in Platform Ops"],
             await host.RowsAsync("SELECT kind || '|' || title FROM notify.notification ORDER BY created_at DESC, kind"));
     }
 
@@ -120,7 +120,7 @@ public sealed class NotificationStateTests(PostgresServer server)
         await s.DeliverAsync();
 
         Assert.Equal(2, host.Mail!.Sent.Count);
-        Assert.All(host.Mail.Sent, m => Assert.Contains("Raised from level 4.", m.Text, StringComparison.Ordinal));
+        Assert.All(host.Mail.Sent, m => Assert.Contains("Raised from High.", m.Text, StringComparison.Ordinal));
         Assert.Equal(["action.level_raised", "action.level_raised"], await host.RowsAsync("SELECT event FROM notify.delivery_event ORDER BY occurred_at"));
     }
 
@@ -145,7 +145,7 @@ public sealed class NotificationStateTests(PostgresServer server)
         await s.DeliverAsync();
 
         var mail = Assert.Single(host.Mail!.Sent);
-        Assert.StartsWith("[5 Critical] 3 updates in Acme", mail.Subject, StringComparison.Ordinal);
+        Assert.StartsWith("[Critical] 3 updates in Acme", mail.Subject, StringComparison.Ordinal);
         Assert.Contains("#2 PostgreSQL", mail.Text, StringComparison.Ordinal);
         Assert.Contains("It is actively exploited.", mail.Text, StringComparison.Ordinal);
         Assert.Equal(["3"], await host.RowsAsync("SELECT count(*) FROM notify.delivery_event GROUP BY delivery_id"));
@@ -176,7 +176,7 @@ public sealed class NotificationStateTests(PostgresServer server)
         Assert.Equal(1L, await s.CountAsync("SELECT count(*) FROM notify.notification"));
         var mail = Assert.Single(host.Mail!.Sent);
         Assert.Equal("First assessment: Platform Ops", mail.Subject);
-        Assert.Contains("40 reminder(s), highest level 4", mail.Text, StringComparison.Ordinal);
+        Assert.Contains("40 reminder(s), highest priority High", mail.Text, StringComparison.Ordinal);
         Assert.Equal(80L, await s.CountAsync("SELECT count(*) FROM notify.recipient_state"));
 
         await s.SetActionAsync(actions[1], 4);

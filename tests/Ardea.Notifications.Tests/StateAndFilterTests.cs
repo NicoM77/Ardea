@@ -98,7 +98,7 @@ public sealed class StateAndFilterTests(PostgresServer server)
         }
 
         await s.EvaluateAsync();
-        Assert.Equal(["[4 High] #2 PostgreSQL in Platform Ops"], await host.RowsAsync("SELECT title FROM notify.notification"));
+        Assert.Equal(["[High] #2 PostgreSQL in Platform Ops"], await host.RowsAsync("SELECT title FROM notify.notification"));
         Assert.Equal([ops.ToString()], await host.RowsAsync("SELECT remediation_id FROM notify.digest_item"));
         await DigestAsync(host);
         Assert.Contains("#2 PostgreSQL in Platform Ops", Assert.Single(host.Mail!.Sent).Text, StringComparison.Ordinal);

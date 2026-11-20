@@ -58,7 +58,7 @@ internal static class ApiDocument
     }
 
     private static IEnumerable<string> RouteParameters(string route) =>
-        System.Text.RegularExpressions.Regex.Matches(route, @"\{(?<name>orgId)(:[^}]*)?\}", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromMilliseconds(100))
+        System.Text.RegularExpressions.Regex.Matches(route, @"\{(?<name>orgId)(:[^}]*)?\}", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1))
             .Select(m => m.Groups["name"].Value);
 
     public static string Normalize(string json)

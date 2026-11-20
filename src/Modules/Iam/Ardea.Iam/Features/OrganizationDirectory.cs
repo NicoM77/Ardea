@@ -70,5 +70,5 @@ internal static class OrganizationDirectory
     }
 
     public static bool IsValidSlug(string slug) =>
-        System.Text.RegularExpressions.Regex.IsMatch(slug, "^[a-z0-9]([a-z0-9-]{0,48}[a-z0-9])?$", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromMilliseconds(100));
+        System.Text.RegularExpressions.Regex.IsMatch(slug, "^[a-z0-9]([a-z0-9-]{0,48}[a-z0-9])?$", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1));
 }

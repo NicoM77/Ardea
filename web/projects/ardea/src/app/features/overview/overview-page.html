@@ -1,7 +1,7 @@
 <header class="head">
   <h1>{{ 'nav.overview' | transloco }}</h1>
   <p class="finding" role="status">
-    @if (finding(); as f) {
+    @if (firstUse() === false && finding(); as f) {
       @if (noticeCount()) {
         <strong>{{
           'overview.finding.notices' | transloco: { count: noticeCount() }
@@ -25,7 +25,12 @@
   <ui-notice class="notice">{{ w.message }}</ui-notice>
 }
 
-@if (data(); as d) {
+@if (firstUse()) {
+  <ui-empty-state [heading]="'areas.overview.emptyHeading' | transloco">
+    <svg uiEmptyIcon lucideLayoutGrid aria-hidden="true"></svg>
+    {{ 'areas.overview.emptyText' | transloco }}
+  </ui-empty-state>
+} @else if (firstUse() === false && data(); as d) {
   <div class="grid">
     <ui-card class="span-8" [heading]="'overview.urgent.title' | transloco">
       <a uiCardMeta class="card-link" routerLink="../reminders"
@@ -55,13 +60,8 @@
             }
           </ul>
         }
-      } @else if (total()) {
-        <p class="quiet">{{ 'overview.urgent.none' | transloco }}</p>
       } @else {
-        <ui-empty-state [heading]="'areas.overview.emptyHeading' | transloco">
-          <svg uiEmptyIcon lucideLayoutGrid aria-hidden="true"></svg>
-          {{ 'areas.overview.emptyText' | transloco }}
-        </ui-empty-state>
+        <p class="quiet">{{ 'overview.urgent.none' | transloco }}</p>
       }
     </ui-card>
 
@@ -72,9 +72,9 @@
             <span class="figure">{{ noticeText() }}</span>
             <span>{{ 'overview.notices.word' | transloco: { count: noticeCount() } }}</span>
           </p>
-          <p class="figure-sub">
-            {{ (noticeCount() ? 'overview.notices.sub' : 'overview.notices.calm') | transloco }}
-          </p>
+          @if (noticeSub(); as sub) {
+            <p class="figure-sub">{{ sub | transloco }}</p>
+          }
         } @else if (noticesFailed()) {
           <p class="figure-sub">{{ 'overview.notices.loadFailed' | transloco }}</p>
         } @else {
@@ -102,22 +102,35 @@
             }
           </ul>
         }
-        @if (noticeCount() || !noticesKnown()) {
-          <a
-            uiButton
-            [variant]="noticeCount() ? 'primary' : 'default'"
-            class="notices-go"
-            routerLink="../notices"
-            >{{ 'overview.notices.answer' | transloco }}</a
-          >
-        } @else {
-          <a
-            uiButton
-            class="notices-go"
-            routerLink="../notices"
-            [queryParams]="{ view: 'answered' }"
-            >{{ 'overview.notices.answered' | transloco }}</a
-          >
+        @switch (noticeState()) {
+          @case ('answered') {
+            <a
+              uiButton
+              class="notices-go"
+              routerLink="../notices"
+              [queryParams]="{ view: 'answered' }"
+              >{{ 'overview.notices.answered' | transloco }}</a
+            >
+          }
+          @case ('earlier') {
+            <a
+              uiButton
+              class="notices-go"
+              routerLink="../notices"
+              [queryParams]="{ view: 'earlier' }"
+              >{{ 'notices.list.earlier' | transloco }}</a
+            >
+          }
+          @case ('none') {}
+          @default {
+            <a
+              uiButton
+              [variant]="noticeCount() ? 'primary' : 'default'"
+              class="notices-go"
+              routerLink="../notices"
+              >{{ 'overview.notices.answer' | transloco }}</a
+            >
+          }
         }
       </ui-card>
       <ui-card [heading]="'overview.ring.title' | transloco">
@@ -127,8 +140,16 @@
   </div>
 
   <div class="grid">
-    <ardea-projects-card class="span-7" [projects]="projects()" />
-    <ardea-changes-card class="span-5" [changes]="d.last24Hours" />
+    <div class="side span-7">
+      <ardea-projects-card [projects]="projects()" />
+      @if (warnings().length) {
+        <ardea-warnings-card class="warnings" [warnings]="warnings()" [sources]="sources()" />
+      }
+    </div>
+    <div class="side span-5">
+      <ardea-changes-card [changes]="d.last24Hours" />
+      <ardea-sources-card class="sources" [sources]="sources()" />
+    </div>
   </div>
 } @else if (overview.error()) {
   <ui-notice class="notice" tone="error">{{ problem() | transloco }}</ui-notice>
@@ -138,8 +159,3 @@
 } @else {
   <div class="wait"><ui-loader size="page" [label]="'overview.loading' | transloco" /></div>
 }
-
-<div class="grid">
-  <ardea-warnings-card class="span-7" [warnings]="warnings()" [sources]="sources()" />
-  <ardea-sources-card class="span-5" [sources]="sources()" />
-</div>

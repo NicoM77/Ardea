@@ -277,6 +277,7 @@ function finding(
 
 export interface FlowOptions {
   calm?: boolean;
+  empty?: boolean;
   conflict?: boolean;
   ai?: boolean;
   learned?: boolean;
@@ -412,10 +413,10 @@ function noticeOrder(a: Notice, b: Notice): number {
 
 export async function flowsApi(page: Page, options: FlowOptions = {}): Promise<void> {
   await api(page, true);
-  const inbox = notices(!!options.calm);
+  const inbox = options.empty ? [] : notices(!!options.calm);
   let nextReminder = 160;
   let noticeConflict = !!options.noticeConflict;
-  let rows = actions();
+  let rows = options.empty ? [] : actions();
   if (options.calm) rows = rows.filter((r) => r.level <= 3);
   if (options.stackReminder)
     rows.push(

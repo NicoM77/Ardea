@@ -1,28 +1,20 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { Component, inject, input, output, signal } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideCircleCheck, LucideRotateCw } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiEmptyState, UiLoader, UiNotice } from 'ui';
+import { UiButton, UiCard, UiLoader, UiNotice } from 'ui';
 import { AdministrationService, type AbandonedJobResponse } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import { count } from './settings-patch';
 
 @Component({
   selector: 'ardea-jobs-card',
-  imports: [
-    TranslocoPipe,
-    LucideCircleCheck,
-    LucideRotateCw,
-    UiButton,
-    UiCard,
-    UiEmptyState,
-    UiLoader,
-    UiNotice,
-  ],
+  imports: [TranslocoPipe, LucideCircleCheck, LucideRotateCw, UiButton, UiCard, UiLoader, UiNotice],
   template: `
     <ui-card [heading]="'admin.jobs.title' | transloco" [attr.aria-busy]="loading()">
-      @if (jobs(); as list) {
-        <span uiCardMeta>{{ 'admin.jobs.count' | transloco: { count: list.length } }}</span>
+      @if (jobs()?.length) {
+        <span uiCardMeta>{{ 'admin.jobs.count' | transloco: { count: jobs()!.length } }}</span>
       }
 
       <div class="live" role="status">
@@ -45,10 +37,10 @@ import { count } from './settings-patch';
         </div>
       } @else if (jobs(); as list) {
         @if (list.length === 0) {
-          <ui-empty-state [heading]="'admin.jobs.emptyHeading' | transloco">
-            <svg uiEmptyIcon lucideCircleCheck aria-hidden="true"></svg>
-            {{ 'admin.jobs.emptyText' | transloco }}
-          </ui-empty-state>
+          <p class="healthy">
+            <svg lucideCircleCheck aria-hidden="true"></svg>
+            {{ 'admin.jobs.empty' | transloco }}
+          </p>
         } @else {
           <div class="table-wrap">
             <table>
@@ -87,7 +79,9 @@ import { count } from './settings-patch';
                     </td>
                     <td class="when">
                       @if (job.finishedAt) {
-                        <time [attr.datetime]="job.finishedAt">{{ when(job.finishedAt) }}</time>
+                        <time [attr.datetime]="job.finishedAt">{{
+                          dates.dateTime(job.finishedAt)
+                        }}</time>
                       } @else {
                         <span class="muted">–</span>
                       }
@@ -132,6 +126,18 @@ import { count } from './settings-patch';
     }
     .wait {
       min-height: 24px;
+    }
+    .healthy {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      color: var(--muted);
+    }
+    .healthy svg {
+      flex: none;
+      width: 16px;
+      height: 16px;
+      color: var(--positive);
     }
     .table-wrap {
       overflow-x: auto;
@@ -236,26 +242,14 @@ export class JobsCard {
   readonly reload = output();
 
   private readonly admin = inject(AdministrationService);
-  private readonly transloco = inject(TranslocoService);
+  protected readonly dates = inject(Dates);
 
   protected readonly number = count;
   protected readonly retrying = signal<string | null>(null);
   protected readonly retried = signal<string | null>(null);
   protected readonly problem = signal<string | null>(null);
-  private readonly format = computed(
-    () =>
-      new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }),
-  );
-
   protected stateLabel(state: string): string {
     return state === 'dead' ? 'admin.jobs.dead' : 'admin.jobs.failed';
-  }
-
-  protected when(value: string): string {
-    return this.format().format(new Date(value));
   }
 
   protected async retry(job: AbandonedJobResponse): Promise<void> {

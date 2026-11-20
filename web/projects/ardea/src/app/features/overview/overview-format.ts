@@ -68,3 +68,20 @@ export function warningSource(key: string, sources: readonly SourceStatus[]): st
   const prefix = key.includes(':') ? key.slice(0, key.indexOf(':')) : null;
   return (prefix && sources.find((s) => s.key === prefix)?.name) || null;
 }
+
+export function sourceSummary(
+  sources: readonly SourceStatus[],
+): (Sentence & { attention: SourceStatus[] }) | null {
+  if (!sources.length) return null;
+  const count = sources.length;
+  const attention = sources.filter((s) => !s.enabled || s.health !== 'healthy');
+  if (!attention.length)
+    return { key: 'overview.sources.healthy', params: { count }, attention: [] };
+  if (attention.length === count && attention.every((s) => !s.enabled))
+    return { key: 'overview.sources.paused', params: { count }, attention: [] };
+  return {
+    key: 'overview.sources.some',
+    params: { count, healthy: count - attention.length },
+    attention,
+  };
+}

@@ -7,6 +7,7 @@ import { ACTION_PRIORITIES, type ActionPriority } from '../actions/action-format
 const R = 50;
 const LENGTH = 2 * Math.PI * R;
 const GAP = 3;
+const COVER = LENGTH + 2;
 
 @Component({
   selector: 'ardea-priority-ring',
@@ -24,6 +25,16 @@ const GAP = 3;
             [attr.stroke-dasharray]="s.dash"
             [attr.stroke-dashoffset]="s.offset"
             [class.dim]="focus() && focus() !== s.priority"
+          />
+        }
+        @if (segments().length) {
+          <circle
+            class="cover"
+            cx="58"
+            cy="58"
+            r="50"
+            [attr.stroke-dasharray]="cover + ' ' + cover"
+            [attr.stroke-dashoffset]="-cover"
           />
         }
       </svg>
@@ -85,6 +96,20 @@ const GAP = 3;
     .dim {
       opacity: 0.2;
     }
+    .cover {
+      stroke: var(--rule);
+      animation: draw var(--t-draw) var(--ease-out) both;
+    }
+    @keyframes draw {
+      from {
+        stroke-dashoffset: 0;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cover {
+        display: none;
+      }
+    }
     .total {
       position: absolute;
       inset: 0;
@@ -132,6 +157,7 @@ export class PriorityRing {
   readonly focused = output<ActionPriority | null>();
 
   protected readonly priorities = ACTION_PRIORITIES;
+  protected readonly cover = COVER;
   protected readonly total = computed(() =>
     ACTION_PRIORITIES.reduce((n, p) => n + this.counts()[p], 0),
   );

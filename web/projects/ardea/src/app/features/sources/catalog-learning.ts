@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideCircleCheck } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiEmptyState, UiField, UiInput, UiLoader, UiNotice, UiPill } from 'ui';
+import { UiButton, UiCard, UiField, UiInput, UiLoader, UiNotice, UiPill } from 'ui';
 import {
   CatalogService,
   getCatalogLearningResource,
@@ -12,6 +12,7 @@ import {
   type LearnedItemView,
 } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
+import { Dates } from '../../core/format/dates';
 import {
   HOLD_LABELS,
   KINDS,
@@ -21,6 +22,7 @@ import {
   SCHEMES,
   type LearningView,
   share,
+  weeksWithActivity,
 } from './learning-format';
 
 @Component({
@@ -30,7 +32,6 @@ import {
     LucideCircleCheck,
     UiButton,
     UiCard,
-    UiEmptyState,
     UiField,
     UiInput,
     UiLoader,
@@ -114,35 +115,37 @@ import {
           </div>
         </div>
 
-        <table class="weeks">
-          <caption>
-            {{
-              'catalogLearning.weeksCaption' | transloco
-            }}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">{{ 'catalogLearning.week' | transloco }}</th>
-              <th scope="col">{{ 'catalogLearning.learned' | transloco }}</th>
-              <th scope="col">{{ 'catalogLearning.adopted' | transloco }}</th>
-              <th scope="col">{{ 'catalogLearning.confirmed' | transloco }}</th>
-              <th scope="col">{{ 'catalogLearning.rejected' | transloco }}</th>
-              <th scope="col">{{ 'catalogLearning.withdrawn' | transloco }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (w of s.weeks; track w.week) {
+        @if (active(s.weeks)) {
+          <table class="weeks">
+            <caption>
+              {{
+                'catalogLearning.weeksCaption' | transloco
+              }}
+            </caption>
+            <thead>
               <tr>
-                <th scope="row">{{ day(w.week) }}</th>
-                <td>{{ w.learned }}</td>
-                <td>{{ w.adopted }}</td>
-                <td>{{ w.confirmed }}</td>
-                <td>{{ w.rejected }}</td>
-                <td>{{ w.withdrawn }}</td>
+                <th scope="col">{{ 'catalogLearning.week' | transloco }}</th>
+                <th scope="col">{{ 'catalogLearning.learned' | transloco }}</th>
+                <th scope="col">{{ 'catalogLearning.adopted' | transloco }}</th>
+                <th scope="col">{{ 'catalogLearning.confirmed' | transloco }}</th>
+                <th scope="col">{{ 'catalogLearning.rejected' | transloco }}</th>
+                <th scope="col">{{ 'catalogLearning.withdrawn' | transloco }}</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (w of s.weeks; track w.week) {
+                <tr>
+                  <th scope="row">{{ dates.date(w.week) }}</th>
+                  <td>{{ w.learned }}</td>
+                  <td>{{ w.adopted }}</td>
+                  <td>{{ w.confirmed }}</td>
+                  <td>{{ w.rejected }}</td>
+                  <td>{{ w.withdrawn }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       } @else if (status.error()) {
         <ui-notice tone="error">{{ 'catalogLearning.loadFailed' | transloco }}</ui-notice>
       }
@@ -363,10 +366,10 @@ import {
             }
           </ul>
         } @else {
-          <ui-empty-state [heading]="'catalogLearning.emptyHeading' | transloco">
-            <svg uiEmptyIcon lucideCircleCheck aria-hidden="true"></svg>
-            {{ 'catalogLearning.emptyText' | transloco }}
-          </ui-empty-state>
+          <p class="healthy">
+            <svg lucideCircleCheck aria-hidden="true"></svg>
+            {{ 'catalogLearning.empty' | transloco }}
+          </p>
         }
       } @else if (items.error()) {
         <ui-notice tone="error">{{ 'catalogLearning.loadFailed' | transloco }}</ui-notice>
@@ -441,6 +444,18 @@ import {
     .weeks th:first-child {
       text-align: left;
       font-weight: 400;
+    }
+    .healthy {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      color: var(--muted);
+    }
+    .healthy svg {
+      flex: none;
+      width: 16px;
+      height: 16px;
+      color: var(--positive);
     }
     .live:empty {
       display: none;
@@ -542,6 +557,8 @@ export class CatalogLearning {
 
   private readonly api = inject(CatalogService);
   private readonly transloco = inject(TranslocoService);
+  protected readonly dates = inject(Dates);
+  protected readonly active = weeksWithActivity;
 
   protected readonly views = LEARNING_VIEWS;
   protected readonly kinds = KINDS;
@@ -665,13 +682,6 @@ export class CatalogLearning {
 
   protected holdLabel(hold: string): string {
     return HOLD_LABELS[hold] ?? 'catalogLearning.hold.check';
-  }
-
-  protected day(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-      dateStyle: 'medium',
-      timeZone: 'UTC',
-    }).format(new Date(value + 'T00:00:00Z'));
   }
 
   private async act(

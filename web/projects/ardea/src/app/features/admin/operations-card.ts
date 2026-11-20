@@ -1,17 +1,21 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { LucideCircleCheck } from '@lucide/angular';
 import { UiButton, UiCard, UiLoader, UiNotice } from 'ui';
 import type { InstanceStatusView, StatusWarning } from '../../core/api/client';
+import { Dates } from '../../core/format/dates';
 import { groupMetrics, notifiedAt } from './operations';
+
+const UNITS: Readonly<Record<string, string>> = { s: 'second', min: 'minute' };
 
 @Component({
   selector: 'ardea-operations-card',
-  imports: [TranslocoPipe, UiButton, UiCard, UiLoader, UiNotice],
+  imports: [TranslocoPipe, LucideCircleCheck, UiButton, UiCard, UiLoader, UiNotice],
   template: `
     <ui-card [heading]="'admin.operations.title' | transloco" [attr.aria-busy]="loading()">
       @if (status(); as view) {
         <span uiCardMeta>
-          {{ 'admin.operations.asOf' | transloco: { time: when(view.at) } }}
+          {{ 'admin.operations.asOf' | transloco: { time: dates.dateTime(view.at) } }}
         </span>
       }
       @if (status(); as view) {
@@ -21,28 +25,41 @@ import { groupMetrics, notifiedAt } from './operations';
               {{ warning.message }}
               @if (mailed(view, warning); as at) {
                 <span class="mailed">
-                  {{ 'admin.operations.notified' | transloco: { time: when(at) } }}
+                  {{ 'admin.operations.notified' | transloco: { time: dates.dateTime(at) } }}
                 </span>
               }
             </ui-notice>
           } @empty {
-            <ui-notice tone="success">{{ 'admin.operations.healthy' | transloco }}</ui-notice>
+            <p class="healthy">
+              <svg lucideCircleCheck aria-hidden="true"></svg>
+              {{ 'admin.operations.healthy' | transloco }}
+            </p>
           }
         </div>
         <div class="groups">
           @for (group of groups(); track group.group) {
             <section>
-              <h3 class="id">{{ group.group }}</h3>
+              <h3>
+                @if (group.label) {
+                  {{ group.label | transloco }}
+                } @else {
+                  <span class="id">{{ group.group }}</span>
+                }
+              </h3>
               <dl>
                 @for (row of group.rows; track row.name) {
                   <div>
-                    <dt>{{ row.name }}</dt>
-                    <dd>
-                      {{ figure(row.value) }}
-                      @if (row.unit) {
-                        <span class="unit"> {{ row.unit }}</span>
+                    <dt>
+                      @if (row.label; as label) {
+                        @if (label.subject) {
+                          <span class="id">{{ label.subject }}</span> ·
+                        }
+                        {{ label.key | transloco }}
+                      } @else {
+                        <span class="id">{{ row.name }}</span>
                       }
-                    </dd>
+                    </dt>
+                    <dd>{{ figure(row.value, row.unit) }}</dd>
                   </div>
                 }
               </dl>
@@ -101,8 +118,17 @@ import { groupMetrics, notifiedAt } from './operations';
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
     }
-    .unit {
+    .healthy {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
       color: var(--muted);
+    }
+    .healthy svg {
+      flex: none;
+      width: 16px;
+      height: 16px;
+      color: var(--positive);
     }
     .gap {
       margin-top: var(--space-md);
@@ -111,6 +137,7 @@ import { groupMetrics, notifiedAt } from './operations';
 })
 export class OperationsCard {
   private readonly transloco = inject(TranslocoService);
+  protected readonly dates = inject(Dates);
 
   readonly status = input<InstanceStatusView | null>(null);
   readonly loading = input(false);
@@ -123,14 +150,16 @@ export class OperationsCard {
     return notifiedAt(view.notified, warning);
   }
 
-  protected figure(value: number): string {
-    return new Intl.NumberFormat(this.transloco.getActiveLang()).format(value);
-  }
-
-  protected when(value: string): string {
-    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(new Date(value));
+  protected figure(value: number, unit: string | null): string {
+    const lang = this.transloco.getActiveLang();
+    const known = unit ? UNITS[unit] : undefined;
+    if (known)
+      return new Intl.NumberFormat(lang, {
+        style: 'unit',
+        unit: known,
+        maximumFractionDigits: 0,
+      }).format(value);
+    const figure = new Intl.NumberFormat(lang).format(value);
+    return unit ? `${figure} ${unit}` : figure;
   }
 }

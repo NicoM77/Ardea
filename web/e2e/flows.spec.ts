@@ -553,7 +553,11 @@ test('notices before the first one: no chart and nothing answered to look at', a
 });
 
 test.describe('at 390 × 844', () => {
-  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  test.use({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    reducedMotion: 'no-preference',
+  });
 
   test('the three answers sit above the action bar', async ({ page }) => {
     const problems = watchConsole(page);
@@ -562,8 +566,25 @@ test.describe('at 390 × 844', () => {
     const bar = page.locator('.ui-actionbar');
     await expect(bar).toBeVisible();
     await expect(bar.getByRole('button', { name: 'Mark as remediated' })).toBeVisible();
+    await page.evaluate(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity)
+          .map((a) => a.finished),
+      ),
+    );
+    const pinned = () =>
+      bar.evaluate((el) => window.innerHeight - el.getBoundingClientRect().bottom);
+    expect(
+      Math.abs(await pinned()),
+      'the bar sits on the bottom of the screen',
+    ).toBeLessThanOrEqual(1);
+    await page.mouse.wheel(0, 400);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    expect(Math.abs(await pinned()), 'the bar stays there while scrolling').toBeLessThanOrEqual(1);
+    await page.evaluate(() => window.scrollTo(0, 0));
     const barTop = (await bar.boundingBox())!.y;
-    expect(barTop).toBeGreaterThan(700);
     for (const part of ['happened', 'affected', 'todo']) {
       const box = (await page.locator(`ardea-action-page [data-answer="${part}"]`).boundingBox())!;
       expect(box.y + box.height, `${part} ends above the action bar`).toBeLessThanOrEqual(barTop);

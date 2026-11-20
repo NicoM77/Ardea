@@ -44,7 +44,7 @@ import { ICON_CONFIG } from '../../core/icons';
       border: 1px solid var(--border);
       border-radius: var(--radius-sheet);
       background: var(--surface);
-      animation: auth-rise 420ms var(--ease-out) both;
+      animation: auth-rise 420ms var(--ease-out) backwards;
       view-transition-name: content;
     }
     .auth-tagline {

@@ -4,10 +4,17 @@ import { Router } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideDynamicIcon, LucideSearch } from '@lucide/angular';
 import { UiKbd } from 'ui';
-import { filterSearchItems, moveActive, SearchItem } from './search';
+import {
+  filterSearchItems,
+  moveActive,
+  SearchItem,
+  VulnerabilitySearch,
+  withVulnerabilities,
+} from './search';
 
 export interface SearchDialogData {
   items: readonly SearchItem[];
+  vulnerabilities: VulnerabilitySearch;
   byPointer: boolean;
 }
 
@@ -61,8 +68,6 @@ export interface SearchDialogData {
             </div>
           }
         </div>
-      } @empty {
-        <p class="empty">{{ 'search.empty' | transloco: { query: query() } }}</p>
       }
     </div>
     <p class="foot" aria-hidden="true">
@@ -137,11 +142,6 @@ export interface SearchDialogData {
     .option[aria-selected='true'] {
       background: var(--active);
     }
-    .empty {
-      padding: var(--gap) var(--space-sm);
-      color: var(--muted);
-      text-align: center;
-    }
     .foot {
       display: flex;
       gap: var(--space-lg);
@@ -179,7 +179,13 @@ export class SearchDialog {
   private readonly router = inject(Router);
 
   protected readonly query = signal('');
-  protected readonly results = computed(() => filterSearchItems(this.data.items, this.query()));
+  protected readonly results = computed(() =>
+    withVulnerabilities(
+      filterSearchItems(this.data.items, this.query()),
+      this.query(),
+      this.data.vulnerabilities,
+    ),
+  );
   protected readonly active = signal(0);
   protected readonly groups = computed(() => {
     const groups: { name: string; entries: { item: SearchItem; index: number }[] }[] = [];

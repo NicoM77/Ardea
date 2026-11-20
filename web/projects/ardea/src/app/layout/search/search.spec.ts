@@ -1,5 +1,13 @@
 import { LucideBell } from '@lucide/angular';
-import { filterSearchItems, moveActive, opensSearch, SearchItem } from './search';
+import {
+  entryKey,
+  filterSearchItems,
+  moveActive,
+  opensSearch,
+  SearchItem,
+  VulnerabilitySearch,
+  withVulnerabilities,
+} from './search';
 
 const item = (label: string, keywords?: string): SearchItem => ({
   label,
@@ -34,6 +42,48 @@ describe('filterSearchItems', () => {
   it('finds an item by its keywords', () => {
     expect(filterSearchItems(items, 'mfa').map((i) => i.label)).toEqual([
       'Two-factor authentication',
+    ]);
+  });
+});
+
+describe('entryKey', () => {
+  it('knows CVE and GHSA identifiers in any case and writes them as the sources do', () => {
+    expect(entryKey(' cve-2024-3094 ')).toBe('CVE-2024-3094');
+    expect(entryKey('CVE-2021-44228')).toBe('CVE-2021-44228');
+    expect(entryKey('ghsa-JFH8-C2JP-5V3Q')).toBe('GHSA-jfh8-c2jp-5v3q');
+  });
+
+  it('leaves words and incomplete identifiers to the search', () => {
+    expect(entryKey('CVE-2024')).toBeNull();
+    expect(entryKey('openssl')).toBeNull();
+    expect(entryKey('CVE-2024-3094 xz')).toBeNull();
+  });
+});
+
+describe('withVulnerabilities', () => {
+  const vulnerabilities: VulnerabilitySearch = {
+    group: 'Vulnerabilities',
+    icon: LucideBell.icon,
+    open: (key) => `Open ${key}`,
+    search: (query) => `Search vulnerabilities for “${query}”`,
+  };
+
+  it('adds nothing while the query is empty', () => {
+    expect(withVulnerabilities(items, ' ', vulnerabilities)).toEqual(items);
+  });
+
+  it('ends any other query with a search of the vulnerabilities', () => {
+    const results = withVulnerabilities([], 'xz utils', vulnerabilities);
+    expect(results.map((i) => [i.label, i.url])).toEqual([
+      ['Search vulnerabilities for “xz utils”', '/entries?q=xz%20utils'],
+    ]);
+  });
+
+  it('opens an identifier directly, before every page', () => {
+    const results = withVulnerabilities(items.slice(0, 1), 'cve-2024-3094', vulnerabilities);
+    expect(results.map((i) => [i.label, i.url])).toEqual([
+      ['Open CVE-2024-3094', '/entries/CVE-2024-3094'],
+      ['Overview', '/Overview'],
     ]);
   });
 });

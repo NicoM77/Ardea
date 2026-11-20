@@ -12,12 +12,13 @@ import {
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucideKeyRound } from '@lucide/angular';
+import { LucideBellRing, LucideKeyRound } from '@lucide/angular';
 import { UiToastHost } from 'ui';
-import { filter, firstValueFrom, map } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
 import { AuthenticationService } from '../../core/api/client';
+import { CurrentOrganization } from '../../core/session/current-organization';
 import { Session } from '../../core/session/session';
 import { ICON_CONFIG } from '../../core/icons';
 import { AREA_ICONS } from '../../features/areas/area-icons';
@@ -26,11 +27,9 @@ import { NoticeCount } from '../../features/notices/notice-count';
 import { countText } from '../../features/notices/notice-format';
 import { PushDevice } from '../../features/notifications/push-device';
 import { SearchDialog, SearchDialogData } from '../search/search-dialog';
-import { opensSearch, SearchItem } from '../search/search';
+import { opensSearch, SearchItem, VulnerabilitySearch } from '../search/search';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
-
-const SLUG = /^\/o\/([^/?#]+)/;
 
 @Component({
   selector: 'ardea-shell',
@@ -200,19 +199,7 @@ export class Shell {
   );
   protected readonly menuOpen = signal(false);
 
-  private readonly url = toSignal(
-    this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      map((event) => event.urlAfterRedirects),
-    ),
-    { initialValue: this.router.url },
-  );
-
-  protected readonly organization = computed(() => {
-    const orgs = this.session.user()?.organizations ?? [];
-    const slug = SLUG.exec(this.url())?.[1];
-    return orgs.find((org) => org.slug === slug) ?? orgs[0] ?? null;
-  });
+  protected readonly organization = inject(CurrentOrganization).organization;
 
   private readonly notices = inject(NoticeCount);
   protected readonly noticeCount = computed(() =>
@@ -254,7 +241,7 @@ export class Shell {
   protected openSearch(byPointer: boolean): void {
     if (this.dialog.openDialogs.length > 0) return;
     this.dialog.open<void, SearchDialogData>(SearchDialog, {
-      data: { items: this.searchItems(), byPointer },
+      data: { items: this.searchItems(), vulnerabilities: this.vulnerabilitySearch(), byPointer },
       ariaLabel: this.transloco.translate('search.label'),
       backdropClass: 'ui-scrim',
       panelClass: 'ui-dialog-pane',
@@ -277,6 +264,17 @@ export class Shell {
     this.main().nativeElement.focus();
   }
 
+  private vulnerabilitySearch(): VulnerabilitySearch {
+    const t = (key: string, params?: Record<string, string>) =>
+      this.transloco.translate(key, params);
+    return {
+      group: t('nav.vulnerabilities'),
+      icon: AREA_ICONS.vulnerabilities,
+      open: (key) => t('search.openEntry', { key }),
+      search: (query) => t('search.vulnerabilities', { query }),
+    };
+  }
+
   private searchItems(): SearchItem[] {
     const t = (key: string) => this.transloco.translate(key);
     const items: SearchItem[] = [];
@@ -296,6 +294,15 @@ export class Shell {
       });
     }
     const account = t('search.groups.account');
+    if (org) {
+      items.push({
+        label: t('notify.settings.title'),
+        group: account,
+        url: `/o/${org.slug}/settings/notifications`,
+        icon: LucideBellRing.icon,
+        keywords: t('search.keywords.notifications'),
+      });
+    }
     items.push({
       label: t('shell.account.twoFactor'),
       group: account,

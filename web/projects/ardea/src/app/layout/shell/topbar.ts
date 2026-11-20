@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import {
   LucideBell,
+  LucideBellRing,
   LucideKeyRound,
   LucideLogOut,
   LucideMenu,
@@ -24,6 +25,7 @@ import { UnreadCount } from '../../features/notifications/unread-count';
     RouterLinkActive,
     TranslocoPipe,
     LucideBell,
+    LucideBellRing,
     LucideKeyRound,
     LucideLogOut,
     LucideMenu,
@@ -57,7 +59,7 @@ import { UnreadCount } from '../../features/notifications/unread-count';
       (click)="openSearch.emit($event.detail > 0)"
     >
       <svg lucideSearch aria-hidden="true"></svg>
-      <span class="search-text">{{ 'search.trigger' | transloco }}</span>
+      <span class="search-text">{{ 'search.label' | transloco }}</span>
       <span class="keys" aria-hidden="true">
         <ui-kbd>/</ui-kbd>
         <ui-kbd>{{ 'search.ctrlK' | transloco }}</ui-kbd>
@@ -97,6 +99,16 @@ import { UnreadCount } from '../../features/notifications/unread-count';
             <b>{{ me.displayName }}</b>
             <small>{{ me.email }}</small>
           </div>
+          @if (organization(); as org) {
+            <a
+              class="ui-menu-item"
+              cdkMenuItem
+              [routerLink]="'/o/' + org.slug + '/settings/notifications'"
+            >
+              <svg lucideBellRing aria-hidden="true"></svg>
+              {{ 'notify.settings.title' | transloco }}
+            </a>
+          }
           <a class="ui-menu-item" cdkMenuItem routerLink="/account/two-factor">
             <svg lucideKeyRound aria-hidden="true"></svg>
             {{ 'shell.account.twoFactor' | transloco }}

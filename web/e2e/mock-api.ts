@@ -133,6 +133,25 @@ const SETTING = (value: string | null, locked = false) => ({
   locked,
 });
 
+const SECOND_ORG_ID = '0190a000-0000-7000-8000-000000000009';
+
+export async function secondOrganization(page: Page): Promise<void> {
+  await page.route(`**/api/v1/orgs/${SECOND_ORG_ID}/**`, (route) =>
+    route.fallback({ url: route.request().url().replace(SECOND_ORG_ID, ORG_ID) }),
+  );
+  await page.route('**/api/v1/auth/session', (route) =>
+    route.fulfill({
+      json: {
+        ...SESSION,
+        organizations: [
+          ...SESSION.organizations,
+          { ...SESSION.organizations[0], id: SECOND_ORG_ID, slug: 'second', name: 'Second Org' },
+        ],
+      },
+    }),
+  );
+}
+
 export async function api(page: Page, signedIn: boolean): Promise<void> {
   await page.route('**/api/v1/**', (route) => {
     const path = new URL(route.request().url()).pathname;

@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideCheck, LucideChevronsUpDown, LucidePlus } from '@lucide/angular';
 import type { SessionOrganization } from '../../core/api/client';
+import { ROLE_LABELS } from '../../features/organizations/org-format';
 
 @Component({
   selector: 'ardea-org-switch',
@@ -24,7 +25,9 @@ import type { SessionOrganization } from '../../core/api/client';
         <span class="name">
           <span class="sr-only">{{ 'shell.org.switchPrefix' | transloco }}</span>
           {{ org.name }}
-          <small>{{ 'shell.org.count' | transloco: { count: organizations().length } }}</small>
+          @if (roleLabel(); as label) {
+            <small>{{ label | transloco }}</small>
+          }
           <span class="sr-only">{{ 'shell.org.switchHint' | transloco }}</span>
         </span>
         <svg lucideChevronsUpDown aria-hidden="true"></svg>
@@ -148,6 +151,7 @@ import type { SessionOrganization } from '../../core/api/client';
 export class OrgSwitch {
   readonly organizations = input.required<readonly SessionOrganization[]>();
   readonly current = input<SessionOrganization | null>(null);
+  protected readonly roleLabel = computed(() => ROLE_LABELS[this.current()?.role ?? ''] ?? null);
   protected readonly mark = computed(() =>
     (Array.from(this.current()?.name.trim() ?? '')[0] ?? '').toLocaleUpperCase(),
   );

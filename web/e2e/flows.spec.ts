@@ -4,7 +4,7 @@ import { watchConsole } from './console';
 import { flowsApi } from './flows-api';
 import { notifyApi } from './notify-api';
 import { stackApi } from './stack-api';
-import { PROJECT_ID } from './mock-api';
+import { PROJECT_ID, secondOrganization } from './mock-api';
 
 const ORG = '/o/example';
 
@@ -1096,4 +1096,63 @@ test.describe('notices and the overview at 390 × 844', () => {
     expect(await overflow(page)).toBeLessThanOrEqual(0);
     expect(problems).toEqual([]);
   });
+});
+
+test('pages of the whole instance keep the organization last opened, also after a reload', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  await secondOrganization(page);
+  await page.goto('/o/second/overview');
+
+  const nav = page.getByRole('navigation', { name: 'Main' });
+  const orgSwitch = page.getByRole('button', { name: /^Organization: Second Org/ });
+  await expect(orgSwitch).toContainText('Owner');
+  await nav.getByRole('link', { name: 'Vulnerabilities' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Vulnerabilities' })).toBeVisible();
+  await expect(orgSwitch).toBeVisible();
+  await page.reload();
+  await expect(orgSwitch).toBeVisible();
+  await nav.getByRole('link', { name: 'Overview' }).click();
+  await expect(page).toHaveURL(/\/o\/second\/overview$/);
+  await page.goto('/entries');
+  await page.getByRole('link', { name: 'Ardea, overview' }).first().click();
+  await expect(page).toHaveURL(/\/o\/second\/overview$/);
+  expect(problems).toEqual([]);
+});
+
+test('search: an identifier opens its vulnerability, other words search the vulnerabilities', async ({
+  page,
+}) => {
+  const problems = watchConsole(page);
+  await flowsApi(page);
+  await page.goto(`${ORG}/overview`);
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible();
+
+  await page.keyboard.press('/');
+  const box = page.getByRole('combobox', { name: 'Search' });
+  await expect(box).toBeFocused();
+  await box.fill('cve-2026-0001');
+  await expect(page.getByRole('option').first()).toHaveText('Open CVE-2026-0001');
+  await expect(page.getByRole('option').first()).toHaveAttribute('aria-selected', 'true');
+  await expectAccessible(page, 'search with an identifier');
+  await box.press('Enter');
+  await expect(page).toHaveURL(/\/entries\/CVE-2026-0001$/);
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Sample: remote code execution in an example library',
+    }),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
+  await box.fill('example library');
+  await expect(page.getByRole('option')).toHaveText([
+    'Search vulnerabilities for “example library”',
+  ]);
+  await box.press('Enter');
+  await expect(page).toHaveURL(/\/entries\?q=example(%20|\+)library$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Vulnerabilities' })).toBeVisible();
+  expect(problems).toEqual([]);
 });

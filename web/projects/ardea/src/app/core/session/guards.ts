@@ -12,6 +12,7 @@ import {
   decideSetupAccess,
   decideSignedInAccess,
 } from './access';
+import { CurrentOrganization } from './current-organization';
 import { Session } from './session';
 
 function redirect(router: Router, decision: AccessDecision, returnUrl?: string): true | UrlTree {
@@ -69,9 +70,9 @@ export const instanceAdminGuard: CanActivateFn = () =>
   inject(Session).user()?.isInstanceAdmin === true || inject(Router).createUrlTree(['/']);
 
 export const homeRedirectGuard: CanActivateFn = () => {
-  const first = inject(Session).user()?.organizations[0];
+  const organization = inject(CurrentOrganization).organization();
   const router = inject(Router);
-  return first
-    ? router.createUrlTree(['/o', first.slug, 'overview'])
+  return organization
+    ? router.createUrlTree(['/o', organization.slug, 'overview'])
     : router.createUrlTree(['/no-organization']);
 };

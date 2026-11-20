@@ -11,29 +11,29 @@ export type UiNoticeTone = 'info' | 'error' | 'success';
     '[attr.role]': "tone() === 'error' ? 'alert' : 'status'",
   },
   template: `
-    @switch (tone()) {
-      @case ('error') {
-        <svg lucideCircleExclamationPoint aria-hidden="true"></svg>
+    <div class="frame">
+      @switch (tone()) {
+        @case ('error') {
+          <svg lucideCircleExclamationPoint aria-hidden="true"></svg>
+        }
+        @case ('success') {
+          <svg lucideCircleCheck aria-hidden="true"></svg>
+        }
+        @default {
+          <svg lucideInfo aria-hidden="true"></svg>
+        }
       }
-      @case ('success') {
-        <svg lucideCircleCheck aria-hidden="true"></svg>
-      }
-      @default {
-        <svg lucideInfo aria-hidden="true"></svg>
-      }
-    }
-    <div class="body">
-      @if (heading()) {
-        <p class="heading">{{ heading() }}</p>
-      }
-      <div class="text"><ng-content /></div>
+      <div class="body">
+        @if (heading()) {
+          <p class="heading">{{ heading() }}</p>
+        }
+        <div class="text"><ng-content /></div>
+      </div>
     </div>
   `,
   styles: `
     :host {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
+      display: block;
       padding: 10px var(--space-md);
       border: 1px solid var(--border);
       border-radius: var(--radius-card);
@@ -49,7 +49,15 @@ export type UiNoticeTone = 'info' | 'error' | 'success';
       background: var(--positive-soft);
       color: var(--positive-ink);
     }
+    .frame {
+      display: flex;
+      flex: 1;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+    }
     svg {
+      flex: none;
       width: 16px;
       height: 16px;
       margin-top: 2px;

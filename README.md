@@ -153,7 +153,7 @@ The profile gets two depths (chapter 17 of the plan): a coarse stack for the org
 | 5a.3 | Notices from the stack with a threshold per entry; «affects us» creates a reminder; reappears on active exploitation or KEV | 5a.2 | ✅ [ADR 047](docs/adr/0047-notice-generation-and-answers.md) |
 | 5a.4 | Wizard: stack step before projects; projects and repository optional | 5a.2 | ✅ |
 | 5a.5 | Notices page; shortened reminder detail; overview with new notices | 5a.3 | ⬜ |
-| 5a.6 | Reminders by level; event `notice.raised`; escalation dropped | 5a.3, 5.2 | ⬜ |
+| 5a.6 | Reminders by level; event `notice.raised`; escalation dropped | 5a.3, 5.2 | ✅ [ADR 048](docs/adr/0048-notice-raised-and-reminders-by-level.md) |
 
 Acceptance: a stack of ten entries produces at most the number of notices set in 5a.1 in the spike week; «doesn't affect us» does not come back; no endpoint or page knows assignment or deadline.
 
@@ -208,7 +208,7 @@ In this order (master plan, chapter 14):
 1. **First source wave:** generic CSAF reader, OSV for distributions and further ecosystems (RubyGems, crates.io, GitHub Actions), ENISA EUVD and the other sources of wave 1 in chapter 5.6.
 2. **More ways into the profile:** GitHub App with webhooks, SBOM upload (CycloneDX, SPDX), more lock files; then GitLab and Azure DevOps.
 3. **German** in the UI and in messages.
-4. **Escalation** in steps; templates for Teams and Slack.
+4. **Templates for Teams and Slack** on the webhook channel (escalation in steps is dropped: reminders remind by level, chapter 17.5).
 5. **Passkeys and OIDC sign-in;** API tokens.
 6. **Products from free text** via a language model; corrections as context; weights per organisation.
 7. **Capacitor app,** once the push relay is decided.

@@ -40,7 +40,7 @@ push service; the SMTP test uses a Mailpit container.
   the delivery log has no chart, «Send a test» is on each device row, webhook rows show «New secret» and «Delete» as
   buttons, and underline tabs stay flush on their rule.
 - **Not part of the criteria, but unchecked:**
-  - The escalation of master plan 8.7 is not in the MVP (PR #66).
+  - The escalation of master plan 8.7 is not in the MVP (PR #66); task 5a.6 dropped it for reminders by level (ADR 048).
   - `repository.unavailable` can be chosen in a rule, but nothing raises it yet (PR #66, Assets 16.6).
   - Over 60 immediate messages per channel and hour, further ones are `suppressed` and appear only in digests whose
     targets match them (PR #66); the owner may want another limit or a hint on the page.

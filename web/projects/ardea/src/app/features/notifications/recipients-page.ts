@@ -1,6 +1,17 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { UiButton, UiCard, UiCopyButton, UiInput, UiLoader, UiNotice, UiPill } from 'ui';
+import {
+  UiButton,
+  UiCard,
+  UiCopyButton,
+  UiInput,
+  UiLoader,
+  UiMenu,
+  UiMenuItem,
+  UiNotice,
+  UiOverflowMenu,
+  UiPill,
+} from 'ui';
 import { firstValueFrom } from 'rxjs';
 import {
   listExternalAddressesResource,
@@ -40,7 +51,10 @@ const ADDRESS_PROBLEMS = {
     UiCopyButton,
     UiInput,
     UiLoader,
+    UiMenu,
+    UiMenuItem,
     UiNotice,
+    UiOverflowMenu,
     UiPill,
     NotifyFrame,
   ],
@@ -94,30 +108,26 @@ const ADDRESS_PROBLEMS = {
                         >
                           {{ 'notify.webhooks.test' | transloco }}
                         </button>
-                        <button
-                          uiButton
-                          variant="ghost"
-                          type="button"
-                          [loading]="busy() === 'rotate:' + e.id"
-                          [attr.aria-label]="
-                            'notify.webhooks.rotateLabel' | transloco: { name: e.name }
-                          "
-                          (click)="rotate(e)"
+                        <ui-overflow-menu
+                          [name]="e.name"
+                          [busy]="busy() === 'rotate:' + e.id || busy() === 'delete:' + e.id"
                         >
-                          {{ 'notify.webhooks.rotate' | transloco }}
-                        </button>
-                        <button
-                          uiButton
-                          variant="ghost"
-                          type="button"
-                          [loading]="busy() === 'delete:' + e.id"
-                          [attr.aria-label]="
-                            'notify.webhooks.deleteLabel' | transloco: { name: e.name }
-                          "
-                          (click)="deleteEndpoint(e)"
-                        >
-                          {{ 'notify.webhooks.delete' | transloco }}
-                        </button>
+                          <ng-template>
+                            <div uiMenu>
+                              <button uiMenuItem type="button" (triggered)="rotate(e)">
+                                {{ 'notify.webhooks.rotate' | transloco }}
+                              </button>
+                              <button
+                                uiMenuItem
+                                destructive
+                                type="button"
+                                (triggered)="deleteEndpoint(e)"
+                              >
+                                {{ 'notify.webhooks.delete' | transloco }}
+                              </button>
+                            </div>
+                          </ng-template>
+                        </ui-overflow-menu>
                       </span>
                     </li>
                   }
@@ -180,36 +190,30 @@ const ADDRESS_PROBLEMS = {
                       <ui-pill [tone]="a.state === 'confirmed' ? 'done' : 'neutral'">{{
                         stateLabels[a.state] ?? a.state | transloco
                       }}</ui-pill>
-                      <span class="buttons">
-                        @if (a.state === 'pending' || a.state === 'expired') {
-                          <button
-                            uiButton
-                            variant="ghost"
-                            type="button"
-                            [loading]="busy() === 'resend:' + a.id"
-                            [attr.aria-label]="
-                              'notify.addresses.resendLabel' | transloco: { address: a.address }
-                            "
-                            (click)="resend(a)"
-                          >
-                            {{ 'notify.addresses.resend' | transloco }}
-                          </button>
-                        }
-                        @if (a.state !== 'unsubscribed') {
-                          <button
-                            uiButton
-                            variant="ghost"
-                            type="button"
-                            [loading]="busy() === 'remove:' + a.id"
-                            [attr.aria-label]="
-                              'notify.addresses.removeLabel' | transloco: { address: a.address }
-                            "
-                            (click)="removeAddress(a)"
-                          >
-                            {{ 'notify.addresses.remove' | transloco }}
-                          </button>
-                        }
-                      </span>
+                      @if (a.state !== 'unsubscribed') {
+                        <ui-overflow-menu
+                          [name]="a.address"
+                          [busy]="busy() === 'resend:' + a.id || busy() === 'remove:' + a.id"
+                        >
+                          <ng-template>
+                            <div uiMenu>
+                              @if (resendable(a)) {
+                                <button uiMenuItem type="button" (triggered)="resend(a)">
+                                  {{ 'notify.addresses.resend' | transloco }}
+                                </button>
+                              }
+                              <button
+                                uiMenuItem
+                                destructive
+                                type="button"
+                                (triggered)="removeAddress(a)"
+                              >
+                                {{ 'notify.addresses.remove' | transloco }}
+                              </button>
+                            </div>
+                          </ng-template>
+                        </ui-overflow-menu>
+                      }
                     </li>
                   }
                 </ul>
@@ -414,6 +418,10 @@ export class RecipientsPage {
           timeStyle: 'short',
         }).format(new Date(value))
       : '';
+  }
+
+  protected resendable(a: ExternalAddressView): boolean {
+    return a.state === 'pending' || a.state === 'expired';
   }
 
   protected addressLine(a: ExternalAddressView): string {

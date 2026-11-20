@@ -1,17 +1,10 @@
 import { Component, input, output, signal, viewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { LucideChevronRight } from '@lucide/angular';
-import { UiInput, UiPill, UiPriority, UiStatus } from 'ui';
+import { LucideChevronDown, LucideChevronRight } from '@lucide/angular';
+import { UiButton, UiMenu, UiMenuItem, UiMenuTrigger, UiPill, UiPriority, UiStatus } from 'ui';
 import type { FindingView, MemberView } from '../../core/api/client';
-import {
-  isOutcome,
-  num,
-  priorityOf,
-  statusKindOf,
-  SYSTEM_REASON_LABELS,
-  type Outcome,
-} from './action-format';
+import { num, priorityOf, statusKindOf, SYSTEM_REASON_LABELS, type Outcome } from './action-format';
 import { checkLabel } from './answers-format';
 import { FactorTable } from './factor-table';
 import { LearnedNote } from './learned-note';
@@ -30,8 +23,12 @@ export interface FindingChange {
   imports: [
     RouterLink,
     TranslocoPipe,
+    LucideChevronDown,
     LucideChevronRight,
-    UiInput,
+    UiButton,
+    UiMenu,
+    UiMenuItem,
+    UiMenuTrigger,
     UiPill,
     UiPriority,
     UiStatus,
@@ -113,21 +110,36 @@ export interface FindingChange {
               </a>
             }
             @if (canEdit()) {
-              <label class="status">
-                <span class="sr-only">{{
-                  'findings.statusOf' | transloco: { entry: f.entry.key }
-                }}</span>
-                <select uiInput [disabled]="busy()" (change)="choose(f, $event)">
-                  <option value="" selected>{{ 'findings.change' | transloco }}</option>
+              <button
+                uiButton
+                type="button"
+                uiMenuAlign="start"
+                [uiMenuTrigger]="outcomes"
+                [loading]="busy()"
+                [attr.aria-label]="'findings.statusOf' | transloco: { entry: f.entry.key }"
+              >
+                {{ 'findings.change' | transloco }}
+                <svg lucideChevronDown aria-hidden="true"></svg>
+              </button>
+              <ng-template #outcomes>
+                <div uiMenu>
                   @if (isOpen(f)) {
-                    <option value="remediated">{{ 'ui.status.remediated' | transloco }}</option>
-                    <option value="risk_accepted">{{ 'ui.status.accepted' | transloco }}</option>
-                    <option value="not_affected">{{ 'ui.status.notAffected' | transloco }}</option>
+                    <button uiMenuItem type="button" (triggered)="choose(f, 'remediated')">
+                      {{ 'ui.status.remediated' | transloco }}
+                    </button>
+                    <button uiMenuItem type="button" (triggered)="choose(f, 'risk_accepted')">
+                      {{ 'ui.status.accepted' | transloco }}
+                    </button>
+                    <button uiMenuItem type="button" (triggered)="choose(f, 'not_affected')">
+                      {{ 'ui.status.notAffected' | transloco }}
+                    </button>
                   } @else {
-                    <option value="open">{{ 'findings.reopen' | transloco }}</option>
+                    <button uiMenuItem type="button" (triggered)="choose(f, 'open')">
+                      {{ 'findings.reopen' | transloco }}
+                    </button>
                   }
-                </select>
-              </label>
+                </div>
+              </ng-template>
             }
           </div>
           @if (pending()?.id === f.id) {
@@ -222,9 +234,6 @@ export interface FindingChange {
       align-items: center;
       gap: var(--space-sm) var(--space-lg);
     }
-    .status select {
-      width: auto;
-    }
     @media (hover: hover) and (pointer: fine) {
       summary:hover {
         background: var(--raised);
@@ -284,14 +293,11 @@ export class FindingsList {
     return num(f.alertNumber);
   }
 
-  protected choose(f: FindingView, event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    const status = select.value;
-    select.value = '';
+  protected choose(f: FindingView, status: Outcome | 'open'): void {
     if (status === 'open') {
       this.pending.set(null);
       this.outcome.emit({ finding: f, status: 'open', note: null });
-    } else if (isOutcome(status)) {
+    } else {
       this.pending.set({ id: f.id, status });
     }
   }

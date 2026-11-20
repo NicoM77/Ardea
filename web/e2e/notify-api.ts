@@ -194,6 +194,15 @@ export async function notifyApi(
       }
       return route.fulfill({ json: state.endpoints });
     }
+    const endpointMatch = path.match(new RegExp(`^${base}/endpoints/([^/]+)$`));
+    if (endpointMatch && method === 'PUT') {
+      const endpoint = state.endpoints.find((e) => e.id === endpointMatch[1])!;
+      return route.fulfill({ json: { ...endpoint, secret: 'whsec_sample-secret-rotated' } });
+    }
+    if (endpointMatch && method === 'DELETE') {
+      state.endpoints = state.endpoints.filter((e) => e.id !== endpointMatch[1]);
+      return route.fulfill({ status: 204 });
+    }
     const testMatch = path.match(new RegExp(`^${base}/endpoints/([^/]+)/test$`));
     if (testMatch) {
       const endpoint = state.endpoints.find((e) => e.id === testMatch[1])!;

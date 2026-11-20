@@ -9,7 +9,10 @@ import {
   UiField,
   UiInput,
   UiLoader,
+  UiMenu,
+  UiMenuItem,
   UiNotice,
+  UiOverflowMenu,
   UiPasswordToggle,
   UiPill,
 } from 'ui';
@@ -38,7 +41,10 @@ import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
     UiField,
     UiInput,
     UiLoader,
+    UiMenu,
+    UiMenuItem,
     UiNotice,
+    UiOverflowMenu,
     UiPasswordToggle,
     UiPill,
   ],
@@ -93,17 +99,15 @@ import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
                       {{ 'settings.accesses.test' | transloco }}
                     </button>
                     @if (manage()) {
-                      <button
-                        uiButton
-                        variant="ghost"
-                        type="button"
-                        [attr.aria-label]="
-                          'settings.accesses.deleteNamed' | transloco: { name: c.name }
-                        "
-                        (click)="confirming.set(c.id)"
-                      >
-                        {{ 'settings.accesses.delete' | transloco }}
-                      </button>
+                      <ui-overflow-menu #more [name]="c.name">
+                        <ng-template>
+                          <div uiMenu>
+                            <button uiMenuItem destructive type="button" (triggered)="ask(c, more)">
+                              {{ 'settings.accesses.delete' | transloco }}
+                            </button>
+                          </div>
+                        </ng-template>
+                      </ui-overflow-menu>
                     }
                   </div>
                 </div>
@@ -119,12 +123,13 @@ import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
                       <button
                         uiButton
                         type="button"
+                        class="confirm-button"
                         [loading]="busy() === c.id + ':delete'"
                         (click)="remove(c)"
                       >
                         {{ 'settings.accesses.delete' | transloco }}
                       </button>
-                      <button uiButton variant="ghost" type="button" (click)="confirming.set(null)">
+                      <button uiButton variant="ghost" type="button" (click)="cancel()">
                         {{ 'team.cancel' | transloco }}
                       </button>
                     </div>
@@ -291,6 +296,7 @@ export class AccessesCard {
   private readonly api = inject(RepositoryConnectionsService);
   private readonly transloco = inject(TranslocoService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  private opener: UiOverflowMenu | null = null;
 
   protected readonly fieldErrorKey = fieldErrorKey;
   protected readonly nameErrors = {
@@ -397,10 +403,23 @@ export class AccessesCard {
     });
   }
 
+  protected ask(c: ConnectionView, opener: UiOverflowMenu): void {
+    this.opener = opener;
+    this.confirming.set(c.id);
+    setTimeout(() => this.host.querySelector<HTMLElement>('.confirm-button')?.focus());
+  }
+
+  protected cancel(): void {
+    this.confirming.set(null);
+    this.opener?.focus();
+    this.opener = null;
+  }
+
   protected async remove(c: ConnectionView): Promise<void> {
     await this.run(c.id + ':delete', async () => {
       await firstValueFrom(this.api.deleteRepositoryConnection(this.organization().id, c.id));
       this.confirming.set(null);
+      this.opener = null;
       return { key: 'settings.accesses.deleted', params: { name: c.name } };
     });
   }

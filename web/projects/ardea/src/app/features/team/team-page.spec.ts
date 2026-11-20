@@ -75,6 +75,13 @@ describe('TeamPage', () => {
     [...element.querySelectorAll<HTMLButtonElement>('button')].find(
       (b) => b.textContent?.trim() === label,
     );
+  const menus = (element: HTMLElement) => [
+    ...element.querySelectorAll<HTMLButtonElement>('ardea-members-card ui-overflow-menu button'),
+  ];
+  const menuItems = () =>
+    [...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].map((item) =>
+      item.textContent?.trim(),
+    );
 
   it('lets the owner hand ownership on after confirming', async () => {
     const { fixture, http, refresh, element } = await render('owner');
@@ -84,9 +91,11 @@ describe('TeamPage', () => {
     expect(element.querySelectorAll('select[aria-label]').length).toBe(2);
     expect(element.textContent).toContain('new@example.org');
 
-    element
-      .querySelector<HTMLButtonElement>('button[aria-label="en.team.members.transferLabel"]')!
-      .click();
+    expect(menus(element)).toHaveLength(2);
+    menus(element)[0].click();
+    await settle(fixture);
+    expect(menuItems()).toEqual(['en.team.members.transfer', 'en.team.members.remove']);
+    button(document.body, 'en.team.members.transfer')!.click();
     await settle(fixture);
     expect(element.querySelector('.confirm')?.textContent).toContain(
       'en.team.members.confirmTransfer',
@@ -110,8 +119,9 @@ describe('TeamPage', () => {
     http.expectNone(`/api/v1/orgs/${ORG_ID}/invitations`);
     expect(element.querySelector('select')).toBeNull();
     expect(element.querySelector('ardea-invite-card')).toBeNull();
-    expect(button(element, 'en.team.members.leave')).toBeDefined();
-    expect(button(element, 'en.team.members.remove')).toBeUndefined();
+    expect(menus(element)).toHaveLength(1);
+    menus(element)[0].click();
+    expect(menuItems()).toEqual(['en.team.members.leave']);
   });
 
   it('shows the link of an invitation once when the instance sends no e-mail', async () => {

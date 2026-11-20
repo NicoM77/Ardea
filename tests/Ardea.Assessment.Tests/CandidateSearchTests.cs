@@ -106,7 +106,8 @@ public sealed class CandidateSearchTests(PostgresServer server)
 
         Assert.Equal(
             [
-                "Ops\tproduct\tunknown\tuncertain\t2\topen\t-\t-",
+                // Without a version the hit is the notice's (ADR 047); a distribution's package stays unknown and open.
+                "Ops\tproduct\tunknown\tuncertain\t1\tnot_affected\tmoved_to_notice\t-",
                 "Ops\tproduct\tunknown\tuncertain\t2\topen\t-\t-",
                 "Ops\tproduct\tin_range\taffected\t3\topen\t-\t16.4",
                 "Ops\tproduct\tin_range\taffected\t3\topen\t-\t-",

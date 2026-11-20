@@ -105,6 +105,9 @@ public sealed record EntryFacts
     /// <summary>Since when that source reports it, if it says.</summary>
     public DateTimeOffset? ExploitationSince { get; init; }
 
+    /// <summary>CISA lists the entry as a known exploited vulnerability (KEV), by its feed or a CVE record's CISA-ADP container.</summary>
+    public bool InKev { get; init; }
+
     /// <summary><c>high</c> (EPSS above 50 %), <c>low</c>, or <c>null</c> without a value.</summary>
     public string? EpssClass { get; init; }
 

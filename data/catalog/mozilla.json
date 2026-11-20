@@ -8,7 +8,8 @@
       "kind": "other",
       "versionScheme": "numeric",
       "cpe": ["mozilla:firefox", "mozilla:firefox_esr"],
-      "aliases": [{ "vendor": "Mozilla", "names": ["Firefox ESR", "Mozilla Firefox"] }]
+      "aliases": [{ "vendor": "Mozilla", "names": ["Firefox ESR", "Mozilla Firefox"] }],
+      "noisy": true
     },
     {
       "key": "thunderbird",

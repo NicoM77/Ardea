@@ -178,7 +178,8 @@
       "kind": "other",
       "versionScheme": "numeric",
       "cpe": ["microsoft:edge_chromium"],
-      "aliases": [{ "vendor": "Microsoft", "names": ["Edge", "Microsoft Edge (Chromium-based)"] }]
+      "aliases": [{ "vendor": "Microsoft", "names": ["Edge", "Microsoft Edge (Chromium-based)"] }],
+      "noisy": true
     },
     {
       "key": "vscode",

@@ -7,6 +7,7 @@ export * from './authentication/authentication.service';
 export * from './catalog/catalog.service';
 export * from './entries/entries.service';
 export * from './live/live.service';
+export * from './notices/notices.service';
 export * from './notifications/notifications.service';
 export * from './organizations/organizations.service';
 export * from './projects/projects.service';

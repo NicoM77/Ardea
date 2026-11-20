@@ -142,8 +142,9 @@ public sealed class ReviewTests(PostgresServer server)
             new RecordedProviders(("local", true, new RecordedModel(request => Recorded.For("valid.json", request, verdict))))));
 
     /// <summary>
-    /// Two projects with PostgreSQL in an unknown version, one entry of CVSS 8.0 with a public exploit: two findings of
-    /// one alert, both assessed by the model.
+    /// Two projects with PostgreSQL 17.4 from a distribution, whose version the check cannot judge (a component without a
+    /// version would raise a notice instead, ADR 047), one entry of CVSS 8.0 with a public exploit: two findings of one alert,
+    /// both assessed by the model.
     /// </summary>
     private static async Task<(Guid Finding, Guid Other)> TwoUnknownVersionsAsync(AssessmentTestHost host, Guid organization)
     {
@@ -151,7 +152,7 @@ public sealed class ReviewTests(PostgresServer server)
         foreach (var name in new[] { "Shop", "Billing" })
         {
             var project = await host.AddProjectAsync(organization, name);
-            components.Add(await host.AddComponentAsync(organization, project, c => (c.ProductKey, c.Kind) = ("postgresql", "database")));
+            components.Add(await host.AddComponentAsync(organization, project, c => (c.ProductKey, c.Kind, c.Version, c.Packaging) = ("postgresql", "database", "17.4", "distribution")));
             await host.ProfileChangedAsync(organization, project);
         }
 

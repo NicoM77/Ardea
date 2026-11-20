@@ -70,10 +70,19 @@ public sealed class AnswerTests(PostgresServer server)
         await host.RunJobsAsync();
         var entry = await host.AddEntryAsync(new TestEntry("CVE-2026-6100", new TestAffected { ProductKey = "nginx", Introduced = "1.25.0", LastAffected = "1.27.3" })
         {
+            Score = 9.1,
             Solutions = ["Disable the mp4 module until a fixed release is available; see the advisory for the configuration line to remove from every server block that uses it."],
         });
         await host.EntryChangedAsync(entry);
         await host.RunJobsAsync();
+
+        // Without a version the entry raises a notice; «affects us» makes it a reminder (master plan 17.3, ADR 047).
+        await host.InOrganizationAsync(acme, async services =>
+        {
+            var notice = await services.GetRequiredService<AssessDbContext>().Notices.SingleAsync();
+            var answered = await services.GetRequiredService<NoticeCommands>().AnswerAsync(notice.Id, new AnswerNoticeRequest("affects_us", "open"), Guid.CreateVersion7(), CancellationToken.None);
+            Assert.Null(answered.Refusal);
+        });
 
         var answers = await AnswersAsync(host, acme);
         Assert.Null(answers.WhatHappened.Excerpt);

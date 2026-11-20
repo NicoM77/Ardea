@@ -115,6 +115,8 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             e.Property(x => x.Data).HasColumnType("jsonb");
             e.HasIndex(x => new { x.RemediationId, x.At }).HasDatabaseName("ix_assess_event_remediation");
             e.HasIndex(x => x.FindingId).HasDatabaseName("ix_assess_event_finding");
+            // The history of a notice (ADR 047).
+            e.HasIndex(x => new { x.NoticeId, x.At }).HasDatabaseName("ix_assess_event_notice");
             e.HasIndex(x => new { x.OrganizationId, x.At }).HasDatabaseName("ix_assess_event_org_at");
         });
 
@@ -183,9 +185,10 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
         {
             notice.ToTable("notice", t =>
             {
-                t.HasCheckConstraint("ck_notice_state", "state IN ('open', 'affects_us', 'not_affected')");
+                t.HasCheckConstraint("ck_notice_state", "state IN ('open', 'affects_us', 'not_affected', 'withdrawn')");
                 // An answer names who gave it and when (master plan 17.3).
-                t.HasCheckConstraint("ck_notice_decided", "state = 'open' OR (decided_by IS NOT NULL AND decided_at IS NOT NULL)");
+                t.HasCheckConstraint("ck_notice_decided", "state IN ('open', 'withdrawn') OR (decided_by IS NOT NULL AND decided_at IS NOT NULL)");
+                t.HasCheckConstraint("ck_notice_exploitation", "exploitation IN ('none', 'poc', 'active') AND (decided_exploitation IS NULL OR decided_exploitation IN ('none', 'poc', 'active'))");
                 t.HasCheckConstraint("ck_notice_reappeared", "reappeared_reason IS NULL OR reappeared_reason IN ('exploited', 'kev')");
             });
             notice.HasKey(n => n.Id);
@@ -193,10 +196,16 @@ internal sealed class AssessDbContext(DbContextOptions<AssessDbContext> options,
             notice.Property(n => n.EntryKey).HasMaxLength(300);
             notice.Property(n => n.State).HasMaxLength(20);
             notice.Property(n => n.ReappearedReason).HasMaxLength(20);
+            notice.Property(n => n.DecidedExploitation).HasMaxLength(10);
+            notice.Property(n => n.Exploitation).HasMaxLength(10).HasDefaultValue("none");
+            // The list's order (E23): exploited first, then the score, then the newest; computed, so no writer can disagree.
+            notice.Property(n => n.Exploited).HasComputedColumnSql("exploitation = 'active'", stored: true);
+            notice.Property(n => n.ScoreRank).HasComputedColumnSql("coalesce(cvss_score, -1)", stored: true);
             // One notice per organisation and entry (master plan 17.3).
             notice.HasIndex(n => new { n.OrganizationId, n.EntryId }).IsUnique().HasDatabaseName("ux_notice_entry");
-            // The inbox: open notices first, newest first (task 5a.5).
-            notice.HasIndex(n => new { n.OrganizationId, n.State, n.RaisedAt }).HasDatabaseName("ix_notice_list");
+            // The inbox in its order (E23), per state and backfill: new notices, earlier ones, answered, withdrawn (task 5a.5).
+            notice.HasIndex(n => new { n.OrganizationId, n.State, n.IsBackfill, n.Exploited, n.ScoreRank, n.RaisedAt, n.Id })
+                .IsDescending(false, false, false, true, true, true, true).HasDatabaseName("ix_notice_list");
             notice.HasIndex(n => n.RemediationId).HasDatabaseName("ix_notice_remediation");
             notice.HasOne<Remediation>().WithMany().HasForeignKey(n => n.RemediationId).OnDelete(DeleteBehavior.SetNull);
         });

@@ -13,23 +13,29 @@ using Microsoft.EntityFrameworkCore;
 namespace Ardea.Assessment.Assessing;
 
 /// <summary>
-/// What the assessment looks at: every project of the organisation, or one project (the reverse search).
+/// What the assessment looks at: every project of the organisation, one project (the reverse search), or given components.
 /// <see cref="Backfill"/> names the components whose new findings belong to a first fill (master plan 7.7).
 /// </summary>
-internal sealed record AssessmentScope(ProjectProfile? Project, IReadOnlySet<Guid> Backfill, Guid? Component = null)
+internal sealed record AssessmentScope(ProjectProfile? Project, IReadOnlySet<Guid> Backfill, IReadOnlySet<Guid>? Components = null)
 {
     public static readonly AssessmentScope Organization = new(null, new HashSet<Guid>());
 
     public static AssessmentScope ForProject(ProjectProfile project, IReadOnlySet<Guid>? backfill = null) => new(project, backfill ?? new HashSet<Guid>());
 
     /// <summary>One component's finding of the entry, after a person reviewed its assessment (master plan 7.7: «dieser Befund»).</summary>
-    public static AssessmentScope ForComponent(Guid componentId) => new(null, new HashSet<Guid>(), componentId);
+    public static AssessmentScope ForComponent(Guid componentId) => ForComponents(new HashSet<Guid> { componentId });
+
+    /// <summary>The findings of the entry on these components, where a person's answer to a notice placed it (ADR 047).</summary>
+    public static AssessmentScope ForComponents(IReadOnlySet<Guid> componentIds) => new(null, new HashSet<Guid>(), componentIds);
 }
 
 /// <summary>
 /// Computes the findings of one entry in the current organisation (master plan 3.3 <c>AssessAlert</c>,
 /// 7.2, 7.3, 7.6): candidates through the component keys, version check per strong candidate, the level
 /// from the rule set, findings written only where something changed. The same input changes nothing.
+/// A strong hit on a component without an exact version takes the coarse path (master plan 17.1, ADR 047): its finding
+/// stays closed with the reason <c>moved_to_notice</c> at level 1, and the organisation's notice of the entry asks
+/// instead (<see cref="Notices"/>), unless a person's «affects us» opened it.
 /// Runs in the tenant context of the job or request; a transaction-level advisory lock serialises work
 /// on the same alert. The caller brings the actions in step afterwards (<see cref="Remediations"/>).
 /// </summary>
@@ -41,11 +47,15 @@ internal sealed class AlertAssessor(
     RuleSet rules,
     Numbers numbers,
     History history,
+    Notices notices,
     IJobQueue jobs,
     ITenantContext tenant,
     TimeProvider time)
 {
-    /// <summary>The reason of a finding whose open action the migration of ADR 046 turned into a notice.</summary>
+    /// <summary>
+    /// The reason of a finding on a component without an exact version: a notice asks instead (ADR 047). The migration of
+    /// ADR 046 used it first, for the open actions it turned into notices.
+    /// </summary>
     internal const string MovedToNotice = "moved_to_notice";
 
     internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -60,14 +70,10 @@ internal sealed class AlertAssessor(
         await LockAsync(entry.Id, cancellationToken);
 
         var alert = await db.Alerts.SingleOrDefaultAsync(a => a.EntryId == entry.Id, cancellationToken);
+        var only = scope.Components?.ToArray();
         var existing = alert is null ? [] : await db.Findings
-            .Where(f => f.AlertId == alert.Id && (scope.Project == null || f.ProjectId == scope.Project.Id) && (scope.Component == null || f.ComponentId == scope.Component))
+            .Where(f => f.AlertId == alert.Id && (scope.Project == null || f.ProjectId == scope.Project.Id) && (only == null || only.Contains(f.ComponentId)))
             .ToListAsync(cancellationToken);
-
-        // The components an open notice for this entry names (ADR 046): their findings closed by the system stay closed.
-        HashSet<Guid> noticed = existing.Count == 0 ? [] : (await db.Notices.AsNoTracking()
-                .Where(n => n.EntryId == entry.Id && n.State == Notice.Open).Select(n => n.ComponentIds).ToListAsync(cancellationToken))
-            .SelectMany(ids => ids).ToHashSet();
 
         var relevant = entry.Kind == "vulnerability" && entry.State is "published" or "disputed";
         var keys = relevant ? await EntryKeys.ForAsync(entry, catalog, cancellationToken) : null;
@@ -82,7 +88,7 @@ internal sealed class AlertAssessor(
         }
 
         var candidates = keys?.Match(components.Where(c => !c.ProjectArchived), catalogKeys) ?? [];
-        if (scope.Project is null)
+        if (scope.Project is null && scope.Components is null)
         {
             candidates = await WithoutFirstFillAsync(candidates, existing, cancellationToken);
         }
@@ -111,17 +117,42 @@ internal sealed class AlertAssessor(
 
         var byComponent = existing.ToDictionary(f => f.ComponentId);
         var present = components.ToDictionary(c => c.Id);
+        var hit = new HashSet<Guid>();
+        var raising = new HashSet<Guid>();
+        var handed = new HashSet<Guid>();
         foreach (var candidate in candidates)
         {
             byComponent.TryGetValue(candidate.Component.Id, out var known);
-            var outcome = Evaluate(entry, candidate, known, modelVerdicts.GetValueOrDefault(candidate.Component.Id), keys!.Learned(candidate, learnedProducts));
+            var coarse = candidate.IsStrong && NoticeRules.IsCoarse(candidate.Component);
+
+            // A finding the system would close as it moves to the coarse path, while it is open (a reminder) or carries a
+            // person's verdict, always raises the notice: nobody's reminder or verdict disappears without one (E25, ADR 047).
+            var handedOver = coarse && known is { StatusChangedBy: null } && (known.Status == "open" || known.VerdictSource == "human");
+            if (handedOver && known!.StatusReason != MovedToNotice)
+            {
+                // Handed over now: the notice is new, also in a reverse search, so the reminder stays in sight.
+                handed.Add(candidate.Component.Id);
+            }
+
+            var outcome = Evaluate(entry, candidate, known, modelVerdicts.GetValueOrDefault(candidate.Component.Id), keys!.Learned(candidate, learnedProducts), coarse);
             if (byComponent.Remove(candidate.Component.Id, out var finding))
             {
-                Apply(finding, outcome, noticed.Contains(finding.ComponentId), now);
+                Apply(finding, outcome, coarse, now);
             }
             else
             {
-                db.Findings.Add(Create(alert, entry, candidate, outcome, scope.Backfill.Contains(candidate.Component.Id), now));
+                db.Findings.Add(Create(alert, entry, candidate, outcome, scope.Backfill.Contains(candidate.Component.Id), coarse, now));
+            }
+
+            // The coarse path (master plan 17.2, 17.3): the product itself, within the line; then the entry's threshold.
+            if (handedOver || (coarse && LineNarrowing.Keeps(outcome.Statements, NoticeRules.Line(candidate.Component))))
+            {
+                hit.Add(candidate.Component.Id);
+                var noisy = candidate.Component.ProductKey is { } product && (await catalog.FindByKeyAsync(product, cancellationToken))?.Noisy == true;
+                if (handedOver || NoticeRules.Meets(candidate.Component.NoticeThreshold, noisy, entry))
+                {
+                    raising.Add(candidate.Component.Id);
+                }
             }
         }
 
@@ -140,6 +171,10 @@ internal sealed class AlertAssessor(
             .Select(e => e.Entity.ComponentId)
             .ToHashSet();
         await db.SaveChangesAsync(cancellationToken);
+
+        // The notice of the entry, within what this assessment looked at; a reverse search raises quietly (master plan 7.7).
+        var looked = components.Select(c => c.Id).Concat(existing.Select(f => f.ComponentId)).ToHashSet();
+        await notices.UpdateAsync(entry, new CoarseHits(looked, hit, raising, handed, Quiet: scope.Project is not null), cancellationToken);
 
         var findings = await db.Findings.Where(f => f.AlertId == alert.Id).Select(f => new { f.Level, f.Status }).ToListAsync(cancellationToken);
         var level = findings.Count == 0 ? 1 : findings.Max(f => f.Level);
@@ -200,9 +235,9 @@ internal sealed class AlertAssessor(
             return project.Archived ? [.. project.Components.Select(c => c with { ProjectArchived = true })] : project.Components;
         }
 
-        if (scope.Component is { } only)
+        if (scope.Components is { } only)
         {
-            return await profiles.FindComponentsAsync([only], cancellationToken);
+            return await profiles.FindComponentsAsync([.. only], cancellationToken);
         }
 
         var ids = existing.Select(f => f.ComponentId).ToHashSet();
@@ -255,8 +290,12 @@ internal sealed class AlertAssessor(
         return kept;
     }
 
-    /// <summary>Match, version check and rule set for one candidate (master plan 7.2, 7.3, 7.6).</summary>
-    private Outcome Evaluate(EntryFacts entry, Candidate candidate, Finding? known, Estimating.StoredVerdict? modelVerdict, LearnedHit? learned)
+    /// <summary>
+    /// Match, version check and rule set for one candidate (master plan 7.2, 7.3, 7.6). A strong hit on a component without an
+    /// exact version (<paramref name="coarse"/>) is checked without its version: a line is not a release, and narrows the notice
+    /// instead (ADR 047).
+    /// </summary>
+    private Outcome Evaluate(EntryFacts entry, Candidate candidate, Finding? known, Estimating.StoredVerdict? modelVerdict, LearnedHit? learned, bool coarse)
     {
         var evidence = new Dictionary<string, object?>
         {
@@ -269,13 +308,13 @@ internal sealed class AlertAssessor(
             evidence["learned"] = new { productKey = learned.ProductKey, rawKeys = learned.RawKeys };
         }
 
-        var version = candidate.IsStrong ? VersionMatch.Check(candidate.Component, candidate.MatchType, candidate.Affected, schemes, entry.FixVersionsInText) : null;
+        var component = coarse ? candidate.Component with { Version = null } : candidate.Component;
+        var version = candidate.IsStrong ? VersionMatch.Check(component, candidate.MatchType, candidate.Affected, schemes, entry.FixVersionsInText) : null;
         if (version is not null)
         {
             evidence["version"] = version;
         }
 
-        var component = candidate.Component;
         var human = known is { VerdictSource: "human" } ? known.Verdict : null;
 
         // The model's verdict is a factor only where the version check could not decide (master plan 7.5, 7.6;
@@ -330,59 +369,71 @@ internal sealed class AlertAssessor(
         return new Outcome(
             candidate.MatchType, version?.Verdict, version?.Reason, version?.Verdict == VersionVerdicts.InRange ? version.FixedVersion : null,
             verdict, source, result.Level, result.Exclusion, Document(evidence), Document(result),
-            entry.Exploitation, entry.FixAvailable, withoutPerson.Level, Document(withoutPerson));
+            entry.Exploitation, entry.FixAvailable, withoutPerson.Level, Document(withoutPerson), version?.Statements ?? []);
     }
 
-    private static Finding Create(Alert alert, EntryFacts entry, Candidate candidate, Outcome outcome, bool backfill, DateTimeOffset now) => new()
+    private Finding Create(Alert alert, EntryFacts entry, Candidate candidate, Outcome outcome, bool backfill, bool coarse, DateTimeOffset now)
     {
-        Id = Guid.CreateVersion7(),
-        AlertId = alert.Id,
-        EntryId = entry.Id,
-        ProjectId = candidate.Component.ProjectId,
-        ComponentId = candidate.Component.Id,
-        MatchType = outcome.MatchType,
-        VersionVerdict = outcome.VersionVerdict,
-        VersionReason = outcome.VersionReason,
-        FixedVersion = outcome.FixedVersion,
-        Verdict = outcome.Verdict,
-        VerdictSource = outcome.VerdictSource,
-        Level = outcome.Level,
-        Evidence = outcome.Evidence,
-        Factors = outcome.Factors,
-        Exploitation = outcome.Exploitation,
-        FixAvailable = outcome.FixAvailable,
-        Status = outcome.Level >= 2 ? "open" : "not_affected",
-        StatusReason = outcome.Level >= 2 ? null : outcome.ExclusionReason,
-        StatusChangedAt = now,
-        IsBackfill = backfill,
-        CreatedAt = now,
-        ChangedAt = now,
-    };
+        // A coarse hit is the notice's: closed from the start, at level 1 (ADR 047).
+        var (level, factors, status, reason) = coarse ? (1, Routed(outcome), "not_affected", MovedToNotice)
+            : outcome.Level >= 2 ? (outcome.Level, outcome.Factors, "open", null)
+            : (outcome.Level, outcome.Factors, "not_affected", outcome.ExclusionReason);
+        return new Finding
+        {
+            Id = Guid.CreateVersion7(),
+            AlertId = alert.Id,
+            EntryId = entry.Id,
+            ProjectId = candidate.Component.ProjectId,
+            ComponentId = candidate.Component.Id,
+            MatchType = outcome.MatchType,
+            VersionVerdict = outcome.VersionVerdict,
+            VersionReason = outcome.VersionReason,
+            FixedVersion = outcome.FixedVersion,
+            Verdict = outcome.Verdict,
+            VerdictSource = outcome.VerdictSource,
+            Level = level,
+            Evidence = outcome.Evidence,
+            Factors = factors,
+            Exploitation = outcome.Exploitation,
+            FixAvailable = outcome.FixAvailable,
+            Status = status,
+            StatusReason = reason,
+            StatusChangedAt = now,
+            IsBackfill = backfill,
+            CreatedAt = now,
+            ChangedAt = now,
+        };
+    }
+
+    /// <summary>The factors of a coarse hit: level 1, excluded because a notice asks, with the level the rules give it.</summary>
+    private JsonDocument Routed(Outcome outcome) =>
+        Document(new RuleResult { RulesetVersion = rules.Version, Level = 1, Exclusion = MovedToNotice, PreciseLevel = outcome.Level });
 
     /// <summary>Writes a new result into an existing finding, only where it differs.</summary>
     /// <param name="finding">The stored finding.</param>
     /// <param name="outcome">The result of this assessment.</param>
-    /// <param name="noticed">An open notice of the organisation for this entry names the finding's component (ADR 046).</param>
+    /// <param name="coarse">A strong hit on a component without an exact version: the coarse path (ADR 047).</param>
     /// <param name="now">When.</param>
-    private void Apply(Finding finding, Outcome outcome, bool noticed, DateTimeOffset now)
+    private void Apply(Finding finding, Outcome outcome, bool coarse, DateTimeOffset now)
     {
         var installedBefore = finding.Evidence.RootElement.TryGetProperty("installed", out var before) ? before.GetString() : null;
         var installedNow = outcome.Evidence.RootElement.TryGetProperty("installed", out var after) ? after.GetString() : null;
         var personClosed = finding.StatusChangedBy is not null && finding.Status is "remediated" or "risk_accepted" or "not_affected";
 
+        // On the coarse path the notice decides (ADR 047): a finding of the system stays closed with the notice, whatever a
+        // later closing wrote; one a person opened by answering «affects us» stays open, at least at level 2, until a person
+        // closes it; one a person closed stays closed, and only the notice comes back on exploitation (E22).
+        var routed = coarse && finding.StatusChangedBy is null;
+        var personOpened = coarse && finding is { StatusChangedBy: not null, Status: "open" };
+
         // A finding a person closed opens again only when its level rises or the version check says «in range» again (master plan 6.7).
-        string? reopen = !personClosed ? null
+        string? reopen = !personClosed || coarse ? null
             : outcome.ReopenLevel > (finding.ClosedLevel ?? finding.Level) && outcome.ReopenLevel >= 2 ? "level_raised"
             : outcome.VersionVerdict == VersionVerdicts.InRange && finding.ClosedVersionVerdict != VersionVerdicts.InRange && outcome.ReopenLevel >= 2 ? "in_range_again"
             : null;
 
-        // A finding the system closed stays with the open notice that names its component (ADR 046 decision 9), whatever
-        // reason a later closing wrote (archived, no longer matched, withdrawn): while the component has no version and
-        // the entry is not actively exploited (KEV included), as a notice that was answered comes back once on exploitation
-        // (E22). With a version, or exploited, it takes the precise path again. Task 5a.3 routes every coarse component.
-        var withNotice = noticed && finding is { StatusChangedBy: null } && finding.Status != "open"
-            && string.IsNullOrWhiteSpace(installedNow) && outcome.Exploitation != "active";
-        var (level, factors) = withNotice ? (1, Document(new RuleResult { RulesetVersion = rules.Version, Level = 1, Exclusion = MovedToNotice }))
+        var (level, factors) = routed ? (1, Routed(outcome))
+            : personOpened ? (Math.Max(outcome.Level, 2), outcome.Factors)
             : reopen is null ? (outcome.Level, outcome.Factors)
             : (outcome.ReopenLevel, outcome.ReopenFactors);
 
@@ -407,9 +458,14 @@ internal sealed class AlertAssessor(
             finding.ChangedAt = now;
         }
 
-        if (withNotice)
+        if (routed)
         {
             SetStatus(finding, "not_affected", MovedToNotice, now);
+            return;
+        }
+
+        if (personOpened)
+        {
             return;
         }
 
@@ -479,5 +535,6 @@ internal sealed class AlertAssessor(
     /// <summary>The result for one finding.</summary>
     private sealed record Outcome(
         string MatchType, string? VersionVerdict, string? VersionReason, string? FixedVersion, string Verdict, string VerdictSource, int Level, string? ExclusionReason,
-        JsonDocument Evidence, JsonDocument Factors, string Exploitation, bool FixAvailable, int ReopenLevel, JsonDocument ReopenFactors);
+        JsonDocument Evidence, JsonDocument Factors, string Exploitation, bool FixAvailable, int ReopenLevel, JsonDocument ReopenFactors,
+        IReadOnlyList<VersionStatement> Statements);
 }

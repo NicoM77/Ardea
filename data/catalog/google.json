@@ -74,7 +74,8 @@
       "kind": "other",
       "versionScheme": "numeric",
       "cpe": ["google:chrome"],
-      "aliases": [{ "vendor": "Google", "names": ["Chrome"] }]
+      "aliases": [{ "vendor": "Google", "names": ["Chrome"] }],
+      "noisy": true
     }
   ]
 }

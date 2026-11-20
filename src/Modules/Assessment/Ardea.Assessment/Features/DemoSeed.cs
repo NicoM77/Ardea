@@ -8,8 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Ardea.Assessment.Features;
 
 /// <summary>
-/// The work of the demo's people on the actions the pipeline raised (<c>ardea seed-demo</c>, task 7.6), done through the
-/// commands the endpoints use: notes on two open actions and one action closed as not affected. Actions stay open or
+/// The work of the demo's people on the actions and notices the pipeline raised (<c>ardea seed-demo</c>, tasks 7.6 and 5a.3),
+/// done through the commands the endpoints use: notes on two open actions, one action closed as not affected, and two of the
+/// stack's notices answered. Actions stay open or
 /// done; nobody is assigned, no deadline is set by hand and nothing is put in review, because phase 5a removes these.
 /// The history and the notifications the steps cause are the real ones. An action the rules did not raise is skipped.
 /// </summary>
@@ -45,7 +46,32 @@ internal sealed class DemoSeed : IDemoSeedStep
             done++;
         }
 
-        context.Report($"{done} steps of work on {numbers.Count} actions");
+        // The stack's notices (task 5a.3): one «doesn't affect us», one «affects us» on the stack entry; the rest stay new.
+        var notices = await OpenNoticesAsync(context, cancellationToken);
+        var answered = 0;
+        if (notices.TryGetValue("CVE-2026-116304", out var postgresNotice))
+        {
+            await ActAsync<NoticeCommands>(context, "lea", async (commands, user) => Check(await commands.AnswerAsync(
+                postgresNotice, new AnswerNoticeRequest(Notice.NotAffected, Notice.Open), user, cancellationToken)), cancellationToken);
+            answered++;
+        }
+
+        if (notices.TryGetValue("CVE-2026-114952", out var mysqlNotice))
+        {
+            await ActAsync<NoticeCommands>(context, "marc", async (commands, user) => Check(await commands.AnswerAsync(
+                mysqlNotice, new AnswerNoticeRequest(Notice.AffectsUs, Notice.Open), user, cancellationToken)), cancellationToken);
+            answered++;
+        }
+
+        context.Report($"{done} steps of work on {numbers.Count} actions; {answered} of {notices.Count} notices answered");
+    }
+
+    /// <summary>The open notices by their entry's key.</summary>
+    private static async Task<Dictionary<string, Guid>> OpenNoticesAsync(DemoSeedContext context, CancellationToken cancellationToken)
+    {
+        await using var scope = context.CreateScope(context.OrganizationId, context.Members["nina"].UserId);
+        return await scope.ServiceProvider.GetRequiredService<AssessDbContext>().Notices.AsNoTracking()
+            .Where(n => n.State == Notice.Open).ToDictionaryAsync(n => n.EntryKey, n => n.Id, StringComparer.Ordinal, cancellationToken);
     }
 
     /// <summary>The numbers of the open actions by the component's product key; the first where several components share one.</summary>
@@ -63,12 +89,16 @@ internal sealed class DemoSeed : IDemoSeedStep
     }
 
     /// <summary>One unit of work as one person, committed when the work is done.</summary>
-    private static async Task ActAsync(DemoSeedContext context, string person, Func<ActionCommands, Guid, Task> work, CancellationToken cancellationToken)
+    private static Task ActAsync(DemoSeedContext context, string person, Func<ActionCommands, Guid, Task> work, CancellationToken cancellationToken) =>
+        ActAsync<ActionCommands>(context, person, work, cancellationToken);
+
+    private static async Task ActAsync<TCommands>(DemoSeedContext context, string person, Func<TCommands, Guid, Task> work, CancellationToken cancellationToken)
+        where TCommands : notnull
     {
         var user = context.Members[person].UserId;
         await using var scope = context.CreateScope(context.OrganizationId, user);
         var services = scope.ServiceProvider;
-        await work(services.GetRequiredService<ActionCommands>(), user);
+        await work(services.GetRequiredService<TCommands>(), user);
         await services.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
     }
 

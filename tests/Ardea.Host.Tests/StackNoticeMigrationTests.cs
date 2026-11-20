@@ -15,8 +15,8 @@ namespace Ardea.Host.Tests;
 /// </summary>
 public sealed class StackNoticeMigrationTests(PostgresServer server)
 {
-    /// <summary>The migrations of task 5a.2; the state before them is the old state.</summary>
-    private static readonly string[] Added = ["_StackAndPrecision", "_NoticesAndOpenOrDone", "_WithoutAssignment"];
+    /// <summary>The migrations of tasks 5a.2 and 5a.3; the state before them is the old state.</summary>
+    private static readonly string[] Added = ["_StackAndPrecision", "_NoticesAndOpenOrDone", "_WithoutAssignment", "_NoisyProducts", "_NoticeGeneration"];
 
     [Fact]
     public async Task Open_actions_without_a_version_become_notices_and_everything_else_stays()
@@ -55,7 +55,7 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
                 ('01900000-0000-7000-8000-000000000025', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000010', 'dotnet', NULL, 'runtime', '10.0', 'unknown', 'none', 'repository', NULL, now(), now()),
                 ('01900000-0000-7000-8000-000000000026', '01900000-0000-7000-8000-000000000001', '01900000-0000-7000-8000-000000000010', NULL, 'lodash', 'library', '4.17', 'upstream', 'none', 'repository', 'pkg:npm/lodash@4.17', now(), now());
             INSERT INTO intel.security_entry (id, kind, primary_key, state, changed_at, revision, material_fingerprint, remediation_fingerprint, exploitation, fix_available, cwe_ids, authority_warning, provenance) VALUES
-                ('01900000-0000-7000-8000-000000000031', 'vulnerability', 'CVE-2026-0031', 'published', now(), 1, 'm', 'r', 'none', false, '{}', false, '{}'),
+                ('01900000-0000-7000-8000-000000000031', 'vulnerability', 'CVE-2026-0031', 'published', now(), 1, 'm', 'r', 'poc', false, '{}', false, '{}'),
                 ('01900000-0000-7000-8000-000000000032', 'vulnerability', 'CVE-2026-0032', 'published', now(), 1, 'm', 'r', 'none', false, '{}', false, '{}'),
                 ('01900000-0000-7000-8000-000000000033', 'vulnerability', 'CVE-2026-0033', 'published', now(), 1, 'm', 'r', 'none', false, '{}', false, '{}');
             INSERT INTO assess.alert (id, organization_id, entry_id, entry_key, number, level, assessed_entry_revision, created_at, changed_at) VALUES
@@ -100,6 +100,10 @@ public sealed class StackNoticeMigrationTests(PostgresServer server)
                 SELECT string_agg(entry_key || ' ' || state || ' ' || (SELECT array_agg(c ORDER BY c) FROM unnest(component_ids) c)::text || ' ' || to_char(raised_at AT TIME ZONE 'UTC', 'YYYY-MM-DD'), '; ' ORDER BY entry_key)
                 FROM assess.notice WHERE decided_at IS NULL AND remediation_id IS NULL
                 """, ct));
+
+        // They carry their entry's exploitation for the order of the list (task 5a.3, ADR 047).
+        Assert.Equal("CVE-2026-0031 poc, CVE-2026-0032 none", await ScalarAsync<string>(owner,
+            "SELECT string_agg(entry_key || ' ' || exploitation, ', ' ORDER BY entry_key) FROM assess.notice", ct));
 
         // Their actions closed saying so; their findings too, at level 1, and both histories say it.
         Assert.Equal("4 closed moved_to_notice 0, 5 closed moved_to_notice 0, 6 closed risk_accepted 0, 7 open - 1", await ScalarAsync<string>(owner,

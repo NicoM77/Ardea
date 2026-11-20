@@ -21,6 +21,7 @@ internal static class ProductRows
         PlatformKey = row.PlatformKey,
         RelatedKeys = row.RelatedKeys,
         ImageNames = row.ImageNames,
+        Noisy = row.Noisy,
         Origin = row.Origin == ProductRow.Learned ? ProductOrigin.Learned : ProductOrigin.Curated,
         State = Enum.TryParse<ProductState>(row.State, ignoreCase: true, out var state) ? state : ProductState.Pending,
     };
@@ -44,6 +45,7 @@ internal static class ProductRows
         row.PlatformKey = product.PlatformKey;
         SetIfDifferent(row.RelatedKeys, [.. product.RelatedKeys], v => row.RelatedKeys = v);
         SetIfDifferent(row.ImageNames, [.. product.ImageNames], v => row.ImageNames = v);
+        row.Noisy = product.Noisy;
         row.Origin = ProductRow.Curated;
         row.State = ProductRow.Active;
     }

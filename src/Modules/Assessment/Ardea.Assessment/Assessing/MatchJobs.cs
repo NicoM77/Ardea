@@ -99,6 +99,7 @@ internal sealed class MatchProjectHandler(
     AlertAssessor assessor,
     Remediations remediations,
     History history,
+    Notices notices,
     TimeProvider time)
     : IJobHandler<MatchProject>
 {
@@ -136,6 +137,14 @@ internal sealed class MatchProjectHandler(
         }
 
         await remediations.SyncAsync(touched, actor: null, cancellationToken);
+
+        // Notices a reverse search raises, for a stack entry added or changed, are one summary, not one event each (ADR 047).
+        if (notices.QuietlyRaised.Count > 0)
+        {
+            history.Add(EventKinds.NoticeBackfilled, new { notices = notices.QuietlyRaised.Count }, project: project.Id);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
         if (backfill.Count == 0)
         {
             return;

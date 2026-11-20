@@ -141,6 +141,10 @@ namespace Ardea.Catalog.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
+                    b.Property<bool>("Noisy")
+                        .HasColumnType("boolean")
+                        .HasColumnName("noisy");
+
                     b.Property<string>("Origin")
                         .IsRequired()
                         .HasMaxLength(10)

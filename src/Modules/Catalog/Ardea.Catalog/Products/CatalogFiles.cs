@@ -128,6 +128,7 @@ internal static class CatalogFiles
             PlatformKey = entry.Platform,
             RelatedKeys = entry.Related ?? [],
             ImageNames = entry.Images ?? [],
+            Noisy = entry.Noisy,
         };
     }
 
@@ -165,6 +166,9 @@ internal static class CatalogFiles
         public List<string>? Related { get; set; }
 
         public List<string>? Images { get; set; }
+
+        /// <summary>Notices only for exploited entries (ADR 044 decision 3).</summary>
+        public bool Noisy { get; set; }
     }
 
     private sealed class AliasEntry

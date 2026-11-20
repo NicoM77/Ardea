@@ -94,6 +94,13 @@ internal sealed record RuleResult
     /// model counted. The threshold for asking the model again and the floor of 7.6 compare against it.
     /// </summary>
     public int? LevelWithoutModel { get; init; }
+
+    /// <summary>
+    /// For a hit on a component without an exact version, which a notice asks about instead of a finding (exclusion
+    /// <c>moved_to_notice</c>, ADR 047): the level the rules give the hit as they would on the precise path. Kept for the
+    /// explanation and the reference set (master plan 7.9); the finding itself stays at level 1.
+    /// </summary>
+    public int? PreciseLevel { get; init; }
 }
 
 /// <summary>

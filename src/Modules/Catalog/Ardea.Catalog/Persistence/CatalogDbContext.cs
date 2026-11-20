@@ -37,6 +37,9 @@ internal sealed class ProductRow
 
     public string[] ImageNames { get; set; } = [];
 
+    /// <summary>Curated: a product whose notices need active exploitation or an authority warning (ADR 044 decision 3).</summary>
+    public bool Noisy { get; set; }
+
     /// <summary><c>curated</c> or <c>learned</c>.</summary>
     public required string Origin { get; set; }
 

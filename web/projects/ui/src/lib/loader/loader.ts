@@ -28,7 +28,7 @@ const LINES = [
 ] as const;
 
 /**
- * The loader (DESIGN.md, Components, Loader; variant Draw from docs/design/loader): the heron draws
+ * The loader (DESIGN.md, Components, Loader; variant Draw, kept at the tag archive/planning-and-design): the heron draws
  * itself from the beak to the feet, the front line 90ms behind, then crest and eye appear; it holds
  * and the line leaves the way it came, 2.4s per cycle. Ink only.
  *

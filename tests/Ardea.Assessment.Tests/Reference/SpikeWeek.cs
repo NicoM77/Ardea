@@ -5,7 +5,7 @@ using Ardea.Intel.Sources.Abstractions;
 namespace Ardea.Assessment.Tests.Reference;
 
 /// <summary>
-/// The spike week as a test dataset (task 3.7; <c>prototypes/relevance-funnel</c>): every CVE record that
+/// The spike week as a test dataset (task 3.7; the planning spike at tag <c>archive/planning-and-design</c>): every CVE record that
 /// appeared or changed from 11 to 17 November 2026, newest state each, and the three example projects of
 /// the requirements. Their versions are the ones installed before that week's security updates, the
 /// situation the spike asks about: what does one week bring to an organisation that was up to date.

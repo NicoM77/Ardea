@@ -1,5 +1,5 @@
 /* Ardea design tokens.
-   Source: docs/design/mockups/app.css and DESIGN.md. This file is the only place in web/ that holds
+   Source: DESIGN.md (first drawn in static mockups, kept at the tag archive/planning-and-design). This file is the only place in web/ that holds
    colour values; components use these custom properties and nothing else (scripts/check-tokens.mjs).
    Light theme only (DESIGN.md: "Don't build a dark theme"). */
 

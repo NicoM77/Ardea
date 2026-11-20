@@ -1,58 +1,18 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { LucidePause, LucidePlay, LucideRefreshCw } from '@lucide/angular';
-import { firstValueFrom } from 'rxjs';
-import { UiButton, UiLoader, UiNotice } from 'ui';
+import { UiLoader } from 'ui';
 import {
   listQuarantineResource,
   listSourceRunsResource,
-  SourcesService,
   type SourceStatus,
 } from '../../core/api/client';
-import { problemMessageKey } from '../../core/api/problem';
 import { webUrl } from '../entries/entry-detail-format';
 import { count } from './source-format';
 
 @Component({
   selector: 'ardea-source-admin',
-  imports: [TranslocoPipe, LucidePause, LucidePlay, LucideRefreshCw, UiButton, UiLoader, UiNotice],
+  imports: [TranslocoPipe, UiLoader],
   template: `
-    <div class="actions">
-      <button
-        uiButton
-        type="button"
-        [loading]="busy() === 'sync'"
-        [disabled]="!source().enabled"
-        (click)="syncNow()"
-      >
-        <svg lucideRefreshCw aria-hidden="true"></svg>
-        {{ 'sources.admin.syncNow' | transloco }}
-      </button>
-      <button
-        uiButton
-        variant="ghost"
-        type="button"
-        [loading]="busy() === 'toggle'"
-        (click)="toggle()"
-      >
-        @if (source().enabled) {
-          <svg lucidePause aria-hidden="true"></svg>
-          {{ 'sources.admin.pause' | transloco }}
-        } @else {
-          <svg lucidePlay aria-hidden="true"></svg>
-          {{ 'sources.admin.resume' | transloco }}
-        }
-      </button>
-    </div>
-    <div class="live" role="status">
-      @if (done()) {
-        <ui-notice tone="success">{{ done() | transloco }}</ui-notice>
-      }
-    </div>
-    @if (problem()) {
-      <ui-notice tone="error">{{ problem() | transloco }}</ui-notice>
-    }
-
     <h4>{{ 'sources.admin.runs' | transloco }}</h4>
     @if (runs.hasValue() && runs.value(); as list) {
       @if (list.length) {
@@ -139,19 +99,13 @@ import { count } from './source-format';
       gap: var(--space-md);
       min-width: 0;
     }
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-sm);
-    }
-    .live:empty {
-      display: none;
-    }
     h4 {
-      margin-top: var(--space-sm);
       font-size: var(--fs-body);
       line-height: var(--lh-body);
       font-weight: 600;
+    }
+    h4:not(:first-child) {
+      margin-top: var(--space-sm);
     }
     .muted {
       color: var(--muted);
@@ -205,9 +159,7 @@ import { count } from './source-format';
 })
 export class SourceAdmin {
   readonly source = input.required<SourceStatus>();
-  readonly changed = output();
 
-  private readonly api = inject(SourcesService);
   private readonly transloco = inject(TranslocoService);
 
   private readonly key = computed(() => this.source().key);
@@ -215,48 +167,8 @@ export class SourceAdmin {
   protected readonly runs = listSourceRunsResource(this.key, this.limit);
   protected readonly quarantine = listQuarantineResource(this.key, signal({ limit: 50 }));
 
-  protected readonly busy = signal<'sync' | 'toggle' | null>(null);
-  protected readonly done = signal<string | null>(null);
-  protected readonly problem = signal<string | null>(null);
   protected readonly number = count;
   protected readonly web = webUrl;
-
-  protected async syncNow(): Promise<void> {
-    await this.run('sync', async () => {
-      await firstValueFrom(this.api.syncSource(this.source().key));
-      return 'sources.admin.syncRequested';
-    });
-  }
-
-  protected async toggle(): Promise<void> {
-    const enabled = !this.source().enabled;
-    await this.run('toggle', async () => {
-      await firstValueFrom(
-        this.api.updateSource(this.source().key, { enabled, intervalMinutes: null }),
-      );
-      return enabled ? 'sources.admin.resumed' : 'sources.admin.paused';
-    });
-  }
-
-  private async run(kind: 'sync' | 'toggle', action: () => Promise<string>): Promise<void> {
-    this.busy.set(kind);
-    this.done.set(null);
-    this.problem.set(null);
-    try {
-      this.done.set(await action());
-      this.changed.emit();
-      this.runs.reload();
-    } catch (error) {
-      this.problem.set(
-        problemMessageKey(error, {
-          codes: { source_disabled: 'sources.admin.disabled', not_found: 'sources.admin.gone' },
-          fallback: 'sources.admin.failed',
-        }),
-      );
-    } finally {
-      this.busy.set(null);
-    }
-  }
 
   protected outcomeLabel(outcome: string): string {
     const labels: Record<string, string> = {

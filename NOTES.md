@@ -1,6 +1,6 @@
 # NOTES: Arbeitsstand und Wissen ausserhalb des Repositorys
 
-Stand: 20.11.2026, ca. 05:30 UTC. Phase 5a abgeschlossen; Phase 7 ohne Eigentümer weitgehend erledigt.
+Stand: 20.11.2026, ca. 06:30 UTC. Alles ohne Eigentümer Machbare ist gemergt (main 18c43ad); kein Agent läuft.
 Umsetzung weiss und was nicht schon im Repository steht (README, Masterplan, ADR, Abnahmen, PR-Texte,
 Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 
@@ -15,7 +15,7 @@ Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 | #84 (5a.1, ADR 044), #86 (7.10 Teil 1), #87 (#85 TOTP einmalig, ADR 045), #88, #89 (5a.2, ADR 046), #90, #91 (Mockups 5a.5) | gemergt; #87 und #89 unabhängig geprüft (je 1 Blocker bzw. 4 Should-fix, behoben); main-Lauf zu #86 grün, zu #89 läuft | — |
 | #92 (5a.4), #93 (5a.3, ADR 047), #94 (5a.5), #95 (Doku 5a, 6.7 ✅), #97 (7.10 Teil 2), #98 (7.4, Tag `archive/planning-and-design`) | gemergt, jeweils unabhängig geprüft (ausser Doku/Tests) und lokal kombiniert geprüft; **CI gesperrt (Billing)** | — |
 | #96 (5a.6, ADR 048), #99 (Abnahme 5a), #101/#103/#105/#110 (7.5), #104 (7.10 ✅), #106 (7.7), #108 (7.8), #109 (#102, ADR 049), #112 (7.9 Bau, nicht veröffentlicht) | gemergt, lokal kombiniert geprüft | — |
-| #111 (#107 seed-demo deterministisch) | Determinismus-Test fiel im vollen Iam-Lauf 2/2 (Reminder-Nummer 10 vs 11 unter Last); Agent sucht die Ursache | erst mergen, wenn der Test unter Last stabil ist |
+| #111 (#107) | gemergt: seed-demo deterministisch; `JobStore.ClaimAsync` liefert geclaimte Jobs in priority/run_at/id-Reihenfolge (RETURNING behielt die Reihenfolge nicht) | — |
 | **Rest braucht den Eigentümer** | 7.1 (Branch-Schutz, Dependabot, CodeQL, Beschreibung/Topics), 7.2/7.3 (release-please, Images, cosign), 7.9 Veröffentlichung (Pages für privates Repo, Actions), 7.13 (CI auf PRs), 7.14 (Branches, Einstellung «auto-delete»), danach 7.11 Abnahme auf Release-Images und 7.12 Masterplan löschen; 6.2/6.3 Personen; 6.4/6.8 eigene Instanz | |
 | Phase 5a | neu seit #80 (Kapitel 17). **Eigentümer-Entscheid 19.11.: 5a vor Phase 7.** 5a.1 ✅, 5a.2 ✅; **Release-Sperre: kein Release/Upgrade zwischen 5a.2 und 5a.5** (ADR 046 Entscheid 13). 5a.3 (`feat/notices`, ADR 0047) und 5a.4 (`feat/stack-wizard`) laufen als Agents | dann 5a.5 (Seiten, Mockups in #91), 5a.6 |
 | Phase 6 | 6.1, 6.5, 6.6 ✅; 6.4/6.8 brauchen die eigene Instanz; 6.2, 6.3 brauchen Menschen; 6.7 offen nur wegen `SECURITY.md`-Zuordnung (README-Absatz) | |
@@ -169,6 +169,8 @@ Die meisten stehen in `docs/acceptance/phase-*.md`; hier alle an einem Ort:
 
 
 ## 8. Lokale Reste
+
+- `.claude/worktrees/agent-a178f361aa5d345d7/site` und `agent-abba53403c95645aa/web`: Reste, die beim Aufräumen von einem laufenden Prozess belegt waren; Worktrees sind abgemeldet, Ordner später löschen.
 
 - `<scratchpad>/wt-combined` (Branch `check/combined`, nur lokal) und `<scratchpad>/wt-notes` (dieser Branch):
   Prüf-Worktrees, nach Gebrauch löschen (`git worktree remove --force …`, `git branch -D check/combined`).

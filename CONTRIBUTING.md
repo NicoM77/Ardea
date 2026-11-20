@@ -36,9 +36,9 @@ check:comments` in `web/`), so strings and URLs are never mistaken for comments.
 
 Checked: C# in `src/`, `tests/` and `build/`; SQL comments (`--`, `/* */`) in SQL inside C# string literals (an
 argument of a method whose name contains `Sql`, or a raw or verbatim literal that starts with a statement keyword);
-shell scripts (`*.sh`); TypeScript and JavaScript in `web/`, `tests/e2e/` and `build/`; HTML templates, also inline
-`template:`; CSS and SCSS, also inline `styles:`. Not checked: configuration and data (YAML, JSON, MSBuild files, `Dockerfile`, `Caddyfile`,
-`.editorconfig`), Markdown, and the Python scripts.
+shell scripts (`*.sh`); TypeScript and JavaScript in `web/`, `site/`, `tests/e2e/` and `build/`; HTML templates, also inline
+`template:`; CSS and SCSS, also inline `styles:`, in `web/` and `site/`. Not checked: configuration and data (YAML, JSON, MSBuild files, `Dockerfile`, `Caddyfile`,
+`.editorconfig`), Markdown, Astro components (`site/src/**/*.astro`), and the Python scripts.
 
 Exceptions, and nothing else:
 
@@ -83,6 +83,10 @@ tools read. Migrations and generated code are left out. Tests against the databa
 | Script | What it does |
 | --- | --- |
 | `build/check-comments.sh [--fix]` | Comments outside the exceptions (see «Comments»): the C# tool, then the web part. |
+| `npm run build` (in `site/`) | The website: copies the pages from `docs/`, `SECURITY.md`, `CONTRIBUTING.md` and the API reference from `openapi/ardea.v1.json` into Astro with Starlight and builds `site/dist/`; a link from those pages to a file that does not exist fails it. Sources and publishing in [`site/README.md`](site/README.md). |
+| `npm run check:links` (in `site/`) | Every internal link and anchor of the built site, landing page and API reference included. |
+| `npm run check:a11y` (in `site/`) | axe (WCAG 2.2 AA tags) with Playwright on the landing page, every documentation page and a sample of API operations; runs in the Playwright image like the web app's checks (command in `site/README.md`). |
+| `npm run check:licenses` (in `site/`) | The web app's licence check (`web/scripts/check-licenses.mjs`) on the website's production packages; exceptions with reasons in `site/license-exceptions.json`. |
 | `npm run check:unused` (in `web/`) | [knip](https://knip.dev) (ISC): unused files, exports, types and dependencies of the web app; configuration in `web/knip.json`. Translation keys nobody uses fail `npm run check:i18n`. |
 | `build/check-licenses.sh` | Licence gate for every direct and transitive NuGet package (allow-list in `build/licenses/`). |
 | `build/coverage.sh <TestProject> [<include filter> …]` | Line and branch coverage of one test project (see «Measuring coverage»). |

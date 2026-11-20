@@ -115,7 +115,7 @@ import { Topbar } from './topbar';
     .content {
       max-width: var(--content-max);
       margin: 0 auto;
-      animation: shell-content-in 260ms var(--ease-out) both;
+      animation: shell-content-in 260ms var(--ease-out) backwards;
       view-transition-name: content;
     }
     .skip-link {

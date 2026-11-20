@@ -20,7 +20,8 @@
     "@fontsource/ibm-plex-mono": "5.3.0",
     "@fontsource/ibm-plex-sans": "5.3.0",
     "astro": "7.4.13",
-    "starlight-openapi": "0.27.1"
+    "starlight-openapi": "0.27.1",
+    "ultrahtml": "1.7.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
@@ -28,6 +29,8 @@
     "license-checker-rseidelsohn": "5.0.1"
   },
   "overrides": {
-    "form-data": "4.0.6"
+    "form-data": "4.0.6",
+    "minimatch": "^11.0.2",
+    "glob": "^14.0.2"
   }
 }

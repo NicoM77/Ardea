@@ -2,6 +2,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ELEMENT_NODE, parse, walkSync } from 'ultrahtml';
 import { base } from '../site.config.mjs';
 
 const dist = fileURLToPath(new URL('../dist', import.meta.url));
@@ -17,13 +18,47 @@ function pages(dir) {
   });
 }
 
-const ids = new Map();
-function idsOf(file) {
-  if (!ids.has(file)) {
-    const html = readFileSync(file, 'utf8');
-    ids.set(file, new Set([...html.matchAll(/\s(?:id|name)="([^"]+)"/g)].map((match) => match[1])));
+const rawText = new Set(['script', 'style', 'template', 'noscript']);
+function insideRawText(node) {
+  for (let parent = node.parent; parent; parent = parent.parent) {
+    if (parent.type === ELEMENT_NODE && rawText.has(parent.name.toLowerCase())) {
+      return true;
+    }
   }
-  return ids.get(file);
+  return false;
+}
+
+const parsed = new Map();
+function read(file) {
+  if (!parsed.has(file)) {
+    const ids = new Set();
+    const links = [];
+    walkSync(parse(readFileSync(file, 'utf8')), (node) => {
+      if (node.type !== ELEMENT_NODE || insideRawText(node)) {
+        return;
+      }
+      const attributes = node.attributes ?? {};
+      for (const key of ['id', 'name']) {
+        if (attributes[key]) {
+          ids.add(attributes[key]);
+        }
+      }
+      for (const key of ['href', 'src']) {
+        if (key in attributes) {
+          links.push(attributes[key]);
+        }
+      }
+      if (attributes.srcset) {
+        links.push(...attributes.srcset.split(',').map((part) => part.trim().split(/\s+/)[0]));
+      }
+    });
+    parsed.set(file, { ids, links });
+  }
+  return parsed.get(file);
+}
+
+function idsOf(file) {
+  return read(file).ids;
 }
 
 function fileFor(pathname) {
@@ -39,12 +74,8 @@ const files = pages(dist);
 const broken = [];
 let checked = 0;
 for (const file of files) {
-  const html = readFileSync(file, 'utf8').replace(/<script\b[\s\S]*?<\/script>/g, '');
   const page = new URL(`http://site${base}/${relative(dist, file).replaceAll('\\', '/').replace(/index\.html$/, '')}`);
-  const links = [
-    ...[...html.matchAll(/\s(?:href|src)="([^"]*)"/g)].map((match) => match[1]),
-    ...[...html.matchAll(/\ssrcset="([^"]*)"/g)].flatMap((match) => match[1].split(',').map((part) => part.trim().split(/\s+/)[0])),
-  ];
+  const { links } = read(file);
   for (const raw of links) {
     const link = raw.replaceAll('&amp;', '&');
     if (link === '' || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(link)) {

@@ -157,7 +157,6 @@ public sealed class StateAndFilterTests(PostgresServer server)
     private static async Task DigestAsync(NotifyTestHost host)
     {
         var due = await host.ScalarAsync<DateTime>("SELECT min(next_digest_at) FROM notify.rule_target WHERE mode = 'digest'");
-        // The real clock may already be past the digest time (the test host starts at UtcNow): only move forward.
         var dueAt = new DateTimeOffset(DateTime.SpecifyKind(due, DateTimeKind.Utc));
         if (dueAt > host.Time.GetUtcNow())
         {

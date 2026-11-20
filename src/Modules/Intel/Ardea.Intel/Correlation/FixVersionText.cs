@@ -6,6 +6,8 @@ internal static partial class FixVersionText
 {
     private const int MaxVersions = 20;
 
+    private const int TimeoutMilliseconds = 1000;
+
     private const string Version = @"v?(\d+(?:\.\d+)+(?:(?:[-+~][0-9A-Za-z]+|[A-Za-z][0-9A-Za-z]*)(?:\.[0-9A-Za-z]+)*)?)(?!\.?[0-9A-Za-z*])";
 
     private const string MoreVersions =
@@ -51,21 +53,21 @@ internal static partial class FixVersionText
         @"\b(?:fixed in|fixes? (?:it|this|the issue) in|upgrade to|upgrading to|update to|updating to|patched in|resolved in|addressed in|before|prior to|earlier than)\s+(?:(?:the\s+)?(?:version|release)s?\s+)?"
             + Version + MoreVersions,
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-        matchTimeoutMilliseconds: 100)]
+        matchTimeoutMilliseconds: TimeoutMilliseconds)]
     private static partial Regex FixWord();
 
     [GeneratedRegex(
         @"\b(?:upgrade|update|upgrading|updating)\s+to\s+(?:[A-Za-z][\w.-]*\s+){1,4}?(?:version|release)s?\s+" + Version + MoreVersions,
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-        matchTimeoutMilliseconds: 100)]
+        matchTimeoutMilliseconds: TimeoutMilliseconds)]
     private static partial Regex UpgradeToProduct();
 
     [GeneratedRegex(
         @"\b(?:upgrade|update)\s+(?:[A-Za-z][\w.-]*\s+){1,4}?to\s+(?:(?:the\s+)?(?:version|release)s?\s+)?" + Version + MoreVersions,
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-        matchTimeoutMilliseconds: 100)]
+        matchTimeoutMilliseconds: TimeoutMilliseconds)]
     private static partial Regex UpgradeProductTo();
 
-    [GeneratedRegex(Version, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 100)]
+    [GeneratedRegex(Version, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: TimeoutMilliseconds)]
     private static partial Regex ListedVersion();
 }

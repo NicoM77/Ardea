@@ -334,13 +334,17 @@ Acceptance (planned): every pull request runs the pipeline again and branch prot
 
 ## After 1.0
 
-In this order (master plan, chapter 14):
+In this order, because this is the order in which they help:
 
-1. **First source wave:** generic CSAF reader, OSV for distributions and further ecosystems (RubyGems, crates.io, GitHub Actions), ENISA EUVD and the other sources of wave 1 in chapter 5.6.
-2. **More ways into the profile:** GitHub App with webhooks, SBOM upload (CycloneDX, SPDX), more lock files; then GitLab and Azure DevOps.
-3. **German** in the UI and in messages.
-4. **Templates for Teams and Slack** on the webhook channel (escalation in steps is dropped: reminders remind by level, chapter 17.5).
-5. **Passkeys and OIDC sign-in;** API tokens.
-6. **Products from free text** via a language model; corrections as context; weights per organisation.
-7. **Capacitor app,** once the push relay is decided.
-8. **30 to 50 sources;** reports and export; per-project permissions; master key rotation; pause on suspicious mass changes from a source.
+1. **First source wave.** A generic CSAF reader and OSV for distributions (Debian and others) and further ecosystems (RubyGems, crates.io, GitHub Actions), with the version schemes they need; GitHub Advisory Database; NVD for CPE enrichment; CISA CSAF; CERT-Bund; Microsoft; Red Hat; Ubuntu; Kubernetes; CERT-FR; ENISA EUVD as an alias and exploitation signal. Distribution data turns today's «unknown» for distribution packages into a real version check.
+2. **More ways into the profile:** GitHub App with webhooks, SBOM upload (CycloneDX, SPDX), more lock files; then GitLab and Azure DevOps behind the same repository interface.
+3. **German** in the interface and in messages.
+4. **Templates for Teams and Slack** on the webhook channel, and quiet hours. There is no escalation: open reminders remind by level ([ADR 048](docs/adr/0048-notice-raised-and-reminders-by-level.md)).
+5. **Passkeys and OIDC sign-in;** API tokens; exporting and deleting an organisation from the interface.
+6. **Products from free text** found by a language model; people's corrections as context for later assessments; rule-set weights per organisation.
+7. **Capacitor app** for phones, once the push relay is decided: a relay that sees no content and can be run by the operator.
+8. **30 to 50 sources** through further waves of authorities and vendors (CSAF, RSS and Atom feeds); reports and export; bulk actions; permissions per project; master key rotation; pausing a source that suddenly changes many records.
+
+Later, without an order: Bitbucket and an agent for installed packages; learned product mappings shared across organisations; comparing several models; native push through the relay and ntfy; French and Italian; SCIM; a Helm chart and backup helpers; high availability; partitioning raw records by month and a read replica for search when the data grows.
+
+Platform upgrades stay on schedule: .NET 10 is supported until November 2028 and moves to the next LTS release in the first half of 2028; Angular follows its major versions with `ng update`; PostgreSQL major upgrades are a documented step with a backup.

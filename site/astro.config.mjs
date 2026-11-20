@@ -84,6 +84,8 @@ export default defineConfig({
           label: 'Architecture',
           items: [
             { label: 'Overview', slug: 'architecture' },
+            { label: 'Data model', slug: 'architecture/data-model' },
+            { label: 'Rule set and levels', slug: 'architecture/rule-set' },
             { label: 'Decision records', slug: 'adr' },
             { label: 'All decisions', collapsed: true, items: [{ autogenerate: { directory: 'adr' } }] },
           ],
@@ -93,6 +95,7 @@ export default defineConfig({
           label: 'Security',
           items: [
             { label: 'Security policy', slug: 'security' },
+            { label: 'Security model', slug: 'security/security-model' },
             { label: 'Threat review', slug: 'security/threat-review' },
           ],
         },

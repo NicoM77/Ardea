@@ -1,6 +1,31 @@
 # Contributing to Ardea
 
-The rules below summarise chapter 13 of the [master plan](docs/masterplan/13-repository-und-richtlinien.md).
+How Ardea is developed: the repository, the workflow and the rules for code, dependencies, tests and releases. How the
+program is built is in the [architecture](docs/architecture.md); how to build and run it locally is under
+«Development» in the [README](README.md#development).
+
+## Repository layout
+
+| Path | What it holds |
+| --- | --- |
+| `src/Hosts/Ardea.Host` | The one program: the roles `api`, `worker`, `migrate`, the helpers and the maintenance commands |
+| `src/BuildingBlocks` | `Ardea.SharedKernel` (identifiers, results, base types), `Ardea.Platform` (jobs, schedules, tenant context, unit of work, audit, settings, secrets, telemetry), `Ardea.Ai` (language model providers) |
+| `src/Modules/<Module>` | `Ardea.<Module>` and `Ardea.<Module>.Contracts` for Iam, Catalog, Assets, Intel, Assessment and Notifications |
+| `src/Sources` | The provider SDK (`Ardea.Intel.Sources.Abstractions`, Apache-2.0), shared format readers (`Ardea.Intel.Sources.Formats`) and one project per source or source family |
+| `web/` | The Angular workspace: the application (`projects/ardea`) and the component library (`projects/ui`) |
+| `data/` | Master data shipped in the image: the catalogue (`catalog/`), the rule set (`rules/`) and the reference set (`reference/`) |
+| `tests/` | `Ardea.<Module>.Tests` per module, `Ardea.Architecture.Tests` (module boundaries), `Ardea.Sources.Tests` (adapters against recorded answers), `Ardea.Host.Tests`, `Ardea.Platform.Tests`, shared helpers in `Ardea.TestSupport`, and the end-to-end flows in `e2e/` |
+| `deploy/` | `Dockerfile`, `compose.yaml` with the Caddy variant, and the development Compose file |
+| `build/` | Checks and scripts (see «Scripts»), the licence allow-list |
+| `openapi/` | The committed OpenAPI document; a test keeps it equal to the code |
+| `docs/` | Architecture, decision records (`adr/`), operation (`operations/`), security, acceptance records, brand and screenshots |
+| `site/` | The website, built from `docs/` ([`site/README.md`](site/README.md)) |
+| `tools/` | Scripts that select and rebuild the reference set |
+
+## Language
+
+Code, identifiers, commits, issues, pull requests and documentation are in English. The interface is English first;
+other languages are translations through translation keys.
 
 ## Workflow
 
@@ -21,21 +46,47 @@ The rules below summarise chapter 13 of the [master plan](docs/masterplan/13-rep
   reads `main`'s history by date and stops at the last release, so a branch commit written before the last release
   but merged after it is found only through the merge commit's subject. The body must not hold a second Conventional
   Commit; a breaking change takes the `!` in the title.
-- Decisions with lasting impact get an ADR in `docs/adr/`: context, decision, alternatives, consequences.
+- Decisions with lasting impact get an ADR in `docs/adr/`: context, decision, alternatives, consequences. Short,
+  dated and numbered.
 - Vertical slices: a feature is finished through every layer before the next one starts. Nothing is built in advance.
+
+### Done means
+
+- The task's acceptance criteria are met and shown: by a fast test where possible, otherwise by an observation
+  recorded once during development.
+- Every pipeline stays within its limit (see «Pipelines»).
+- No new finding in build, lint, analyzers, the licence check or the accessibility check.
+- Migrations are forward-compatible, master data is up to date.
+- The interface is complete in English, every state is there, and it works with the keyboard.
+- Documentation and, where concerned, an ADR are updated.
+- The new path has telemetry.
 
 ## Code
 
 - `Nullable` and `TreatWarningsAsErrors` are on; formatting follows `.editorconfig` (`dotnet format`). Unused code
   fails the build: unused usings, private members, fields, parameters and assignments, and unreachable code
   (IDE0005, IDE0051, IDE0052, IDE0059, IDE0060, CA1823, IDE0035, CS0162).
+- Central package management (`Directory.Packages.props`) with lock files; the SDK is pinned in `global.json`.
 - Types of a module are `internal`. Only the module entry point (`*Module`) is public; whatever other modules
   may use lives in the module's `Contracts` assembly. The architecture tests enforce this.
-- A module uses another module only through its `Contracts`. Allowed directions are in master plan 3.2.
+- A module uses another module only through its `Contracts`. The allowed directions are in
+  [Rules between modules](docs/architecture.md#rules-between-modules).
 - Domain logic does not depend on EF Core, HTTP or the clock; time comes from `TimeProvider`.
 - Asynchronous all the way, with a `CancellationToken` passed into every I/O call.
 - Logging through generated log methods with fixed event ids; never profile contents or secrets.
 - No mediator, no object mapper: endpoints call handlers directly, mappings are written in code.
+- Migrations go forward only and change the schema compatibly: first extend, remove what is no longer used one
+  version later, so the previous build keeps running against the new schema during an upgrade.
+
+### Web app
+
+- TypeScript in strict mode; standalone components, signals, no zone.js.
+- The API client is generated from the OpenAPI document by orval and never edited by hand; CI checks that it
+  matches the document.
+- Colours, spacing and type only through the design tokens of [`DESIGN.md`](DESIGN.md); no colour values in
+  components (`npm run check:tokens`).
+- Every component brings its states: default, hover, focus, disabled, loading, error, empty.
+- Every text goes through a translation key (`npm run check:i18n`).
 
 ### Comments
 
@@ -66,6 +117,8 @@ A new dependency needs a reason in its pull request. Its licence must be on the 
 `build/licenses/allowed-licenses.json` (MIT, Apache-2.0, BSD-2/3-Clause, ISC, PostgreSQL, MPL-2.0, OFL-1.1).
 Excluded because they are commercial or impose conditions on operators: MediatR, AutoMapper, MassTransit 9+,
 FluentAssertions 8+, ImageSharp, Duende IdentityServer, TickerQ, PrimeNG 22+, Verify 33+ (snapshot tests; build-time maintenance-fee check).
+«Free for open-source projects» is not enough: such a clause covers the repository, not the organisation that runs
+Ardea.
 
 ## Tests
 
@@ -73,7 +126,28 @@ Every pipeline runs in 15 to at most 25 minutes. Many fast unit tests, few tests
 a handful of end-to-end tests for the core flows. No long-running and no scheduled tests.
 
 A test checks a rule or a defect that can be named, and its name says which. It sits at the lowest level where
-the statement is possible. There is no coverage quota.
+the statement is possible: what a unit test can show is not checked again through the interface. There is no
+coverage quota, and no tests for mappings without logic or for the behaviour of frameworks and libraries. A defect
+found in operation becomes a test, with the raw record that caused it, before it is fixed.
+
+| Level | What | Tools |
+| --- | --- | --- |
+| Unit | Version comparison, product keys, precedence rules, the rule set with caps and floors, fingerprints, reminders, notification state, reconciling repository components, merging entries; in the web app the logic and states of components | xUnit v3, Vitest |
+| Adapters | Every source adapter against recorded real answers; the GitHub connection, every lock-file reader and detection rule against real files and SBOMs; output compared as a snapshot | xUnit v3, own snapshot comparison, no network |
+| Reference set | Matching and levels against the labelled pairs in `data/reference/`, rules only, with the thresholds as acceptance ([Rule set and levels](docs/architecture/rule-set.md#measuring-the-rules)) | xUnit v3 against the real pipeline |
+| Integration | Only what the real database shows: idempotence of the job chain, retries and leases, the shared transaction, tenant isolation, migrations | Testcontainers, one PostgreSQL server per run |
+| Architecture and contract | Module boundaries; the OpenAPI document equals the code; a cross-tenant test for every organisation endpoint | ArchUnitNET, own tests |
+| Web flows | The core flows of the web app against a mock API, the pages under the production CSP with axe, and the visual comparison of the component library | Playwright, axe |
+| End to end | Flows against a real instance started from the image as an operator does (`tests/e2e/run.sh`); today the first sign-in with setup token, password and TOTP | Playwright |
+
+A new end-to-end test needs a reason in its pull request and, in doubt, replaces an existing one. Nothing runs
+outside a pipeline: no load tests, no long runs, no nightly or scheduled runs, no runs against real sources or real
+language models. What cannot be a fast test is not kept as a test: acceptance criteria about time and volume are
+observed once and recorded; a source that changes its structure shows in operation (quarantine and empty fetches mark
+it degraded); the quality of a language model shows as the correction rate in operation.
+
+Before a release two short passes stay manual: the core flows with keyboard and screen reader, and Web Push on an
+installed web app on iOS.
 
 ### Measuring coverage
 
@@ -89,10 +163,25 @@ build/coverage.sh Ardea.Iam.Tests        # every Ardea assembly the tests load
 The report for the uncovered lines is `artifacts/coverage/<TestProject>.cobertura.xml`, which IDEs and report
 tools read. Migrations and generated code are left out. Tests against the database need Docker, as for `dotnet test`.
 
+## Pipelines
+
+| Pipeline | What | Target | Limit |
+| --- | --- | --- | --- |
+| Pull request | build, format, lint, comments, licences, all tests, the web flows under CSP, end to end, image for `amd64` with a smoke test | 15 minutes | 25 minutes |
+| `main` | the same, plus the visual comparison and the `arm64` image | 20 minutes | 25 minutes |
+| Release | images for both architectures, signed, with SBOM and notes | 20 minutes | 25 minutes |
+
+The jobs run side by side, with dependencies and build layers from the cache. The `arm64` image is cross-compiled, not
+emulated. Integration tests share one PostgreSQL server per run and create databases in it instead of starting
+servers. A pipeline over its limit is a defect to fix by tightening, moving or removing tests; the limit is not
+raised.
+
 ## Releases
 
 Releases are made by [release-please](https://github.com/googleapis/release-please) in
 `.github/workflows/release.yml` ([ADR 050](docs/adr/0050-releases-with-release-please-and-signed-images.md)).
+Versions follow Semantic Versioning. A major version is needed for a break in the API `v1`, in the environment
+variables, or in stored data without an automatic migration; before 1.0 such a break raises the minor version.
 
 **Before the first release (owner, repository settings):**
 

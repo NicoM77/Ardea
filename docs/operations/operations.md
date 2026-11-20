@@ -58,8 +58,9 @@ What an operator should know:
   What it finds is raised quietly: the notices are listed under *Earlier*, apart from the new ones, with one summary
   line in the history. A stack of ten entries can bring a few dozen of them at once. Only entries that arrive
   afterwards are new.
-- **Noisy products.** For products the catalogue marks as noisy (Google Chrome, Microsoft Edge, Mozilla Firefox) even
-  the threshold «Everything» raises a notice only for active exploitation or an authority's warning. Marking more is a
+- **Noisy products.** For products the catalogue marks as noisy (Google Chrome, Microsoft Edge, Mozilla Firefox) the
+  threshold «Only important» raises a notice only for active exploitation or an authority's warning; «Everything»
+  still raises one for every hit ([ADR 044](../adr/0044-notices-per-week-and-thresholds.md)). Marking more is a
   curated catalogue change.
 - **Recomputing.** `ardea intel recompute` and `ardea assess recompute` ([Maintenance commands](#maintenance-commands))
   also update the notices; there is no separate command.

@@ -6,7 +6,7 @@ namespace Ardea.Catalog.Products;
 
 internal sealed class CatalogIndex
 {
-    private static readonly TimeSpan PatternTimeout = TimeSpan.FromMilliseconds(50);
+    private static readonly TimeSpan PatternTimeout = TimeSpan.FromSeconds(1);
 
     private readonly Dictionary<string, CatalogProduct> _byKey = new(StringComparer.Ordinal);
     private readonly Dictionary<CpePair, CatalogProduct> _byCpe = [];

@@ -43,7 +43,7 @@ five calls per action in seven days, retries included (ADR 037 decision 7).
   answers. Ardea's prompt `estimate-1` has not been tried with a model, and `operations.md` says the recommended
   models have not been measured against the reference set. The correction rate in the administration's AI table will
   show the quality in operation.
-- **Review the AI mockups and screens** (E15): `docs/design/mockups/remediation.html?ai` against the built screens.
+- **Review the AI mockups and screens** (E15): [`docs/design/mockups/remediation.html?ai`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/design/mockups/remediation.html) against the built screens.
   Deviations are listed in PR #67: the action page shows the assessment of the action's lead alert only, the budget
   line has no «x of 5 automatic assessments in 7 days», «Assess again» is on the alert page, and the correction form
   adds an optional expected priority. The «Catalogue that learns» card on *Sources* (PR #71) has no mockup of its own.

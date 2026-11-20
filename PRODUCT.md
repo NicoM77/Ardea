@@ -76,7 +76,7 @@ Later instruction, stated by the owner on 2026-11-18 after reviewing the system-
 ## Evidence on Hand
 
 - Real CVE records from the CVE Program (record format 5.2), fetched 2026-11-18, including CISA SSVC and KEV data embedded in them. They may be used as demonstration content.
-- Measurements from the planning spike in `prototypes/relevance-funnel/`: one week of CVE data (6 432 published records) reduced to 173 structured candidates for three example projects.
+- Measurements from the planning spike in [`prototypes/relevance-funnel/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/prototypes/relevance-funnel): one week of CVE data (6 432 published records) reduced to 173 structured candidates for three example projects.
 - No customers, testimonials, usage numbers, benchmarks, or pricing exist. Sample organizations, people, and project names in mockups are fictional and must be recognisable as sample data.
 
 ## Product Principles

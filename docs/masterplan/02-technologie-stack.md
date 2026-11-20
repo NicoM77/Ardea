@@ -1,6 +1,6 @@
 # 2 · Technologie-Stack
 
-Versionen und Lizenzen sind am 18.11.2026 gegen Primärquellen geprüft. Die vollständigen Recherchen mit Quellenangaben liegen unter [`docs/research/`](../research/); was dort als ungeprüft markiert ist, steht in Abschnitt 2.8.
+Versionen und Lizenzen sind am 18.11.2026 gegen Primärquellen geprüft. Die vollständigen Recherchen mit Quellenangaben liegen unter [`docs/research/`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/research); was dort als ungeprüft markiert ist, steht in Abschnitt 2.8.
 
 ## 2.1 Überblick
 

@@ -1,6 +1,6 @@
 # 5 · Quellen und Synchronisation
 
-Die Endpunkte in diesem Kapitel wurden am 18.11.2026 abgerufen, soweit nichts anderes vermerkt ist. Die Tabellen mit Adressen, Antwortcodes und Hinweisen zu den Bedingungen stehen in [`docs/research/2026-11-18-source-catalogue.md`](../research/2026-11-18-source-catalogue.md). Drei Einschränkungen gelten für das ganze Kapitel: Die Recherche wurde vor ihrer Zusammenfassung beendet, die Einordnung in Familien und Wellen stammt deshalb aus diesem Plan. Lizenz- und Nutzungsbedingungen sind bei rund der Hälfte der späteren Quellen nicht geprüft (5.6). Und dokumentierte Limits wie die der NVD sind übernommen, nicht nachgemessen.
+Die Endpunkte in diesem Kapitel wurden am 18.11.2026 abgerufen, soweit nichts anderes vermerkt ist. Die Tabellen mit Adressen, Antwortcodes und Hinweisen zu den Bedingungen stehen in [`docs/research/2026-11-18-source-catalogue.md`](https://github.com/NicoM77/Ardea/tree/archive/planning-and-design/docs/research/2026-11-18-source-catalogue.md). Drei Einschränkungen gelten für das ganze Kapitel: Die Recherche wurde vor ihrer Zusammenfassung beendet, die Einordnung in Familien und Wellen stammt deshalb aus diesem Plan. Lizenz- und Nutzungsbedingungen sind bei rund der Hälfte der späteren Quellen nicht geprüft (5.6). Und dokumentierte Limits wie die der NVD sind übernommen, nicht nachgemessen.
 
 ## 5.1 Zielbild
 

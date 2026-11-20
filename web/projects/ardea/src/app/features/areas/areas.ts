@@ -1,21 +1,9 @@
 import { Routes } from '@angular/router';
-import {
-  LucideBell,
-  LucideFolder,
-  LucideLayers,
-  LucideLayoutGrid,
-  LucideListChecks,
-  LucideRadioTower,
-  LucideServerCog,
-  LucideShieldExclamationPoint,
-  LucideSlidersHorizontal,
-  LucideUsers,
-  type LucideIconData,
-} from '@lucide/angular';
 
 export type AreaId =
   | 'overview'
-  | 'actions'
+  | 'notices'
+  | 'reminders'
   | 'vulnerabilities'
   | 'projects'
   | 'stack'
@@ -25,13 +13,15 @@ export type AreaId =
   | 'settings'
   | 'administration';
 
-/** A destination in the navigation (master plan 11.4) with what its page says while it is empty. */
+/**
+ * A destination in the navigation (master plan 11.4) with what its page says while it is empty. Its icon
+ * is in the area icons module: this file is read at start-up (the routes), the icons only with the shell.
+ */
 export interface Area {
   id: AreaId;
   /** Below `/o/:slug`, or absolute for instance-wide areas. */
   path: string;
   label: string;
-  icon: LucideIconData;
   emptyHeading?: string;
   emptyText?: string;
   /** Main list or the group at the foot of the sidebar. */
@@ -43,14 +33,20 @@ export const AREAS: readonly Area[] = [
     id: 'overview',
     path: 'overview',
     label: 'nav.overview',
-    icon: LucideLayoutGrid.icon,
     group: 'main',
   },
   {
-    id: 'actions',
-    path: 'actions',
-    label: 'nav.actions',
-    icon: LucideListChecks.icon,
+    // The inbox «could affect you» of the stack (master plan 17.7, task 5a.5); its count is the queue.
+    id: 'notices',
+    path: 'notices',
+    label: 'nav.notices',
+    group: 'main',
+  },
+  {
+    // Reminders without owner or deadline (master plan 17.5); code and API keep «action» (ADR 046).
+    id: 'reminders',
+    path: 'reminders',
+    label: 'nav.reminders',
     group: 'main',
   },
   {
@@ -58,14 +54,12 @@ export const AREAS: readonly Area[] = [
     // Every consolidated entry, the same for all organizations (master plan 10.2): instance-wide.
     path: '/entries',
     label: 'nav.vulnerabilities',
-    icon: LucideShieldExclamationPoint.icon,
     group: 'main',
   },
   {
     id: 'projects',
     path: 'projects',
     label: 'nav.projects',
-    icon: LucideFolder.icon,
     group: 'main',
   },
   {
@@ -73,14 +67,12 @@ export const AREAS: readonly Area[] = [
     id: 'stack',
     path: 'stack',
     label: 'nav.stack',
-    icon: LucideLayers.icon,
     group: 'main',
   },
   {
     id: 'sources',
     path: '/sources',
     label: 'nav.sources',
-    icon: LucideRadioTower.icon,
     emptyHeading: 'areas.sources.emptyHeading',
     emptyText: 'areas.sources.emptyText',
     group: 'main',
@@ -89,21 +81,18 @@ export const AREAS: readonly Area[] = [
     id: 'rules',
     path: 'notification-rules',
     label: 'nav.rules',
-    icon: LucideBell.icon,
     group: 'main',
   },
   {
     id: 'team',
     path: 'team',
     label: 'nav.team',
-    icon: LucideUsers.icon,
     group: 'foot',
   },
   {
     id: 'settings',
     path: 'settings',
     label: 'nav.settings',
-    icon: LucideSlidersHorizontal.icon,
     group: 'foot',
   },
 ];
@@ -113,7 +102,6 @@ export const ADMINISTRATION: Area = {
   id: 'administration',
   path: '/admin',
   label: 'nav.administration',
-  icon: LucideServerCog.icon,
   group: 'foot',
 };
 

@@ -100,7 +100,7 @@ function formatWhen(lang: string, value: string): string {
       <ul class="rows">
         @for (p of projects(); track p.id) {
           <li>
-            <a routerLink="../actions" [queryParams]="{ project: p.id }">
+            <a routerLink="../reminders" [queryParams]="{ project: p.id }">
               <span class="main"
                 ><b>{{ p.name }}</b></span
               >

@@ -28,7 +28,13 @@ const PAGES: { path: string; signedIn: boolean; title: string; heading: string }
     heading: 'Join Example Org',
   },
   { path: '/o/example/overview', signedIn: true, title: 'Overview · Ardea', heading: 'Overview' },
-  { path: '/o/example/actions', signedIn: true, title: 'Actions · Ardea', heading: 'Actions' },
+  { path: '/o/example/notices', signedIn: true, title: 'Notices · Ardea', heading: 'Notices' },
+  {
+    path: '/o/example/reminders',
+    signedIn: true,
+    title: 'Reminders · Ardea',
+    heading: 'Reminders',
+  },
   { path: '/o/example/team', signedIn: true, title: 'Team · Ardea', heading: 'Team' },
   { path: '/o/example/projects', signedIn: true, title: 'Projects · Ardea', heading: 'Projects' },
   {

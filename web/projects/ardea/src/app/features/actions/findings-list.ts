@@ -48,7 +48,7 @@ export interface FindingChange {
   ],
   template: `
     @for (f of findings(); track f.id; let first = $first) {
-      <details class="finding" [open]="first || waiting(f)">
+      <details class="finding" [open]="(first && openFirst()) || waiting(f)">
         <summary>
           <ui-priority [level]="priority(f.levelName)" />
           <span class="title">
@@ -262,6 +262,8 @@ export class FindingsList {
   readonly busy = input(false);
   /** The organization's members, to name who reviewed an assessment. */
   readonly members = input<readonly MemberView[]>([]);
+  /** The first finding opens by itself; the reminder keeps factors collapsed (master plan 17.7). */
+  readonly openFirst = input(true);
   readonly outcome = output<FindingChange>();
   readonly review = output<ReviewChange>();
 

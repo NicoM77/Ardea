@@ -2,6 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LucideDynamicIcon } from '@lucide/angular';
 import { UiEmptyState, UiPageHeader } from 'ui';
+import { AREA_ICONS } from './area-icons';
 import { AreaId, areaById } from './areas';
 
 /**
@@ -14,7 +15,7 @@ import { AreaId, areaById } from './areas';
   template: `
     <ui-page-header [heading]="def().label | transloco" />
     <ui-empty-state [heading]="def().emptyHeading | transloco">
-      <svg uiEmptyIcon [lucideIcon]="def().icon" aria-hidden="true"></svg>
+      <svg uiEmptyIcon [lucideIcon]="icons[def().id]" aria-hidden="true"></svg>
       {{ def().emptyText | transloco }}
     </ui-empty-state>
   `,
@@ -23,4 +24,5 @@ export class AreaPage {
   /** From the route's data. */
   readonly area = input.required<AreaId>();
   protected readonly def = computed(() => areaById(this.area()));
+  protected readonly icons = AREA_ICONS;
 }

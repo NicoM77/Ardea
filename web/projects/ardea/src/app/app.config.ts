@@ -18,7 +18,6 @@ import {
   withViewTransitions,
 } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
-import { provideLucideConfig } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
 import { routes } from './app.routes';
 import { apiBaseUrlInterceptor } from './core/http/api-base-url.interceptor';
@@ -44,8 +43,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([apiBaseUrlInterceptor, sessionExpiredInterceptor]),
     ),
     provideTranslations(),
-    // Icons: 1.6px line drawings on a 24px grid, shown at 16px (DESIGN.md, Shapes)
-    provideLucideConfig({ size: 16, strokeWidth: 1.6 }),
+    // Icons: provided by the layouts (core/icons.ts), so the icon set is not part of start-up.
     provideAppInitializer(() => {
       // Start reading the session at once: it tells the guards who is signed in and sets the
       // XSRF-TOKEN cookie before the first write. A failure is not fatal; the guards show it.

@@ -1,5 +1,6 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ICON_CONFIG } from '../core/icons';
 
 /**
  * Frame of the component library pages. Development only and never shipped, so its own labels
@@ -8,6 +9,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
  */
 @Component({
   selector: 'ardea-showcase-layout',
+  providers: [ICON_CONFIG],
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
   encapsulation: ViewEncapsulation.None,
   template: `

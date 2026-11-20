@@ -40,7 +40,9 @@
   },
   "nav": {
     "overview": "Overview",
-    "actions": "Actions",
+    "notices": "Notices",
+    "noticesNew": "{count} new",
+    "reminders": "Reminders",
     "vulnerabilities": "Vulnerabilities",
     "projects": "Projects",
     "stack": "Stack",
@@ -53,11 +55,11 @@
   "areas": {
     "overview": {
       "emptyHeading": "Nothing to triage yet",
-      "emptyText": "Once sources are synced and a project describes what it runs, open actions and what to do about them appear here."
+      "emptyText": "Once sources are synced and a project describes what it runs, open reminders and what to do about them appear here."
     },
     "actions": {
-      "emptyHeading": "No open actions",
-      "emptyText": "An action appears when a vulnerability affects a component of one of your projects."
+      "emptyHeading": "No open reminders",
+      "emptyText": "A reminder appears when a vulnerability affects a component of one of your projects, or when a notice is answered “Affects us”."
     },
     "sources": {
       "emptyHeading": "No source has reported yet",
@@ -185,7 +187,7 @@
       "notFound": "This provider is no longer configured.",
       "quality": {
         "title": "How people judged the model",
-        "intro": "Per model and prompt version: how many of its verdicts people confirmed or corrected on the action and alert pages. The share of corrections among the reviewed shows how far to trust it.",
+        "intro": "Per model and prompt version: how many of its verdicts people confirmed or corrected on the reminder and alert pages. The share of corrections among the reviewed shows how far to trust it.",
         "loadFailed": "The figures could not be loaded.",
         "none": "No assessment by a model yet.",
         "prompt": "Prompt",
@@ -648,7 +650,7 @@
   "organizations": {
     "create": {
       "title": "Create organization",
-      "lead": "An organization holds your projects, actions and team. You become its owner.",
+      "lead": "An organization holds your projects, reminders and team. You become its owner.",
       "name": "Name",
       "nameHint": "Your company, team or project, as members know it.",
       "slug": "Address",
@@ -677,8 +679,8 @@
     "roleHints": {
       "owner": "Everything an admin can do, and hands ownership on.",
       "admin": "Invites members, changes roles and sets rules and the two-factor requirement.",
-      "member": "Works on actions and projects: sets status and adds notes.",
-      "viewer": "Reads actions, projects and the overview, and changes nothing."
+      "member": "Works on notices, reminders and projects: answers notices, sets status and adds notes.",
+      "viewer": "Reads notices, reminders, projects and the overview, and changes nothing."
     },
     "members": {
       "title": "Members",
@@ -930,11 +932,11 @@
       "queued": "{name} is read again in a moment.",
       "remove": "Remove",
       "removeNamed": "Remove {name}",
-      "confirmRemove": "Remove {name}? Its packages and the platforms it confirmed leave the project, and their actions close.",
+      "confirmRemove": "Remove {name}? Its packages and the platforms it confirmed leave the project, and their reminders close.",
       "removed": "{name} no longer feeds the project.",
       "failingSince": "Since {when}; the project keeps the last good state.",
       "shrinkHeading": "A new commit lists far fewer packages: held back",
-      "shrinkText": "More than half would go, and their actions with them. Often a lock file was removed or the dependency graph was switched off. Ardea keeps the current state until the new one is confirmed.",
+      "shrinkText": "More than half would go, and their reminders with them. Often a lock file was removed or the dependency graph was switched off. Ardea keeps the current state until the new one is confirmed.",
       "none": "No repository feeds this project. Add one and Ardea keeps its packages up to date.",
       "loading": "Loading repositories",
       "loadFailed": "The repositories could not be loaded.",
@@ -1043,7 +1045,7 @@
       "productTitle": "The product itself",
       "product": "An entry covers the product, not what is built on it: .NET says nothing about NuGet packages, WordPress nothing about plugins. Connect a repository to a project for those.",
       "versionTitle": "Version",
-      "version": "A line such as “17” narrows notices to that line. An exact version such as “17.9” is checked like a project, with findings and actions instead of notices."
+      "version": "A line such as “17” narrows notices to that line. An exact version such as “17.9” is checked like a project, with findings and reminders instead of notices."
     },
     "toast": {
       "added": "Added {name}.",
@@ -1302,9 +1304,9 @@
     }
   },
   "actions": {
-    "title": "Actions",
-    "loading": "Loading the actions",
-    "loadFailed": "The actions could not be loaded.",
+    "title": "Reminders",
+    "loading": "Loading the reminders",
+    "loadFailed": "The reminders could not be loaded.",
     "tryAgain": "Try again",
     "more": "Show more",
     "name": {
@@ -1330,45 +1332,45 @@
     },
     "table": {
       "priority": "Priority",
-      "action": "Action",
+      "action": "Reminder",
       "status": "Status",
       "since": "Since",
-      "closedOn": "Closed"
+      "closedOn": "Done"
     },
     "filters": {
       "view": "Show",
       "priority": "Filter by priority",
       "project": "Project",
       "allProjects": "All projects",
-      "search": "Search actions",
+      "search": "Search reminders",
       "searchHint": "Component, CVE or project"
     },
     "view": {
       "open": "Open",
-      "closed": "Closed"
+      "closed": "Done"
     },
     "summary": {
       "open": "{more, select, yes {More than } other {}}{count} open. {critical} critical.",
-      "closed": "{more, select, yes {More than } other {}}{count} closed.",
-      "matchOpen": "{count, plural, =0 {No open action matches.} one {# open action matches.} other {# open actions match.}}",
-      "matchClosed": "{count, plural, =0 {No closed action matches.} one {# closed action matches.} other {# closed actions match.}}"
+      "closed": "{more, select, yes {More than } other {}}{count} done.",
+      "matchOpen": "{count, plural, =0 {No open reminder matches.} one {# open reminder matches.} other {# open reminders match.}}",
+      "matchClosed": "{count, plural, =0 {No done reminder matches.} one {# done reminder matches.} other {# done reminders match.}}"
     },
     "caption": {
-      "open": "Open actions",
-      "closed": "Closed actions"
+      "open": "Open reminders",
+      "closed": "Done reminders"
     },
     "empty": {
       "filteredHeading": "Nothing matches these filters",
-      "filteredText": "Clear a filter to see more actions.",
-      "closedHeading": "No closed actions yet",
-      "closedText": "Actions appear here once they are remediated, accepted or found not to affect you.",
+      "filteredText": "Clear a filter to see more reminders.",
+      "closedHeading": "No done reminders yet",
+      "closedText": "Reminders appear here once they are remediated, accepted or found not to affect you.",
       "clear": "Clear filters"
     }
   },
   "actionDetail": {
-    "title": "Action",
-    "loading": "Loading the action",
-    "loadFailed": "The action could not be loaded.",
+    "title": "Reminder",
+    "loading": "Loading the reminder",
+    "loadFailed": "The reminder could not be loaded.",
     "reopen": "Reopen",
     "details": {
       "title": "Details",
@@ -1385,38 +1387,38 @@
       "placeholder": "Kept in the history",
       "required": "Write a short reason; it stays in the history.",
       "cancel": "Cancel",
-      "submit": "Close for all findings",
       "remediated": "How was it remediated?",
       "riskAccepted": "Why is the risk accepted?",
       "notAffected": "Why is the project not affected?"
     },
     "errors": {
-      "conflict": "Someone changed this action in the meantime. It shows the current state now; decide again.",
-      "superseded": "A newer action for this component is open; work there.",
-      "nothingToReopen": "No finding of this action was closed by a person, so there is no closing to take back.",
-      "closed": "The action is closed. Reopen it first.",
+      "conflict": "Someone changed this reminder in the meantime. It shows the current state now; decide again.",
+      "superseded": "A newer reminder for this component is open; work there.",
+      "nothingToReopen": "No finding of this reminder was closed by a person, so there is no closing to take back.",
+      "closed": "The reminder is done. Reopen it first.",
       "findingOpen": "The finding is open already.",
       "invalid": "The change is not valid.",
-      "forbidden": "Only members can change actions.",
-      "gone": "This action does not exist.",
+      "forbidden": "Only members can change reminders.",
+      "gone": "This reminder does not exist.",
       "failed": "That did not work. Try again in a moment."
     },
     "toast": {
-      "reopened": "Closing taken back: the action is open again",
+      "reopened": "Reopened: the reminder is open again",
       "closed": "Closed as {status, select, open {open} remediated {remediated} risk_accepted {risk accepted} not_affected {not affected} other {another status}} for all findings",
       "note": "Note saved",
       "finding": "{entry}: {status, select, open {open again} remediated {remediated} risk_accepted {risk accepted} not_affected {not affected} other {another status}}",
       "undone": "Undone",
       "confirmed": "{entry}: estimate confirmed",
       "confirmedClosed": "{entry}: confirmed as not affected and closed",
-      "corrected": "{entry}: correction saved, the finding was assessed again"
+      "corrected": "{entry}: correction saved, the finding was assessed again",
+      "remediated": "Marked as remediated"
     },
     "history": {
       "title": "History",
       "to": "to",
       "empty": "No history yet.",
       "other": "{kind}",
-      "raised": "Action raised with {findings, plural, one {# finding} other {# findings}}",
+      "raised": "Reminder raised with {findings, plural, one {# finding} other {# findings}}",
       "levelRaised": "Priority raised",
       "levelLowered": "Priority lowered",
       "exploited": "Exploitation is known now",
@@ -1429,7 +1431,7 @@
       "findingReopenedBy": "{who} reopened {entry}",
       "note": "Note by {who}",
       "backfill": "First fill completed",
-      "joined": "{entry} joined the action",
+      "joined": "{entry} joined the reminder",
       "findingClosed": "{entry} closed",
       "findingReopened": "{entry} is open again",
       "someone": "Someone",
@@ -1442,11 +1444,153 @@
       "placeholder": "Add a note for the team",
       "save": "Save note"
     },
-    "resolve": "Mark as remediated"
+    "resolve": "Mark as remediated",
+    "other": "Other outcome",
+    "outcome": {
+      "legend": "Close without remediating",
+      "submit": "Close reminder"
+    },
+    "state": {
+      "open": "Open since {date}.",
+      "done": "Done on {date}: {status, select, remediated {remediated} risk_accepted {risk accepted} not_affected {not affected} other {closed by Ardea}}. No more reminders."
+    },
+    "historyMeta": "{count, plural, =0 {No events} one {# event} other {# events}}",
+    "vulnerabilities": "Vulnerabilities in this reminder"
+  },
+  "notices": {
+    "title": "Notices",
+    "loading": "Loading the notices",
+    "loadFailed": "The notices could not be loaded.",
+    "tryAgain": "Try again",
+    "more": "Show more",
+    "show": "Show",
+    "view": {
+      "new": "New",
+      "answered": "Answered",
+      "earlier": "Earlier"
+    },
+    "filter": {
+      "label": "Stack entry",
+      "all": "All stack entries"
+    },
+    "summary": {
+      "new": "{count, plural, one {# new notice} other {# new notices}}",
+      "newRest": "might affect you. {answered} answered.",
+      "none": "No new notices.",
+      "noneRest": "{answered, plural, =0 {Nothing answered yet.} one {# answered.} other {# answered.}}"
+    },
+    "keys": {
+      "move": "next notice",
+      "affects": "affects us",
+      "notAffected": "doesn’t affect us",
+      "cancel": "cancel"
+    },
+    "list": {
+      "new": "New notices",
+      "earlier": "Earlier notices"
+    },
+    "calm": {
+      "heading": "Nothing to answer",
+      "text": "{answered, plural, =0 {No notice is waiting.} one {The # notice so far is answered.} other {All # notices so far are answered.}} Ardea checks your stack against every new entry and asks when one is critical or exploited.",
+      "answered": "See answered",
+      "filtered": "No new notices for {entry}."
+    },
+    "earlier": {
+      "title": "Earlier",
+      "text": "Raised quietly when a stack entry was added or changed, from up to half a year back. They do not count as new.",
+      "none": "Nothing earlier is waiting."
+    },
+    "answered": {
+      "title": "Answered",
+      "meta": "{count} notices",
+      "entries": "{product} · {count, plural, one {# entry} other {# entries}}",
+      "affects": "· reminder #{number} · {who}, {date}",
+      "affectsNoReminder": "· checked against the version, no reminder · {who}, {date}",
+      "notAffected": "· {who}, {date} · comes back once if exploited",
+      "openReminder": "Open reminder",
+      "change": "Change answer",
+      "none": "Nothing answered yet.",
+      "noneFor": "Nothing answered for {entry} yet."
+    },
+    "side": {
+      "title": "Notices so far",
+      "note": "One block per notice: new, earlier, and how they were answered.",
+      "blocks": "{total} notices: {fresh} new, {earlier} earlier, {affects} affect us, {not} do not",
+      "stackTitle": "From your stack",
+      "stackText": "A notice asks when an entry names a technology of your stack without an exact version and is critical or exploited. “Doesn’t affect us” is final; it comes back once if the entry gets exploited."
+    },
+    "affects": "Affects us",
+    "notAffected": "Doesn’t affect us",
+    "details": "Details",
+    "exploited": "Exploited",
+    "cvss": "CVSS {score}",
+    "noCvss": "No CVSS score",
+    "someone": "Someone",
+    "back": {
+      "lead": "Back once.",
+      "text": "{who} answered “Doesn’t affect us” on {date}. Since then {reason, select, kev {CISA lists it as exploited} other {it is exploited}}. It will not come back again.",
+      "textBefore": "It was answered “Doesn’t affect us” before; since then {reason, select, kev {CISA lists it as exploited} other {it is exploited}}. It will not come back again."
+    },
+    "reason": {
+      "stack": "Your stack names {product}",
+      "project": "{project} names {product}",
+      "gone": "The stack entry that raised it was removed",
+      "noisy": "for this product only exploited entries ask"
+    },
+    "affect": {
+      "none": "Your stack has no version for it, so Ardea cannot check it.",
+      "line": "Your stack names the {line} line, not the installed release."
+    },
+    "answers": {
+      "what": "What is it?",
+      "whatText": "{severity, select, critical {A critical vulnerability} high {A high-severity vulnerability} medium {A medium-severity vulnerability} low {A low-severity vulnerability} other {A vulnerability without a score}}{exploitation, select, active {, actively exploited.} poc {, with a public proof of concept.} other {, no exploitation known.}}",
+      "affect": "Does it affect us?",
+      "possibly": "Possibly",
+      "todo": "What to do?",
+      "todoText": "Check whether you run an affected version of {product}. If so, answer “Affects us”."
+    },
+    "follow": {
+      "createsStack": "Creates a reminder to update {product} in the stack. Add the project and version if you know them.",
+      "createsProject": "Creates a reminder to update {product} in {project}.",
+      "joinsStack": "As far as Ardea can tell, this adds the entry to the open reminder #{number} “{reminder}” in the stack, which has {entries, plural, one {# entry} other {# entries}}.",
+      "joinsProject": "As far as Ardea can tell, this adds the entry to the open reminder #{number} “{reminder}” in {project}, which has {entries, plural, one {# entry} other {# entries}}.",
+      "project": "Project",
+      "noProject": "No project, the stack",
+      "version": "Version",
+      "versionHint": "With a version, Ardea checks the entry against it and closes the reminder by itself once that version is fixed.",
+      "versionPlaceholder": "Installed version",
+      "cancel": "Cancel",
+      "add": "Add to reminder",
+      "create": "Create reminder",
+      "noProjectThere": "No other project: {project}"
+    },
+    "toast": {
+      "notAffected": "Doesn’t affect us. It comes back once if it gets exploited.",
+      "notAffectedFinal": "Doesn’t affect us. It will not come back.",
+      "affectsCreated": "Reminder #{number} created",
+      "affectsJoined": "Added to reminder #{number}",
+      "affectsOutOfRange": "Checked against {version}: outside the affected range, no reminder",
+      "movedBack": "{count, plural, one {Moved back to New} other {# notices moved back to New}}",
+      "undone": "Undone",
+      "oneAtATime": "One answer at a time: the last one is still being saved.",
+      "movedBackPart": "{count} of {total} notices moved back to New; the rest could not be changed."
+    },
+    "errors": {
+      "conflict": "Someone answered this notice in the meantime. It shows the current state now.",
+      "withoutComponent": "The stack entry that raised this notice was removed; there is nothing left to remind about.",
+      "projectGone": "That project no longer exists. Choose another one or the stack.",
+      "projectArchived": "That project is archived. Choose another one or the stack.",
+      "projectNeeded": "The notice names several projects. Choose the project the version is for.",
+      "version": "Ardea cannot record this version here: a repository reads this product in the project and sets its version, or it is a service without one. Answer without a version.",
+      "invalid": "The answer is not valid.",
+      "forbidden": "Only members can answer notices.",
+      "gone": "This notice no longer exists.",
+      "failed": "That did not work. Try again in a moment."
+    }
   },
   "answers": {
     "label": "The three answers",
-    "none": "The answers appear once the action has findings.",
+    "none": "The answers appear once the reminder has findings.",
     "happened": {
       "label": "What happened",
       "untitled": "No title in the record",
@@ -1507,8 +1651,7 @@
     }
   },
   "findings": {
-    "title": "Findings",
-    "meta": "{count} open · the action takes the highest",
+    "meta": "{count} open",
     "verdict": "{verdict, select, affected {Affected} likely {Likely} uncertain {Uncertain} unlikely {Unlikely} not_affected {Not affected} other {Not judged}}",
     "fixedIn": "fixed in {version}",
     "noFix": "no fix named",
@@ -1542,16 +1685,16 @@
     "loading": "Loading the alert",
     "loadFailed": "The alert could not be loaded.",
     "gone": "This alert does not exist.",
-    "back": "Action #{number}",
+    "back": "Reminder #{number}",
     "hits": {
       "title": "Components hit",
       "meta": "{count, plural, one {# component} other {# components}}",
       "component": "Component",
       "check": "Version check",
-      "action": "Action",
+      "action": "Reminder",
       "factors": "Factors",
       "match": "{type, select, package {package match} cpe {CPE match} product {product match} variant {variant} other {match}}",
-      "noAction": "Not relevant, no action",
+      "noAction": "Not relevant, no reminder",
       "showFactors": "Factors",
       "factorsOf": "Factors for {component} in {project}"
     },
@@ -1581,38 +1724,39 @@
     "loadFailed": "The overview could not be loaded.",
     "tryAgain": "Try again",
     "finding": {
-      "critical": "{count, plural, one {# critical action is open.} other {# critical actions are open.}}",
+      "critical": "{count, plural, one {# critical reminder is open.} other {# critical reminders are open.}}",
       "criticalDetail": "{exploited} actively exploited, {fix} with a fix.",
-      "noCritical": "No critical action is open.",
-      "highDetail": "{count, plural, one {# high action is open.} other {# high actions are open.}}",
+      "noCritical": "No critical reminder is open.",
+      "highDetail": "{count, plural, one {# high reminder is open.} other {# high reminders are open.}}",
       "calm": "Nothing urgent.",
-      "calmDetail": "No critical or high action is open.",
-      "nothing": "Nothing open: no action needs you right now."
+      "calmDetail": "No critical or high reminder is open.",
+      "nothing": "Nothing open: no reminder needs you right now.",
+      "notices": "{count, plural, one {# new notice to answer.} other {# new notices to answer.}}"
     },
     "ring": {
       "title": "By priority",
       "open": "open"
     },
     "urgent": {
-      "title": "Most urgent",
-      "none": "Nothing urgent: no action is open.",
-      "all": "All actions"
+      "title": "Open reminders",
+      "none": "Nothing urgent: no reminder is open.",
+      "all": "All reminders"
     },
     "projects": {
       "title": "Projects",
-      "open": " open actions",
-      "none": "No project has an open action."
+      "open": " open reminders",
+      "none": "No project has an open reminder."
     },
     "changes": {
       "title": "Since yesterday",
       "meta": "{count, plural, =0 {No changes} one {# change} other {# changes}}",
       "none": "Nothing changed since yesterday.",
-      "raised": "{count, plural, one {# action raised} other {# actions raised}}",
+      "raised": "{count, plural, one {# reminder raised} other {# reminders raised}}",
       "levelRaised": "{count, plural, one {# priority raised} other {# priorities raised}}",
       "levelLowered": "{count, plural, one {# priority lowered} other {# priorities lowered}}",
-      "exploited": "{count, plural, one {# action now exploited} other {# actions now exploited}}",
+      "exploited": "{count, plural, one {# reminder now exploited} other {# reminders now exploited}}",
       "fixAvailable": "{count, plural, one {# fix became available} other {# fixes became available}}",
-      "withdrawn": "{count, plural, one {# action closed by Ardea} other {# actions closed by Ardea}}",
+      "withdrawn": "{count, plural, one {# reminder closed by Ardea} other {# reminders closed by Ardea}}",
       "status": "{count, plural, one {# status change} other {# status changes}}",
       "notes": "{count, plural, one {# note} other {# notes}}",
       "backfill": "{count, plural, one {# first fill completed} other {# first fills completed}}"
@@ -1620,7 +1764,7 @@
     "warnings": {
       "title": "Warnings without an identifier",
       "meta": "National centres, 7 days",
-      "note": "Campaigns and advisories with no CVE yet. They name no product of yours, so they raise no action.",
+      "note": "Campaigns and advisories with no CVE yet. They name no product of yours, so they raise no reminder.",
       "national": "National centre",
       "none": "No warning without an identifier in the last 7 days."
     },
@@ -1628,6 +1772,19 @@
       "title": "Sources",
       "all": "All sources",
       "none": "No source has reported yet."
+    },
+    "notices": {
+      "title": "Notices",
+      "word": "{count, plural, one {new notice} other {new notices}}",
+      "sub": "might affect you. Answer each with “Affects us” or “Doesn’t affect us”.",
+      "calm": "Nothing to answer: every notice so far is answered.",
+      "answer": "Answer notices",
+      "answered": "Answered notices",
+      "peek": "Your stack names {product}",
+      "exploited": "exploited",
+      "cvss": "CVSS {score}",
+      "loading": "Loading the notices",
+      "loadFailed": "The notices could not be loaded. They are on the Notices page."
     }
   },
   "estimate": {
@@ -1683,7 +1840,7 @@
     "made": "{model} ({provider}) · prompt {prompt} · rule set v{ruleset} · {when}",
     "budget": "{tokensIn, number} tokens in, {tokensOut, number} out, {seconds, number} s. Only the hit components left Ardea, without project names.",
     "byPerson": "Asked for by a person.",
-    "bySystem": "Asked for by Ardea, within the quota of the action.",
+    "bySystem": "Asked for by Ardea, within the quota of the reminder.",
     "again": "Assess again",
     "request": {
       "button": "Request an AI assessment",
@@ -1735,12 +1892,12 @@
     },
     "events": {
       "groups": {
-        "actions": "Actions",
+        "actions": "Reminders",
         "notices": "Notices",
         "team": "Team work",
         "other": "Other"
       },
-      "raised": "New action",
+      "raised": "New reminder",
       "raisedHint": "From the rule's priority up",
       "levelRaised": "Priority raised",
       "levelRaisedHint": "Also when reported before",
@@ -1763,7 +1920,7 @@
     },
     "rules": {
       "new": "New rule",
-      "summary": "{count, plural, one {# rule} other {# rules}}{off, plural, =0 {} other {, # off}}. Who hears about which actions, on which channel, and when.",
+      "summary": "{count, plural, one {# rule} other {# rules}}{off, plural, =0 {} other {, # off}}. Who hears about which reminders, on which channel, and when.",
       "matrix": "Who hears what",
       "timeZone": "Times in the organization's time zone",
       "rule": "Rule",
@@ -1777,7 +1934,7 @@
       "toggle": "Rule {name}",
       "overlap": "Rules overlap on purpose: nobody hears the same thing twice on one channel. A member can mute a channel for themselves; Critical still gets through unless the organization allows muting it.",
       "emptyHeading": "No notification rules",
-      "emptyText": "Rules decide who hears about which actions, in the app, by e-mail, push or webhook.",
+      "emptyText": "Rules decide who hears about which reminders, in the app, by e-mail, push or webhook.",
       "emailOff": {
         "heading": "E-mail is off",
         "text": "No mail server is configured on this instance. Rules reach nobody by e-mail until the instance administrator sets one up."
@@ -1809,7 +1966,7 @@
       "notFound": "This rule does not exist any more.",
       "when": "When",
       "name": "Name",
-      "level": "Report actions from",
+      "level": "Report reminders from",
       "levelHint": "Warnings without an identifier have no priority and come with every rule that names them.",
       "events": "Events",
       "projects": "Projects",
@@ -1830,8 +1987,8 @@
       "remove": "Remove recipient {number}",
       "addTarget": "Add recipient",
       "summary": "In one sentence",
-      "sentence": "{level} actions and above in {projects} reach {targets}.",
-      "sentenceTop": "{level} actions in {projects} reach {targets}.",
+      "sentence": "{level} reminders and above in {projects} reach {targets}.",
+      "sentenceTop": "{level} reminders in {projects} reach {targets}.",
       "sentenceAll": "all projects",
       "sentenceTarget": "{who} {via}, {when}",
       "via": {
@@ -1953,7 +2110,7 @@
       "more": "Show older",
       "empty": "No notifications yet",
       "caughtUp": "You are up to date",
-      "emptyText": "New actions, rises and the team's work appear here as they happen."
+      "emptyText": "New reminders, rises and the team's work appear here as they happen."
     },
     "settings": {
       "title": "Your notifications",
@@ -1976,7 +2133,7 @@
       "title": "Push on this device",
       "on": "On for this device",
       "off": "Off on this device",
-      "onText": "Messages carry priority, number and title; a click opens the action. Their content is end-to-end encrypted.",
+      "onText": "Messages carry priority, number and title; a click opens the reminder. Their content is end-to-end encrypted.",
       "offText": "Get alerts on this device even when Ardea is closed. Your browser asks for permission once.",
       "turnOn": "Turn on push",
       "turnOff": "Turn off on this device",

@@ -70,7 +70,8 @@ const SAMPLE_ME: Me = {
     }
     .phone {
       width: 390px;
-      height: 640px;
+      /* Tall enough for every area and the person at the foot */
+      height: 720px;
     }
     .phone ardea-sidebar {
       height: 100%;

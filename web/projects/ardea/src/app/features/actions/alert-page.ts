@@ -65,12 +65,12 @@ import { ModelReview, type ReviewChange } from './model-review';
   template: `
     @if (view(); as v) {
       @if (v.actions[0]; as first) {
-        <a class="crumb" [routerLink]="['../../actions', actionNumber(first.number)]">
+        <a class="crumb" [routerLink]="['../../reminders', actionNumber(first.number)]">
           <svg lucideChevronLeft aria-hidden="true"></svg
           >{{ 'alert.back' | transloco: { number: actionNumber(first.number) } }}
         </a>
       } @else {
-        <a class="crumb" routerLink="../../actions">
+        <a class="crumb" routerLink="../../reminders">
           <svg lucideChevronLeft aria-hidden="true"></svg>{{ 'actions.title' | transloco }}
         </a>
       }
@@ -170,7 +170,7 @@ import { ModelReview, type ReviewChange } from './model-review';
                       @if (f.actionNumber !== null) {
                         <a
                           class="link"
-                          [routerLink]="['../../actions', actionNumber(f.actionNumber)]"
+                          [routerLink]="['../../reminders', actionNumber(f.actionNumber)]"
                           >#{{ actionNumber(f.actionNumber) }}</a
                         >
                       } @else {

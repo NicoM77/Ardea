@@ -111,12 +111,16 @@ public sealed class RobustnessTests(PostgresServer server)
     }
 
     [Fact]
-    public async Task A_new_time_zone_moves_the_next_digest_to_the_same_local_time()
+    public async Task A_new_time_zone_moves_the_next_digest_and_the_next_run_of_the_reminders_to_the_same_local_time()
     {
         await using var host = await NotifyTestHost.StartAsync(server);
         var (owner, organization) = await host.OwnerAsync();
         using var _ = owner;
         var path = $"/api/v1/orgs/{organization}";
+        await host.ExecuteAsync($"""
+            INSERT INTO notify.reminder_schedule (organization_id, level5, level4, level3, next_run_at, changed_at)
+            VALUES ('{organization}', 'daily', 'weekly', 'monthly', '{host.Time.GetUtcNow().AddHours(1):O}', now())
+            """);
 
         Assert.Equal(HttpStatusCode.OK, (await owner.SendAsync(HttpMethod.Patch, path, new { timeZone = "Asia/Tokyo" })).StatusCode);
 
@@ -125,6 +129,9 @@ public sealed class RobustnessTests(PostgresServer server)
             .Single(r => r.GetProperty("preset").GetString() == "weekly").GetProperty("targets")[0];
         var next = TimeZoneInfo.ConvertTime(weekly.GetProperty("nextDigestAt").GetDateTimeOffset(), tokyo);
         Assert.Equal((DayOfWeek.Monday, 8, 0), (next.DayOfWeek, next.Hour, next.Minute));
+        var run = TimeZoneInfo.ConvertTime(new DateTimeOffset(await host.ScalarAsync<DateTime>("SELECT next_run_at FROM notify.reminder_schedule")), tokyo);
+        Assert.Equal((true, 8, 0), (run.DayOfWeek is >= DayOfWeek.Monday and <= DayOfWeek.Friday, run.Hour, run.Minute));
+        Assert.Equal(Rules.DigestSchedule.Next(ReminderRhythms.Schedule, "Asia/Tokyo", host.Time.GetUtcNow()), run);
     }
 
     private static void Decorate<TService>(IServiceCollection services, Func<TService, TService> wrap)

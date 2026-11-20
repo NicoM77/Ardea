@@ -8,15 +8,7 @@ Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 
 Stand 20.11.2026, ca. 08:00 UTC, main = c018f07. Alle Agents werden mit der Sitzung abgeschaltet.
 
-- **PR #127 (7.2/7.3, Branch `ci/release-pipeline`, ADR 0050):** release-please, Commit-Prüfung (`build/check-commits.mjs`, `.github/workflows/commits.yml`), `release.yml` (amd64/arm64, cosign keyless, Provenance, SBOM), `AppVersion`/`doctor`. Unabhängig geprüft: keine Code-Blocker, 7 Should-fix; an den Autor-Agent geschickt, **Stand der Korrektur unbekannt** (Branch ansehen). Zu beheben:
-  1. Owner-Voraussetzungen als Checkliste in PR und CONTRIBUTING.
-  2. Images nur per Digest pushen; Versions-Tags (`0.1.0`, `0.1`, `0`) erst in `publish` nach Signatur/Attest mit `docker buildx imagetools create`.
-  3. release-please verliert Branch-Commits, die älter sind als der letzte Release → Merge-Commit-Betreff = Conventional PR-Titel (`gh pr merge N --merge --subject "<titel> (#N)"`); kein Rebase (Owner-Regel); prüfen, dass release-please solche Merge-Commits liest; ADR 0050.
-  4. PR-Titel in `commits.yml` prüfen (via `env`), Squash/Rebase-Merge im Repo abschalten (Owner).
-  5. Wiederherstellung: nur Draft löschen, Tag behalten; «Re-run all jobs» tut nichts, nur «Re-run failed jobs»; `workflow_dispatch` mit Eingabe `tag`.
-  6. `gh attestation verify` mit exakter `--cert-identity https://github.com/NicoM77/Ardea/.github/workflows/release.yml@refs/heads/main` und `--deny-self-hosted-runners`.
-  7. Release wartet auf grünen `ci.yml`-Lauf des Release-SHA.
-  Nits: Bereich `HEAD^1..HEAD^2`, `Reapply "…"` erlauben, Test für die doctor-Versionszeile, Beispielkonfiguration anhängen. **Erst nach den Korrekturen mergen.**
+- **#127 (7.2/7.3, ADR 0050) GEMERGT (main 77e8541):** alle 7 Review-Funde behoben (Tags erst nach Signatur, Merge-Betreff = Conventional PR-Titel + leerer Body, PR-Titel-Prüfung, Recovery per `workflow_dispatch tag`, exakte `--cert-identity`, Gate auf grünen `ci.yml`). Nichts davon ist je gelaufen. Ab jetzt mergen mit `gh pr merge N --merge --subject "<Conventional Titel> (#N)" --body "<branch>"`. Owner-Checkliste in CONTRIBUTING «Releases». 7.2/7.3 werden ✅ nach dem ersten echten Release.
 - **Dependabot-Sichtung (fertig, nichts gemergt/geschlossen):** PR **#130** (`ci/dependabot-ignores`) mit Ignore-Regeln, offen.
   - Mergen (lokal geprüft): #117 (build-push-action 7), #118 (setup-buildx 4), #119 (setup-dotnet 6), #122 (jsdom 31), #123 (cyclonedx-npm 7).
   - #124 (nuget-minor-patch): **Lock-Datei fehlt** (`tests/Ardea.Architecture.Tests/packages.lock.json` noch 10.11.0 → NU1004). Mit `dotnet restore Ardea.slnx --force-evaluate` auf dem PR-Branch neu erzeugen (LF!), dann ganze Suite grün (1 837 bestanden lokal).

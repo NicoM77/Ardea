@@ -1,20 +1,15 @@
 name: Website
 
-# NOT ENABLED (task 7.9 of the roadmap): this workflow runs only when started by hand, and publishing needs the
-# owner's decision first. GitHub Pages for a private repository depends on the account's plan, and Actions minutes
-# are used up until task 7.13. Before the first run: Settings → Pages → Source «GitHub Actions».
-# Once Pages is on, the triggers of the plan replace `workflow_dispatch` alone:
-#
-#   on:
-#     release:
-#       types: [published]
-#     push:
-#       branches: [main]
-#       paths: ["docs/**", "README.md", "SECURITY.md", "CONTRIBUTING.md", "openapi/**", "site/**"]
-#     workflow_dispatch:
-#
+# Task 7.9 of the roadmap: the owner approved the website on 20.11.2026; GitHub Pages serves it from this
+# workflow (Settings → Pages → Source «GitHub Actions») at https://nicom77.github.io/Ardea/. It is built and
+# published on every release and on changes to its sources on main, and can be started by hand.
 # The site is built from docs/, README.md, SECURITY.md, CONTRIBUTING.md and openapi/ardea.v1.json (site/README.md).
 on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+    paths: ["docs/**", "README.md", "SECURITY.md", "CONTRIBUTING.md", "openapi/**", "site/**"]
   workflow_dispatch:
 
 permissions:

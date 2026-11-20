@@ -564,6 +564,7 @@ test('alert: the components hit with their factors, and the entry', async ({ pag
     page.getByRole('table', { name: 'Factors for PostgreSQL in Platform Ops' }),
   ).toContainText('5 points · rule set v1');
   await expect(page.getByRole('link', { name: 'Reminder #143' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Request an AI assessment' })).toHaveCount(0);
   await expectAccessible(page, 'alert');
   expect(problems).toEqual([]);
 });
@@ -747,6 +748,29 @@ test('recipients: a webhook is added, its secret shown once, and a test message 
   await expect(page.getByText('SIEM answered 200. The test message arrived.')).toBeVisible();
   await expect(hooks).toContainText('200');
   await expectAccessible(page, 'recipients');
+
+  const more = hooks.getByRole('button', { name: 'More actions for SIEM' });
+  await more.focus();
+  await page.keyboard.press('Enter');
+  const menu = page.getByRole('menu', { name: 'More actions for SIEM' });
+  await expect(menu.getByRole('menuitem', { name: 'New secret' })).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(menu.getByRole('menuitem', { name: 'Delete' })).toBeFocused();
+  await expectAccessible(page, 'recipients with the webhook menu');
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await expect(more).toBeFocused();
+
+  await page.keyboard.press('ArrowDown');
+  await expect(menu.getByRole('menuitem', { name: 'New secret' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByText('whsec_sample-secret-rotated')).toBeVisible();
+  await expect(more).toBeFocused();
+
+  await more.click();
+  await menu.getByRole('menuitem', { name: 'Delete' }).click();
+  await expect(page.getByText('Webhook SIEM deleted.')).toBeVisible();
+  await expect(hooks).toHaveCount(0);
   expect(problems).toEqual([]);
 });
 

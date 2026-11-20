@@ -3,7 +3,17 @@ import { Component, computed, ElementRef, inject, input, signal } from '@angular
 import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { UiAvatar, UiButton, UiCard, UiInput, UiLoader, UiNotice } from 'ui';
+import {
+  UiAvatar,
+  UiButton,
+  UiCard,
+  UiInput,
+  UiLoader,
+  UiMenu,
+  UiMenuItem,
+  UiNotice,
+  UiOverflowMenu,
+} from 'ui';
 import {
   OrganizationsService,
   type MemberView,
@@ -32,7 +42,18 @@ const CONFIRM_LABELS: Record<Pending['kind'], string> = {
 
 @Component({
   selector: 'ardea-members-card',
-  imports: [TranslocoPipe, UiAvatar, UiButton, UiCard, UiInput, UiLoader, UiNotice],
+  imports: [
+    TranslocoPipe,
+    UiAvatar,
+    UiButton,
+    UiCard,
+    UiInput,
+    UiLoader,
+    UiMenu,
+    UiMenuItem,
+    UiNotice,
+    UiOverflowMenu,
+  ],
   template: `
     <ui-card [heading]="'team.members.title' | transloco" [attr.aria-busy]="members().isLoading()">
       @if (list(); as rows) {
@@ -88,41 +109,42 @@ const CONFIRM_LABELS: Record<Pending['kind'], string> = {
                   }
                 </div>
                 <div class="act">
-                  @if (can.transfer) {
-                    <button
-                      uiButton
-                      variant="ghost"
-                      type="button"
-                      [attr.aria-label]="
-                        'team.members.transferLabel' | transloco: { name: member.displayName }
-                      "
-                      (click)="ask('transfer', member, $event)"
-                    >
-                      {{ 'team.members.transfer' | transloco }}
-                    </button>
-                  }
-                  @if (can.remove) {
-                    <button
-                      uiButton
-                      variant="ghost"
-                      type="button"
-                      [attr.aria-label]="
-                        'team.members.removeLabel' | transloco: { name: member.displayName }
-                      "
-                      (click)="ask('remove', member, $event)"
-                    >
-                      {{ 'team.members.remove' | transloco }}
-                    </button>
-                  }
-                  @if (can.leave) {
-                    <button
-                      uiButton
-                      variant="ghost"
-                      type="button"
-                      (click)="ask('leave', member, $event)"
-                    >
-                      {{ 'team.members.leave' | transloco }}
-                    </button>
+                  @if (can.transfer || can.remove || can.leave) {
+                    <ui-overflow-menu #more [name]="member.displayName">
+                      <ng-template>
+                        <div uiMenu>
+                          @if (can.transfer) {
+                            <button
+                              uiMenuItem
+                              type="button"
+                              (triggered)="ask('transfer', member, more)"
+                            >
+                              {{ 'team.members.transfer' | transloco }}
+                            </button>
+                          }
+                          @if (can.remove) {
+                            <button
+                              uiMenuItem
+                              destructive
+                              type="button"
+                              (triggered)="ask('remove', member, more)"
+                            >
+                              {{ 'team.members.remove' | transloco }}
+                            </button>
+                          }
+                          @if (can.leave) {
+                            <button
+                              uiMenuItem
+                              destructive
+                              type="button"
+                              (triggered)="ask('leave', member, more)"
+                            >
+                              {{ 'team.members.leave' | transloco }}
+                            </button>
+                          }
+                        </div>
+                      </ng-template>
+                    </ui-overflow-menu>
                   }
                 </div>
               </div>
@@ -195,7 +217,7 @@ const CONFIRM_LABELS: Record<Pending['kind'], string> = {
     }
     .row {
       display: grid;
-      grid-template-columns: 24px minmax(0, 1fr) 140px minmax(0, auto);
+      grid-template-columns: 24px minmax(0, 1fr) 140px var(--control-height);
       align-items: center;
       gap: var(--space-sm) var(--space-md);
       min-height: 52px;
@@ -249,14 +271,14 @@ const CONFIRM_LABELS: Record<Pending['kind'], string> = {
     }
     @media (max-width: 640px) {
       .row {
-        grid-template-columns: 24px minmax(0, 1fr);
+        grid-template-columns: 24px minmax(0, 1fr) var(--control-height);
       }
-      .role,
-      .act {
-        grid-column: 2;
+      .role {
+        grid-column: 2 / span 2;
       }
       .act {
-        justify-content: flex-start;
+        grid-column: 3;
+        grid-row: 1;
       }
       .role-text {
         padding-left: 0;
@@ -299,14 +321,14 @@ export class MembersCard {
     }),
   );
 
-  private opener: HTMLElement | null = null;
+  private opener: UiOverflowMenu | null = null;
 
   protected actions(member: MemberView) {
     return memberActions(member, this.meId(), this.organization().role);
   }
 
-  protected ask(kind: Pending['kind'], member: MemberView, event: Event): void {
-    this.opener = event.currentTarget as HTMLElement;
+  protected ask(kind: Pending['kind'], member: MemberView, opener: UiOverflowMenu): void {
+    this.opener = opener;
     this.problem.set(null);
     this.pending.set({ kind, member });
     setTimeout(() => this.host.querySelector<HTMLElement>('.confirm-button')?.focus());

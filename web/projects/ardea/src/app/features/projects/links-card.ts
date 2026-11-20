@@ -1,5 +1,5 @@
 import { HttpResourceRef } from '@angular/common/http';
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, input, output, signal } from '@angular/core';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import {
   LucideCircleCheck,
@@ -9,7 +9,7 @@ import {
   LucideGitBranch,
 } from '@lucide/angular';
 import { firstValueFrom } from 'rxjs';
-import { UiButton, UiCard, UiLoader, UiNotice } from 'ui';
+import { UiButton, UiCard, UiLoader, UiMenu, UiMenuItem, UiNotice, UiOverflowMenu } from 'ui';
 import { RepositoriesService, type LinkView } from '../../core/api/client';
 import { problemMessageKey } from '../../core/api/problem';
 import { WIZARD_PROBLEMS } from '../setup/wizard-problems';
@@ -27,7 +27,10 @@ import { isReading, LINK_STATE_LABELS, repositoryName } from './link-format';
     UiButton,
     UiCard,
     UiLoader,
+    UiMenu,
+    UiMenuItem,
     UiNotice,
+    UiOverflowMenu,
   ],
   template: `
     <ui-card
@@ -119,17 +122,20 @@ import { isReading, LINK_STATE_LABELS, repositoryName } from './link-format';
                       >
                         {{ 'projects.links.readNow' | transloco }}
                       </button>
-                      <button
-                        uiButton
-                        variant="ghost"
-                        type="button"
-                        [attr.aria-label]="
-                          'projects.links.removeNamed' | transloco: { name: name(link) }
-                        "
-                        (click)="confirming.set(link.id)"
-                      >
-                        {{ 'projects.links.remove' | transloco }}
-                      </button>
+                      <ui-overflow-menu #more [name]="name(link)">
+                        <ng-template>
+                          <div uiMenu>
+                            <button
+                              uiMenuItem
+                              destructive
+                              type="button"
+                              (triggered)="ask(link, more)"
+                            >
+                              {{ 'projects.links.remove' | transloco }}
+                            </button>
+                          </div>
+                        </ng-template>
+                      </ui-overflow-menu>
                     </div>
                   }
                 </div>
@@ -169,12 +175,13 @@ import { isReading, LINK_STATE_LABELS, repositoryName } from './link-format';
                       <button
                         uiButton
                         type="button"
+                        class="confirm-button"
                         [loading]="busy() === link.id"
                         (click)="remove(link)"
                       >
                         {{ 'projects.links.remove' | transloco }}
                       </button>
-                      <button uiButton variant="ghost" type="button" (click)="confirming.set(null)">
+                      <button uiButton variant="ghost" type="button" (click)="cancel()">
                         {{ 'team.cancel' | transloco }}
                       </button>
                     </div>
@@ -320,6 +327,8 @@ export class LinksCard {
 
   private readonly api = inject(RepositoriesService);
   private readonly transloco = inject(TranslocoService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+  private opener: UiOverflowMenu | null = null;
 
   protected readonly labels = LINK_STATE_LABELS;
   protected readonly isReading = isReading;
@@ -345,6 +354,18 @@ export class LinksCard {
     }).format(new Date(value));
   }
 
+  protected ask(link: LinkView, opener: UiOverflowMenu): void {
+    this.opener = opener;
+    this.confirming.set(link.id);
+    setTimeout(() => this.host.querySelector<HTMLElement>('.confirm-button')?.focus());
+  }
+
+  protected cancel(): void {
+    this.confirming.set(null);
+    this.opener?.focus();
+    this.opener = null;
+  }
+
   protected async sync(link: LinkView): Promise<void> {
     await this.run(link, async () => {
       await firstValueFrom(this.api.syncRepositoryLink(this.orgId(), this.projectId(), link.id));
@@ -365,6 +386,7 @@ export class LinksCard {
     await this.run(link, async () => {
       await firstValueFrom(this.api.deleteRepositoryLink(this.orgId(), this.projectId(), link.id));
       this.confirming.set(null);
+      this.opener = null;
       return { key: 'projects.links.removed', params: { name: repositoryName(link) } };
     });
   }

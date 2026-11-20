@@ -6,6 +6,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import type { ComponentView, LinkView, SuggestionView } from '../../core/api/client';
+import { UiToaster } from 'ui';
 import { Session, type Me } from '../../core/session/session';
 import { ProjectPage } from './project-page';
 
@@ -224,5 +225,55 @@ describe('ProjectPage', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('leads back to the projects and to the project’s open reminders', async () => {
+    const { fixture, http, element } = await render([link({})]);
+    http.expectOne(`/api/v1/orgs/${ORG}/overview`).flush({
+      openByLevel: [],
+      urgent: [],
+      projects: [
+        {
+          project: { id: PROJECT, name: 'Customer Portal' },
+          level: 4,
+          levelName: 'high',
+          actions: 2,
+        },
+      ],
+      last24Hours: [],
+    });
+    await settle(fixture);
+    expect(element.querySelector('ui-back-link')?.textContent?.trim()).toBe('en.nav.projects');
+    const reminders = element.querySelector<HTMLAnchorElement>('a.reminders')!;
+    expect(reminders.textContent?.trim()).toBe('en.projects.openReminders');
+    expect(reminders.getAttribute('href')).toContain(`project=${PROJECT}`);
+  });
+
+  it('keeps Edit and Archive in the project’s menu; archiving says so with Undo', async () => {
+    const { fixture, http, element } = await render([link({})]);
+    const header = element.querySelector('ui-page-header')!;
+    expect(button(header, 'en.projects.edit')).toBeUndefined();
+    header.querySelector<HTMLButtonElement>('ui-overflow-menu button')!.click();
+    await settle(fixture);
+    const items = [...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];
+    expect(items.map((item) => item.textContent?.trim())).toEqual([
+      'en.projects.edit',
+      'en.projects.archive',
+    ]);
+    items[1].click();
+    await settle(fixture);
+    const archive = http.expectOne(BASE);
+    expect(archive.request.method).toBe('PATCH');
+    expect(archive.request.body).toMatchObject({ archived: true });
+    archive.flush({});
+    await settle(fixture);
+    const toaster = TestBed.inject(UiToaster);
+    expect(toaster.current()?.text).toBe('en.projects.archivedNow');
+    http.expectOne((r) => r.url === BASE && r.method === 'GET');
+    toaster.undo();
+    await settle(fixture);
+    expect(
+      http.expectOne((r) => r.url === BASE && r.method === 'PATCH').request.body,
+    ).toMatchObject({ archived: false });
   });
 });

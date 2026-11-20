@@ -1,4 +1,5 @@
 export * from './lib/avatar/avatar';
+export * from './lib/back-link/back-link';
 export * from './lib/button/button';
 export * from './lib/card/card';
 export * from './lib/copy-button/copy-button';
@@ -7,6 +8,8 @@ export * from './lib/field/field';
 export * from './lib/field/input';
 export * from './lib/field/password-toggle';
 export * from './lib/kbd/kbd';
+export * from './lib/menu/menu';
+export * from './lib/menu/overflow-menu';
 export * from './lib/notice/notice';
 export * from './lib/page-header/page-header';
 export * from './lib/pill/pill';

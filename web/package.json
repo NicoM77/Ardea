@@ -46,7 +46,7 @@
     "@axe-core/playwright": "4.14.0",
     "@cyclonedx/cyclonedx-npm": "4.2.1",
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "1.56.1",
+    "@playwright/test": "1.65.1",
     "angular-eslint": "22.8.0",
     "eslint": "^10.14.0",
     "jsdom": "^30.0.0",
@@ -56,7 +56,7 @@
     "orval": "8.48.0",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",
-    "typescript-eslint": "8.72.2",
+    "typescript-eslint": "8.73.0",
     "vitest": "^5.0.0"
   }
 }

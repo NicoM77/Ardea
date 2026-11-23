@@ -9,7 +9,7 @@ x-image: &image ${ARDEA_IMAGE:-ghcr.io/nicom77/ardea:0}
 
 services:
   db:
-    image: postgres:18
+    image: postgres:19
     environment:
       POSTGRES_DB: ardea
       POSTGRES_USER: ardea_migrator

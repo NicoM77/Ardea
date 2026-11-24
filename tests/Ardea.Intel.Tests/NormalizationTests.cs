@@ -45,6 +45,34 @@ public sealed class NormalizationTests(PostgresServer server)
     }
 
     [Fact]
+    public async Task Two_normalize_jobs_of_one_source_at_once_take_different_records()
+    {
+        await using var host = await IntelTestHost.StartAsync(server);
+        host.Provider.Items.AddRange([ScriptedProvider.Json("A", """{"id":"A"}"""), ScriptedProvider.Json("B", """{"id":"B"}"""), new Checkpoint("c1")]);
+        await host.SyncAsync();
+        using var inside = new SemaphoreSlim(0);
+        using var release = new SemaphoreSlim(0);
+        var first = 0;
+        host.Provider.OnNormalize = _ =>
+        {
+            if (Interlocked.Exchange(ref first, 1) == 0)
+            {
+                inside.Release();
+                release.Wait(TimeSpan.FromSeconds(30));
+            }
+        };
+
+        var running = Task.Run(host.NormalizeAsync, TestContext.Current.CancellationToken);
+        Assert.True(await inside.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken));
+        await host.NormalizeAsync();
+        release.Release();
+        await running;
+
+        Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.observation"));
+        Assert.Equal(0L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.source_record WHERE parse_status = 'pending'"));
+    }
+
+    [Fact]
     public async Task More_than_five_percent_in_quarantine_marks_the_source_degraded()
     {
         await using var host = await IntelTestHost.StartAsync(server);

@@ -1,5 +1,7 @@
 using Ardea.Intel.Sources.Abstractions;
+using Ardea.Platform.Persistence;
 using Ardea.TestSupport;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Ardea.Intel.Tests;
 
@@ -144,6 +146,96 @@ public sealed class CorrelationTests(PostgresServer server)
 
         Assert.Equal("warning", await host.ScalarAsync<string>("SELECT kind FROM intel.security_entry"));
         Assert.Equal("scripted:W-1", await host.ScalarAsync<string>("SELECT primary_key FROM intel.security_entry"));
+    }
+
+    [Fact]
+    public async Task Two_jobs_for_identifiers_of_one_new_entry_at_once_create_it_once()
+    {
+        await using var host = await IntelTestHost.StartAsync(server);
+        await StoreAsync(host, ("A", """{"aliases":["CVE:CVE-2026-1","GHSA:GHSA-aaaa-bbbb-cccc"],"title":"First"}"""));
+
+        await using var first = host.Services.CreateAsyncScope();
+        await IntelTestHost.CorrelateAsync(first.ServiceProvider, "CVE:CVE-2026-1");
+        var second = Task.Run(async () =>
+        {
+            await using var scope = host.Services.CreateAsyncScope();
+            await IntelTestHost.CorrelateAsync(scope.ServiceProvider, "GHSA:GHSA-aaaa-bbbb-cccc");
+            await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+        }, TestContext.Current.CancellationToken);
+        await host.WaitUntilASessionWaitsForALockAsync();
+        await first.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+        await second;
+
+        Assert.Equal("CVE-2026-1|1", await host.ScalarAsync<string>("SELECT string_agg(primary_key || '|' || revision, ',') FROM intel.security_entry"));
+        Assert.Equal(2L, await host.ScalarAsync<long>("SELECT count(*) FROM intel.entry_alias"));
+    }
+
+    [Fact]
+    public async Task A_record_that_drops_an_identifier_splits_the_entry_and_each_side_keeps_its_own_key()
+    {
+        await using var host = await IntelTestHost.StartAsync(server);
+        await DeliverAsync(
+            host,
+            ("P", """{"aliases":["GHSA:GHSA-aaaa-aaaa-aaaa","CVE:CVE-2026-1","CVE:CVE-2026-2","GHSA:GHSA-bbbb-bbbb-bbbb"],"title":"Joint"}"""),
+            ("Q", """{"aliases":["GHSA:GHSA-bbbb-bbbb-bbbb","CVE:CVE-2026-1","CVE:CVE-2026-2","GHSA:GHSA-aaaa-aaaa-aaaa"],"title":"Joint"}"""));
+        Assert.Equal("CVE-2026-1", await host.ScalarAsync<string>("SELECT string_agg(primary_key, ',') FROM intel.security_entry"));
+
+        await StoreAsync(
+            host,
+            ("P", """{"aliases":["GHSA:GHSA-aaaa-aaaa-aaaa","CVE:CVE-2026-1"],"title":"First"}"""),
+            ("Q", """{"aliases":["GHSA:GHSA-bbbb-bbbb-bbbb","CVE:CVE-2026-2"],"title":"Second"}"""));
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            await IntelTestHost.CorrelateAsync(scope.ServiceProvider, "CVE:CVE-2026-2");
+            await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+        }
+
+        await host.RunJobsAsync(Pipeline);
+
+        Assert.Equal(Split, await host.ScalarAsync<string>(SplitQuery));
+    }
+
+    [Fact]
+    public async Task An_entry_left_with_the_identifiers_of_another_entry_is_repaired_by_its_own_key()
+    {
+        await using var host = await IntelTestHost.StartAsync(server);
+        await DeliverAsync(
+            host,
+            ("P", """{"aliases":["GHSA:GHSA-aaaa-aaaa-aaaa","CVE:CVE-2026-1","CVE:CVE-2026-2","GHSA:GHSA-bbbb-bbbb-bbbb"],"title":"Joint"}"""),
+            ("Q", """{"aliases":["GHSA:GHSA-bbbb-bbbb-bbbb","CVE:CVE-2026-1","CVE:CVE-2026-2","GHSA:GHSA-aaaa-aaaa-aaaa"],"title":"Joint"}"""));
+        await StoreAsync(
+            host,
+            ("P", """{"aliases":["GHSA:GHSA-aaaa-aaaa-aaaa","CVE:CVE-2026-1"],"title":"First"}"""),
+            ("Q", """{"aliases":["GHSA:GHSA-bbbb-bbbb-bbbb","CVE:CVE-2026-2"],"title":"Second"}"""));
+        await host.ExecuteAsync("UPDATE platform.job SET state = 'succeeded' WHERE state = 'pending'");
+        await host.ExecuteAsync("DELETE FROM intel.entry_alias WHERE value IN ('CVE-2026-1', 'GHSA-aaaa-aaaa-aaaa')");
+
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            await IntelTestHost.CorrelateAsync(scope.ServiceProvider, "CVE:CVE-2026-1");
+            await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
+        }
+
+        await host.RunJobsAsync(Pipeline);
+
+        Assert.Equal(Split, await host.ScalarAsync<string>(SplitQuery));
+    }
+
+    private const string Split = "CVE-2026-1|First|CVE:CVE-2026-1 GHSA:GHSA-aaaa-aaaa-aaaa,CVE-2026-2|Second|CVE:CVE-2026-2 GHSA:GHSA-bbbb-bbbb-bbbb";
+
+    private const string SplitQuery = """
+        SELECT string_agg(e.primary_key || '|' || e.title || '|' || (
+            SELECT string_agg(a.scheme || ':' || a.value, ' ' ORDER BY a.scheme, a.value) FROM intel.entry_alias a WHERE a.entry_id = e.id), ',' ORDER BY e.primary_key)
+        FROM intel.security_entry e WHERE e.state <> 'merged'
+        """;
+
+    private static async Task StoreAsync(IntelTestHost host, params (string Id, string Json)[] records)
+    {
+        host.Provider.Items.Clear();
+        host.Provider.Items.AddRange(records.Select(r => (FetchItem)ScriptedProvider.Json(r.Id, r.Json)));
+        host.Provider.Items.Add(new Checkpoint(Guid.NewGuid().ToString()));
+        await host.SyncAsync();
+        await host.RunJobsAsync("intel.normalize-records");
     }
 
     private static async Task DeliverAsync(IntelTestHost host, params (string Id, string Json)[] records)

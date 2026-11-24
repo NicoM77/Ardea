@@ -38,29 +38,77 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
             return;
         }
 
-        var (aliasSet, observations) = await ClosureAsync(job.Key, exclude: [], cancellationToken);
+        var locked = new HashSet<string>(StringComparer.Ordinal);
+        while (true)
+        {
+            var plan = await PlanAsync(job.Key, sources, cancellationToken);
+            var missing = plan.Keys.Where(k => !locked.Contains(k)).Order(StringComparer.Ordinal).ToList();
+            if (missing.Count == 0)
+            {
+                await ApplyAsync(plan, sources, job.Key, cancellationToken);
+                return;
+            }
+
+            db.ChangeTracker.Clear();
+            foreach (var key in missing)
+            {
+                await LockEntryAsync(key, cancellationToken);
+                locked.Add(key);
+            }
+        }
+    }
+
+    private async Task<Plan> PlanAsync(string key, Dictionary<Guid, SourceRow> sources, CancellationToken cancellationToken)
+    {
+        var (aliasSet, observations) = await ClosureAsync(key, exclude: [], cancellationToken);
         var keyArray = aliasSet.ToArray();
         var linked = await db.EntryAliases.Where(a => keyArray.Contains(a.Scheme + ":" + a.Value)).Select(a => a.EntryId).Distinct().ToListAsync(cancellationToken);
-        var entries = await db.Entries.Where(e => linked.Contains(e.Id) && e.State != "merged").ToListAsync(cancellationToken);
+        var (projection, triggeredBy) = Project(observations, aliasSet, sources);
+        var primaryKey = projection?.PrimaryKey;
+        var found = await db.Entries.Where(e => (linked.Contains(e.Id) && e.State != "merged") || e.PrimaryKey == primaryKey).ToListAsync(cancellationToken);
+        var values = aliasSet.Select(a => a[(a.IndexOf(':', StringComparison.Ordinal) + 1)..]).ToHashSet(StringComparer.Ordinal);
+        return new Plan(aliasSet, observations, [.. found.Where(e => values.Contains(e.PrimaryKey))], [.. found.Where(e => !values.Contains(e.PrimaryKey))], projection, triggeredBy);
+    }
 
-        var cveEntries = entries.Where(e => IsCve(e.PrimaryKey)).OrderBy(e => e.PrimaryKey, StringComparer.Ordinal).ToList();
+    private async Task ApplyAsync(Plan plan, Dictionary<Guid, SourceRow> sources, string key, CancellationToken cancellationToken)
+    {
+        await DetachAsync(plan.Foreign, plan.Aliases, cancellationToken);
+        var cveEntries = plan.Entries.Where(e => IsCve(e.PrimaryKey)).OrderBy(e => e.PrimaryKey, StringComparer.Ordinal).ToList();
         if (cveEntries.Count >= 2)
         {
-            await SeparateAsync(cveEntries, observations, sources, job.Key, cancellationToken);
+            await SeparateAsync(cveEntries, plan.Observations, plan.Aliases, sources, key, cancellationToken);
             return;
         }
 
-        var (projection, triggeredBy) = Project(observations, aliasSet, sources);
-        if (projection is null)
+        if (plan.Projection is not { } projection)
         {
             return;
         }
 
-        var target = entries.FirstOrDefault(e => e.PrimaryKey == projection.PrimaryKey) ?? entries.OrderBy(e => e.Id).FirstOrDefault();
-        await MergeIntoAsync(target, entries.Where(e => e != target), cancellationToken);
+        var target = plan.Entries.FirstOrDefault(e => e.PrimaryKey == projection.PrimaryKey) ?? plan.Entries.OrderBy(e => e.Id).FirstOrDefault();
+        await MergeIntoAsync(target, plan.Entries.Where(e => e != target && e.State != "merged"), cancellationToken);
         projection = await WithSignalsAsync(projection, sources, cancellationToken);
         projection = await WithCatalogKeysAsync(projection, cancellationToken);
-        await WriteAsync(target, projection, triggeredBy, cancellationToken);
+        await WriteAsync(target, projection, plan.TriggeredBy, plan.Aliases, cancellationToken);
+    }
+
+    private Task LockEntryAsync(string primaryKey, CancellationToken cancellationToken) =>
+        db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"intel.entry:" + primaryKey}, 0))", cancellationToken);
+
+    private async Task DetachAsync(List<EntryRow> foreign, HashSet<string> aliasSet, CancellationToken cancellationToken)
+    {
+        var keyArray = aliasSet.ToArray();
+        foreach (var entry in foreign)
+        {
+            var kept = await db.EntryAliases.Where(a => a.EntryId == entry.Id && !keyArray.Contains(a.Scheme + ":" + a.Value))
+                .Select(a => new { Key = a.Scheme + ":" + a.Value, a.Value }).ToListAsync(cancellationToken);
+            await db.EntryAliases.Where(a => a.EntryId == entry.Id && keyArray.Contains(a.Scheme + ":" + a.Value)).ExecuteDeleteAsync(cancellationToken);
+            var own = kept.OrderBy(a => a.Value != entry.PrimaryKey).ThenBy(a => a.Key, StringComparer.Ordinal).Select(a => a.Key).FirstOrDefault();
+            if (own is not null)
+            {
+                await jobs.EnqueueAsync(new CorrelateEntry(own), CorrelateEntry.Options(own), cancellationToken);
+            }
+        }
     }
 
     private async Task<(HashSet<string> Aliases, List<ObservationRow> Observations)> ClosureAsync(string key, IReadOnlyCollection<string> exclude, CancellationToken cancellationToken)
@@ -112,7 +160,8 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         }
     }
 
-    private async Task SeparateAsync(List<EntryRow> cveEntries, List<ObservationRow> joined, Dictionary<Guid, SourceRow> sources, string via, CancellationToken cancellationToken)
+    private async Task SeparateAsync(
+        List<EntryRow> cveEntries, List<ObservationRow> joined, HashSet<string> closure, Dictionary<Guid, SourceRow> sources, string via, CancellationToken cancellationToken)
     {
         var keys = cveEntries.ToDictionary(e => e.Id, e => "CVE:" + e.PrimaryKey);
         var closures = new Dictionary<Guid, (HashSet<string> Aliases, List<ObservationRow> Observations)>();
@@ -151,7 +200,7 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
             projection = projection with { Aliases = [.. projection.Aliases.Where(a => !shared.Contains(AliasKey(a)))] };
             projection = await WithSignalsAsync(projection, sources, cancellationToken);
             projection = await WithCatalogKeysAsync(projection, cancellationToken);
-            await WriteAsync(entry, projection, triggeredBy, cancellationToken);
+            await WriteAsync(entry, projection, triggeredBy, closure, cancellationToken);
         }
     }
 
@@ -258,11 +307,12 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
 
         var model = JsonSerializer.Deserialize<Observation>(observation.Claims, NormalizeRecordsHandler.Json)!;
         var projection = Projection.Compute([new Contribution(source.Id, source.Key, source.OperatorKind, record!.Id, record.Url, model, [])], $"{source.Key}:{record.ExternalId}");
+        await LockEntryAsync(projection.PrimaryKey, cancellationToken);
         var entry = await db.Entries.SingleOrDefaultAsync(e => e.PrimaryKey == projection.PrimaryKey, cancellationToken);
-        await WriteAsync(entry, projection, source.Key, cancellationToken);
+        await WriteAsync(entry, projection, source.Key, new HashSet<string>(StringComparer.Ordinal), cancellationToken);
     }
 
-    private async Task WriteAsync(EntryRow? entry, EntryProjection projection, string triggeredBy, CancellationToken cancellationToken)
+    private async Task WriteAsync(EntryRow? entry, EntryProjection projection, string triggeredBy, IReadOnlySet<string> closure, CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
         var created = entry is null;
@@ -289,6 +339,7 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         entry.Summary = projection.Summary;
         entry.Description = projection.Description;
         entry.State = projection.State;
+        entry.MergedIntoId = null;
         entry.PublishedAt = projection.PublishedAt;
         entry.CvssScore = projection.CvssScore;
         entry.CvssVersion = projection.CvssVersion;
@@ -315,7 +366,7 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
             return;
         }
 
-        await ReplaceChildrenAsync(entry.Id, projection, created, cancellationToken);
+        await ReplaceChildrenAsync(entry.Id, projection, created, closure, cancellationToken);
         var isMaterial = created || entry.MaterialFingerprint != material;
         entry.MaterialFingerprint = material;
         entry.RemediationFingerprint = remediation;
@@ -340,10 +391,16 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         }
     }
 
-    private async Task ReplaceChildrenAsync(Guid entryId, EntryProjection projection, bool created, CancellationToken cancellationToken)
+    private async Task ReplaceChildrenAsync(Guid entryId, EntryProjection projection, bool created, IReadOnlySet<string> closure, CancellationToken cancellationToken)
     {
         if (!created)
         {
+            var dropped = await db.EntryAliases.Where(a => a.EntryId == entryId).Select(a => a.Scheme + ":" + a.Value).ToListAsync(cancellationToken);
+            foreach (var key in dropped.Where(k => !closure.Contains(k)).Order(StringComparer.Ordinal))
+            {
+                await jobs.EnqueueAsync(new CorrelateEntry(key), CorrelateEntry.Options(key), cancellationToken);
+            }
+
             await db.EntryAliases.Where(a => a.EntryId == entryId).ExecuteDeleteAsync(cancellationToken);
             await db.EntryAffected.Where(a => a.EntryId == entryId).ExecuteDeleteAsync(cancellationToken);
             await db.EntryReferences.Where(r => r.EntryId == entryId).ExecuteDeleteAsync(cancellationToken);
@@ -455,6 +512,12 @@ internal sealed partial class CorrelateEntryHandler(IntelDbContext db, IJobQueue
         Add("fixAvailable", before.Fix, after.Fix);
         Add("authorityWarning", before.Authority, after.Authority);
         return diff;
+    }
+
+    private sealed record Plan(
+        HashSet<string> Aliases, List<ObservationRow> Observations, List<EntryRow> Entries, List<EntryRow> Foreign, EntryProjection? Projection, string TriggeredBy)
+    {
+        public IEnumerable<string> Keys => Entries.Concat(Foreign).Select(e => e.PrimaryKey).Concat(Projection is null ? [] : [Projection.PrimaryKey]).Distinct(StringComparer.Ordinal);
     }
 
     internal static string AliasKey(Identifier identifier) => $"{identifier.Scheme.ToUpperInvariant()}:{identifier.Value}";

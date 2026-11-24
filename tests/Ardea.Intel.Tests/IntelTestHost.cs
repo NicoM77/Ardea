@@ -130,6 +130,24 @@ internal sealed class IntelTestHost : IAsyncDisposable
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(CancellationToken.None);
     }
 
+    public static Task CorrelateAsync(IServiceProvider services, string key) =>
+        services.GetRequiredService<Correlation.CorrelateEntryHandler>()
+            .HandleAsync(new Correlation.CorrelateEntry(key), new JobContext(Guid.CreateVersion7(), Correlation.CorrelateEntry.Kind, 1, null), CancellationToken.None);
+
+    public async Task WaitUntilASessionWaitsForALockAsync()
+    {
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(10);
+        while (await ScalarAsync<long>("SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'") == 0)
+        {
+            if (DateTimeOffset.UtcNow > deadline)
+            {
+                throw new TimeoutException("No session started waiting for a lock.");
+            }
+
+            await Task.Delay(20);
+        }
+    }
+
     public async Task RunJobsAsync(params string[] kinds)
     {
         for (var round = 0; round < 10; round++)
@@ -265,8 +283,11 @@ internal sealed class ScriptedProvider : ISourceProvider, IChangeLogSource
         }
     }
 
+    public Action<RawRecord>? OnNormalize { get; set; }
+
     public NormalizationResult Normalize(RawRecord record)
     {
+        OnNormalize?.Invoke(record);
         using var document = System.Text.Json.JsonDocument.Parse(record.Content);
         if (document.RootElement.TryGetProperty("bad", out _))
         {

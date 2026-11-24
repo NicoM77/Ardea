@@ -224,6 +224,11 @@ role: `docker compose run --rm migrate org …`. `seed-demo` needs the owner pas
 | `ardea org delete <slug> --confirm <slug>` | Remove an organisation and all its data |
 | `ardea seed-demo` | Load the sample data (with a stack and notices) into an empty instance ([Try it](try-it.md)); needs the owner role, refuses a database with data |
 
+A given-up `intel.normalize-records` job leaves nothing behind: the next one of the same source takes every record
+still waiting. A given-up `intel.correlate-entry` job leaves its entry out of date, or never created, until one of
+its records changes again; `ardea intel recompute` only reaches entries that exist, so retry such a job under
+*Failed jobs* in the administration.
+
 ## Size
 
 On the reference machine (2 vCPU, 4 GB) the 180-day first load took 51 minutes and 1.9 GB; at rest the

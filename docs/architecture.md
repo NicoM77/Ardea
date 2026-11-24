@@ -105,8 +105,8 @@ Every step is an idempotent job. A state and the job that follows it are written
 | Step | Job | Started by |
 |---|---|---|
 | Fetch | `intel.sync-source` | `intel.schedule-due-sources`, when a source is due. One attempt: on failure the source's back-off decides the next run, which resumes at the last checkpoint. |
-| Normalise | `intel.normalize-records` | new or changed raw records; one observation per raw record |
-| Merge | `intel.correlate-entry` | new observations or a changed signal class; the entry is recomputed from all its observations |
+| Normalise | `intel.normalize-records` | new or changed raw records; one observation per raw record. Jobs of one source may run at once; each takes its records with `FOR UPDATE SKIP LOCKED`. |
+| Merge | `intel.correlate-entry` | new observations or a changed signal class; the entry is recomputed from all its observations. Jobs that touch the same entry take turns: an advisory lock per primary key, taken before the entry is read. An entry whose primary key is no longer among the identifiers it is reached by is not taken over: it gives those identifiers up and is merged again from its own. |
 | Announce | `intel.notify-entry-changed` | a material change of an entry, a minute later, so a wave of updates from several sources is assessed once |
 | Forward search | `assess.match-entry` | an entry changed: which organisations and components carry its product keys |
 | Read a repository | `assets.index-repository` | `assets.schedule-due-repositories`, a newly linked repository or «read now» |

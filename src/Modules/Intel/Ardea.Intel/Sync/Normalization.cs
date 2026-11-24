@@ -63,9 +63,8 @@ internal sealed partial class NormalizeRecordsHandler(IUnitOfWorkFactory units, 
         var db = scope.ServiceProvider.GetRequiredService<IntelDbContext>();
         var source = await db.Sources.SingleAsync(s => s.Key == sourceKey, cancellationToken);
         var records = await db.SourceRecords
-            .Where(r => r.SourceId == source.Id && r.ParseStatus == "pending")
-            .OrderBy(r => r.Id)
-            .Take(BatchSize)
+            .FromSqlInterpolated(
+                $"SELECT * FROM intel.source_record WHERE source_id = {source.Id} AND parse_status = 'pending' ORDER BY id LIMIT {BatchSize} FOR UPDATE SKIP LOCKED")
             .ToListAsync(cancellationToken);
         if (records.Count == 0)
         {

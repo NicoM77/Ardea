@@ -254,10 +254,17 @@ internal static class Projection
         var package = PackageCoordinate.TryParsePurl(product.Purl, out var coordinate, out _) ? coordinate : null;
         var key = ProductKey.TryCreate(product.Vendor, product.Product ?? package?.Name, out var raw) ? raw.Value : null;
         var defaultStatus = Status(product.DefaultStatus) ?? "unknown";
+        var vendor = Fit(product.Vendor, NameLength);
+        var productName = Fit(product.Product, NameLength);
+        key = Fit(key, NameLength);
+        var cpeVendor = Fit(cpe?.Vendor, NameLength);
+        var cpeProduct = Fit(cpe?.Product, NameLength);
+        var purlType = Fit(package?.Type, SchemeLength);
+        var purlName = Fit(package?.Name, NameLength);
         if (product.Versions.Count == 0)
         {
-            yield return new AffectedData(sourceId, product.Vendor, product.Product, key, cpe?.Vendor, cpe?.Product, package?.Type, package?.Name,
-                product.VersionScheme, null, null, null, null, Status(product.DefaultStatus) ?? "unknown", defaultStatus);
+            yield return new AffectedData(sourceId, vendor, productName, key, cpeVendor, cpeProduct, purlType, purlName,
+                KnownScheme(product.VersionScheme), null, null, null, null, Status(product.DefaultStatus) ?? "unknown", defaultStatus);
             yield break;
         }
 
@@ -271,11 +278,18 @@ internal static class Projection
                 Exact = stated.Exact,
                 Scheme = stated.Scheme ?? product.VersionScheme,
             });
-            yield return new AffectedData(sourceId, product.Vendor, product.Product, key, cpe?.Vendor, cpe?.Product, package?.Type, package?.Name,
-                range.Scheme, range.Introduced, range.Fixed, range.LastAffected, range.Exact,
+            yield return new AffectedData(sourceId, vendor, productName, key, cpeVendor, cpeProduct, purlType, purlName,
+                KnownScheme(range.Scheme), range.Introduced, range.Fixed, range.LastAffected, range.Exact,
                 Status(stated.Status) ?? "unknown", defaultStatus);
         }
     }
+
+    private const int NameLength = 500;
+    private const int SchemeLength = 50;
+
+    private static string? KnownScheme(string? scheme) => scheme is { Length: > SchemeLength } ? null : scheme;
+
+    private static string? Fit(string? value, int length) => value is { } v && v.Length > length ? v[..length] : value;
 
     private static int Rank(Contribution c) =>
         SourceRank.TryGetValue(c.SourceKey, out var rank) ? rank

@@ -251,7 +251,8 @@ No language model was configured on the release instances. The criteria with a m
 
 ## The two manual passes of chapter 13.6
 
-Chapter 13.6 keeps exactly two short passes by hand before a release. Neither was done; both need a person.
+Chapter 13.6 keeps exactly two short passes by hand before a release. Neither was done; both need a person. The
+script for both is [manual-passes.md](manual-passes.md).
 
 | Pass | What covers it until then | Result |
 |---|---|---|

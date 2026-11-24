@@ -82,7 +82,7 @@ jobs:
           [ "$(docker image inspect "$IMAGE:$VERSION" --format '{{.Architecture}}')" = "${{ matrix.arch }}" ]
           reported="$(docker run --rm "$IMAGE:$VERSION" version)"
           [ "$reported" = "$VERSION" ] || { echo "::error::The image reports '$reported' instead of '$VERSION'"; exit 1; }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm

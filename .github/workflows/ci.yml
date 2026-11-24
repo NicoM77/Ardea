@@ -104,7 +104,7 @@ jobs:
           if-no-files-found: ignore
       # SBOM (CycloneDX) and third-party notices of what the image ships; the image build writes the
       # same notices into /app/THIRD-PARTY-NOTICES.md.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -132,7 +132,7 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -178,7 +178,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # The image ships Node 22.20; Angular CLI 22.2 needs 22.22 or 24.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -218,7 +218,7 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -261,7 +261,7 @@ jobs:
           load: true
           tags: ardea:e2e
           cache-from: type=gha,scope=image-amd64
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm

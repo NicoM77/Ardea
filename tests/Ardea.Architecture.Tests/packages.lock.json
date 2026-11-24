@@ -435,10 +435,10 @@
       },
       "OpenAI": {
         "type": "Transitive",
-        "resolved": "2.14.0",
-        "contentHash": "AeyC3GxbrJ7KRoWDyFeNSUOQQWD9AnNvM7LYQijCcXcqjyr53aGRcf5GBLExcSBzIs0RWYHe+NbzPrHTeuU5zA==",
+        "resolved": "2.15.0",
+        "contentHash": "04Lvp/guze35OdYsEcQY58SmSCBWCEDCGkiLiTQXDJy5L3d20n7I/zg94ry9hQ5c4dMDF1ASqlxD/IIMy47gFg==",
         "dependencies": {
-          "System.ClientModel": "1.15.0"
+          "System.ClientModel": "1.16.0"
         }
       },
       "OpenTelemetry": {
@@ -495,13 +495,13 @@
       },
       "System.ClientModel": {
         "type": "Transitive",
-        "resolved": "1.15.0",
-        "contentHash": "y6zQLInrpX+oGL1gXM04DrUSu1O1esWxt4rD/zrujTnzIFChn/noD1OiVVpTrU8ZvglwqO2Uw038svUR3SiAOg==",
+        "resolved": "1.16.0",
+        "contentHash": "vLljZON+8lXDUtsPP8uwsPvsBSQaUHhh8NvB+D9TQsXu5n622RLtuLyZAcyIFc98b8ixrwD0AhzUQhtg2NwJnQ==",
         "dependencies": {
-          "Microsoft.Extensions.Configuration.Abstractions": "10.0.9",
-          "Microsoft.Extensions.Hosting.Abstractions": "10.0.9",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.9",
-          "System.Memory.Data": "10.0.9"
+          "Microsoft.Extensions.Configuration.Abstractions": "10.0.10",
+          "Microsoft.Extensions.Hosting.Abstractions": "10.0.10",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.10",
+          "System.Memory.Data": "10.0.10"
         }
       },
       "System.Diagnostics.DiagnosticSource": {
@@ -511,8 +511,8 @@
       },
       "System.Memory.Data": {
         "type": "Transitive",
-        "resolved": "10.0.9",
-        "contentHash": "YweovHiLUoEdbr2Xv8eRqCSkTu1vMms4a6xBHaQiMSFVy32PL+hXv6Vhol2NWOmLHjaVgTyhJ3R52U6JxS6w3Q=="
+        "resolved": "10.0.10",
+        "contentHash": "roR+5AeOpflUxJQlqSfsZs/Bvi1uw4KBuTkIgF1e8l0RdalG4AUn84+sjJLclEfOV85gAjc8+Pp540qjDE5UIg=="
       },
       "System.Numerics.Tensors": {
         "type": "Transitive",
@@ -629,10 +629,10 @@
       "ardea.ai": {
         "type": "Project",
         "dependencies": {
-          "Anthropic": "[13.11.0, )",
+          "Anthropic": "[13.12.0, )",
           "Ardea.Platform": "[0.0.0, )",
-          "Microsoft.Extensions.AI": "[11.0.0, )",
-          "Microsoft.Extensions.AI.OpenAI": "[11.0.0, )",
+          "Microsoft.Extensions.AI": "[11.0.1, )",
+          "Microsoft.Extensions.AI.OpenAI": "[11.0.1, )",
           "OllamaSharp": "[5.5.2, )"
         }
       },
@@ -645,7 +645,7 @@
           "Ardea.Iam.Contracts": "[0.0.0, )",
           "Ardea.Intel.Contracts": "[0.0.0, )",
           "Ardea.Platform": "[0.0.0, )",
-          "Microsoft.Extensions.AI": "[11.0.0, )"
+          "Microsoft.Extensions.AI": "[11.0.1, )"
         }
       },
       "ardea.assessment.contracts": {
@@ -674,7 +674,7 @@
         "dependencies": {
           "Ardea.Catalog.Contracts": "[0.0.0, )",
           "Ardea.Platform": "[0.0.0, )",
-          "Microsoft.Extensions.AI": "[11.0.0, )",
+          "Microsoft.Extensions.AI": "[11.0.1, )",
           "NuGet.Versioning": "[8.0.0, )",
           "Semver": "[3.0.0, )"
         }
@@ -777,10 +777,10 @@
           "Cronos": "[0.13.0, )",
           "EFCore.NamingConventions": "[10.0.1, )",
           "MailKit": "[5.0.0, )",
-          "Microsoft.Extensions.AI.Abstractions": "[11.0.0, )",
-          "Npgsql": "[10.0.3, )",
-          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
-          "Npgsql.OpenTelemetry": "[10.0.3, )",
+          "Microsoft.Extensions.AI.Abstractions": "[11.0.1, )",
+          "Npgsql": "[10.0.4, )",
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.4, )",
+          "Npgsql.OpenTelemetry": "[10.0.4, )",
           "OpenTelemetry.Exporter.OpenTelemetryProtocol": "[1.21.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.21.0, )",
           "OpenTelemetry.Instrumentation.AspNetCore": "[1.21.0, )",
@@ -793,9 +793,9 @@
       },
       "Anthropic": {
         "type": "CentralTransitive",
-        "requested": "[13.11.0, )",
-        "resolved": "13.11.0",
-        "contentHash": "H466KZWidIycmozTYWNDgxsX/Wi9iN93YXRedYtR3SZ6d/pD137DhsD7DgiYf0OIQcs7rhxHBKf5A4PBNSOuPQ==",
+        "requested": "[13.12.0, )",
+        "resolved": "13.12.0",
+        "contentHash": "pIguTtfKb8lfsLRdnsmbzhzmPfwhoVjr2v1M7BVdxYZOR4/2nDiuKcHJBSzS2zsEKyW2is0trrqPKOIuyL1gDg==",
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "10.5.1"
         }
@@ -871,11 +871,11 @@
       },
       "Microsoft.Extensions.AI": {
         "type": "CentralTransitive",
-        "requested": "[11.0.0, )",
-        "resolved": "11.0.0",
-        "contentHash": "Vn8jo7RCYS3+tD7XOYgwtAPtd6CZIfIpzE20wGkbehAezj+tRY0lZWnEgehP0bLEAno/L54aCa4GnretNoGkXQ==",
+        "requested": "[11.0.1, )",
+        "resolved": "11.0.1",
+        "contentHash": "MP6zzZzPseaXu0DtZFCkPCWPXLTu7JY28ciyxqSoeDOP5Raf+wJT8+HapyLfXaI7F1CXpyr5PgiCQEE0CeVCqw==",
         "dependencies": {
-          "Microsoft.Extensions.AI.Abstractions": "11.0.0",
+          "Microsoft.Extensions.AI.Abstractions": "11.0.1",
           "Microsoft.Extensions.Caching.Abstractions": "11.0.0",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "11.0.0",
           "Microsoft.Extensions.Logging.Abstractions": "11.0.0",
@@ -884,18 +884,18 @@
       },
       "Microsoft.Extensions.AI.Abstractions": {
         "type": "CentralTransitive",
-        "requested": "[11.0.0, )",
-        "resolved": "11.0.0",
-        "contentHash": "UYZTudmTrGykWIRzcO/TKauTx/+L/h4MYpUBODCG7aIybRVkv2y6uhVwG6UHRS6uTzRqg0K8IJprC9/QhMZGsw=="
+        "requested": "[11.0.1, )",
+        "resolved": "11.0.1",
+        "contentHash": "pG3n1nHRnVcYuMAiqhDPuKefXTtUGAhAtqhBUKpNsZXYef9Vm51iZhUAVfQ2EzYhechFaA5hCcgQgK18jTzuiw=="
       },
       "Microsoft.Extensions.AI.OpenAI": {
         "type": "CentralTransitive",
-        "requested": "[11.0.0, )",
-        "resolved": "11.0.0",
-        "contentHash": "yZcoQnQOU/tUUy+w5/qBuiuTvUjtirVVhvMq12QP7WKH1XLg+LcUJs6GsLNCwwGk07VWbj7O8ZU/lYsGr7vlUg==",
+        "requested": "[11.0.1, )",
+        "resolved": "11.0.1",
+        "contentHash": "BPyxzh96v26MfAM61x/5hj1Gt3FbUpqqnRFuKa9j+FIPewNq4qL4zmJzUJv6csyv8nMNX8tdZBKba3H3XK/OBg==",
         "dependencies": {
-          "Microsoft.Extensions.AI.Abstractions": "11.0.0",
-          "OpenAI": "2.14.0"
+          "Microsoft.Extensions.AI.Abstractions": "11.0.1",
+          "OpenAI": "2.15.0"
         }
       },
       "Microsoft.Extensions.Http.Resilience": {
@@ -911,31 +911,31 @@
       },
       "Npgsql": {
         "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "10.0.3",
-        "contentHash": "7nb5YzXuvWWJxB0J8DiyL3we+X4FOctZrt0fIBnucOIaIevFEEwGQVZKtiu9olXdlNAK1eNgqSral6r/jlhI4w==",
+        "requested": "[10.0.4, )",
+        "resolved": "10.0.4",
+        "contentHash": "m2VCpcU9MKD8lLxTn+YaNIRWd+Gz3y/9wIaM+2ifDF24xZ2Kvvjx4CDB2BIgobr1Gj6a/gsdmfz1sQ+kmd7liw==",
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "10.0.0"
         }
       },
       "Npgsql.EntityFrameworkCore.PostgreSQL": {
         "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "10.0.3",
-        "contentHash": "IPGrrZnRkuW7OlHDhUESZz4G5DLkW7Nej/O3Cx+0iTsgyU5XJxBgpsvTHLloo3WWuAKKbDHXBvWPVkX1deRh1Q==",
+        "requested": "[10.0.4, )",
+        "resolved": "10.0.4",
+        "contentHash": "KRFbmHOn260bgSSQTKZsKtvEFW1k1AaZUtb/IPmW31M47qMkzAOglP7FHQgMeqpZeMJ2rjRwczfEUP5lyWUAdA==",
         "dependencies": {
-          "Microsoft.EntityFrameworkCore": "[10.0.4, 11.0.0)",
-          "Microsoft.EntityFrameworkCore.Relational": "[10.0.4, 11.0.0)",
-          "Npgsql": "10.0.3"
+          "Microsoft.EntityFrameworkCore": "[10.0.15, 11.0.0)",
+          "Microsoft.EntityFrameworkCore.Relational": "[10.0.15, 11.0.0)",
+          "Npgsql": "10.0.4"
         }
       },
       "Npgsql.OpenTelemetry": {
         "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
-        "resolved": "10.0.3",
-        "contentHash": "ShsdG/FHxJ2VuWM6tebJL/mCWkcxymmvtENN59c85EsJdT4TStWwwtgZoBu/9UvC0qi1jpFZ6bOfl9ijiWD+vA==",
+        "requested": "[10.0.4, )",
+        "resolved": "10.0.4",
+        "contentHash": "FQBFufPAD1fUcXgp8aIZY/C5S1lCjxUZ7ZumIl+pxMoIXRhDzVYPYgY0l1xI8N0VH5iC1Kg3XmZapmH5EAMLIg==",
         "dependencies": {
-          "Npgsql": "10.0.3",
+          "Npgsql": "10.0.4",
           "OpenTelemetry.API": "1.15.3"
         }
       },

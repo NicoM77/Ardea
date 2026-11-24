@@ -43,8 +43,12 @@ updates:
         update-types: [minor, patch]
     # Must match the Playwright image (mcr.microsoft.com/playwright:v1.56.1-noble) used for the visual baselines.
     # Bump it together with the image tag, the baselines and the other pins by hand, then remove this rule.
+    # TypeScript follows the range Angular supports (@angular/compiler-cli peer dependency); a new major comes with
+    # the Angular update that allows it.
     ignore:
       - dependency-name: "@playwright/test"
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: npm
     directory: /site
@@ -109,3 +113,8 @@ updates:
     open-pull-requests-limit: 3
     commit-message:
       prefix: "chore(deps)"
+    # A new PostgreSQL major cannot read the data directory of the old one: it needs a dump and restore or
+    # pg_upgrade, documented in the update guide, so it is a deliberate move and not a dependency bump.
+    ignore:
+      - dependency-name: "postgres"
+        update-types: ["version-update:semver-major"]

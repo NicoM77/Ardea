@@ -148,6 +148,33 @@ public sealed class ProjectionTests
         Assert.Contains(rows, r => r.Product == "Linux" && r is { Introduced: "6.12.116", Fixed: "6.13", LastAffected: null, Status: "unaffected", VersionScheme: "semver" });
     }
 
+    [Fact]
+    public void A_version_type_longer_than_the_column_is_dropped_so_the_range_falls_back_to_the_unknown_scheme()
+    {
+        var malformed = "customDKCMAIN Ver.93-" + new string('x', 80);
+        var record = Contribution(Cve, "cve-program", "mandated", ObservationKind.Vulnerability, new ClaimBlock
+        {
+            Aliases = [new Identifier("CVE", "CVE-2025-7737")],
+            Affected =
+            [
+                new AffectedProduct
+                {
+                    Vendor = new string('v', 600),
+                    Product = "Portal",
+                    VersionScheme = malformed,
+                    Versions = [new VersionRange { Introduced = "1.0", Fixed = "2.0", Scheme = malformed }],
+                },
+            ],
+        });
+
+        var row = Assert.Single(Projection.Compute([record]).Affected);
+
+        Assert.Null(row.VersionScheme);
+        Assert.Equal("1.0", row.Introduced);
+        Assert.Equal("2.0", row.Fixed);
+        Assert.Equal(500, row.Vendor!.Length);
+    }
+
     private static ClaimBlock Block(string description, string fixedIn) => new()
     {
         Aliases = [new Identifier("CVE", "CVE-2026-6")],

@@ -147,7 +147,7 @@ observed once and recorded; a source that changes its structure shows in operati
 it degraded); the quality of a language model shows as the correction rate in operation.
 
 Before a release two short passes stay manual: the core flows with keyboard and screen reader, and Web Push on an
-installed web app on iOS.
+installed web app on iOS. [`docs/acceptance/manual-passes.md`](docs/acceptance/manual-passes.md) is the script for both.
 
 ### Measuring coverage
 

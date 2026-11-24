@@ -1,6 +1,6 @@
 # NOTES: Arbeitsstand und Wissen ausserhalb des Repositorys
 
-Stand: 24.11.2026, main = fe02805, keine offenen PRs. Abschnitt 0 zuerst lesen.
+Stand: 24.11.2026 abends, keine offenen PRs, Remote nur main, NOTES, release-please-Branch. Abschnitt 0 zuerst lesen.
 Umsetzung weiss und was nicht schon im Repository steht (README, Masterplan, ADR, Abnahmen, PR-Texte,
 Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 
@@ -11,6 +11,8 @@ Issues). Wo etwas im Repository steht, verweise ich nur darauf.
 - **Abnahme:** `.github/workflows/acceptance.yml` (#158), von Hand mit `version`: Signatur/Attestierungen wie im Installationsleitfaden, frische Installation + E2E auf amd64 und arm64 (GitHub-Runner `ubuntu-24.04-arm`; dieser Host kann kein arm64). Grün für 0.1.1 und 0.1.2. Protokoll `docs/acceptance/release-1.0.md` (#160) als Generalprobe auf 0.1.1; 7.11 erst ✅ mit dem Lauf auf 1.0 (Update 0.x→1.0, die zwei Handdurchgänge aus 13.6).
 - **Roadmap:** 7.2, 7.3, 7.9, 7.13, 7.15 ✅; 7.12 Teil 1 ✅ (#153), Teil 2 (Masterplan löschen) nach 7.11; offen beim Eigentümer: 7.1 (Markenrecherche, Social Preview hochladen, Branch-Schutz, Squash/Rebase aus), 7.14 (Branches löschen, Befehle unten), 6.2, 6.3, 6.4/6.8.
 - **Heute gefundene und behobene Fehler:** Release-Website-Neuveröffentlichung (#161, jetzt per `workflow_dispatch` aus `release.yml`, bei 0.1.2 bestätigt); Phone-Aktionsleiste nicht fixiert (#162, Animation mit `both` hinterliess Transform); **doppeltes Dispose der Unit of Work** (#164): zweites Dispose rollte die Transaktion der nächsten Anfrage auf derselben physischen Verbindung zurück (500er in CI, in Produktion stiller Datenverlust möglich).
+- **Repository-Einstellungen (vom Eigentümer am 24.11. freigegeben, umgesetzt):** Branch-Schutz auf `main` mit Pflicht-Checks Backend, Dependencies, Web, Web under CSP, End to end, Image (kein Force-Push, kein Löschen; Admins dürfen umgehen); nur Merge-Commits (Titel = PR-Titel, leerer Body), Squash/Rebase aus, «Automatically delete head branches» an. 7.14 ✅: 127 Remote-Branches gelöscht, lokal die gemergten Branches und 22 alte Worktrees. Doku-PRs: CI startet immer, der Job «Changes» überspringt die Pflicht-Jobs (zählt als bestanden, #175; mit #176 bestätigt).
+- **1.0:** Eigentümer will noch **nicht** (erst 6.2 Sicherheitsprüfung und 6.3 Handdurchgang durch Menschen). Danach: Commit mit Footer `Release-As: 1.0.0`, Release-PR mergen, `acceptance.yml` mit 1.0.0, Update 0.1.x→1.0 prüfen, 7.11 abschliessen, 7.12 Teil 2.
 - **Dependabot:** TypeScript- und PostgreSQL-Majors werden ignoriert (#172; TS 7 ausserhalb Angulars Bereich, PG 19 braucht Migrationspfad und Eigentümer-Entscheid). NuGet-Gruppen-PRs brauchen oft neue Lock-Dateien: Branch auschecken, im SDK-Container `dotnet restore Ardea.slnx --force-evaluate`, committen, normal pushen.
 
 ## 0. Stand 20.11.2026 (zuerst lesen)

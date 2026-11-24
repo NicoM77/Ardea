@@ -1,8 +1,17 @@
 # NOTES: Arbeitsstand und Wissen ausserhalb des Repositorys
 
-Stand: 20.11.2026, ca. 13:45 UTC, main nach #154. Abschnitt 0 zuerst lesen.
+Stand: 24.11.2026, main = fe02805, keine offenen PRs. Abschnitt 0 zuerst lesen.
 Umsetzung weiss und was nicht schon im Repository steht (README, Masterplan, ADR, Abnahmen, PR-Texte,
 Issues). Wo etwas im Repository steht, verweise ich nur darauf.
+
+## 00. Stand 24.11.2026 (zuerst lesen)
+
+- **Releases:** v0.1.1 (20.11., erstes veröffentlichtes Release) und v0.1.2 (23.11., vom Eigentümer gemergt). v0.1.0 hat einen Tag, aber keine Images (Cache-Wettlauf der zwei Plattformen, behoben in #156; Entwurf gelöscht, Tag bleibt, wie CONTRIBUTING «Releases» es verlangt). Paket `ghcr.io/nicom77/ardea` öffentlich und mit dem Repo verknüpft; Tags `0`, `0.1`, `0.1.x`.
+- **Eigentümer-Freigabe:** Release-PRs von release-please darf ich mergen, sobald CI grün ist (Memory `ardea-release-authorization`). Vorher einmal schliessen/öffnen, damit die Checks laufen.
+- **Abnahme:** `.github/workflows/acceptance.yml` (#158), von Hand mit `version`: Signatur/Attestierungen wie im Installationsleitfaden, frische Installation + E2E auf amd64 und arm64 (GitHub-Runner `ubuntu-24.04-arm`; dieser Host kann kein arm64). Grün für 0.1.1 und 0.1.2. Protokoll `docs/acceptance/release-1.0.md` (#160) als Generalprobe auf 0.1.1; 7.11 erst ✅ mit dem Lauf auf 1.0 (Update 0.x→1.0, die zwei Handdurchgänge aus 13.6).
+- **Roadmap:** 7.2, 7.3, 7.9, 7.13, 7.15 ✅; 7.12 Teil 1 ✅ (#153), Teil 2 (Masterplan löschen) nach 7.11; offen beim Eigentümer: 7.1 (Markenrecherche, Social Preview hochladen, Branch-Schutz, Squash/Rebase aus), 7.14 (Branches löschen, Befehle unten), 6.2, 6.3, 6.4/6.8.
+- **Heute gefundene und behobene Fehler:** Release-Website-Neuveröffentlichung (#161, jetzt per `workflow_dispatch` aus `release.yml`, bei 0.1.2 bestätigt); Phone-Aktionsleiste nicht fixiert (#162, Animation mit `both` hinterliess Transform); **doppeltes Dispose der Unit of Work** (#164): zweites Dispose rollte die Transaktion der nächsten Anfrage auf derselben physischen Verbindung zurück (500er in CI, in Produktion stiller Datenverlust möglich).
+- **Dependabot:** TypeScript- und PostgreSQL-Majors werden ignoriert (#172; TS 7 ausserhalb Angulars Bereich, PG 19 braucht Migrationspfad und Eigentümer-Entscheid). NuGet-Gruppen-PRs brauchen oft neue Lock-Dateien: Branch auschecken, im SDK-Container `dotnet restore Ardea.slnx --force-evaluate`, committen, normal pushen.
 
 ## 0. Stand 20.11.2026 (zuerst lesen)
 

@@ -1,11 +1,10 @@
 name: CI
 
-# Every pull request and every push to main runs the pipeline, except changes to documentation alone.
+# Every pull request and every push to main runs the pipeline, except changes to documentation alone. On a pull
+# request the workflow always starts and the job «Changes» skips the rest for documentation alone: a skipped job
+# counts as passed for the checks that branch protection requires, a workflow that never starts does not.
 on:
   pull_request:
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
   push:
     branches: [main]
     paths-ignore:
@@ -28,8 +27,34 @@ env:
 # Time budget (master plan 13.7): pull request 15 minutes target, 25 minutes hard limit.
 # Jobs run side by side; a job over its timeout is a defect to fix, not a limit to raise.
 jobs:
+  changes:
+    name: Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      code: ${{ steps.files.outputs.code }}
+    steps:
+      - id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          files="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename')"
+          if grep -qvE '^docs/|\.md$' <<< "$files"; then code=true; else code=false; fi
+          echo "Changes beyond documentation: $code"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
   backend:
     name: Backend
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -54,6 +79,8 @@ jobs:
 
   dependencies:
     name: Dependencies
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -96,6 +123,8 @@ jobs:
 
   web:
     name: Web
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -177,6 +206,8 @@ jobs:
   # The same job runs the flows of phase 3 against a stand-in for the API, with axe (a few seconds).
   web-csp:
     name: Web under CSP
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
@@ -214,6 +245,8 @@ jobs:
   # The image is built here from the Image job's cache (read only), so both jobs run side by side.
   e2e:
     name: End to end
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -252,6 +285,8 @@ jobs:
 
   image:
     name: Image
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
